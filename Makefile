@@ -22,8 +22,8 @@ protos:
 	go get code.google.com/p/goprotobuf/protoc-gen-go
 
 examples: check_proto_headers check_mesos protos c-bridge
-	go install mesos.apache.org/example_framework
-	go install mesos.apache.org/example_executor
+	go install github.com/mesosphere/mesos-go/src/mesos.apache.org/example_framework
+	go install github.com/mesosphere/mesos-go/src/mesos.apache.org/example_executor
 
 clean:
 	@cd c-bridge; make clean

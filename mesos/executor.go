@@ -1,11 +1,14 @@
 package mesos
 
 /*
-#cgo LDFLAGS:-Lc-bridge -L../../../c-bridge -lcbridge -lmesos -lstdc++
-#cgo CFLAGS:-Ic-bridge -I../../../c-bridge
+#cgo LDFLAGS:-L/usr/local/lib -lmesos -lstdc++
+
+// I have to add /usr/local/include/mesos to the include path
+// because mesos.pb.h included with angle brackets. :/
+#cgo CPPFLAGS:-I/usr/local/include -I/usr/local/include/mesos
 
 #include <string.h>
-#include <c-api.hpp>
+#include "c-api.hpp"
 
 extern void executor_registeredCB(void*, ProtobufObj*, ProtobufObj*, ProtobufObj*);
 extern void executor_reregisteredCB(void*, ProtobufObj*);

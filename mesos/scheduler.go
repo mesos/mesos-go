@@ -1,39 +1,40 @@
 package mesos
 
 /*
-#cgo LDFLAGS:-L../../../c-bridge -Lc-bridge -lcbridge -lmesos -lstdc++
-#cgo CFLAGS:-Ic-bridge -I../../../c-bridge
+#cgo LDFLAGS:-L/usr/local/lib -lmesos -lstdc++
+
+// I have to add /usr/local/include/mesos to the include path
+// because mesos.pb.h included with angle brackets. :/
+#cgo CPPFLAGS:-I/usr/local/include -I/usr/local/include/mesos
 
 #include <string.h>
-#include <c-api.hpp>
+#include "c-api.hpp"
 
-extern void registeredCB(void*, ProtobufObj*, ProtobufObj*);
-extern void reregisteredCB(void*, ProtobufObj*);
-extern void disconnectedCB(void*);
-extern void resourceOffersCB(void*, ProtobufObj*, size_t);
-extern void offerRescindedCB(void*, ProtobufObj*);
-extern void statusUpdateCB(void*, ProtobufObj*);
-extern void frameworkMessageCB(
-    void*,
-    ProtobufObj*,
-    ProtobufObj*,
-    ProtobufObj*);
-extern void slaveLostCB(void*, ProtobufObj*);
-extern void executorLostCB(void*, ProtobufObj*, ProtobufObj*, int);
-extern void errorCB(void*, ProtobufObj*);
+extern void scheduler_registeredCB(void*, ProtobufObj*, ProtobufObj*);
+extern void scheduler_reregisteredCB(void*, ProtobufObj*);
+extern void scheduler_disconnectedCB(void*);
+extern void scheduler_resourceOffersCB(void*, ProtobufObj*, size_t);
+extern void scheduler_offerRescindedCB(void*, ProtobufObj*);
+extern void scheduler_statusUpdateCB(void*, ProtobufObj*);
+extern void scheduler_frameworkMessageCB(void*, ProtobufObj*, ProtobufObj*, ProtobufObj*);
+extern void scheduler_slaveLostCB(void*, ProtobufObj*);
+extern void scheduler_executorLostCB(void*, ProtobufObj*, ProtobufObj*, int);
+extern void scheduler_errorCB(void*, ProtobufObj*);
 
 static SchedulerCallbacks getSchedulerCallbacks() {
   SchedulerCallbacks callbacks;
-  callbacks.registeredCallBack = registeredCB;
-  callbacks.reregisteredCallBack = reregisteredCB;
-  callbacks.disconnectedCallBack = disconnectedCB;
-  callbacks.resourceOffersCallBack = resourceOffersCB;
-  callbacks.offerRescindedCallBack = offerRescindedCB;
-  callbacks.statusUpdateCallBack = statusUpdateCB;
-  callbacks.frameworkMessageCallBack = frameworkMessageCB;
-  callbacks.slaveLostCallBack = slaveLostCB;
-  callbacks.executorLostCallBack = executorLostCB;
-  callbacks.errorCallBack = errorCB;
+
+  callbacks.registeredCallBack = scheduler_registeredCB;
+  callbacks.reregisteredCallBack = scheduler_reregisteredCB;
+  callbacks.disconnectedCallBack = scheduler_disconnectedCB;
+  callbacks.resourceOffersCallBack = scheduler_resourceOffersCB;
+  callbacks.offerRescindedCallBack = scheduler_offerRescindedCB;
+  callbacks.statusUpdateCallBack = scheduler_statusUpdateCB;
+  callbacks.frameworkMessageCallBack = scheduler_frameworkMessageCB;
+  callbacks.slaveLostCallBack = scheduler_slaveLostCB;
+  callbacks.executorLostCallBack = scheduler_executorLostCB;
+  callbacks.errorCallBack = scheduler_errorCB;
+
   return callbacks;
 }
 
@@ -374,8 +375,8 @@ func (sdriver *SchedulerDriver) Wait() {
 // Callbacks //
 ///////////////
 
-//export registeredCB
-func registeredCB(
+//export scheduler_registeredCB
+func scheduler_registeredCB(
 	ptr unsafe.Pointer,
 	frameworkMessage *C.ProtobufObj,
 	masterMessage *C.ProtobufObj) {
@@ -407,8 +408,8 @@ func registeredCB(
 	}
 }
 
-//export reregisteredCB
-func reregisteredCB(ptr unsafe.Pointer, masterMessage *C.ProtobufObj) {
+//export scheduler_reregisteredCB
+func scheduler_reregisteredCB(ptr unsafe.Pointer, masterMessage *C.ProtobufObj) {
 	if ptr != nil {
 		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
 		if driver.Scheduler.Reregistered == nil {
@@ -426,8 +427,8 @@ func reregisteredCB(ptr unsafe.Pointer, masterMessage *C.ProtobufObj) {
 	}
 }
 
-//export disconnectedCB
-func disconnectedCB(ptr unsafe.Pointer) {
+//export scheduler_disconnectedCB
+func scheduler_disconnectedCB(ptr unsafe.Pointer) {
 	if ptr != nil {
 		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
 		if driver.Scheduler.Disconnected == nil {
@@ -437,8 +438,8 @@ func disconnectedCB(ptr unsafe.Pointer) {
 	}
 }
 
-//export resourceOffersCB
-func resourceOffersCB(
+//export scheduler_resourceOffersCB
+func scheduler_resourceOffersCB(
 	ptr unsafe.Pointer,
 	offerMessages *C.ProtobufObj,
 	count C.size_t) {
@@ -468,8 +469,8 @@ func resourceOffersCB(
 	}
 }
 
-//export offerRescindedCB
-func offerRescindedCB(ptr unsafe.Pointer, offerIdMessage *C.ProtobufObj) {
+//export scheduler_offerRescindedCB
+func scheduler_offerRescindedCB(ptr unsafe.Pointer, offerIdMessage *C.ProtobufObj) {
 	if ptr != nil {
 		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
 		if driver.Scheduler.OfferRescinded == nil {
@@ -487,8 +488,8 @@ func offerRescindedCB(ptr unsafe.Pointer, offerIdMessage *C.ProtobufObj) {
 	}
 }
 
-//export statusUpdateCB
-func statusUpdateCB(
+//export scheduler_statusUpdateCB
+func scheduler_statusUpdateCB(
 	ptr unsafe.Pointer,
 	statusMessage *C.ProtobufObj) {
 	if ptr != nil {
@@ -510,8 +511,8 @@ func statusUpdateCB(
 	}
 }
 
-//export frameworkMessageCB
-func frameworkMessageCB(
+//export scheduler_frameworkMessageCB
+func scheduler_frameworkMessageCB(
 	ptr unsafe.Pointer,
 	executorIdMessage *C.ProtobufObj,
 	slaveIdMessage *C.ProtobufObj,
@@ -542,8 +543,8 @@ func frameworkMessageCB(
 	}
 }
 
-//export slaveLostCB
-func slaveLostCB(ptr unsafe.Pointer, slaveIdMessage *C.ProtobufObj) {
+//export scheduler_slaveLostCB
+func scheduler_slaveLostCB(ptr unsafe.Pointer, slaveIdMessage *C.ProtobufObj) {
 	if ptr != nil {
 		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
 		if driver.Scheduler.SlaveLost == nil {
@@ -561,8 +562,8 @@ func slaveLostCB(ptr unsafe.Pointer, slaveIdMessage *C.ProtobufObj) {
 	}
 }
 
-//export executorLostCB
-func executorLostCB(
+//export scheduler_executorLostCB
+func scheduler_executorLostCB(
 	ptr unsafe.Pointer,
 	executorIdMessage *C.ProtobufObj,
 	slaveIdMessage *C.ProtobufObj,
@@ -591,8 +592,8 @@ func executorLostCB(
 	}
 }
 
-//export errorCB
-func errorCB(ptr unsafe.Pointer, message *C.ProtobufObj) {
+//export scheduler_errorCB
+func scheduler_errorCB(ptr unsafe.Pointer, message *C.ProtobufObj) {
 	if ptr != nil {
 		data := C.GoBytes(message.data, C.int(message.size))
 		var errorString string = string(data)

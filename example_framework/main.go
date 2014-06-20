@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"code.google.com/p/goprotobuf/proto"
-	"github.com/reverb/go-mesos/mesos"
+	"github.com/mesosphere/go-mesos/mesos"
 )
 
 func main() {

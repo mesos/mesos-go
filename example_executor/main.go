@@ -9,17 +9,12 @@ import (
 
 type MesosExecutor bool
 
-func (e MesosExecutor) Registered(
-	driver *mesos.ExecutorDriver,
-	executor mesos.ExecutorInfo,
-	framework mesos.FrameworkInfo,
-	slave mesos.SlaveInfo) {
+func (e MesosExecutor) Registered(driver mesos.ExecutorDriver, executor *mesos.ExecutorInfo,
+	framework *mesos.FrameworkInfo, slave *mesos.SlaveInfo) {
 	fmt.Println("Executor registered!")
 }
 
-func (e MesosExecutor) LaunchTask(
-	driver *mesos.ExecutorDriver,
-	taskInfo mesos.TaskInfo) {
+func (e MesosExecutor) LaunchTask(driver mesos.ExecutorDriver, taskInfo *mesos.TaskInfo) {
 	fmt.Println("Launch task!")
 	driver.SendStatusUpdate(&mesos.TaskStatus{
 		TaskId:  taskInfo.TaskId,
@@ -34,16 +29,20 @@ func (e MesosExecutor) LaunchTask(
 	})
 }
 
-func (e MesosExecutor) Disconnected(*mesos.ExecutorDriver) {}
-func (e MesosExecutor) Reregistered(*mesos.ExecutorDriver, mesos.SlaveInfo) {}
-func (e MesosExecutor) KillTask(*mesos.ExecutorDriver, mesos.TaskID) {}
-func (e MesosExecutor) FrameworkMessage(*mesos.ExecutorDriver, string) {}
-func (e MesosExecutor) Shutdown(*mesos.ExecutorDriver) {}
-func (e MesosExecutor) Error(*mesos.ExecutorDriver, string) {}
+func (e MesosExecutor) Disconnected(mesos.ExecutorDriver) {}
+
+func (e MesosExecutor) Reregistered(mesos.ExecutorDriver, *mesos.SlaveInfo) {}
+
+func (e MesosExecutor) KillTask(mesos.ExecutorDriver, *mesos.TaskID) {}
+
+func (e MesosExecutor) FrameworkMessage(mesos.ExecutorDriver, string) {}
+
+func (e MesosExecutor) Shutdown(mesos.ExecutorDriver) {}
+
+func (e MesosExecutor) Error(mesos.ExecutorDriver, string) {}
 
 func main() {
-
-	driver := mesos.ExecutorDriver{
+	driver := &mesos.MesosExecutorDriver{
 		Executor: MesosExecutor(true),
 	}
 

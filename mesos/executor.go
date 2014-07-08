@@ -48,24 +48,36 @@ func NewTaskState(val TaskState) *TaskState {
 }
 
 type Executor interface {
-	Registered(*ExecutorDriver, ExecutorInfo, FrameworkInfo, SlaveInfo)
-	Reregistered(*ExecutorDriver, SlaveInfo)
-	Disconnected(*ExecutorDriver)
-	LaunchTask(*ExecutorDriver, TaskInfo)
-	KillTask(*ExecutorDriver, TaskID)
-	FrameworkMessage(*ExecutorDriver, string)
-	Shutdown(*ExecutorDriver)
-	Error(*ExecutorDriver, string)
+	Registered(ExecutorDriver, *ExecutorInfo, *FrameworkInfo, *SlaveInfo)
+	Reregistered(ExecutorDriver, *SlaveInfo)
+	Disconnected(ExecutorDriver)
+	LaunchTask(ExecutorDriver, *TaskInfo)
+	KillTask(ExecutorDriver, *TaskID)
+	FrameworkMessage(ExecutorDriver, string)
+	Shutdown(ExecutorDriver)
+	Error(ExecutorDriver, string)
 }
 
-type ExecutorDriver struct {
+type ExecutorDriver interface {
+	Init() error
+	Start() error
+	Stop() error
+	Abort() error
+	Join() error
+	Run() error
+	SendStatusUpdate(*TaskStatus) error
+	SendFrameworkMessage(string) error
+	Destroy()
+}
+
+type MesosExecutorDriver struct {
 	Executor  Executor
 	callbacks C.ExecutorCallbacks
 	driver    unsafe.Pointer
 	executor  unsafe.Pointer
 }
 
-func (edriver *ExecutorDriver) Init() error {
+func (edriver *MesosExecutorDriver) Init() error {
 	edriver.callbacks = C.getExecutorCallbacks()
 
 	pair := C.executor_init(&edriver.callbacks, unsafe.Pointer(edriver))
@@ -75,7 +87,7 @@ func (edriver *ExecutorDriver) Init() error {
 	return nil
 }
 
-func (edriver *ExecutorDriver) Start() error {
+func (edriver *MesosExecutorDriver) Start() error {
 	if edriver.driver != nil {
 		C.executor_start(C.ExecutorDriverPtr(edriver.driver))
 	} else {
@@ -84,7 +96,7 @@ func (edriver *ExecutorDriver) Start() error {
 	return nil
 }
 
-func (edriver *ExecutorDriver) Stop() error {
+func (edriver *MesosExecutorDriver) Stop() error {
 	if edriver.driver != nil {
 		C.executor_stop(C.ExecutorDriverPtr(edriver.driver))
 	} else {
@@ -93,7 +105,7 @@ func (edriver *ExecutorDriver) Stop() error {
 	return nil
 }
 
-func (edriver *ExecutorDriver) Abort() error {
+func (edriver *MesosExecutorDriver) Abort() error {
 	if edriver.driver != nil {
 		C.executor_abort(C.ExecutorDriverPtr(edriver.driver))
 	} else {
@@ -102,7 +114,7 @@ func (edriver *ExecutorDriver) Abort() error {
 	return nil
 }
 
-func (edriver *ExecutorDriver) Join() error {
+func (edriver *MesosExecutorDriver) Join() error {
 	if edriver.driver != nil {
 		C.executor_join(C.ExecutorDriverPtr(edriver.driver))
 	} else {
@@ -111,7 +123,7 @@ func (edriver *ExecutorDriver) Join() error {
 	return nil
 }
 
-func (edriver *ExecutorDriver) Run() error {
+func (edriver *MesosExecutorDriver) Run() error {
 	if edriver.driver != nil {
 		C.executor_run(C.ExecutorDriverPtr(edriver.driver))
 	} else {
@@ -120,7 +132,7 @@ func (edriver *ExecutorDriver) Run() error {
 	return nil
 }
 
-func (edriver *ExecutorDriver) SendStatusUpdate(status *TaskStatus) error {
+func (edriver *MesosExecutorDriver) SendStatusUpdate(status *TaskStatus) error {
 	if edriver.driver != nil {
 		statusObj, err := serialize(status)
 		if err != nil {
@@ -138,7 +150,7 @@ func (edriver *ExecutorDriver) SendStatusUpdate(status *TaskStatus) error {
 	return nil
 }
 
-func (edriver *ExecutorDriver) SendFrameworkMessage(message string) error {
+func (edriver *MesosExecutorDriver) SendFrameworkMessage(message string) error {
 	if edriver.driver != nil {
 		var cdata *C.char = C.CString(message)
 
@@ -151,7 +163,7 @@ func (edriver *ExecutorDriver) SendFrameworkMessage(message string) error {
 	return nil
 }
 
-func (edriver *ExecutorDriver) Destroy() {
+func (edriver *MesosExecutorDriver) Destroy() {
 	C.executor_destroy(edriver.driver, edriver.executor)
 }
 
@@ -166,24 +178,24 @@ func executor_registeredCB(
 	frameworkInfo *C.ProtobufObj,
 	slaveInfo *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
+		var driver *MesosExecutorDriver = (*MesosExecutorDriver)(ptr)
 		executorData := C.GoBytes(executorInfo.data, C.int(executorInfo.size))
-		var executor ExecutorInfo
-		err := proto.Unmarshal(executorData, &executor)
+		executor := new(ExecutorInfo)
+		err := proto.Unmarshal(executorData, executor)
 		if err != nil {
 			return
 		}
 
 		frameworkData := C.GoBytes(frameworkInfo.data, C.int(frameworkInfo.size))
-		var framework FrameworkInfo
-		err = proto.Unmarshal(frameworkData, &framework)
+		framework := new(FrameworkInfo)
+		err = proto.Unmarshal(frameworkData, framework)
 		if err != nil {
 			return
 		}
 
 		slaveData := C.GoBytes(slaveInfo.data, C.int(slaveInfo.size))
-		var slave SlaveInfo
-		err = proto.Unmarshal(slaveData, &slave)
+		slave := new(SlaveInfo)
+		err = proto.Unmarshal(slaveData, slave)
 		if err != nil {
 			return
 		}
@@ -195,10 +207,10 @@ func executor_registeredCB(
 //export executor_reregisteredCB
 func executor_reregisteredCB(ptr unsafe.Pointer, slaveInfo *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
+		var driver *MesosExecutorDriver = (*MesosExecutorDriver)(ptr)
 		slaveData := C.GoBytes(slaveInfo.data, C.int(slaveInfo.size))
-		var slave SlaveInfo
-		err := proto.Unmarshal(slaveData, &slave)
+		slave := new(SlaveInfo)
+		err := proto.Unmarshal(slaveData, slave)
 		if err != nil {
 			return
 		}
@@ -210,7 +222,7 @@ func executor_reregisteredCB(ptr unsafe.Pointer, slaveInfo *C.ProtobufObj) {
 //export executor_disconnectedCB
 func executor_disconnectedCB(ptr unsafe.Pointer) {
 	if ptr != nil {
-		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
+		var driver *MesosExecutorDriver = (*MesosExecutorDriver)(ptr)
 		driver.Executor.Disconnected(driver)
 	}
 }
@@ -218,14 +230,11 @@ func executor_disconnectedCB(ptr unsafe.Pointer) {
 //export executor_launchTaskCB
 func executor_launchTaskCB(ptr unsafe.Pointer, taskInfo *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
-		if driver.Executor.LaunchTask == nil {
-			return
-		}
+		var driver *MesosExecutorDriver = (*MesosExecutorDriver)(ptr)
 
 		taskData := C.GoBytes(taskInfo.data, C.int(taskInfo.size))
-		var task TaskInfo
-		err := proto.Unmarshal(taskData, &task)
+		task := new(TaskInfo)
+		err := proto.Unmarshal(taskData, task)
 		if err != nil {
 			return
 		}
@@ -237,14 +246,11 @@ func executor_launchTaskCB(ptr unsafe.Pointer, taskInfo *C.ProtobufObj) {
 //export executor_killTaskCB
 func executor_killTaskCB(ptr unsafe.Pointer, taskId *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
-		if driver.Executor.LaunchTask == nil {
-			return
-		}
+		var driver *MesosExecutorDriver = (*MesosExecutorDriver)(ptr)
 
 		taskData := C.GoBytes(taskId.data, C.int(taskId.size))
-		var task TaskID
-		err := proto.Unmarshal(taskData, &task)
+		task := new(TaskID)
+		err := proto.Unmarshal(taskData, task)
 		if err != nil {
 			return
 		}
@@ -259,7 +265,7 @@ func executor_frameworkMessageCB(ptr unsafe.Pointer, message *C.ProtobufObj) {
 		data := C.GoBytes(message.data, C.int(message.size))
 		var messageString string = string(data)
 
-		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
+		var driver *MesosExecutorDriver = (*MesosExecutorDriver)(ptr)
 
 		driver.Executor.FrameworkMessage(driver, messageString)
 	}
@@ -268,7 +274,7 @@ func executor_frameworkMessageCB(ptr unsafe.Pointer, message *C.ProtobufObj) {
 //export executor_shutdownCB
 func executor_shutdownCB(ptr unsafe.Pointer) {
 	if ptr != nil {
-		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
+		var driver *MesosExecutorDriver = (*MesosExecutorDriver)(ptr)
 		driver.Executor.Shutdown(driver)
 	}
 }
@@ -279,7 +285,7 @@ func executor_errorCB(ptr unsafe.Pointer, message *C.ProtobufObj) {
 		data := C.GoBytes(message.data, C.int(message.size))
 		var errorString string = string(data)
 
-		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
+		var driver *MesosExecutorDriver = (*MesosExecutorDriver)(ptr)
 		driver.Executor.Error(driver, errorString)
 	}
 }

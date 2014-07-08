@@ -11,35 +11,32 @@ import (
 	"github.com/mesosphere/mesos-go/mesos"
 )
 
-type ExampleScheduler bool
+type ExampleScheduler struct {
+	taskLimit int
+	taskId    int
+	exit      chan struct{}
+}
 
-var taskLimit = 5
-var taskId = 0
-var exit = make(chan bool)
+func NewExampleScheduler() *ExampleScheduler {
+	return &ExampleScheduler{
+		taskLimit: 5,
+		taskId:    0,
+		exit:      make(chan struct{}),
+	}
+}
+
 var executor *mesos.ExecutorInfo
-
-func (s *ExampleScheduler) Registered(driver mesos.SchedulerDriver, frameworkId *mesos.FrameworkID, masterInfo *mesos.MasterInfo) {
-	return
-}
-
-func (s *ExampleScheduler) Reregistered(driver mesos.SchedulerDriver, masterInfo *mesos.MasterInfo) {
-	return
-}
-
-func (s *ExampleScheduler) Disconnected(driver mesos.SchedulerDriver) {
-	return
-}
 
 func (s *ExampleScheduler) ResourceOffers(driver mesos.SchedulerDriver, offers []*mesos.Offer) {
 	for _, offer := range offers {
-		taskId++
-		fmt.Printf("Launching task: %d\n", taskId)
+		s.taskId++
+		fmt.Printf("Launching task: %d\n", s.taskId)
 
 		tasks := []*mesos.TaskInfo{
 			&mesos.TaskInfo{
 				Name: proto.String("go-task"),
 				TaskId: &mesos.TaskID{
-					Value: proto.String("go-task-" + strconv.Itoa(taskId)),
+					Value: proto.String("go-task-" + strconv.Itoa(s.taskId)),
 				},
 				SlaveId:  offer.SlaveId,
 				Executor: executor,
@@ -55,36 +52,33 @@ func (s *ExampleScheduler) ResourceOffers(driver mesos.SchedulerDriver, offers [
 	return
 }
 
-func (s *ExampleScheduler) OfferRescinded(driver mesos.SchedulerDriver, offerId *mesos.OfferID) {
-	return
-}
-
 func (s *ExampleScheduler) StatusUpdate(driver mesos.SchedulerDriver, status *mesos.TaskStatus) {
 	fmt.Println("Received task status: " + *status.Message)
 
 	if *status.State == mesos.TaskState_TASK_FINISHED {
-		taskLimit--
-		if taskLimit <= 0 {
-			exit <- true
+		s.taskLimit--
+		if s.taskLimit <= 0 {
+			close(s.exit)
 		}
 	}
 	return
 }
+func (s *ExampleScheduler) Registered(mesos.SchedulerDriver, *mesos.FrameworkID, *mesos.MasterInfo) {}
 
-func (s *ExampleScheduler) FrameworkMessage(driver mesos.SchedulerDriver, executorId *mesos.ExecutorID, slaveId *mesos.SlaveID, data string) {
-	return
+func (s *ExampleScheduler) Reregistered(mesos.SchedulerDriver, *mesos.MasterInfo) {}
+
+func (s *ExampleScheduler) Disconnected(mesos.SchedulerDriver) {}
+
+func (s *ExampleScheduler) OfferRescinded(mesos.SchedulerDriver, *mesos.OfferID) {}
+
+func (s *ExampleScheduler) SlaveLost(mesos.SchedulerDriver, *mesos.SlaveID) {}
+
+func (s *ExampleScheduler) Error(mesos.SchedulerDriver, string) {}
+
+func (s *ExampleScheduler) FrameworkMessage(mesos.SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, string) {
 }
 
-func (s *ExampleScheduler) SlaveLost(driver mesos.SchedulerDriver, slaveId *mesos.SlaveID) {
-	return
-}
-
-func (s *ExampleScheduler) ExecutorLost(driver mesos.SchedulerDriver, executorId *mesos.ExecutorID, slaveId *mesos.SlaveID, status int) {
-	return
-}
-
-func (s *ExampleScheduler) Error(driver mesos.SchedulerDriver, message string) {
-	return
+func (s *ExampleScheduler) ExecutorLost(mesos.SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, int) {
 }
 
 func main() {
@@ -106,7 +100,7 @@ func main() {
 		Source: proto.String("go_test"),
 	}
 
-	exampleScheduler := new(ExampleScheduler)
+	exampleScheduler := NewExampleScheduler()
 	driver := &mesos.MesosSchedulerDriver{
 		Master: *master,
 		Framework: mesos.FrameworkInfo{
@@ -121,7 +115,7 @@ func main() {
 	defer driver.Destroy()
 
 	driver.Start()
-	<-exit
+	<-exampleScheduler.exit
 	driver.Stop(false)
 }
 

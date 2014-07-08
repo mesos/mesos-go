@@ -38,7 +38,6 @@ import "C"
 
 import (
 	"errors"
-	"log"
 	"unsafe"
 
 	"code.google.com/p/goprotobuf/proto"
@@ -48,28 +47,19 @@ func NewTaskState(val TaskState) *TaskState {
 	return &val
 }
 
-type ExecutorRegisteredFunc func(*ExecutorDriver, ExecutorInfo, FrameworkInfo, SlaveInfo)
-type ExecutorReregisteredFunc func(*ExecutorDriver, SlaveInfo)
-type ExecutorDisconnectedFunc func(*ExecutorDriver)
-type ExecutorLaunchTaskFunc func(*ExecutorDriver, TaskInfo)
-type ExecutorKillTaskFunc func(*ExecutorDriver, TaskID)
-type ExecutorFrameworkMessageFunc func(*ExecutorDriver, string)
-type ExecutorShutdownFunc func(*ExecutorDriver)
-type ExecutorErrorFunc func(*ExecutorDriver, string)
-
-type Executor struct {
-	Registered       ExecutorRegisteredFunc
-	Reregistered     ExecutorReregisteredFunc
-	Disconnected     ExecutorDisconnectedFunc
-	LaunchTask       ExecutorLaunchTaskFunc
-	KillTask         ExecutorKillTaskFunc
-	FrameworkMessage ExecutorFrameworkMessageFunc
-	Shutdown         ExecutorShutdownFunc
-	Error            ExecutorErrorFunc
+type Executor interface {
+	Registered(*ExecutorDriver, ExecutorInfo, FrameworkInfo, SlaveInfo)
+	Reregistered(*ExecutorDriver, SlaveInfo)
+	Disconnected(*ExecutorDriver)
+	LaunchTask(*ExecutorDriver, TaskInfo)
+	KillTask(*ExecutorDriver, TaskID)
+	FrameworkMessage(*ExecutorDriver, string)
+	Shutdown(*ExecutorDriver)
+	Error(*ExecutorDriver, string)
 }
 
 type ExecutorDriver struct {
-	Executor  *Executor
+	Executor  Executor
 	callbacks C.ExecutorCallbacks
 	driver    unsafe.Pointer
 	executor  unsafe.Pointer
@@ -177,11 +167,6 @@ func executor_registeredCB(
 	slaveInfo *C.ProtobufObj) {
 	if ptr != nil {
 		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
-
-		if driver.Executor.Registered == nil {
-			return
-		}
-
 		executorData := C.GoBytes(executorInfo.data, C.int(executorInfo.size))
 		var executor ExecutorInfo
 		err := proto.Unmarshal(executorData, &executor)
@@ -211,10 +196,6 @@ func executor_registeredCB(
 func executor_reregisteredCB(ptr unsafe.Pointer, slaveInfo *C.ProtobufObj) {
 	if ptr != nil {
 		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
-		if driver.Executor.Reregistered == nil {
-			return
-		}
-
 		slaveData := C.GoBytes(slaveInfo.data, C.int(slaveInfo.size))
 		var slave SlaveInfo
 		err := proto.Unmarshal(slaveData, &slave)
@@ -230,9 +211,6 @@ func executor_reregisteredCB(ptr unsafe.Pointer, slaveInfo *C.ProtobufObj) {
 func executor_disconnectedCB(ptr unsafe.Pointer) {
 	if ptr != nil {
 		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
-		if driver.Executor.Disconnected == nil {
-			return
-		}
 		driver.Executor.Disconnected(driver)
 	}
 }
@@ -282,9 +260,6 @@ func executor_frameworkMessageCB(ptr unsafe.Pointer, message *C.ProtobufObj) {
 		var messageString string = string(data)
 
 		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
-		if driver.Executor.Error == nil {
-			return
-		}
 
 		driver.Executor.FrameworkMessage(driver, messageString)
 	}
@@ -294,9 +269,6 @@ func executor_frameworkMessageCB(ptr unsafe.Pointer, message *C.ProtobufObj) {
 func executor_shutdownCB(ptr unsafe.Pointer) {
 	if ptr != nil {
 		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
-		if driver.Executor.Error == nil {
-			return
-		}
 		driver.Executor.Shutdown(driver)
 	}
 }
@@ -308,10 +280,6 @@ func executor_errorCB(ptr unsafe.Pointer, message *C.ProtobufObj) {
 		var errorString string = string(data)
 
 		var driver *ExecutorDriver = (*ExecutorDriver)(ptr)
-		if driver.Executor.Error == nil {
-			log.Print("Mesos error: " + errorString)
-			return
-		}
 		driver.Executor.Error(driver, errorString)
 	}
 }

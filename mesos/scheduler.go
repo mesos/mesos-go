@@ -69,34 +69,44 @@ func Scalar(val float64) *Value_Scalar {
 	return &Value_Scalar{Value: &val}
 }
 
-type SchedulerRegisteredFunc func(*SchedulerDriver, FrameworkID, MasterInfo)
-type SchedulerReregisteredFunc func(*SchedulerDriver, MasterInfo)
-type SchedulerDisconnectedFunc func(*SchedulerDriver)
-type SchedulerResourceOffersFunc func(*SchedulerDriver, []Offer)
-type SchedulerOfferRescindedFunc func(*SchedulerDriver, OfferID)
-type SchedulerStatusUpdateFunc func(*SchedulerDriver, TaskStatus)
-type SchedulerFrameworkMessageFunc func(*SchedulerDriver, ExecutorID, SlaveID, string)
-type SchedulerSlaveLostFunc func(*SchedulerDriver, SlaveID)
-type SchedulerExecutorLostFunc func(*SchedulerDriver, ExecutorID, SlaveID, int)
-type SchedulerErrorFunc func(*SchedulerDriver, string)
-
-type Scheduler struct {
-	Registered       SchedulerRegisteredFunc
-	Reregistered     SchedulerReregisteredFunc
-	Disconnected     SchedulerDisconnectedFunc
-	ResourceOffers   SchedulerResourceOffersFunc
-	OfferRescinded   SchedulerOfferRescindedFunc
-	StatusUpdate     SchedulerStatusUpdateFunc
-	FrameworkMessage SchedulerFrameworkMessageFunc
-	SlaveLost        SchedulerSlaveLostFunc
-	ExecutorLost     SchedulerExecutorLostFunc
-	Error            SchedulerErrorFunc
+// Scheduler defines the interfaces that needed to be implemented.
+type Scheduler interface {
+	Registered(SchedulerDriver, FrameworkID, MasterInfo)
+	Reregistered(SchedulerDriver, MasterInfo)
+	Disconnected(SchedulerDriver)
+	ResourceOffers(SchedulerDriver, []Offer)
+	OfferRescinded(SchedulerDriver, OfferID)
+	StatusUpdate(SchedulerDriver, TaskStatus)
+	FrameworkMessage(SchedulerDriver, ExecutorID, SlaveID, string)
+	SlaveLost(SchedulerDriver, SlaveID)
+	ExecutorLost(SchedulerDriver, ExecutorID, SlaveID, int)
+	Error(SchedulerDriver, string)
 }
 
-type SchedulerDriver struct {
+// ScheduerDriver defines the interfaces that needed to be implemented.
+type SchedulerDriver interface {
+	Init() error
+	Start() error
+	Stop(bool) error
+	Abort() error
+	Join() error
+	Run() error
+	RequestResources([]Request) error
+	LaunchTasks(offerId OfferID, tasks []TaskInfo, filters ...Filters) error
+	KillTask(TaskID) error
+	DeclineOffer(offerId OfferID, filters ...Filters) error
+	ReviveOffers() error
+	SendFrameworkMessage(ExecutorID, SlaveID, string) error
+	Destroy()
+	Wait()
+}
+
+// MesosSchedulerDriver is a concrete implementation of the
+// SchedulerDriver interface.
+type MesosSchedulerDriver struct {
 	Master    string
 	Framework FrameworkInfo
-	Scheduler *Scheduler
+	Scheduler Scheduler
 	callbacks C.SchedulerCallbacks
 	driver    unsafe.Pointer
 	scheduler unsafe.Pointer
@@ -132,7 +142,7 @@ func serializeItem(pb proto.Message) ([]byte, error) {
 	return ret, nil
 }
 
-func (sdriver *SchedulerDriver) Init() error {
+func (sdriver *MesosSchedulerDriver) Init() error {
 	var cmsg *C.char = C.CString(sdriver.Master)
 
 	dataObj, err := serialize(&sdriver.Framework)
@@ -154,7 +164,7 @@ func (sdriver *SchedulerDriver) Init() error {
 	return nil
 }
 
-func (sdriver *SchedulerDriver) Start() error {
+func (sdriver *MesosSchedulerDriver) Start() error {
 	if sdriver.driver != nil {
 		C.scheduler_start(C.SchedulerDriverPtr(sdriver.driver))
 	} else {
@@ -163,7 +173,7 @@ func (sdriver *SchedulerDriver) Start() error {
 	return nil
 }
 
-func (sdriver *SchedulerDriver) Stop(failover bool) error {
+func (sdriver *MesosSchedulerDriver) Stop(failover bool) error {
 	if sdriver.driver != nil {
 		var failoverInt C.int = 0
 		if failover {
@@ -177,7 +187,7 @@ func (sdriver *SchedulerDriver) Stop(failover bool) error {
 	return nil
 }
 
-func (sdriver *SchedulerDriver) Abort() error {
+func (sdriver *MesosSchedulerDriver) Abort() error {
 	if sdriver.driver != nil {
 		C.scheduler_abort(C.SchedulerDriverPtr(sdriver.driver))
 	} else {
@@ -186,7 +196,7 @@ func (sdriver *SchedulerDriver) Abort() error {
 	return nil
 }
 
-func (sdriver *SchedulerDriver) Join() error {
+func (sdriver *MesosSchedulerDriver) Join() error {
 	if sdriver.driver != nil {
 		C.scheduler_join(C.SchedulerDriverPtr(sdriver.driver))
 	} else {
@@ -195,7 +205,7 @@ func (sdriver *SchedulerDriver) Join() error {
 	return nil
 }
 
-func (sdriver *SchedulerDriver) Run() error {
+func (sdriver *MesosSchedulerDriver) Run() error {
 	if sdriver.driver != nil {
 		C.scheduler_run(C.SchedulerDriverPtr(sdriver.driver))
 	} else {
@@ -204,7 +214,7 @@ func (sdriver *SchedulerDriver) Run() error {
 	return nil
 }
 
-func (sdriver *SchedulerDriver) RequestResources(requests []Request) error {
+func (sdriver *MesosSchedulerDriver) RequestResources(requests []Request) error {
 	if sdriver.driver != nil {
 		var requestsData []byte
 		for _, request := range requests {
@@ -232,13 +242,13 @@ func (sdriver *SchedulerDriver) RequestResources(requests []Request) error {
 	return nil
 }
 
-func (sdriver *SchedulerDriver) LaunchTasks(
-	offerId *OfferID,
+func (sdriver *MesosSchedulerDriver) LaunchTasks(
+	offerId OfferID,
 	tasks []TaskInfo,
 	filters ...Filters) error {
 
 	if sdriver.driver != nil {
-		offerObj, err := serialize(offerId)
+		offerObj, err := serialize(&offerId)
 		if err != nil {
 			return err
 		}
@@ -279,9 +289,9 @@ func (sdriver *SchedulerDriver) LaunchTasks(
 	return nil
 }
 
-func (sdriver *SchedulerDriver) KillTask(taskId *TaskID) error {
+func (sdriver *MesosSchedulerDriver) KillTask(taskId TaskID) error {
 	if sdriver.driver != nil {
-		message, err := serialize(taskId)
+		message, err := serialize(&taskId)
 		if err != nil {
 			return err
 		}
@@ -294,11 +304,11 @@ func (sdriver *SchedulerDriver) KillTask(taskId *TaskID) error {
 	return nil
 }
 
-func (sdriver *SchedulerDriver) DeclineOffer(
-	offerId *OfferID,
+func (sdriver *MesosSchedulerDriver) DeclineOffer(
+	offerId OfferID,
 	filters ...Filters) error {
 	if sdriver.driver != nil {
-		message, err := serialize(offerId)
+		message, err := serialize(&offerId)
 		if err != nil {
 			return err
 		}
@@ -323,7 +333,7 @@ func (sdriver *SchedulerDriver) DeclineOffer(
 	return nil
 }
 
-func (sdriver *SchedulerDriver) ReviveOffers() error {
+func (sdriver *MesosSchedulerDriver) ReviveOffers() error {
 	if sdriver.driver != nil {
 		C.scheduler_reviveOffers(C.SchedulerDriverPtr(sdriver.driver))
 	} else {
@@ -332,17 +342,17 @@ func (sdriver *SchedulerDriver) ReviveOffers() error {
 	return nil
 }
 
-func (sdriver *SchedulerDriver) SendFrameworkMessage(
-	executorId *ExecutorID,
-	slaveId *SlaveID,
+func (sdriver *MesosSchedulerDriver) SendFrameworkMessage(
+	executorId ExecutorID,
+	slaveId SlaveID,
 	data string) error {
 	if sdriver.driver != nil {
-		executorMessage, executorErr := serialize(executorId)
+		executorMessage, executorErr := serialize(&executorId)
 		if executorErr != nil {
 			return executorErr
 		}
 
-		slaveMessage, slaveErr := serialize(slaveId)
+		slaveMessage, slaveErr := serialize(&slaveId)
 		if slaveErr != nil {
 			return slaveErr
 		}
@@ -362,11 +372,11 @@ func (sdriver *SchedulerDriver) SendFrameworkMessage(
 	return nil
 }
 
-func (sdriver *SchedulerDriver) Destroy() {
+func (sdriver *MesosSchedulerDriver) Destroy() {
 	C.scheduler_destroy(sdriver.driver, sdriver.scheduler)
 }
 
-func (sdriver *SchedulerDriver) Wait() {
+func (sdriver *MesosSchedulerDriver) Wait() {
 	for {
 		// For now, wait for juicy details.
 		runtime.Gosched()
@@ -383,7 +393,7 @@ func registeredCB(
 	frameworkMessage *C.ProtobufObj,
 	masterMessage *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 
 		if driver.Scheduler.Registered == nil {
 			return
@@ -413,7 +423,7 @@ func registeredCB(
 //export reregisteredCB
 func reregisteredCB(ptr unsafe.Pointer, masterMessage *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 		if driver.Scheduler.Reregistered == nil {
 			return
 		}
@@ -432,7 +442,7 @@ func reregisteredCB(ptr unsafe.Pointer, masterMessage *C.ProtobufObj) {
 //export disconnectedCB
 func disconnectedCB(ptr unsafe.Pointer) {
 	if ptr != nil {
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 		if driver.Scheduler.Disconnected == nil {
 			return
 		}
@@ -447,7 +457,7 @@ func resourceOffersCB(
 	count C.size_t) {
 
 	if ptr != nil {
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 
 		// XXX(nnielsen): Verify memory assumptions.
 		var messageSlice []C.ProtobufObj
@@ -474,7 +484,7 @@ func resourceOffersCB(
 //export offerRescindedCB
 func offerRescindedCB(ptr unsafe.Pointer, offerIdMessage *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 		if driver.Scheduler.OfferRescinded == nil {
 			return
 		}
@@ -495,7 +505,7 @@ func statusUpdateCB(
 	ptr unsafe.Pointer,
 	statusMessage *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 
 		if driver.Scheduler.StatusUpdate == nil {
 			return
@@ -520,7 +530,7 @@ func frameworkMessageCB(
 	slaveIdMessage *C.ProtobufObj,
 	dataMessage *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 		if driver.Scheduler.FrameworkMessage == nil {
 			return
 		}
@@ -548,7 +558,7 @@ func frameworkMessageCB(
 //export slaveLostCB
 func slaveLostCB(ptr unsafe.Pointer, slaveIdMessage *C.ProtobufObj) {
 	if ptr != nil {
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 		if driver.Scheduler.SlaveLost == nil {
 			return
 		}
@@ -571,7 +581,7 @@ func executorLostCB(
 	slaveIdMessage *C.ProtobufObj,
 	status C.int) {
 	if ptr != nil {
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 		if driver.Scheduler.ExecutorLost == nil {
 			return
 		}
@@ -602,7 +612,7 @@ func errorCB(ptr unsafe.Pointer, message *C.ProtobufObj) {
 
 		// Special case: If error reporting isn't provided by the user,
 		// write to log instead of dropping message.
-		var driver *SchedulerDriver = (*SchedulerDriver)(ptr)
+		var driver *MesosSchedulerDriver = (*MesosSchedulerDriver)(ptr)
 		if driver.Scheduler.Error == nil {
 			log.Print("Mesos error: " + errorString)
 			return

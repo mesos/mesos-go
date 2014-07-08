@@ -11,6 +11,77 @@ import (
 	"github.com/mesosphere/mesos-go/mesos"
 )
 
+type ExampleScheduler bool
+
+func (s *ExampleScheduler) Registered(driver SchedulerDriver, frameworkId FrameworkID, masterInfo MasterInfo) {
+	return
+}
+
+func (s *ExampleScheduler) Reregistered(driver SchedulerDriver, masterInfo MasterInfo) {
+	return
+}
+
+func (s *ExampleScheduler) Disconnected(driver SchedulerDriver) {
+	return
+}
+
+func (s *ExampleScheduler) ResourceOffers(driver SchedulerDriver) {
+	for _, offer := range offers {
+		taskId++
+		fmt.Printf("Launching task: %d\n", taskId)
+
+		tasks := []mesos.TaskInfo{
+			mesos.TaskInfo{
+				Name: proto.String("go-task"),
+				TaskId: &mesos.TaskID{
+					Value: proto.String("go-task-" + strconv.Itoa(taskId)),
+				},
+				SlaveId:  offer.SlaveId,
+				Executor: executor,
+				Resources: []*mesos.Resource{
+					mesos.ScalarResource("cpus", 1),
+					mesos.ScalarResource("mem", 512),
+				},
+			},
+		}
+
+		driver.LaunchTasks(offer.Id, tasks)
+	}
+	return
+}
+
+func (s *ExampleScheduler) OfferRescinded(driver SchedulerDriver, offerId OfferID) {
+	return
+}
+
+func (s *ExampleScheduler) StatusUpdate(driver SchedulerDriver, status TaskStatus) {
+	fmt.Println("Received task status: " + *status.Message)
+
+	if *status.State == mesos.TaskState_TASK_FINISHED {
+		taskLimit--
+		if taskLimit <= 0 {
+			exit <- true
+		}
+	}
+	return
+}
+
+func (s *ExampleScheduler) FrameworkMessage(driver SchedulerDriver, executorId ExecutorID, slaveId SlaveID, data string) {
+	return
+}
+
+func (s *ExampleScheduler) SlaveLost(driver SchedulerDriver, slaveId SlaveID) {
+	return
+}
+
+func (s *ExampleScheduler) ExecutorLost(driver SchedulerDriver, executorId ExecutorID, slaveId SlaveID, status int) {
+	return
+}
+
+func (s *ExampleScheduler) Error(driver SchedulerDriver, message string) {
+	return
+}
+
 func main() {
 	taskLimit := 5
 	taskId := 0
@@ -40,42 +111,7 @@ func main() {
 			User: proto.String(""),
 		},
 
-		Scheduler: &mesos.Scheduler{
-			ResourceOffers: func(driver *mesos.SchedulerDriver, offers []mesos.Offer) {
-				for _, offer := range offers {
-					taskId++
-					fmt.Printf("Launching task: %d\n", taskId)
-
-					tasks := []mesos.TaskInfo{
-						mesos.TaskInfo{
-							Name: proto.String("go-task"),
-							TaskId: &mesos.TaskID{
-								Value: proto.String("go-task-" + strconv.Itoa(taskId)),
-							},
-							SlaveId:  offer.SlaveId,
-							Executor: executor,
-							Resources: []*mesos.Resource{
-								mesos.ScalarResource("cpus", 1),
-								mesos.ScalarResource("mem", 512),
-							},
-						},
-					}
-
-					driver.LaunchTasks(offer.Id, tasks)
-				}
-			},
-
-			StatusUpdate: func(driver *mesos.SchedulerDriver, status mesos.TaskStatus) {
-				fmt.Println("Received task status: " + *status.Message)
-
-				if *status.State == mesos.TaskState_TASK_FINISHED {
-					taskLimit--
-					if taskLimit <= 0 {
-						exit <- true
-					}
-				}
-			},
-		},
+		Scheduler: ExampleScheduler,
 	}
 
 	driver.Init()

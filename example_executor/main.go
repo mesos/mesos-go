@@ -34,12 +34,12 @@ func (e MesosExecutor) LaunchTask(
 	})
 }
 
-func (e MesosExecutor) Disconnected(*mesos.ExecutorDriver)                  {}
+func (e MesosExecutor) Disconnected(*mesos.ExecutorDriver) {}
 func (e MesosExecutor) Reregistered(*mesos.ExecutorDriver, mesos.SlaveInfo) {}
-func (e MesosExecutor) KillTask(*mesos.ExecutorDriver, mesos.TaskID)        {}
-func (e MesosExecutor) FrameworkMessage(*mesos.ExecutorDriver, string)      {}
-func (e MesosExecutor) Shutdown(*mesos.ExecutorDriver)                      {}
-func (e MesosExecutor) Error(*mesos.ExecutorDriver, string)                 {}
+func (e MesosExecutor) KillTask(*mesos.ExecutorDriver, mesos.TaskID) {}
+func (e MesosExecutor) FrameworkMessage(*mesos.ExecutorDriver, string) {}
+func (e MesosExecutor) Shutdown(*mesos.ExecutorDriver) {}
+func (e MesosExecutor) Error(*mesos.ExecutorDriver, string) {}
 
 func main() {
 

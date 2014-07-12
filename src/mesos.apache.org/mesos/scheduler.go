@@ -255,7 +255,7 @@ func (sdriver *SchedulerDriver) LaunchTasks(
 		}
 
 		var filters_ *C.ProtobufObj = nil
-		if len(filters) > 1 {
+		if len(filters) >= 1 {
 			filtersObj, err := serialize(&filters[0])
 			if err != nil {
 				return err
@@ -301,7 +301,7 @@ func (sdriver *SchedulerDriver) DeclineOffer(
 		}
 
 		var filters_ *C.ProtobufObj = nil
-		if len(filters) > 1 {
+		if len(filters) >= 1 {
 			filtersObj, err := serialize(&filters[0])
 			if err != nil {
 				return err

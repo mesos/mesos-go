@@ -1,0 +1,26 @@
+{
+	"ImportPath": "github.com/mesos/mesos-go",
+	"GoVersion": "go1.3",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/go-uuid/uuid",
+			"Comment": "null-12",
+			"Rev": "7dda39b2e7d5e265014674c5af696ba4186679e9"
+		},
+		{
+			"ImportPath": "code.google.com/p/gogoprotobuf/proto",
+			"Rev": "d228c1a206c3a756d7ec6cc3579d92d00c35a161"
+		},
+		{
+			"ImportPath": "github.com/golang/glog",
+			"Rev": "d1c4472bf2efd3826f2b5bdcc02d8416798d678c"
+		},
+		{
+			"ImportPath": "github.com/mesosphere/testify/assert",
+			"Rev": "f27146ea31ee06ed1f7021c471320d2949c2da71"
+		}
+	]
+}

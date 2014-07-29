@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/mesosphere/mesos-go/mesos",
-	"GoVersion": "go1.2.1",
+	"GoVersion": "go1.3",
 	"Deps": [
 		{
 			"ImportPath": "code.google.com/p/goprotobuf/proto",

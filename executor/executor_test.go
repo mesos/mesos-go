@@ -51,12 +51,15 @@ func TestDriverFailToStart(t *testing.T) {
 	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, status)
 }
 
-func TestDriverSucceedToStart(t *testing.T) {
+func TestExecutorDriverSucceedToStartAndRegistered(t *testing.T) {
 	slave = startMockedSlave(t)
 	slave.Mock.On("RegisterExecutor").Return()
 
+	executor := NewMockedExecutor()
+	executor.On("Registered").Return()
+
 	driver := NewMesosExecutorDriver()
-	driver.Executor = NewMockedExecutor()
+	driver.Executor = executor
 	setEnvironments(t, "", false)
 
 	status, err := driver.Start()
@@ -65,4 +68,5 @@ func TestDriverSucceedToStart(t *testing.T) {
 
 	time.Sleep(time.Second) // Sleep 1 seconde to wait for the slave to receive the message.
 	slave.Mock.AssertNumberOfCalls(t, "RegisterExecutor", 1)
+	executor.AssertNumberOfCalls(t, "Registered", 1)
 }

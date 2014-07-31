@@ -44,6 +44,8 @@ func (s *MockedSlave) Stop() {
 // RegisterExecutor is the handler for RegisterExecutorMessage.
 func (s *MockedSlave) RegisterExecutor(upid *upid.UPID, msg proto.Message) {
 	s.Mock.Called()
+	message := s.makeExecutorRegisteredMessage()
+	s.messenger.Send(upid, message)
 }
 
 // ReregisterExecutor is the handler for ReregisterExecutorMessage.
@@ -59,4 +61,26 @@ func (s *MockedSlave) StatusUpdate(upid *upid.UPID, msg proto.Message) {
 // FrameworkMessage is the handler for FrameworkMessage
 func (s *MockedSlave) FrameworkMessage(upid *upid.UPID, msg proto.Message) {
 	s.Mock.Called(upid, msg)
+}
+
+func (s *MockedSlave) makeExecutorRegisteredMessage() *mesosproto.ExecutorRegisteredMessage {
+	executorID := &mesosproto.ExecutorID{Value: proto.String("executor-id")}
+	commandInfo := &mesosproto.CommandInfo{Value: proto.String("foobar")}
+	executorInfo := &mesosproto.ExecutorInfo{ExecutorId: executorID, Command: commandInfo}
+
+	frameworkID := &mesosproto.FrameworkID{Value: proto.String("framework-id")}
+
+	frameworkInfo := &mesosproto.FrameworkInfo{User: proto.String("user"), Name: proto.String("name")}
+
+	slaveID := &mesosproto.SlaveID{Value: proto.String("slave-id")}
+
+	slaveInfo := &mesosproto.SlaveInfo{Hostname: proto.String("slave-host-name")}
+
+	return &mesosproto.ExecutorRegisteredMessage{
+		ExecutorInfo:  executorInfo,
+		FrameworkId:   frameworkID,
+		FrameworkInfo: frameworkInfo,
+		SlaveId:       slaveID,
+		SlaveInfo:     slaveInfo,
+	}
 }

@@ -23,7 +23,9 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/gogoprotobuf/proto"
@@ -73,6 +75,7 @@ type MesosExecutorDriver struct {
 	Executor           Executor
 	mutex              *sync.Mutex
 	cond               *sync.Cond
+	rwlock             *sync.RWMutex
 	status             mesosproto.Status
 	messenger          messenger.Messenger
 	slaveUPID          *upid.UPID
@@ -80,7 +83,7 @@ type MesosExecutorDriver struct {
 	frameworkID        *mesosproto.FrameworkID
 	executorID         *mesosproto.ExecutorID
 	workDir            string
-	connected          bool
+	connected          int32
 	connection         uuid.UUID
 	local              bool
 	directory          string
@@ -96,6 +99,7 @@ func NewMesosExecutorDriver() *MesosExecutorDriver {
 	driver := &MesosExecutorDriver{
 		status:  mesosproto.Status_DRIVER_NOT_STARTED,
 		mutex:   new(sync.Mutex),
+		rwlock:  new(sync.RWMutex),
 		updates: make(map[string]*mesosproto.StatusUpdate),
 		tasks:   make(map[string]*mesosproto.TaskInfo),
 	}
@@ -164,7 +168,7 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 	}
 
 	// Set status.
-	driver.status = mesosproto.Status_DRIVER_RUNNING
+	driver.setStatus(mesosproto.Status_DRIVER_RUNNING)
 	log.Infoln("Mesos executor is running")
 	return driver.status, nil
 }
@@ -186,10 +190,10 @@ func (driver *MesosExecutorDriver) Stop() (mesosproto.Status, error) {
 	driver.messenger.Stop()
 
 	aborted := false
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		aborted = true
 	}
-	driver.status = mesosproto.Status_DRIVER_STOPPED
+	driver.setStatus(mesosproto.Status_DRIVER_STOPPED)
 	if aborted {
 		return mesosproto.Status_DRIVER_ABORTED, nil
 	}
@@ -210,7 +214,7 @@ func (driver *MesosExecutorDriver) Abort() (mesosproto.Status, error) {
 		return driver.status, nil
 	}
 	driver.messenger.Stop()
-	driver.status = mesosproto.Status_DRIVER_ABORTED
+	driver.setStatus(mesosproto.Status_DRIVER_ABORTED)
 	return driver.status, nil
 }
 
@@ -224,7 +228,7 @@ func (driver *MesosExecutorDriver) Join() (mesosproto.Status, error) {
 	if driver.status != mesosproto.Status_DRIVER_RUNNING {
 		return driver.status, nil
 	}
-	for driver.status == mesosproto.Status_DRIVER_RUNNING {
+	for driver.getStatus() == mesosproto.Status_DRIVER_RUNNING {
 		driver.cond.Wait()
 	}
 	return driver.status, nil
@@ -344,46 +348,36 @@ func (driver *MesosExecutorDriver) parseEnviroments() error {
 }
 
 func (driver *MesosExecutorDriver) registered(from *upid.UPID, pbMsg proto.Message) {
-	// Lock is still needed to avoid health check race. Thought it will rarely happen.
-	// TODO(yifan): serialize these function calls.
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
-
 	msg := pbMsg.(*mesosproto.ExecutorRegisteredMessage)
 	slaveID := msg.GetSlaveId()
 	executorInfo := msg.GetExecutorInfo()
 	frameworkInfo := msg.GetFrameworkInfo()
 	slaveInfo := msg.GetSlaveInfo()
 
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring registered message from slave %v, because the driver is aborted!\n", slaveID)
 		return
 	}
 
 	log.Infof("Executor registered on slave %v\n", slaveID)
-	driver.connected = true
-	driver.connection = uuid.NewUUID()
+	driver.setConnected(true)
+	driver.setConnection(uuid.NewUUID())
 	driver.Executor.Registered(driver, executorInfo, frameworkInfo, slaveInfo)
 }
 
 func (driver *MesosExecutorDriver) reregistered(from *upid.UPID, pbMsg proto.Message) {
-	// Lock is still needed to avoid health check race. Thought it will rarely happen.
-	// TODO(yifan): serialize these function calls.
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
-
 	msg := pbMsg.(*mesosproto.ExecutorReregisteredMessage)
 	slaveID := msg.GetSlaveId()
 	slaveInfo := msg.GetSlaveInfo()
 
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring re-registered message from slave %v, because the driver is aborted!\n", slaveID)
 		return
 	}
 
 	log.Infof("Executor re-registered on slave %v\n", slaveID)
-	driver.connected = true
-	driver.connection = uuid.NewUUID()
+	driver.setConnected(true)
+	driver.setConnection(uuid.NewUUID())
 	driver.Executor.Reregistered(driver, slaveInfo)
 }
 
@@ -391,7 +385,7 @@ func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Messag
 	msg := pbMsg.(*mesosproto.ReconnectExecutorMessage)
 	slaveID := msg.GetSlaveId()
 
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring reconnect message from slave %v, because the driver is aborted!\n", slaveID)
 		return
 	}
@@ -424,7 +418,7 @@ func (driver *MesosExecutorDriver) runTask(from *upid.UPID, pbMsg proto.Message)
 	task := msg.GetTask()
 	taskID := task.GetTaskId()
 
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring run task message for task %v because the driver is aborted!\n", taskID)
 		return
 	}
@@ -441,7 +435,7 @@ func (driver *MesosExecutorDriver) killTask(from *upid.UPID, pbMsg proto.Message
 	msg := pbMsg.(*mesosproto.KillTaskMessage)
 	taskID := msg.GetTaskId()
 
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring kill task message for task %v, because the driver is aborted!\n", taskID)
 		return
 	}
@@ -458,7 +452,7 @@ func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(from *upid.UPID, 
 	taskID := msg.GetTaskId()
 	uuid := uuid.UUID(msg.GetUuid())
 
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring status update acknowledgement %v for task %v of framework %v because the driver is aborted!\n",
 			uuid, taskID, frameworkID)
 	}
@@ -473,7 +467,7 @@ func (driver *MesosExecutorDriver) frameworkMessage(from *upid.UPID, pbMsg proto
 	msg := pbMsg.(*mesosproto.FrameworkToExecutorMessage)
 	data := msg.GetData()
 
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring framework message because the driver is aborted!\n")
 		return
 	}
@@ -488,7 +482,7 @@ func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message
 		panic("Not a ShutdownExecutorMessage! This should not happen")
 	}
 
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring shutdown message because the driver is aborted!\n")
 		return
 	}
@@ -499,7 +493,7 @@ func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message
 		// TODO(yifan): go kill.
 	}
 	driver.Executor.Shutdown(driver)
-	driver.status = mesosproto.Status_DRIVER_ABORTED
+	driver.setStatus(mesosproto.Status_DRIVER_ABORTED)
 	driver.Stop()
 }
 
@@ -508,13 +502,13 @@ func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message
 // also aquires a lock.
 // One way to fix this is to serialize these racy functions.
 func (driver *MesosExecutorDriver) slaveExited() {
-	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring slave exited event because the driver is aborted!\n")
 		return
 	}
 
-	if driver.checkpoint && driver.connected {
-		driver.connected = false
+	if driver.checkpoint && driver.getConnected() {
+		driver.setConnected(false)
 
 		log.Infof("Slave exited, but framework has checkpointing enabled. Waiting %v to reconnect with slave %v",
 			driver.recoveryTimeout, driver.slaveID)
@@ -523,10 +517,10 @@ func (driver *MesosExecutorDriver) slaveExited() {
 	}
 
 	log.Infof("Slave exited ... shutting down\n")
-	driver.connected = false
+	driver.setConnected(false)
 	// Clean up
 	driver.Executor.Shutdown(driver)
-	driver.status = mesosproto.Status_DRIVER_ABORTED
+	driver.setStatus(mesosproto.Status_DRIVER_ABORTED)
 	driver.Stop()
 }
 
@@ -543,15 +537,15 @@ func (driver *MesosExecutorDriver) monitorSlave() {
 // also aquires a lock.
 // One way to fix this is to serialize these racy functions.
 func (driver *MesosExecutorDriver) recoveryTimeouts(connection uuid.UUID) {
-	if driver.connected {
+	if driver.getConnected() {
 		return
 	}
 
-	if bytes.Equal(connection, driver.connection) {
+	if bytes.Equal(connection, driver.getConnection()) {
 		log.Infof("Recovery timeout of %v exceeded; Shutting down\n", driver.recoveryTimeout)
 		// Clean up
 		driver.Executor.Shutdown(driver)
-		driver.status = mesosproto.Status_DRIVER_ABORTED
+		driver.setStatus(mesosproto.Status_DRIVER_ABORTED)
 		driver.Stop()
 	}
 }
@@ -570,4 +564,37 @@ func (driver *MesosExecutorDriver) makeStatusUpdate(taskStatus *mesosproto.TaskS
 		Uuid:        uuid.NewUUID(),
 	}
 	return update
+}
+
+func (driver *MesosExecutorDriver) getStatus() mesosproto.Status {
+	return mesosproto.Status(atomic.LoadInt32((*int32)(unsafe.Pointer(&driver.status))))
+}
+
+func (driver *MesosExecutorDriver) setStatus(status mesosproto.Status) {
+	atomic.StoreInt32((*int32)((unsafe.Pointer(&driver.status))), int32(status))
+
+}
+
+func (driver *MesosExecutorDriver) getConnected() bool {
+	return atomic.LoadInt32(&driver.connected) == 1
+}
+
+func (driver *MesosExecutorDriver) setConnected(connected bool) {
+	if connected {
+		atomic.StoreInt32(&driver.connected, 1)
+		return
+	}
+	atomic.StoreInt32(&driver.connected, 0)
+}
+
+func (driver *MesosExecutorDriver) getConnection() uuid.UUID {
+	driver.rwlock.RLock()
+	defer driver.rwlock.RUnlock()
+	return driver.connection
+}
+
+func (driver *MesosExecutorDriver) setConnection(connection uuid.UUID) {
+	driver.rwlock.Lock()
+	defer driver.rwlock.Unlock()
+	driver.connection = connection
 }

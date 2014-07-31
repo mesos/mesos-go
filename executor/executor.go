@@ -102,6 +102,7 @@ func NewMesosExecutorDriver() *MesosExecutorDriver {
 		rwlock:  new(sync.RWMutex),
 		updates: make(map[string]*mesosproto.StatusUpdate),
 		tasks:   make(map[string]*mesosproto.TaskInfo),
+		workDir: ".",
 	}
 	driver.cond = sync.NewCond(driver.mutex)
 	// TODO(yifan): Set executor cnt.
@@ -166,7 +167,6 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 		log.Errorf("Failed to send %v: %v\n", message, err)
 		return mesosproto.Status_DRIVER_NOT_STARTED, err
 	}
-
 	// Set status.
 	driver.setStatus(mesosproto.Status_DRIVER_RUNNING)
 	log.Infoln("Mesos executor is running")
@@ -336,8 +336,9 @@ func (driver *MesosExecutorDriver) parseEnviroments() error {
 	driver.executorID = &mesosproto.ExecutorID{Value: proto.String(value)}
 
 	value = os.Getenv("MESOS_DIRECTORY")
-	// TODO(yifan): Check if the value exists?
-	driver.workDir = value
+	if len(value) > 0 {
+		driver.workDir = value
+	}
 
 	value = os.Getenv("MESOS_CHECKPOINT")
 	if value == "1" {

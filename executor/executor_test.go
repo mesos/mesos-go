@@ -3,18 +3,18 @@ package executor
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/mockedSlave"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/mesosphere/testify/assert"
-	//"github.com/mesosphere/testify/mock"
 )
 
 var (
 	slaveStarted = false
 	slave        *mockedSlave.MockedSlave
-	slavePID     = "slave(1)@localhost:8080"
+	slavePID     = "slave(1)@127.0.0.1:8080"
 	slaveID      = "some-slave-id-uuid"
 	frameworkID  = "some-framework-id-uuid"
 	executorID   = "some-executor-id-uuid"
@@ -53,12 +53,16 @@ func TestDriverFailToStart(t *testing.T) {
 
 func TestDriverSucceedToStart(t *testing.T) {
 	slave = startMockedSlave(t)
-	slave.Mock.On("RegisterExecutor").Return().Times(1)
+	slave.Mock.On("RegisterExecutor").Return()
 
 	driver := NewMesosExecutorDriver()
 	driver.Executor = NewMockedExecutor()
 	setEnvironments(t, "", false)
+
 	status, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, status)
+
+	time.Sleep(time.Second) // Sleep 1 seconde to wait for the slave to receive the message.
+	slave.Mock.AssertNumberOfCalls(t, "RegisterExecutor", 1)
 }

@@ -43,7 +43,7 @@ func (s *MockedSlave) Stop() {
 
 // RegisterExecutor is the handler for RegisterExecutorMessage.
 func (s *MockedSlave) RegisterExecutor(upid *upid.UPID, msg proto.Message) {
-	s.Mock.Called(upid, msg)
+	s.Mock.Called()
 }
 
 // ReregisterExecutor is the handler for ReregisterExecutorMessage.

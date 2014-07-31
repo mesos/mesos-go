@@ -20,11 +20,11 @@
 		},
 		{
 			"ImportPath": "github.com/mesosphere/testify/assert",
-			"Rev": "2a994a50b6683e078040d382eff28175694b3790"
+			"Rev": "c3820d20c7b66f5ec9eaf73aa6625e223c8d46f1"
 		},
 		{
 			"ImportPath": "github.com/mesosphere/testify/mock",
-			"Rev": "2a994a50b6683e078040d382eff28175694b3790"
+			"Rev": "c3820d20c7b66f5ec9eaf73aa6625e223c8d46f1"
 		},
 		{
 			"ImportPath": "github.com/stretchr/objx",

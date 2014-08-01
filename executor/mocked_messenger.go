@@ -22,6 +22,7 @@ type MockedMessenger struct {
 	stop         chan struct{}
 }
 
+// NewMockedMessenger returns a mocked messenger used for testing.
 func NewMockedMessenger() *MockedMessenger {
 	return &MockedMessenger{
 		messageQueue: make(chan *message, 1),
@@ -30,25 +31,30 @@ func NewMockedMessenger() *MockedMessenger {
 	}
 }
 
+// Install is a mocked implementation.
 func (m *MockedMessenger) Install(handler messenger.MessageHandler, msg proto.Message) error {
 	m.handlers[reflect.TypeOf(msg).Elem().Name()] = handler
 	return m.Called().Error(0)
 }
 
+// Send is a mocked implementation.
 func (m *MockedMessenger) Send(upid *upid.UPID, msg proto.Message) error {
 	return m.Called().Error(0)
 }
 
+// Start is a mocked implementation.
 func (m *MockedMessenger) Start() error {
 	go m.recvLoop()
 	return m.Called().Error(0)
 }
 
+// Stop is a mocked implementation.
 func (m *MockedMessenger) Stop() {
 	close(m.stop)
 	m.Called()
 }
 
+// UPID is a mocked implementation.
 func (m *MockedMessenger) UPID() *upid.UPID {
 	return m.Called().Get(0).(*upid.UPID)
 }
@@ -65,6 +71,8 @@ func (m *MockedMessenger) recvLoop() {
 	}
 }
 
+// Recv receives a upid and a message, it will dispatch the message to its handler
+// with the upid. This is for testing.
 func (m *MockedMessenger) Recv(from *upid.UPID, msg proto.Message) {
 	m.messageQueue <- &message{from, msg}
 }

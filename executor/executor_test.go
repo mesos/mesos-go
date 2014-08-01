@@ -6,18 +6,15 @@ import (
 	"testing"
 
 	"github.com/mesos/mesos-go/mesosproto"
-	"github.com/mesos/mesos-go/mockedSlave"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/mesosphere/testify/assert"
 )
 
 var (
-	slaveStarted = false
-	slave        *mockedSlave.MockedSlave
-	slavePID     = "slave(1)@127.0.0.1:8080"
-	slaveID      = "some-slave-id-uuid"
-	frameworkID  = "some-framework-id-uuid"
-	executorID   = "some-executor-id-uuid"
+	slavePID    = "slave(1)@127.0.0.1:8080"
+	slaveID     = "some-slave-id-uuid"
+	frameworkID = "some-framework-id-uuid"
+	executorID  = "some-executor-id-uuid"
 )
 
 func setEnvironments(t *testing.T, workDir string, checkpoint bool) {

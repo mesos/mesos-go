@@ -23,7 +23,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/mesos/mesos-go/healthchecker"
 	"github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/mesosphere/testify/assert"
 )
@@ -58,7 +60,7 @@ func TestExecutorDriverStartFailedToParseEnvironment(t *testing.T) {
 
 func TestExecutorDriverStartFailedToInit(t *testing.T) {
 	driver := NewMesosExecutorDriver()
-	messenger := NewMockedMessenger()
+	messenger := messenger.NewMockedMessenger()
 	driver.messenger = messenger
 
 	// Set expections and return values.
@@ -75,7 +77,7 @@ func TestExecutorDriverStartFailedToInit(t *testing.T) {
 
 func TestExecutorDriverStartFailedToStartMessenger(t *testing.T) {
 	driver := NewMesosExecutorDriver()
-	messenger := NewMockedMessenger()
+	messenger := messenger.NewMockedMessenger()
 	driver.messenger = messenger
 
 	// Set expections and return values.
@@ -94,7 +96,7 @@ func TestExecutorDriverStartFailedToStartMessenger(t *testing.T) {
 
 func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
 	driver := NewMesosExecutorDriver()
-	messenger := NewMockedMessenger()
+	messenger := messenger.NewMockedMessenger()
 	driver.messenger = messenger
 
 	// Set expections and return values.
@@ -119,8 +121,10 @@ func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
 
 func TestExecutorDriverStartSucceed(t *testing.T) {
 	driver := NewMesosExecutorDriver()
-	messenger := NewMockedMessenger()
+	messenger := messenger.NewMockedMessenger()
 	driver.messenger = messenger
+	checker := healthchecker.NewMockedHealthChecker()
+	driver.slaveHealthChecker = checker
 
 	// Set expections and return values.
 	messenger.On("Install").Return(nil)
@@ -135,7 +139,9 @@ func TestExecutorDriverStartSucceed(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, status)
 
-	driver.Stop()
+	status, err = driver.Stop()
+	assert.NoError(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, status)
 
 	messenger.AssertNumberOfCalls(t, "Install", 8)
 	messenger.AssertNumberOfCalls(t, "Start", 1)

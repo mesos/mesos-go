@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package executor
+package healthchecker
 
 import (
 	"fmt"
@@ -28,14 +28,13 @@ import (
 )
 
 // SlaveHealthChecker is for checking the slave's health.
-// TODO(yifan): Make it an interface?
 type SlaveHealthChecker struct {
 	slaveUPID                *upid.UPID
 	threshold                int
 	checkDuration            time.Duration
 	continuousUnhealthyCount int
 	stop                     chan struct{}
-	C                        chan bool
+	ch                       chan time.Time
 }
 
 // NewSlaveHealthChecker creates a slave health checker and return a notification channel.
@@ -46,44 +45,48 @@ func NewSlaveHealthChecker(slaveUPID *upid.UPID, threshold int, checkDuration ti
 		threshold:     threshold,
 		checkDuration: checkDuration,
 		stop:          make(chan struct{}),
-		C:             make(chan bool, 1),
+		ch:            make(chan time.Time, 1),
 	}
-	go checker.start()
 	return checker
 }
 
-// Stop stops the slave health checker.
-func (c *SlaveHealthChecker) Stop() {
-	close(c.stop)
-}
-
-func (c *SlaveHealthChecker) start() {
-	ticker := time.Tick(c.checkDuration)
-	for {
-		select {
-		case <-ticker:
-			c.doCheck()
-		case <-c.stop:
-			return
+// Start starts the health checker and returns the notification channel.
+func (s *SlaveHealthChecker) Start() <-chan time.Time {
+	go func() {
+		ticker := time.Tick(s.checkDuration)
+		for {
+			select {
+			case <-ticker:
+				s.doCheck()
+			case <-s.stop:
+				return
+			}
 		}
-	}
+	}()
+	return s.ch
 }
 
-func (c *SlaveHealthChecker) doCheck() {
-	path := fmt.Sprintf("http://%s:%s/%s/health", c.slaveUPID.Host, c.slaveUPID.Port, c.slaveUPID.ID)
+// Stop stops the slave health checker.
+// It should be called only once during the life span of the checker.
+func (s *SlaveHealthChecker) Stop() {
+	close(s.stop)
+}
+
+func (s *SlaveHealthChecker) doCheck() {
+	path := fmt.Sprintf("http://%s:%s/%s/health", s.slaveUPID.Host, s.slaveUPID.Port, s.slaveUPID.ID)
 	resp, err := http.Get(path)
 	if err != nil {
 		log.Errorf("Failed to request the health path: %v\n", err)
-		c.continuousUnhealthyCount++
-		if c.continuousUnhealthyCount >= c.threshold {
+		s.continuousUnhealthyCount++
+		if s.continuousUnhealthyCount >= s.threshold {
 			select {
-			case c.C <- true: // If no one is receiving the channel, then just skip it.
+			case s.ch <- time.Now(): // If no one is receiving the channel, then just skip it.
 			default:
 			}
-			c.continuousUnhealthyCount = 0
+			s.continuousUnhealthyCount = 0
 		}
 		return
 	}
-	c.continuousUnhealthyCount = 0
+	s.continuousUnhealthyCount = 0
 	resp.Body.Close()
 }

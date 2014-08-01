@@ -16,13 +16,12 @@
  * limitations under the License.
  */
 
-package executor
+package messenger
 
 import (
 	"reflect"
 
 	"code.google.com/p/gogoprotobuf/proto"
-	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/mesosphere/testify/mock"
 )
@@ -36,7 +35,7 @@ type message struct {
 type MockedMessenger struct {
 	mock.Mock
 	messageQueue chan *message
-	handlers     map[string]messenger.MessageHandler
+	handlers     map[string]MessageHandler
 	stop         chan struct{}
 }
 
@@ -44,13 +43,13 @@ type MockedMessenger struct {
 func NewMockedMessenger() *MockedMessenger {
 	return &MockedMessenger{
 		messageQueue: make(chan *message, 1),
-		handlers:     make(map[string]messenger.MessageHandler),
+		handlers:     make(map[string]MessageHandler),
 		stop:         make(chan struct{}),
 	}
 }
 
 // Install is a mocked implementation.
-func (m *MockedMessenger) Install(handler messenger.MessageHandler, msg proto.Message) error {
+func (m *MockedMessenger) Install(handler MessageHandler, msg proto.Message) error {
 	m.handlers[reflect.TypeOf(msg).Elem().Name()] = handler
 	return m.Called().Error(0)
 }

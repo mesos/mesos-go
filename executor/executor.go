@@ -30,6 +30,7 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
+	"github.com/mesos/mesos-go/healthchecker"
 	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
@@ -89,7 +90,7 @@ type MesosExecutorDriver struct {
 	directory          string
 	checkpoint         bool
 	recoveryTimeout    time.Duration
-	slaveHealthChecker *SlaveHealthChecker
+	slaveHealthChecker healthchecker.HealthChecker
 	updates            map[string]*mesosproto.StatusUpdate // Key is a UUID string.
 	tasks              map[string]*mesosproto.TaskInfo     // Key is a UUID string.
 }
@@ -140,6 +141,7 @@ func (driver *MesosExecutorDriver) init() error {
 	if err := driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{}); err != nil {
 		return err
 	}
+	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, defaultHealthCheckThreshold, defaultHealthCheckDuration)
 	return nil
 }
 
@@ -428,6 +430,7 @@ func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Messag
 		log.Errorf("Failed to send %v: %v\n")
 	}
 	// Start monitoring the slave again.
+	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, defaultHealthCheckThreshold, defaultRecoveryTimeout)
 	go driver.monitorSlave()
 }
 
@@ -543,8 +546,7 @@ func (driver *MesosExecutorDriver) slaveExited() {
 }
 
 func (driver *MesosExecutorDriver) monitorSlave() {
-	driver.slaveHealthChecker = NewSlaveHealthChecker(driver.slaveUPID, defaultHealthCheckThreshold, defaultHealthCheckDuration)
-	<-driver.slaveHealthChecker.C
+	<-driver.slaveHealthChecker.Start()
 	log.Warningf("Slave unhealthy count exceeds the threshold, assuming it has exited\n")
 	driver.slaveHealthChecker.Stop()
 	driver.slaveExited()

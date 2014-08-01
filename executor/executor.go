@@ -116,15 +116,30 @@ func (driver *MesosExecutorDriver) init() error {
 	log.Infof("Version: %v\n", MesosVersion)
 
 	// Install handlers.
-	// TODO(yifan): Check errors.
-	driver.messenger.Install(driver.registered, &mesosproto.ExecutorRegisteredMessage{})
-	driver.messenger.Install(driver.reregistered, &mesosproto.ExecutorReregisteredMessage{})
-	driver.messenger.Install(driver.reconnect, &mesosproto.ReconnectExecutorMessage{})
-	driver.messenger.Install(driver.runTask, &mesosproto.RunTaskMessage{})
-	driver.messenger.Install(driver.killTask, &mesosproto.KillTaskMessage{})
-	driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{})
-	driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
-	driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
+	if err := driver.messenger.Install(driver.registered, &mesosproto.ExecutorRegisteredMessage{}); err != nil {
+		return err
+	}
+	if err := driver.messenger.Install(driver.reregistered, &mesosproto.ExecutorReregisteredMessage{}); err != nil {
+		return err
+	}
+	if err := driver.messenger.Install(driver.reconnect, &mesosproto.ReconnectExecutorMessage{}); err != nil {
+		return err
+	}
+	if err := driver.messenger.Install(driver.runTask, &mesosproto.RunTaskMessage{}); err != nil {
+		return err
+	}
+	if err := driver.messenger.Install(driver.killTask, &mesosproto.KillTaskMessage{}); err != nil {
+		return err
+	}
+	if err := driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{}); err != nil {
+		return err
+	}
+	if err := driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{}); err != nil {
+		return err
+	}
+	if err := driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -147,9 +162,6 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 		return mesosproto.Status_DRIVER_NOT_STARTED, err
 	}
 
-	// Start monitoring the slave.
-	go driver.monitorSlave()
-
 	// Start the messenger.
 	if err := driver.messenger.Start(); err != nil {
 		log.Errorf("Failed to start the messenger: %v\n", err)
@@ -165,8 +177,13 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 	}
 	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
 		log.Errorf("Failed to send %v: %v\n", message, err)
+		driver.messenger.Stop()
 		return mesosproto.Status_DRIVER_NOT_STARTED, err
 	}
+
+	// Start monitoring the slave.
+	go driver.monitorSlave()
+
 	// Set status.
 	driver.setStatus(mesosproto.Status_DRIVER_RUNNING)
 	log.Infoln("Mesos executor is running")

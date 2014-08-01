@@ -1,9 +1,9 @@
 package executor
 
 import (
+	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/mockedSlave"
@@ -20,16 +20,6 @@ var (
 	executorID   = "some-executor-id-uuid"
 )
 
-func startMockedSlave(t *testing.T) *mockedSlave.MockedSlave {
-	if !slaveStarted {
-		upid, err := upid.Parse(slavePID)
-		assert.NoError(t, err)
-		slave = mockedSlave.NewMockedSlave(t, upid)
-	}
-	slave.Refresh()
-	return slave
-}
-
 func setEnvironments(t *testing.T, workDir string, checkpoint bool) {
 	assert.NoError(t, os.Setenv("MESOS_SLAVE_PID", slavePID))
 	assert.NoError(t, os.Setenv("MESOS_SLAVE_ID", slaveID))
@@ -43,7 +33,7 @@ func setEnvironments(t *testing.T, workDir string, checkpoint bool) {
 	}
 }
 
-func TestDriverFailToStart(t *testing.T) {
+func TestExecutorDriverStartFailedToParseEnvironment(t *testing.T) {
 	driver := NewMesosExecutorDriver()
 	driver.Executor = NewMockedExecutor()
 	status, err := driver.Start()
@@ -51,22 +41,90 @@ func TestDriverFailToStart(t *testing.T) {
 	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, status)
 }
 
-func TestExecutorDriverSucceedToStartAndRegistered(t *testing.T) {
-	slave = startMockedSlave(t)
-	slave.Mock.On("RegisterExecutor").Return()
-
-	executor := NewMockedExecutor()
-	executor.On("Registered").Return()
-
+func TestExecutorDriverStartFailedToInit(t *testing.T) {
 	driver := NewMesosExecutorDriver()
-	driver.Executor = executor
+	messenger := NewMockedMessenger()
+	driver.messenger = messenger
+
+	// Set expections and return values.
+	messenger.On("Install").Return(fmt.Errorf("messenger failed to installed"))
+
+	setEnvironments(t, "", false)
+
+	status, err := driver.Start()
+	assert.Error(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, status)
+
+	messenger.AssertNumberOfCalls(t, "Install", 1)
+}
+
+func TestExecutorDriverStartFailedToStartMessenger(t *testing.T) {
+	driver := NewMesosExecutorDriver()
+	messenger := NewMockedMessenger()
+	driver.messenger = messenger
+
+	// Set expections and return values.
+	messenger.On("Install").Return(nil)
+	messenger.On("Start").Return(fmt.Errorf("messenger failed to start"))
+
+	setEnvironments(t, "", false)
+
+	status, err := driver.Start()
+	assert.Error(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, status)
+
+	messenger.AssertNumberOfCalls(t, "Install", 8)
+	messenger.AssertNumberOfCalls(t, "Start", 1)
+}
+
+func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
+	driver := NewMesosExecutorDriver()
+	messenger := NewMockedMessenger()
+	driver.messenger = messenger
+
+	// Set expections and return values.
+	messenger.On("Install").Return(nil)
+	messenger.On("Start").Return(nil)
+	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("Send").Return(fmt.Errorf("messenger failed to send"))
+	messenger.On("Stop").Return(nil)
+
+	setEnvironments(t, "", false)
+
+	status, err := driver.Start()
+	assert.Error(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, status)
+
+	messenger.AssertNumberOfCalls(t, "Install", 8)
+	messenger.AssertNumberOfCalls(t, "Start", 1)
+	messenger.AssertNumberOfCalls(t, "UPID", 1)
+	messenger.AssertNumberOfCalls(t, "Send", 1)
+	messenger.AssertNumberOfCalls(t, "Stop", 1)
+}
+
+func TestExecutorDriverStartSucceed(t *testing.T) {
+	driver := NewMesosExecutorDriver()
+	messenger := NewMockedMessenger()
+	driver.messenger = messenger
+
+	// Set expections and return values.
+	messenger.On("Install").Return(nil)
+	messenger.On("Start").Return(nil)
+	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("Send").Return(nil)
+	messenger.On("Stop").Return(nil)
+
 	setEnvironments(t, "", false)
 
 	status, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, status)
 
-	time.Sleep(time.Second) // Sleep 1 seconde to wait for the slave to receive the message.
-	slave.Mock.AssertNumberOfCalls(t, "RegisterExecutor", 1)
-	executor.AssertNumberOfCalls(t, "Registered", 1)
+	driver.Stop()
+
+	messenger.AssertNumberOfCalls(t, "Install", 8)
+	messenger.AssertNumberOfCalls(t, "Start", 1)
+	messenger.AssertNumberOfCalls(t, "UPID", 1)
+	messenger.AssertNumberOfCalls(t, "Send", 1)
+	messenger.AssertNumberOfCalls(t, "Stop", 1)
 }

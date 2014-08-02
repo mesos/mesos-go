@@ -35,40 +35,40 @@ func NewMockedExecutor() *MockedExecutor {
 
 // Registered implements the Registered handler.
 func (e *MockedExecutor) Registered(ExecutorDriver, *mesosproto.ExecutorInfo, *mesosproto.FrameworkInfo, *mesosproto.SlaveInfo) {
-	e.Mock.Called()
+	e.Called()
 }
 
 // Reregistered implements the Reregistered handler.
 func (e *MockedExecutor) Reregistered(ExecutorDriver, *mesosproto.SlaveInfo) {
-	e.Mock.Called()
+	e.Called()
 }
 
 // Disconnected implements the Disconnected handler.
 func (e *MockedExecutor) Disconnected(ExecutorDriver) {
-	e.Mock.Called()
+	e.Called()
 }
 
 // LaunchTask implements the LaunchTask handler.
 func (e *MockedExecutor) LaunchTask(ExecutorDriver, *mesosproto.TaskInfo) {
-	e.Mock.Called()
+	e.Called()
 }
 
 // KillTask implements the KillTask handler.
 func (e *MockedExecutor) KillTask(ExecutorDriver, *mesosproto.TaskID) {
-	e.Mock.Called()
+	e.Called()
 }
 
 // FrameworkMessage implements the FrameworkMessage handler.
 func (e *MockedExecutor) FrameworkMessage(ExecutorDriver, string) {
-	e.Mock.Called()
+	e.Called()
 }
 
 // Shutdown implements the Shutdown handler.
 func (e *MockedExecutor) Shutdown(ExecutorDriver) {
-	e.Mock.Called()
+	e.Called()
 }
 
 // Error implements the Error handler.
 func (e *MockedExecutor) Error(ExecutorDriver, string) {
-	e.Mock.Called()
+	e.Called()
 }

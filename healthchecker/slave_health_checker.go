@@ -27,9 +27,16 @@ import (
 	"github.com/mesos/mesos-go/upid"
 )
 
+const (
+	defaultTimeout       = time.Second
+	defaultCheckDuration = time.Second
+	defaultThreshold     = 5
+)
+
 // SlaveHealthChecker is for checking the slave's health.
 type SlaveHealthChecker struct {
 	slaveUPID                *upid.UPID
+	client                   *http.Client
 	threshold                int
 	checkDuration            time.Duration
 	continuousUnhealthyCount int
@@ -39,13 +46,23 @@ type SlaveHealthChecker struct {
 
 // NewSlaveHealthChecker creates a slave health checker and return a notification channel.
 // Each time the checker thinks the slave is unhealthy, it will send a notification through the channel.
-func NewSlaveHealthChecker(slaveUPID *upid.UPID, threshold int, checkDuration time.Duration) *SlaveHealthChecker {
+func NewSlaveHealthChecker(slaveUPID *upid.UPID, threshold int, checkDuration time.Duration, timeout time.Duration) *SlaveHealthChecker {
 	checker := &SlaveHealthChecker{
 		slaveUPID:     slaveUPID,
+		client:        &http.Client{Timeout: timeout},
 		threshold:     threshold,
 		checkDuration: checkDuration,
 		stop:          make(chan struct{}),
 		ch:            make(chan time.Time, 1),
+	}
+	if timeout == 0 {
+		checker.client.Timeout = defaultTimeout
+	}
+	if checkDuration == 0 {
+		checker.checkDuration = defaultCheckDuration
+	}
+	if threshold <= 0 {
+		checker.threshold = defaultThreshold
 	}
 	return checker
 }
@@ -74,9 +91,16 @@ func (s *SlaveHealthChecker) Stop() {
 
 func (s *SlaveHealthChecker) doCheck() {
 	path := fmt.Sprintf("http://%s:%s/%s/health", s.slaveUPID.Host, s.slaveUPID.Port, s.slaveUPID.ID)
-	resp, err := http.Get(path)
+	resp, err := s.client.Head(path)
+	unhealthy := false
 	if err != nil {
 		log.Errorf("Failed to request the health path: %v\n", err)
+		unhealthy = true
+	} else if resp.StatusCode != http.StatusOK {
+		log.Errorf("Failed to request the health path: status: %v\n", resp.StatusCode)
+		unhealthy = true
+	}
+	if unhealthy {
 		s.continuousUnhealthyCount++
 		if s.continuousUnhealthyCount >= s.threshold {
 			select {

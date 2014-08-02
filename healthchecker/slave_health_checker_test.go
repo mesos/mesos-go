@@ -19,8 +19,12 @@
 package healthchecker
 
 import (
+	"flag"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -28,27 +32,63 @@ import (
 	"github.com/mesosphere/testify/assert"
 )
 
-type slave struct {
-	Cnt       int
-	threshold int
-	ts        *httptest.Server
+type thresholdMonitor struct {
+	cnt       int32
+	threshold int32
 }
 
-func startSlave(threshold int) *slave {
-	s := &slave{threshold: threshold}
-	s.ts = httptest.NewServer(s)
-	return s
+func newThresholdMonitor(threshold int) *thresholdMonitor {
+	return &thresholdMonitor{threshold: int32(threshold)}
 }
 
-func (s *slave) handleFunc(w http.ResponseWriter, r *http.Request) {
-	s.Cnt++
-	if s.Cnt <= s.threshold {
+// incAndTest returns true if the threshold is reached.
+func (t *thresholdMonitor) incAndTest() bool {
+	if atomic.AddInt32(&t.cnt, 1) >= t.threshold {
+		return false
+	}
+	return true
+}
+
+// blockedServer replies only threshold times, after that
+// it will block.
+type blockedServer struct {
+	th *thresholdMonitor
+	ch chan struct{}
+}
+
+func newBlockedServer(threshold int) *blockedServer {
+	return &blockedServer{
+		th: newThresholdMonitor(threshold),
+		ch: make(chan struct{}),
+	}
+}
+
+func (s *blockedServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if s.th.incAndTest() {
 		return
 	}
-	hj, ok := w.(http.Hijacker)
-	if !ok {
-		panic("Cannot hijack!")
+	<-s.ch
+}
+
+func (s *blockedServer) stop() {
+	close(s.ch)
+}
+
+// eofServer will close the connection after it replies for threshold times.
+// Thus the health checker will get an EOF error.
+type eofServer struct {
+	th *thresholdMonitor
+}
+
+func newEOFServer(threshold int) *eofServer {
+	return &eofServer{newThresholdMonitor(threshold)}
+}
+
+func (s *eofServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if s.th.incAndTest() {
+		return
 	}
+	hj := w.(http.Hijacker)
 	conn, _, err := hj.Hijack()
 	if err != nil {
 		panic("Cannot hijack")
@@ -56,23 +96,175 @@ func (s *slave) handleFunc(w http.ResponseWriter, r *http.Request) {
 	conn.Close()
 }
 
-func (s *slave) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.handleFunc(w, r)
+// errorStatusCodeServer will reply error status code (e.g. 503) after the
+// it replies for threhold time.
+type errorStatusCodeServer struct {
+	th *thresholdMonitor
 }
 
-func (s *slave) closeSlave() {
-	s.ts.Close()
+func newErrorStatusServer(threshold int) *errorStatusCodeServer {
+	return &errorStatusCodeServer{newThresholdMonitor(threshold)}
 }
 
-func TestSlaveHealthCheckerFailed(t *testing.T) {
-	upid := &upid.UPID{ID: "slave", Host: "127.0.0.1", Port: "8000"}
-	slave := startSlave(0)
-	checker := NewSlaveHealthChecker(upid, 10, time.Second)
+func (s *errorStatusCodeServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if s.th.incAndTest() {
+		return
+	}
+	w.WriteHeader(http.StatusServiceUnavailable)
+}
+
+// goodServer always returns status ok.
+type goodServer bool
+
+func (s *goodServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {}
+
+// partitionedServer returns status ok at some first requests.
+// Then it will block for a while, and then reply again.
+type partitionedServer struct {
+	healthyCnt   int32
+	partitionCnt int32
+	cnt          int32
+	mutex        *sync.Mutex
+	cond         *sync.Cond
+}
+
+func newPartitionedServer(healthyCnt, partitionCnt int) *partitionedServer {
+	mutex := new(sync.Mutex)
+	cond := sync.NewCond(mutex)
+	return &partitionedServer{
+		healthyCnt:   int32(healthyCnt),
+		partitionCnt: int32(partitionCnt),
+		mutex:        mutex,
+		cond:         cond,
+	}
+}
+
+func (s *partitionedServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	cnt := atomic.AddInt32(&s.cnt, 1)
+	if cnt < s.healthyCnt {
+		return
+	}
+	if cnt < s.healthyCnt+s.partitionCnt {
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
+		s.cond.Wait()
+		return
+	}
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.cond.Broadcast()
+}
+
+func getUPID(t *testing.T, id string) *upid.UPID {
+	var err error
+	listenOn := flag.Lookup("httptest.serve")
+	if listenOn == nil {
+		t.Fatal("Should set httptest.serve flag for this test")
+	}
+	if len(listenOn.Value.String()) == 0 {
+		t.Fatal("Should set httptest.serve flag for this test")
+	}
+	upid := &upid.UPID{ID: id}
+	upid.Host, upid.Port, err = net.SplitHostPort(listenOn.Value.String())
+	if err != nil {
+		t.Fatal("Wrong httptest.serve flag")
+	}
+	return upid
+}
+
+func TestSlaveHealthCheckerFailedOnBlockedSlave(t *testing.T) {
+	s := newBlockedServer(5)
+	ts := httptest.NewUnstartedServer(s)
+	go ts.Start()
+	defer ts.Close()
+
+	upid := getUPID(t, "slave")
+	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
+	ch := checker.Start()
+	defer checker.Stop()
 
 	select {
-	case <-time.After(time.Second * 10):
-		t.Fatal("time out")
-	case <-checker.C:
-		assert.Equal(t, 10, slave.Cnt)
+	case <-time.After(time.Second):
+		s.stop()
+		t.Fatal("timeout")
+	case <-ch:
+		s.stop()
+		assert.True(t, atomic.LoadInt32(&s.th.cnt) > 10)
+	}
+}
+
+func TestSlaveHealthCheckerFailedOnEOFSlave(t *testing.T) {
+	s := newEOFServer(5)
+	ts := httptest.NewUnstartedServer(s)
+	go ts.Start()
+	defer ts.Close()
+
+	upid := getUPID(t, "slave")
+	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
+	ch := checker.Start()
+	defer checker.Stop()
+
+	select {
+	case <-time.After(time.Second):
+		t.Fatal("timeout")
+	case <-ch:
+		assert.True(t, atomic.LoadInt32(&s.th.cnt) > 10)
+	}
+}
+
+func TestSlaveHealthCheckerFailedOnErrorStatusSlave(t *testing.T) {
+	s := newErrorStatusServer(5)
+	ts := httptest.NewUnstartedServer(s)
+	go ts.Start()
+	defer ts.Close()
+
+	upid := getUPID(t, "slave")
+	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
+	ch := checker.Start()
+	defer checker.Stop()
+
+	select {
+	case <-time.After(time.Second):
+		t.Fatal("timeout")
+	case <-ch:
+		assert.True(t, atomic.LoadInt32(&s.th.cnt) > 10)
+	}
+}
+
+func TestSlaveHealthCheckerSucceed(t *testing.T) {
+	s := new(goodServer)
+	ts := httptest.NewUnstartedServer(s)
+	go ts.Start()
+	defer ts.Close()
+
+	upid := getUPID(t, "slave")
+	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
+	ch := checker.Start()
+	defer checker.Stop()
+
+	select {
+	case <-time.After(time.Second):
+		assert.Equal(t, 0, checker.continuousUnhealthyCount)
+	case <-ch:
+		t.Fatal("Shouldn't get unhealthy notification")
+	}
+}
+
+func TestSlaveHealthCheckerPartitonedSlave(t *testing.T) {
+	s := newPartitionedServer(5, 9)
+	ts := httptest.NewUnstartedServer(s)
+	go ts.Start()
+	defer ts.Close()
+
+	upid := getUPID(t, "slave")
+	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
+	ch := checker.Start()
+	defer checker.Stop()
+
+	select {
+	case <-time.After(time.Second):
+		assert.Equal(t, 0, checker.continuousUnhealthyCount)
+	case <-ch:
+		t.Fatal("Shouldn't get unhealthy notification")
 	}
 }

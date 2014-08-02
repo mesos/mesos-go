@@ -19,8 +19,7 @@
 package healthchecker
 
 import (
-	"flag"
-	"net"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -155,30 +154,15 @@ func (s *partitionedServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.cond.Broadcast()
 }
 
-func getUPID(t *testing.T, id string) *upid.UPID {
-	var err error
-	listenOn := flag.Lookup("httptest.serve")
-	if listenOn == nil {
-		t.Fatal("Should set httptest.serve flag for this test")
-	}
-	if len(listenOn.Value.String()) == 0 {
-		t.Fatal("Should set httptest.serve flag for this test")
-	}
-	upid := &upid.UPID{ID: id}
-	upid.Host, upid.Port, err = net.SplitHostPort(listenOn.Value.String())
-	if err != nil {
-		t.Fatal("Wrong httptest.serve flag")
-	}
-	return upid
-}
-
 func TestSlaveHealthCheckerFailedOnBlockedSlave(t *testing.T) {
 	s := newBlockedServer(5)
 	ts := httptest.NewUnstartedServer(s)
 	go ts.Start()
 	defer ts.Close()
 
-	upid := getUPID(t, "slave")
+	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
+	assert.NoError(t, err)
+
 	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
 	ch := checker.Start()
 	defer checker.Stop()
@@ -199,7 +183,9 @@ func TestSlaveHealthCheckerFailedOnEOFSlave(t *testing.T) {
 	go ts.Start()
 	defer ts.Close()
 
-	upid := getUPID(t, "slave")
+	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
+	assert.NoError(t, err)
+
 	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
 	ch := checker.Start()
 	defer checker.Stop()
@@ -218,7 +204,9 @@ func TestSlaveHealthCheckerFailedOnErrorStatusSlave(t *testing.T) {
 	go ts.Start()
 	defer ts.Close()
 
-	upid := getUPID(t, "slave")
+	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
+	assert.NoError(t, err)
+
 	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
 	ch := checker.Start()
 	defer checker.Stop()
@@ -237,7 +225,9 @@ func TestSlaveHealthCheckerSucceed(t *testing.T) {
 	go ts.Start()
 	defer ts.Close()
 
-	upid := getUPID(t, "slave")
+	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
+	assert.NoError(t, err)
+
 	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
 	ch := checker.Start()
 	defer checker.Stop()
@@ -256,7 +246,9 @@ func TestSlaveHealthCheckerPartitonedSlave(t *testing.T) {
 	go ts.Start()
 	defer ts.Close()
 
-	upid := getUPID(t, "slave")
+	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
+	assert.NoError(t, err)
+
 	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
 	ch := checker.Start()
 	defer checker.Stop()

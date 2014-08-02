@@ -141,7 +141,7 @@ func (driver *MesosExecutorDriver) init() error {
 	if err := driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{}); err != nil {
 		return err
 	}
-	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, defaultHealthCheckThreshold, defaultHealthCheckDuration)
+	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
 	return nil
 }
 
@@ -430,7 +430,7 @@ func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Messag
 		log.Errorf("Failed to send %v: %v\n")
 	}
 	// Start monitoring the slave again.
-	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, defaultHealthCheckThreshold, defaultRecoveryTimeout)
+	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
 	go driver.monitorSlave()
 }
 

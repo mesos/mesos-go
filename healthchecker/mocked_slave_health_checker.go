@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/mesosphere/testify/mock"
+	"github.com/mesos/mesos-go/upid"
 )
 
 type MockedHealthChecker struct {
@@ -34,13 +35,23 @@ func NewMockedHealthChecker() *MockedHealthChecker {
 	return &MockedHealthChecker{ch: make(chan time.Time, 1)}
 }
 
-// Start starts the checker and returns the notification channel.
+// Start will start the checker and returns the notification channel.
 func (m *MockedHealthChecker) Start() <-chan time.Time {
 	m.Called()
 	return m.ch
 }
 
-// Stop stops the checker.
+// Pause will pause the slave health checker.
+func (m *MockedHealthChecker) Pause() {
+	m.Called()
+}
+
+// Continue will continue the slave health checker with a new slave upid.
+func (m *MockedHealthChecker) Continue(slaveUPID *upid.UPID) {
+	m.Called()
+}
+
+// Stop will stop the checker.
 func (m *MockedHealthChecker) Stop() {
 	m.Called()
 }

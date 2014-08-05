@@ -77,6 +77,7 @@ type MesosExecutorDriver struct {
 	mutex              *sync.Mutex
 	cond               *sync.Cond
 	rwlock             *sync.RWMutex
+	stop               chan bool
 	status             mesosproto.Status
 	messenger          messenger.Messenger
 	slaveUPID          *upid.UPID
@@ -101,6 +102,7 @@ func NewMesosExecutorDriver() *MesosExecutorDriver {
 		status:  mesosproto.Status_DRIVER_NOT_STARTED,
 		mutex:   new(sync.Mutex),
 		rwlock:  new(sync.RWMutex),
+		stop:    make(chan bool),
 		updates: make(map[string]*mesosproto.StatusUpdate),
 		tasks:   make(map[string]*mesosproto.TaskInfo),
 		workDir: ".",
@@ -108,6 +110,10 @@ func NewMesosExecutorDriver() *MesosExecutorDriver {
 	driver.cond = sync.NewCond(driver.mutex)
 	// TODO(yifan): Set executor cnt.
 	driver.messenger = messenger.NewMesosMessenger(&upid.UPID{ID: "executor(1)"})
+	if err := driver.init(); err != nil {
+		log.Errorf("Failed to initialize the driver: %v\n", err)
+		return nil
+	}
 	return driver
 }
 
@@ -116,52 +122,31 @@ func (driver *MesosExecutorDriver) init() error {
 	log.Infof("Init mesos executor driver\n")
 	log.Infof("Version: %v\n", MesosVersion)
 
+	// Parse environments.
+	if err := driver.parseEnviroments(); err != nil {
+		log.Errorf("Failed to parse environments: %v\n", err)
+		return nil
+	}
 	// Install handlers.
-	if err := driver.messenger.Install(driver.registered, &mesosproto.ExecutorRegisteredMessage{}); err != nil {
-		return err
-	}
-	if err := driver.messenger.Install(driver.reregistered, &mesosproto.ExecutorReregisteredMessage{}); err != nil {
-		return err
-	}
-	if err := driver.messenger.Install(driver.reconnect, &mesosproto.ReconnectExecutorMessage{}); err != nil {
-		return err
-	}
-	if err := driver.messenger.Install(driver.runTask, &mesosproto.RunTaskMessage{}); err != nil {
-		return err
-	}
-	if err := driver.messenger.Install(driver.killTask, &mesosproto.KillTaskMessage{}); err != nil {
-		return err
-	}
-	if err := driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{}); err != nil {
-		return err
-	}
-	if err := driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{}); err != nil {
-		return err
-	}
-	if err := driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{}); err != nil {
-		return err
-	}
+	driver.messenger.Install(driver.registered, &mesosproto.ExecutorRegisteredMessage{})
+	driver.messenger.Install(driver.reregistered, &mesosproto.ExecutorReregisteredMessage{})
+	driver.messenger.Install(driver.reconnect, &mesosproto.ReconnectExecutorMessage{})
+	driver.messenger.Install(driver.runTask, &mesosproto.RunTaskMessage{})
+	driver.messenger.Install(driver.killTask, &mesosproto.KillTaskMessage{})
+	driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{})
+	driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
+	driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
 	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
 	return nil
 }
 
 // Start starts the driver.
 func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
-	log.Infoln("Start mesos executor driver")
-
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
 	if driver.status != mesosproto.Status_DRIVER_NOT_STARTED {
 		return driver.status, nil
-	}
-	if err := driver.parseEnviroments(); err != nil {
-		log.Errorf("Failed to parse environments: %v\n", err)
-		return mesosproto.Status_DRIVER_NOT_STARTED, err
-	}
-	if err := driver.init(); err != nil {
-		log.Errorf("Failed to initialize the driver: %v\n", err)
-		return mesosproto.Status_DRIVER_NOT_STARTED, err
 	}
 
 	// Start the messenger.
@@ -207,7 +192,11 @@ func (driver *MesosExecutorDriver) Stop() (mesosproto.Status, error) {
 	}
 
 	driver.messenger.Stop()
-
+	// Try to send a stop signal.
+	select {
+	case driver.stop <- true:
+	default:
+	}
 	aborted := false
 	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
 		aborted = true
@@ -233,6 +222,11 @@ func (driver *MesosExecutorDriver) Abort() (mesosproto.Status, error) {
 		return driver.status, nil
 	}
 	driver.messenger.Stop()
+	// Try to send a stop signal.
+	select {
+	case driver.stop <- true:
+	default:
+	}
 	driver.setStatus(mesosproto.Status_DRIVER_ABORTED)
 	return driver.status, nil
 }
@@ -429,9 +423,7 @@ func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Messag
 	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
 		log.Errorf("Failed to send %v: %v\n")
 	}
-	// Start monitoring the slave again.
-	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
-	go driver.monitorSlave()
+	driver.slaveHealthChecker.Continue(driver.slaveUPID)
 }
 
 func (driver *MesosExecutorDriver) runTask(from *upid.UPID, pbMsg proto.Message) {
@@ -546,10 +538,16 @@ func (driver *MesosExecutorDriver) slaveExited() {
 }
 
 func (driver *MesosExecutorDriver) monitorSlave() {
-	<-driver.slaveHealthChecker.Start()
-	log.Warningf("Slave unhealthy count exceeds the threshold, assuming it has exited\n")
-	driver.slaveHealthChecker.Stop()
-	driver.slaveExited()
+	for {
+		select {
+		case <-driver.stop:
+			return
+		case <-driver.slaveHealthChecker.Start():
+			log.Warningf("Slave unhealthy count exceeds the threshold, assuming it has exited\n")
+			driver.slaveHealthChecker.Pause()
+			driver.slaveExited()
+		}
+	}
 }
 
 // TODO(yifan): There is some race condition here because when recoveryTimeouts is called

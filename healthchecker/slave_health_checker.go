@@ -21,6 +21,7 @@ package healthchecker
 import (
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	log "github.com/golang/glog"
@@ -35,6 +36,7 @@ const (
 
 // SlaveHealthChecker is for checking the slave's health.
 type SlaveHealthChecker struct {
+	sync.RWMutex
 	slaveUPID                *upid.UPID
 	client                   *http.Client
 	threshold                int
@@ -42,6 +44,7 @@ type SlaveHealthChecker struct {
 	continuousUnhealthyCount int
 	stop                     chan struct{}
 	ch                       chan time.Time
+	paused                   bool
 }
 
 // NewSlaveHealthChecker creates a slave health checker and return a notification channel.
@@ -67,14 +70,18 @@ func NewSlaveHealthChecker(slaveUPID *upid.UPID, threshold int, checkDuration ti
 	return checker
 }
 
-// Start starts the health checker and returns the notification channel.
+// Start will start the health checker and returns the notification channel.
 func (s *SlaveHealthChecker) Start() <-chan time.Time {
 	go func() {
 		ticker := time.Tick(s.checkDuration)
 		for {
 			select {
 			case <-ticker:
-				s.doCheck()
+				s.RLock()
+				if !s.paused {
+					s.doCheck()
+				}
+				s.RUnlock()
 			case <-s.stop:
 				return
 			}
@@ -83,7 +90,22 @@ func (s *SlaveHealthChecker) Start() <-chan time.Time {
 	return s.ch
 }
 
-// Stop stops the slave health checker.
+// Pause will pause the slave health checker.
+func (s *SlaveHealthChecker) Pause() {
+	s.Lock()
+	defer s.Unlock()
+	s.paused = true
+}
+
+// Continue will continue the slave health checker with a new slave upid.
+func (s *SlaveHealthChecker) Continue(slaveUPID *upid.UPID) {
+	s.Lock()
+	defer s.Unlock()
+	s.paused = false
+	s.slaveUPID = slaveUPID
+}
+
+// Stop will stop the slave health checker.
 // It should be called only once during the life span of the checker.
 func (s *SlaveHealthChecker) Stop() {
 	close(s.stop)

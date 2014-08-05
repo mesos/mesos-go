@@ -20,15 +20,20 @@ package healthchecker
 
 import (
 	"time"
+
+	"github.com/mesos/mesos-go/upid"
 )
 
 // HealthChecker defines the interface of a health checker.
 type HealthChecker interface {
-	// Start starts the health checker, and returns a notification channel.
+	// Start will start the health checker, and returns a notification channel.
 	// if the checker thinks the slave is unhealthy, it will send the timestamp
 	// via the channel.
 	Start() <-chan time.Time
-
+	// Pause will pause the slave health checker.
+	Pause()
+	// Continue will continue the slave health checker with a new slave upid.
+	Continue(slaveUPID *upid.UPID)
 	// Stop will stop the health checker. it should be called only once during
 	// the life span of the checker.
 	Stop()

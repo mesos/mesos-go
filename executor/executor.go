@@ -62,9 +62,9 @@ type Executor interface {
 // a mesos executor driver.
 type ExecutorDriver interface {
 	Start() (mesosproto.Status, error)
-	Stop() (mesosproto.Status, error)
-	Abort() (mesosproto.Status, error)
-	Join() (mesosproto.Status, error)
+	Stop() mesosproto.Status
+	Abort() mesosproto.Status
+	Join() mesosproto.Status
 	SendStatusUpdate(*mesosproto.TaskStatus) (mesosproto.Status, error)
 	SendFrameworkMessage(string) (mesosproto.Status, error)
 	Destroy() error
@@ -77,7 +77,7 @@ type MesosExecutorDriver struct {
 	mutex              *sync.Mutex
 	cond               *sync.Cond
 	rwlock             *sync.RWMutex
-	stop               chan bool
+	stopCh             chan struct{}
 	status             mesosproto.Status
 	messenger          messenger.Messenger
 	slaveUPID          *upid.UPID
@@ -102,7 +102,6 @@ func NewMesosExecutorDriver() *MesosExecutorDriver {
 		status:  mesosproto.Status_DRIVER_NOT_STARTED,
 		mutex:   new(sync.Mutex),
 		rwlock:  new(sync.RWMutex),
-		stop:    make(chan bool),
 		updates: make(map[string]*mesosproto.StatusUpdate),
 		tasks:   make(map[string]*mesosproto.TaskInfo),
 		workDir: ".",
@@ -125,7 +124,7 @@ func (driver *MesosExecutorDriver) init() error {
 	// Parse environments.
 	if err := driver.parseEnviroments(); err != nil {
 		log.Errorf("Failed to parse environments: %v\n", err)
-		return nil
+		return err
 	}
 	// Install handlers.
 	driver.messenger.Install(driver.registered, &mesosproto.ExecutorRegisteredMessage{})
@@ -154,7 +153,6 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 		log.Errorf("Failed to start the messenger: %v\n", err)
 		return mesosproto.Status_DRIVER_NOT_STARTED, err
 	}
-
 	driver.self = driver.messenger.UPID()
 
 	// Register with slave.
@@ -169,6 +167,7 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 	}
 
 	// Start monitoring the slave.
+	driver.stopCh = make(chan struct{})
 	go driver.monitorSlave()
 
 	// Set status.
@@ -177,74 +176,49 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 	return driver.status, nil
 }
 
-// Stop stops the driver.
-func (driver *MesosExecutorDriver) Stop() (mesosproto.Status, error) {
-	log.Infoln("Stop mesos executor driver")
-
+func (driver *MesosExecutorDriver) stop(status mesosproto.Status) {
 	driver.mutex.Lock()
-	defer func() {
-		driver.cond.Signal()
-		driver.mutex.Unlock()
-	}()
+	defer driver.mutex.Unlock()
 
-	if driver.status != mesosproto.Status_DRIVER_RUNNING && driver.status != mesosproto.Status_DRIVER_ABORTED {
-		return driver.status, nil
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return
 	}
 
 	driver.messenger.Stop()
 	// Try to send a stop signal.
-	select {
-	case driver.stop <- true:
-	default:
-	}
-	aborted := false
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
-		aborted = true
-	}
-	driver.setStatus(mesosproto.Status_DRIVER_STOPPED)
-	if aborted {
-		return mesosproto.Status_DRIVER_ABORTED, nil
-	}
-	return mesosproto.Status_DRIVER_STOPPED, nil
+	close(driver.stopCh)
+	driver.setStatus(status)
+	driver.cond.Signal()
+}
+
+// Stop stops the driver.
+func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
+	log.Infoln("Stop mesos executor driver")
+	driver.stop(mesosproto.Status_DRIVER_STOPPED)
+	return driver.status
 }
 
 // Abort aborts the driver.
-func (driver *MesosExecutorDriver) Abort() (mesosproto.Status, error) {
+func (driver *MesosExecutorDriver) Abort() mesosproto.Status {
 	log.Infoln("Abort mesos executor driver")
-
-	driver.mutex.Lock()
-	defer func() {
-		driver.cond.Signal()
-		driver.mutex.Unlock()
-	}()
-
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status, nil
-	}
-	driver.messenger.Stop()
-	// Try to send a stop signal.
-	select {
-	case driver.stop <- true:
-	default:
-	}
-	driver.setStatus(mesosproto.Status_DRIVER_ABORTED)
-	return driver.status, nil
+	driver.stop(mesosproto.Status_DRIVER_ABORTED)
+	return driver.status
 }
 
 // Join blocks the driver until it's either stopped or aborted.
-func (driver *MesosExecutorDriver) Join() (mesosproto.Status, error) {
+func (driver *MesosExecutorDriver) Join() mesosproto.Status {
 	log.Infoln("Join is called for mesos executor driver")
 
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
 	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status, nil
+		return driver.status
 	}
 	for driver.getStatus() == mesosproto.Status_DRIVER_RUNNING {
 		driver.cond.Wait()
 	}
-	return driver.status, nil
+	return driver.status
 }
 
 // SendStatusUpdate sends a StatusUpdate message to the slave.
@@ -540,7 +514,8 @@ func (driver *MesosExecutorDriver) slaveExited() {
 func (driver *MesosExecutorDriver) monitorSlave() {
 	for {
 		select {
-		case <-driver.stop:
+		case <-driver.stopCh:
+			driver.slaveHealthChecker.Stop()
 			return
 		case <-driver.slaveHealthChecker.Start():
 			log.Warningf("Slave unhealthy count exceeds the threshold, assuming it has exited\n")

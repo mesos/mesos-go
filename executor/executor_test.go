@@ -68,6 +68,7 @@ func createTestExecutorDriver(t *testing.T) (
 
 	checker := healthchecker.NewMockedHealthChecker()
 	checker.On("Start").Return()
+	checker.On("Stop").Return()
 
 	driver.messenger, driver.slaveHealthChecker = messenger, checker
 	return driver, messenger, checker
@@ -134,15 +135,13 @@ func TestExecutorDriverStartSucceed(t *testing.T) {
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
-	checker.On("Start").Return(nil)
+	checker.On("Start").Return()
+	checker.On("Stop").Return()
 
 	status, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, status)
-
-	status, err = driver.Stop()
-	assert.NoError(t, err)
-	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, status)
+	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, driver.Stop())
 
 	// Sleep 1 second to enable checker.Start() be called.
 	time.Sleep(time.Second)
@@ -157,31 +156,67 @@ func TestExecutorDriverStartSucceed(t *testing.T) {
 func TestExecutorDriverStop(t *testing.T) {
 	statusChan := make(chan mesosproto.Status)
 	driver, messenger, checker := createTestExecutorDriver(t)
-	go func() {
-		st, err := driver.Join()
-		assert.NoError(t, err)
-		statusChan <- st
-	}()
-	st, err := driver.Stop()
-	assert.NoError(t, err)
-	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, st)
-	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, <-statusChan)
 
-	st, err = driver.Start()
+	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Join())
+	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Stop())
+
+	st, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, st)
 	go func() {
-		st, err := driver.Join()
-		assert.NoError(t, err)
+		st := driver.Join()
 		statusChan <- st
 	}()
-	st, err = driver.Stop()
-	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, st)
+	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, driver.Stop())
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, <-statusChan)
+
+	// Stop for the second time, should return directly.
+	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, driver.Stop())
+	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, driver.Abort())
+
+	// Restart should not start.
+	st, err = driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, st)
 
 	messenger.AssertNumberOfCalls(t, "Start", 1)
 	messenger.AssertNumberOfCalls(t, "UPID", 1)
 	messenger.AssertNumberOfCalls(t, "Send", 1)
 	messenger.AssertNumberOfCalls(t, "Stop", 1)
 	checker.AssertNumberOfCalls(t, "Start", 1)
+	checker.AssertNumberOfCalls(t, "Stop", 1)
+}
+
+func TestExecutorDriverAbort(t *testing.T) {
+	statusChan := make(chan mesosproto.Status)
+	driver, messenger, checker := createTestExecutorDriver(t)
+
+	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Join())
+	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Abort())
+
+	st, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, st)
+	go func() {
+		st := driver.Join()
+		statusChan <- st
+	}()
+	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, driver.Abort())
+	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, <-statusChan)
+
+	// Abort for the second time, should return directly.
+	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, driver.Abort())
+	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, driver.Stop())
+
+	// Restart should not start.
+	st, err = driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, st)
+
+	messenger.AssertNumberOfCalls(t, "Start", 1)
+	messenger.AssertNumberOfCalls(t, "UPID", 1)
+	messenger.AssertNumberOfCalls(t, "Send", 1)
+	messenger.AssertNumberOfCalls(t, "Stop", 1)
+	checker.AssertNumberOfCalls(t, "Start", 1)
+	checker.AssertNumberOfCalls(t, "Stop", 1)
 }

@@ -78,7 +78,6 @@ func NewMesosMessenger(upid *upid.UPID) *MesosMessenger {
 		sendingQueue:      make(chan *Message, defaultQueueSize),
 		installedMessages: make(map[string]reflect.Type),
 		installedHandlers: make(map[string]MessageHandler),
-		stop:              make(chan struct{}),
 		tr:                NewHTTPTransporter(upid),
 	}
 }
@@ -118,6 +117,7 @@ func (m *MesosMessenger) Send(upid *upid.UPID, msg proto.Message) error {
 
 // Start starts the messenger.
 func (m *MesosMessenger) Start() error {
+	m.stop = make(chan struct{})
 	errChan := make(chan error)
 	go func() {
 		if err := m.tr.Start(); err != nil {

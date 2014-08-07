@@ -89,3 +89,6 @@ _testmain.go
 *.exe
 *.test
 junit_*
+
+# mesos-go specific
+example_executor

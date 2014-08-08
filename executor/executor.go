@@ -187,6 +187,7 @@ func (driver *MesosExecutorDriver) parseEnviroments() error {
 
 // Start starts the driver.
 func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
+	log.Infon("Starting the executor driver")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -235,7 +236,7 @@ func (driver *MesosExecutorDriver) stop(status mesosproto.Status) {
 
 // Stop stops the driver.
 func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
-	log.Infoln("Stop mesos executor driver")
+	log.Infoln("Stopping the executor driver")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -245,7 +246,7 @@ func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
 
 // Abort aborts the driver.
 func (driver *MesosExecutorDriver) Abort() mesosproto.Status {
-	log.Infoln("Abort mesos executor driver")
+	log.Infoln("Aborting the executor driver")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -255,7 +256,7 @@ func (driver *MesosExecutorDriver) Abort() mesosproto.Status {
 
 // Join blocks the driver until it's either stopped or aborted.
 func (driver *MesosExecutorDriver) Join() mesosproto.Status {
-	log.Infoln("Join is called for mesos executor driver")
+	log.Infoln("Waiting for the executor driver to stop")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -304,7 +305,7 @@ func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskS
 
 // SendFrameworkMessage sends a FrameworkMessage to the slave.
 func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto.Status, error) {
-	log.Infoln("Send framework message")
+	log.Infoln("Sending framework message")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -331,7 +332,7 @@ func (driver *MesosExecutorDriver) Destroy() error {
 }
 
 func (driver *MesosExecutorDriver) registered(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Executor registered")
+	log.Infoln("Executor driver registered")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -346,14 +347,14 @@ func (driver *MesosExecutorDriver) registered(from *upid.UPID, pbMsg proto.Messa
 		return
 	}
 
-	log.Infof("Executor registered on slave %v\n", slaveID)
+	log.Infof("Registered on slave %v\n", slaveID)
 	driver.connected = true
 	driver.connection = uuid.NewUUID()
 	driver.Executor.Registered(driver, executorInfo, frameworkInfo, slaveInfo)
 }
 
 func (driver *MesosExecutorDriver) reregistered(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Executor reregistered")
+	log.Infoln("Executor driver reregistered")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -366,14 +367,14 @@ func (driver *MesosExecutorDriver) reregistered(from *upid.UPID, pbMsg proto.Mes
 		return
 	}
 
-	log.Infof("Executor re-registered on slave %v\n", slaveID)
+	log.Infof("Re-registered on slave %v\n", slaveID)
 	driver.connected = true
 	driver.connection = uuid.NewUUID()
 	driver.Executor.Reregistered(driver, slaveInfo)
 }
 
 func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Executor reconnect")
+	log.Infoln("Executor driver reconnect")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -408,7 +409,7 @@ func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Messag
 }
 
 func (driver *MesosExecutorDriver) runTask(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Executor runTask")
+	log.Infoln("Executor driver runTask")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -430,7 +431,7 @@ func (driver *MesosExecutorDriver) runTask(from *upid.UPID, pbMsg proto.Message)
 }
 
 func (driver *MesosExecutorDriver) killTask(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Executor killTask")
+	log.Infoln("Executor driver killTask")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -442,7 +443,7 @@ func (driver *MesosExecutorDriver) killTask(from *upid.UPID, pbMsg proto.Message
 		return
 	}
 
-	log.Infof("Executor asked to kill task '%v'\n", taskID)
+	log.Infof("Executor driver is asked to kill task '%v'\n", taskID)
 	driver.Executor.KillTask(driver, taskID)
 }
 
@@ -470,7 +471,7 @@ func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(from *upid.UPID, 
 }
 
 func (driver *MesosExecutorDriver) frameworkMessage(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Executor frameworkMessage")
+	log.Infoln("Executor driver received frameworkMessage")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -482,12 +483,12 @@ func (driver *MesosExecutorDriver) frameworkMessage(from *upid.UPID, pbMsg proto
 		return
 	}
 
-	log.Infof("Executor received framework message\n")
+	log.Infof("Executor driver receives framework message\n")
 	driver.Executor.FrameworkMessage(driver, string(data))
 }
 
 func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Executor shutdown")
+	log.Infoln("Executor driver received shutdown")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -501,7 +502,7 @@ func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message
 		return
 	}
 
-	log.Infof("Executor asked to shutdown\n")
+	log.Infof("Executor driver is asked to shutdown\n")
 
 	if !driver.local {
 		// TODO(yifan): go kill.

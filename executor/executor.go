@@ -23,9 +23,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"sync/atomic"
 	"time"
-	"unsafe"
 
 	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/gogoprotobuf/proto"
@@ -76,7 +74,6 @@ type MesosExecutorDriver struct {
 	Executor           Executor
 	mutex              *sync.Mutex
 	cond               *sync.Cond
-	rwlock             *sync.RWMutex
 	stopCh             chan struct{}
 	status             mesosproto.Status
 	messenger          messenger.Messenger
@@ -85,7 +82,7 @@ type MesosExecutorDriver struct {
 	frameworkID        *mesosproto.FrameworkID
 	executorID         *mesosproto.ExecutorID
 	workDir            string
-	connected          int32
+	connected          bool
 	connection         uuid.UUID
 	local              bool
 	directory          string
@@ -101,7 +98,6 @@ func NewMesosExecutorDriver() *MesosExecutorDriver {
 	driver := &MesosExecutorDriver{
 		status:  mesosproto.Status_DRIVER_NOT_STARTED,
 		mutex:   new(sync.Mutex),
-		rwlock:  new(sync.RWMutex),
 		updates: make(map[string]*mesosproto.StatusUpdate),
 		tasks:   make(map[string]*mesosproto.TaskInfo),
 		workDir: ".",
@@ -136,152 +132,6 @@ func (driver *MesosExecutorDriver) init() error {
 	driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
 	driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
 	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
-	return nil
-}
-
-// Start starts the driver.
-func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
-
-	if driver.status != mesosproto.Status_DRIVER_NOT_STARTED {
-		return driver.status, nil
-	}
-
-	// Start the messenger.
-	if err := driver.messenger.Start(); err != nil {
-		log.Errorf("Failed to start the messenger: %v\n", err)
-		return mesosproto.Status_DRIVER_NOT_STARTED, err
-	}
-	driver.self = driver.messenger.UPID()
-
-	// Register with slave.
-	message := &mesosproto.RegisterExecutorMessage{
-		FrameworkId: driver.frameworkID,
-		ExecutorId:  driver.executorID,
-	}
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
-		log.Errorf("Failed to send %v: %v\n", message, err)
-		driver.messenger.Stop()
-		return mesosproto.Status_DRIVER_NOT_STARTED, err
-	}
-
-	// Start monitoring the slave.
-	driver.stopCh = make(chan struct{})
-	go driver.monitorSlave()
-
-	// Set status.
-	driver.setStatus(mesosproto.Status_DRIVER_RUNNING)
-	log.Infoln("Mesos executor is running")
-	return driver.status, nil
-}
-
-func (driver *MesosExecutorDriver) stop(status mesosproto.Status) {
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
-
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return
-	}
-
-	driver.messenger.Stop()
-	// Try to send a stop signal.
-	close(driver.stopCh)
-	driver.setStatus(status)
-	driver.cond.Signal()
-}
-
-// Stop stops the driver.
-func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
-	log.Infoln("Stop mesos executor driver")
-	driver.stop(mesosproto.Status_DRIVER_STOPPED)
-	return driver.status
-}
-
-// Abort aborts the driver.
-func (driver *MesosExecutorDriver) Abort() mesosproto.Status {
-	log.Infoln("Abort mesos executor driver")
-	driver.stop(mesosproto.Status_DRIVER_ABORTED)
-	return driver.status
-}
-
-// Join blocks the driver until it's either stopped or aborted.
-func (driver *MesosExecutorDriver) Join() mesosproto.Status {
-	log.Infoln("Join is called for mesos executor driver")
-
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
-
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status
-	}
-	for driver.getStatus() == mesosproto.Status_DRIVER_RUNNING {
-		driver.cond.Wait()
-	}
-	return driver.status
-}
-
-// SendStatusUpdate sends a StatusUpdate message to the slave.
-func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskStatus) (mesosproto.Status, error) {
-	log.Infoln("Sending status update")
-
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
-
-	if taskStatus.GetState() == mesosproto.TaskState_TASK_STAGING {
-		log.Errorf("Executor is not allowed to send TASK_STAGING status update. Aborting!\n")
-		driver.Abort()
-		err := fmt.Errorf("Attempted to send TASK_STAGING status update")
-		driver.Executor.Error(driver, err.Error())
-		return driver.status, err
-	}
-
-	// Set up status update.
-	update := driver.makeStatusUpdate(taskStatus)
-	log.Infof("Executor sending status update %v\n", update.String())
-
-	// Capture the status update.
-	driver.updates[uuid.UUID(update.GetUuid()).String()] = update
-
-	// Put the status update in the message.
-	message := &mesosproto.StatusUpdateMessage{
-		Update: update,
-		Pid:    proto.String(driver.self.String()),
-	}
-	// Send the message.
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
-		log.Errorf("Failed to send %v: %v\n")
-		return driver.status, err
-	}
-	return driver.status, nil
-}
-
-// SendFrameworkMessage sends a FrameworkMessage to the slave.
-func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto.Status, error) {
-	log.Infoln("Send framework message")
-
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
-
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status, nil
-	}
-	message := &mesosproto.ExecutorToFrameworkMessage{
-		SlaveId:     driver.slaveID,
-		FrameworkId: driver.frameworkID,
-		ExecutorId:  driver.executorID,
-		Data:        []byte(data),
-	}
-	// Send the message.
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
-		log.Errorf("Failed to send %v: %v\n")
-		return driver.status, err
-	}
-	return driver.status, nil
-}
-
-// Destroy destroys the driver. No-op for now.
-func (driver *MesosExecutorDriver) Destroy() error {
 	return nil
 }
 
@@ -335,45 +185,202 @@ func (driver *MesosExecutorDriver) parseEnviroments() error {
 	return nil
 }
 
+// Start starts the driver.
+func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	if driver.status != mesosproto.Status_DRIVER_NOT_STARTED {
+		return driver.status, nil
+	}
+
+	// Start the messenger.
+	if err := driver.messenger.Start(); err != nil {
+		log.Errorf("Failed to start the messenger: %v\n", err)
+		return mesosproto.Status_DRIVER_NOT_STARTED, err
+	}
+	driver.self = driver.messenger.UPID()
+
+	// Register with slave.
+	message := &mesosproto.RegisterExecutorMessage{
+		FrameworkId: driver.frameworkID,
+		ExecutorId:  driver.executorID,
+	}
+	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+		log.Errorf("Failed to send %v: %v\n", message, err)
+		driver.messenger.Stop()
+		return mesosproto.Status_DRIVER_NOT_STARTED, err
+	}
+
+	// Start monitoring the slave.
+	driver.stopCh = make(chan struct{})
+	go driver.monitorSlave()
+
+	// Set status.
+	driver.status = mesosproto.Status_DRIVER_RUNNING
+	log.Infoln("Mesos executor is running")
+	return driver.status, nil
+}
+
+func (driver *MesosExecutorDriver) stop(status mesosproto.Status) {
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return
+	}
+
+	driver.messenger.Stop()
+	close(driver.stopCh)
+	driver.status = status
+	driver.cond.Signal()
+}
+
+// Stop stops the driver.
+func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
+	log.Infoln("Stop mesos executor driver")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	driver.stop(mesosproto.Status_DRIVER_STOPPED)
+	return driver.status
+}
+
+// Abort aborts the driver.
+func (driver *MesosExecutorDriver) Abort() mesosproto.Status {
+	log.Infoln("Abort mesos executor driver")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	driver.stop(mesosproto.Status_DRIVER_ABORTED)
+	return driver.status
+}
+
+// Join blocks the driver until it's either stopped or aborted.
+func (driver *MesosExecutorDriver) Join() mesosproto.Status {
+	log.Infoln("Join is called for mesos executor driver")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+	for driver.status == mesosproto.Status_DRIVER_RUNNING {
+		driver.cond.Wait()
+	}
+	return driver.status
+}
+
+// SendStatusUpdate sends a StatusUpdate message to the slave.
+func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskStatus) (mesosproto.Status, error) {
+	log.Infoln("Sending status update")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	if taskStatus.GetState() == mesosproto.TaskState_TASK_STAGING {
+		log.Errorf("Executor is not allowed to send TASK_STAGING status update. Aborting!\n")
+		driver.Abort()
+		err := fmt.Errorf("Attempted to send TASK_STAGING status update")
+		driver.Executor.Error(driver, err.Error())
+		return driver.status, err
+	}
+
+	// Set up status update.
+	update := driver.makeStatusUpdate(taskStatus)
+	log.Infof("Executor sending status update %v\n", update.String())
+
+	// Capture the status update.
+	driver.updates[uuid.UUID(update.GetUuid()).String()] = update
+
+	// Put the status update in the message.
+	message := &mesosproto.StatusUpdateMessage{
+		Update: update,
+		Pid:    proto.String(driver.self.String()),
+	}
+	// Send the message.
+	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+		log.Errorf("Failed to send %v: %v\n")
+		return driver.status, err
+	}
+	return driver.status, nil
+}
+
+// SendFrameworkMessage sends a FrameworkMessage to the slave.
+func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto.Status, error) {
+	log.Infoln("Send framework message")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return driver.status, nil
+	}
+	message := &mesosproto.ExecutorToFrameworkMessage{
+		SlaveId:     driver.slaveID,
+		FrameworkId: driver.frameworkID,
+		ExecutorId:  driver.executorID,
+		Data:        []byte(data),
+	}
+	// Send the message.
+	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+		log.Errorf("Failed to send %v: %v\n")
+		return driver.status, err
+	}
+	return driver.status, nil
+}
+
+// Destroy destroys the driver. No-op for now.
+func (driver *MesosExecutorDriver) Destroy() error {
+	return nil
+}
+
 func (driver *MesosExecutorDriver) registered(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Executor registered")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	msg := pbMsg.(*mesosproto.ExecutorRegisteredMessage)
 	slaveID := msg.GetSlaveId()
 	executorInfo := msg.GetExecutorInfo()
 	frameworkInfo := msg.GetFrameworkInfo()
 	slaveInfo := msg.GetSlaveInfo()
 
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring registered message from slave %v, because the driver is aborted!\n", slaveID)
 		return
 	}
 
 	log.Infof("Executor registered on slave %v\n", slaveID)
-	driver.setConnected(true)
-	driver.setConnection(uuid.NewUUID())
+	driver.connected = true
+	driver.connection = uuid.NewUUID()
 	driver.Executor.Registered(driver, executorInfo, frameworkInfo, slaveInfo)
 }
 
 func (driver *MesosExecutorDriver) reregistered(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Executor reregistered")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	msg := pbMsg.(*mesosproto.ExecutorReregisteredMessage)
 	slaveID := msg.GetSlaveId()
 	slaveInfo := msg.GetSlaveInfo()
 
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring re-registered message from slave %v, because the driver is aborted!\n", slaveID)
 		return
 	}
 
 	log.Infof("Executor re-registered on slave %v\n", slaveID)
-	driver.setConnected(true)
-	driver.setConnection(uuid.NewUUID())
+	driver.connected = true
+	driver.connection = uuid.NewUUID()
 	driver.Executor.Reregistered(driver, slaveInfo)
 }
 
 func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Executor reconnect")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	msg := pbMsg.(*mesosproto.ReconnectExecutorMessage)
 	slaveID := msg.GetSlaveId()
 
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring reconnect message from slave %v, because the driver is aborted!\n", slaveID)
 		return
 	}
@@ -401,11 +408,15 @@ func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Messag
 }
 
 func (driver *MesosExecutorDriver) runTask(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Executor runTask")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	msg := pbMsg.(*mesosproto.RunTaskMessage)
 	task := msg.GetTask()
 	taskID := task.GetTaskId()
 
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring run task message for task %v because the driver is aborted!\n", taskID)
 		return
 	}
@@ -419,10 +430,14 @@ func (driver *MesosExecutorDriver) runTask(from *upid.UPID, pbMsg proto.Message)
 }
 
 func (driver *MesosExecutorDriver) killTask(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Executor killTask")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	msg := pbMsg.(*mesosproto.KillTaskMessage)
 	taskID := msg.GetTaskId()
 
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring kill task message for task %v, because the driver is aborted!\n", taskID)
 		return
 	}
@@ -432,6 +447,10 @@ func (driver *MesosExecutorDriver) killTask(from *upid.UPID, pbMsg proto.Message
 }
 
 func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Executor statusUpdateAcknowledgement")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	msg := pbMsg.(*mesosproto.StatusUpdateAcknowledgementMessage)
 	log.Infof("Receiving status update acknowledgement %v", msg)
 
@@ -439,7 +458,7 @@ func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(from *upid.UPID, 
 	taskID := msg.GetTaskId()
 	uuid := uuid.UUID(msg.GetUuid())
 
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring status update acknowledgement %v for task %v of framework %v because the driver is aborted!\n",
 			uuid, taskID, frameworkID)
 	}
@@ -451,10 +470,14 @@ func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(from *upid.UPID, 
 }
 
 func (driver *MesosExecutorDriver) frameworkMessage(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Executor frameworkMessage")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	msg := pbMsg.(*mesosproto.FrameworkToExecutorMessage)
 	data := msg.GetData()
 
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring framework message because the driver is aborted!\n")
 		return
 	}
@@ -464,12 +487,16 @@ func (driver *MesosExecutorDriver) frameworkMessage(from *upid.UPID, pbMsg proto
 }
 
 func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Executor shutdown")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
 	_, ok := pbMsg.(*mesosproto.ShutdownExecutorMessage)
 	if !ok {
 		panic("Not a ShutdownExecutorMessage! This should not happen")
 	}
 
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring shutdown message because the driver is aborted!\n")
 		return
 	}
@@ -480,23 +507,21 @@ func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message
 		// TODO(yifan): go kill.
 	}
 	driver.Executor.Shutdown(driver)
-	driver.setStatus(mesosproto.Status_DRIVER_ABORTED)
-	driver.Stop()
+	driver.stop(mesosproto.Status_DRIVER_ABORTED)
 }
 
-// TODO(yifan): There is some race condition here because when slaveExited is called
-// the reregistered may be also running. We cannot use a lock here because driver.Stop
-// also aquires a lock.
-// One way to fix this is to serialize these racy functions.
 func (driver *MesosExecutorDriver) slaveExited() {
-	if driver.getStatus() == mesosproto.Status_DRIVER_ABORTED {
+	log.Infoln("Slave exited")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
 		log.Infof("Ignoring slave exited event because the driver is aborted!\n")
 		return
 	}
 
-	if driver.checkpoint && driver.getConnected() {
-		driver.setConnected(false)
-
+	if driver.checkpoint && driver.connected {
+		driver.connected = false
 		log.Infof("Slave exited, but framework has checkpointing enabled. Waiting %v to reconnect with slave %v",
 			driver.recoveryTimeout, driver.slaveID)
 		time.AfterFunc(driver.recoveryTimeout, func() { driver.recoveryTimeouts(driver.connection) })
@@ -504,11 +529,10 @@ func (driver *MesosExecutorDriver) slaveExited() {
 	}
 
 	log.Infof("Slave exited ... shutting down\n")
-	driver.setConnected(false)
+	driver.connected = false
 	// Clean up
 	driver.Executor.Shutdown(driver)
-	driver.setStatus(mesosproto.Status_DRIVER_ABORTED)
-	driver.Stop()
+	driver.stop(mesosproto.Status_DRIVER_NOT_STARTED)
 }
 
 func (driver *MesosExecutorDriver) monitorSlave() {
@@ -525,21 +549,20 @@ func (driver *MesosExecutorDriver) monitorSlave() {
 	}
 }
 
-// TODO(yifan): There is some race condition here because when recoveryTimeouts is called
-// the reregistered may be also running. We cannot use a lock here because driver.Stop
-// also aquires a lock.
-// One way to fix this is to serialize these racy functions.
 func (driver *MesosExecutorDriver) recoveryTimeouts(connection uuid.UUID) {
-	if driver.getConnected() {
+	log.Infoln("Slave recovery timeouts")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	if driver.connected {
 		return
 	}
 
-	if bytes.Equal(connection, driver.getConnection()) {
+	if bytes.Equal(connection, driver.connection) {
 		log.Infof("Recovery timeout of %v exceeded; Shutting down\n", driver.recoveryTimeout)
 		// Clean up
 		driver.Executor.Shutdown(driver)
-		driver.setStatus(mesosproto.Status_DRIVER_ABORTED)
-		driver.Stop()
+		driver.stop(mesosproto.Status_DRIVER_ABORTED)
 	}
 }
 
@@ -557,37 +580,4 @@ func (driver *MesosExecutorDriver) makeStatusUpdate(taskStatus *mesosproto.TaskS
 		Uuid:        uuid.NewUUID(),
 	}
 	return update
-}
-
-func (driver *MesosExecutorDriver) getStatus() mesosproto.Status {
-	return mesosproto.Status(atomic.LoadInt32((*int32)(unsafe.Pointer(&driver.status))))
-}
-
-func (driver *MesosExecutorDriver) setStatus(status mesosproto.Status) {
-	atomic.StoreInt32((*int32)((unsafe.Pointer(&driver.status))), int32(status))
-
-}
-
-func (driver *MesosExecutorDriver) getConnected() bool {
-	return atomic.LoadInt32(&driver.connected) == 1
-}
-
-func (driver *MesosExecutorDriver) setConnected(connected bool) {
-	if connected {
-		atomic.StoreInt32(&driver.connected, 1)
-		return
-	}
-	atomic.StoreInt32(&driver.connected, 0)
-}
-
-func (driver *MesosExecutorDriver) getConnection() uuid.UUID {
-	driver.rwlock.RLock()
-	defer driver.rwlock.RUnlock()
-	return driver.connection
-}
-
-func (driver *MesosExecutorDriver) setConnection(connection uuid.UUID) {
-	driver.rwlock.Lock()
-	defer driver.rwlock.Unlock()
-	driver.connection = connection
 }

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mesosphere/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func generateRandomString() string {

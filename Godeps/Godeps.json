@@ -19,20 +19,16 @@
 			"Rev": "d1c4472bf2efd3826f2b5bdcc02d8416798d678c"
 		},
 		{
-			"ImportPath": "github.com/mesosphere/testify/assert",
-			"Rev": "c3820d20c7b66f5ec9eaf73aa6625e223c8d46f1"
-		},
-		{
-			"ImportPath": "github.com/mesosphere/testify/mock",
-			"Rev": "c3820d20c7b66f5ec9eaf73aa6625e223c8d46f1"
-		},
-		{
 			"ImportPath": "github.com/stretchr/objx",
 			"Rev": "cbeaeb16a013161a98496fad62933b1d21786672"
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/assert",
-			"Rev": "045faa6b5295a1b963231eb764df82b65bc1e0b7"
+			"Rev": "da775f0337260efbac0fce9764cee5bd3e8c85b8"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/mock",
+			"Rev": "da775f0337260efbac0fce9764cee5bd3e8c85b8"
 		}
 	]
 }

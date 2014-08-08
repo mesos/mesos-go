@@ -73,6 +73,9 @@ func (exec *ExampleExecutor) Error(executor.ExecutorDriver, string) {
 func main() {
 	flag.Parse()
 	driver := executor.NewMesosExecutorDriver()
+	if driver == nil {
+		return
+	}
 	driver.Executor = new(ExampleExecutor)
 	_, err := driver.Start()
 	if err != nil {

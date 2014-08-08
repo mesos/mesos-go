@@ -28,7 +28,7 @@ import (
 	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
-	"github.com/mesosphere/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 var (

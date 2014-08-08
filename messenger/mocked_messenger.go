@@ -23,7 +23,7 @@ import (
 
 	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/mesos/mesos-go/upid"
-	"github.com/mesosphere/testify/mock"
+	"github.com/stretchr/testify/mock"
 )
 
 type message struct {

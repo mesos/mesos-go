@@ -20,7 +20,7 @@ package executor
 
 import (
 	"github.com/mesos/mesos-go/mesosproto"
-	"github.com/mesosphere/testify/mock"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockedExecutor is used for testing the executor driver.

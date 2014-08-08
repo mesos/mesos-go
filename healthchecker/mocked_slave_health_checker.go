@@ -21,7 +21,7 @@ package healthchecker
 import (
 	"time"
 
-	"github.com/mesosphere/testify/mock"
+	"github.com/stretchr/testify/mock"
 	"github.com/mesos/mesos-go/upid"
 )
 

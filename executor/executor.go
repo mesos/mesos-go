@@ -187,7 +187,7 @@ func (driver *MesosExecutorDriver) parseEnviroments() error {
 
 // Start starts the driver.
 func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
-	log.Infon("Starting the executor driver")
+	log.Infoln("Starting the executor driver")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -511,8 +511,8 @@ func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message
 	driver.stop(mesosproto.Status_DRIVER_ABORTED)
 }
 
-func (driver *MesosExecutorDriver) slaveExited() {
-	log.Infoln("Slave exited")
+func (driver *MesosExecutorDriver) slaveDisconnected() {
+	log.Infoln("Slave disconnected")
 	driver.mutex.Lock()
 	defer driver.mutex.Unlock()
 
@@ -525,6 +525,7 @@ func (driver *MesosExecutorDriver) slaveExited() {
 		driver.connected = false
 		log.Infof("Slave exited, but framework has checkpointing enabled. Waiting %v to reconnect with slave %v",
 			driver.recoveryTimeout, driver.slaveID)
+		driver.Executor.Disconnected(driver)
 		time.AfterFunc(driver.recoveryTimeout, func() { driver.recoveryTimeouts(driver.connection) })
 		return
 	}
@@ -543,9 +544,9 @@ func (driver *MesosExecutorDriver) monitorSlave() {
 			driver.slaveHealthChecker.Stop()
 			return
 		case <-driver.slaveHealthChecker.Start():
-			log.Warningf("Slave unhealthy count exceeds the threshold, assuming it has exited\n")
+			log.Warningf("Slave unhealthy count exceeds the threshold, assuming it is disconnected\n")
 			driver.slaveHealthChecker.Pause()
-			driver.slaveExited()
+			driver.slaveDisconnected()
 		}
 	}
 }

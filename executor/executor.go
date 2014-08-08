@@ -275,8 +275,6 @@ func (driver *MesosExecutorDriver) Join() mesosproto.Status {
 // SendStatusUpdate sends a StatusUpdate message to the slave.
 func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskStatus) (mesosproto.Status, error) {
 	log.Infoln("Sending status update")
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
 
 	if taskStatus.GetState() == mesosproto.TaskState_TASK_STAGING {
 		log.Errorf("Executor is not allowed to send TASK_STAGING status update. Aborting!\n")
@@ -309,8 +307,6 @@ func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskS
 // SendFrameworkMessage sends a FrameworkMessage to the slave.
 func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto.Status, error) {
 	log.Infoln("Sending framework message")
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
 
 	if driver.status != mesosproto.Status_DRIVER_RUNNING {
 		return driver.status, nil

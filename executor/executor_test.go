@@ -138,10 +138,13 @@ func TestExecutorDriverStartSucceed(t *testing.T) {
 	checker.On("Start").Return()
 	checker.On("Stop").Return()
 
+	assert.True(t, driver.stopped)
 	status, err := driver.Start()
+	assert.False(t, driver.stopped)
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, status)
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, driver.Stop())
+	assert.True(t, driver.stopped)
 
 	// Sleep 1 second to enable checker.Start() be called.
 	time.Sleep(time.Second)
@@ -160,7 +163,9 @@ func TestExecutorDriverStop(t *testing.T) {
 	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Join())
 	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Stop())
 
+	assert.True(t, driver.stopped)
 	st, err := driver.Start()
+	assert.False(t, driver.stopped)
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, st)
 	go func() {
@@ -169,13 +174,16 @@ func TestExecutorDriverStop(t *testing.T) {
 	}()
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, driver.Stop())
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, <-statusChan)
+	assert.True(t, driver.stopped)
 
 	// Stop for the second time, should return directly.
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, driver.Stop())
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, driver.Abort())
+	assert.True(t, driver.stopped)
 
 	// Restart should not start.
 	st, err = driver.Start()
+	assert.True(t, driver.stopped)
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, st)
 
@@ -194,7 +202,9 @@ func TestExecutorDriverAbort(t *testing.T) {
 	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Join())
 	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Abort())
 
+	assert.True(t, driver.stopped)
 	st, err := driver.Start()
+	assert.False(t, driver.stopped)
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, st)
 	go func() {
@@ -203,13 +213,16 @@ func TestExecutorDriverAbort(t *testing.T) {
 	}()
 	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, driver.Abort())
 	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, <-statusChan)
+	assert.True(t, driver.stopped)
 
 	// Abort for the second time, should return directly.
 	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, driver.Abort())
 	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, driver.Stop())
+	assert.True(t, driver.stopped)
 
 	// Restart should not start.
 	st, err = driver.Start()
+	assert.True(t, driver.stopped)
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, st)
 

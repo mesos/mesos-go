@@ -16,13 +16,8 @@ func generateRandomString() string {
 	return strings.Replace(string(b), "@", "", -1)
 }
 
-func TestUPID(t *testing.T) {
-	u, err := Parse("mesos@localhost:5050")
-	assert.NotNil(t, u)
-	assert.NoError(t, err)
-	assert.Equal(t, "mesos@localhost:5050", u.String())
-
-	u, err = Parse("mesos@foo:bar")
+func TestUPIDParse(t *testing.T) {
+	u, err := Parse("mesos@foo:bar")
 	assert.Nil(t, u)
 	assert.Error(t, err)
 
@@ -33,17 +28,6 @@ func TestUPID(t *testing.T) {
 	u, err = Parse("mesos@localhost")
 	assert.Nil(t, u)
 	assert.Error(t, err)
-
-	u1, err := Parse("mesos@localhost:5050")
-	u2, err := Parse("mesos@localhost:5050")
-	u3, err := Parse("mesos1@localhost:5050")
-	u4, err := Parse("mesos@mesos.com:5050")
-	u5, err := Parse("mesos@localhost:5051")
-
-	assert.True(t, u1.Equal(u2))
-	assert.False(t, u1.Equal(u3))
-	assert.False(t, u1.Equal(u4))
-	assert.False(t, u1.Equal(u5))
 
 	// Simple fuzzy test.
 	for i := 0; i < 100000; i++ {
@@ -56,4 +40,25 @@ func TestUPID(t *testing.T) {
 		assert.Error(t, err)
 	}
 
+}
+
+func TestUPIDString(t *testing.T) {
+	u, err := Parse("mesos@localhost:5050")
+	assert.NotNil(t, u)
+	assert.NoError(t, err)
+	assert.Equal(t, "mesos@localhost:5050", u.String())
+}
+
+func TestUPIDEqual(t *testing.T) {
+	u1, err := Parse("mesos@localhost:5050")
+	u2, err := Parse("mesos@localhost:5050")
+	u3, err := Parse("mesos1@localhost:5050")
+	u4, err := Parse("mesos@mesos.com:5050")
+	u5, err := Parse("mesos@localhost:5051")
+	assert.NoError(t, err)
+
+	assert.True(t, u1.Equal(u2))
+	assert.False(t, u1.Equal(u3))
+	assert.False(t, u1.Equal(u4))
+	assert.False(t, u1.Equal(u5))
 }

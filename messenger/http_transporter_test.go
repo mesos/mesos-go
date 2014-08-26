@@ -75,6 +75,8 @@ func TestTransporterStartAndSend(t *testing.T) {
 			ctrl <- true
 		}()
 	})
+	err = receiver.Listen()
+	assert.NoError(t, err)
 
 	go func() {
 		err = receiver.Start()
@@ -114,6 +116,8 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 	assert.NoError(t, err)
 	receiver := NewHTTPTransporter(rcvPid)
 	receiver.Install(msgName)
+	err = receiver.Listen()
+	assert.NoError(t, err)
 
 	go func() {
 		msg := receiver.Recv()
@@ -155,6 +159,8 @@ func TestTransporterStartAndStop(t *testing.T) {
 	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
 	assert.NoError(t, err)
 	receiver := NewHTTPTransporter(rcvPid)
+	err = receiver.Listen()
+	assert.NoError(t, err)
 
 	go func() {
 		err = receiver.Start()

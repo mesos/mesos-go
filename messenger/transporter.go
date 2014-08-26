@@ -25,6 +25,7 @@ import (
 // Transporter defines the interfaces that should be implemented.
 type Transporter interface {
 	Send(msg *Message) error
+	Listen() error
 	Recv() *Message
 	Install(messageName string)
 	Start() error

@@ -1,4 +1,4 @@
-Go bindings for Apache Mesos
+Go bindings for Apache Mesos [![Build Status](https://travis-ci.org/mesosphere/mesos-go.svg?branch=master)](https://travis-ci.org/mesosphere/mesos-go)
 ========
 
 Early Go language bindings for Apache Mesos.

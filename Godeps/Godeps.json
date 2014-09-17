@@ -1,0 +1,14 @@
+{
+	"ImportPath": "github.com/mesosphere/mesos-go",
+	"GoVersion": "go1.3",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/goprotobuf/proto",
+			"Comment": "go.r60-146",
+			"Rev": "f5ac12b15e49095c60ae0acc6da0e28d47e2a29f"
+		}
+	]
+}

@@ -5,28 +5,17 @@ Early Go language bindings for Apache Mesos.
 
 ## Install instructions
 
-ssh into your current leading master node.
+ssh into your current leading master node.  
 Record the IP of the HDFS name node to publish your built executor.
 
-### Install build dependencies
 
-Install protoc-gen-go, you will also need protobuf, protobuf-c, gcc and g++
+### Fetch and build the bindings and examples
 
-```bash
-go get code.google.com/p/goprotobuf/{proto,protoc-gen-go}
-```
-
-### Fetch and compile example framework and executor
+goprotobuf will be built automatically as a dependency.  
+You will also need protobuf >= 2.5, as well as GCC
 
 ```bash
-go get github.com/mesosphere/mesos-go/example_framework
-go get github.com/mesosphere/mesos-go/example_executor
-```
-
-### Use library itself
-
-```bash
-go get github.com/mesosphere/mesos-go/mesos
+go get -v github.com/mesosphere/mesos-go/example_framework/...
 ```
 
 ### Install example executor in HDFS

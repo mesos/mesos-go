@@ -282,6 +282,39 @@ func (driver *MesosSchedulerDriver) registered(from *upid.UPID, pbMsg proto.Mess
 
 // Starts the scheduler driver. Blocked until either stopped or aborted.
 // Returns the status of the scheduler driver.
-func (s *MesosSchedulerDriver) Start() mesos.Status {
-	return mesos.Status_DRIVER_NOT_STARTED
+func (driver *MesosSchedulerDriver) Start() mesos.Status {
+	log.Infoln("Starting the scheduler driver")
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	if driver.status != mesos.Status_DRIVER_NOT_STARTED {
+		return driver.status
+	}
+
+	// Start the messenger.
+	if err := driver.messenger.Start(); err != nil {
+		log.Errorf("Schduler failed to start the messenger: %v\n", err)
+		driver.status = mesos.Status_DRIVER_NOT_STARTED
+		return driver.status
+	}
+	driver.self = driver.messenger.UPID()
+
+	// register framework
+	if err := driver.registerFramework(); err != nil {
+		log.Errorf("Failed to send RegisterFramework message: %v\n", err)
+		driver.messenger.Stop()
+		driver.status = mesos.Status_DRIVER_NOT_STARTED
+	} else {
+		driver.status = mesos.Status_DRIVER_RUNNING
+		driver.stopCh = make(chan struct{})
+		driver.stopped = false
+		log.Infoln("Mesos executor is running")
+	}
+
+	return driver.status
+}
+
+func (driver *MesosSchedulerDriver) registerFramework() error {
+	message := &mesos.RegisterFrameworkMessage{Framework: driver.FrameworkInfo}
+	return driver.messenger.Send(driver.MasterUPID, message)
 }

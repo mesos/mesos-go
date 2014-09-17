@@ -1,0 +1,13 @@
+language: go
+before_install:
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv C7917B12
+  - DISTRO=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
+  - CODENAME=$(lsb_release -cs)
+  - echo "deb http://repos.mesosphere.io/${DISTRO} ${CODENAME} main" | sudo tee /etc/apt/sources.list.d/mesos.list
+  - echo "deb http://ppa.launchpad.net/chris-lea/protobuf/${DISTRO} ${CODENAME} main" | sudo tee /etc/apt/sources.list.d/protobuf.list
+  - sudo apt-get -y update
+install:
+  - sudo apt-get -y install libprotobuf-dev
+  - sudo apt-get -y install mesos
+  - go get -d -v ./... && go build -v ./...

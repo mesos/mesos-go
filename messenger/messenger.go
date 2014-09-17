@@ -117,6 +117,12 @@ func (m *MesosMessenger) Send(upid *upid.UPID, msg proto.Message) error {
 
 // Start starts the messenger.
 func (m *MesosMessenger) Start() error {
+	if err := m.tr.Listen(); err != nil {
+		log.Errorf("Failed to start messenger: %v\n", err)
+		return err
+	}
+	m.upid = m.tr.UPID()
+
 	m.stop = make(chan struct{})
 	errChan := make(chan error)
 	go func() {
@@ -130,8 +136,6 @@ func (m *MesosMessenger) Start() error {
 		return err
 	case <-time.After(preparePeriod):
 	}
-
-	m.upid = m.tr.UPID()
 	for i := 0; i < sendRoutines; i++ {
 		go m.sendLoop()
 	}

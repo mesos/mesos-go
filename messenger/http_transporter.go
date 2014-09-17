@@ -79,25 +79,29 @@ func (t *HTTPTransporter) Install(msgName string) {
 	t.mux.HandleFunc(requestURI, t.messageHandler)
 }
 
-// Start starts the http transporter. This will block, should be put
-// in a goroutine.
-func (t *HTTPTransporter) Start() error {
+// Listen starts listen on UPID. If UPID is empty, the transporter
+// will listen on a random port, and then fill the UPID with the
+// host:port it is listening.
+func (t *HTTPTransporter) Listen() error {
 	// NOTE: Explicitly specifis IPv4 because Libprocess
 	// only supports IPv4 for now.
 	ln, err := net.Listen("tcp4", net.JoinHostPort(t.upid.Host, t.upid.Port))
 	if err != nil {
+		log.Errorf("HTTPTransporter failed to listen: %v\n", err)
 		return err
 	}
 	// Save the host:port in case they are not specified in upid.
-	host, port, err := net.SplitHostPort(ln.Addr().String())
-	if err != nil {
-		return err
-	}
+	host, port, _ := net.SplitHostPort(ln.Addr().String())
 	t.upid.Host, t.upid.Port = host, port
 	t.listener = ln
+	return nil
+}
 
+// Start starts the http transporter. This will block, should be put
+// in a goroutine.
+func (t *HTTPTransporter) Start() error {
 	// TODO(yifan): Set read/write deadline.
-	if err := http.Serve(ln, t.mux); err != nil {
+	if err := http.Serve(t.listener, t.mux); err != nil {
 		return err
 	}
 	return nil

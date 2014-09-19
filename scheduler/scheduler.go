@@ -32,6 +32,66 @@ import (
 	"time"
 )
 
+type eventType int
+type actionType int
+
+const (
+	// master-originated event messages
+	eventFrameworkRegistered eventType = iota + 100
+	eventFrameworkReregestiered
+	eventResourceOffers
+	eventRescindRessourceOffer
+	eventStatusUpdate
+	eventExecutorToFramework
+	eventLostSlave
+
+	// driver-originated actions
+	actionStartDriver actionType = iota + 200
+	actionStopDriver
+	actionAbortDriver
+	actionJoinDriver
+	actionRequestResources
+	actionKillTask
+	actionLaunchTasks
+	actionDeclineOffer
+	actionReviveOffers
+	actionSendFrameworkMessage
+	actionReconcileTask
+)
+
+type mesosEvent struct {
+	evnType eventType
+	from    *upid.UPID
+	msg     proto.Message
+}
+
+type response struct {
+	stat mesos.Status
+	err  error
+}
+
+type action struct {
+	acType actionType
+	param  interface{}
+	respCh chan *response
+}
+
+func newMesosEvent(evnType eventType, from *upid.UPID, msg proto.Message) *mesosEvent {
+	return &mesosEvent{
+		evnType: evnType,
+		from:    from,
+		msg:     msg,
+	}
+}
+
+func newAction(acType actionType, param interface{}) *action {
+	return &action{
+		acType: acType,
+		param:  param,
+		respCh: make(chan *response),
+	}
+}
+
 // Abstract interface for connecting a scheduler to Mesos. This
 // interface is used both to manage the scheduler's lifecycle (start
 // it, stop it, or wait for it to finish) and to interact with Mesos
@@ -147,7 +207,8 @@ type MesosSchedulerDriver struct {
 	self            *upid.UPID
 	mutex           *sync.Mutex
 	cond            *sync.Cond
-	stopCh          chan struct{}
+	eventCh         chan *mesosEvent
+	actionCh        chan *action
 	stopped         bool
 	status          mesos.Status
 	messenger       messenger.Messenger
@@ -203,10 +264,11 @@ func NewMesosSchedulerDriver(
 	driver := &MesosSchedulerDriver{
 		Scheduler:     sched,
 		FrameworkInfo: framework,
+		eventCh:       make(chan *mesosEvent, 1024),
+		actionCh:      make(chan *action, 1024),
 		status:        mesos.Status_DRIVER_NOT_STARTED,
 		stopped:       true,
 		connected:     false,
-		mutex:         new(sync.Mutex),
 		updates:       make(map[string]*mesos.StatusUpdate),
 		tasks:         make(map[string]*mesos.TaskInfo),
 		messenger:     messenger.NewMesosMessenger(&upid.UPID{ID: "scheduler(1)"}),
@@ -218,8 +280,10 @@ func NewMesosSchedulerDriver(
 		driver.MasterUPID = m
 	}
 
-	driver.messenger = messenger.NewMesosMessenger(&upid.UPID{ID: "executor(1)"})
-
+	if err := driver.init(); err != nil {
+		log.Errorf("Failed to initialize the scheduler driver: %v\n", err)
+		return nil, err
+	}
 	return driver, nil
 }
 
@@ -235,7 +299,7 @@ func (driver *MesosSchedulerDriver) init() error {
 	// }
 
 	// Install handlers.
-	driver.messenger.Install(driver.registered, &mesos.ExecutorRegisteredMessage{})
+	driver.messenger.Install(driver.dispatchFrameworkRegistered, &mesos.FrameworkRegisteredMessage{})
 	// driver.messenger.Install(driver.reregistered, &mesosproto.ExecutorReregisteredMessage{})
 	// driver.messenger.Install(driver.reconnect, &mesosproto.ReconnectExecutorMessage{})
 	// driver.messenger.Install(driver.runTask, &mesosproto.RunTaskMessage{})
@@ -244,13 +308,39 @@ func (driver *MesosSchedulerDriver) init() error {
 	// driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
 	// driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
 	// driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
+
+	go driver.eventLoop()
 	return nil
 }
 
-func (driver *MesosSchedulerDriver) registered(from *upid.UPID, pbMsg proto.Message) {
+func (driver *MesosSchedulerDriver) eventLoop() {
+
+	for {
+		select {
+		//case <-driver.destroyCh:
+		//return
+		case e := <-driver.eventCh:
+			switch e.evnType {
+			case eventFrameworkRegistered:
+				driver.handleFrameworkRegistered(e.from, e.msg)
+			}
+
+		case a := <-driver.actionCh:
+			switch a.acType {
+			// dispatch events
+			case actionStartDriver:
+				a.respCh <- driver.doStart()
+			}
+		}
+	}
+}
+
+func (driver *MesosSchedulerDriver) dispatchFrameworkRegistered(from *upid.UPID, msg proto.Message) {
+	driver.eventCh <- newMesosEvent(eventFrameworkRegistered, from, msg)
+}
+
+func (driver *MesosSchedulerDriver) handleFrameworkRegistered(from *upid.UPID, pbMsg proto.Message) {
 	log.Infoln("Scheduler driver registered")
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
 
 	msg := pbMsg.(*mesos.FrameworkRegisteredMessage)
 	masterInfo := msg.GetMasterInfo()
@@ -284,34 +374,48 @@ func (driver *MesosSchedulerDriver) registered(from *upid.UPID, pbMsg proto.Mess
 // Returns the status of the scheduler driver.
 func (driver *MesosSchedulerDriver) Start() mesos.Status {
 	log.Infoln("Starting the scheduler driver")
-	driver.mutex.Lock()
-	defer driver.mutex.Unlock()
+	act := newAction(actionStartDriver, nil)
+	driver.actionCh <- act
+	respCh := <-act.respCh
+	return respCh.stat
+}
+
+func (driver *MesosSchedulerDriver) doStart() *response {
+	log.Infoln("Starting the scheduler driver")
 
 	if driver.status != mesos.Status_DRIVER_NOT_STARTED {
-		return driver.status
+		return &response{driver.status, nil}
 	}
 
 	// Start the messenger.
 	if err := driver.messenger.Start(); err != nil {
 		log.Errorf("Schduler failed to start the messenger: %v\n", err)
 		driver.status = mesos.Status_DRIVER_NOT_STARTED
-		return driver.status
+		return &response{driver.status, err}
 	}
 	driver.self = driver.messenger.UPID()
 
 	// register framework
-	if err := driver.registerFramework(); err != nil {
+	message := &mesos.RegisterFrameworkMessage{
+		Framework: driver.FrameworkInfo,
+	}
+
+	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
 		log.Errorf("Failed to send RegisterFramework message: %v\n", err)
 		driver.messenger.Stop()
 		driver.status = mesos.Status_DRIVER_NOT_STARTED
-	} else {
-		driver.status = mesos.Status_DRIVER_RUNNING
-		driver.stopCh = make(chan struct{})
-		driver.stopped = false
-		log.Infoln("Mesos executor is running")
+		return &response{driver.status, err}
 	}
 
-	return driver.status
+	driver.status = mesos.Status_DRIVER_RUNNING
+	//driver.stopCh = make(chan struct{})
+	driver.stopped = false
+	log.Infoln("Mesos executor is running")
+
+	// TODO(VV) Monitor Master Connection
+	// go driver.monitorMaster()
+
+	return &response{driver.status, nil}
 }
 
 func (driver *MesosSchedulerDriver) registerFramework() error {

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/user"
 	"testing"
+	"time"
 )
 
 var (
@@ -49,9 +50,6 @@ func TestSchedulerDriverNew_WithFrameworkInfo_Override(t *testing.T) {
 
 func TestSchedulerDriverStartOK(t *testing.T) {
 	sched := &Scheduler{}
-	sched.Registered = func(SchedulerDriver, *mesos.FrameworkID, *mesos.MasterInfo) {
-
-	}
 
 	messenger := messenger.NewMockedMessenger()
 	messenger.On("Start").Return(nil)
@@ -64,49 +62,113 @@ func TestSchedulerDriverStartOK(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
-	fmt.Println("Starting sched driver...")
 	stat := driver.Start()
 	assert.False(t, driver.stopped)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 }
 
-// func TestSchedulerDriverStartWithMessengerFailure(t *testing.T) {
-// 	sched := &Scheduler{}
+func TestSchedulerDriverStartWithMessengerFailure(t *testing.T) {
+	sched := &Scheduler{}
 
-// 	messenger := messenger.NewMockedMessenger()
-// 	messenger.On("Start").Return(fmt.Errorf("Failed to start messenger"))
-// 	messenger.On("Stop").Return()
+	messenger := messenger.NewMockedMessenger()
+	messenger.On("Start").Return(fmt.Errorf("Failed to start messenger"))
+	messenger.On("Stop").Return()
 
-// 	driver, err := NewMesosSchedulerDriver(sched, framework, master, nil)
-// 	driver.messenger = messenger
-// 	assert.NoError(t, err)
-// 	assert.True(t, driver.stopped)
+	driver, err := NewMesosSchedulerDriver(sched, framework, master, nil)
+	driver.messenger = messenger
+	assert.NoError(t, err)
+	assert.True(t, driver.stopped)
 
-// 	stat := driver.Start()
-// 	assert.True(t, driver.stopped)
-// 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, driver.status)
-// 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
+	stat := driver.Start()
+	assert.True(t, driver.stopped)
+	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, driver.status)
+	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
 
-// }
+}
 
-// func TestSchedulerDriverStartWithRegistrationFailure(t *testing.T) {
-// 	sched := &Scheduler{}
+func TestSchedulerDriverStartWithRegistrationFailure(t *testing.T) {
+	sched := &Scheduler{}
 
-// 	// Set expections and return values.
-// 	messenger := messenger.NewMockedMessenger()
-// 	messenger.On("Start").Return(nil)
-// 	messenger.On("UPID").Return(&upid.UPID{})
-// 	messenger.On("Send").Return(fmt.Errorf("messenger failed to send"))
-// 	messenger.On("Stop").Return(nil)
+	// Set expections and return values.
+	messenger := messenger.NewMockedMessenger()
+	messenger.On("Start").Return(nil)
+	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("Send").Return(fmt.Errorf("messenger failed to send"))
+	messenger.On("Stop").Return(nil)
 
-// 	driver, err := NewMesosSchedulerDriver(sched, framework, master, nil)
-// 	driver.messenger = messenger
-// 	assert.NoError(t, err)
-// 	assert.True(t, driver.stopped)
+	driver, err := NewMesosSchedulerDriver(sched, framework, master, nil)
 
-// 	stat := driver.Start()
-// 	assert.True(t, driver.stopped)
-// 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, driver.status)
-// 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
+	driver.messenger = messenger
+	assert.NoError(t, err)
+	assert.True(t, driver.stopped)
 
-// }
+	stat := driver.Start()
+	assert.True(t, driver.stopped)
+	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, driver.status)
+	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
+
+}
+
+func TestSchedulerDriverJoinUnstarted(t *testing.T) {
+	driver, err := NewMesosSchedulerDriver(&Scheduler{}, framework, master, nil)
+	assert.NoError(t, err)
+	assert.True(t, driver.stopped)
+
+	stat := driver.Join()
+	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
+}
+
+func TestSchedulerDriverJoinOK(t *testing.T) {
+	// Set expections and return values.
+	messenger := messenger.NewMockedMessenger()
+	messenger.On("Start").Return(nil)
+	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("Send").Return(nil)
+	messenger.On("Stop").Return(nil)
+
+	driver, err := NewMesosSchedulerDriver(&Scheduler{}, framework, master, nil)
+	driver.messenger = messenger
+	assert.NoError(t, err)
+	assert.True(t, driver.stopped)
+
+	stat := driver.Start()
+	assert.False(t, driver.stopped)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+
+	go func() {
+		stat := driver.Join()
+		assert.Equal(t, mesos.Status_DRIVER_STOPPED, stat)
+	}()
+
+	driver.status = mesos.Status_DRIVER_STOPPED
+	close(driver.stopCh)
+	time.Sleep(time.Millisecond * 1)
+}
+
+func TestSchedulerDriverRun(t *testing.T) {
+	// Set expections and return values.
+	messenger := messenger.NewMockedMessenger()
+	messenger.On("Start").Return(nil)
+	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("Send").Return(nil)
+	messenger.On("Stop").Return(nil)
+
+	driver, err := NewMesosSchedulerDriver(&Scheduler{}, framework, master, nil)
+	driver.messenger = messenger
+	assert.NoError(t, err)
+	assert.True(t, driver.stopped)
+
+	go func() {
+		stat := driver.Run()
+		assert.Equal(t, mesos.Status_DRIVER_STOPPED, stat)
+	}()
+	time.Sleep(time.Millisecond * 1)
+
+	assert.False(t, driver.stopped)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.status)
+
+	// close it all.
+	driver.status = mesos.Status_DRIVER_STOPPED
+	close(driver.stopCh)
+	time.Sleep(time.Millisecond * 1)
+}

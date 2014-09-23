@@ -59,6 +59,7 @@ const (
 	actionReconcileTask
 )
 
+// mesosEvent event sent/received to master/from slave.
 type mesosEvent struct {
 	evnType eventType
 	from    *upid.UPID
@@ -109,7 +110,7 @@ type SchedulerDriver interface {
 	// running (for some framework specific failover timeout) allowing the
 	// scheduler to reconnect (possibly in the same process, or from a
 	// different process, for example, on a different machine).
-	//Stop(failover bool) mesos.Status
+	Stop(failover bool) mesos.Status
 
 	// Aborts the driver so that no more callbacks can be made to the
 	// scheduler. The semantics of abort and stop have deliberately been
@@ -118,16 +119,16 @@ type SchedulerDriver interface {
 	// instantiate and start another driver if desired (from within the
 	// same process). Note that 'Stop()' is not automatically called
 	// inside 'Abort()'.
-	//Abort() mesos.Status
+	Abort() mesos.Status
 
 	// Waits for the driver to be stopped or aborted, possibly
 	// _blocking_ the current thread indefinitely. The return status of
 	// this function can be used to determine if the driver was aborted
 	// (see mesos.proto for a description of Status).
-	//Join() mesos.Status
+	Join() mesos.Status
 
 	// Starts and immediately joins (i.e., blocks on) the driver.
-	//Run() mesos.Status
+	Run() mesos.Status
 
 	// Requests resources from Mesos (see mesos.proto for a description
 	// of Request and how, for example, to request resources
@@ -143,15 +144,14 @@ type SchedulerDriver interface {
 	// provided. Note that all offers must belong to the same slave.
 	// Invoking this function with an empty collection of tasks declines
 	// offers in their entirety (see Scheduler::declineOffer).
-	//LaunchTasks(offerIDs []*mesos.OfferID, tasks []*mesos.TaskInfo,
-	//	filters *mesos.Filters) mesos.Status
+	LaunchTasks(offerIDs []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) mesos.Status
 
 	// Kills the specified task. Note that attempting to kill a task is
 	// currently not reliable. If, for example, a scheduler fails over
 	// while it was attempting to kill a task it will need to retry in
 	// the future. Likewise, if unregistered / disconnected, the request
 	// will be dropped (these semantics may be changed in the future).
-	//KillTask(taskID *mesos.TaskID) mesos.Status
+	KillTask(taskID *mesos.TaskID) mesos.Status
 
 	// Declines an offer in its entirety and applies the specified
 	// filters on the resources (see mesos.proto for a description of
@@ -299,7 +299,7 @@ func (driver *MesosSchedulerDriver) init() error {
 	// }
 
 	// Install handlers.
-	driver.messenger.Install(driver.dispatchFrameworkRegistered, &mesos.FrameworkRegisteredMessage{})
+	driver.messenger.Install(driver.handleFrameworkRegisteredEvent, &mesos.FrameworkRegisteredMessage{})
 	// driver.messenger.Install(driver.reregistered, &mesosproto.ExecutorReregisteredMessage{})
 	// driver.messenger.Install(driver.reconnect, &mesosproto.ReconnectExecutorMessage{})
 	// driver.messenger.Install(driver.runTask, &mesosproto.RunTaskMessage{})
@@ -322,26 +322,28 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 		case e := <-driver.eventCh:
 			switch e.evnType {
 			case eventFrameworkRegistered:
-				driver.handleFrameworkRegistered(e.from, e.msg)
+				driver.frameworkRegistered(e.from, e.msg)
 			}
 
 		case a := <-driver.actionCh:
 			switch a.acType {
 			// dispatch events
-			case actionStartDriver:
-				a.respCh <- driver.doStart()
-			case actionJoinDriver:
-				a.respCh <- driver.doJoin()
+			// case actionStartDriver:
+			// 	a.respCh <- driver.doStart()
+			// case actionJoinDriver:
+			// 	a.respCh <- driver.doJoin()
+			// case actionStopDriver:
+			// 	a.respCh <- driver.doStop(a.param)
 			}
 		}
 	}
 }
 
-func (driver *MesosSchedulerDriver) dispatchFrameworkRegistered(from *upid.UPID, msg proto.Message) {
+func (driver *MesosSchedulerDriver) handleFrameworkRegisteredEvent(from *upid.UPID, msg proto.Message) {
 	driver.eventCh <- newMesosEvent(eventFrameworkRegistered, from, msg)
 }
 
-func (driver *MesosSchedulerDriver) handleFrameworkRegistered(from *upid.UPID, pbMsg proto.Message) {
+func (driver *MesosSchedulerDriver) frameworkRegistered(from *upid.UPID, pbMsg proto.Message) {
 	log.Infoln("Scheduler driver registered")
 
 	msg := pbMsg.(*mesos.FrameworkRegisteredMessage)
@@ -376,24 +378,16 @@ func (driver *MesosSchedulerDriver) handleFrameworkRegistered(from *upid.UPID, p
 // Returns the status of the scheduler driver.
 func (driver *MesosSchedulerDriver) Start() mesos.Status {
 	log.Infoln("Starting the scheduler driver")
-	act := newAction(actionStartDriver, nil)
-	driver.actionCh <- act
-	resp := <-act.respCh
-	return resp.stat
-}
-
-func (driver *MesosSchedulerDriver) doStart() *response {
-	log.Infoln("Starting the scheduler driver")
 
 	if driver.status != mesos.Status_DRIVER_NOT_STARTED {
-		return &response{driver.status, nil}
+		return driver.status
 	}
 
 	// Start the messenger.
 	if err := driver.messenger.Start(); err != nil {
 		log.Errorf("Schduler failed to start the messenger: %v\n", err)
 		driver.status = mesos.Status_DRIVER_NOT_STARTED
-		return &response{driver.status, err}
+		return driver.status
 	}
 	driver.self = driver.messenger.UPID()
 
@@ -406,7 +400,7 @@ func (driver *MesosSchedulerDriver) doStart() *response {
 		log.Errorf("Failed to send RegisterFramework message: %v\n", err)
 		driver.messenger.Stop()
 		driver.status = mesos.Status_DRIVER_NOT_STARTED
-		return &response{driver.status, err}
+		return driver.status
 	}
 
 	driver.status = mesos.Status_DRIVER_RUNNING
@@ -417,42 +411,138 @@ func (driver *MesosSchedulerDriver) doStart() *response {
 	// TODO(VV) Monitor Master Connection
 	// go driver.monitorMaster()
 
-	return &response{driver.status, nil}
+	return driver.status
 }
 
-//Join waits for the driver to be stopped or aborted.
+//Join blocks until the driver is stopped.
+//Should follow a call to Start()
 func (driver *MesosSchedulerDriver) Join() mesos.Status {
-	act := newAction(actionJoinDriver, nil)
-	driver.actionCh <- act
-	resp := <-act.respCh
-	return resp.stat
-}
-
-func (driver *MesosSchedulerDriver) doJoin() *response {
 	if driver.status != mesos.Status_DRIVER_RUNNING {
-		return &response{driver.status, nil}
+		return driver.status
 	}
 	<-driver.stopCh // wait for stop signal
-	return &response{driver.status, nil}
+	return driver.status
 }
 
-//Run starts and joins driver process to be stopped or aborted.
+//Run starts and joins driver process and waits to be stopped or aborted.
 func (driver *MesosSchedulerDriver) Run() mesos.Status {
+	log.Infoln("Running the scheduler driver.")
 	stat := driver.Start()
 	if stat != mesos.Status_DRIVER_RUNNING {
 		return stat
 	}
 
 	return driver.Join()
-
 }
 
-// Stop stops the driver.
-// func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
-// 	log.Infoln("Stopping the scheduler driver")
-// 	act := newAction(actionStopDriver, nil)
-// 	driver.actionCh <- act
-// 	respCh := <-act.respCh
-// 	return respCh.stat
+//Stop stops the driver.
+func (driver *MesosSchedulerDriver) Stop(failover bool) mesos.Status {
+	log.Infoln("Stopping the scheduler driver")
+	if driver.status != mesos.Status_DRIVER_RUNNING {
+		log.Error("Unexpected status ", driver.status)
+		return driver.status
+	}
 
-// }
+	if driver.connected && failover {
+		// unregister the framework
+		message := &mesos.UnregisterFrameworkMessage{
+			FrameworkId: driver.FrameworkInfo.Id,
+		}
+		if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
+			log.Errorf("Failed to send UnregisterFramework message: %v\n", err)
+			driver.messenger.Stop()
+			driver.status = mesos.Status_DRIVER_ABORTED
+			return driver.status
+		}
+	}
+
+	// stop messenger
+	driver.messenger.Stop()
+	driver.status = mesos.Status_DRIVER_STOPPED
+	driver.stopped = true
+	driver.connected = false
+	close(driver.stopCh)
+
+	return driver.status
+}
+
+func (driver *MesosSchedulerDriver) Abort() mesos.Status {
+	log.Infof("Aborting framework [%s]\n", driver.FrameworkInfo.GetId().GetValue())
+	if driver.status != mesos.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+
+	if !driver.connected {
+		log.Infoln("Not sending deactivate message, master is disconnected.")
+		return driver.status
+	}
+	driver.Stop(true)
+	driver.status = mesos.Status_DRIVER_ABORTED
+	return driver.status
+}
+
+func (driver *MesosSchedulerDriver) LaunchTasks(offerId *mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) mesos.Status {
+	if driver.status != mesos.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+
+	// Launch tasks
+	if !driver.connected {
+		log.Infoln("Ignoring LaunchTasks message, disconnected from master.")
+		// TODO: send statusUpdate with status=TASK_LOST for each task.
+		//       See sched.cpp L#823
+		return driver.status
+	}
+	// only allow tasks with either ExecInfo or CommandInfo through.
+	okTasks := make([]*mesos.TaskInfo, 0, len(tasks))
+	for _, task := range tasks {
+		if task.Executor != nil && task.Command != nil {
+			log.Warning("WARN: Ignoring task ", task.Name, ". It has both Executor and Command set.")
+			continue
+		}
+		if task.Executor != nil && task.Executor.FrameworkId != driver.FrameworkInfo.Id {
+			log.Warning("WARN: Ignoring task ", task.Name, ". Expecting FrameworkId", driver.FrameworkInfo.GetId(), ", but got", task.Executor.FrameworkId.GetValue())
+			continue
+		}
+		// ensure default frameworkid value
+		if task.Executor != nil && task.Executor.FrameworkId == nil {
+			task.Executor.FrameworkId = driver.FrameworkInfo.Id
+		}
+		okTasks = append(okTasks, task)
+	}
+
+	// launch tasks
+	message := &mesos.LaunchTasksMessage{
+		FrameworkId: driver.FrameworkInfo.Id,
+		OfferIds:    []*mesos.OfferID{offerId},
+		Tasks:       okTasks,
+		Filters:     filters,
+	}
+
+	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
+		log.Errorf("Failed to send LaunchTask message: %v\n", err)
+		// TODO(VV): Task probably should be marked as lost or requeued.
+		return driver.status
+	}
+
+	return driver.status
+}
+
+func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) mesos.Status {
+	if driver.status != mesos.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+
+	if !driver.connected {
+		log.Infoln("Ignoring kill task message, disconnected from master.")
+	}
+
+	message := &mesos.KillTaskMessage{TaskId: taskId}
+
+	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
+		log.Errorf("Failed to send KillTask message: %v\n", err)
+		return driver.status
+	}
+
+	return driver.status
+}

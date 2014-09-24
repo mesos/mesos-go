@@ -25,7 +25,7 @@ type Scheduler struct {
 	// This is only called when the scheduler has previously been registered.
 	// MasterInfo containing the updated information about the elected master
 	// is provided as an argument.
-	Reregistered func(*SchedulerDriver, *mesos.MasterInfo)
+	Reregistered func(SchedulerDriver, *mesos.MasterInfo)
 
 	// Invoked when the scheduler becomes "disconnected" from the master
 	// (e.g., the master fails and another is taking over).

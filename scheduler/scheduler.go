@@ -37,7 +37,7 @@ type actionType int
 const (
 	// master-originated event messages
 	eventFrameworkRegistered eventType = iota + 100
-	eventFrameworkReregestiered
+	eventFrameworkReregistered
 	eventResourceOffers
 	eventRescindRessourceOffer
 	eventStatusUpdate
@@ -323,6 +323,8 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 			switch e.evnType {
 			case eventFrameworkRegistered:
 				driver.frameworkRegistered(e.from, e.msg)
+			case eventFrameworkReregistered:
+				driver.frameworkReregistered(e.from, e.msg)
 			}
 
 			// case a := <-driver.actionCh:
@@ -343,8 +345,12 @@ func (driver *MesosSchedulerDriver) handleFrameworkRegisteredEvent(from *upid.UP
 	driver.eventCh <- newMesosEvent(eventFrameworkRegistered, from, msg)
 }
 
+func (driver *MesosSchedulerDriver) handleFrameworkReregisteredEvent(from *upid.UPID, msg proto.Message) {
+	driver.eventCh <- newMesosEvent(eventFrameworkReregistered, from, msg)
+}
+
 func (driver *MesosSchedulerDriver) frameworkRegistered(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Scheduler driver registered")
+	log.Infoln("Scheduler driver got registered event.")
 
 	msg := pbMsg.(*mesos.FrameworkRegisteredMessage)
 	masterInfo := msg.GetMasterInfo()
@@ -370,7 +376,30 @@ func (driver *MesosSchedulerDriver) frameworkRegistered(from *upid.UPID, pbMsg p
 	driver.connected = true
 	driver.connection = uuid.NewUUID()
 	if driver.Scheduler.Registered != nil {
-		go driver.Scheduler.Registered(driver, frameworkId, masterInfo)
+		driver.Scheduler.Registered(driver, frameworkId, masterInfo)
+	}
+}
+
+func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Scheduler got re-registered event.")
+	msg := pbMsg.(*mesos.FrameworkRegisteredMessage)
+
+	if driver.status == mesos.Status_DRIVER_ABORTED {
+		log.Infoln("Ignoring FrameworkReregisteredMessage from master, driver is aborted!")
+		return
+	}
+
+	if driver.connected {
+		log.Infoln("Ignoring FrameworkReregisteredMessage from master,driver is already connected!")
+		return
+	}
+
+	// TODO(vv) detect if message was from leading-master (sched.cpp)
+	log.Infof("Framework re-registered with ID [%s] ", msg.GetFrameworkId().GetValue())
+	driver.connected = true
+	driver.connection = uuid.NewUUID()
+	if driver.Scheduler.Registered != nil {
+		driver.Scheduler.Reregistered(driver, msg.GetMasterInfo())
 	}
 }
 

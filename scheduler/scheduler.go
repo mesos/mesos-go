@@ -144,7 +144,7 @@ type SchedulerDriver interface {
 	// provided. Note that all offers must belong to the same slave.
 	// Invoking this function with an empty collection of tasks declines
 	// offers in their entirety (see Scheduler::declineOffer).
-	LaunchTasks(offerIDs []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) mesos.Status
+	LaunchTasks(offerID *mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) mesos.Status
 
 	// Kills the specified task. Note that attempting to kill a task is
 	// currently not reliable. If, for example, a scheduler fails over
@@ -271,15 +271,15 @@ func NewMesosSchedulerDriver(
 		connected:     false,
 		updates:       make(map[string]*mesos.StatusUpdate),
 		tasks:         make(map[string]*mesos.TaskInfo),
-		messenger:     messenger.NewMesosMessenger(&upid.UPID{ID: "scheduler(1)"}),
 	}
 
-	if m, err := upid.Parse("master(1)@" + master); err != nil {
+	if m, err := upid.Parse("master@" + master); err != nil {
 		return nil, err
 	} else {
 		driver.MasterUPID = m
 	}
 
+	driver.messenger = messenger.NewMesosMessenger(&upid.UPID{ID: "scheduler(1)"})
 	if err := driver.init(); err != nil {
 		log.Errorf("Failed to initialize the scheduler driver: %v\n", err)
 		return nil, err
@@ -314,7 +314,7 @@ func (driver *MesosSchedulerDriver) init() error {
 }
 
 func (driver *MesosSchedulerDriver) eventLoop() {
-
+	log.Infoln("Event Loop starting...")
 	for {
 		select {
 		//case <-driver.destroyCh:
@@ -325,16 +325,16 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 				driver.frameworkRegistered(e.from, e.msg)
 			}
 
-		case a := <-driver.actionCh:
-			switch a.acType {
-			// dispatch events
-			// case actionStartDriver:
-			// 	a.respCh <- driver.doStart()
-			// case actionJoinDriver:
-			// 	a.respCh <- driver.doJoin()
-			// case actionStopDriver:
-			// 	a.respCh <- driver.doStop(a.param)
-			}
+			// case a := <-driver.actionCh:
+			// 	switch a.acType {
+			// 	// dispatch events
+			// 	// case actionStartDriver:
+			// 	// 	a.respCh <- driver.doStart()
+			// 	// case actionJoinDriver:
+			// 	// 	a.respCh <- driver.doJoin()
+			// 	// case actionStopDriver:
+			// 	// 	a.respCh <- driver.doStop(a.param)
+			// 	}
 		}
 	}
 }
@@ -377,7 +377,7 @@ func (driver *MesosSchedulerDriver) frameworkRegistered(from *upid.UPID, pbMsg p
 // Starts the scheduler driver. Blocked until either stopped or aborted.
 // Returns the status of the scheduler driver.
 func (driver *MesosSchedulerDriver) Start() mesos.Status {
-	log.Infoln("Starting the scheduler driver")
+	log.Infoln("Starting the scheduler driver...")
 
 	if driver.status != mesos.Status_DRIVER_NOT_STARTED {
 		return driver.status
@@ -396,17 +396,17 @@ func (driver *MesosSchedulerDriver) Start() mesos.Status {
 		Framework: driver.FrameworkInfo,
 	}
 
+	log.Infof("Registering with master %s [%s] ", driver.MasterUPID, message)
 	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
 		log.Errorf("Failed to send RegisterFramework message: %v\n", err)
 		driver.messenger.Stop()
-		driver.status = mesos.Status_DRIVER_NOT_STARTED
-		return driver.status
+		return mesos.Status_DRIVER_NOT_STARTED
 	}
 
 	driver.status = mesos.Status_DRIVER_RUNNING
 	driver.stopped = false
 
-	log.Infoln("Mesos executor is running")
+	log.Infoln("Mesos scheduler driver started OK.")
 
 	// TODO(VV) Monitor Master Connection
 	// go driver.monitorMaster()
@@ -426,12 +426,13 @@ func (driver *MesosSchedulerDriver) Join() mesos.Status {
 
 //Run starts and joins driver process and waits to be stopped or aborted.
 func (driver *MesosSchedulerDriver) Run() mesos.Status {
-	log.Infoln("Running the scheduler driver.")
 	stat := driver.Start()
 	if stat != mesos.Status_DRIVER_RUNNING {
+		log.Errorln("Mesos scheduler driver failed to start. Exiting Run.")
 		return stat
 	}
 
+	log.Infoln("Running scheduler driver with PID=", driver.self)
 	return driver.Join()
 }
 

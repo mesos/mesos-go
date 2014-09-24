@@ -3,11 +3,16 @@ package scheduler
 import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
+	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/mesos/mesos-go/util"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/user"
 	"testing"
@@ -25,6 +30,12 @@ var (
 		util.NewFrameworkID(frameworkID),
 	)
 )
+
+func makeMockServer(handler func(rsp http.ResponseWriter, req *http.Request)) *httptest.Server {
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	log.Error("Created test http server  ", server.URL)
+	return server
+}
 
 func TestSchedulerDriverNew(t *testing.T) {
 	masterAddr := "localhost:5050"
@@ -107,6 +118,44 @@ func TestSchedulerDriverStartWithRegistrationFailure(t *testing.T) {
 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, driver.status)
 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
 
+}
+
+func TestSchedulerDriverStartIntegration(t *testing.T) {
+	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
+		log.Infoln("RCVD request ", req.URL)
+
+		data, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			t.Fatalf("Missing RegisteredFramework data from scheduler.")
+		}
+		defer req.Body.Close()
+
+		message := new(mesos.RegisterFrameworkMessage)
+		err = proto.Unmarshal(data, message)
+		if err != nil {
+			t.Fatal("Problem unmarshaling expected RegisterFrameworkMessage")
+		}
+
+		assert.NotNil(t, message)
+		info := message.GetFramework()
+		assert.NotNil(t, info)
+		assert.Equal(t, framework.GetName(), info.GetName())
+		assert.Equal(t, framework.GetId().GetValue(), info.GetId().GetValue())
+		rsp.WriteHeader(http.StatusOK)
+	})
+	defer server.Close()
+	url, _ := url.Parse(server.URL)
+
+	driver, err := NewMesosSchedulerDriver(&Scheduler{}, framework, url.Host, nil)
+	assert.NoError(t, err)
+	assert.True(t, driver.stopped)
+
+	stat := driver.Start()
+
+	assert.False(t, driver.stopped)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+
+	<-time.After(time.Millisecond * 7)
 }
 
 func TestSchedulerDriverJoinUnstarted(t *testing.T) {

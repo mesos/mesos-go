@@ -44,7 +44,7 @@ type Scheduler struct {
 	// will have those resources rescinded (or if a framework has
 	// already launched tasks with those resources then those tasks will
 	// fail with a TASK_LOST status and a message saying as much).
-	ResourceOffers func(*SchedulerDriver, []*mesos.Offer)
+	ResourceOffers func(SchedulerDriver, []*mesos.Offer)
 
 	// Invoked when an offer is no longer valid (e.g., the slave was
 	// lost or another framework used resources in the offer). If for

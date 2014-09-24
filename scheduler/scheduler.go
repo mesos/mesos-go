@@ -300,8 +300,8 @@ func (driver *MesosSchedulerDriver) init() error {
 
 	// Install handlers.
 	driver.messenger.Install(driver.handleFrameworkRegisteredEvent, &mesos.FrameworkRegisteredMessage{})
-	// driver.messenger.Install(driver.reregistered, &mesosproto.ExecutorReregisteredMessage{})
-	// driver.messenger.Install(driver.reconnect, &mesosproto.ReconnectExecutorMessage{})
+	driver.messenger.Install(driver.handleFrameworkReregisteredEvent, &mesos.FrameworkReregisteredMessage{})
+	driver.messenger.Install(driver.handleResourceOffersEvent, &mesos.ResourceOffersMessage{})
 	// driver.messenger.Install(driver.runTask, &mesosproto.RunTaskMessage{})
 	// driver.messenger.Install(driver.killTask, &mesosproto.KillTaskMessage{})
 	// driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{})
@@ -325,6 +325,8 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 				driver.frameworkRegistered(e.from, e.msg)
 			case eventFrameworkReregistered:
 				driver.frameworkReregistered(e.from, e.msg)
+			case eventResourceOffers:
+				driver.resourcesOffered(e.from, e.msg)
 			}
 
 			// case a := <-driver.actionCh:
@@ -345,12 +347,8 @@ func (driver *MesosSchedulerDriver) handleFrameworkRegisteredEvent(from *upid.UP
 	driver.eventCh <- newMesosEvent(eventFrameworkRegistered, from, msg)
 }
 
-func (driver *MesosSchedulerDriver) handleFrameworkReregisteredEvent(from *upid.UPID, msg proto.Message) {
-	driver.eventCh <- newMesosEvent(eventFrameworkReregistered, from, msg)
-}
-
 func (driver *MesosSchedulerDriver) frameworkRegistered(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Scheduler driver got registered event.")
+	log.V(2).Infoln("Handling scheduler driver framework registered event.")
 
 	msg := pbMsg.(*mesos.FrameworkRegisteredMessage)
 	masterInfo := msg.GetMasterInfo()
@@ -376,12 +374,16 @@ func (driver *MesosSchedulerDriver) frameworkRegistered(from *upid.UPID, pbMsg p
 	driver.connected = true
 	driver.connection = uuid.NewUUID()
 	if driver.Scheduler.Registered != nil {
-		driver.Scheduler.Registered(driver, frameworkId, masterInfo)
+		go driver.Scheduler.Registered(driver, frameworkId, masterInfo)
 	}
 }
 
+func (driver *MesosSchedulerDriver) handleFrameworkReregisteredEvent(from *upid.UPID, msg proto.Message) {
+	driver.eventCh <- newMesosEvent(eventFrameworkReregistered, from, msg)
+}
+
 func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Scheduler got re-registered event.")
+	log.V(2).Infoln("Handling Scheduler re-registered event.")
 	msg := pbMsg.(*mesos.FrameworkRegisteredMessage)
 
 	if driver.status == mesos.Status_DRIVER_ABORTED {
@@ -399,7 +401,30 @@ func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg
 	driver.connected = true
 	driver.connection = uuid.NewUUID()
 	if driver.Scheduler.Registered != nil {
-		driver.Scheduler.Reregistered(driver, msg.GetMasterInfo())
+		go driver.Scheduler.Reregistered(driver, msg.GetMasterInfo())
+	}
+}
+
+func (driver *MesosSchedulerDriver) handleResourceOffersEvent(from *upid.UPID, msg proto.Message) {
+	driver.eventCh <- newMesosEvent(eventResourceOffers, from, msg)
+}
+
+func (driver *MesosSchedulerDriver) resourcesOffered(from *upid.UPID, pbMsg proto.Message) {
+	log.V(2).Infoln("Handling resource offers.")
+
+	msg := pbMsg.(*mesos.ResourceOffersMessage)
+	if driver.status == mesos.Status_DRIVER_ABORTED {
+		log.Infoln("Ignoring ResourceOffersMessage, the driver is aborted!")
+		return
+	}
+
+	if !driver.connected {
+		log.Infoln("Ignoring ResourceOffersMessage, the driver is not connected!")
+		return
+	}
+
+	if driver.Scheduler != nil && driver.Scheduler.ResourceOffers != nil {
+		go driver.Scheduler.ResourceOffers(driver, msg.Offers)
 	}
 }
 

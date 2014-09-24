@@ -52,7 +52,7 @@ type Scheduler struct {
 	// message, failing over framework, etc.), a framwork that attempts
 	// to launch tasks using an invalid offer will receive TASK_LOST
 	// status updates for those tasks (see Scheduler::resourceOffers).
-	OfferRescinded func(*SchedulerDriver, *mesos.OfferID)
+	OfferRescinded func(SchedulerDriver, *mesos.OfferID)
 
 	// Invoked when the status of a task has changed (e.g., a slave is
 	// lost and so the task is lost, a task finishes and an executor

@@ -302,7 +302,7 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.handleFrameworkRegisteredEvent, &mesos.FrameworkRegisteredMessage{})
 	driver.messenger.Install(driver.handleFrameworkReregisteredEvent, &mesos.FrameworkReregisteredMessage{})
 	driver.messenger.Install(driver.handleResourceOffersEvent, &mesos.ResourceOffersMessage{})
-	// driver.messenger.Install(driver.runTask, &mesosproto.RunTaskMessage{})
+	driver.messenger.Install(driver.handleRescindResourceOfferEvent, &mesos.RescindResourceOfferMessage{})
 	// driver.messenger.Install(driver.killTask, &mesosproto.KillTaskMessage{})
 	// driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{})
 	// driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
@@ -327,6 +327,8 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 				driver.frameworkReregistered(e.from, e.msg)
 			case eventResourceOffers:
 				driver.resourcesOffered(e.from, e.msg)
+			case eventRescindRessourceOffer:
+				driver.resourceOfferRescinded(e.from, e.msg)
 			}
 
 			// case a := <-driver.actionCh:
@@ -374,7 +376,7 @@ func (driver *MesosSchedulerDriver) frameworkRegistered(from *upid.UPID, pbMsg p
 	driver.connected = true
 	driver.connection = uuid.NewUUID()
 	if driver.Scheduler.Registered != nil {
-		go driver.Scheduler.Registered(driver, frameworkId, masterInfo)
+		driver.Scheduler.Registered(driver, frameworkId, masterInfo)
 	}
 }
 
@@ -383,7 +385,7 @@ func (driver *MesosSchedulerDriver) handleFrameworkReregisteredEvent(from *upid.
 }
 
 func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg proto.Message) {
-	log.V(2).Infoln("Handling Scheduler re-registered event.")
+	log.V(1).Infoln("Handling Scheduler re-registered event.")
 	msg := pbMsg.(*mesos.FrameworkRegisteredMessage)
 
 	if driver.status == mesos.Status_DRIVER_ABORTED {
@@ -401,7 +403,7 @@ func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg
 	driver.connected = true
 	driver.connection = uuid.NewUUID()
 	if driver.Scheduler.Registered != nil {
-		go driver.Scheduler.Reregistered(driver, msg.GetMasterInfo())
+		driver.Scheduler.Reregistered(driver, msg.GetMasterInfo())
 	}
 }
 
@@ -410,7 +412,7 @@ func (driver *MesosSchedulerDriver) handleResourceOffersEvent(from *upid.UPID, m
 }
 
 func (driver *MesosSchedulerDriver) resourcesOffered(from *upid.UPID, pbMsg proto.Message) {
-	log.V(2).Infoln("Handling resource offers.")
+	log.V(1).Infoln("Handling resource offers.")
 
 	msg := pbMsg.(*mesos.ResourceOffersMessage)
 	if driver.status == mesos.Status_DRIVER_ABORTED {
@@ -424,7 +426,34 @@ func (driver *MesosSchedulerDriver) resourcesOffered(from *upid.UPID, pbMsg prot
 	}
 
 	if driver.Scheduler != nil && driver.Scheduler.ResourceOffers != nil {
-		go driver.Scheduler.ResourceOffers(driver, msg.Offers)
+		driver.Scheduler.ResourceOffers(driver, msg.Offers)
+	}
+}
+
+func (driver *MesosSchedulerDriver) handleRescindResourceOfferEvent(from *upid.UPID, msg proto.Message) {
+	driver.eventCh <- newMesosEvent(eventRescindRessourceOffer, from, msg)
+}
+
+func (driver *MesosSchedulerDriver) resourceOfferRescinded(from *upid.UPID, pbMsg proto.Message) {
+	log.V(1).Infoln("Handling resource offer rescinded.")
+
+	msg := pbMsg.(*mesos.RescindResourceOfferMessage)
+
+	if driver.status == mesos.Status_DRIVER_ABORTED {
+		log.Infoln("Ignoring RescindResourceOfferMessage, the driver is aborted!")
+		return
+	}
+
+	if !driver.connected {
+		log.Infoln("Ignoring ResourceOffersMessage, the driver is not connected!")
+		return
+	}
+
+	// TODO(vv) check for leading master (see sched.cpp)
+
+	log.V(1).Infoln("Rescinding offer ", msg.OfferId.GetValue())
+	if driver.Scheduler != nil && driver.Scheduler.OfferRescinded != nil {
+		driver.Scheduler.OfferRescinded(driver, msg.OfferId)
 	}
 }
 

@@ -160,7 +160,7 @@ type Scheduler struct {
 	// Invoked when a slave has been determined unreachable (e.g.,
 	// machine failure, network partition). Most frameworks will need to
 	// reschedule any tasks launched on this slave on a new slave.
-	SlaveLost func(*SchedulerDriver, *mesos.SlaveID)
+	SlaveLost func(SchedulerDriver, *mesos.SlaveID)
 
 	// Invoked when an executor has exited/terminated. Note that any
 	// tasks running will have TASK_LOST status updates automagically

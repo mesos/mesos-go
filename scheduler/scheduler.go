@@ -217,7 +217,7 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.handleResourceOffersEvent, &mesos.ResourceOffersMessage{})
 	driver.messenger.Install(driver.handleRescindResourceOfferEvent, &mesos.RescindResourceOfferMessage{})
 	driver.messenger.Install(driver.handleStatusUpdateEvent, &mesos.StatusUpdateMessage{})
-	// driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{})
+	driver.messenger.Install(driver.handleLostSlaveEvent, &mesos.LostSlaveMessage{})
 	// driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
 	// driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
 	// driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
@@ -244,6 +244,8 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 				driver.resourceOfferRescinded(e.from, e.msg)
 			case eventStatusUpdate:
 				driver.statusUpdated(e.from, e.msg)
+			case eventLostSlave:
+				driver.slaveLost(e.from, e.msg)
 			}
 
 			// case a := <-driver.actionCh:
@@ -415,6 +417,34 @@ func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.M
 	if err := driver.messenger.Send(driver.MasterUPID, ackMsg); err != nil {
 		log.Errorf("Failed to send StatusUpdate ACK message: %v\n", err)
 		return
+	}
+}
+
+func (driver *MesosSchedulerDriver) handleLostSlaveEvent(from *upid.UPID, msg proto.Message) {
+	driver.eventCh <- newMesosEvent(eventLostSlave, from, msg)
+}
+
+func (driver *MesosSchedulerDriver) slaveLost(from *upid.UPID, pbMsg proto.Message) {
+	log.V(1).Infoln("Handling LostSlave event.")
+
+	msg := pbMsg.(*mesos.LostSlaveMessage)
+
+	if driver.status == mesos.Status_DRIVER_ABORTED {
+		log.V(1).Infoln("Ignoring LostSlave message, the driver is aborted!")
+		return
+	}
+
+	if !driver.connected {
+		log.V(1).Infoln("Ignoring LostSlave message, the driver is not connected!")
+		return
+	}
+
+	// TODO(VV) - detect leading master (see sched.cpp)
+
+	log.V(2).Infoln("Lost slave ", msg.SlaveId.GetValue())
+
+	if driver.Scheduler != nil && driver.Scheduler.SlaveLost != nil {
+		driver.Scheduler.SlaveLost(driver, msg.SlaveId)
 	}
 }
 

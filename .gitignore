@@ -92,4 +92,4 @@ junit_*
 
 # mesos-go specific
 examples/sched/sched
-examples/exec/example_executor
+examples/exec/exec

@@ -150,7 +150,7 @@ type Scheduler struct {
 	// the process exits) another status update will be delivered (note,
 	// however, that this is currently not true if the slave sending the
 	// status update is lost/fails during that time).
-	StatusUpdate func(*SchedulerDriver, *mesos.TaskStatus)
+	StatusUpdate func(SchedulerDriver, *mesos.TaskStatus)
 
 	// Invoked when an executor sends a message. These messages are best
 	// effort; do not expect a framework message to be retransmitted in

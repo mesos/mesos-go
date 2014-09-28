@@ -216,7 +216,7 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.handleFrameworkReregisteredEvent, &mesos.FrameworkReregisteredMessage{})
 	driver.messenger.Install(driver.handleResourceOffersEvent, &mesos.ResourceOffersMessage{})
 	driver.messenger.Install(driver.handleRescindResourceOfferEvent, &mesos.RescindResourceOfferMessage{})
-	// driver.messenger.Install(driver.killTask, &mesosproto.KillTaskMessage{})
+	driver.messenger.Install(driver.handleStatusUpdateEvent, &mesos.StatusUpdateMessage{})
 	// driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{})
 	// driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
 	// driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
@@ -242,6 +242,8 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 				driver.resourcesOffered(e.from, e.msg)
 			case eventRescindRessourceOffer:
 				driver.resourceOfferRescinded(e.from, e.msg)
+			case eventStatusUpdate:
+				driver.statusUpdated(e.from, e.msg)
 			}
 
 			// case a := <-driver.actionCh:
@@ -363,12 +365,60 @@ func (driver *MesosSchedulerDriver) resourceOfferRescinded(from *upid.UPID, pbMs
 	}
 
 	// TODO(vv) check for leading master (see sched.cpp)
+	// TODO(vv) remove saved offers (see sched.cpp L#572)
 
 	log.V(1).Infoln("Rescinding offer ", msg.OfferId.GetValue())
 	if driver.Scheduler != nil && driver.Scheduler.OfferRescinded != nil {
 		driver.Scheduler.OfferRescinded(driver, msg.OfferId)
 	}
 }
+
+func (driver *MesosSchedulerDriver) handleStatusUpdateEvent(from *upid.UPID, msg proto.Message) {
+	driver.eventCh <- newMesosEvent(eventStatusUpdate, from, msg)
+}
+
+func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.Message) {
+	log.V(1).Infoln("Handling status update.")
+
+	msg := pbMsg.(*mesos.StatusUpdateMessage)
+
+	if driver.status == mesos.Status_DRIVER_ABORTED {
+		log.V(1).Infoln("Ignoring StatusUpdate message, the driver is aborted!")
+		return
+	}
+
+	if !driver.connected {
+		log.V(1).Infoln("Ignoring StatusUpdate message, the driver is not connected!")
+		return
+	}
+
+	log.V(2).Infoln("Received status update from ", from.String())
+
+	if driver.Scheduler != nil && driver.Scheduler.StatusUpdate != nil {
+		driver.Scheduler.StatusUpdate(driver, msg.Update.GetStatus())
+	}
+
+	if driver.status == mesos.Status_DRIVER_ABORTED {
+		log.V(1).Infoln("Not sending StatusUpdate ACK, the driver is aborted!")
+		return
+	}
+
+	// Send StatusUpdate Acknowledgement
+	ackMsg := &mesos.StatusUpdateAcknowledgementMessage{
+		SlaveId:     msg.Update.SlaveId,
+		FrameworkId: driver.FrameworkInfo.Id,
+		TaskId:      msg.Update.Status.TaskId,
+		Uuid:        msg.Update.Uuid,
+	}
+
+	log.V(2).Infoln("Sending status update ACK to ", from.String())
+	if err := driver.messenger.Send(driver.MasterUPID, ackMsg); err != nil {
+		log.Errorf("Failed to send StatusUpdate ACK message: %v\n", err)
+		return
+	}
+}
+
+// ---------------------- Interface Methods ---------------------- //
 
 // Starts the scheduler driver. Blocked until either stopped or aborted.
 // Returns the status of the scheduler driver.

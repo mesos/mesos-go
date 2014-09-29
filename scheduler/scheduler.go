@@ -218,7 +218,7 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.handleRescindResourceOfferEvent, &mesos.RescindResourceOfferMessage{})
 	driver.messenger.Install(driver.handleStatusUpdateEvent, &mesos.StatusUpdateMessage{})
 	driver.messenger.Install(driver.handleLostSlaveEvent, &mesos.LostSlaveMessage{})
-	// driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
+	driver.messenger.Install(driver.handleFrameworkMessageEvent, &mesos.FrameworkToExecutorMessage{})
 	// driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
 	// driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
 
@@ -246,6 +246,8 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 				driver.statusUpdated(e.from, e.msg)
 			case eventLostSlave:
 				driver.slaveLost(e.from, e.msg)
+			case eventExecutorToFramework:
+				driver.frameworkMessageRcvd(e.from, e.msg)
 			}
 
 			// case a := <-driver.actionCh:
@@ -445,6 +447,27 @@ func (driver *MesosSchedulerDriver) slaveLost(from *upid.UPID, pbMsg proto.Messa
 
 	if driver.Scheduler != nil && driver.Scheduler.SlaveLost != nil {
 		driver.Scheduler.SlaveLost(driver, msg.SlaveId)
+	}
+}
+
+func (driver *MesosSchedulerDriver) handleFrameworkMessageEvent(from *upid.UPID, msg proto.Message) {
+	driver.eventCh <- newMesosEvent(eventExecutorToFramework, from, msg)
+}
+
+func (driver *MesosSchedulerDriver) frameworkMessageRcvd(from *upid.UPID, pbMsg proto.Message) {
+	log.V(1).Infoln("Handling framework message event.")
+
+	msg := pbMsg.(*mesos.ExecutorToFrameworkMessage)
+
+	if driver.status == mesos.Status_DRIVER_ABORTED {
+		log.V(1).Infoln("Ignoring framwork message, the driver is aborted!")
+		return
+	}
+
+	log.V(1).Infoln("Received Framwork Message ", msg.String())
+
+	if driver.Scheduler != nil && driver.Scheduler.FrameworkMessage != nil {
+		driver.Scheduler.FrameworkMessage(driver, msg.ExecutorId, msg.SlaveId, msg.Data)
 	}
 }
 

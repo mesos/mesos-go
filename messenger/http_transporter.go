@@ -60,11 +60,19 @@ func (t *HTTPTransporter) Send(msg *Message) error {
 		return err
 	}
 	resp, err := t.client.Do(req)
+	defer resp.Body.Close()
 	if err != nil {
 		log.Errorf("Failed to POST: %v\n", err)
 		return err
 	}
-	defer resp.Body.Close()
+	// ensure master acknowledgement.
+	if (resp.StatusCode != http.StatusOK) &&
+		(resp.StatusCode != http.StatusAccepted) {
+		msg := fmt.Sprintf("Master %s rejected %s.  Returned status %s.", msg.UPID, msg.RequestURI(), resp.Status)
+		log.Errorln(msg)
+		return fmt.Errorf(msg)
+	}
+
 	return nil
 }
 
@@ -143,12 +151,16 @@ func (t *HTTPTransporter) messageHandler(w http.ResponseWriter, r *http.Request)
 func (t *HTTPTransporter) makeLibprocessRequest(msg *Message) (*http.Request, error) {
 	hostport := net.JoinHostPort(msg.UPID.Host, msg.UPID.Port)
 	targetURL := fmt.Sprintf("http://%s%s", hostport, msg.RequestURI())
+	log.V(2).Infof("libproc target URL %s", targetURL)
 	req, err := http.NewRequest("POST", targetURL, bytes.NewReader(msg.Bytes))
 	if err != nil {
 		log.Errorf("Failed to create request: %v\n", err)
 		return nil, err
 	}
 	req.Header.Add("Libprocess-From", t.upid.String())
+	req.Header.Add("Content-Type", "application/x-protobuf")
+	req.Header.Add("Connection", "Keep-Alive")
+
 	return req, nil
 }
 

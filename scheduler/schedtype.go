@@ -165,10 +165,10 @@ type Scheduler struct {
 	// Invoked when an executor has exited/terminated. Note that any
 	// tasks running will have TASK_LOST status updates automagically
 	// generated.
-	ExecutorLost func(*SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, int)
+	ExecutorLost func(SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, int)
 
 	// Invoked when there is an unrecoverable error in the scheduler or
 	// scheduler driver. The driver will be aborted BEFORE invoking this
 	// callback.
-	Error func(*SchedulerDriver, string)
+	Error func(SchedulerDriver, string)
 }

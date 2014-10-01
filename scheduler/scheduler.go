@@ -43,6 +43,7 @@ const (
 	eventStatusUpdate
 	eventExecutorToFramework
 	eventLostSlave
+	eventError
 
 	// driver-originated actions
 	actionStartDriver actionType = iota + 200
@@ -219,8 +220,6 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.handleStatusUpdateEvent, &mesos.StatusUpdateMessage{})
 	driver.messenger.Install(driver.handleLostSlaveEvent, &mesos.LostSlaveMessage{})
 	driver.messenger.Install(driver.handleFrameworkMessageEvent, &mesos.FrameworkToExecutorMessage{})
-	// driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
-	// driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
 
 	go driver.eventLoop()
 	return nil
@@ -264,6 +263,7 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 	}
 }
 
+// ---------------------- Handlers for Events from Master --------------- //
 func (driver *MesosSchedulerDriver) handleFrameworkRegisteredEvent(from *upid.UPID, msg proto.Message) {
 	driver.eventCh <- newMesosEvent(eventFrameworkRegistered, from, msg)
 }
@@ -484,7 +484,9 @@ func (driver *MesosSchedulerDriver) Start() mesos.Status {
 
 	// Start the messenger.
 	if err := driver.messenger.Start(); err != nil {
-		log.Errorf("Schduler failed to start the messenger: %v\n", err)
+		errMsg := fmt.Sprintf("Schduler failed to start the messenger: %v", err)
+		log.Errorln(errMsg)
+		driver.error(errMsg, false)
 		driver.status = mesos.Status_DRIVER_NOT_STARTED
 		return driver.status
 	}
@@ -497,7 +499,9 @@ func (driver *MesosSchedulerDriver) Start() mesos.Status {
 
 	log.Infof("Registering with master %s [%s] ", driver.MasterUPID, message)
 	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
-		log.Errorf("Failed to send RegisterFramework message: %v\n", err)
+		errMsg := fmt.Sprintf("Stopping driver. Failed to send RegisterFramework message: %v", err)
+		log.Errorf(errMsg)
+		driver.error(errMsg, false)
 		driver.messenger.Stop()
 		return mesos.Status_DRIVER_NOT_STARTED
 	}
@@ -531,7 +535,7 @@ func (driver *MesosSchedulerDriver) Run() mesos.Status {
 		return stat
 	}
 
-	log.Infoln("Running scheduler driver with PID=", driver.self)
+	log.Infof("Running scheduler driver with PID=%v\n", driver.self)
 	return driver.Join()
 }
 
@@ -549,7 +553,9 @@ func (driver *MesosSchedulerDriver) Stop(failover bool) mesos.Status {
 			FrameworkId: driver.FrameworkInfo.Id,
 		}
 		if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
-			log.Errorf("Failed to send UnregisterFramework message: %v\n", err)
+			errMsg := fmt.Sprintf("Failed to send UnregisterFramework message while stopping driver: %v", err)
+			log.Errorln(errMsg)
+			driver.error(errMsg, false)
 			driver.messenger.Stop()
 			driver.status = mesos.Status_DRIVER_ABORTED
 			return driver.status
@@ -620,7 +626,9 @@ func (driver *MesosSchedulerDriver) LaunchTasks(offerId *mesos.OfferID, tasks []
 	}
 
 	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
-		log.Errorf("Failed to send LaunchTask message: %v\n", err)
+		errMsg := fmt.Sprintf("Failed to send LaunchTask message: %v", err)
+		log.Errorln(errMsg)
+		driver.error(errMsg, false)
 		// TODO(VV): Task probably should be marked as lost or requeued.
 		return driver.status
 	}
@@ -640,9 +648,29 @@ func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) mesos.Status 
 	message := &mesos.KillTaskMessage{TaskId: taskId}
 
 	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
-		log.Errorf("Failed to send KillTask message: %v\n", err)
+		errMsg := fmt.Sprintf("Failed to send KillTask message: %v\n", err)
+		log.Errorln(errMsg)
+		driver.error(errMsg, false)
 		return driver.status
 	}
 
 	return driver.status
+}
+
+func (driver *MesosSchedulerDriver) error(err string, abortDriver bool) {
+	if abortDriver {
+		if driver.status == mesos.Status_DRIVER_ABORTED {
+			log.V(1).Infoln("Ignoring error message, the driver is aborted!")
+			return
+		}
+
+		log.Infoln("Aborting driver, got error '", err, "'")
+
+		driver.Abort()
+	}
+
+	if driver.Scheduler != nil && driver.Scheduler.Error != nil {
+		log.V(1).Infoln("Sending error '", err, "'")
+		go driver.Scheduler.Error(driver, err)
+	}
 }

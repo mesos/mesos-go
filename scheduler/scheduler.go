@@ -204,13 +204,6 @@ func NewMesosSchedulerDriver(
 // init initializes the driver.
 func (driver *MesosSchedulerDriver) init() error {
 	log.Infof("Initializing mesos scheduler driver\n")
-	//log.Infof("Version: %v\n", MesosVersion)
-
-	// Parse environments.
-	// if err := driver.parseEnviroments(); err != nil {
-	// 	log.Errorf("Failed to parse environments: %v\n", err)
-	// 	return err
-	// }
 
 	// Install handlers.
 	driver.messenger.Install(driver.handleFrameworkRegisteredEvent, &mesos.FrameworkRegisteredMessage{})
@@ -229,8 +222,6 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 	log.Infoln("Event Loop starting...")
 	for {
 		select {
-		//case <-driver.destroyCh:
-		//return
 		case e := <-driver.eventCh:
 			switch e.evnType {
 			case eventFrameworkRegistered:
@@ -248,17 +239,6 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 			case eventExecutorToFramework:
 				driver.frameworkMessageRcvd(e.from, e.msg)
 			}
-
-			// case a := <-driver.actionCh:
-			// 	switch a.acType {
-			// 	// dispatch events
-			// 	// case actionStartDriver:
-			// 	// 	a.respCh <- driver.doStart()
-			// 	// case actionJoinDriver:
-			// 	// 	a.respCh <- driver.doJoin()
-			// 	// case actionStopDriver:
-			// 	// 	a.respCh <- driver.doStop(a.param)
-			// 	}
 		}
 	}
 }
@@ -614,8 +594,17 @@ func (driver *MesosSchedulerDriver) LaunchTasks(offerId *mesos.OfferID, tasks []
 		if task.Executor != nil && task.Executor.FrameworkId == nil {
 			task.Executor.FrameworkId = driver.FrameworkInfo.Id
 		}
+
+		// TODO (VV): Send StatusUpdate(TASK_LOST)
+		//   when task.executorinfo.framework_id != driver.FrameworkInfo.Id
+		//   See Sched.cpp L#867
+
 		okTasks = append(okTasks, task)
 	}
+
+	// TODO (VV): Keep track of slaves where tasks are running so future
+	//   SendFrameworkMessage can be sent directly to running slaves.
+	//   See L#901
 
 	// launch tasks
 	message := &mesos.LaunchTasksMessage{
@@ -643,6 +632,7 @@ func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) mesos.Status 
 
 	if !driver.connected {
 		log.Infoln("Ignoring kill task message, disconnected from master.")
+		return driver.status
 	}
 
 	message := &mesos.KillTaskMessage{TaskId: taskId}

@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"bytes"
 	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
 	log "github.com/golang/glog"
@@ -10,11 +11,13 @@ import (
 	"github.com/mesos/mesos-go/util"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"os/user"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -37,9 +40,26 @@ func makeMockServer(handler func(rsp http.ResponseWriter, req *http.Request)) *h
 	return server
 }
 
+// MockMaster to send a event messages to processes.
+func generateMasterEvent(t *testing.T, targetPid *upid.UPID, message proto.Message) {
+	messageName := reflect.TypeOf(message).Elem().Name()
+	data, err := proto.Marshal(message)
+	assert.NoError(t, err)
+	hostport := net.JoinHostPort(targetPid.Host, targetPid.Port)
+	targetURL := fmt.Sprintf("http://%s/%s/mesos.internal.%s", hostport, targetPid.ID, messageName)
+	log.Infoln("MockMaster Sending message to", targetURL)
+	req, err := http.NewRequest("POST", targetURL, bytes.NewReader(data))
+	assert.NoError(t, err)
+	req.Header.Add("Libprocess-From", targetPid.String())
+	req.Header.Add("Content-Type", "application/x-protobuf")
+	resp, err := http.DefaultClient.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+}
+
 func TestSchedulerDriverNew(t *testing.T) {
 	masterAddr := "localhost:5050"
-	mUpid, err := upid.Parse("master(1)@" + masterAddr)
+	mUpid, err := upid.Parse("master@" + masterAddr)
 	assert.NoError(t, err)
 	driver, err := NewMesosSchedulerDriver(&Scheduler{}, &mesos.FrameworkInfo{}, masterAddr, nil)
 	assert.NotNil(t, driver)
@@ -58,6 +78,47 @@ func TestSchedulerDriverNew_WithFrameworkInfo_Override(t *testing.T) {
 	assert.Equal(t, driver.FrameworkInfo.GetUser(), "test-user")
 	assert.Equal(t, "local-host", driver.FrameworkInfo.GetHostname())
 }
+
+// ------------------- Http Message Handler Tests --------------------
+
+func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
+	// start mock master server to handle connection
+	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
+		log.Infoln("MockMaster - rcvd ", req.RequestURI)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+	url, _ := url.Parse(server.URL)
+
+	ch := make(chan bool)
+	sched := &Scheduler{
+		Registered: func(dr SchedulerDriver, fw *mesos.FrameworkID, mi *mesos.MasterInfo) {
+			assert.Equal(t, fw.GetValue(), framework.Id.GetValue())
+			assert.Equal(t, mi.GetIp(), 123456)
+			ch <- true
+		},
+	}
+
+	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
+
+	// Send a event to this SchedulerDriver (via http) to test handlers.
+	pbMsg := &mesos.FrameworkRegisteredMessage{
+		FrameworkId: framework.Id,
+		MasterInfo:  util.NewMasterInfo("master", 123456, 1234),
+	}
+	generateMasterEvent(t, driver.self, pbMsg) // after this driver.connced=true
+	<-time.After(time.Millisecond * 1)
+	assert.True(t, driver.connected)
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+	}
+}
+
+// -------------------------------------------------------------------
 
 func TestSchedulerDriverStartOK(t *testing.T) {
 	sched := &Scheduler{}

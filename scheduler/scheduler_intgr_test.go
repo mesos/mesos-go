@@ -21,7 +21,7 @@ import (
 
 func makeMockServer(handler func(rsp http.ResponseWriter, req *http.Request)) *httptest.Server {
 	server := httptest.NewServer(http.HandlerFunc(handler))
-	log.Error("Created test http server  ", server.URL)
+	log.Infoln("Created test http server  ", server.URL)
 	return server
 }
 
@@ -42,7 +42,7 @@ func generateMasterEvent(t *testing.T, targetPid *upid.UPID, message proto.Messa
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 }
 
-func TestSchedulerDriverStartIntegration(t *testing.T) {
+func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
 	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("RCVD request ", req.URL)
 
@@ -77,7 +77,7 @@ func TestSchedulerDriverStartIntegration(t *testing.T) {
 	assert.False(t, driver.stopped)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 
-	<-time.After(time.Millisecond * 7)
+	<-time.After(time.Millisecond * 3)
 }
 
 func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
@@ -93,6 +93,7 @@ func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
 	ch := make(chan bool)
 	sched := &Scheduler{
 		Registered: func(dr SchedulerDriver, fw *mesos.FrameworkID, mi *mesos.MasterInfo) {
+			log.Infoln("Sched.Registered() called.")
 			assert.Equal(t, fw.GetValue(), framework.Id.GetValue())
 			assert.Equal(t, mi.GetIp(), 123456)
 			ch <- true
@@ -114,5 +115,89 @@ func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
 	select {
 	case <-ch:
 	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting for scheduler callback.")
+	}
+}
+
+func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
+	// start mock master server to handle connection
+	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
+		log.Infoln("MockMaster - rcvd ", req.RequestURI)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+	url, _ := url.Parse(server.URL)
+
+	ch := make(chan bool)
+	sched := &Scheduler{
+		Reregistered: func(dr SchedulerDriver, mi *mesos.MasterInfo) {
+			log.Infoln("Sched.Reregistered() called")
+			assert.Equal(t, mi.GetIp(), 123456)
+			ch <- true
+		},
+	}
+
+	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
+
+	// Send a event to this SchedulerDriver (via http) to test handlers.
+	pbMsg := &mesos.FrameworkReregisteredMessage{
+		FrameworkId: framework.Id,
+		MasterInfo:  util.NewMasterInfo("master", 123456, 1234),
+	}
+	generateMasterEvent(t, driver.self, pbMsg)
+	<-time.After(time.Millisecond * 1)
+	assert.True(t, driver.connected)
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting for scheduler callback.")
+	}
+}
+
+func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
+	// start mock master server to handle connection
+	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
+		log.Infoln("MockMaster - rcvd ", req.RequestURI)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+	url, _ := url.Parse(server.URL)
+
+	ch := make(chan bool)
+	sched := &Scheduler{
+		ResourceOffers: func(dr SchedulerDriver, offers []*mesos.Offer) {
+			log.Infoln("Sched.ResourceOffers called.")
+			assert.NotNil(t, offers)
+			assert.Equal(t, len(offers), 1)
+			ch <- true
+		},
+	}
+
+	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
+	driver.connected = true // mock state
+
+	// Send a event to this SchedulerDriver (via http) to test handlers.
+	offer := util.NewOffer(
+		util.NewOfferID("test-offer-001"),
+		framework.Id,
+		util.NewSlaveID("test-slave-001"),
+		"test-localhost",
+	)
+	pbMsg := &mesos.ResourceOffersMessage{
+		Offers: []*mesos.Offer{offer},
+		Pids:   []string{"test-offer-001"},
+	}
+	generateMasterEvent(t, driver.self, pbMsg)
+	<-time.After(time.Millisecond * 1)
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting for scheduler callback.")
 	}
 }

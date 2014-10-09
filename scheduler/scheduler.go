@@ -285,7 +285,7 @@ func (driver *MesosSchedulerDriver) handleFrameworkReregisteredEvent(from *upid.
 
 func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg proto.Message) {
 	log.V(1).Infoln("Handling Scheduler re-registered event.")
-	msg := pbMsg.(*mesos.FrameworkRegisteredMessage)
+	msg := pbMsg.(*mesos.FrameworkReregisteredMessage)
 
 	if driver.status == mesos.Status_DRIVER_ABORTED {
 		log.Infoln("Ignoring FrameworkReregisteredMessage from master, driver is aborted!")
@@ -301,7 +301,7 @@ func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg
 	log.Infof("Framework re-registered with ID [%s] ", msg.GetFrameworkId().GetValue())
 	driver.connected = true
 	driver.connection = uuid.NewUUID()
-	if driver.Scheduler.Registered != nil {
+	if driver.Scheduler.Reregistered != nil {
 		driver.Scheduler.Reregistered(driver, msg.GetMasterInfo())
 	}
 }

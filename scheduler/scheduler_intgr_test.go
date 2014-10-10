@@ -201,3 +201,41 @@ func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
 		log.Errorf("Tired of waiting for scheduler callback.")
 	}
 }
+
+func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
+	// start mock master server to handle connection
+	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
+		log.Infoln("MockMaster - rcvd ", req.RequestURI)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+	url, _ := url.Parse(server.URL)
+
+	ch := make(chan bool)
+	sched := &Scheduler{
+		OfferRescinded: func(dr SchedulerDriver, oid *mesos.OfferID) {
+			log.Infoln("Sched.OfferRescinded() called.")
+			assert.NotNil(t, oid)
+			assert.Equal(t, "test-offer-001", oid.GetValue())
+			ch <- true
+		},
+	}
+
+	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
+	driver.connected = true // mock state
+
+	// Send a event to this SchedulerDriver (via http) to test handlers.
+	pbMsg := &mesos.RescindResourceOfferMessage{
+		OfferId: util.NewOfferID("test-offer-001"),
+	}
+	generateMasterEvent(t, driver.self, pbMsg)
+	<-time.After(time.Millisecond * 1)
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting for scheduler callback.")
+	}
+}

@@ -239,3 +239,47 @@ func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 		log.Errorf("Tired of waiting for scheduler callback.")
 	}
 }
+
+func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
+	// start mock master server to handle connection
+	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
+		log.Infoln("MockMaster - rcvd ", req.RequestURI)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+	url, _ := url.Parse(server.URL)
+
+	ch := make(chan bool)
+	sched := &Scheduler{
+		StatusUpdate: func(dr SchedulerDriver, stat *mesos.TaskStatus) {
+			log.Infoln("Sched.StatusUpdate() called.")
+			assert.NotNil(t, stat)
+			assert.Equal(t, "test-task-001", stat.GetTaskId().GetValue())
+			ch <- true
+		},
+	}
+
+	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
+	driver.connected = true // mock state
+
+	// Send a event to this SchedulerDriver (via http) to test handlers.
+	pbMsg := &mesos.StatusUpdateMessage{
+		Update: util.NewStatusUpdate(
+			framework.Id,
+			util.NewTaskStatus(util.NewTaskID("test-task-001"), mesos.TaskState_TASK_STARTING),
+			float64(time.Now().Unix()),
+			[]byte("test-abcd-ef-3455-454-001"),
+		),
+		Pid: proto.String(driver.self.String()),
+	}
+	generateMasterEvent(t, driver.self, pbMsg)
+	<-time.After(time.Millisecond * 1)
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting for scheduler callback.")
+	}
+}

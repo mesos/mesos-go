@@ -212,7 +212,7 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.handleRescindResourceOfferEvent, &mesos.RescindResourceOfferMessage{})
 	driver.messenger.Install(driver.handleStatusUpdateEvent, &mesos.StatusUpdateMessage{})
 	driver.messenger.Install(driver.handleLostSlaveEvent, &mesos.LostSlaveMessage{})
-	driver.messenger.Install(driver.handleFrameworkMessageEvent, &mesos.FrameworkToExecutorMessage{})
+	driver.messenger.Install(driver.handleFrameworkMessageEvent, &mesos.ExecutorToFrameworkMessage{})
 
 	go driver.eventLoop()
 	return nil

@@ -327,3 +327,46 @@ func TestSchedulerDriverLostSlaveEvent(t *testing.T) {
 		log.Errorf("Tired of waiting for scheduler callback.")
 	}
 }
+
+func TestSchedulerDriverFrameworkMessageEvent(t *testing.T) {
+	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
+		log.Infoln("MockMaster - rcvd ", req.RequestURI)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+	url, _ := url.Parse(server.URL)
+
+	ch := make(chan bool)
+	sched := &Scheduler{
+		FrameworkMessage: func(dr SchedulerDriver, execId *mesos.ExecutorID, slaveId *mesos.SlaveID, data []byte) {
+			log.Infoln("Sched.FrameworkMessage() called.")
+			assert.NotNil(t, slaveId)
+			assert.Equal(t, slaveId.GetValue(), "test-slave-001")
+			assert.NotNil(t, execId)
+			assert.NotNil(t, data)
+			assert.Equal(t, "test-data-999", string(data))
+			ch <- true
+		},
+	}
+
+	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
+	driver.connected = true // mock state
+
+	// Send a event to this SchedulerDriver (via http) to test handlers.	offer := util.NewOffer(
+	pbMsg := &mesos.ExecutorToFrameworkMessage{
+		SlaveId:     util.NewSlaveID("test-slave-001"),
+		FrameworkId: framework.Id,
+		ExecutorId:  util.NewExecutorID("test-executor-001"),
+		Data:        []byte("test-data-999"),
+	}
+	generateMasterEvent(t, driver.self, pbMsg)
+	<-time.After(time.Millisecond * 1)
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting for scheduler callback.")
+	}
+}

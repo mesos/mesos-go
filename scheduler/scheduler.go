@@ -213,6 +213,7 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.handleStatusUpdateEvent, &mesos.StatusUpdateMessage{})
 	driver.messenger.Install(driver.handleLostSlaveEvent, &mesos.LostSlaveMessage{})
 	driver.messenger.Install(driver.handleFrameworkMessageEvent, &mesos.ExecutorToFrameworkMessage{})
+	driver.messenger.Install(driver.handleFrameworkErrorEvent, &mesos.FrameworkErrorMessage{})
 
 	go driver.eventLoop()
 	return nil
@@ -238,6 +239,8 @@ func (driver *MesosSchedulerDriver) eventLoop() {
 				driver.slaveLost(e.from, e.msg)
 			case eventExecutorToFramework:
 				driver.frameworkMessageRcvd(e.from, e.msg)
+			case eventError:
+				driver.frameworkErrorRcvd(e.from, e.msg)
 			}
 		}
 	}
@@ -449,6 +452,16 @@ func (driver *MesosSchedulerDriver) frameworkMessageRcvd(from *upid.UPID, pbMsg 
 	if driver.Scheduler != nil && driver.Scheduler.FrameworkMessage != nil {
 		driver.Scheduler.FrameworkMessage(driver, msg.ExecutorId, msg.SlaveId, msg.Data)
 	}
+}
+
+func (driver *MesosSchedulerDriver) handleFrameworkErrorEvent(from *upid.UPID, msg proto.Message) {
+	driver.eventCh <- newMesosEvent(eventError, from, msg)
+}
+
+func (driver *MesosSchedulerDriver) frameworkErrorRcvd(from *upid.UPID, pbMsg proto.Message) {
+	log.V(1).Infoln("Handling framework error event.")
+	msg := pbMsg.(*mesos.FrameworkErrorMessage)
+	driver.error(msg.GetMessage(), true)
 }
 
 // ---------------------- Interface Methods ---------------------- //

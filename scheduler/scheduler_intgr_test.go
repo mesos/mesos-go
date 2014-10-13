@@ -15,6 +15,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -241,22 +243,30 @@ func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
-	// start mock master server to handle connection
+	var wg sync.WaitGroup
+	wg.Add(2)
 	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
+		if strings.Contains(req.RequestURI, "mesos.internal.StatusUpdateAcknowledgementMessage") {
+			log.Infoln("Master cvd ACK")
+			data, _ := ioutil.ReadAll(req.Body)
+			defer req.Body.Close()
+			assert.NotNil(t, data)
+			wg.Done()
+		}
 		rsp.WriteHeader(http.StatusAccepted)
 	})
 
 	defer server.Close()
 	url, _ := url.Parse(server.URL)
 
-	ch := make(chan bool)
+	//ch := make(chan bool)
 	sched := &Scheduler{
 		StatusUpdate: func(dr SchedulerDriver, stat *mesos.TaskStatus) {
 			log.Infoln("Sched.StatusUpdate() called.")
 			assert.NotNil(t, stat)
 			assert.Equal(t, "test-task-001", stat.GetTaskId().GetValue())
-			ch <- true
+			wg.Done()
 		},
 	}
 
@@ -275,11 +285,8 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 		),
 		Pid: proto.String(driver.self.String()),
 	}
+	pbMsg.Update.SlaveId = &mesos.SlaveID{Value: proto.String("test-slave-001")}
 	generateMasterEvent(t, driver.self, pbMsg)
 	<-time.After(time.Millisecond * 1)
-	select {
-	case <-ch:
-	case <-time.After(time.Millisecond * 2):
-		log.Errorf("Tired of waiting for scheduler callback.")
-	}
+	wg.Wait()
 }

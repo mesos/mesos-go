@@ -290,3 +290,40 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 	<-time.After(time.Millisecond * 1)
 	wg.Wait()
 }
+
+func TestSchedulerDriverLostSlaveEvent(t *testing.T) {
+	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
+		log.Infoln("MockMaster - rcvd ", req.RequestURI)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+	url, _ := url.Parse(server.URL)
+
+	ch := make(chan bool)
+	sched := &Scheduler{
+		SlaveLost: func(dr SchedulerDriver, slaveId *mesos.SlaveID) {
+			log.Infoln("Sched.SlaveLost() called.")
+			assert.NotNil(t, slaveId)
+			assert.Equal(t, slaveId.GetValue(), "test-slave-001")
+			ch <- true
+		},
+	}
+
+	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
+	driver.connected = true // mock state
+
+	// Send a event to this SchedulerDriver (via http) to test handlers.	offer := util.NewOffer(
+	pbMsg := &mesos.LostSlaveMessage{
+		SlaveId: util.NewSlaveID("test-slave-001"),
+	}
+	generateMasterEvent(t, driver.self, pbMsg)
+	<-time.After(time.Millisecond * 1)
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting for scheduler callback.")
+	}
+}

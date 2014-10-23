@@ -46,7 +46,7 @@ type SchedulerDriver interface {
 	// of Request and how, for example, to request resources
 	// from specific slaves). Any resources available are offered to the
 	// framework via Scheduler.ResourceOffers callback, asynchronously.
-	//RequestResources(requests []*mesos.Request) mesos.Status
+	RequestResources(requests []*mesos.Request) mesos.Status
 
 	// Launches the given set of tasks. Any resources remaining (i.e.,
 	// not used by the tasks or their executors) will be considered
@@ -70,18 +70,17 @@ type SchedulerDriver interface {
 	// Filters). Note that this can be done at any time, it is not
 	// necessary to do this within the Scheduler::resourceOffers
 	// callback.
-	//DeclineOffer(offerID *mesos.OfferID, filters *mesos.Filters) mesos.Status
+	DeclineOffer(offerID *mesos.OfferID, filters *mesos.Filters) mesos.Status
 
 	// Removes all filters previously set by the framework (via
 	// LaunchTasks()). This enables the framework to receive offers from
 	// those filtered slaves.
-	//ReviveOffers() mesos.Status
+	ReviveOffers() mesos.Status
 
 	// Sends a message from the framework to one of its executors. These
 	// messages are best effort; do not expect a framework message to be
 	// retransmitted in any reliable fashion.
-	//SendFrameworkMessage(executorID *mesos.ExecutorID, slaveID *mesos.SlaveID,
-	//	data string) mesos.Status
+	SendFrameworkMessage(executorID *mesos.ExecutorID, slaveID *mesos.SlaveID, data []byte) mesos.Status
 
 	// Allows the framework to query the status for non-terminal tasks.
 	// This causes the master to send back the latest task status for
@@ -89,7 +88,7 @@ type SchedulerDriver interface {
 	// known will result in a TASK_LOST update. If statuses is empty,
 	// then the master will send the latest status for each task
 	// currently known.
-	//ReconcileTasks(statuses []*mesos.TaskStatus) mesos.Status
+	ReconcileTasks(statuses []*mesos.TaskStatus) mesos.Status
 }
 
 // Scheduler a type with callback attributes to be provided by frameworks

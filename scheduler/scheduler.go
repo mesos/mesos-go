@@ -660,6 +660,85 @@ func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) mesos.Status 
 	return driver.status
 }
 
+func (driver *MesosSchedulerDriver) RequestResources(requests []*mesos.Request) mesos.Status {
+	if driver.status != mesos.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+	if !driver.connected {
+		log.Infoln("Ignoring request resource message, disconnected from master.")
+		return driver.status
+	}
+
+	message := &mesos.ResourceRequestMessage{
+		FrameworkId: driver.FrameworkInfo.Id,
+		Requests:    requests,
+	}
+
+	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
+		errMsg := fmt.Sprintf("Failed to send ResourceRequest message: %v\n", err)
+		log.Errorln(errMsg)
+		driver.error(errMsg, false)
+		return driver.status
+	}
+
+	return driver.status
+}
+
+func (driver *MesosSchedulerDriver) DeclineOffer(offerId *mesos.OfferID, filters *mesos.Filters) mesos.Status {
+	return driver.LaunchTasks(offerId, []*mesos.TaskInfo{}, filters)
+}
+
+func (driver *MesosSchedulerDriver) ReviveOffers() mesos.Status {
+	if driver.status != mesos.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+	if !driver.connected {
+		log.Infoln("Ignoring revive offers message, disconnected from master.")
+		return driver.status
+	}
+
+	message := &mesos.ReviveOffersMessage{
+		FrameworkId: driver.FrameworkInfo.Id,
+	}
+	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
+		errMsg := fmt.Sprintf("Failed to send ReviveOffers message: %v\n", err)
+		log.Errorln(errMsg)
+		driver.error(errMsg, false)
+		return driver.status
+	}
+
+	return driver.status
+}
+
+func (driver *MesosSchedulerDriver) SendFrameworkMessage(executorId *mesos.ExecutorID, slaveId *mesos.SlaveID, data []byte) mesos.Status {
+	if driver.status != mesos.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+	if !driver.connected {
+		log.Infoln("Ignoring send framework message, disconnected from master.")
+		return driver.status
+	}
+
+	// TODO (vv): keep list of cached slaveIds from previous launchTask() calls.
+	//            Send frameworkMessage directly to those slaveIds
+	//            See mesos/sched.cpp L#963
+	message := &mesos.FrameworkToExecutorMessage{
+		SlaveId:     slaveId,
+		FrameworkId: driver.FrameworkInfo.Id,
+		ExecutorId:  executorId,
+		Data:        data,
+	}
+
+	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
+		errMsg := fmt.Sprintf("Failed to send framework to executor message: %v\n", err)
+		log.Errorln(errMsg)
+		driver.error(errMsg, false)
+		return driver.status
+	}
+
+	return driver.status
+}
+
 func (driver *MesosSchedulerDriver) error(err string, abortDriver bool) {
 	if abortDriver {
 		if driver.status == mesos.Status_DRIVER_ABORTED {

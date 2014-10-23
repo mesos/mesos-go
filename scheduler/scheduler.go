@@ -739,6 +739,30 @@ func (driver *MesosSchedulerDriver) SendFrameworkMessage(executorId *mesos.Execu
 	return driver.status
 }
 
+func (driver *MesosSchedulerDriver) ReconcileTasks(statuses []*mesos.TaskStatus) mesos.Status {
+	if driver.status != mesos.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+	if !driver.connected {
+		log.Infoln("Ignoring send Reconcile Tasks message, disconnected from master.")
+		return driver.status
+	}
+
+	message := &mesos.ReconcileTasksMessage{
+		FrameworkId: driver.FrameworkInfo.Id,
+		Statuses:    statuses,
+	}
+	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
+		errMsg := fmt.Sprintf("Failed to send reconcile tasks message: %v\n", err)
+		log.Errorln(errMsg)
+		driver.error(errMsg, false)
+		return driver.status
+	}
+
+	return driver.status
+
+}
+
 func (driver *MesosSchedulerDriver) error(err string, abortDriver bool) {
 	if abortDriver {
 		if driver.status == mesos.Status_DRIVER_ABORTED {

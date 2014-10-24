@@ -6,28 +6,56 @@ import (
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	sched "github.com/mesos/mesos-go/scheduler"
+	"github.com/mesos/mesos-go/util"
+	"strconv"
 )
 
-var Sched = &sched.Scheduler{}
+var ip = flag.String("ip", "127.0.0.1", "Master's ip address")
+var port = flag.String("port", "5050", "Master's port")
+
+type ExampleFramework struct {
+	taskLimit int
+	taskId    int
+	exit      chan struct{}
+	Scheduler *sched.Scheduler
+}
+
+var fw = &ExampleFramework{Scheduler: &sched.Scheduler{}}
 
 func init() {
 	log.Infoln("Initializing the Scheduler...")
-	Sched.Registered = func(driver sched.SchedulerDriver, frameworkId *mesos.FrameworkID, masterInfo *mesos.MasterInfo) {
+	fw.Scheduler.Registered = func(driver sched.SchedulerDriver, frameworkId *mesos.FrameworkID, masterInfo *mesos.MasterInfo) {
 		log.Infoln("Framework Registered with Master ", masterInfo)
 	}
 
-	// Sched.Reregistered = func(driver *gomes.SchedulerDriver, masterInfo *mesos.MasterInfo) {
-	// 	log.Println("Framework Registered with Master ", masterInfo)
-	// }
+	fw.Scheduler.ResourceOffers = func(driver sched.SchedulerDriver, offers []*mesos.Offer) {
+		log.Infoln("Got ", len(offers), " offers from master.")
+		for _, offer := range offers {
+			fw.taskId++
+			log.Infoln("Launching task: %d\n", fw.taskId)
 
-	// Sched.ResourceOffers = func(driver *gomes.SchedulerDriver, offers []*mesos.Offer) {
-	// 	log.Println("Got ", len(offers), "offers from master.")
-	// 	log.Println("Offer 1", offers[0])
-	// }
+			tasks := []*mesos.TaskInfo{
+				&mesos.TaskInfo{
+					Name: proto.String("go-task"),
+					TaskId: &mesos.TaskID{
+						Value: proto.String("go-task-" + strconv.Itoa(fw.taskId)),
+					},
+					SlaveId:  offer.SlaveId,
+					Executor: nil,
+					Resources: []*mesos.Resource{
+						util.NewScalarResource("cpus", 1),
+						util.NewScalarResource("mem", 512),
+					},
+				},
+			}
 
-	// Sched.Error = func(driver *gomes.SchedulerDriver, err gomes.MesosError) {
-	// 	log.Println("Scheduler received error:", err.Error())
-	// }
+			driver.LaunchTasks(offer.Id, tasks, &mesos.Filters{})
+		}
+	}
+
+	fw.Scheduler.Error = func(driver sched.SchedulerDriver, err string) {
+		log.Infoln("Scheduler received error:", err)
+	}
 }
 
 func main() {
@@ -35,15 +63,15 @@ func main() {
 	log.Infoln("Starting scheduler test.")
 	log.Infoln("Assuming master 127.0.0.1:5050...")
 
-	master := "127.0.0.1:5050"
+	master := *ip + ":" + *port
 
-	framework := &mesos.FrameworkInfo{
+	fwinfo := &mesos.FrameworkInfo{
 		User: proto.String("testuser"),
 		Name: proto.String("sched-test"),
 		Id:   &mesos.FrameworkID{Value: proto.String("mesos-framework-1")},
 	}
 
-	driver, err := sched.NewMesosSchedulerDriver(Sched, framework, master, nil)
+	driver, err := sched.NewMesosSchedulerDriver(fw.Scheduler, fwinfo, master, nil)
 	if err != nil {
 		log.Errorln("Unable to create a SchedulerDriver ", err.Error())
 	}

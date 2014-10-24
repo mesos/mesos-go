@@ -21,7 +21,7 @@ package detector
 import (
 	"net/url"
 
-	log "github.com/golang/glog"
+	_ "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 )
 
@@ -33,11 +33,9 @@ type ZooKeeperMasterDetector struct {
 
 // Create a new ZooKeeperMasterDetector.
 func NewZooKeeperMasterDetector(rawurl string) (*ZooKeeperMasterDetector, error) {
-	url, err := url.Parse(rawurl)
-	if err != nil {
-		log.Fatalln("Failed to parse url", err)
-	}
-
+	// url, err := url.Parse(rawurl)
+	// if err != nil {
+	// 	log.Fatalln("Failed to parse url", err)
+	// }
+	return nil, nil
 }
-
-//

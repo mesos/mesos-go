@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package util
+package mesosutil
 
 import (
 	"code.google.com/p/gogoprotobuf/proto"

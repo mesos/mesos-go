@@ -93,3 +93,6 @@ junit_*
 # mesos-go specific
 examples/sched/sched
 examples/exec/exec
+
+#webide
+.c9

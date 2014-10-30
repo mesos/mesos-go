@@ -31,6 +31,7 @@ import (
 	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
+	"github.com/mesos/mesos-go/mesosutil"
 )
 
 const (
@@ -39,8 +40,6 @@ const (
 	defaultRecoveryTimeout      = time.Minute * 15
 	defaultHealthCheckDuration  = time.Second * 1
 	defaultHealthCheckThreshold = 10
-	// MesosVersion indicates the supported mesos version.
-	MesosVersion = "0.20.0"
 )
 
 const (
@@ -164,7 +163,7 @@ func NewMesosExecutorDriver() *MesosExecutorDriver {
 // init initializes the driver.
 func (driver *MesosExecutorDriver) init() error {
 	log.Infof("Init mesos executor driver\n")
-	log.Infof("Version: %v\n", MesosVersion)
+	log.Infof("Version: %v\n", mesosutil.MesosVersion)
 
 	// Parse environments.
 	if err := driver.parseEnviroments(); err != nil {

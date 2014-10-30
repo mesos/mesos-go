@@ -24,7 +24,7 @@ import (
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
-	"github.com/mesos/mesos-go/util"
+	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"os/user"

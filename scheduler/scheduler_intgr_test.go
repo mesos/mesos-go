@@ -25,7 +25,7 @@ import (
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/upid"
-	"github.com/mesos/mesos-go/util"
+	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net"

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"code.google.com/p/goprotobuf/proto"
+	"code.google.com/p/gogoprotobuf/proto"
 	"flag"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"

@@ -24,8 +24,8 @@ import (
 	"fmt"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
-	"github.com/mesos/mesos-go/upid"
 	util "github.com/mesos/mesos-go/mesosutil"
+	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net"
@@ -62,6 +62,50 @@ func generateMasterEvent(t *testing.T, targetPid *upid.UPID, message proto.Messa
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 }
 
+// testScuduler is used for testing Schduler callbacks.
+type testScheduler struct {
+	ch chan bool
+	wg sync.WaitGroup
+}
+func (sched *testScheduler) Registered(dr SchedulerDriver, fw *mesos.FrameworkID, mi *mesos.MasterInfo) {
+	log.Infoln("Sched.Registered() called.")
+	assert.Equal(t, fw.GetValue(), framework.Id.GetValue())
+	assert.Equal(t, mi.GetIp(), 123456)
+	sched.ch <- true
+}
+
+func (sched *testScheduler) Reregistered(dr SchedulerDriver, mi *mesos.MasterInfo) {
+			log.Infoln("Sched.Reregistered() called")
+			assert.Equal(t, mi.GetIp(), 123456)
+			sched.ch <- true
+}
+
+func (sched *testScheduler) ResourceOffers(dr SchedulerDriver, offers []*mesos.Offer) {
+			log.Infoln("Sched.ResourceOffers called.")
+			assert.NotNil(t, offers)
+			assert.Equal(t, len(offers), 1)
+			sched.ch <- true
+		}
+
+func (sched *testScheduler) OfferRescinded(dr SchedulerDriver, oid *mesos.OfferID) {
+			log.Infoln("Sched.OfferRescinded() called.")
+			assert.NotNil(t, oid)
+			assert.Equal(t, "test-offer-001", oid.GetValue())
+			sched.ch <- true
+		}
+
+func StatusUpdate(dr SchedulerDriver, stat *mesos.TaskStatus) {
+	log.Infoln("Sched.StatusUpdate() called.")
+	assert.NotNil(t, stat)
+	assert.Equal(t, "test-task-001", stat.GetTaskId().GetValue())
+	sched.ch <- true
+}
+
+
+func newTestScheduler() *testScheduler {
+	return &testScheduler{ch = new(chan bool)}
+}
+
 func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
 	server := makeMockServer(func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("RCVD request ", req.URL)
@@ -88,7 +132,7 @@ func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
 	defer server.Close()
 	url, _ := url.Parse(server.URL)
 
-	driver, err := NewMesosSchedulerDriver(&Scheduler{}, framework, url.Host, nil)
+	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), framework, url.Host, nil)
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
@@ -110,16 +154,7 @@ func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
 	defer server.Close()
 	url, _ := url.Parse(server.URL)
 
-	ch := make(chan bool)
-	sched := &Scheduler{
-		Registered: func(dr SchedulerDriver, fw *mesos.FrameworkID, mi *mesos.MasterInfo) {
-			log.Infoln("Sched.Registered() called.")
-			assert.Equal(t, fw.GetValue(), framework.Id.GetValue())
-			assert.Equal(t, mi.GetIp(), 123456)
-			ch <- true
-		},
-	}
-
+	sched := newTestScheduler()
 	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
@@ -133,7 +168,7 @@ func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
 	<-time.After(time.Millisecond * 1)
 	assert.True(t, driver.connected)
 	select {
-	case <-ch:
+	case <-sched.ch:
 	case <-time.After(time.Millisecond * 2):
 		log.Errorf("Tired of waiting for scheduler callback.")
 	}
@@ -148,16 +183,8 @@ func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
 
 	defer server.Close()
 	url, _ := url.Parse(server.URL)
-
-	ch := make(chan bool)
-	sched := &Scheduler{
-		Reregistered: func(dr SchedulerDriver, mi *mesos.MasterInfo) {
-			log.Infoln("Sched.Reregistered() called")
-			assert.Equal(t, mi.GetIp(), 123456)
-			ch <- true
-		},
-	}
-
+	
+	sched := newTestScheduler()
 	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
@@ -171,7 +198,7 @@ func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
 	<-time.After(time.Millisecond * 1)
 	assert.True(t, driver.connected)
 	select {
-	case <-ch:
+	case <-sched.ch:
 	case <-time.After(time.Millisecond * 2):
 		log.Errorf("Tired of waiting for scheduler callback.")
 	}
@@ -187,16 +214,8 @@ func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
 	defer server.Close()
 	url, _ := url.Parse(server.URL)
 
-	ch := make(chan bool)
-	sched := &Scheduler{
-		ResourceOffers: func(dr SchedulerDriver, offers []*mesos.Offer) {
-			log.Infoln("Sched.ResourceOffers called.")
-			assert.NotNil(t, offers)
-			assert.Equal(t, len(offers), 1)
-			ch <- true
-		},
-	}
-
+	sched := newTestScheduler()
+	
 	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
@@ -216,7 +235,7 @@ func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
 	generateMasterEvent(t, driver.self, pbMsg)
 	<-time.After(time.Millisecond * 1)
 	select {
-	case <-ch:
+	case <- sched.ch:
 	case <-time.After(time.Millisecond * 2):
 		log.Errorf("Tired of waiting for scheduler callback.")
 	}
@@ -232,15 +251,7 @@ func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 	defer server.Close()
 	url, _ := url.Parse(server.URL)
 
-	ch := make(chan bool)
-	sched := &Scheduler{
-		OfferRescinded: func(dr SchedulerDriver, oid *mesos.OfferID) {
-			log.Infoln("Sched.OfferRescinded() called.")
-			assert.NotNil(t, oid)
-			assert.Equal(t, "test-offer-001", oid.GetValue())
-			ch <- true
-		},
-	}
+	sched := newTestScheduler()
 
 	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
 	assert.NoError(t, err)
@@ -254,7 +265,7 @@ func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 	generateMasterEvent(t, driver.self, pbMsg)
 	<-time.After(time.Millisecond * 1)
 	select {
-	case <-ch:
+	case <-sched.ch:
 	case <-time.After(time.Millisecond * 2):
 		log.Errorf("Tired of waiting for scheduler callback.")
 	}
@@ -278,6 +289,7 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 	defer server.Close()
 	url, _ := url.Parse(server.URL)
 
+	sched := newTestScheduler()
 	//ch := make(chan bool)
 	sched := &Scheduler{
 		StatusUpdate: func(dr SchedulerDriver, stat *mesos.TaskStatus) {

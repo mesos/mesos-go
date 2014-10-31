@@ -302,9 +302,9 @@ func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg
 	log.Infof("Framework re-registered with ID [%s] ", msg.GetFrameworkId().GetValue())
 	driver.connected = true
 	driver.connection = uuid.NewUUID()
-	
+
 	driver.Scheduler.Reregistered(driver, msg.GetMasterInfo())
-	
+
 }
 
 func (driver *MesosSchedulerDriver) handleResourceOffersEvent(from *upid.UPID, msg proto.Message) {

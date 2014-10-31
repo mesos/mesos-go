@@ -21,7 +21,7 @@ func (sched *MockScheduler) Reregistered(SchedulerDriver, *mesos.MasterInfo) {
 	sched.Called()
 }
 
-func (sched *MockScheduler) Disconnected(*SchedulerDriver) {
+func (sched *MockScheduler) Disconnected(SchedulerDriver) {
 	sched.Called()
 }
 

@@ -134,7 +134,7 @@ type Scheduler interface {
 
 	// Invoked when the scheduler becomes "disconnected" from the master
 	// (e.g., the master fails and another is taking over).
-	Disconnected(*SchedulerDriver)
+	Disconnected(SchedulerDriver)
 
 	// Invoked when resources have been offered to this framework. A
 	// single offer will only contain resources from a single slave.

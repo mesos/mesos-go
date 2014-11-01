@@ -87,6 +87,7 @@ func TestSchedulerDriverStartOK(t *testing.T) {
 
 func TestSchedulerDriverStartWithMessengerFailure(t *testing.T) {
 	sched := NewMockScheduler()
+	sched.On("Error").Return()
 
 	messenger := messenger.NewMockedMessenger()
 	messenger.On("Start").Return(fmt.Errorf("Failed to start messenger"))
@@ -106,6 +107,7 @@ func TestSchedulerDriverStartWithMessengerFailure(t *testing.T) {
 
 func TestSchedulerDriverStartWithRegistrationFailure(t *testing.T) {
 	sched := NewMockScheduler()
+	sched.On("Error").Return()
 
 	// Set expections and return values.
 	messenger := messenger.NewMockedMessenger()
@@ -262,10 +264,13 @@ func TestSchdulerDriverAbort(t *testing.T) {
 }
 
 func TestSchdulerDriverLunchTasksUnstarted(t *testing.T) {
+	sched := NewMockScheduler()
+	sched.On("Error").Return()
+	
 	// Set expections and return values.
 	messenger := messenger.NewMockedMessenger()
 
-	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), framework, master, nil)
+	driver, err := NewMesosSchedulerDriver(sched, framework, master, nil)
 	driver.messenger = messenger
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
@@ -280,13 +285,16 @@ func TestSchdulerDriverLunchTasksUnstarted(t *testing.T) {
 }
 
 func TestSchdulerDriverLaunchTasksWithError(t *testing.T) {
+	sched := NewMockScheduler()
+	sched.On("Error").Return()
+	
 	messenger := messenger.NewMockedMessenger()
 	messenger.On("Start").Return(nil)
 	messenger.On("Send").Return(nil)
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Stop").Return(nil)
 
-	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), framework, master, nil)
+	driver, err := NewMesosSchedulerDriver(sched, framework, master, nil)
 	driver.messenger = messenger
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)

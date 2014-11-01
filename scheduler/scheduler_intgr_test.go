@@ -65,7 +65,7 @@ func generateMasterEvent(t *testing.T, targetPid *upid.UPID, message proto.Messa
 // testScuduler is used for testing Schduler callbacks.
 type testScheduler struct {
 	ch chan bool
-	wg sync.WaitGroup
+	wg *sync.WaitGroup
 	t *testing.T
 }
 
@@ -105,6 +105,7 @@ func (sched *testScheduler) StatusUpdate(dr SchedulerDriver, stat *mesos.TaskSta
 	assert.NotNil(sched.t, stat)
 	assert.Equal(sched.t, "test-task-001", stat.GetTaskId().GetValue())
 	sched.wg.Done()
+	log.Infof("Status update done with waitGroup %v \n", sched.wg)
 }
 
 func (sched *testScheduler) SlaveLost(dr SchedulerDriver, slaveId *mesos.SlaveID) {
@@ -330,6 +331,7 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 			defer req.Body.Close()
 			assert.NotNil(t, data)
 			wg.Done()
+			log.Infof("MockMaster - Done with wait group %v \n", wg)
 		}
 		rsp.WriteHeader(http.StatusAccepted)
 	})
@@ -338,7 +340,7 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 	url, _ := url.Parse(server.URL)
 
 	sched := newTestScheduler()
-	sched.wg = wg
+	sched.wg = &wg
 	sched.t = t
 	
 	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)

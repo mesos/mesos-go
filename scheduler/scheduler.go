@@ -32,7 +32,6 @@ import (
 )
 
 type eventType int
-type actionType int
 
 const (
 	// master-originated event messages
@@ -44,20 +43,6 @@ const (
 	eventExecutorToFramework
 	eventLostSlave
 	eventError
-
-	// driver-originated actions
-	actionStartDriver actionType = iota + 200
-	actionStopDriver
-	actionAbortDriver
-	actionJoinDriver
-	actionRunDriver
-	actionRequestResources
-	actionKillTask
-	actionLaunchTasks
-	actionDeclineOffer
-	actionReviveOffers
-	actionSendFrameworkMessage
-	actionReconcileTask
 )
 
 // mesosEvent event sent/received to master/from slave.
@@ -67,16 +52,6 @@ type mesosEvent struct {
 	msg     proto.Message
 }
 
-type response struct {
-	stat mesos.Status
-	err  error
-}
-
-type action struct {
-	acType actionType
-	param  interface{}
-	respCh chan *response
-}
 
 func newMesosEvent(evnType eventType, from *upid.UPID, msg proto.Message) *mesosEvent {
 	return &mesosEvent{
@@ -86,13 +61,6 @@ func newMesosEvent(evnType eventType, from *upid.UPID, msg proto.Message) *mesos
 	}
 }
 
-func newAction(acType actionType, param interface{}) *action {
-	return &action{
-		acType: acType,
-		param:  param,
-		respCh: make(chan *response),
-	}
-}
 
 // Concrete implementation of a SchedulerDriver that connects a
 // Scheduler with a Mesos master. The MesosSchedulerDriver is
@@ -120,7 +88,6 @@ type MesosSchedulerDriver struct {
 	FrameworkInfo   *mesos.FrameworkInfo
 	self            *upid.UPID
 	eventCh         chan *mesosEvent
-	actionCh        chan *action
 	stopCh          chan struct{}
 	stopped         bool
 	status          mesos.Status
@@ -178,7 +145,6 @@ func NewMesosSchedulerDriver(
 		Scheduler:     sched,
 		FrameworkInfo: framework,
 		eventCh:       make(chan *mesosEvent, 1024),
-		actionCh:      make(chan *action, 1024),
 		stopCh:        make(chan struct{}),
 		status:        mesos.Status_DRIVER_NOT_STARTED,
 		stopped:       true,

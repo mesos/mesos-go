@@ -55,7 +55,8 @@ func generateMasterEvent(t *testing.T, targetPid *upid.UPID, message proto.Messa
 	log.Infoln("MockMaster Sending message to", targetURL)
 	req, err := http.NewRequest("POST", targetURL, bytes.NewReader(data))
 	assert.NoError(t, err)
-	req.Header.Add("Libprocess-From", targetPid.String())
+	from, _ := upid.Parse("test-client@127.0.0.1:5050")
+	req.Header.Add("Libprocess-From", from.String())
 	req.Header.Add("Content-Type", "application/x-protobuf")
 	resp, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err)
@@ -66,7 +67,7 @@ func generateMasterEvent(t *testing.T, targetPid *upid.UPID, message proto.Messa
 type testScheduler struct {
 	ch chan bool
 	wg *sync.WaitGroup
-	t *testing.T
+	t  *testing.T
 }
 
 func (sched *testScheduler) Registered(dr SchedulerDriver, fw *mesos.FrameworkID, mi *mesos.MasterInfo) {
@@ -83,7 +84,7 @@ func (sched *testScheduler) Reregistered(dr SchedulerDriver, mi *mesos.MasterInf
 }
 
 func (sched *testScheduler) Disconnected(dr SchedulerDriver) {
-	log.Infoln("Shed.Disconnected() called")	
+	log.Infoln("Shed.Disconnected() called")
 }
 
 func (sched *testScheduler) ResourceOffers(dr SchedulerDriver, offers []*mesos.Offer) {
@@ -223,11 +224,11 @@ func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
 	defer server.Close()
 	url, _ := url.Parse(server.URL)
 
-	ch := make (chan bool)
+	ch := make(chan bool)
 	sched := newTestScheduler()
 	sched.ch = ch
 	sched.t = t
-	
+
 	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
@@ -261,7 +262,7 @@ func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
 	sched := newTestScheduler()
 	sched.ch = ch
 	sched.t = t
-	
+
 	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
@@ -297,11 +298,11 @@ func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 	defer server.Close()
 	url, _ := url.Parse(server.URL)
 
-	ch := make (chan bool)
+	ch := make(chan bool)
 	sched := newTestScheduler()
 	sched.ch = ch
 	sched.t = t
-	
+
 	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())
@@ -342,7 +343,7 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 	sched := newTestScheduler()
 	sched.wg = &wg
 	sched.t = t
-	
+
 	driver, err := NewMesosSchedulerDriver(sched, framework, url.Host, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.Start())

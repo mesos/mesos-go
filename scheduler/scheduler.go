@@ -52,7 +52,6 @@ type mesosEvent struct {
 	msg     proto.Message
 }
 
-
 func newMesosEvent(evnType eventType, from *upid.UPID, msg proto.Message) *mesosEvent {
 	return &mesosEvent{
 		evnType: evnType,
@@ -60,7 +59,6 @@ func newMesosEvent(evnType eventType, from *upid.UPID, msg proto.Message) *mesos
 		msg:     msg,
 	}
 }
-
 
 // Concrete implementation of a SchedulerDriver that connects a
 // Scheduler with a Mesos master. The MesosSchedulerDriver is
@@ -349,17 +347,20 @@ func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.M
 	}
 
 	// Send StatusUpdate Acknowledgement
-	ackMsg := &mesos.StatusUpdateAcknowledgementMessage{
-		SlaveId:     msg.Update.SlaveId,
-		FrameworkId: driver.FrameworkInfo.Id,
-		TaskId:      msg.Update.Status.TaskId,
-		Uuid:        msg.Update.Uuid,
-	}
+	// Only send ack if udpate was not from master or driver
+	if !from.Equal(driver.self) && !from.Equal(driver.MasterUPID) {
+		ackMsg := &mesos.StatusUpdateAcknowledgementMessage{
+			SlaveId:     msg.Update.SlaveId,
+			FrameworkId: driver.FrameworkInfo.Id,
+			TaskId:      msg.Update.Status.TaskId,
+			Uuid:        msg.Update.Uuid,
+		}
 
-	log.V(2).Infoln("Sending status update ACK to ", from.String())
-	if err := driver.messenger.Send(driver.MasterUPID, ackMsg); err != nil {
-		log.Errorf("Failed to send StatusUpdate ACK message: %v\n", err)
-		return
+		log.V(2).Infoln("Sending status update ACK to ", from.String())
+		if err := driver.messenger.Send(driver.MasterUPID, ackMsg); err != nil {
+			log.Errorf("Failed to send StatusUpdate ACK message: %v\n", err)
+			return
+		}
 	}
 }
 

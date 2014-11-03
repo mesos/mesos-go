@@ -266,7 +266,7 @@ func TestSchdulerDriverAbort(t *testing.T) {
 func TestSchdulerDriverLunchTasksUnstarted(t *testing.T) {
 	sched := NewMockScheduler()
 	sched.On("Error").Return()
-	
+
 	// Set expections and return values.
 	messenger := messenger.NewMockedMessenger()
 
@@ -276,7 +276,7 @@ func TestSchdulerDriverLunchTasksUnstarted(t *testing.T) {
 	assert.True(t, driver.stopped)
 
 	stat := driver.LaunchTasks(
-		&mesos.OfferID{},
+		[]*mesos.OfferID{&mesos.OfferID{}},
 		[]*mesos.TaskInfo{},
 		&mesos.Filters{},
 	)
@@ -287,7 +287,7 @@ func TestSchdulerDriverLunchTasksUnstarted(t *testing.T) {
 func TestSchdulerDriverLaunchTasksWithError(t *testing.T) {
 	sched := NewMockScheduler()
 	sched.On("Error").Return()
-	
+
 	messenger := messenger.NewMockedMessenger()
 	messenger.On("Start").Return(nil)
 	messenger.On("Send").Return(nil)
@@ -320,7 +320,7 @@ func TestSchdulerDriverLaunchTasksWithError(t *testing.T) {
 	tasks := []*mesos.TaskInfo{task}
 
 	stat := driver.LaunchTasks(
-		&mesos.OfferID{},
+		[]*mesos.OfferID{&mesos.OfferID{}},
 		tasks,
 		&mesos.Filters{},
 	)
@@ -359,7 +359,7 @@ func TestSchdulerDriverLaunchTasks(t *testing.T) {
 	tasks := []*mesos.TaskInfo{task}
 
 	stat := driver.LaunchTasks(
-		&mesos.OfferID{},
+		[]*mesos.OfferID{&mesos.OfferID{}},
 		tasks,
 		&mesos.Filters{},
 	)

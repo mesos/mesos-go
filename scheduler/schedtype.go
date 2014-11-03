@@ -74,7 +74,7 @@ type SchedulerDriver interface {
 	// provided. Note that all offers must belong to the same slave.
 	// Invoking this function with an empty collection of tasks declines
 	// offers in their entirety (see Scheduler::declineOffer).
-	LaunchTasks(offerID *mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) mesos.Status
+	LaunchTasks(offerIDs []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) mesos.Status
 
 	// Kills the specified task. Note that attempting to kill a task is
 	// currently not reliable. If, for example, a scheduler fails over

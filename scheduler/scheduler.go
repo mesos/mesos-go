@@ -95,6 +95,7 @@ type MesosSchedulerDriver struct {
 	local           bool
 	checkpoint      bool
 	recoveryTimeout time.Duration
+	cache           *schedCache
 	updates         map[string]*mesos.StatusUpdate // Key is a UUID string.
 	tasks           map[string]*mesos.TaskInfo     // Key is a UUID string.
 }
@@ -147,8 +148,7 @@ func NewMesosSchedulerDriver(
 		status:        mesos.Status_DRIVER_NOT_STARTED,
 		stopped:       true,
 		connected:     false,
-		updates:       make(map[string]*mesos.StatusUpdate),
-		tasks:         make(map[string]*mesos.TaskInfo),
+		cache:         newSchedCache(),
 	}
 
 	if m, err := upid.Parse("master@" + master); err != nil {
@@ -289,6 +289,21 @@ func (driver *MesosSchedulerDriver) resourcesOffered(from *upid.UPID, pbMsg prot
 		return
 	}
 
+	pidStrings := msg.GetPids()
+	if len(pidStrings) != len(msg.Offers) {
+		log.Errorln("Ignoring offers, Offer count does not match Slave PID count.")
+		return
+	}
+
+	for i, offer := range msg.Offers {
+		if pid, err := upid.Parse(pidStrings[i]); err == nil {
+			driver.cache.putOffer(offer, pid)
+			log.V(1).Infof("Cached offer %s from SlavePID %s", offer.Id.GetValue(), pid)
+		} else {
+			log.V(1).Infoln("Failed to parse offer PID:", pid)
+		}
+	}
+
 	driver.Scheduler.ResourceOffers(driver, msg.Offers)
 }
 
@@ -312,9 +327,9 @@ func (driver *MesosSchedulerDriver) resourceOfferRescinded(from *upid.UPID, pbMs
 	}
 
 	// TODO(vv) check for leading master (see sched.cpp)
-	// TODO(vv) remove saved offers (see sched.cpp L#572)
 
 	log.V(1).Infoln("Rescinding offer ", msg.OfferId.GetValue())
+	driver.cache.removeOffer(msg.OfferId)
 	driver.Scheduler.OfferRescinded(driver, msg.OfferId)
 }
 
@@ -386,6 +401,7 @@ func (driver *MesosSchedulerDriver) slaveLost(from *upid.UPID, pbMsg proto.Messa
 	// TODO(VV) - detect leading master (see sched.cpp)
 
 	log.V(2).Infoln("Lost slave ", msg.SlaveId.GetValue())
+	driver.cache.removeSlavePid(msg.SlaveId)
 
 	driver.Scheduler.SlaveLost(driver, msg.SlaveId)
 }
@@ -535,7 +551,7 @@ func (driver *MesosSchedulerDriver) Abort() mesos.Status {
 	return driver.status
 }
 
-func (driver *MesosSchedulerDriver) LaunchTasks(offerId *mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) mesos.Status {
+func (driver *MesosSchedulerDriver) LaunchTasks(offerIds []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) mesos.Status {
 	if driver.status != mesos.Status_DRIVER_RUNNING {
 		return driver.status
 	}
@@ -543,54 +559,100 @@ func (driver *MesosSchedulerDriver) LaunchTasks(offerId *mesos.OfferID, tasks []
 	// Launch tasks
 	if !driver.connected {
 		log.Infoln("Ignoring LaunchTasks message, disconnected from master.")
-		// TODO: send statusUpdate with status=TASK_LOST for each task.
-		//       See sched.cpp L#823
+		// Send statusUpdate with status=TASK_LOST for each task.
+		// See sched.cpp L#823
+		for _, task := range tasks {
+			driver.pushLostTask(task, "Master is disconnected")
+		}
 		return driver.status
 	}
-	// only allow tasks with either ExecInfo or CommandInfo through.
+	// only allow tasks with either ExecInfo or CommandInfo through (not both)
 	okTasks := make([]*mesos.TaskInfo, 0, len(tasks))
 	for _, task := range tasks {
 		if task.Executor != nil && task.Command != nil {
-			log.Warning("WARN: Ignoring task ", task.Name, ". It has both Executor and Command set.")
+			warn := fmt.Sprintf("Ignoring task %s, TaskInfo must either have an Executor or Command (not both)", task.Name)
+			log.Warning("WARN:", warn)
+			driver.pushLostTask(task, warn)
 			continue
 		}
 		if task.Executor != nil && task.Executor.FrameworkId != driver.FrameworkInfo.Id {
-			log.Warning("WARN: Ignoring task ", task.Name, ". Expecting FrameworkId", driver.FrameworkInfo.GetId(), ", but got", task.Executor.FrameworkId.GetValue())
+			warn := fmt.Sprintf(
+				"Ignoring task %s, Expecting task.FrameworkId %s, but got %s.",
+				task.Name,
+				driver.FrameworkInfo.GetId(),
+				task.Executor.FrameworkId.GetValue(),
+			)
+			log.Warning("WARN:", warn)
+			driver.pushLostTask(task, warn)
 			continue
 		}
-		// ensure default frameworkid value
+		// ensure default frameworkid value is set in TaskInfo
 		if task.Executor != nil && task.Executor.FrameworkId == nil {
 			task.Executor.FrameworkId = driver.FrameworkInfo.Id
 		}
 
-		// TODO (VV): Send StatusUpdate(TASK_LOST)
-		//   when task.executorinfo.framework_id != driver.FrameworkInfo.Id
-		//   See Sched.cpp L#867
-
 		okTasks = append(okTasks, task)
 	}
 
-	// TODO (VV): Keep track of slaves where tasks are running so future
-	//   SendFrameworkMessage can be sent directly to running slaves.
-	//   See L#901
+	for _, offerId := range offerIds {
+
+		if !driver.cache.containsOffer(offerId) {
+			log.Warningf("Attempting to launch task with unknown offer %s\n", offerId)
+		}
+
+		for _, task := range okTasks {
+			// only launch task with previously known cached offers (from cached slaves)
+			if driver.cache.containsOffer(offerId) &&
+				driver.cache.getOffer(offerId).offer.SlaveId.Equal(task.SlaveId) {
+				// cache the tasked slave, for future communication
+				pid := driver.cache.getOffer(offerId).slavePid
+				driver.cache.putSlavePid(task.SlaveId, pid)
+			}
+		}
+
+		driver.cache.removeOffer(offerId) // if offer
+	}
 
 	// launch tasks
 	message := &mesos.LaunchTasksMessage{
 		FrameworkId: driver.FrameworkInfo.Id,
-		OfferIds:    []*mesos.OfferID{offerId},
+		OfferIds:    offerIds,
 		Tasks:       okTasks,
 		Filters:     filters,
 	}
 
 	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
+		for _, task := range tasks {
+			driver.pushLostTask(task, "Unable to launch tasks: "+err.Error())
+		}
 		errMsg := fmt.Sprintf("Failed to send LaunchTask message: %v", err)
 		log.Errorln(errMsg)
 		driver.error(errMsg, false)
-		// TODO(VV): Task probably should be marked as lost or requeued.
 		return driver.status
 	}
 
 	return driver.status
+}
+
+func (driver *MesosSchedulerDriver) pushLostTask(taskInfo *mesos.TaskInfo, why string) {
+	msg := &mesos.StatusUpdateMessage{
+		Update: &mesos.StatusUpdate{
+			FrameworkId: driver.FrameworkInfo.Id,
+			Status: &mesos.TaskStatus{
+				TaskId:  taskInfo.TaskId,
+				State:   mesos.TaskState_TASK_LOST.Enum(),
+				Message: proto.String(why),
+			},
+			SlaveId:    taskInfo.SlaveId,
+			ExecutorId: taskInfo.Executor.ExecutorId,
+			Timestamp:  proto.Float64(float64(time.Now().Unix())),
+			Uuid:       uuid.NewRandom(),
+		},
+	}
+
+	// put it on internal chanel
+	// will cause handler to push to attached Scheduler
+	driver.eventCh <- newMesosEvent(eventStatusUpdate, driver.self, msg)
 }
 
 func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) mesos.Status {
@@ -640,7 +702,7 @@ func (driver *MesosSchedulerDriver) RequestResources(requests []*mesos.Request) 
 }
 
 func (driver *MesosSchedulerDriver) DeclineOffer(offerId *mesos.OfferID, filters *mesos.Filters) mesos.Status {
-	return driver.LaunchTasks(offerId, []*mesos.TaskInfo{}, filters)
+	return driver.LaunchTasks([]*mesos.OfferID{offerId}, []*mesos.TaskInfo{}, filters)
 }
 
 func (driver *MesosSchedulerDriver) ReviveOffers() mesos.Status {
@@ -674,21 +736,33 @@ func (driver *MesosSchedulerDriver) SendFrameworkMessage(executorId *mesos.Execu
 		return driver.status
 	}
 
-	// TODO (vv): keep list of cached slaveIds from previous launchTask() calls.
-	//            Send frameworkMessage directly to those slaveIds
-	//            See mesos/sched.cpp L#963
 	message := &mesos.FrameworkToExecutorMessage{
 		SlaveId:     slaveId,
 		FrameworkId: driver.FrameworkInfo.Id,
 		ExecutorId:  executorId,
 		Data:        data,
 	}
-
-	if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
-		errMsg := fmt.Sprintf("Failed to send framework to executor message: %v\n", err)
-		log.Errorln(errMsg)
-		driver.error(errMsg, false)
-		return driver.status
+	// Use list of cached slaveIds from previous offers.
+	// Send frameworkMessage directly to cached slave, otherwise to master.
+	if driver.cache.containsSlavePid(slaveId) {
+		slavePid := driver.cache.getSlavePid(slaveId)
+		if slavePid.Equal(driver.self) {
+			return driver.status
+		}
+		if err := driver.messenger.Send(slavePid, message); err != nil {
+			errMsg := fmt.Sprintf("Failed to send framework to executor message: %v\n", err)
+			log.Errorln(errMsg)
+			driver.error(errMsg, false)
+			return driver.status
+		}
+	} else {
+		// slavePid not cached, send to master.
+		if err := driver.messenger.Send(driver.MasterUPID, message); err != nil {
+			errMsg := fmt.Sprintf("Failed to send framework to executor message: %v\n", err)
+			log.Errorln(errMsg)
+			driver.error(errMsg, false)
+			return driver.status
+		}
 	}
 
 	return driver.status

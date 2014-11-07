@@ -4,6 +4,7 @@ import (
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/upid"
 	"sync"
+	log "github.com/golang/glog"
 )
 
 type cachedOffer struct {
@@ -28,12 +29,18 @@ func newSchedCache() *schedCache {
 
 // putOffer stores an offer and the slavePID associated with offer.
 func (cache *schedCache) putOffer(offer *mesos.Offer, pid *upid.UPID) {
+	if offer == nil || pid == nil {
+		log.Warningf("Offer not cached. The offer or pid cannot be nil")
+		return
+	}
+	log.V(3).Infoln("Caching offer ", offer.Id.GetValue(), " with slavePID ", pid.String())
 	cache.savedOffers[offer.Id.GetValue()] = cachedOffer{offer: offer, slavePid: pid}
 }
 
 // getOffer returns cached offer
 func (cache *schedCache) getOffer(offerId *mesos.OfferID) cachedOffer {
 	if offerId == nil {
+		log.Warningf("OfferId == nil, returning empty cachedOffer")
 		return cachedOffer{}
 	}
 	return cache.savedOffers[offerId.GetValue()]

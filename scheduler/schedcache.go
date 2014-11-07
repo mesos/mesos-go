@@ -12,17 +12,21 @@ type cachedOffer struct {
 	slavePid *upid.UPID
 }
 
+func newCachedOffer(offer *mesos.Offer, slavePid *upid.UPID) *cachedOffer {
+	return &cachedOffer{offer: offer, slavePid: slavePid}
+}
+
 // schedCache a managed cache with backing maps to store offeres
 // and tasked slaves.
 type schedCache struct {
 	sync.RWMutex
-	savedOffers    map[string]cachedOffer // current offers key:OfferID
+	savedOffers    map[string]*cachedOffer // current offers key:OfferID
 	savedSlavePids map[string]*upid.UPID  // Current saved slaves, key:slaveId
 }
 
 func newSchedCache() *schedCache {
 	return &schedCache{
-		savedOffers:    make(map[string]cachedOffer),
+		savedOffers:    make(map[string]*cachedOffer),
 		savedSlavePids: make(map[string]*upid.UPID),
 	}
 }
@@ -30,18 +34,18 @@ func newSchedCache() *schedCache {
 // putOffer stores an offer and the slavePID associated with offer.
 func (cache *schedCache) putOffer(offer *mesos.Offer, pid *upid.UPID) {
 	if offer == nil || pid == nil {
-		log.Warningf("Offer not cached. The offer or pid cannot be nil")
+		log.V(3).Infoln("WARN: Offer not cached. The offer or pid cannot be nil")
 		return
 	}
 	log.V(3).Infoln("Caching offer ", offer.Id.GetValue(), " with slavePID ", pid.String())
-	cache.savedOffers[offer.Id.GetValue()] = cachedOffer{offer: offer, slavePid: pid}
+	cache.savedOffers[offer.Id.GetValue()] = &cachedOffer{offer: offer, slavePid: pid}
 }
 
 // getOffer returns cached offer
-func (cache *schedCache) getOffer(offerId *mesos.OfferID) cachedOffer {
+func (cache *schedCache) getOffer(offerId *mesos.OfferID) *cachedOffer {
 	if offerId == nil {
-		log.Warningf("OfferId == nil, returning empty cachedOffer")
-		return cachedOffer{}
+		log.V(3).Infoln("WARN: OfferId == nil, returning nil")
+		return nil
 	}
 	return cache.savedOffers[offerId.GetValue()]
 }
@@ -62,7 +66,8 @@ func (cache *schedCache) putSlavePid(slaveId *mesos.SlaveID, pid *upid.UPID) {
 
 func (cache *schedCache) getSlavePid(slaveId *mesos.SlaveID) *upid.UPID {
 	if slaveId == nil {
-		return &upid.UPID{}
+		log.V(3).Infoln("SlaveId == nil, returning empty UPID")
+		return nil
 	}
 	return cache.savedSlavePids[slaveId.GetValue()]
 }

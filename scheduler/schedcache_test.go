@@ -148,6 +148,65 @@ func TestSchedCachePutSlavePid(t *testing.T) {
 	assert.True(t, cachedSlavePid3.Equal(pid03))
 }
 
+func TestSchedCacheGetSlavePid(t *testing.T) {
+	cache := newSchedCache()
+	
+	pid01, err := upid.Parse("slave01@127.0.0.1:5050")
+	assert.NoError(t, err)
+	pid02, err := upid.Parse("slave02@127.0.0.1:5050")
+	assert.NoError(t, err)
+	
+	cache.putSlavePid(util.NewSlaveID("slave01"), pid01)
+	cache.putSlavePid(util.NewSlaveID("slave02"),pid02)
+
+	cachedSlavePid1 := cache.getSlavePid(util.NewSlaveID("slave01"))
+	cachedSlavePid2 := cache.getSlavePid(util.NewSlaveID("slave02"))
+
+	assert.NotNil(t, cachedSlavePid1)
+	assert.NotNil(t, cachedSlavePid2)
+	assert.True(t, pid01.Equal(cachedSlavePid1))
+	assert.True(t, pid02.Equal(cachedSlavePid2))
+	assert.False(t, pid01.Equal(cachedSlavePid2))
+}
+
+func TestSchedCacheContainsSlavePid(t *testing.T) {
+	cache := newSchedCache()
+	
+	pid01, err := upid.Parse("slave01@127.0.0.1:5050")
+	assert.NoError(t, err)
+	pid02, err := upid.Parse("slave02@127.0.0.1:5050")
+	assert.NoError(t, err)
+	
+	cache.putSlavePid(util.NewSlaveID("slave01"), pid01)
+	cache.putSlavePid(util.NewSlaveID("slave02"),pid02)	
+	
+	assert.True(t, cache.containsSlavePid(util.NewSlaveID("slave01")))
+	assert.True(t, cache.containsSlavePid(util.NewSlaveID("slave02")))
+	assert.False(t, cache.containsSlavePid(util.NewSlaveID("slave05")))
+}
+
+
+func TestSchedCacheRemoveSlavePid(t *testing.T) {
+	cache := newSchedCache()
+	
+	pid01, err := upid.Parse("slave01@127.0.0.1:5050")
+	assert.NoError(t, err)
+	pid02, err := upid.Parse("slave02@127.0.0.1:5050")
+	assert.NoError(t, err)
+	
+	cache.putSlavePid(util.NewSlaveID("slave01"), pid01)
+	cache.putSlavePid(util.NewSlaveID("slave02"),pid02)	
+	
+	assert.True(t, cache.containsSlavePid(util.NewSlaveID("slave01")))
+	assert.True(t, cache.containsSlavePid(util.NewSlaveID("slave02")))
+	assert.False(t, cache.containsSlavePid(util.NewSlaveID("slave05")))
+	
+	cache.removeSlavePid(util.NewSlaveID("slave01"))
+	assert.Equal(t, 1, len(cache.savedSlavePids))
+	assert.False(t, cache.containsSlavePid(util.NewSlaveID("slave01")))
+	
+}
+
 func createTestOffer(idSuffix string) *mesos.Offer {
 	return util.NewOffer(
 		util.NewOfferID("test-offer-"+idSuffix),

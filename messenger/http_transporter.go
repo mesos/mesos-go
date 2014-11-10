@@ -60,11 +60,12 @@ func (t *HTTPTransporter) Send(msg *Message) error {
 		return err
 	}
 	resp, err := t.client.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		log.Errorf("Failed to POST: %v\n", err)
 		return err
 	}
+	defer resp.Body.Close()
+
 	// ensure master acknowledgement.
 	if (resp.StatusCode != http.StatusOK) &&
 		(resp.StatusCode != http.StatusAccepted) {
@@ -91,15 +92,23 @@ func (t *HTTPTransporter) Install(msgName string) {
 // will listen on a random port, and then fill the UPID with the
 // host:port it is listening.
 func (t *HTTPTransporter) Listen() error {
+	host := t.upid.Host
+	port := t.upid.Port
+	if host == "" {
+		host = "0.0.0.0"
+	}
+	if port == "" {
+		port = "0"
+	}
 	// NOTE: Explicitly specifis IPv4 because Libprocess
 	// only supports IPv4 for now.
-	ln, err := net.Listen("tcp4", net.JoinHostPort(t.upid.Host, t.upid.Port))
+	ln, err := net.Listen("tcp4", net.JoinHostPort(host, port))
 	if err != nil {
 		log.Errorf("HTTPTransporter failed to listen: %v\n", err)
 		return err
 	}
 	// Save the host:port in case they are not specified in upid.
-	host, port, _ := net.SplitHostPort(ln.Addr().String())
+	host, port, _ = net.SplitHostPort(ln.Addr().String())
 	t.upid.Host, t.upid.Port = host, port
 	t.listener = ln
 	return nil

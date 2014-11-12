@@ -21,8 +21,26 @@ package mesosutil
 import (
 	"code.google.com/p/gogoprotobuf/proto"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+func TestFilterResources(t *testing.T) {
+	resources := []*mesos.Resource{
+		NewScalarResource("mem", 200),
+		NewScalarResource("cpu", 4),
+		NewScalarResource("mem", 500),
+	}
+
+	memRes := FilterResources(resources, func(res *mesos.Resource) bool {
+		if res.GetType() == mesos.Value_SCALAR && res.GetName() == "mem" {
+			return true
+		}
+		return false
+	})
+
+	assert.Equal(t, 2, len(memRes))
+}
 
 func TestNewValueRange(t *testing.T) {
 	val := NewValueRange(20, 40)

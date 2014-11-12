@@ -27,6 +27,15 @@ func NewValueRange(begin, end uint64) *mesos.Value_Range {
 	return &mesos.Value_Range{Begin: proto.Uint64(begin), End: proto.Uint64(end)}
 }
 
+func FilterResources(resources []*mesos.Resource, filter func(*mesos.Resource) bool) (result []*mesos.Resource) {
+	for _, resource := range resources {
+		if filter(resource) {
+			result = append(result, resource)
+		}
+	}
+	return result
+}
+
 func NewScalarResource(name string, val float64) *mesos.Resource {
 	return &mesos.Resource{
 		Name:   proto.String(name),
@@ -83,6 +92,13 @@ func NewOffer(offerId *mesos.OfferID, frameworkId *mesos.FrameworkID, slaveId *m
 		SlaveId:     slaveId,
 		Hostname:    proto.String(hostname),
 	}
+}
+
+func FilterOffersResources(offers []*mesos.Offer, filter func(*mesos.Resource) bool) (result []*mesos.Resource) {
+	for _, offer := range offers {
+		result = FilterResources(offer.Resources, filter)
+	}
+	return result
 }
 
 func NewSlaveID(id string) *mesos.SlaveID {

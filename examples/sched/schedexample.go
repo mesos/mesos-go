@@ -76,9 +76,7 @@ func (sched *ExampleScheduler) Error(driver sched.SchedulerDriver, err string) {
 
 func init() {
 	flag.Parse()
-	log.Infoln("Starting scheduler test.")
-	log.Infoln("Assuming master 127.0.0.1:5050...")
-	log.Infoln("Initializing the Scheduler...")
+	log.Infoln("Initializing the Example Scheduler...")
 }
 
 func main() {
@@ -98,6 +96,7 @@ func main() {
 	ch := make(chan bool)
 
 	go func() {
+		log.Infoln("Starting scheduler: with master ", master)
 		stat := driver.Run()
 		if stat != mesos.Status_DRIVER_STOPPED {
 			log.Infoln("A problem occured, framework reported status " + stat.String())

@@ -12,7 +12,7 @@ import (
 
 const (
 	CPUS_PER_TASK = 1
-	MEM_PER_TASK  = 128
+	MEM_PER_TASK  = 64
 )
 
 var master = flag.String("master", "127.0.0.1:5050", "Master address <ip:port>")
@@ -30,7 +30,7 @@ func newExampleScheduler(exec *mesos.ExecutorInfo) *ExampleScheduler {
 		executor:      exec,
 		tasksLaunched: 0,
 		tasksFinished: 0,
-		totalTasks:    10,
+		totalTasks:    1,
 	}
 }
 
@@ -45,7 +45,7 @@ func (sched *ExampleScheduler) Reregistered(driver sched.SchedulerDriver, master
 func (sched *ExampleScheduler) Disconnected(sched.SchedulerDriver) {}
 
 func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offers []*mesos.Offer) {
-	log.Infoln("Received [", len(offers), "] offers total.")
+	log.Infoln("Received [", len(offers), "] offers from master.")
 	for _, offer := range offers {
 		cpuResources := util.FilterResources(offer.Resources, func(res *mesos.Resource) bool {
 			return res.GetName() == "cpus"
@@ -63,20 +63,15 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 			mems += res.GetScalar().GetValue()
 		}
 
-		remainingCpus := cpus
-		remainingMems := mems
-
 		log.Infoln("Received Offer <", offer.Id.GetValue(), "> with cpus=", cpus, " mem=", mems)
 
 		var tasks []*mesos.TaskInfo
-		for sched.tasksLaunched < sched.totalTasks &&
-			remainingCpus >= CPUS_PER_TASK &&
-			remainingMems >= MEM_PER_TASK {
+		if sched.tasksLaunched < sched.totalTasks {
 			sched.tasksLaunched++
 			taskId := &mesos.TaskID{
 				Value: proto.String("go-task-" + strconv.Itoa(sched.tasksLaunched)),
 			}
-			log.Infof("Launching task: %s with offer %s\n", taskId.GetValue(), offer.Id.GetValue())
+			log.Infof("Preparing task task: %s with offer %s\n", taskId.GetValue(), offer.Id.GetValue())
 
 			task := &mesos.TaskInfo{
 				Name:     proto.String("go-task-" + taskId.GetValue()),
@@ -90,8 +85,6 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 			}
 
 			tasks = append(tasks, task)
-			remainingMems -= MEM_PER_TASK
-			remainingCpus -= CPUS_PER_TASK
 		}
 		driver.LaunchTasks([]*mesos.OfferID{offer.Id}, tasks, &mesos.Filters{RefuseSeconds: proto.Float64(1)})
 	}
@@ -131,12 +124,15 @@ func (sched *ExampleScheduler) Error(driver sched.SchedulerDriver, err string) {
 	log.Infoln("Scheduler received error:", err)
 }
 
+// ----------------------- func init() ------------------------- //
+
 func init() {
 	flag.Parse()
 	log.Infoln("Initializing the Example Scheduler...")
 }
 
 // ----------------------- func main() ------------------------- //
+
 func main() {
 
 	// build command executor

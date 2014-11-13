@@ -42,10 +42,19 @@ $ <mesos-install>/bin/mesos-local --ip=127.0.0.1 --port=5050
 ```
 ### Running the Scheduler
 * Change directory to `examples`
-* Build the scheduler binary `$ go build -o sample_framework test_framework.go`
-* Build the executor binary `$ go build -o sample_exec test_executor.go`
+* Build the scheduler binary `$ go build -o test-framework test_framework.go`
+* Build the executor binary `$ go build -o test-executor test_executor.go`
 * Ensure your mesos instance is running, then launch scheduler
 ```
-$ ./sample_framework --master=127.0.0.1:5050 --executor="<fully-qualified-path-to>/sample_exec" --logtostderr=true -v=99
+$ ./sample_framework --master=127.0.0.1:5050 --executor="<fully-qualified-path-to>/test-executor" --logtostderr=true
 ```
-Note that you must provide the fully-qualified path to the executor binary.
+Note: that you must provide the fully-qualified path to the executor binary.
+
+You can also use the Go test-scheduler with executors written in other languages.  Run the test-scheduler with the Python or Java executors like so:
+```
+$ ./sample_framework --master=127.0.0.1:5050 --executor="<fully-qualified-path>/src/examples/python/test-executor" --logtostderr=true
+```
+Or the Java version
+```
+$ ./sample_framework --master=127.0.0.1:5050 --executor="<fully-qualified-path>/src/examples/java/test-executor" --logtostderr=true
+```

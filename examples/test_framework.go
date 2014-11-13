@@ -12,11 +12,12 @@ import (
 
 const (
 	CPUS_PER_TASK = 1
-	MEM_PER_TASK  = 64
+	MEM_PER_TASK  = 128
 )
 
 var master = flag.String("master", "127.0.0.1:5050", "Master address <ip:port>")
 var execUri = flag.String("executor", "./test_executor", "Path to test executor")
+var taskCount = flag.String("task-count", "5", "Total task count to run.")
 
 type ExampleScheduler struct {
 	executor      *mesos.ExecutorInfo
@@ -26,11 +27,15 @@ type ExampleScheduler struct {
 }
 
 func newExampleScheduler(exec *mesos.ExecutorInfo) *ExampleScheduler {
+	total, err := strconv.Atoi(*taskCount)
+	if err != nil {
+		total = 5
+	}
 	return &ExampleScheduler{
 		executor:      exec,
 		tasksLaunched: 0,
 		tasksFinished: 0,
-		totalTasks:    1,
+		totalTasks:    total,
 	}
 }
 
@@ -45,7 +50,7 @@ func (sched *ExampleScheduler) Reregistered(driver sched.SchedulerDriver, master
 func (sched *ExampleScheduler) Disconnected(sched.SchedulerDriver) {}
 
 func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offers []*mesos.Offer) {
-	log.Infoln("Received [", len(offers), "] offers from master.")
+
 	for _, offer := range offers {
 		cpuResources := util.FilterResources(offer.Resources, func(res *mesos.Resource) bool {
 			return res.GetName() == "cpus"
@@ -65,13 +70,19 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 
 		log.Infoln("Received Offer <", offer.Id.GetValue(), "> with cpus=", cpus, " mem=", mems)
 
+		remainingCpus := cpus
+		remainingMems := mems
+
 		var tasks []*mesos.TaskInfo
-		if sched.tasksLaunched < sched.totalTasks {
+		for sched.tasksLaunched <= sched.totalTasks &&
+			CPUS_PER_TASK <= remainingCpus &&
+			MEM_PER_TASK <= remainingMems {
+
 			sched.tasksLaunched++
+
 			taskId := &mesos.TaskID{
-				Value: proto.String("go-task-" + strconv.Itoa(sched.tasksLaunched)),
+				Value: proto.String(strconv.Itoa(sched.tasksLaunched)),
 			}
-			log.Infof("Preparing task task: %s with offer %s\n", taskId.GetValue(), offer.Id.GetValue())
 
 			task := &mesos.TaskInfo{
 				Name:     proto.String("go-task-" + taskId.GetValue()),
@@ -83,9 +94,13 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 					util.NewScalarResource("mem", MEM_PER_TASK),
 				},
 			}
+			log.Infof("Prepared task: %s with offer %s for launch\n", task.GetName(), offer.Id.GetValue())
 
 			tasks = append(tasks, task)
+			remainingCpus -= CPUS_PER_TASK
+			remainingMems -= MEM_PER_TASK
 		}
+		log.Infoln("Launching ", len(tasks), "tasks for offer", offer.Id.GetValue())
 		driver.LaunchTasks([]*mesos.OfferID{offer.Id}, tasks, &mesos.Filters{RefuseSeconds: proto.Float64(1)})
 	}
 }
@@ -95,6 +110,12 @@ func (sched *ExampleScheduler) StatusUpdate(driver sched.SchedulerDriver, status
 	if status.GetState() == mesos.TaskState_TASK_FINISHED {
 		sched.tasksFinished++
 	}
+
+	if sched.tasksFinished >= sched.totalTasks {
+		log.Infoln("Total tasks completed, stopping framework.")
+		driver.Stop(false)
+	}
+
 	if status.GetState() == mesos.TaskState_TASK_LOST ||
 		status.GetState() == mesos.TaskState_TASK_KILLED ||
 		status.GetState() == mesos.TaskState_TASK_FAILED {
@@ -103,12 +124,7 @@ func (sched *ExampleScheduler) StatusUpdate(driver sched.SchedulerDriver, status
 			"is in unexpected state", status.State.String(),
 			"with message", status.GetMessage(),
 		)
-
 		driver.Abort()
-	}
-
-	if sched.tasksFinished == sched.totalTasks {
-		driver.Stop(false)
 	}
 }
 

@@ -340,8 +340,6 @@ func (driver *MesosSchedulerDriver) handleStatusUpdateEvent(from *upid.UPID, msg
 }
 
 func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.Message) {
-	log.V(1).Infoln("Handling status update.")
-
 	msg := pbMsg.(*mesos.StatusUpdateMessage)
 
 	if driver.status == mesos.Status_DRIVER_ABORTED {
@@ -354,7 +352,7 @@ func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.M
 		return
 	}
 
-	log.V(2).Infoln("Received status update from ", from.String())
+	log.V(2).Infoln("Received status update from ", from.String(), " status source:", msg.GetPid())
 
 	driver.Scheduler.StatusUpdate(driver, msg.Update.GetStatus())
 
@@ -364,8 +362,8 @@ func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.M
 	}
 
 	// Send StatusUpdate Acknowledgement
-	// Only send ack if udpate was not from master or driver
-	if !from.Equal(driver.self) && !from.Equal(driver.MasterUPID) {
+	// Only send ACK if udpate was not from this driver
+	if !from.Equal(driver.self) && msg.GetPid() != from.String() {
 		ackMsg := &mesos.StatusUpdateAcknowledgementMessage{
 			SlaveId:     msg.Update.SlaveId,
 			FrameworkId: driver.FrameworkInfo.Id,
@@ -378,6 +376,8 @@ func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.M
 			log.Errorf("Failed to send StatusUpdate ACK message: %v\n", err)
 			return
 		}
+	} else {
+		log.V(1).Infoln("Not sending ACK, update is not from slave:", from.String())
 	}
 }
 
@@ -575,16 +575,16 @@ func (driver *MesosSchedulerDriver) LaunchTasks(offerIds []*mesos.OfferID, tasks
 	for _, task := range tasks {
 		if task.Executor != nil && task.Executor.FrameworkId == nil {
 			task.Executor.FrameworkId = driver.FrameworkInfo.Id
-			okTasks = append(okTasks, task)
 		}
+		okTasks = append(okTasks, task)
 	}
 
 	for _, offerId := range offerIds {
 		for _, task := range okTasks {
-			// only launch task with previously known cached offers (from cached slaves)
+			// Keep only the slave PIDs where we run tasks so we can send
+			// framework messages directly.
 			if driver.cache.containsOffer(offerId) {
-				if driver.cache.containsOffer(offerId) &&
-					driver.cache.getOffer(offerId).offer.SlaveId.Equal(task.SlaveId) {
+				if driver.cache.getOffer(offerId).offer.SlaveId.Equal(task.SlaveId) {
 					// cache the tasked slave, for future communication
 					pid := driver.cache.getOffer(offerId).slavePid
 					driver.cache.putSlavePid(task.SlaveId, pid)
@@ -593,7 +593,6 @@ func (driver *MesosSchedulerDriver) LaunchTasks(offerIds []*mesos.OfferID, tasks
 				}
 			} else {
 				log.Warningf("Attempting to launch task %s with unknown offer %s\n", task.TaskId.GetValue(), offerId.GetValue())
-
 			}
 		}
 

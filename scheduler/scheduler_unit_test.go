@@ -51,7 +51,7 @@ func TestSchedulerDriverNew(t *testing.T) {
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), &mesos.FrameworkInfo{}, masterAddr, nil)
 	assert.NotNil(t, driver)
 	assert.NoError(t, err)
-	assert.True(t, driver.MasterUPID.Equal(mUpid))
+	assert.True(t, driver.MasterPid.Equal(mUpid))
 	user, _ := user.Current()
 	assert.Equal(t, user.Username, driver.FrameworkInfo.GetUser())
 	host, _ := os.Hostname()

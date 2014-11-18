@@ -109,7 +109,6 @@ type ExecutorDriver interface {
 	Join() mesosproto.Status
 	SendStatusUpdate(*mesosproto.TaskStatus) (mesosproto.Status, error)
 	SendFrameworkMessage(string) (mesosproto.Status, error)
-	Destroy() error
 }
 
 // MesosExecutorDriver is a implementation of the ExecutorDriver.
@@ -265,8 +264,6 @@ func (driver *MesosExecutorDriver) eventLoop() {
 		case e := <-driver.eventCh:
 			switch e.etype {
 			// dispatch events
-			case joinEvent:
-				driver.invokeJoin(e)
 			case sendStatusUpdateEvent:
 				driver.invokeSendStatusUpdate(e)
 			case sendFrameworkMessageEvent:
@@ -438,27 +435,6 @@ func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto
 	driver.eventCh <- e
 	res := <-e.res
 	return res.stat, res.err
-}
-
-// Destroy destroys the driver by closing the event loop.
-func (driver *MesosExecutorDriver) Destroy() error {
-	log.Infoln("Destroy")
-	e := newEvent(stopEvent, nil)
-	driver.eventCh <- e
-	<-e.res
-	close(driver.destroyCh)
-	return nil
-}
-
-func (driver *MesosExecutorDriver) invokeJoin(e *event) {
-	log.Infoln("invokeJoin()")
-	ch := e.req.(chan struct{})
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		close(ch)
-		return
-	}
-	<-driver.stopCh
-	close(ch)
 }
 
 // SendStatusUpdate sends a StatusUpdate message to the slave.

@@ -104,8 +104,7 @@ func TestExecutorDriverStartFailedToStartMessenger(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, status)
 
-	messenger.Stop() // To delete the running go routine
-	driver.Destroy()
+	messenger.Stop()
 
 	messenger.AssertNumberOfCalls(t, "Start", 1)
 	messenger.AssertNumberOfCalls(t, "Stop", 1)
@@ -131,8 +130,6 @@ func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
 	status, err := driver.Start()
 	assert.Error(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, status)
-
-	driver.Destroy()
 
 	messenger.AssertNumberOfCalls(t, "Start", 1)
 	messenger.AssertNumberOfCalls(t, "UPID", 1)
@@ -290,9 +287,6 @@ func TestExecutorDriverStop(t *testing.T) {
 	statusChan := make(chan mesosproto.Status)
 	driver, messenger, checker := createTestExecutorDriver(t)
 
-	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Join())
-	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, driver.Stop())
-
 	assert.True(t, driver.stopped)
 	st, err := driver.Start()
 	assert.False(t, driver.stopped)
@@ -316,8 +310,6 @@ func TestExecutorDriverStop(t *testing.T) {
 	assert.True(t, driver.stopped)
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, st)
-
-	driver.Destroy()
 
 	messenger.AssertNumberOfCalls(t, "Start", 1)
 	messenger.AssertNumberOfCalls(t, "UPID", 1)

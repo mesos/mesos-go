@@ -141,22 +141,24 @@ func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
 }
 
 func TestExecutorDriverStartSucceed(t *testing.T) {
-	exec := NewMockedExecutor()
-
 	setEnvironments(t, "", false)
+
+	exec := NewMockedExecutor()
+	exec.On("Error").Return(nil)
+
 	driver, err := NewMesosExecutorDriver(exec)
 	assert.NoError(t, err)
 	assert.NotNil(t, driver)
+
 	messenger := messenger.NewMockedMessenger()
 	driver.messenger = messenger
-	checker := healthchecker.NewMockedHealthChecker()
-	driver.slaveHealthChecker = checker
-
-	// Set expections and return values.
 	messenger.On("Start").Return(nil)
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
+
+	checker := healthchecker.NewMockedHealthChecker()
+	driver.slaveHealthChecker = checker
 	checker.On("Start").Return()
 	checker.On("Stop").Return()
 
@@ -165,19 +167,86 @@ func TestExecutorDriverStartSucceed(t *testing.T) {
 	assert.False(t, driver.stopped)
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, status)
-	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, driver.Stop())
-	assert.True(t, driver.stopped)
-
-	// Sleep 1 second to enable checker.Start() be called.
-	time.Sleep(time.Second)
-
-	driver.Destroy()
 
 	messenger.AssertNumberOfCalls(t, "Start", 1)
 	messenger.AssertNumberOfCalls(t, "UPID", 1)
 	messenger.AssertNumberOfCalls(t, "Send", 1)
-	messenger.AssertNumberOfCalls(t, "Stop", 1)
-	checker.AssertNumberOfCalls(t, "Start", 1)
+}
+
+func TestExecutorDriverJoin(t *testing.T) {
+	setEnvironments(t, "", false)
+
+	// Set expections and return values.
+	messenger := messenger.NewMockedMessenger()
+	messenger.On("Start").Return(nil)
+	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("Send").Return(nil)
+	messenger.On("Stop").Return(nil)
+
+	exec := NewMockedExecutor()
+	exec.On("Error").Return(nil)
+
+	driver, err := NewMesosExecutorDriver(exec)
+	driver.messenger = messenger
+	assert.NoError(t, err)
+	assert.True(t, driver.stopped)
+
+	checker := healthchecker.NewMockedHealthChecker()
+	driver.slaveHealthChecker = checker
+	checker.On("Start").Return()
+	checker.On("Stop").Return()
+
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.False(t, driver.stopped)
+	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
+
+	testCh := make(chan mesosproto.Status)
+	go func() {
+		stat := driver.Join()
+		testCh <- stat
+	}()
+
+	close(driver.stopCh) // manually stopping
+	stat = <-testCh      // when Stop() is called, stat will be DRIVER_STOPPED.
+
+}
+
+func TestExecutorDriverRunOK(t *testing.T) {
+	setEnvironments(t, "", false)
+
+	// Set expections and return values.
+	messenger := messenger.NewMockedMessenger()
+	messenger.On("Start").Return(nil)
+	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("Send").Return(nil)
+	messenger.On("Stop").Return(nil)
+
+	exec := NewMockedExecutor()
+	exec.On("Error").Return(nil)
+
+	driver, err := NewMesosExecutorDriver(exec)
+	driver.messenger = messenger
+	assert.NoError(t, err)
+	assert.True(t, driver.stopped)
+
+	checker := healthchecker.NewMockedHealthChecker()
+	driver.slaveHealthChecker = checker
+	checker.On("Start").Return()
+	checker.On("Stop").Return()
+
+	go func() {
+		stat := driver.Run()
+		assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, stat)
+	}()
+	time.Sleep(time.Millisecond * 1) // allow for things to settle
+	assert.False(t, driver.stopped)
+	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, driver.status)
+
+	// mannually close it all
+	driver.status = mesosproto.Status_DRIVER_STOPPED
+	close(driver.stopCh)
+	time.Sleep(time.Millisecond * 1)
 }
 
 func TestExecutorDriverStop(t *testing.T) {

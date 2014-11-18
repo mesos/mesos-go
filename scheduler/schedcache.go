@@ -1,10 +1,10 @@
 package scheduler
 
 import (
+	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/upid"
 	"sync"
-	log "github.com/golang/glog"
 )
 
 type cachedOffer struct {
@@ -21,7 +21,7 @@ func newCachedOffer(offer *mesos.Offer, slavePid *upid.UPID) *cachedOffer {
 type schedCache struct {
 	sync.RWMutex
 	savedOffers    map[string]*cachedOffer // current offers key:OfferID
-	savedSlavePids map[string]*upid.UPID  // Current saved slaves, key:slaveId
+	savedSlavePids map[string]*upid.UPID   // Current saved slaves, key:slaveId
 }
 
 func newSchedCache() *schedCache {

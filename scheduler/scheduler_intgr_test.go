@@ -73,13 +73,13 @@ type testScheduler struct {
 func (sched *testScheduler) Registered(dr SchedulerDriver, fw *mesos.FrameworkID, mi *mesos.MasterInfo) {
 	log.Infoln("Sched.Registered() called.")
 	assert.Equal(sched.t, fw.GetValue(), framework.Id.GetValue())
-	assert.Equal(sched.t, mi.GetIp(), 123456)
+	assert.Equal(sched.t, mi.GetIp(), uint32(123456))
 	sched.ch <- true
 }
 
 func (sched *testScheduler) Reregistered(dr SchedulerDriver, mi *mesos.MasterInfo) {
 	log.Infoln("Sched.Reregistered() called")
-	assert.Equal(sched.t, mi.GetIp(), 123456)
+	assert.Equal(sched.t, mi.GetIp(), uint32(123456))
 	sched.ch <- true
 }
 

@@ -323,11 +323,13 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 		return driver.status, nil
 	}
 
+	driver.status = mesosproto.Status_DRIVER_NOT_STARTED
+	driver.stopped = true
+
 	// Start the messenger.
 	if err := driver.messenger.Start(); err != nil {
-		msg := fmt.Sprintf("Failed to start the messenger: %v\n", err)
-		log.Errorf(msg)
-		return mesosproto.Status_DRIVER_NOT_STARTED, err
+		log.Errorf("Failed to start the messenger: %v\n", err)
+		return driver.status, err
 	}
 
 	driver.self = driver.messenger.UPID()
@@ -340,7 +342,7 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
 		log.Errorf("Failed to send %v: %v\n", message, err)
 		driver.messenger.Stop()
-		return mesosproto.Status_DRIVER_NOT_STARTED, err
+		return driver.status, err
 	}
 
 	driver.stopped = false
@@ -359,8 +361,7 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 // receives the result from the response channel.
 func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
 	log.Infoln("Stopping the executor driver")
-	if driver.status != mesosproto.Status_DRIVER_RUNNING &&
-		driver.status != mesosproto.Status_DRIVER_ABORTED {
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
 		return driver.status
 	}
 	stopStat := mesosproto.Status_DRIVER_STOPPED
@@ -379,7 +380,12 @@ func (driver *MesosExecutorDriver) stop(stopStatus mesosproto.Status) {
 // Abort aborts the driver by sending an 'abortEvent' to the event loop, and
 // receives the result from the response channel.
 func (driver *MesosExecutorDriver) Abort() mesosproto.Status {
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+
 	log.Infoln("Aborting the executor driver")
+
 	abortStat := mesosproto.Status_DRIVER_ABORTED
 	driver.stop(abortStat)
 	return abortStat

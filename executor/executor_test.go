@@ -26,6 +26,7 @@ import (
 
 	"github.com/mesos/mesos-go/healthchecker"
 	"github.com/mesos/mesos-go/mesosproto"
+	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
@@ -317,4 +318,48 @@ func TestExecutorDriverStop(t *testing.T) {
 	messenger.AssertNumberOfCalls(t, "Stop", 1)
 	checker.AssertNumberOfCalls(t, "Start", 1)
 	checker.AssertNumberOfCalls(t, "Stop", 1)
+}
+
+func TestExecutorDriverSendStatusUpdate(t *testing.T) {
+
+	driver, _, _ := createTestExecutorDriver(t)
+
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
+	driver.connected = true
+	driver.stopped = false
+
+	taskStatus := util.NewTaskStatus(
+		util.NewTaskID("test-task-001"),
+		mesosproto.TaskState_TASK_RUNNING,
+	)
+
+	stat, err = driver.SendStatusUpdate(taskStatus)
+	assert.NoError(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
+}
+
+func TestExecutorDriverSendStatusUpdateStaging(t *testing.T) {
+
+	driver, _, _ := createTestExecutorDriver(t)
+
+	exec := NewMockedExecutor()
+	exec.On("Error").Return(nil)
+	driver.exec = exec
+
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
+	driver.connected = true
+	driver.stopped = false
+
+	taskStatus := util.NewTaskStatus(
+		util.NewTaskID("test-task-001"),
+		mesosproto.TaskState_TASK_STAGING,
+	)
+
+	stat, err = driver.SendStatusUpdate(taskStatus)
+	assert.Error(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, stat)
 }

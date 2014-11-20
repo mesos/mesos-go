@@ -264,8 +264,6 @@ func (driver *MesosExecutorDriver) eventLoop() {
 		case e := <-driver.eventCh:
 			switch e.etype {
 			// dispatch events
-			case sendStatusUpdateEvent:
-				driver.invokeSendStatusUpdate(e)
 			case sendFrameworkMessageEvent:
 				driver.invokeSendFrameworkMessage(e)
 			case slaveDisconnectedEvent:
@@ -420,35 +418,17 @@ func (driver *MesosExecutorDriver) Run() mesosproto.Status {
 // SendStatusUpdate sends the status updates by sending a 'sendStatusUpdateEvent"
 // to the event loop, and receives the result from the response channel.
 func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskStatus) (mesosproto.Status, error) {
-	log.Infoln("Sending status update")
-	e := newEvent(sendStatusUpdateEvent, taskStatus)
-	driver.eventCh <- e
-	res := <-e.res
-	return res.stat, res.err
-}
-
-// SendFrameworkMessage sends the framework message by sending a 'sendFrameworkMessageEvent'
-// to the event loop, and receives the result from the response channel.
-func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto.Status, error) {
-	log.Infoln("Sending framework message")
-	e := newEvent(sendFrameworkMessageEvent, data)
-	driver.eventCh <- e
-	res := <-e.res
-	return res.stat, res.err
-}
-
-// SendStatusUpdate sends a StatusUpdate message to the slave.
-func (driver *MesosExecutorDriver) invokeSendStatusUpdate(e *event) {
-	log.Infoln("invokeSendStatusUpdate()")
-	taskStatus := e.req.(*mesosproto.TaskStatus)
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return driver.status, nil
+	}
 
 	if taskStatus.GetState() == mesosproto.TaskState_TASK_STAGING {
-		log.Errorf("Executor is not allowed to send TASK_STAGING status update. Aborting!\n")
+		msg := "Executor is not allowed to send TASK_STAGING status update. Aborting!"
+		err := fmt.Errorf(msg)
+		log.Errorln(msg)
 		driver.Abort()
-		err := fmt.Errorf("Attempted to send TASK_STAGING status update")
 		driver.exec.Error(driver, err.Error())
-		e.res <- &response{driver.status, err}
-		return
+		return driver.status, err
 	}
 
 	// Set up status update.
@@ -465,11 +445,40 @@ func (driver *MesosExecutorDriver) invokeSendStatusUpdate(e *event) {
 	}
 	// Send the message.
 	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
-		log.Errorf("Failed to send %v: %v\n")
-		e.res <- &response{driver.status, err}
-		return
+		msg := fmt.Sprintf("Failed to send %v: %v")
+		err := fmt.Errorf(msg)
+		log.Errorln(msg)
+		driver.exec.Error(driver, msg)
+		return driver.status, err
 	}
-	e.res <- &response{driver.status, nil}
+
+	return driver.status, nil
+}
+
+func (driver *MesosExecutorDriver) makeStatusUpdate(taskStatus *mesosproto.TaskStatus) *mesosproto.StatusUpdate {
+	now := float64(time.Now().Unix())
+	// Fill in all the fields.
+	taskStatus.Timestamp = proto.Float64(now)
+	taskStatus.SlaveId = driver.slaveID
+	update := &mesosproto.StatusUpdate{
+		FrameworkId: driver.frameworkID,
+		ExecutorId:  driver.executorID,
+		SlaveId:     driver.slaveID,
+		Status:      taskStatus,
+		Timestamp:   proto.Float64(now),
+		Uuid:        uuid.NewUUID(),
+	}
+	return update
+}
+
+// SendFrameworkMessage sends the framework message by sending a 'sendFrameworkMessageEvent'
+// to the event loop, and receives the result from the response channel.
+func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto.Status, error) {
+	log.Infoln("Sending framework message")
+	e := newEvent(sendFrameworkMessageEvent, data)
+	driver.eventCh <- e
+	res := <-e.res
+	return res.stat, res.err
 }
 
 // SendFrameworkMessage sends a FrameworkMessage to the slave.
@@ -718,20 +727,4 @@ func (driver *MesosExecutorDriver) slaveRecoveryTimeout(e *event) {
 		driver.exec.Shutdown(driver)
 		driver.Abort()
 	}
-}
-
-func (driver *MesosExecutorDriver) makeStatusUpdate(taskStatus *mesosproto.TaskStatus) *mesosproto.StatusUpdate {
-	now := float64(time.Now().Unix())
-	// Fill in all the fields.
-	taskStatus.Timestamp = proto.Float64(now)
-	taskStatus.SlaveId = driver.slaveID
-	update := &mesosproto.StatusUpdate{
-		FrameworkId: driver.frameworkID,
-		ExecutorId:  driver.executorID,
-		SlaveId:     driver.slaveID,
-		Status:      taskStatus,
-		Timestamp:   proto.Float64(now),
-		Uuid:        uuid.NewUUID(),
-	}
-	return update
 }

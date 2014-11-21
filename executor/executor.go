@@ -32,30 +32,6 @@ import (
 	"github.com/mesos/mesos-go/upid"
 )
 
-// Executor interface defines all the functions that are needed to implement
-// a mesos executor.
-type Executor interface {
-	Registered(ExecutorDriver, *mesosproto.ExecutorInfo, *mesosproto.FrameworkInfo, *mesosproto.SlaveInfo)
-	Reregistered(ExecutorDriver, *mesosproto.SlaveInfo)
-	Disconnected(ExecutorDriver)
-	LaunchTask(ExecutorDriver, *mesosproto.TaskInfo)
-	KillTask(ExecutorDriver, *mesosproto.TaskID)
-	FrameworkMessage(ExecutorDriver, string)
-	Shutdown(ExecutorDriver)
-	Error(ExecutorDriver, string)
-}
-
-// ExecutorDriver interface defines the functions that are needed to implement
-// a mesos executor driver.
-type ExecutorDriver interface {
-	Start() (mesosproto.Status, error)
-	Stop() mesosproto.Status
-	Abort() mesosproto.Status
-	Join() mesosproto.Status
-	SendStatusUpdate(*mesosproto.TaskStatus) (mesosproto.Status, error)
-	SendFrameworkMessage([]byte) (mesosproto.Status, error)
-}
-
 // MesosExecutorDriver is a implementation of the ExecutorDriver.
 type MesosExecutorDriver struct {
 	self            *upid.UPID

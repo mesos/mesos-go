@@ -19,7 +19,6 @@
 package executor
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"time"
@@ -27,65 +26,11 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
-	"github.com/mesos/mesos-go/healthchecker"
 	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 )
-
-const (
-	// TODO(yifan): Make them as flags.
-	defaultChanSize             = 1024
-	defaultRecoveryTimeout      = time.Minute * 15
-	defaultHealthCheckDuration  = time.Second * 1
-	defaultHealthCheckThreshold = 10
-)
-
-const (
-	messageRegistered int = iota + 100
-	messageReregistered
-	messageReconnect
-	messageRunTask
-	messageKillTask
-	messageStatusUpdateAcknowledgement
-	messageFramework
-	messageShutdown
-
-	startEvent int = iota + 200
-	stopEvent
-	abortEvent
-	joinEvent
-	sendStatusUpdateEvent
-	sendFrameworkMessageEvent
-	slaveDisconnectedEvent
-	slaveRecoveryTimeoutEvent
-)
-
-type message struct {
-	mtype int
-	from  *upid.UPID
-	msg   proto.Message
-}
-
-type response struct {
-	stat mesosproto.Status
-	err  error
-}
-
-type event struct {
-	etype int
-	req   interface{}
-	res   chan *response
-}
-
-func newEvent(etype int, req interface{}) *event {
-	return &event{
-		etype: etype,
-		req:   req,
-		res:   make(chan *response),
-	}
-}
 
 // Executor interface defines all the functions that are needed to implement
 // a mesos executor.
@@ -113,29 +58,26 @@ type ExecutorDriver interface {
 
 // MesosExecutorDriver is a implementation of the ExecutorDriver.
 type MesosExecutorDriver struct {
-	self               *upid.UPID
-	exec               Executor
-	messageCh          chan *message
-	eventCh            chan *event
-	stopCh             chan struct{}
-	destroyCh          chan struct{}
-	stopped            bool
-	status             mesosproto.Status
-	messenger          messenger.Messenger
-	slaveUPID          *upid.UPID
-	slaveID            *mesosproto.SlaveID
-	frameworkID        *mesosproto.FrameworkID
-	executorID         *mesosproto.ExecutorID
-	workDir            string
-	connected          bool
-	connection         uuid.UUID
-	local              bool   // TODO(yifan): Not used yet.
-	directory          string // TODO(yifan): Not used yet.
-	checkpoint         bool
-	recoveryTimeout    time.Duration
-	slaveHealthChecker healthchecker.HealthChecker
-	updates            map[string]*mesosproto.StatusUpdate // Key is a UUID string. TODO(yifan): Not used yet.
-	tasks              map[string]*mesosproto.TaskInfo     // Key is a UUID string. TODO(yifan): Not used yet.
+	self            *upid.UPID
+	exec            Executor
+	stopCh          chan struct{}
+	destroyCh       chan struct{}
+	stopped         bool
+	status          mesosproto.Status
+	messenger       messenger.Messenger
+	slaveUPID       *upid.UPID
+	slaveID         *mesosproto.SlaveID
+	frameworkID     *mesosproto.FrameworkID
+	executorID      *mesosproto.ExecutorID
+	workDir         string
+	connected       bool
+	connection      uuid.UUID
+	local           bool   // TODO(yifan): Not used yet.
+	directory       string // TODO(yifan): Not used yet.
+	checkpoint      bool
+	recoveryTimeout time.Duration
+	updates         map[string]*mesosproto.StatusUpdate // Key is a UUID string. TODO(yifan): Not used yet.
+	tasks           map[string]*mesosproto.TaskInfo     // Key is a UUID string. TODO(yifan): Not used yet.
 }
 
 // NewMesosExecutorDriver creates a new mesos executor driver.
@@ -149,8 +91,6 @@ func NewMesosExecutorDriver(exec Executor) (*MesosExecutorDriver, error) {
 	driver := &MesosExecutorDriver{
 		exec:      exec,
 		status:    mesosproto.Status_DRIVER_NOT_STARTED,
-		messageCh: make(chan *message, defaultChanSize),
-		eventCh:   make(chan *event, defaultChanSize),
 		destroyCh: make(chan struct{}),
 		stopped:   true,
 		updates:   make(map[string]*mesosproto.StatusUpdate),
@@ -179,17 +119,15 @@ func (driver *MesosExecutorDriver) init() error {
 		return err
 	}
 	// Install handlers.
-	driver.messenger.Install(driver.handleRegistered, &mesosproto.ExecutorRegisteredMessage{})
-	driver.messenger.Install(driver.handleReregistered, &mesosproto.ExecutorReregisteredMessage{})
-	driver.messenger.Install(driver.handleReconnect, &mesosproto.ReconnectExecutorMessage{})
-	driver.messenger.Install(driver.handleRunTask, &mesosproto.RunTaskMessage{})
-	driver.messenger.Install(driver.handleKillTask, &mesosproto.KillTaskMessage{})
-	driver.messenger.Install(driver.handleStatusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{})
-	driver.messenger.Install(driver.handleFrameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
-	driver.messenger.Install(driver.handleShutdownMessage, &mesosproto.ShutdownExecutorMessage{})
-	driver.slaveHealthChecker = healthchecker.NewSlaveHealthChecker(driver.slaveUPID, 0, 0, 0)
+	driver.messenger.Install(driver.registered, &mesosproto.ExecutorRegisteredMessage{})
+	driver.messenger.Install(driver.reregistered, &mesosproto.ExecutorReregisteredMessage{})
+	driver.messenger.Install(driver.reconnect, &mesosproto.ReconnectExecutorMessage{})
+	driver.messenger.Install(driver.runTask, &mesosproto.RunTaskMessage{})
+	driver.messenger.Install(driver.killTask, &mesosproto.KillTaskMessage{})
+	driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{})
+	driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
+	driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
 
-	go driver.eventLoop()
 	return nil
 }
 
@@ -234,78 +172,7 @@ func (driver *MesosExecutorDriver) parseEnviroments() error {
 	return nil
 }
 
-// eventLoop receives incoming messages and events from the channel, and
-// dispatch them to the underlying 'real' handlers according to the type
-// of the message and the event.
-func (driver *MesosExecutorDriver) eventLoop() {
-	for {
-		select {
-		case <-driver.destroyCh:
-			return
-		case msg := <-driver.messageCh:
-			switch msg.mtype {
-			case messageRegistered:
-				driver.registered(msg.from, msg.msg)
-			case messageReregistered:
-				driver.reregistered(msg.from, msg.msg)
-			case messageReconnect:
-				driver.reconnect(msg.from, msg.msg)
-			case messageRunTask:
-				driver.runTask(msg.from, msg.msg)
-			case messageKillTask:
-				driver.killTask(msg.from, msg.msg)
-			case messageStatusUpdateAcknowledgement:
-				driver.killTask(msg.from, msg.msg)
-			case messageFramework:
-				driver.frameworkMessage(msg.from, msg.msg)
-			case messageShutdown:
-				driver.shutdown(msg.from, msg.msg)
-			}
-		case e := <-driver.eventCh:
-			switch e.etype {
-			// dispatch events
-			case slaveDisconnectedEvent:
-				driver.slaveDisconnected()
-			case slaveRecoveryTimeoutEvent:
-				driver.slaveRecoveryTimeout(e)
-			}
-		}
-	}
-}
-
-// Following are incoming message handlers, these handlers are used to dispatch messages
-// to the event loop.
-func (driver *MesosExecutorDriver) handleRegistered(from *upid.UPID, msg proto.Message) {
-	driver.messageCh <- &message{messageRegistered, from, msg}
-}
-
-func (driver *MesosExecutorDriver) handleReregistered(from *upid.UPID, msg proto.Message) {
-	driver.messageCh <- &message{messageReregistered, from, msg}
-}
-
-func (driver *MesosExecutorDriver) handleReconnect(from *upid.UPID, msg proto.Message) {
-	driver.messageCh <- &message{messageReconnect, from, msg}
-}
-
-func (driver *MesosExecutorDriver) handleRunTask(from *upid.UPID, msg proto.Message) {
-	driver.messageCh <- &message{messageRunTask, from, msg}
-}
-
-func (driver *MesosExecutorDriver) handleKillTask(from *upid.UPID, msg proto.Message) {
-	driver.messageCh <- &message{messageKillTask, from, msg}
-}
-
-func (driver *MesosExecutorDriver) handleStatusUpdateAcknowledgement(from *upid.UPID, msg proto.Message) {
-	driver.messageCh <- &message{messageStatusUpdateAcknowledgement, from, msg}
-}
-
-func (driver *MesosExecutorDriver) handleFrameworkMessage(from *upid.UPID, msg proto.Message) {
-	driver.messageCh <- &message{messageFramework, from, msg}
-}
-
-func (driver *MesosExecutorDriver) handleShutdownMessage(from *upid.UPID, msg proto.Message) {
-	driver.messageCh <- &message{messageShutdown, from, msg}
-}
+// --------------------- Message Handlers --------------------- //
 
 func (driver *MesosExecutorDriver) registered(from *upid.UPID, pbMsg proto.Message) {
 	log.Infoln("Executor driver registered")
@@ -375,7 +242,6 @@ func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Messag
 	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
 		log.Errorf("Failed to send %v: %v\n")
 	}
-	driver.slaveHealthChecker.Continue(driver.slaveUPID)
 }
 
 func (driver *MesosExecutorDriver) runTask(from *upid.UPID, pbMsg proto.Message) {
@@ -472,62 +338,7 @@ func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message
 	driver.Stop()
 }
 
-func (driver *MesosExecutorDriver) slaveDisconnected() {
-	log.Infoln("Slave disconnected")
-
-	if driver.stopped {
-		log.Infof("Ignoring slave exited event because the driver is stopped!\n")
-		return
-	}
-
-	if driver.checkpoint && driver.connected {
-		driver.connected = false
-		log.Infof("Slave exited, but framework has checkpointing enabled. Waiting %v to reconnect with slave %v",
-			driver.recoveryTimeout, driver.slaveID)
-		driver.exec.Disconnected(driver)
-		e := newEvent(slaveRecoveryTimeoutEvent, driver.connection)
-		time.AfterFunc(driver.recoveryTimeout, func() {
-			driver.eventCh <- e
-		})
-		return
-	}
-
-	log.Infof("Slave exited ... shutting down\n")
-	driver.connected = false
-	// Clean up
-	driver.exec.Shutdown(driver)
-	driver.stop(mesosproto.Status_DRIVER_NOT_STARTED)
-}
-
-func (driver *MesosExecutorDriver) monitorSlave() {
-	for {
-		select {
-		case <-driver.stopCh:
-			driver.slaveHealthChecker.Stop()
-			return
-		case <-driver.slaveHealthChecker.Start():
-			log.Warningf("Slave unhealthy count exceeds the threshold, assuming it is disconnected\n")
-			driver.slaveHealthChecker.Pause()
-			driver.eventCh <- newEvent(slaveDisconnectedEvent, nil)
-		}
-	}
-}
-
-func (driver *MesosExecutorDriver) slaveRecoveryTimeout(e *event) {
-	log.Infoln("Slave recovery timeouts")
-
-	connection := e.req.(uuid.UUID)
-	if driver.connected {
-		return
-	}
-
-	if bytes.Equal(connection, driver.connection) {
-		log.Infof("Recovery timeout of %v exceeded; Shutting down\n", driver.recoveryTimeout)
-		// Clean up
-		driver.exec.Shutdown(driver)
-		driver.Abort()
-	}
-}
+// ------------------------ Driver Implementation ----------------- //
 
 // Start starts the driver by sending a 'startEvent' to the event loop, and
 // receives the result from the response channel.
@@ -563,9 +374,6 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 	driver.stopped = false
 	driver.stopCh = make(chan struct{})
 
-	// Start monitoring the slave.
-	go driver.monitorSlave()
-
 	// Set status.
 	driver.status = mesosproto.Status_DRIVER_RUNNING
 	log.Infoln("Mesos executor is running")
@@ -587,6 +395,7 @@ func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
 // internal function for stopping the driver and set reason for stopping
 func (driver *MesosExecutorDriver) stop(stopStatus mesosproto.Status) {
 	driver.messenger.Stop()
+	close(driver.destroyCh)
 	close(driver.stopCh)
 	driver.status = stopStatus
 	driver.stopped = true

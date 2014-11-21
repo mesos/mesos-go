@@ -74,7 +74,7 @@ func createTestExecutorDriver(t *testing.T) (
 	checker.On("Start").Return()
 	checker.On("Stop").Return()
 
-	driver.messenger, driver.slaveHealthChecker = messenger, checker
+	driver.messenger = messenger
 	return driver, messenger, checker
 }
 
@@ -95,7 +95,6 @@ func TestExecutorDriverStartFailedToStartMessenger(t *testing.T) {
 	assert.NotNil(t, driver)
 	messenger := messenger.NewMockedMessenger()
 	driver.messenger = messenger
-	driver.slaveHealthChecker = healthchecker.NewMockedHealthChecker()
 
 	// Set expections and return values.
 	messenger.On("Start").Return(fmt.Errorf("messenger failed to start"))
@@ -120,7 +119,6 @@ func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
 	assert.NotNil(t, driver)
 	messenger := messenger.NewMockedMessenger()
 	driver.messenger = messenger
-	driver.slaveHealthChecker = healthchecker.NewMockedHealthChecker()
 
 	// Set expections and return values.
 	messenger.On("Start").Return(nil)
@@ -156,7 +154,6 @@ func TestExecutorDriverStartSucceed(t *testing.T) {
 	messenger.On("Stop").Return(nil)
 
 	checker := healthchecker.NewMockedHealthChecker()
-	driver.slaveHealthChecker = checker
 	checker.On("Start").Return()
 	checker.On("Stop").Return()
 
@@ -190,7 +187,6 @@ func TestExecutorDriverRun(t *testing.T) {
 	assert.True(t, driver.stopped)
 
 	checker := healthchecker.NewMockedHealthChecker()
-	driver.slaveHealthChecker = checker
 	checker.On("Start").Return()
 	checker.On("Stop").Return()
 
@@ -227,7 +223,6 @@ func TestExecutorDriverJoin(t *testing.T) {
 	assert.True(t, driver.stopped)
 
 	checker := healthchecker.NewMockedHealthChecker()
-	driver.slaveHealthChecker = checker
 	checker.On("Start").Return()
 	checker.On("Stop").Return()
 
@@ -249,7 +244,7 @@ func TestExecutorDriverJoin(t *testing.T) {
 
 func TestExecutorDriverAbort(t *testing.T) {
 	statusChan := make(chan mesosproto.Status)
-	driver, messenger, checker := createTestExecutorDriver(t)
+	driver, messenger, _ := createTestExecutorDriver(t)
 
 	assert.True(t, driver.stopped)
 	st, err := driver.Start()
@@ -280,13 +275,11 @@ func TestExecutorDriverAbort(t *testing.T) {
 	messenger.AssertNumberOfCalls(t, "UPID", 1)
 	messenger.AssertNumberOfCalls(t, "Send", 1)
 	messenger.AssertNumberOfCalls(t, "Stop", 1)
-	checker.AssertNumberOfCalls(t, "Start", 1)
-	checker.AssertNumberOfCalls(t, "Stop", 1)
 }
 
 func TestExecutorDriverStop(t *testing.T) {
 	statusChan := make(chan mesosproto.Status)
-	driver, messenger, checker := createTestExecutorDriver(t)
+	driver, messenger, _ := createTestExecutorDriver(t)
 
 	assert.True(t, driver.stopped)
 	st, err := driver.Start()
@@ -316,8 +309,6 @@ func TestExecutorDriverStop(t *testing.T) {
 	messenger.AssertNumberOfCalls(t, "UPID", 1)
 	messenger.AssertNumberOfCalls(t, "Send", 1)
 	messenger.AssertNumberOfCalls(t, "Stop", 1)
-	checker.AssertNumberOfCalls(t, "Start", 1)
-	checker.AssertNumberOfCalls(t, "Stop", 1)
 }
 
 func TestExecutorDriverSendStatusUpdate(t *testing.T) {

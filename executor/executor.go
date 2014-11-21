@@ -307,195 +307,6 @@ func (driver *MesosExecutorDriver) handleShutdownMessage(from *upid.UPID, msg pr
 	driver.messageCh <- &message{messageShutdown, from, msg}
 }
 
-// Start starts the driver by sending a 'startEvent' to the event loop, and
-// receives the result from the response channel.
-func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
-	log.Infoln("Starting the executor driver")
-
-	if driver.status != mesosproto.Status_DRIVER_NOT_STARTED {
-		return driver.status, nil
-	}
-
-	driver.status = mesosproto.Status_DRIVER_NOT_STARTED
-	driver.stopped = true
-
-	// Start the messenger.
-	if err := driver.messenger.Start(); err != nil {
-		log.Errorf("Failed to start the messenger: %v\n", err)
-		return driver.status, err
-	}
-
-	driver.self = driver.messenger.UPID()
-
-	// Register with slave.
-	message := &mesosproto.RegisterExecutorMessage{
-		FrameworkId: driver.frameworkID,
-		ExecutorId:  driver.executorID,
-	}
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
-		log.Errorf("Failed to send %v: %v\n", message, err)
-		driver.messenger.Stop()
-		return driver.status, err
-	}
-
-	driver.stopped = false
-	driver.stopCh = make(chan struct{})
-
-	// Start monitoring the slave.
-	go driver.monitorSlave()
-
-	// Set status.
-	driver.status = mesosproto.Status_DRIVER_RUNNING
-	log.Infoln("Mesos executor is running")
-	return driver.status, nil
-}
-
-// Stop stops the driver by sending a 'stopEvent' to the event loop, and
-// receives the result from the response channel.
-func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
-	log.Infoln("Stopping the executor driver")
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status
-	}
-	stopStat := mesosproto.Status_DRIVER_STOPPED
-	driver.stop(stopStat)
-	return stopStat
-}
-
-// internal function for stopping the driver and set reason for stopping
-func (driver *MesosExecutorDriver) stop(stopStatus mesosproto.Status) {
-	driver.messenger.Stop()
-	close(driver.stopCh)
-	driver.status = stopStatus
-	driver.stopped = true
-}
-
-// Abort aborts the driver by sending an 'abortEvent' to the event loop, and
-// receives the result from the response channel.
-func (driver *MesosExecutorDriver) Abort() mesosproto.Status {
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status
-	}
-
-	log.Infoln("Aborting the executor driver")
-
-	abortStat := mesosproto.Status_DRIVER_ABORTED
-	driver.stop(abortStat)
-	return abortStat
-}
-
-// Join waits for the driver by sending a 'joinEvent' to the event loop, and wait
-// on a channel for the notification of driver termination.
-func (driver *MesosExecutorDriver) Join() mesosproto.Status {
-	log.Infoln("Waiting for the executor driver to stop")
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status
-	}
-	<-driver.stopCh // wait for stop signal
-	return driver.status
-}
-
-func (driver *MesosExecutorDriver) Run() mesosproto.Status {
-	stat, err := driver.Start()
-
-	if err != nil {
-		driver.exec.Error(driver, err.Error())
-		return stat
-	}
-
-	if stat != mesosproto.Status_DRIVER_RUNNING {
-		log.Errorln("Mesos scheduler driver failed to start.")
-		return stat
-	}
-
-	log.Infof("Running Executor Driver with PID=%v\n", driver.self)
-	return driver.Join()
-
-}
-
-// SendStatusUpdate sends the status updates by sending a 'sendStatusUpdateEvent"
-// to the event loop, and receives the result from the response channel.
-func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskStatus) (mesosproto.Status, error) {
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status, nil
-	}
-
-	if taskStatus.GetState() == mesosproto.TaskState_TASK_STAGING {
-		msg := "Executor is not allowed to send TASK_STAGING status update. Aborting!"
-		err := fmt.Errorf(msg)
-		log.Errorln(msg)
-		driver.Abort()
-		driver.exec.Error(driver, err.Error())
-		return driver.status, err
-	}
-
-	// Set up status update.
-	update := driver.makeStatusUpdate(taskStatus)
-	log.Infof("Executor sending status update %v\n", update.String())
-
-	// Capture the status update.
-	driver.updates[uuid.UUID(update.GetUuid()).String()] = update
-
-	// Put the status update in the message.
-	message := &mesosproto.StatusUpdateMessage{
-		Update: update,
-		Pid:    proto.String(driver.self.String()),
-	}
-	// Send the message.
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
-		msg := fmt.Sprintf("Failed to send %v: %v")
-		err := fmt.Errorf(msg)
-		log.Errorln(msg)
-		driver.exec.Error(driver, msg)
-		return driver.status, err
-	}
-
-	return driver.status, nil
-}
-
-func (driver *MesosExecutorDriver) makeStatusUpdate(taskStatus *mesosproto.TaskStatus) *mesosproto.StatusUpdate {
-	now := float64(time.Now().Unix())
-	// Fill in all the fields.
-	taskStatus.Timestamp = proto.Float64(now)
-	taskStatus.SlaveId = driver.slaveID
-	update := &mesosproto.StatusUpdate{
-		FrameworkId: driver.frameworkID,
-		ExecutorId:  driver.executorID,
-		SlaveId:     driver.slaveID,
-		Status:      taskStatus,
-		Timestamp:   proto.Float64(now),
-		Uuid:        uuid.NewUUID(),
-	}
-	return update
-}
-
-// SendFrameworkMessage sends the framework message by sending a 'sendFrameworkMessageEvent'
-// to the event loop, and receives the result from the response channel.
-func (driver *MesosExecutorDriver) SendFrameworkMessage(data []byte) (mesosproto.Status, error) {
-	log.V(3).Infoln("Sending framework message", string(data))
-
-	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		err := fmt.Errorf("Executor driver is not running")
-		log.Errorln(err)
-		return driver.status, err
-	}
-
-	message := &mesosproto.ExecutorToFrameworkMessage{
-		SlaveId:     driver.slaveID,
-		FrameworkId: driver.frameworkID,
-		ExecutorId:  driver.executorID,
-		Data:        data,
-	}
-
-	// Send the message.
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
-		err := fmt.Errorf("Failed to send %v: %v")
-		log.Errorln(err)
-		return driver.status, err
-	}
-	return driver.status, nil
-}
-
 func (driver *MesosExecutorDriver) registered(from *upid.UPID, pbMsg proto.Message) {
 	log.Infoln("Executor driver registered")
 
@@ -716,4 +527,193 @@ func (driver *MesosExecutorDriver) slaveRecoveryTimeout(e *event) {
 		driver.exec.Shutdown(driver)
 		driver.Abort()
 	}
+}
+
+// Start starts the driver by sending a 'startEvent' to the event loop, and
+// receives the result from the response channel.
+func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
+	log.Infoln("Starting the executor driver")
+
+	if driver.status != mesosproto.Status_DRIVER_NOT_STARTED {
+		return driver.status, nil
+	}
+
+	driver.status = mesosproto.Status_DRIVER_NOT_STARTED
+	driver.stopped = true
+
+	// Start the messenger.
+	if err := driver.messenger.Start(); err != nil {
+		log.Errorf("Failed to start the messenger: %v\n", err)
+		return driver.status, err
+	}
+
+	driver.self = driver.messenger.UPID()
+
+	// Register with slave.
+	message := &mesosproto.RegisterExecutorMessage{
+		FrameworkId: driver.frameworkID,
+		ExecutorId:  driver.executorID,
+	}
+	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+		log.Errorf("Failed to send %v: %v\n", message, err)
+		driver.messenger.Stop()
+		return driver.status, err
+	}
+
+	driver.stopped = false
+	driver.stopCh = make(chan struct{})
+
+	// Start monitoring the slave.
+	go driver.monitorSlave()
+
+	// Set status.
+	driver.status = mesosproto.Status_DRIVER_RUNNING
+	log.Infoln("Mesos executor is running")
+	return driver.status, nil
+}
+
+// Stop stops the driver by sending a 'stopEvent' to the event loop, and
+// receives the result from the response channel.
+func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
+	log.Infoln("Stopping the executor driver")
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+	stopStat := mesosproto.Status_DRIVER_STOPPED
+	driver.stop(stopStat)
+	return stopStat
+}
+
+// internal function for stopping the driver and set reason for stopping
+func (driver *MesosExecutorDriver) stop(stopStatus mesosproto.Status) {
+	driver.messenger.Stop()
+	close(driver.stopCh)
+	driver.status = stopStatus
+	driver.stopped = true
+}
+
+// Abort aborts the driver by sending an 'abortEvent' to the event loop, and
+// receives the result from the response channel.
+func (driver *MesosExecutorDriver) Abort() mesosproto.Status {
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+
+	log.Infoln("Aborting the executor driver")
+
+	abortStat := mesosproto.Status_DRIVER_ABORTED
+	driver.stop(abortStat)
+	return abortStat
+}
+
+// Join waits for the driver by sending a 'joinEvent' to the event loop, and wait
+// on a channel for the notification of driver termination.
+func (driver *MesosExecutorDriver) Join() mesosproto.Status {
+	log.Infoln("Waiting for the executor driver to stop")
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return driver.status
+	}
+	<-driver.stopCh // wait for stop signal
+	return driver.status
+}
+
+func (driver *MesosExecutorDriver) Run() mesosproto.Status {
+	stat, err := driver.Start()
+
+	if err != nil {
+		driver.exec.Error(driver, err.Error())
+		return stat
+	}
+
+	if stat != mesosproto.Status_DRIVER_RUNNING {
+		log.Errorln("Mesos scheduler driver failed to start.")
+		return stat
+	}
+
+	log.Infof("Running Executor Driver with PID=%v\n", driver.self)
+	return driver.Join()
+
+}
+
+// SendStatusUpdate sends the status updates by sending a 'sendStatusUpdateEvent"
+// to the event loop, and receives the result from the response channel.
+func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskStatus) (mesosproto.Status, error) {
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		return driver.status, nil
+	}
+
+	if taskStatus.GetState() == mesosproto.TaskState_TASK_STAGING {
+		msg := "Executor is not allowed to send TASK_STAGING status update. Aborting!"
+		err := fmt.Errorf(msg)
+		log.Errorln(msg)
+		driver.Abort()
+		driver.exec.Error(driver, err.Error())
+		return driver.status, err
+	}
+
+	// Set up status update.
+	update := driver.makeStatusUpdate(taskStatus)
+	log.Infof("Executor sending status update %v\n", update.String())
+
+	// Capture the status update.
+	driver.updates[uuid.UUID(update.GetUuid()).String()] = update
+
+	// Put the status update in the message.
+	message := &mesosproto.StatusUpdateMessage{
+		Update: update,
+		Pid:    proto.String(driver.self.String()),
+	}
+	// Send the message.
+	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+		msg := fmt.Sprintf("Failed to send %v: %v")
+		err := fmt.Errorf(msg)
+		log.Errorln(msg)
+		driver.exec.Error(driver, msg)
+		return driver.status, err
+	}
+
+	return driver.status, nil
+}
+
+func (driver *MesosExecutorDriver) makeStatusUpdate(taskStatus *mesosproto.TaskStatus) *mesosproto.StatusUpdate {
+	now := float64(time.Now().Unix())
+	// Fill in all the fields.
+	taskStatus.Timestamp = proto.Float64(now)
+	taskStatus.SlaveId = driver.slaveID
+	update := &mesosproto.StatusUpdate{
+		FrameworkId: driver.frameworkID,
+		ExecutorId:  driver.executorID,
+		SlaveId:     driver.slaveID,
+		Status:      taskStatus,
+		Timestamp:   proto.Float64(now),
+		Uuid:        uuid.NewUUID(),
+	}
+	return update
+}
+
+// SendFrameworkMessage sends the framework message by sending a 'sendFrameworkMessageEvent'
+// to the event loop, and receives the result from the response channel.
+func (driver *MesosExecutorDriver) SendFrameworkMessage(data []byte) (mesosproto.Status, error) {
+	log.V(3).Infoln("Sending framework message", string(data))
+
+	if driver.status != mesosproto.Status_DRIVER_RUNNING {
+		err := fmt.Errorf("Executor driver is not running")
+		log.Errorln(err)
+		return driver.status, err
+	}
+
+	message := &mesosproto.ExecutorToFrameworkMessage{
+		SlaveId:     driver.slaveID,
+		FrameworkId: driver.frameworkID,
+		ExecutorId:  driver.executorID,
+		Data:        data,
+	}
+
+	// Send the message.
+	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+		err := fmt.Errorf("Failed to send %v: %v")
+		log.Errorln(err)
+		return driver.status, err
+	}
+	return driver.status, nil
 }

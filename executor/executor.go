@@ -108,7 +108,7 @@ type ExecutorDriver interface {
 	Abort() mesosproto.Status
 	Join() mesosproto.Status
 	SendStatusUpdate(*mesosproto.TaskStatus) (mesosproto.Status, error)
-	SendFrameworkMessage(string) (mesosproto.Status, error)
+	SendFrameworkMessage([]byte) (mesosproto.Status, error)
 }
 
 // MesosExecutorDriver is a implementation of the ExecutorDriver.
@@ -264,8 +264,6 @@ func (driver *MesosExecutorDriver) eventLoop() {
 		case e := <-driver.eventCh:
 			switch e.etype {
 			// dispatch events
-			case sendFrameworkMessageEvent:
-				driver.invokeSendFrameworkMessage(e)
 			case slaveDisconnectedEvent:
 				driver.slaveDisconnected()
 			case slaveRecoveryTimeoutEvent:
@@ -473,38 +471,29 @@ func (driver *MesosExecutorDriver) makeStatusUpdate(taskStatus *mesosproto.TaskS
 
 // SendFrameworkMessage sends the framework message by sending a 'sendFrameworkMessageEvent'
 // to the event loop, and receives the result from the response channel.
-func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto.Status, error) {
-	log.Infoln("Sending framework message")
-	e := newEvent(sendFrameworkMessageEvent, data)
-	driver.eventCh <- e
-	res := <-e.res
-	return res.stat, res.err
-}
-
-// SendFrameworkMessage sends a FrameworkMessage to the slave.
-func (driver *MesosExecutorDriver) invokeSendFrameworkMessage(e *event) {
-	log.Infoln("invokeSendFrameworkMessage()")
-	data := e.req.(string)
+func (driver *MesosExecutorDriver) SendFrameworkMessage(data []byte) (mesosproto.Status, error) {
+	log.V(3).Infoln("Sending framework message", string(data))
 
 	if driver.status != mesosproto.Status_DRIVER_RUNNING {
 		err := fmt.Errorf("Executor driver is not running")
 		log.Errorln(err)
-		e.res <- &response{driver.status, err}
-		return
+		return driver.status, err
 	}
+
 	message := &mesosproto.ExecutorToFrameworkMessage{
 		SlaveId:     driver.slaveID,
 		FrameworkId: driver.frameworkID,
 		ExecutorId:  driver.executorID,
-		Data:        []byte(data),
+		Data:        data,
 	}
+
 	// Send the message.
 	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
-		log.Errorf("Failed to send %v: %v\n")
-		e.res <- &response{driver.status, err}
-		return
+		err := fmt.Errorf("Failed to send %v: %v")
+		log.Errorln(err)
+		return driver.status, err
 	}
-	e.res <- &response{driver.status, nil}
+	return driver.status, nil
 }
 
 func (driver *MesosExecutorDriver) registered(from *upid.UPID, pbMsg proto.Message) {

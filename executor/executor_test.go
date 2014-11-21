@@ -363,3 +363,21 @@ func TestExecutorDriverSendStatusUpdateStaging(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, stat)
 }
+
+func TestExecutorDriverSendFrameworkMessage(t *testing.T) {
+
+	driver, _, _ := createTestExecutorDriver(t)
+
+	stat, err := driver.SendFrameworkMessage([]byte("failed"))
+	assert.Error(t, err)
+
+	stat, err = driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
+	driver.connected = true
+	driver.stopped = false
+
+	stat, err = driver.SendFrameworkMessage([]byte("Testing Mesos"))
+	assert.NoError(t, err)
+	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
+}

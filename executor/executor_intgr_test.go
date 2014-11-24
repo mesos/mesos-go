@@ -76,7 +76,12 @@ func (exec *testExecutor) KillTask(driver ExecutorDriver, taskid *mesos.TaskID) 
 	exec.ch <- true
 }
 
-func (e *testExecutor) FrameworkMessage(ExecutorDriver, string) {}
+func (exec *testExecutor) FrameworkMessage(driver ExecutorDriver, message string) {
+	log.Infoln("Exec.FrameworkMessage() called.")
+	assert.NotNil(exec.t, message)
+	assert.Equal(exec.t, "Hello-Test", message)
+	exec.ch <- true
+}
 
 func (e *testExecutor) Shutdown(ExecutorDriver) {}
 
@@ -397,4 +402,47 @@ func TestExecutorDriverStatusUpdateAcknowledgement(t *testing.T) {
 	c := util.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 	<-time.After(time.Millisecond * 2)
+}
+
+func TestExecutorDriverFrameworkToExecutorMessageEvent(t *testing.T) {
+	setTestEnv(t)
+	ch := make(chan bool)
+	// Mock Slave process to respond to registration event.
+	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+		reqPath, err := url.QueryUnescape(req.URL.String())
+		assert.NoError(t, err)
+		log.Infoln("RCVD request", reqPath)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+
+	exec := newTestExecutor(t)
+	exec.ch = ch
+	exec.t = t
+
+	// start
+	driver, err := NewMesosExecutorDriver(exec)
+	assert.NoError(t, err)
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+	driver.connected = true
+
+	// send runtask event to driver
+	pbMsg := &mesos.FrameworkToExecutorMessage{
+		SlaveId:     util.NewSlaveID(slaveID),
+		ExecutorId:  util.NewExecutorID(executorID),
+		FrameworkId: util.NewFrameworkID(frameworkID),
+		Data:        []byte("Hello-Test"),
+	}
+
+	c := util.NewMockMesosClient(t, server.PID)
+	c.SendMessage(driver.self, pbMsg)
+
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting...")
+	}
 }

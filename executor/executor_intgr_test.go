@@ -19,6 +19,7 @@
 package executor
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
@@ -358,5 +359,42 @@ func TestExecutorDriverKillTaskEvent(t *testing.T) {
 	case <-time.After(time.Millisecond * 2):
 		log.Errorf("Tired of waiting...")
 	}
+}
 
+func TestExecutorDriverStatusUpdateAcknowledgement(t *testing.T) {
+	setTestEnv(t)
+	ch := make(chan bool)
+	// Mock Slave process to respond to registration event.
+	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+		reqPath, err := url.QueryUnescape(req.URL.String())
+		assert.NoError(t, err)
+		log.Infoln("RCVD request", reqPath)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+
+	exec := newTestExecutor(t)
+	exec.ch = ch
+	exec.t = t
+
+	// start
+	driver, err := NewMesosExecutorDriver(exec)
+	assert.NoError(t, err)
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+	driver.connected = true
+
+	// send ACK from server
+	pbMsg := &mesos.StatusUpdateAcknowledgementMessage{
+		SlaveId:     util.NewSlaveID(slaveID),
+		FrameworkId: util.NewFrameworkID(frameworkID),
+		TaskId:      util.NewTaskID("test-task-001"),
+		Uuid:        []byte(uuid.NewRandom().String()),
+	}
+
+	c := util.NewMockMesosClient(t, server.PID)
+	c.SendMessage(driver.self, pbMsg)
+	<-time.After(time.Millisecond * 2)
 }

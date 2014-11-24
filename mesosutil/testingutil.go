@@ -29,6 +29,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -49,6 +50,19 @@ func NewMockMasterHttpServer(t *testing.T, handler func(rsp http.ResponseWriter,
 	assert.NoError(t, err)
 	assert.NotNil(t, pid)
 	log.Infoln("Created test Master http server with PID", pid.String())
+	return &MockMesosHttpServer{PID: pid, Addr: addr, server: server, t: t}
+}
+
+func NewMockSlaveHttpServer(t *testing.T, handler func(rsp http.ResponseWriter, req *http.Request)) *MockMesosHttpServer {
+	server := httptest.NewServer(http.HandlerFunc(handler))
+	assert.NotNil(t, server)
+	addr := server.Listener.Addr().String()
+	pid, err := upid.Parse("slave(1)@" + addr)
+	assert.NoError(t, err)
+	assert.NotNil(t, pid)
+	assert.NoError(t, os.Setenv("MESOS_SLAVE_PID", pid.String()))
+	assert.NoError(t, os.Setenv("MESOS_SLAVE_ID", "test-slave-001"))
+	log.Infoln("Created test Slave http server with PID", pid.String())
 	return &MockMesosHttpServer{PID: pid, Addr: addr, server: server, t: t}
 }
 

@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -52,7 +53,11 @@ func (exec *testExecutor) Registered(driver ExecutorDriver, execinfo *mesos.Exec
 	exec.ch <- true
 }
 
-func (e *testExecutor) Reregistered(ExecutorDriver, *mesos.SlaveInfo) {}
+func (exec *testExecutor) Reregistered(driver ExecutorDriver, slaveinfo *mesos.SlaveInfo) {
+	log.Infoln("Exec.Re-registered() called.")
+	assert.NotNil(exec.t, slaveinfo)
+	exec.ch <- true
+}
 
 func (e *testExecutor) Disconnected(ExecutorDriver) {}
 
@@ -159,4 +164,93 @@ func TestExecutorDriverExecutorRegisteredEvent(t *testing.T) {
 	case <-time.After(time.Millisecond * 2):
 		log.Errorf("Tired of waiting...")
 	}
+}
+
+func TestExecutorDriverExecutorReregisteredEvent(t *testing.T) {
+	setTestEnv(t)
+	ch := make(chan bool)
+	// Mock Slave process to respond to registration event.
+	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+		reqPath, err := url.QueryUnescape(req.URL.String())
+		assert.NoError(t, err)
+		log.Infoln("RCVD request", reqPath)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+
+	exec := newTestExecutor(t)
+	exec.ch = ch
+	exec.t = t
+
+	// start
+	driver, err := NewMesosExecutorDriver(exec)
+	assert.NoError(t, err)
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+
+	//simulate sending ExecutorRegisteredMessage from server to exec pid.
+	pbMsg := &mesos.ExecutorReregisteredMessage{
+		SlaveId:   util.NewSlaveID(slaveID),
+		SlaveInfo: &mesos.SlaveInfo{Hostname: proto.String("localhost")},
+	}
+	c := util.NewMockMesosClient(t, server.PID)
+	c.SendMessage(driver.self, pbMsg)
+	assert.True(t, driver.connected)
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting...")
+	}
+}
+
+func TestExecutorDriverReconnectEvent(t *testing.T) {
+	setTestEnv(t)
+	ch := make(chan bool)
+	// Mock Slave process to respond to registration event.
+	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+		reqPath, err := url.QueryUnescape(req.URL.String())
+		assert.NoError(t, err)
+		log.Infoln("RCVD request", reqPath)
+
+		// exec registration request
+		if strings.Contains(reqPath, "RegisterExecutorMessage") {
+			log.Infoln("Got Executor registration request")
+		}
+
+		if strings.Contains(reqPath, "ReregisterExecutorMessage") {
+			log.Infoln("Got Executor Re-registration request")
+			ch <- true
+		}
+
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+
+	exec := newTestExecutor(t)
+	exec.t = t
+
+	// start
+	driver, err := NewMesosExecutorDriver(exec)
+	assert.NoError(t, err)
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+	driver.connected = true
+
+	// send "reconnect" event to driver
+	pbMsg := &mesos.ReconnectExecutorMessage{
+		SlaveId: util.NewSlaveID(slaveID),
+	}
+	c := util.NewMockMesosClient(t, server.PID)
+	c.SendMessage(driver.self, pbMsg)
+
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting...")
+	}
+
 }

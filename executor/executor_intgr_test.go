@@ -45,7 +45,10 @@ func newTestExecutor(t *testing.T) *testExecutor {
 }
 
 func (exec *testExecutor) Registered(driver ExecutorDriver, execinfo *mesos.ExecutorInfo, fwinfo *mesos.FrameworkInfo, slaveinfo *mesos.SlaveInfo) {
-	log.Infoln("Sched.Registered() called.")
+	log.Infoln("Exec.Registered() called.")
+	assert.NotNil(exec.t, execinfo)
+	assert.NotNil(exec.t, fwinfo)
+	assert.NotNil(exec.t, slaveinfo)
 	exec.ch <- true
 }
 
@@ -109,6 +112,48 @@ func TestExecutorDriverRegisterExecutorMessage(t *testing.T) {
 	assert.False(t, driver.stopped)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting...")
+	}
+}
+
+func TestExecutorDriverExecutorRegisteredEvent(t *testing.T) {
+	setTestEnv(t)
+	ch := make(chan bool)
+	// Mock Slave process to respond to registration event.
+	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+		reqPath, err := url.QueryUnescape(req.URL.String())
+		assert.NoError(t, err)
+		log.Infoln("RCVD request", reqPath)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+
+	exec := newTestExecutor(t)
+	exec.ch = ch
+	exec.t = t
+
+	// start
+	driver, err := NewMesosExecutorDriver(exec)
+	assert.NoError(t, err)
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+
+	//simulate sending ExecutorRegisteredMessage from server to exec pid.
+	pbMsg := &mesos.ExecutorRegisteredMessage{
+		ExecutorInfo:  util.NewExecutorInfo(util.NewExecutorID(executorID), nil),
+		FrameworkId:   util.NewFrameworkID(frameworkID),
+		FrameworkInfo: util.NewFrameworkInfo("test", "test-framework", util.NewFrameworkID(frameworkID)),
+		SlaveId:       util.NewSlaveID(slaveID),
+		SlaveInfo:     &mesos.SlaveInfo{Hostname: proto.String("localhost")},
+	}
+	c := util.NewMockMesosClient(t, server.PID)
+	c.SendMessage(driver.self, pbMsg)
+	assert.True(t, driver.connected)
 	select {
 	case <-ch:
 	case <-time.After(time.Millisecond * 2):

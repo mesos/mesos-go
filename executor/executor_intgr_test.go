@@ -61,7 +61,12 @@ func (exec *testExecutor) Reregistered(driver ExecutorDriver, slaveinfo *mesos.S
 
 func (e *testExecutor) Disconnected(ExecutorDriver) {}
 
-func (e *testExecutor) LaunchTask(ExecutorDriver, *mesos.TaskInfo) {}
+func (exec *testExecutor) LaunchTask(driver ExecutorDriver, taskinfo *mesos.TaskInfo) {
+	log.Infoln("Exec.LaunchTask() called.")
+	assert.NotNil(exec.t, taskinfo)
+	assert.True(exec.t, util.NewTaskID("test-task-001").Equal(taskinfo.TaskId))
+	exec.ch <- true
+}
 
 func (e *testExecutor) KillTask(ExecutorDriver, *mesos.TaskID) {}
 
@@ -244,6 +249,60 @@ func TestExecutorDriverReconnectEvent(t *testing.T) {
 	pbMsg := &mesos.ReconnectExecutorMessage{
 		SlaveId: util.NewSlaveID(slaveID),
 	}
+	c := util.NewMockMesosClient(t, server.PID)
+	c.SendMessage(driver.self, pbMsg)
+
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting...")
+	}
+
+}
+
+func TestExecutorDriverRunTaskEvent(t *testing.T) {
+	setTestEnv(t)
+	ch := make(chan bool)
+	// Mock Slave process to respond to registration event.
+	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+		reqPath, err := url.QueryUnescape(req.URL.String())
+		assert.NoError(t, err)
+		log.Infoln("RCVD request", reqPath)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+
+	exec := newTestExecutor(t)
+	exec.ch = ch
+	exec.t = t
+
+	// start
+	driver, err := NewMesosExecutorDriver(exec)
+	assert.NoError(t, err)
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+	driver.connected = true
+
+	// send runtask event to driver
+	pbMsg := &mesos.RunTaskMessage{
+		FrameworkId: util.NewFrameworkID(frameworkID),
+		Framework: util.NewFrameworkInfo(
+			"test", "test-framework-001", util.NewFrameworkID(frameworkID),
+		),
+		Pid: proto.String(server.PID.String()),
+		Task: util.NewTaskInfo(
+			"test-task",
+			util.NewTaskID("test-task-001"),
+			util.NewSlaveID(slaveID),
+			[]*mesos.Resource{
+				util.NewScalarResource("mem", 112),
+				util.NewScalarResource("cpus", 2),
+			},
+		),
+	}
+
 	c := util.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 

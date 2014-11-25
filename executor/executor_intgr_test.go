@@ -83,9 +83,17 @@ func (exec *testExecutor) FrameworkMessage(driver ExecutorDriver, message string
 	exec.ch <- true
 }
 
-func (e *testExecutor) Shutdown(ExecutorDriver) {}
+func (exec *testExecutor) Shutdown(ExecutorDriver) {
+	log.Infoln("Exec.Shutdown() called.")
+	exec.ch <- true
+}
 
-func (e *testExecutor) Error(ExecutorDriver, string) {}
+func (exec *testExecutor) Error(driver ExecutorDriver, err string) {
+	log.Infoln("Exec.Error() called.")
+	log.Infoln("Got error ", err)
+	driver.Stop()
+	exec.ch <- true
+}
 
 // ------------------------ Test Functions -------------------- //
 
@@ -443,6 +451,75 @@ func TestExecutorDriverFrameworkToExecutorMessageEvent(t *testing.T) {
 	select {
 	case <-ch:
 	case <-time.After(time.Millisecond * 2):
+		log.Errorf("Tired of waiting...")
+	}
+}
+
+func TestExecutorDriverShutdownEvent(t *testing.T) {
+	setTestEnv(t)
+	ch := make(chan bool)
+	// Mock Slave process to respond to registration event.
+	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+		reqPath, err := url.QueryUnescape(req.URL.String())
+		assert.NoError(t, err)
+		log.Infoln("RCVD request", reqPath)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	defer server.Close()
+
+	exec := newTestExecutor(t)
+	exec.ch = ch
+	exec.t = t
+
+	// start
+	driver, err := NewMesosExecutorDriver(exec)
+	assert.NoError(t, err)
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+	driver.connected = true
+
+	// send runtask event to driver
+	pbMsg := &mesos.ShutdownExecutorMessage{}
+
+	c := util.NewMockMesosClient(t, server.PID)
+	c.SendMessage(driver.self, pbMsg)
+
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 5):
+		log.Errorf("Tired of waiting...")
+	}
+
+	<-time.After(time.Millisecond * 5) // wait for shutdown to finish.
+	assert.Equal(t, mesos.Status_DRIVER_STOPPED, driver.status)
+}
+
+func TestExecutorDriverError(t *testing.T) {
+	setTestEnv(t)
+	// Mock Slave process to respond to registration event.
+	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+		reqPath, err := url.QueryUnescape(req.URL.String())
+		assert.NoError(t, err)
+		log.Infoln("RCVD request", reqPath)
+		rsp.WriteHeader(http.StatusAccepted)
+	})
+
+	ch := make(chan bool)
+	exec := newTestExecutor(t)
+	exec.ch = ch
+	exec.t = t
+
+	driver, err := NewMesosExecutorDriver(exec)
+	assert.NoError(t, err)
+	server.Close() // will cause error
+	_ = driver.Run()
+	//assert.Er(t, err)
+
+	select {
+	case <-ch:
+	case <-time.After(time.Millisecond * 5):
 		log.Errorf("Tired of waiting...")
 	}
 }

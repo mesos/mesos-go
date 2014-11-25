@@ -89,11 +89,10 @@ func (driver *MesosExecutorDriver) init() error {
 
 	// Parse environments.
 	if err := driver.parseEnviroments(); err != nil {
-		msg := fmt.Sprintf("Failed to parse environments: %v\n", err)
-		log.Errorf(msg)
-		driver.exec.Error(driver, msg)
+		log.Errorf("Failed to parse environments: %v\n", err)
 		return err
 	}
+
 	// Install handlers.
 	driver.messenger.Install(driver.registered, &mesosproto.ExecutorRegisteredMessage{})
 	driver.messenger.Install(driver.reregistered, &mesosproto.ExecutorReregisteredMessage{})
@@ -103,7 +102,7 @@ func (driver *MesosExecutorDriver) init() error {
 	driver.messenger.Install(driver.statusUpdateAcknowledgement, &mesosproto.StatusUpdateAcknowledgementMessage{})
 	driver.messenger.Install(driver.frameworkMessage, &mesosproto.FrameworkToExecutorMessage{})
 	driver.messenger.Install(driver.shutdown, &mesosproto.ShutdownExecutorMessage{})
-
+	driver.messenger.Install(driver.frameworkError, &mesosproto.FrameworkErrorMessage{})
 	return nil
 }
 
@@ -314,6 +313,13 @@ func (driver *MesosExecutorDriver) shutdown(from *upid.UPID, pbMsg proto.Message
 	driver.Stop()
 }
 
+func (driver *MesosExecutorDriver) frameworkError(from *upid.UPID, pbMsg proto.Message) {
+	log.Infoln("Executor driver received error")
+
+	msg := pbMsg.(*mesosproto.FrameworkErrorMessage)
+	driver.exec.Error(driver, msg.GetMessage())
+}
+
 // ------------------------ Driver Implementation ----------------- //
 
 // Start starts the driver by sending a 'startEvent' to the event loop, and
@@ -406,6 +412,7 @@ func (driver *MesosExecutorDriver) Run() mesosproto.Status {
 	stat, err := driver.Start()
 
 	if err != nil {
+		stat := driver.Stop()
 		driver.exec.Error(driver, err.Error())
 		return stat
 	}

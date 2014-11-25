@@ -82,6 +82,12 @@ func (t *HTTPTransporter) Recv() *Message {
 	return <-t.messageQueue
 }
 
+//Inject places a message into the incoming message queue.
+func (t *HTTPTransporter) Inject(msg *Message) error {
+	t.messageQueue <- msg
+	return nil
+}
+
 // Install the request URI according to the message's name.
 func (t *HTTPTransporter) Install(msgName string) {
 	requestURI := fmt.Sprintf("/%s/%s", t.upid.ID, msgName)

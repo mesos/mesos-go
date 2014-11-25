@@ -52,6 +52,13 @@ func setEnvironments(t *testing.T, workDir string, checkpoint bool) {
 	}
 }
 
+func clearEnvironments(t *testing.T) {
+	assert.NoError(t, os.Setenv("MESOS_SLAVE_PID", ""))
+	assert.NoError(t, os.Setenv("MESOS_SLAVE_ID", ""))
+	assert.NoError(t, os.Setenv("MESOS_FRAMEWORK_ID", ""))
+	assert.NoError(t, os.Setenv("MESOS_EXECUTOR_ID", ""))
+}
+
 func createTestExecutorDriver(t *testing.T) (
 	*MesosExecutorDriver,
 	*messenger.MockedMessenger,
@@ -79,6 +86,7 @@ func createTestExecutorDriver(t *testing.T) (
 }
 
 func TestExecutorDriverStartFailedToParseEnvironment(t *testing.T) {
+	clearEnvironments(t)
 	exec := NewMockedExecutor()
 	exec.On("Error").Return(nil)
 	driver, err := NewMesosExecutorDriver(exec)

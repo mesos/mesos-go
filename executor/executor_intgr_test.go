@@ -24,6 +24,7 @@ import (
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
+	"github.com/mesos/mesos-go/testutil"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -105,7 +106,7 @@ func setTestEnv(t *testing.T) {
 func TestExecutorDriverRegisterExecutorMessage(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)
@@ -152,7 +153,7 @@ func TestExecutorDriverExecutorRegisteredEvent(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
 	// Mock Slave process to respond to registration event.
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)
@@ -180,7 +181,7 @@ func TestExecutorDriverExecutorRegisteredEvent(t *testing.T) {
 		SlaveId:       util.NewSlaveID(slaveID),
 		SlaveInfo:     &mesos.SlaveInfo{Hostname: proto.String("localhost")},
 	}
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 	assert.True(t, driver.connected)
 	select {
@@ -194,7 +195,7 @@ func TestExecutorDriverExecutorReregisteredEvent(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
 	// Mock Slave process to respond to registration event.
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)
@@ -219,7 +220,7 @@ func TestExecutorDriverExecutorReregisteredEvent(t *testing.T) {
 		SlaveId:   util.NewSlaveID(slaveID),
 		SlaveInfo: &mesos.SlaveInfo{Hostname: proto.String("localhost")},
 	}
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 	assert.True(t, driver.connected)
 	select {
@@ -233,7 +234,7 @@ func TestExecutorDriverReconnectEvent(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
 	// Mock Slave process to respond to registration event.
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)
@@ -268,7 +269,7 @@ func TestExecutorDriverReconnectEvent(t *testing.T) {
 	pbMsg := &mesos.ReconnectExecutorMessage{
 		SlaveId: util.NewSlaveID(slaveID),
 	}
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	select {
@@ -283,7 +284,7 @@ func TestExecutorDriverRunTaskEvent(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
 	// Mock Slave process to respond to registration event.
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)
@@ -322,7 +323,7 @@ func TestExecutorDriverRunTaskEvent(t *testing.T) {
 		),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	select {
@@ -337,7 +338,7 @@ func TestExecutorDriverKillTaskEvent(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
 	// Mock Slave process to respond to registration event.
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)
@@ -364,7 +365,7 @@ func TestExecutorDriverKillTaskEvent(t *testing.T) {
 		TaskId:      util.NewTaskID("test-task-001"),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	select {
@@ -378,7 +379,7 @@ func TestExecutorDriverStatusUpdateAcknowledgement(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
 	// Mock Slave process to respond to registration event.
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)
@@ -407,7 +408,7 @@ func TestExecutorDriverStatusUpdateAcknowledgement(t *testing.T) {
 		Uuid:        []byte(uuid.NewRandom().String()),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 	<-time.After(time.Millisecond * 2)
 }
@@ -416,7 +417,7 @@ func TestExecutorDriverFrameworkToExecutorMessageEvent(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
 	// Mock Slave process to respond to registration event.
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)
@@ -445,7 +446,7 @@ func TestExecutorDriverFrameworkToExecutorMessageEvent(t *testing.T) {
 		Data:        []byte("Hello-Test"),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	select {
@@ -459,7 +460,7 @@ func TestExecutorDriverShutdownEvent(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
 	// Mock Slave process to respond to registration event.
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)
@@ -483,7 +484,7 @@ func TestExecutorDriverShutdownEvent(t *testing.T) {
 	// send runtask event to driver
 	pbMsg := &mesos.ShutdownExecutorMessage{}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	select {
@@ -499,7 +500,7 @@ func TestExecutorDriverShutdownEvent(t *testing.T) {
 func TestExecutorDriverError(t *testing.T) {
 	setTestEnv(t)
 	// Mock Slave process to respond to registration event.
-	server := util.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
 		log.Infoln("RCVD request", reqPath)

@@ -17,7 +17,7 @@
  */
 
 //Collection of resources for teting mesos artifacts.
-package mesosutil
+package testutil
 
 import (
 	"bytes"

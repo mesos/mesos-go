@@ -23,6 +23,7 @@ import (
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
+	"github.com/mesos/mesos-go/testutil"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -112,7 +113,7 @@ func newTestScheduler() *testScheduler {
 // ---------------------------------- Tests ---------------------------------- //
 
 func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
-	server := util.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("RCVD request ", req.URL)
 
 		data, err := ioutil.ReadAll(req.Body)
@@ -150,7 +151,7 @@ func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
 
 func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
 	// start mock master server to handle connection
-	server := util.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)
 	})
@@ -172,7 +173,7 @@ func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
 		MasterInfo:  util.NewMasterInfo("master", 123456, 1234),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg) // after this driver.connced=true
 
 	assert.True(t, driver.connected)
@@ -185,7 +186,7 @@ func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
 
 func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
 	// start mock master server to handle connection
-	server := util.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)
 	})
@@ -206,7 +207,7 @@ func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
 		MasterInfo:  util.NewMasterInfo("master", 123456, 1234),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	assert.True(t, driver.connected)
@@ -220,7 +221,7 @@ func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
 
 func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
 	// start mock master server to handle connection
-	server := util.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)
 	})
@@ -249,7 +250,7 @@ func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
 		Pids:   []string{"test-offer-001"},
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	select {
@@ -261,7 +262,7 @@ func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
 
 func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 	// start mock master server to handle connection
-	server := util.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)
 	})
@@ -283,7 +284,7 @@ func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 		OfferId: util.NewOfferID("test-offer-001"),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	select {
@@ -296,7 +297,7 @@ func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(2)
-	server := util.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		if strings.Contains(req.RequestURI, "mesos.internal.StatusUpdateAcknowledgementMessage") {
 			log.Infoln("Master cvd ACK")
@@ -332,7 +333,7 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 	}
 	pbMsg.Update.SlaveId = &mesos.SlaveID{Value: proto.String("test-slave-001")}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	<-time.After(time.Millisecond * 1)
@@ -340,7 +341,7 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverLostSlaveEvent(t *testing.T) {
-	server := util.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)
 	})
@@ -362,7 +363,7 @@ func TestSchedulerDriverLostSlaveEvent(t *testing.T) {
 		SlaveId: util.NewSlaveID("test-slave-001"),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	<-time.After(time.Millisecond * 1)
@@ -374,7 +375,7 @@ func TestSchedulerDriverLostSlaveEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverFrameworkMessageEvent(t *testing.T) {
-	server := util.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)
 	})
@@ -399,7 +400,7 @@ func TestSchedulerDriverFrameworkMessageEvent(t *testing.T) {
 		Data:        []byte("test-data-999"),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	<-time.After(time.Millisecond * 1)
@@ -411,7 +412,7 @@ func TestSchedulerDriverFrameworkMessageEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverFrameworkErrorEvent(t *testing.T) {
-	server := util.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)
 	})
@@ -433,7 +434,7 @@ func TestSchedulerDriverFrameworkErrorEvent(t *testing.T) {
 		Message: proto.String("test-error-999"),
 	}
 
-	c := util.NewMockMesosClient(t, server.PID)
+	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
 	<-time.After(time.Millisecond * 1)

@@ -6,55 +6,63 @@ Very early version of a pure Go language bindings for Apache Mesos. As with othe
 [![GoDoc] (https://godoc.org/github.com/mesos/mesos-go?status.png)](https://godoc.org/github.com/mesos/mesos-go)
 
 ## Current Status
-This is a very early version of the project.  Howerver, here is a list of things that works so far
+This is a very early version of the project.  Howerver, here is a list of things that works so far:
+
 - The SchedulerDriver API implemented
 - The ExecutorDriver API implemented
-- Tons of tests
-- Examples of how to use the API
+- Stable API (based on the core Mesos code)
+- Plenty of unit and integrative of tests
+- Modular design for easy readability/extensibility
+- Example programs on how to use the API
 
 ##### Work in Progress...
-- APIs are still taking shape, but getting stable
-- No Master detection via Zookeeper
-- No Auth via SASL
-- Visit issues list for detail
+- No leading master detection yet
+- No Authentication/Authorization via SASL
+- Visit project issues list for detail 
 
 ## Pre-Requisites
 - Go 1.3 or higher
 - A standard and working Go workspace setup
 - Install Protocol Buffer tools 2.5 or higher locally - See http://code.google.com/p/protobuf/
 - Apache Mesos 0.19 or newer
-
+- GNU Make
 
 ## Build Instructions
 The following instructions is to build the code from a github pull.  The code resides in branch labeled `pure` and uses the `GoDep` project for dependency management.
 ```
-git clone https://github.com/mesos/mesos-go.git -b pure
-$ go get github.com/tools/godep
+$ cd <go-workspace>/src/
+$ mkdir -p github.com/mesos
+$ cd github.com/mesos
+$ git clone https://github.com/mesos/mesos-go.git -b pure
 $ cd mesos-go
+$ go get github.com/tools/godep
 $ godep restore
-$ go build ./...
+$ make all
 ```
-## Running Example
-The codebase comes with an example of a scheduler and executor found in the `examples` directory.
-The examples need a running mesos master and slaves to work properly.   For instance, start local-mesos 
-```
-$ <mesos-install>/bin/mesos-local --ip=127.0.0.1 --port=5050
-```
-### Running the Scheduler
-* Change directory to `examples`
-* Build the scheduler binary `$ go build -o test-framework test_framework.go`
-* Build the executor binary `$ go build -o test-executor test_executor.go`
-* Ensure your mesos instance is running, then launch scheduler
-```
-$ ./sample_framework --master=127.0.0.1:5050 --executor="<fully-qualified-path-to>/test-executor" --logtostderr=true
-```
-Note: that you must provide the fully-qualified path to the executor binary.
+The previous will build the code base including the examples.
 
-You can also use the Go test-scheduler with executors written in other languages.  Run the test-scheduler with the Python or Java executors like so:
+## Running the Example
+### Start Mesos
+You will need a running Mesos master and slaves to run the examples.   For instance, start a local Mesos: 
 ```
-$ ./sample_framework --master=127.0.0.1:5050 --executor="<fully-qualified-path>/src/examples/python/test-executor" --logtostderr=true
+$ <mesos-build-install>/bin/mesos-local --ip=127.0.0.1 --port=5050
 ```
-Or the Java version
+See http://mesos.apache.org/gettingstarted/ for getting started with Apache Mesos.
+
+### Running the Go Scheduler/Executor Examples
 ```
-$ ./sample_framework --master=127.0.0.1:5050 --executor="<fully-qualified-path>/src/examples/java/test-executor" --logtostderr=true
+$ cd <go-workspace>/github.com/mesos/mesos-go
+$ cd examples
+$ ./test-framework --master=127.0.0.1:5050 --executor="<go-workspace>/src/github.com/mesos/mesos-go/examples/test-executor" --logtostderr=true
+```
+Note: that you must provide the fully-qualified path to the `test-executor` binary.  If all goes well, you should see output about task completion.  You can also point your browser to the Mesos GUI http://127.0.0.1:5050/ to validate the framework activities.
+
+### Running the Go Scheduler with Other Executors
+You can also use the Go `test-scheduler` with executors written in other languages.  such as those written in `Python` or `Java` executors for further testing (note this requires a build of the mesos source code with `make check`):
+```
+$ ./test-framework --master=127.0.0.1:5050 --executor="<mesos-build>/src/examples/python/test-executor" --logtostderr=true
+```
+Similarly for the Java version:
+```
+$ ./test-framework --master=127.0.0.1:5050 --executor="<mesos-build>/src/examples/java/test-executor" --logtostderr=true
 ```

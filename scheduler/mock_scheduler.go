@@ -37,7 +37,7 @@ func (sched *MockScheduler) StatusUpdate(SchedulerDriver, *mesos.TaskStatus) {
 	sched.Called()
 }
 
-func (sched *MockScheduler) FrameworkMessage(SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, []byte) {
+func (sched *MockScheduler) FrameworkMessage(SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, string) {
 	sched.Called()
 }
 

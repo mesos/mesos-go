@@ -338,7 +338,7 @@ func (driver *MesosSchedulerDriver) frameworkMessageRcvd(from *upid.UPID, pbMsg 
 
 	log.V(1).Infoln("Received Framwork Message ", msg.String())
 
-	driver.Scheduler.FrameworkMessage(driver, msg.ExecutorId, msg.SlaveId, msg.Data)
+	driver.Scheduler.FrameworkMessage(driver, msg.ExecutorId, msg.SlaveId, string(msg.Data))
 }
 
 func (driver *MesosSchedulerDriver) frameworkErrorRcvd(from *upid.UPID, pbMsg proto.Message) {

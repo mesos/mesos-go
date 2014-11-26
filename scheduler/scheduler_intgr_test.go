@@ -86,7 +86,7 @@ func (sched *testScheduler) SlaveLost(dr SchedulerDriver, slaveId *mesos.SlaveID
 	sched.ch <- true
 }
 
-func (sched *testScheduler) FrameworkMessage(dr SchedulerDriver, execId *mesos.ExecutorID, slaveId *mesos.SlaveID, data []byte) {
+func (sched *testScheduler) FrameworkMessage(dr SchedulerDriver, execId *mesos.ExecutorID, slaveId *mesos.SlaveID, data string) {
 	log.Infoln("Sched.FrameworkMessage() called.")
 	assert.NotNil(sched.t, slaveId)
 	assert.Equal(sched.t, slaveId.GetValue(), "test-slave-001")

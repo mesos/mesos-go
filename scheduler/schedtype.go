@@ -172,7 +172,7 @@ type Scheduler interface {
 	// Invoked when an executor sends a message. These messages are best
 	// effort; do not expect a framework message to be retransmitted in
 	// any reliable fashion.
-	FrameworkMessage(SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, []byte)
+	FrameworkMessage(SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, string)
 
 	// Invoked when a slave has been determined unreachable (e.g.,
 	// machine failure, network partition). Most frameworks will need to

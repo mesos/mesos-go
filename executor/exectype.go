@@ -84,6 +84,9 @@ type Executor interface {
  * interface is used both to manage the executor's lifecycle (start
  * it, stop it, or wait for it to finish) and to interact with Mesos
  * (e.g., send status updates, send framework messages, etc.).
+ * A driver method is expected to fail-fast and return an error when possible.
+ * Other internal errors (or remote error) that occur asynchronously are handled
+ * using the the Executor.Error() callback.
  */
 type ExecutorDriver interface {
 	/**
@@ -95,7 +98,7 @@ type ExecutorDriver interface {
 	/**
 	 * Stops the executor driver.
 	 */
-	Stop() mesosproto.Status
+	Stop() (mesosproto.Status, error)
 
 	/**
 	 * Aborts the driver so that no more callbacks can be made to the
@@ -106,7 +109,7 @@ type ExecutorDriver interface {
 	 * same process ... although this functionality is currently not
 	 * supported for executors).
 	 */
-	Abort() mesosproto.Status
+	Abort() (mesosproto.Status, error)
 
 	/**
 	 * Waits for the driver to be stopped or aborted, possibly
@@ -114,12 +117,12 @@ type ExecutorDriver interface {
 	 * this function can be used to determine if the driver was aborted
 	 * (see package mesosproto for a description of Status).
 	 */
-	Join() mesosproto.Status
+	Join() (mesosproto.Status, error)
 
 	/**
 	 * Starts and immediately joins (i.e., blocks on) the driver.
 	 */
-	Run() mesosproto.Status
+	Run() (mesosproto.Status, error)
 
 	/**
 	 * Sends a status update to the framework scheduler, retrying as
@@ -135,5 +138,5 @@ type ExecutorDriver interface {
 	 * best effort; do not expect a framework message to be
 	 * retransmitted in any reliable fashion.
 	 */
-	SendFrameworkMessage([]byte) (mesosproto.Status, error)
+	SendFrameworkMessage(string) (mesosproto.Status, error)
 }

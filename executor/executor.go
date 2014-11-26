@@ -336,90 +336,98 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 
 	// Start the messenger.
 	if err := driver.messenger.Start(); err != nil {
-		log.Errorf("Failed to start the messenger: %v\n", err)
+		log.Errorf("Failed to start executor: %v\n", err)
 		return driver.status, err
 	}
 
 	driver.self = driver.messenger.UPID()
+	// Set status.
+	driver.stopped = false
+	driver.stopCh = make(chan struct{})
+	driver.status = mesosproto.Status_DRIVER_RUNNING
+	log.Infoln("Mesos executor is running with PID=", driver.self.String())
 
 	// Register with slave.
+	log.V(3).Infoln("Sending Executor registration")
 	message := &mesosproto.RegisterExecutorMessage{
 		FrameworkId: driver.frameworkID,
 		ExecutorId:  driver.executorID,
 	}
+
 	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
-		log.Errorf("Failed to send %v: %v\n", message, err)
-		driver.messenger.Stop()
-		return driver.status, err
+		log.Errorf("Stopping the executor, failed to send %v: %v\n", message, err)
+		stat, err0 := driver.Stop()
+		if err0 != nil {
+			log.Errorf("Failed to stop executor %v: %v\n", message, err)
+			return stat, err0
+		}
+		return stat, err
 	}
 
-	driver.stopped = false
-	driver.stopCh = make(chan struct{})
-
-	// Set status.
-	driver.status = mesosproto.Status_DRIVER_RUNNING
-	log.Infoln("Mesos executor is running")
 	return driver.status, nil
 }
 
 // Stop stops the driver by sending a 'stopEvent' to the event loop, and
 // receives the result from the response channel.
-func (driver *MesosExecutorDriver) Stop() mesosproto.Status {
+func (driver *MesosExecutorDriver) Stop() (mesosproto.Status, error) {
 	log.Infoln("Stopping the executor driver")
 	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status
+		return driver.status, nil
 	}
 	stopStat := mesosproto.Status_DRIVER_STOPPED
-	driver.stop(stopStat)
-	return stopStat
+	return stopStat, driver.stop(stopStat)
 }
 
 // internal function for stopping the driver and set reason for stopping
-func (driver *MesosExecutorDriver) stop(stopStatus mesosproto.Status) {
-	driver.messenger.Stop()
-	close(driver.destroyCh)
-	close(driver.stopCh)
+// Note that messages inflight or queued will not be processed.
+func (driver *MesosExecutorDriver) stop(stopStatus mesosproto.Status) error {
+	err := driver.messenger.Stop()
+	defer close(driver.destroyCh)
+	defer close(driver.stopCh)
+
 	driver.status = stopStatus
 	driver.stopped = true
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Abort aborts the driver by sending an 'abortEvent' to the event loop, and
 // receives the result from the response channel.
-func (driver *MesosExecutorDriver) Abort() mesosproto.Status {
+func (driver *MesosExecutorDriver) Abort() (mesosproto.Status, error) {
 	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status
+		return driver.status, nil
 	}
 
 	log.Infoln("Aborting the executor driver")
-
 	abortStat := mesosproto.Status_DRIVER_ABORTED
-	driver.stop(abortStat)
-	return abortStat
+	return abortStat, driver.stop(abortStat)
 }
 
 // Join waits for the driver by sending a 'joinEvent' to the event loop, and wait
 // on a channel for the notification of driver termination.
-func (driver *MesosExecutorDriver) Join() mesosproto.Status {
+func (driver *MesosExecutorDriver) Join() (mesosproto.Status, error) {
 	log.Infoln("Waiting for the executor driver to stop")
 	if driver.status != mesosproto.Status_DRIVER_RUNNING {
-		return driver.status
+		return driver.status, nil
 	}
 	<-driver.stopCh // wait for stop signal
-	return driver.status
+	return driver.status, nil
 }
 
-func (driver *MesosExecutorDriver) Run() mesosproto.Status {
+func (driver *MesosExecutorDriver) Run() (mesosproto.Status, error) {
 	stat, err := driver.Start()
 
 	if err != nil {
-		stat := driver.Stop()
-		driver.exec.Error(driver, err.Error())
-		return stat
+		return driver.Stop()
 	}
 
 	if stat != mesosproto.Status_DRIVER_RUNNING {
 		log.Errorln("Mesos scheduler driver failed to start.")
-		return stat
+		return stat, nil
 	}
 
 	log.Infof("Running Executor Driver with PID=%v\n", driver.self)
@@ -427,8 +435,7 @@ func (driver *MesosExecutorDriver) Run() mesosproto.Status {
 
 }
 
-// SendStatusUpdate sends the status updates by sending a 'sendStatusUpdateEvent"
-// to the event loop, and receives the result from the response channel.
+// SendStatusUpdate sends status updates to the slave.
 func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskStatus) (mesosproto.Status, error) {
 	if driver.status != mesosproto.Status_DRIVER_RUNNING {
 		return driver.status, nil
@@ -485,7 +492,7 @@ func (driver *MesosExecutorDriver) makeStatusUpdate(taskStatus *mesosproto.TaskS
 
 // SendFrameworkMessage sends the framework message by sending a 'sendFrameworkMessageEvent'
 // to the event loop, and receives the result from the response channel.
-func (driver *MesosExecutorDriver) SendFrameworkMessage(data []byte) (mesosproto.Status, error) {
+func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto.Status, error) {
 	log.V(3).Infoln("Sending framework message", string(data))
 
 	if driver.status != mesosproto.Status_DRIVER_RUNNING {
@@ -498,7 +505,7 @@ func (driver *MesosExecutorDriver) SendFrameworkMessage(data []byte) (mesosproto
 		SlaveId:     driver.slaveID,
 		FrameworkId: driver.frameworkID,
 		ExecutorId:  driver.executorID,
-		Data:        data,
+		Data:        []byte(data),
 	}
 
 	// Send the message.

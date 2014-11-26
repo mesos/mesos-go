@@ -515,8 +515,11 @@ func TestExecutorDriverError(t *testing.T) {
 	driver, err := NewMesosExecutorDriver(exec)
 	assert.NoError(t, err)
 	server.Close() // will cause error
-	_ = driver.Run()
-	//assert.Er(t, err)
+	// Run() cause async message processing to start
+	// Therefore, error-handling will be done via Executor.Error callaback.
+	stat, err := driver.Run()
+	assert.NoError(t, err)
+	assert.Equal(t, mesos.Status_DRIVER_STOPPED, stat)
 
 	select {
 	case <-ch:

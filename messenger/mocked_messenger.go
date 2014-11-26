@@ -70,9 +70,9 @@ func (m *MockedMessenger) Start() error {
 }
 
 // Stop is a mocked implementation.
-func (m *MockedMessenger) Stop() {
+func (m *MockedMessenger) Stop() error {
 	close(m.stop)
-	m.Called()
+	return m.Called().Error(0)
 }
 
 // UPID is a mocked implementation.

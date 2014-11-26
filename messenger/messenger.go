@@ -57,7 +57,7 @@ type Messenger interface {
 	Send(upid *upid.UPID, msg proto.Message) error
 	Route(from *upid.UPID, msg proto.Message) error
 	Start() error
-	Stop()
+	Stop() error
 	UPID() *upid.UPID
 }
 
@@ -169,11 +169,13 @@ func (m *MesosMessenger) Start() error {
 }
 
 // Stop stops the messenger and clean up all the goroutines.
-func (m *MesosMessenger) Stop() {
+func (m *MesosMessenger) Stop() error {
 	if err := m.tr.Stop(); err != nil {
 		log.Errorf("Failed to stop the transporter: %v\n", err)
+		return err
 	}
 	close(m.stop)
+	return nil
 }
 
 // UPID returns the upid of the messenger.

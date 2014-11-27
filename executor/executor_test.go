@@ -136,7 +136,7 @@ func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
 
 	status, err := driver.Start()
 	assert.Error(t, err)
-	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, status)
+	assert.Equal(t, mesosproto.Status_DRIVER_NOT_STARTED, status)
 
 	messenger.AssertNumberOfCalls(t, "Start", 1)
 	messenger.AssertNumberOfCalls(t, "UPID", 1)
@@ -273,17 +273,17 @@ func TestExecutorDriverAbort(t *testing.T) {
 
 	// Abort for the second time, should return directly.
 	stat, err = driver.Abort()
-	assert.NoError(t, err)
+	assert.Error(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, stat)
 	stat, err = driver.Stop()
-	assert.NoError(t, err)
+	assert.Error(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, stat)
 	assert.True(t, driver.stopped)
 
 	// Restart should not start.
 	stat, err = driver.Start()
 	assert.True(t, driver.stopped)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_ABORTED, stat)
 
 	messenger.AssertNumberOfCalls(t, "Start", 1)
@@ -313,17 +313,17 @@ func TestExecutorDriverStop(t *testing.T) {
 
 	// Stop for the second time, should return directly.
 	stat, err = driver.Stop()
-	assert.NoError(t, err)
+	assert.Error(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, stat)
 	stat, err = driver.Abort()
-	assert.NoError(t, err)
+	assert.Error(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, stat)
 	assert.True(t, driver.stopped)
 
 	// Restart should not start.
 	stat, err = driver.Start()
 	assert.True(t, driver.stopped)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, stat)
 
 	messenger.AssertNumberOfCalls(t, "Start", 1)

@@ -80,9 +80,10 @@ func TestSchedulerDriverStartOK(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
-	stat := driver.Start()
-	assert.False(t, driver.stopped)
+	stat, err := driver.Start()
+	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+	assert.False(t, driver.stopped)
 }
 
 func TestSchedulerDriverStartWithMessengerFailure(t *testing.T) {
@@ -98,8 +99,10 @@ func TestSchedulerDriverStartWithMessengerFailure(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
-	stat := driver.Start()
+	stat, err := driver.Start()
+	assert.Error(t, err)
 	assert.True(t, driver.stopped)
+	assert.True(t, !driver.connected)
 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, driver.status)
 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
 
@@ -122,7 +125,8 @@ func TestSchedulerDriverStartWithRegistrationFailure(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
-	stat := driver.Start()
+	stat, err := driver.Start()
+	assert.Error(t, err)
 	assert.True(t, driver.stopped)
 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, driver.status)
 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
@@ -134,7 +138,8 @@ func TestSchedulerDriverJoinUnstarted(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
-	stat := driver.Join()
+	stat, err := driver.Join()
+	assert.Error(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
 }
 
@@ -151,13 +156,14 @@ func TestSchedulerDriverJoinOK(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
-	stat := driver.Start()
-	assert.False(t, driver.stopped)
+	stat, err := driver.Start()
+	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+	assert.False(t, driver.stopped)
 
 	testCh := make(chan mesos.Status)
 	go func() {
-		stat := driver.Join()
+		stat, _ := driver.Join()
 		testCh <- stat
 	}()
 
@@ -179,7 +185,8 @@ func TestSchedulerDriverRun(t *testing.T) {
 	assert.True(t, driver.stopped)
 
 	go func() {
-		stat := driver.Run()
+		stat, err := driver.Run()
+		assert.NoError(t, err)
 		assert.Equal(t, mesos.Status_DRIVER_STOPPED, stat)
 	}()
 	time.Sleep(time.Millisecond * 1)
@@ -198,7 +205,8 @@ func TestSchedulerDriverStopUnstarted(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
-	stat := driver.Stop(true)
+	stat, err := driver.Stop(true)
+	assert.NotNil(t, err)
 	assert.True(t, driver.stopped)
 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
 }
@@ -217,7 +225,8 @@ func TestSchdulerDriverStopOK(t *testing.T) {
 	assert.True(t, driver.stopped)
 
 	go func() {
-		stat := driver.Run()
+		stat, err := driver.Run()
+		assert.NoError(t, err)
 		assert.Equal(t, mesos.Status_DRIVER_STOPPED, stat)
 	}()
 	time.Sleep(time.Millisecond * 1)
@@ -246,7 +255,8 @@ func TestSchdulerDriverAbort(t *testing.T) {
 	assert.True(t, driver.stopped)
 
 	go func() {
-		stat := driver.Run()
+		stat, err := driver.Run()
+		assert.NoError(t, err)
 		assert.Equal(t, mesos.Status_DRIVER_ABORTED, stat)
 	}()
 	time.Sleep(time.Millisecond * 1)
@@ -255,9 +265,9 @@ func TestSchdulerDriverAbort(t *testing.T) {
 	assert.False(t, driver.stopped)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.status)
 
-	stat := driver.Abort()
+	stat, err := driver.Abort()
 	time.Sleep(time.Millisecond * 1)
-
+	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 	assert.Equal(t, mesos.Status_DRIVER_ABORTED, stat)
 	assert.Equal(t, mesos.Status_DRIVER_ABORTED, driver.status)
@@ -275,27 +285,28 @@ func TestSchdulerDriverLunchTasksUnstarted(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
-	stat := driver.LaunchTasks(
+	stat, err := driver.LaunchTasks(
 		[]*mesos.OfferID{&mesos.OfferID{}},
 		[]*mesos.TaskInfo{},
 		&mesos.Filters{},
 	)
-
+	assert.Error(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_NOT_STARTED, stat)
 }
 
 func TestSchdulerDriverLaunchTasksWithError(t *testing.T) {
 	sched := NewMockScheduler()
+	sched.On("StatusUpdate").Return(nil)
 	sched.On("Error").Return()
 
-	messenger := messenger.NewMockedMessenger()
-	messenger.On("Start").Return(nil)
-	messenger.On("Send").Return(nil)
-	messenger.On("UPID").Return(&upid.UPID{})
-	messenger.On("Stop").Return(nil)
+	msgr := messenger.NewMockedMessenger()
+	msgr.On("Start").Return(nil)
+	msgr.On("Send").Return(nil)
+	msgr.On("UPID").Return(&upid.UPID{})
+	msgr.On("Stop").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(sched, framework, master, nil)
-	driver.messenger = messenger
+	driver.messenger = msgr
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
@@ -307,24 +318,43 @@ func TestSchdulerDriverLaunchTasksWithError(t *testing.T) {
 	assert.False(t, driver.stopped)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.status)
 
-	// trigger error
-	messenger.On("Send").Return(fmt.Errorf("Unable to send message"))
+	// to trigger error
+	msgr2 := messenger.NewMockedMessenger()
+	msgr2.On("Start").Return(nil)
+	msgr2.On("UPID").Return(&upid.UPID{})
+	msgr2.On("Send").Return(fmt.Errorf("Unable to send message"))
+	msgr2.On("Stop").Return(nil)
+	driver.messenger = msgr2
 
+	// setup an offer
+	offer := util.NewOffer(
+		util.NewOfferID("test-offer-001"),
+		framework.Id,
+		util.NewSlaveID("test-slave-001"),
+		"test-slave(1)@localhost:5050",
+	)
+
+	pid, err := upid.Parse("test-slave(1)@localhost:5050")
+	assert.NoError(t, err)
+	driver.cache.putOffer(offer, pid)
+
+	// launch task
 	task := util.NewTaskInfo(
 		"simple-task",
 		util.NewTaskID("simpe-task-1"),
-		util.NewSlaveID("slave-1"),
+		util.NewSlaveID("test-slave-001"),
 		[]*mesos.Resource{util.NewScalarResource("mem", 400)},
 	)
 	task.Command = util.NewCommandInfo("pwd")
+	task.Executor = util.NewExecutorInfo(util.NewExecutorID("test-exec"), task.Command)
 	tasks := []*mesos.TaskInfo{task}
 
-	stat := driver.LaunchTasks(
-		[]*mesos.OfferID{&mesos.OfferID{}},
+	stat, err := driver.LaunchTasks(
+		[]*mesos.OfferID{offer.Id},
 		tasks,
 		&mesos.Filters{},
 	)
-
+	assert.Error(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 
 }
@@ -358,14 +388,13 @@ func TestSchdulerDriverLaunchTasks(t *testing.T) {
 	task.Command = util.NewCommandInfo("pwd")
 	tasks := []*mesos.TaskInfo{task}
 
-	stat := driver.LaunchTasks(
+	stat, err := driver.LaunchTasks(
 		[]*mesos.OfferID{&mesos.OfferID{}},
 		tasks,
 		&mesos.Filters{},
 	)
-
+	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-
 }
 
 func TestSchdulerDriverKillTask(t *testing.T) {
@@ -388,7 +417,8 @@ func TestSchdulerDriverKillTask(t *testing.T) {
 	assert.False(t, driver.stopped)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.status)
 
-	stat := driver.KillTask(util.NewTaskID("test-task-1"))
+	stat, err := driver.KillTask(util.NewTaskID("test-task-1"))
+	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 }
 
@@ -408,7 +438,7 @@ func TestSchdulerDriverRequestResources(t *testing.T) {
 	driver.connected = true
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.status)
 
-	stat := driver.RequestResources(
+	stat, err := driver.RequestResources(
 		[]*mesos.Request{
 			&mesos.Request{
 				SlaveId: util.NewSlaveID("test-slave-001"),
@@ -418,6 +448,7 @@ func TestSchdulerDriverRequestResources(t *testing.T) {
 			},
 		},
 	)
+	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 }
 
@@ -441,8 +472,8 @@ func TestSchdulerDriverReviveOffers(t *testing.T) {
 	driver.connected = true
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.status)
 
-	stat := driver.ReviveOffers()
-
+	stat, err := driver.ReviveOffers()
+	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 }
 
@@ -462,12 +493,12 @@ func TestSchdulerDriverSendFrameworkMessage(t *testing.T) {
 	driver.connected = true
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.status)
 
-	stat := driver.SendFrameworkMessage(
+	stat, err := driver.SendFrameworkMessage(
 		util.NewExecutorID("test-exec-001"),
 		util.NewSlaveID("test-slave-001"),
-		[]byte("Hello!"),
+		"Hello!",
 	)
-
+	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 }
 
@@ -487,11 +518,11 @@ func TestSchdulerDriverReconcileTasks(t *testing.T) {
 	driver.connected = true
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, driver.status)
 
-	stat := driver.ReconcileTasks(
+	stat, err := driver.ReconcileTasks(
 		[]*mesos.TaskStatus{
 			util.NewTaskStatus(util.NewTaskID("test-task-001"), mesos.TaskState_TASK_FINISHED),
 		},
 	)
-
+	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 }

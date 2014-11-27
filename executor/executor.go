@@ -426,11 +426,10 @@ func (driver *MesosExecutorDriver) Run() (mesosproto.Status, error) {
 	}
 
 	if stat != mesosproto.Status_DRIVER_RUNNING {
-		log.Errorln("Mesos scheduler driver failed to start.")
 		return stat, nil
 	}
 
-	log.Infof("Running Executor Driver with PID=%v\n", driver.self)
+	log.Infof("Running executor driver with PID=%v\n", driver.self)
 	return driver.Join()
 
 }

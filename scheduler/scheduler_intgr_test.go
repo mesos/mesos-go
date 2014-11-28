@@ -139,11 +139,11 @@ func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), framework, server.Addr, nil)
 	assert.NoError(t, err)
-	assert.True(t, driver.stopped)
+	assert.True(t, driver.Stopped())
 
 	stat, err := driver.Start()
 	assert.NoError(t, err)
-	assert.False(t, driver.stopped)
+	assert.False(t, driver.Stopped())
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
 
 	<-time.After(time.Millisecond * 3)
@@ -178,7 +178,7 @@ func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
 	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg) // after this driver.connced=true
 
-	assert.True(t, driver.connected)
+	assert.True(t, driver.Connected())
 	select {
 	case <-ch:
 	case <-time.After(time.Millisecond * 2):
@@ -214,7 +214,7 @@ func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
 	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
 
-	assert.True(t, driver.connected)
+	assert.True(t, driver.Connected())
 
 	select {
 	case <-ch:
@@ -242,7 +242,7 @@ func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	driver.connected = true // mock state
+	driver.setConnected(true) // mock state
 
 	// Send a event to this SchedulerDriver (via http) to test handlers.
 	offer := util.NewOffer(
@@ -285,7 +285,7 @@ func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	driver.connected = true // mock state
+	driver.setConnected(true) // mock state
 
 	// Send a event to this SchedulerDriver (via http) to test handlers.
 	pbMsg := &mesos.RescindResourceOfferMessage{
@@ -329,7 +329,7 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	driver.connected = true // mock state
+	driver.setConnected(true) // mock state
 
 	// Send a event to this SchedulerDriver (via http) to test handlers.
 	pbMsg := &mesos.StatusUpdateMessage{
@@ -368,7 +368,7 @@ func TestSchedulerDriverLostSlaveEvent(t *testing.T) {
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	driver.connected = true // mock state
+	driver.setConnected(true) // mock state
 
 	// Send a event to this SchedulerDriver (via http) to test handlers.	offer := util.NewOffer(
 	pbMsg := &mesos.LostSlaveMessage{
@@ -404,7 +404,7 @@ func TestSchedulerDriverFrameworkMessageEvent(t *testing.T) {
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	driver.connected = true // mock state
+	driver.setConnected(true) // mock state
 
 	// Send a event to this SchedulerDriver (via http) to test handlers.	offer := util.NewOffer(
 	pbMsg := &mesos.ExecutorToFrameworkMessage{
@@ -443,8 +443,8 @@ func TestSchedulerDriverFrameworkErrorEvent(t *testing.T) {
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	driver.connected = true // mock state
-	driver.stopped = false
+	driver.setConnected(true) // mock state
+	driver.setStopped(false)
 
 	// Send an error event to this SchedulerDriver (via http) to test handlers.	offer := util.NewOffer(
 	pbMsg := &mesos.FrameworkErrorMessage{
@@ -461,5 +461,5 @@ func TestSchedulerDriverFrameworkErrorEvent(t *testing.T) {
 		log.Errorf("Tired of waiting for scheduler callback.")
 	}
 
-	assert.Equal(t, mesos.Status_DRIVER_ABORTED, driver.status)
+	assert.Equal(t, mesos.Status_DRIVER_ABORTED, driver.Status())
 }

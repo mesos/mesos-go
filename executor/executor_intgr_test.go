@@ -494,7 +494,7 @@ func TestExecutorDriverShutdownEvent(t *testing.T) {
 	}
 
 	<-time.After(time.Millisecond * 5) // wait for shutdown to finish.
-	assert.Equal(t, mesos.Status_DRIVER_STOPPED, driver.status)
+	assert.Equal(t, mesos.Status_DRIVER_STOPPED, driver.Status())
 }
 
 func TestExecutorDriverError(t *testing.T) {

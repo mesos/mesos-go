@@ -28,7 +28,7 @@ This is a very early version of the project.  Howerver, here is a list of things
 - GNU Make
 
 ## Build Instructions
-The following instructions is to build the code from a github pull.  The code resides in branch labeled `pure` and uses the `GoDep` project for dependency management.
+The following instructions is to build the code from `github`.  For now, the code resides in a branch labeled `pure` and must be pulled down using `git` as shown below.  Also, the project uses the `GoDep` for dependency management.
 ```
 $ cd <go-workspace>/src/
 $ mkdir -p github.com/mesos
@@ -37,10 +37,22 @@ $ git clone https://github.com/mesos/mesos-go.git -b pure
 $ cd mesos-go
 $ go get github.com/tools/godep
 $ godep restore
-$ make all
+$ go build ./...
 ```
-The previous will build the code base including the examples.
+The previous will build the code base.  
 
+### Building the Examples
+Use the following steps to build the example scheduler and executor:
+```
+$ cd <go-workspace>/src/github.com/mesos/mesos-go
+$ cd examples
+
+# build test-framework
+$ go build -tags=test-sched -o test-framework test_framework.go
+
+# build test-executor
+$ go build -tags=test-exec -o test-executor test_framework.go
+```
 ## Running the Example
 ### Start Mesos
 You will need a running Mesos master and slaves to run the examples.   For instance, start a local Mesos: 
@@ -51,14 +63,14 @@ See http://mesos.apache.org/gettingstarted/ for getting started with Apache Meso
 
 ### Running the Go Scheduler/Executor Examples
 ```
-$ cd <go-workspace>/github.com/mesos/mesos-go
+$ cd <go-workspace>/src/github.com/mesos/mesos-go
 $ cd examples
 $ ./test-framework --master=127.0.0.1:5050 --executor="<go-workspace>/src/github.com/mesos/mesos-go/examples/test-executor" --logtostderr=true
 ```
-Note: that you must provide the fully-qualified path to the `test-executor` binary.  If all goes well, you should see output about task completion.  You can also point your browser to the Mesos GUI http://127.0.0.1:5050/ to validate the framework activities.
+Note: you must provide the fully-qualified path to the `test-executor` binary.  If all goes well, you should see output about task completion.  You can also point your browser to the Mesos GUI http://127.0.0.1:5050/ to validate the framework activities.
 
 ### Running the Go Scheduler with Other Executors
-You can also use the Go `test-scheduler` with executors written in other languages.  such as those written in `Python` or `Java` executors for further testing (note this requires a build of the mesos source code with `make check`):
+You can also use the Go `test-framework` with executors written in other languages such as  `Python` or `Java`  for further validation (note: to use these executors requires a build of the mesos source code with `make check`):
 ```
 $ ./test-framework --master=127.0.0.1:5050 --executor="<mesos-build>/src/examples/python/test-executor" --logtostderr=true
 ```

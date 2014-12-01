@@ -22,12 +22,13 @@ func (s *StandaloneMasterDetector) Appoint(m *mesos.MasterInfo) {
 
 // Detecting the new master.
 func (s *StandaloneMasterDetector) Detect(receiver chan *mesos.MasterInfo) error {
-	go func() {
-		for {
-			receiver <- s.ch
-			log.V(2).Infoln("Master detected")
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		receiver <- s.ch
+	// 		log.V(2).Infoln("Master detected")
+	// 	}
+	// }()
+	return nil
 }
 
 // Stop the detection.

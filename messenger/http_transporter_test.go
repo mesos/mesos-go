@@ -150,6 +150,41 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 	}
 }
 
+func TestTransporterStartAndInject(t *testing.T) {
+	serverId := "testserver"
+	serverPort := getNewPort()
+	serverAddr := "127.0.0.1:" + strconv.Itoa(serverPort)
+	protoMsg := testmessage.GenerateSmallMessage()
+	msgName := getMessageName(protoMsg)
+	ctrl := make(chan bool)
+
+	// setup receiver (server) process
+	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
+	assert.NoError(t, err)
+	receiver := NewHTTPTransporter(rcvPid)
+	receiver.Install(msgName)
+
+	go func() {
+		msg := receiver.Recv()
+		assert.Equal(t, msgName, msg.Name)
+		ctrl <- true
+	}()
+	time.Sleep(time.Millisecond * 7) // time to catchup
+
+	msg := &Message{
+		UPID:         rcvPid,
+		Name:         msgName,
+		ProtoMessage: protoMsg,
+	}
+	receiver.Inject(msg)
+
+	select {
+	case <-time.After(time.Millisecond * 5):
+		t.Fatalf("Timeout")
+	case <-ctrl:
+	}
+}
+
 func TestTransporterStartAndStop(t *testing.T) {
 	serverId := "testserver"
 	serverPort := getNewPort()

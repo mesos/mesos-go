@@ -1,3 +1,21 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package scheduler
 
 import (
@@ -13,7 +31,7 @@ import (
 type SchedulerDriver interface {
 	// Starts the scheduler driver. This needs to be called before any
 	// other driver calls are made.
-	Start() mesos.Status
+	Start() (mesos.Status, error)
 
 	// Stops the scheduler driver. If the 'failover' flag is set to
 	// false then it is expected that this framework will never
@@ -22,7 +40,7 @@ type SchedulerDriver interface {
 	// running (for some framework specific failover timeout) allowing the
 	// scheduler to reconnect (possibly in the same process, or from a
 	// different process, for example, on a different machine).
-	Stop(failover bool) mesos.Status
+	Stop(failover bool) (mesos.Status, error)
 
 	// Aborts the driver so that no more callbacks can be made to the
 	// scheduler. The semantics of abort and stop have deliberately been
@@ -31,22 +49,22 @@ type SchedulerDriver interface {
 	// instantiate and start another driver if desired (from within the
 	// same process). Note that 'Stop()' is not automatically called
 	// inside 'Abort()'.
-	Abort() mesos.Status
+	Abort() (mesos.Status, error)
 
 	// Waits for the driver to be stopped or aborted, possibly
 	// _blocking_ the current thread indefinitely. The return status of
 	// this function can be used to determine if the driver was aborted
 	// (see mesos.proto for a description of Status).
-	Join() mesos.Status
+	Join() (mesos.Status, error)
 
 	// Starts and immediately joins (i.e., blocks on) the driver.
-	Run() mesos.Status
+	Run() (mesos.Status, error)
 
 	// Requests resources from Mesos (see mesos.proto for a description
 	// of Request and how, for example, to request resources
 	// from specific slaves). Any resources available are offered to the
 	// framework via Scheduler.ResourceOffers callback, asynchronously.
-	//RequestResources(requests []*mesos.Request) mesos.Status
+	RequestResources(requests []*mesos.Request) (mesos.Status, error)
 
 	// Launches the given set of tasks. Any resources remaining (i.e.,
 	// not used by the tasks or their executors) will be considered
@@ -56,32 +74,31 @@ type SchedulerDriver interface {
 	// provided. Note that all offers must belong to the same slave.
 	// Invoking this function with an empty collection of tasks declines
 	// offers in their entirety (see Scheduler::declineOffer).
-	LaunchTasks(offerID *mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) mesos.Status
+	LaunchTasks(offerIDs []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) (mesos.Status, error)
 
 	// Kills the specified task. Note that attempting to kill a task is
 	// currently not reliable. If, for example, a scheduler fails over
 	// while it was attempting to kill a task it will need to retry in
 	// the future. Likewise, if unregistered / disconnected, the request
 	// will be dropped (these semantics may be changed in the future).
-	KillTask(taskID *mesos.TaskID) mesos.Status
+	KillTask(taskID *mesos.TaskID) (mesos.Status, error)
 
 	// Declines an offer in its entirety and applies the specified
 	// filters on the resources (see mesos.proto for a description of
 	// Filters). Note that this can be done at any time, it is not
 	// necessary to do this within the Scheduler::resourceOffers
 	// callback.
-	//DeclineOffer(offerID *mesos.OfferID, filters *mesos.Filters) mesos.Status
+	DeclineOffer(offerID *mesos.OfferID, filters *mesos.Filters) (mesos.Status, error)
 
 	// Removes all filters previously set by the framework (via
 	// LaunchTasks()). This enables the framework to receive offers from
 	// those filtered slaves.
-	//ReviveOffers() mesos.Status
+	ReviveOffers() (mesos.Status, error)
 
 	// Sends a message from the framework to one of its executors. These
 	// messages are best effort; do not expect a framework message to be
 	// retransmitted in any reliable fashion.
-	//SendFrameworkMessage(executorID *mesos.ExecutorID, slaveID *mesos.SlaveID,
-	//	data string) mesos.Status
+	SendFrameworkMessage(executorID *mesos.ExecutorID, slaveID *mesos.SlaveID, data string) (mesos.Status, error)
 
 	// Allows the framework to query the status for non-terminal tasks.
 	// This causes the master to send back the latest task status for
@@ -89,7 +106,7 @@ type SchedulerDriver interface {
 	// known will result in a TASK_LOST update. If statuses is empty,
 	// then the master will send the latest status for each task
 	// currently known.
-	//ReconcileTasks(statuses []*mesos.TaskStatus) mesos.Status
+	ReconcileTasks(statuses []*mesos.TaskStatus) (mesos.Status, error)
 }
 
 // Scheduler a type with callback attributes to be provided by frameworks
@@ -101,23 +118,23 @@ type SchedulerDriver interface {
 // SchedulerDriver.Start() to the point that SchedulerDriver.Stop()
 // returns). This is intended for convenience so that a scheduler
 // doesn't need to store a reference to the driver itself.
-type Scheduler struct {
+type Scheduler interface {
 
 	// Invoked when the scheduler successfully registers with a Mesos
 	// master. A unique ID (generated by the master) used for
 	// distinguishing this framework from others and MasterInfo
 	// with the ip and port of the current master are provided as arguments.
-	Registered func(SchedulerDriver, *mesos.FrameworkID, *mesos.MasterInfo)
+	Registered(SchedulerDriver, *mesos.FrameworkID, *mesos.MasterInfo)
 
 	// Invoked when the scheduler re-registers with a newly elected Mesos master.
 	// This is only called when the scheduler has previously been registered.
 	// MasterInfo containing the updated information about the elected master
 	// is provided as an argument.
-	Reregistered func(SchedulerDriver, *mesos.MasterInfo)
+	Reregistered(SchedulerDriver, *mesos.MasterInfo)
 
 	// Invoked when the scheduler becomes "disconnected" from the master
 	// (e.g., the master fails and another is taking over).
-	Disconnected func(*SchedulerDriver)
+	Disconnected(SchedulerDriver)
 
 	// Invoked when resources have been offered to this framework. A
 	// single offer will only contain resources from a single slave.
@@ -132,7 +149,7 @@ type Scheduler struct {
 	// will have those resources rescinded (or if a framework has
 	// already launched tasks with those resources then those tasks will
 	// fail with a TASK_LOST status and a message saying as much).
-	ResourceOffers func(SchedulerDriver, []*mesos.Offer)
+	ResourceOffers(SchedulerDriver, []*mesos.Offer)
 
 	// Invoked when an offer is no longer valid (e.g., the slave was
 	// lost or another framework used resources in the offer). If for
@@ -140,7 +157,7 @@ type Scheduler struct {
 	// message, failing over framework, etc.), a framwork that attempts
 	// to launch tasks using an invalid offer will receive TASK_LOST
 	// status updates for those tasks (see Scheduler::resourceOffers).
-	OfferRescinded func(SchedulerDriver, *mesos.OfferID)
+	OfferRescinded(SchedulerDriver, *mesos.OfferID)
 
 	// Invoked when the status of a task has changed (e.g., a slave is
 	// lost and so the task is lost, a task finishes and an executor
@@ -150,25 +167,25 @@ type Scheduler struct {
 	// the process exits) another status update will be delivered (note,
 	// however, that this is currently not true if the slave sending the
 	// status update is lost/fails during that time).
-	StatusUpdate func(SchedulerDriver, *mesos.TaskStatus)
+	StatusUpdate(SchedulerDriver, *mesos.TaskStatus)
 
 	// Invoked when an executor sends a message. These messages are best
 	// effort; do not expect a framework message to be retransmitted in
 	// any reliable fashion.
-	FrameworkMessage func(SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, []byte)
+	FrameworkMessage(SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, string)
 
 	// Invoked when a slave has been determined unreachable (e.g.,
 	// machine failure, network partition). Most frameworks will need to
 	// reschedule any tasks launched on this slave on a new slave.
-	SlaveLost func(SchedulerDriver, *mesos.SlaveID)
+	SlaveLost(SchedulerDriver, *mesos.SlaveID)
 
 	// Invoked when an executor has exited/terminated. Note that any
 	// tasks running will have TASK_LOST status updates automagically
 	// generated.
-	ExecutorLost func(SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, int)
+	ExecutorLost(SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, int)
 
 	// Invoked when there is an unrecoverable error in the scheduler or
 	// scheduler driver. The driver will be aborted BEFORE invoking this
 	// callback.
-	Error func(SchedulerDriver, string)
+	Error(SchedulerDriver, string)
 }

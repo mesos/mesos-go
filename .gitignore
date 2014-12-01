@@ -91,5 +91,8 @@ _testmain.go
 junit_*
 
 # mesos-go specific
-examples/sched/sched
-examples/exec/exec
+examples/test-framework
+examples/test-executor
+
+#webide
+.c9

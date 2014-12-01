@@ -1,10 +1,46 @@
-package util
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package mesosutil
 
 import (
 	"code.google.com/p/gogoprotobuf/proto"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+func TestFilterResources(t *testing.T) {
+	resources := []*mesos.Resource{
+		NewScalarResource("mem", 200),
+		NewScalarResource("cpu", 4),
+		NewScalarResource("mem", 500),
+	}
+
+	memRes := FilterResources(resources, func(res *mesos.Resource) bool {
+		if res.GetType() == mesos.Value_SCALAR && res.GetName() == "mem" {
+			return true
+		}
+		return false
+	})
+
+	assert.Equal(t, 2, len(memRes))
+}
 
 func TestNewValueRange(t *testing.T) {
 	val := NewValueRange(20, 40)

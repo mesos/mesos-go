@@ -59,6 +59,10 @@ func (m *MockedMessenger) Send(upid *upid.UPID, msg proto.Message) error {
 	return m.Called().Error(0)
 }
 
+func (m *MockedMessenger) Route(upid *upid.UPID, msg proto.Message) error {
+	return m.Called().Error(0)
+}
+
 // Start is a mocked implementation.
 func (m *MockedMessenger) Start() error {
 	go m.recvLoop()
@@ -66,9 +70,9 @@ func (m *MockedMessenger) Start() error {
 }
 
 // Stop is a mocked implementation.
-func (m *MockedMessenger) Stop() {
+func (m *MockedMessenger) Stop() error {
 	close(m.stop)
-	m.Called()
+	return m.Called().Error(0)
 }
 
 // UPID is a mocked implementation.

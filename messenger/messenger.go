@@ -26,6 +26,7 @@ import (
 
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
+	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/upid"
 )
 
@@ -54,8 +55,9 @@ type MessageHandler func(from *upid.UPID, pbMsg proto.Message)
 type Messenger interface {
 	Install(handler MessageHandler, msg proto.Message) error
 	Send(upid *upid.UPID, msg proto.Message) error
+	Route(from *upid.UPID, msg proto.Message) error
 	Start() error
-	Stop()
+	Stop() error
 	UPID() *upid.UPID
 }
 
@@ -101,10 +103,10 @@ func (m *MesosMessenger) Install(handler MessageHandler, msg proto.Message) erro
 	return nil
 }
 
-// Send puts a message into the sending queue, waiting to be sent.
+// Send puts a message into the outgoing queue, waiting to be sent.
 // With buffered channels, this will not block under moderate throughput.
-// So there is no need to fire a goroutine each time to send a message,
-// but we need to verify this later.
+// When an error is generated, the error can be communicated by placing
+// a message on the incoming queue to be handled upstream.
 func (m *MesosMessenger) Send(upid *upid.UPID, msg proto.Message) error {
 	if upid.Equal(m.upid) {
 		return fmt.Errorf("Send the message to self")
@@ -113,6 +115,24 @@ func (m *MesosMessenger) Send(upid *upid.UPID, msg proto.Message) error {
 	log.V(2).Infof("Sending message %v to %v\n", name, upid)
 	m.encodingQueue <- &Message{upid, name, msg, nil}
 	return nil
+}
+
+// Route puts a message either in the incoming or outgoing queue.
+// This method is useful for:
+// 1) routing internal error to callback handlers
+// 2) testing components without starting remote servers.
+func (m *MesosMessenger) Route(upid *upid.UPID, msg proto.Message) error {
+	// if destination is not self, send to outbound.
+	if !upid.Equal(m.upid) {
+		return m.Send(upid, msg)
+	}
+
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	name := getMessageName(msg)
+	return m.tr.Inject(&Message{upid, name, msg, data})
 }
 
 // Start starts the messenger.
@@ -149,11 +169,13 @@ func (m *MesosMessenger) Start() error {
 }
 
 // Stop stops the messenger and clean up all the goroutines.
-func (m *MesosMessenger) Stop() {
+func (m *MesosMessenger) Stop() error {
 	if err := m.tr.Stop(); err != nil {
 		log.Errorf("Failed to stop the transporter: %v\n", err)
+		return err
 	}
 	close(m.stop)
+	return nil
 }
 
 // UPID returns the upid of the messenger.
@@ -169,7 +191,9 @@ func (m *MesosMessenger) encodeLoop() {
 		case msg := <-m.encodingQueue:
 			b, err := proto.Marshal(msg.ProtoMessage)
 			if err != nil {
-				log.Errorf("Failed to send message %v: %v\n", msg, err)
+				errMsg := fmt.Sprintf("Failed to send message %v: %v", msg, err)
+				log.Errorln(errMsg)
+				m.Route(m.UPID(), &mesos.FrameworkErrorMessage{Message: proto.String(errMsg)})
 				continue
 			}
 			msg.Bytes = b
@@ -185,7 +209,9 @@ func (m *MesosMessenger) sendLoop() {
 			return
 		case msg := <-m.sendingQueue:
 			if err := m.tr.Send(msg); err != nil {
-				log.Errorf("Failed to send message %v: %v\n", msg.Name, err)
+				errMsg := fmt.Sprintf("Failed to send message %v: %v", msg.Name, err)
+				log.Errorf(errMsg)
+				m.Route(m.UPID(), &mesos.FrameworkErrorMessage{Message: proto.String(errMsg)})
 				continue
 			}
 		}

@@ -22,13 +22,29 @@ import (
 	"github.com/mesos/mesos-go/upid"
 )
 
-// Transporter defines the interfaces that should be implemented.
+// Transporter defines methods for communicating with remote processes.
 type Transporter interface {
+	//Send sends message to remote process.
 	Send(msg *Message) error
+
+	//Listen blocks and listens for incoming messages.
 	Listen() error
+
+	//Rcvd receives and delegate message handling to installed handlers.
 	Recv() *Message
+
+	//Inject injects a message to the incoming queue.
+	Inject(msg *Message) error
+
+	//Install mount an handler based on incoming message name.
 	Install(messageName string)
+
+	//Start starts the transporter.
 	Start() error
+
+	//Stop kills the transporter.
 	Stop() error
+
+	//UPID returns the PID for transporter.
 	UPID() *upid.UPID
 }

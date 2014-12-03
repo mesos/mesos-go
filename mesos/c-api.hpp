@@ -132,7 +132,8 @@ SchedulerPtrPair scheduler_init(
     SchedulerCallbacks* callbacks,
     void* payload,
     ProtobufObj* framework,
-    const char* master);
+    const char* master,
+    ProtobufObj* credobj);
 
 void scheduler_destroy(void* driver, void* scheduler);
 

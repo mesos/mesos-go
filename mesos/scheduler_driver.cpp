@@ -64,7 +64,8 @@ SchedulerPtrPair scheduler_init(
     SchedulerCallbacks* callbacks,
     void* payload,
     ProtobufObj* framework,
-    const char* master)
+    const char* master,
+    ProtobufObj* credobj)
 {
   TRACE("scheduler_init()\n");
   assert(master != NULL);
@@ -81,10 +82,21 @@ SchedulerPtrPair scheduler_init(
     return pair;
   }
 
-  MesosSchedulerDriver* driver = new MesosSchedulerDriver(
-     scheduler,
-     scheduler->info,
-     std::string(master));
+  Credential cred;
+  if(credobj && !utils::deserialize<Credential>(cred, credobj)) {
+    return pair;
+  }
+
+  MesosSchedulerDriver* driver = credobj ? 
+     new MesosSchedulerDriver(
+       scheduler,
+       scheduler->info,
+       std::string(master),
+       cred) : 
+     new MesosSchedulerDriver(
+       scheduler,
+       scheduler->info,
+       std::string(master));
 
   if (callbacks != NULL) {
     scheduler->callbacks = *callbacks;

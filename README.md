@@ -28,12 +28,12 @@ This is a very early version of the project.  Howerver, here is a list of things
 - GNU Make
 
 ## Build Instructions
-The following instructions is to build the code from `github`.  For now, the code resides in a branch labeled `pure` and must be pulled down using `git` as shown below.  Also, the project uses the `GoDep` for dependency management.
+The following instructions is to build the code from `github`.The project uses the `GoDep` for dependency management.
 ```
 $ cd <go-workspace>/src/
 $ mkdir -p github.com/mesos
 $ cd github.com/mesos
-$ git clone https://github.com/mesos/mesos-go.git -b pure
+$ git clone https://github.com/mesos/mesos-go.git
 $ cd mesos-go
 $ go get github.com/tools/godep
 $ godep restore

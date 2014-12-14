@@ -19,23 +19,37 @@
 package detector
 
 import (
-	"net/url"
-
-	_ "github.com/golang/glog"
+	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/samuel/go-zookeeper/zk"
+	"net/url"
+	_ "time"
 )
 
-// A ZooKeeperMasterDetector uses ZooKeeper to detect new leading master.
-type ZooKeeperMasterDetector struct {
-	previous *mesos.MasterInfo
-	url      *url.URL
+// ZkMasterDetector uses ZooKeeper to detect new leading master.
+type ZkMasterDetector struct {
+	zkPath    string
+	zkHosts   []string
+	zkConn    *zk.Conn
+	zkConnCh  <-chan zk.Event
+	zkEventCh <-chan zk.Event
+	previous  *mesos.MasterInfo
+	url       *url.URL
+	pathLabel string
 }
 
-// Create a new ZooKeeperMasterDetector.
-func NewZooKeeperMasterDetector(rawurl string) (*ZooKeeperMasterDetector, error) {
-	// url, err := url.Parse(rawurl)
-	// if err != nil {
-	// 	log.Fatalln("Failed to parse url", err)
-	// }
-	return nil, nil
+// Create a new ZkMasterDetector.
+func NewZkMasterDetector(zkurls string) (*ZkMasterDetector, error) {
+	url, err := url.Parse(zkurls)
+	if err != nil {
+		log.Fatalln("Failed to parse url", err)
+		return nil, err
+	}
+
+	detector := new(ZkMasterDetector)
+	detector.zkHosts = append(detector.zkHosts, url.Host)
+	detector.zkPath = url.Path
+	detector.pathLabel = "info"
+
+	return detector, nil
 }

@@ -32,7 +32,7 @@ type ZkNode interface {
 	//Data retrieves data for the path node.
 	Data() ([]byte, error)
 
-	//List returns a list of children nodes.
+	//List returns a sorted (by Path) list of children nodes.
 	List() ([]ZkNode, error)
 
 	//Returns the string representation of the path for node.

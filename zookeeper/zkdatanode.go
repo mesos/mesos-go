@@ -20,6 +20,7 @@ package zookeeper
 
 import (
 	"errors"
+	"sort"
 )
 
 //ZkDataNode is an implementation of ZkNode.
@@ -39,7 +40,7 @@ func (n *ZkDataNode) Data() ([]byte, error) {
 		return nil, errors.New("Unable to retrieve node data, client not connected.")
 	}
 
-	data, _, err := n.zkClient.conn.Get(n.Path)
+	data, _, err := n.zkClient.Conn.Get(n.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -52,10 +53,14 @@ func (n *ZkDataNode) List() ([]ZkNode, error) {
 		return nil, errors.New("Unable to list node children, client not connected.")
 	}
 
-	children, _, err := n.zkClient.conn.Children(n.Path)
+	children, _, err := n.zkClient.Conn.Children(n.Path)
 	if err != nil {
 		return nil, err
 	}
+
+	// sort children (ascending).
+	sort.Strings(children)
+
 	list := make([]ZkNode, len(children))
 	for i, child := range children {
 		list[i] = NewZkDataNode(n.zkClient, child)

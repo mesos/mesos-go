@@ -27,17 +27,17 @@ import (
 )
 
 type ZkClient struct {
-	conn      ZkConn
+	Conn      ZkConn
 	connected bool
 	stopCh    chan bool
 
-	Watcher  ZkClientWatcher
-	RootNode ZkNode
-	Hosts    []string
+	watcher  ZkClientWatcher
+	rootNode ZkNode
+	hosts    []string
 }
 
 func NewZkClient(watcher ZkClientWatcher) *ZkClient {
-	return &ZkClient{Watcher: watcher}
+	return &ZkClient{watcher: watcher}
 }
 
 func (c *ZkClient) Connect(uris []string, path string) error {
@@ -45,14 +45,13 @@ func (c *ZkClient) Connect(uris []string, path string) error {
 		return nil
 	}
 
-	c.RootNode = NewZkDataNode(c, path)
+	c.rootNode = NewZkDataNode(c, path)
 	conn, ch, err := zk.Connect(uris, time.Second*5)
 	if err != nil {
 		return err
 	}
 
-	c.conn = conn
-	c.stopCh = make(chan bool)
+	c.Conn = conn
 
 	waitConnCh := make(chan struct{})
 	go func() {
@@ -61,8 +60,8 @@ func (c *ZkClient) Connect(uris []string, path string) error {
 			case e := <-ch:
 				if e.Err != nil {
 					log.Errorf("Received state error: %s", e.Err.Error())
-					if c.Watcher != nil {
-						go c.Watcher.Error(e.Err)
+					if c.watcher != nil {
+						go c.watcher.Error(e.Err)
 					}
 					c.Disconnect()
 				}
@@ -74,8 +73,8 @@ func (c *ZkClient) Connect(uris []string, path string) error {
 					c.connected = true
 					log.Infoln("Connected to zookeeper at", uris)
 					close(waitConnCh)
-					if c.Watcher != nil {
-						go c.Watcher.Connected(c)
+					if c.watcher != nil {
+						go c.watcher.Connected(c)
 					}
 
 				case zk.StateSyncConnected:
@@ -111,13 +110,13 @@ func (c *ZkClient) WatchChildren(path string) error {
 	if !c.connected {
 		return errors.New("Not connected to server.")
 	}
-	watchPath := c.RootNode.String()
+	watchPath := c.rootNode.String()
 	if path != "" && path != "." {
 		watchPath = watchPath + path
 	}
 
 	log.V(2).Infoln("Watching children for path", watchPath)
-	children, _, ch, err := c.conn.ChildrenW(watchPath)
+	children, _, ch, err := c.Conn.ChildrenW(watchPath)
 	if err != nil {
 		return err
 	}
@@ -127,30 +126,30 @@ func (c *ZkClient) WatchChildren(path string) error {
 		case e := <-ch:
 			if e.Err != nil {
 				log.Errorf("Received error while watching path %s:%s", watchPath, e.Err.Error())
-				if c.Watcher != nil {
-					go c.Watcher.Error(e.Err)
+				if c.watcher != nil {
+					c.watcher.Error(e.Err)
 				}
 			}
 
 			switch e.Type {
 			case zk.EventNodeChildrenChanged:
 				node := NewZkDataNode(c, e.Path)
-				if c.Watcher != nil {
-					go c.Watcher.ChildrenChanged(c, node)
+				if c.watcher != nil {
+					c.watcher.ChildrenChanged(c, node)
 				}
 			}
 		}
 		err := c.WatchChildren(path)
 		if err != nil {
 			log.Errorf("Unable to watch children for path %s: %s", path, err.Error())
-			c.stopCh <- true
+			//c.stopCh <- true
 		}
 	}(children)
 	return nil
 }
 
 func (c *ZkClient) Disconnect() {
-	c.conn.Close()
+	c.Conn.Close()
 	c.connected = false
-	c.stopCh <- true
+	//c.stopCh <- true
 }

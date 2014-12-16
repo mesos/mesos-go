@@ -19,37 +19,107 @@
 package detector
 
 import (
+	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
-	"github.com/samuel/go-zookeeper/zk"
+	"github.com/mesos/mesos-go/zookeeper"
+
 	"net/url"
-	_ "time"
 )
+
+// ------------------ MasterWatcher ------------------- //
+type masterWatcher struct {
+	detector *ZkMasterDetector
+}
+
+func newMasterWatcher(md *ZkMasterDetector) zookeeper.ZkClientWatcher {
+	return &masterWatcher{detector: md}
+}
+
+func (w *masterWatcher) Connected(zkClient *zookeeper.ZkClient) {
+
+}
+
+func (w *masterWatcher) ChildrenChanged(c *zookeeper.ZkClient, node zookeeper.ZkNode) {
+	list, err := node.List()
+	if err != nil {
+		log.Errorf("Unable to retrieve children list for %s\n", node.String())
+		return
+	}
+	if len(list) == 0 {
+		log.Errorf("Node %s has no children\n", node.String())
+		return
+	}
+
+	// list is sorted (ascending).  So, first element is leader.
+	leaderNode := list[0]
+	if w.detector.leaderNode != nil && w.detector.leaderNode.String() == leaderNode.String() {
+		log.V(2).Infof("Ignoring ChildrenChanged event for node %s, leader has not changed.", node.String())
+		return
+	}
+
+	w.detector.leaderNode = leaderNode
+	data, _, err := w.detector.zkClient.Conn.Get(leaderNode.String())
+	if err != nil {
+		log.Errorln("Unable to retrieve leader data:", err.Error())
+		return
+	}
+	masterInfo := new(mesos.MasterInfo)
+	err = proto.Unmarshal(data, masterInfo)
+	if err != nil {
+		log.Errorln("Unable to unmarshall MasterInfo data from zookeeper.")
+		return
+	}
+
+	if w.detector.detectedFunc != nil {
+		w.detector.detectedFunc(masterInfo)
+	}
+}
+
+func (w *masterWatcher) Error(err error) {
+
+}
 
 // ZkMasterDetector uses ZooKeeper to detect new leading master.
 type ZkMasterDetector struct {
-	zkPath    string
-	zkHosts   []string
-	zkConn    *zk.Conn
-	zkConnCh  <-chan zk.Event
-	zkEventCh <-chan zk.Event
-	previous  *mesos.MasterInfo
-	url       *url.URL
-	pathLabel string
+	zkPath       string
+	zkHosts      []string
+	zkClient     *zookeeper.ZkClient
+	leaderNode   zookeeper.ZkNode
+	url          *url.URL
+	nodePrefix   string
+	detectedFunc func(*mesos.MasterInfo)
 }
 
 // Create a new ZkMasterDetector.
-func NewZkMasterDetector(zkurls string) (*ZkMasterDetector, error) {
-	url, err := url.Parse(zkurls)
+func NewZkMasterDetector(zkurls string) (MasterDetector, error) {
+	u, err := url.Parse(zkurls)
 	if err != nil {
 		log.Fatalln("Failed to parse url", err)
 		return nil, err
 	}
 
 	detector := new(ZkMasterDetector)
-	detector.zkHosts = append(detector.zkHosts, url.Host)
-	detector.zkPath = url.Path
-	detector.pathLabel = "info"
+	detector.url = u
+	detector.zkHosts = append(detector.zkHosts, u.Host)
+	detector.zkPath = u.Path
+	detector.nodePrefix = "info_"
 
 	return detector, nil
+}
+
+func (md *ZkMasterDetector) Detect(f func(*mesos.MasterInfo)) error {
+	md.detectedFunc = f
+
+	md.zkClient = zookeeper.NewZkClient(newMasterWatcher(md))
+	err := md.zkClient.Connect(md.zkHosts, md.zkPath)
+	if err != nil {
+		return err
+	}
+	err = md.zkClient.WatchChildren(".") // watch the current path (speci)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

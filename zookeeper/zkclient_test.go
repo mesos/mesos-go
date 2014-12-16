@@ -77,7 +77,7 @@ func TestZkClientWatchChildren(t *testing.T) {
 	w := newTestClientWatcher()
 	w.t = t
 	c := createClient("/test", (<-chan zk.Event)(ch))
-	c.Watcher = w
+	c.watcher = w
 	c.WatchChildren(".")
 
 	select {
@@ -105,7 +105,7 @@ func TestZkClientWatchChildren_WithEventError(t *testing.T) {
 	w := newTestClientWatcher()
 	w.t = t
 	c := createClient("/test", (<-chan zk.Event)(ch))
-	c.Watcher = w
+	c.watcher = w
 	c.WatchChildren(".")
 
 	select {
@@ -136,7 +136,11 @@ func TestZkNodeList(t *testing.T) {
 	node := NewZkDataNode(c, "/test")
 	nodes, err := node.List()
 	assert.NoError(t, err)
+	// test sorted nodes.
 	assert.Equal(t, 3, len(nodes))
+	assert.Equal(t, "a", nodes[0].String())
+	assert.Equal(t, "d", nodes[1].String())
+	assert.Equal(t, "x", nodes[2].String())
 }
 
 func TestZkNodeListWithError(t *testing.T) {
@@ -152,11 +156,11 @@ func createClient(path string, chEvent <-chan zk.Event) *ZkClient {
 	conn := NewMockZkConn()
 	conn.On("Close").Return(nil)
 	conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, chEvent, nil)
-	conn.On("Children").Return([]string{"a", "b", "c"}, &zk.Stat{}, nil)
+	conn.On("Children").Return([]string{"x", "a", "d"}, &zk.Stat{}, nil)
 	conn.On("Get", path).Return([]byte("Hello"), &zk.Stat{}, nil)
-	c.conn = conn
+	c.Conn = conn
 	c.connected = true
-	c.RootNode = NewZkDataNode(c, path)
+	c.rootNode = NewZkDataNode(c, path)
 	return c
 }
 
@@ -165,10 +169,10 @@ func createClientWithError(path string, chEvent <-chan zk.Event) *ZkClient {
 	conn := NewMockZkConn()
 	conn.On("Close").Return(nil)
 	conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, chEvent, errors.New("ChildrenW() eror"))
-	conn.On("Children").Return([]string{"a", "b", "c"}, &zk.Stat{}, errors.New("Children() error"))
+	conn.On("Children").Return([]string{"x", "a", "d"}, &zk.Stat{}, errors.New("Children() error"))
 	conn.On("Get", path).Return([]byte("Hello"), &zk.Stat{}, errors.New("Get() error"))
-	c.conn = conn
+	c.Conn = conn
 	c.connected = true
-	c.RootNode = NewZkDataNode(c, path)
+	c.rootNode = NewZkDataNode(c, path)
 	return c
 }

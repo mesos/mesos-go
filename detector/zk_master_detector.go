@@ -36,11 +36,11 @@ func newMasterWatcher(md *ZkMasterDetector) zookeeper.ZkClientWatcher {
 	return &masterWatcher{detector: md}
 }
 
-func (w *masterWatcher) Connected(zkClient *zookeeper.ZkClient) {
+func (w *masterWatcher) Connected(zkClient zookeeper.ZkClient) {
 
 }
 
-func (w *masterWatcher) ChildrenChanged(c *zookeeper.ZkClient, node zookeeper.ZkNode) {
+func (w *masterWatcher) ChildrenChanged(c zookeeper.ZkClient, node zookeeper.ZkNode) {
 	list, err := node.List()
 	if err != nil {
 		log.Errorf("Unable to retrieve children list for %s\n", node.String())
@@ -59,7 +59,7 @@ func (w *masterWatcher) ChildrenChanged(c *zookeeper.ZkClient, node zookeeper.Zk
 	}
 
 	w.detector.leaderNode = leaderNode
-	data, _, err := w.detector.zkClient.Conn.Get(leaderNode.String())
+	data, err := leaderNode.Data()
 	if err != nil {
 		log.Errorln("Unable to retrieve leader data:", err.Error())
 		return
@@ -84,15 +84,15 @@ func (w *masterWatcher) Error(err error) {
 type ZkMasterDetector struct {
 	zkPath       string
 	zkHosts      []string
-	zkClient     *zookeeper.ZkClient
+	zkClient     zookeeper.ZkClient
 	leaderNode   zookeeper.ZkNode
 	url          *url.URL
 	nodePrefix   string
 	detectedFunc func(*mesos.MasterInfo)
 }
 
-// Create a new ZkMasterDetector.
-func NewZkMasterDetector(zkurls string) (MasterDetector, error) {
+// Internal constructor function
+func newZkMasterDetector(zkurls string) (*ZkMasterDetector, error) {
 	u, err := url.Parse(zkurls)
 	if err != nil {
 		log.Fatalln("Failed to parse url", err)
@@ -104,15 +104,21 @@ func NewZkMasterDetector(zkurls string) (MasterDetector, error) {
 	detector.zkHosts = append(detector.zkHosts, u.Host)
 	detector.zkPath = u.Path
 	detector.nodePrefix = "info_"
+	detector.zkClient = zookeeper.NewZkClientObject()
 
+	log.V(2).Infoln("Created new detector, watching ", detector.zkHosts, detector.zkPath)
 	return detector, nil
+}
+
+// NewZkMasterDetector creates a new ZkMasterDetector instance.
+func NewZkMasterDetector(zkurls string) (MasterDetector, error) {
+	return newZkMasterDetector(zkurls)
 }
 
 func (md *ZkMasterDetector) Detect(f func(*mesos.MasterInfo)) error {
 	md.detectedFunc = f
 
-	md.zkClient = zookeeper.NewZkClient(newMasterWatcher(md))
-	err := md.zkClient.Connect(md.zkHosts, md.zkPath)
+	err := md.zkClient.Connect(md.zkHosts, md.zkPath, newMasterWatcher(md))
 	if err != nil {
 		return err
 	}

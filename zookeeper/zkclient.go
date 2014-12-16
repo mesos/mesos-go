@@ -26,7 +26,7 @@ import (
 	"time"
 )
 
-type ZkClient struct {
+type ZkClientObject struct {
 	Conn      ZkConn
 	connected bool
 	stopCh    chan bool
@@ -36,15 +36,20 @@ type ZkClient struct {
 	hosts    []string
 }
 
-func NewZkClient(watcher ZkClientWatcher) *ZkClient {
-	return &ZkClient{watcher: watcher}
+func NewZkClientObject() ZkClient {
+	return newZkClientObject()
 }
 
-func (c *ZkClient) Connect(uris []string, path string) error {
+func newZkClientObject() *ZkClientObject {
+	return new(ZkClientObject)
+}
+
+func (c *ZkClientObject) Connect(uris []string, path string, watcher ZkClientWatcher) error {
 	if c.connected {
 		return nil
 	}
 
+	c.watcher = watcher
 	c.rootNode = NewZkDataNode(c, path)
 	conn, ch, err := zk.Connect(uris, time.Second*5)
 	if err != nil {
@@ -106,7 +111,7 @@ func (c *ZkClient) Connect(uris []string, path string) error {
 	return nil
 }
 
-func (c *ZkClient) WatchChildren(path string) error {
+func (c *ZkClientObject) WatchChildren(path string) error {
 	if !c.connected {
 		return errors.New("Not connected to server.")
 	}
@@ -148,7 +153,7 @@ func (c *ZkClient) WatchChildren(path string) error {
 	return nil
 }
 
-func (c *ZkClient) Disconnect() {
+func (c *ZkClientObject) Disconnect() {
 	c.Conn.Close()
 	c.connected = false
 	//c.stopCh <- true

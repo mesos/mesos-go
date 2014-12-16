@@ -41,12 +41,12 @@ func newTestClientWatcher() *testClientWatcher {
 	return &testClientWatcher{ch: make(chan bool)}
 }
 
-func (w *testClientWatcher) Connected(c *ZkClient) {
+func (w *testClientWatcher) Connected(c ZkClient) {
 	log.V(2).Infoln("Connected")
 	w.ch <- true
 }
 
-func (w *testClientWatcher) ChildrenChanged(c *ZkClient, node ZkNode) {
+func (w *testClientWatcher) ChildrenChanged(c ZkClient, node ZkNode) {
 	log.V(2).Infoln("Children changed")
 	list, err := node.List()
 	assert.NoError(w.t, err)
@@ -60,8 +60,8 @@ func (w *testClientWatcher) Error(err error) {
 }
 
 // ----------------------- Test Functions ---------------------- //
-func TestZkClientCreate(t *testing.T) {
-	c := NewZkClient(&testClientWatcher{})
+func TestZkClientNew(t *testing.T) {
+	c := newZkClientObject()
 	assert.NotNil(t, c)
 	assert.False(t, c.connected)
 }
@@ -151,8 +151,9 @@ func TestZkNodeListWithError(t *testing.T) {
 	assert.Nil(t, nodes)
 }
 
-func createClient(path string, chEvent <-chan zk.Event) *ZkClient {
-	c := NewZkClient(newTestClientWatcher())
+func createClient(path string, chEvent <-chan zk.Event) *ZkClientObject {
+	c := newZkClientObject()
+	c.watcher = newTestClientWatcher()
 	conn := NewMockZkConn()
 	conn.On("Close").Return(nil)
 	conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, chEvent, nil)
@@ -164,8 +165,9 @@ func createClient(path string, chEvent <-chan zk.Event) *ZkClient {
 	return c
 }
 
-func createClientWithError(path string, chEvent <-chan zk.Event) *ZkClient {
-	c := NewZkClient(newTestClientWatcher())
+func createClientWithError(path string, chEvent <-chan zk.Event) *ZkClientObject {
+	c := newZkClientObject()
+	c.watcher = newTestClientWatcher()
 	conn := NewMockZkConn()
 	conn.On("Close").Return(nil)
 	conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, chEvent, errors.New("ChildrenW() eror"))

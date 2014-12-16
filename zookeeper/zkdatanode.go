@@ -27,11 +27,11 @@ import (
 //It represents a zookeeper path entry with data and possibly children nodes.
 type ZkDataNode struct {
 	Path     string
-	zkClient *ZkClient
+	zkClient *ZkClientObject
 }
 
 //NewZkDataNode creates a new ZkDataNode instance.
-func NewZkDataNode(zkClient *ZkClient, path string) ZkNode {
+func NewZkDataNode(zkClient *ZkClientObject, path string) ZkNode {
 	return &ZkDataNode{Path: path, zkClient: zkClient}
 }
 

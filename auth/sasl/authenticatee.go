@@ -1,6 +1,7 @@
 package sasl
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -19,6 +20,9 @@ import (
 var (
 	pidLock sync.Mutex
 	pid     int
+
+	UnexpectedAuthenticationMechanisms = errors.New("Unexpected authentication 'mechanisms' received")
+	UnexpectedAuthenticationStep       = errors.New("Unexpected authentication 'step' received")
 )
 
 type statusType int32
@@ -86,7 +90,6 @@ func Authenticatee(ctx context.Context, pid, client upid.UPID, credential mesos.
 }
 
 func newAuthenticatee(ctx context.Context, client upid.UPID, credential mesos.Credential) *authenticateeProcess {
-	// pid := &upid.UPID{ID: fmt.Sprintf("crammd5_authenticatee(%d)", nextPid())} // TODO(jdef): crammd5 prefix needed?
 	pid := &upid.UPID{ID: fmt.Sprintf("sasl_authenticatee(%d)", nextPid())}
 	transport := messenger.NewMesosMessenger(pid)
 	initialStatus := READY
@@ -166,7 +169,7 @@ func (self *authenticateeProcess) authenticate(ctx context.Context, pid upid.UPI
 func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	status := (&self.status).get()
 	if status != STARTING {
-		self.terminate(status, ERROR, fmt.Errorf("Unexpected authentication 'mechanisms' received")) //TODO(jdef) extract constant error
+		self.terminate(status, ERROR, UnexpectedAuthenticationMechanisms)
 		return
 	}
 	// TODO(mesos:benh): Store 'from' in order to ensure we only communicate
@@ -218,7 +221,7 @@ func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPI
 func (self *authenticateeProcess) step(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	status := (&self.status).get()
 	if status != STEPPING {
-		self.terminate(status, ERROR, fmt.Errorf("Unexpected authentication 'step' received")) // TODO(jdef) extract constant error
+		self.terminate(status, ERROR, UnexpectedAuthenticationStep)
 		return
 	}
 

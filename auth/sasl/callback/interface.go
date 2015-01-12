@@ -16,7 +16,7 @@ type Interface interface {
 	// marker interface
 }
 
-// may return an Unsupported error on failure
 type Handler interface {
+	// may return an Unsupported error on failure
 	Handle(callbacks ...Interface) error
 }

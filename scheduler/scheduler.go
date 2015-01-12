@@ -34,9 +34,6 @@ import (
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
-
-	// plugins
-	_ "github.com/mesos/mesos-go/auth/sasl/mech/crammd5"
 )
 
 const (

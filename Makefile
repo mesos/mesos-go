@@ -1,16 +1,17 @@
 EXAMPLES = examples
 
 PKG_PREFIX := github.com/mesos/mesos-go
-LIBS :=	detector \
+LIBS :=	\
+	auth \
+	auth/crammd5 \
+	detector \
 	executor \
 	healthchecker \
 	mesosproto \
 	mesosutil \
 	messenger \
 	scheduler \
-	upid \
-	auth \
-	auth/crammd5
+	upid
 
 .PHONY: format all go-clean pkg-build-install test-framework test-executor
 

@@ -42,8 +42,6 @@ type authenticateeProcess struct {
 	stepFn     stepFunc
 }
 
-type handlerFn func(ctx context.Context, from *upid.UPID, pbMsg proto.Message)
-
 func init() {
 	supportedMechs = make(map[string]struct{})
 	supportedMechs["CRAM-MD5"] = struct{}{}
@@ -88,6 +86,8 @@ func newAuthenticatee(ctx context.Context, client upid.UPID, credential mesos.Cr
 		status:         READY,
 		done:           make(chan struct{}),
 	}
+
+	type handlerFn func(ctx context.Context, from *upid.UPID, pbMsg proto.Message)
 	withContext := func(f handlerFn) messenger.MessageHandler {
 		return func(from *upid.UPID, m proto.Message) {
 			f(ctx, from, m)

@@ -28,6 +28,7 @@ import (
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/upid"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -54,8 +55,8 @@ type MessageHandler func(from *upid.UPID, pbMsg proto.Message)
 // Messenger defines the interfaces that should be implemented.
 type Messenger interface {
 	Install(handler MessageHandler, msg proto.Message) error
-	Send(upid *upid.UPID, msg proto.Message) error
-	Route(from *upid.UPID, msg proto.Message) error
+	Send(ctx context.Context, upid *upid.UPID, msg proto.Message) error
+	Route(ctx context.Context, from *upid.UPID, msg proto.Message) error
 	Start() error
 	Stop() error
 	UPID() *upid.UPID
@@ -107,24 +108,28 @@ func (m *MesosMessenger) Install(handler MessageHandler, msg proto.Message) erro
 // With buffered channels, this will not block under moderate throughput.
 // When an error is generated, the error can be communicated by placing
 // a message on the incoming queue to be handled upstream.
-func (m *MesosMessenger) Send(upid *upid.UPID, msg proto.Message) error {
+func (m *MesosMessenger) Send(ctx context.Context, upid *upid.UPID, msg proto.Message) error {
 	if upid.Equal(m.upid) {
 		return fmt.Errorf("Send the message to self")
 	}
 	name := getMessageName(msg)
 	log.V(2).Infof("Sending message %v to %v\n", name, upid)
-	m.encodingQueue <- &Message{upid, name, msg, nil}
-	return nil
+	select {
+	case <- ctx.Done():
+		return ctx.Err()
+	case m.encodingQueue <- &Message{upid, name, msg, nil}:
+		return nil
+	}
 }
 
 // Route puts a message either in the incoming or outgoing queue.
 // This method is useful for:
 // 1) routing internal error to callback handlers
 // 2) testing components without starting remote servers.
-func (m *MesosMessenger) Route(upid *upid.UPID, msg proto.Message) error {
+func (m *MesosMessenger) Route(ctx context.Context, upid *upid.UPID, msg proto.Message) error {
 	// if destination is not self, send to outbound.
 	if !upid.Equal(m.upid) {
-		return m.Send(upid, msg)
+		return m.Send(ctx, upid, msg)
 	}
 
 	data, err := proto.Marshal(msg)
@@ -132,7 +137,7 @@ func (m *MesosMessenger) Route(upid *upid.UPID, msg proto.Message) error {
 		return err
 	}
 	name := getMessageName(msg)
-	return m.tr.Inject(&Message{upid, name, msg, data})
+	return m.tr.Inject(ctx, &Message{upid, name, msg, data})
 }
 
 // Start starts the messenger.
@@ -189,16 +194,44 @@ func (m *MesosMessenger) encodeLoop() {
 		case <-m.stop:
 			return
 		case msg := <-m.encodingQueue:
-			b, err := proto.Marshal(msg.ProtoMessage)
-			if err != nil {
-				errMsg := fmt.Sprintf("Failed to send message %v: %v", msg, err)
-				log.Errorln(errMsg)
-				m.Route(m.UPID(), &mesos.FrameworkErrorMessage{Message: proto.String(errMsg)})
-				continue
+			e := func() error {
+				//TODO(jdef) implement timeout for context
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+
+				b, err := proto.Marshal(msg.ProtoMessage)
+				if err != nil {
+					return err
+				}
+				msg.Bytes = b
+				select {
+				case <- ctx.Done():
+					return ctx.Err()
+				case m.sendingQueue <- msg:
+					return nil
+				}
+			}()
+			if e != nil {
+				m.reportError(fmt.Errorf("Failed to enqueue message %v: %v", msg, e))
 			}
-			msg.Bytes = b
-			m.sendingQueue <- msg
 		}
+	}
+}
+
+
+func (m *MesosMessenger) reportError(err error) {
+	log.V(2).Info(err)
+	//TODO(jdef) implement timeout for context
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	c := make(chan error, 1)
+	go func() { c <- m.Route(ctx, m.UPID(), &mesos.FrameworkErrorMessage{Message: proto.String(err.Error())}) }()
+	select {
+	case <- ctx.Done():
+		<- c // wait for Route to return
+	case e := <- c:
+		log.Error("failed to report error %v due to: %v", err, e)
 	}
 }
 
@@ -208,11 +241,27 @@ func (m *MesosMessenger) sendLoop() {
 		case <-m.stop:
 			return
 		case msg := <-m.sendingQueue:
-			if err := m.tr.Send(msg); err != nil {
-				errMsg := fmt.Sprintf("Failed to send message %v: %v", msg.Name, err)
-				log.Errorf(errMsg)
-				m.Route(m.UPID(), &mesos.FrameworkErrorMessage{Message: proto.String(errMsg)})
-				continue
+			e := func() error {
+				//TODO(jdef) implement timeout for context
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+
+				c := make(chan error, 1)
+				go func() { c <- m.tr.Send(ctx, msg) }()
+
+				select {
+				case <- ctx.Done():
+					// TODO(jdef) once transport layer offers cancellation we could force-
+					// cancel the current request here. In the meantime, let's hope the
+					// transport layer is using the context to detect cancelled requests.
+					<- c // wait for Send to return
+					return ctx.Err()
+				case err := <- c:
+					return err
+				}
+			}()
+			if e != nil {
+				m.reportError(fmt.Errorf("Failed to send message %v: %v", msg.Name, e))
 			}
 		}
 	}

@@ -29,6 +29,11 @@
 		{
 			"ImportPath": "github.com/stretchr/testify/mock",
 			"Rev": "da775f0337260efbac0fce9764cee5bd3e8c85b8"
-		}
+		},
+		{
+                        "ImportPath": "golang.org/x/net/context",
+                        "Comment": "null-214",
+                        "Rev": "cbcac7bb8415db9b6cb4d1ebab1dc9afbd688b97"
+                }
 	]
 }

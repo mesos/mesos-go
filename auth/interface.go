@@ -18,7 +18,13 @@ type Authenticatee interface {
 	// retried. Discarding the future will cause the future to fail if
 	// it hasn't already completed since we have already started the
 	// authentication procedure and can't reliably cancel.
-	Authenticate(pid, client upid.UPID, credendial mesos.Credential) <-chan err
+	Authenticate(pid, client upid.UPID, creds mesos.Credential) <-chan error
+}
+
+type AuthenticateeFunc func (pid, client upid.UPID, credendial mesos.Credential) <-chan error
+
+func (f AuthenticateeFunc) Authenticate(pid, client upid.UPID, creds mesos.Credential) <-chan error {
+	return f(pid, client, creds)
 }
 
 var (

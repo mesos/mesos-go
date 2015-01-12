@@ -10,12 +10,13 @@ import (
         "github.com/mesos/mesos-go/messenger"
         "github.com/mesos/mesos-go/upid"
         mesos "github.com/mesos/mesos-go/mesosproto"
+	"golang.org/x/net/context"
 )
 
 var (
 	pidLock        sync.Mutex
 	pid            int
-	supportedMechs map[string]struct{} = { "CRAM-MD5": struct{}{} } //TODO(jdef) needs verification
+	supportedMechs map[string]struct{}
 )
 
 type statusType int
@@ -29,14 +30,22 @@ const (
     DISCARDED
 )
 
-type authenticatee struct {
-	*MesosMessenger
+type authenticateeProcess struct {
+	*messenger.MesosMessenger
 	credential mesos.Credential
-	upid.UPID  client
+	client     upid.UPID
 	status     statusType
 	initOnce   sync.Once
 	done       chan struct{}
 	result     error
+	ctx        context.Context
+	cancel     context.CancelFunc
+	mech       *mechanism
+	stepFn     stepFunc
+}
+
+func init() {
+	supportedMechs["CRAM-MD5"] = struct{}{} //TODO(jdef) needs verification
 }
 
 func nextPid() int {
@@ -46,42 +55,67 @@ func nextPid() int {
 	return pid
 }
 
-func newAuthenticatee(client upid.UPID, credential mesos.Credential) *authenticatee {
+func Authenticatee(pid, client upid.UPID, credential mesos.Credential) <- chan error {
+
+	c := make(chan error, 1)
+	f := func() error {
+		auth := newAuthenticatee(client, credential)
+		defer auth.cancel()
+
+		auth.authenticate(pid)
+		select {
+		case <- auth.ctx.Done():
+			<- auth.done
+			return auth.ctx.Err()
+		case <- auth.done:
+			return auth.result
+		}
+	}
+	go func() { c <- f() }()
+	return c
+}
+
+func newAuthenticatee(client upid.UPID, credential mesos.Credential) *authenticateeProcess {
 	pid := &upid.UPID{ID: fmt.Sprintf("crammd5_authenticatee(%d)",nextPid())}
 	messenger := messenger.NewMesosMessenger(pid)
-	return &authenticatee{
-		Messenger: messenger,
+	ctx, cancel := context.WithCancel(context.Background()) // TODO(jdef) support timeout
+	return &authenticateeProcess{
+		MesosMessenger: messenger,
 		client: client,
 		credential: credential,
 		status: READY,
 		done: make(chan struct{}),
+		ctx: ctx,
+		cancel: cancel,
 	}
 }
 
-func (self *authenticatee) _fail(s statusType, err error) {
+func (self *authenticateeProcess) _fail(s statusType, err error) {
 	self.status = s
 	self.result = err
 	close(self.done)
 }
 
-func (self *authenticatee) authenticate(upid.UPID pid) (<-chan struct{}) {
-	initOnce.Do(self.initialize)
+func (self *authenticateeProcess) send(upid *upid.UPID, msg proto.Message) error {
+	return self.Send(self.ctx, upid, msg)
+}
+
+func (self *authenticateeProcess) authenticate(pid upid.UPID) {
+	self.initOnce.Do(self.initialize)
 	if self.status != READY {
-		return self.done
+		return
 	}
 	message := &mesos.AuthenticateMessage{
-		pid: proto.String(client.String())
+		Pid: proto.String(self.client.String()),
 	}
-	if err := self.Send(pid, message); err != nil {
-		_fail(ERROR, err)
+	if err := self.send(&pid, message); err != nil {
+		self._fail(ERROR, err)
 	} else {
 		self.status = STARTING
 	}
-	//TODO(jdef) how to handle authentication cancellation?
-	return self.done
 }
 
-func (self *authenticatee) initialize() {
+func (self *authenticateeProcess) initialize() {
 	// Anticipate mechanisms and steps from the server
 	self.Install(self.mechanisms, &mesos.AuthenticationMechanismsMessage{})
 	self.Install(self.step, &mesos.AuthenticationStepMessage{})
@@ -90,16 +124,16 @@ func (self *authenticatee) initialize() {
 	self.Install(self.errored, &mesos.AuthenticationErrorMessage{})
 }
 
-func (self *authenticatee) mechanisms (from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) mechanisms (from *upid.UPID, pbMsg proto.Message) {
 	if self.status != STARTING {
-		_fail(ERROR, fmt.Errorf("Unexpected authentication 'mechanisms' received"))
+		self._fail(ERROR, fmt.Errorf("Unexpected authentication 'mechanisms' received"))
 		return
 	}
 	// TODO(mesos:benh): Store 'from' in order to ensure we only communicate
 	// with the same Authenticator.
 	msg, ok := pbMsg.(*mesos.AuthenticationMechanismsMessage)
 	if !ok {
-		_fail(ERROR, fmt.Errorf("Expected AuthenticationMechanismsMessage, not %T", pbMsg))
+		self._fail(ERROR, fmt.Errorf("Expected AuthenticationMechanismsMessage, not %T", pbMsg))
 		return
 	}
 	mechanisms := msg.GetMechanisms()
@@ -107,30 +141,38 @@ func (self *authenticatee) mechanisms (from *upid.UPID, pbMsg proto.Message) {
 
 	selectedMech := ""
 	for _, m := range mechanisms {
-		if _, ok := supportedMechs[m] {
+		if _, ok := supportedMechs[m]; ok {
 			selectedMech = m
 			break
 		}
 	}
-	if selectedMech = "" {
-		_fail(ERROR, fmt.Errorf("failed to identify a compatible mechanism")) // TODO(jdef) convert to specific error code
+	if selectedMech == "" {
+		self._fail(ERROR, fmt.Errorf("failed to identify a compatible mechanism")) // TODO(jdef) convert to specific error code
 		return
 	}
 
-	message := &AuthenticationStartMessage{
-		Mechanism: proto.String(...),
-		Data: ...
+	message := &mesos.AuthenticationStartMessage{
+		Mechanism: proto.String(selectedMech),
+		// TODO(jdef) assuming that no data is really needed here since CRAM-MD5 is
+		// a single round-trip protocol initiated by the server
 	}
-	if err := self.Send(from, message); err != nil {
-		_fail(ERROR, err)
+
+	self.mech = &mechanism{
+		username: self.credential.GetPrincipal(),
+		secret: self.credential.GetSecret(),
+	}
+	self.stepFn = challengeResponse
+
+	if err := self.send(from, message); err != nil {
+		self._fail(ERROR, err)
 	} else {
 		self.status = STEPPING
 	}
 }
 
-func (self *authenticatee) step(from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) step(from *upid.UPID, pbMsg proto.Message) {
 	if self.status != STEPPING {
-		_fail(ERROR, fmt.Errorf("Unexpected authentication 'step' received"))
+		self._fail(ERROR, fmt.Errorf("Unexpected authentication 'step' received"))
 		return
 	}
 
@@ -138,49 +180,51 @@ func (self *authenticatee) step(from *upid.UPID, pbMsg proto.Message) {
 
 	msg, ok := pbMsg.(*mesos.AuthenticationStepMessage)
 	if !ok {
-		_fail(ERROR, fmt.Errorf("Expected AuthenticationStepMessage, not %T", pbMsg))
+		self._fail(ERROR, fmt.Errorf("Expected AuthenticationStepMessage, not %T", pbMsg))
 		return
 	}
 
-	data := msg.GetData()
-	err := nil // TODO(jdef): do something with this data!
+	input := msg.GetData()
+	fn, output, err := self.stepFn(self.mech, input)
+
 	if err != nil {
-		_fail(ERROR, fmt.Errorf("failed to perform authentication step: %v", err))
+		self._fail(ERROR, fmt.Errorf("failed to perform authentication step: %v", err))
 		return
 	}
-	output := []byte{}
+	self.stepFn = fn
+
 	// We don't start the client with SASL_SUCCESS_DATA so we may
 	// need to send one more "empty" message to the server.
-	message := &AuthenticationStepMessage{}
+	message := &mesos.AuthenticationStepMessage{}
 	if len(output) > 0 {
 		message.Data = output
 	}
-	if err := Send(from, message); err != nil {
-		_fail(ERROR, err)
+	if err := self.send(from, message); err != nil {
+		self._fail(ERROR, err)
 	}
 }
 
-func (self *authenticatee) completed(from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) completed(from *upid.UPID, pbMsg proto.Message) {
 	if self.status != STEPPING {
-		_fail(ERROR, fmt.Errorf("Unexpected authentication 'completed' received"))
+		self._fail(ERROR, fmt.Errorf("Unexpected authentication 'completed' received"))
 		return
 	}
 
 	log.Infof("Authentication success")
-	self.STATUS = COMPLETED
+	self.status = COMPLETED
 	close(self.done)
 }
 
-func (self *authenticatee) failed(from *upid.UPID, pbMsg proto.Message) {
-	_fail(FAILED, auth.AuthenticationFailed)
+func (self *authenticateeProcess) failed(from *upid.UPID, pbMsg proto.Message) {
+	self._fail(FAILED, auth.AuthenticationFailed)
 }
 
-func (self *authenticatee) errored(from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) errored(from *upid.UPID, pbMsg proto.Message) {
 	var err error
 	if msg, ok := pbMsg.(*mesos.AuthenticationErrorMessage); !ok {
 		err = fmt.Errorf("Expected AuthenticationErrorMessage, not %T", pbMsg)
 	} else {
 		err = fmt.Errorf("Authentication error: %s", msg.GetError())
 	}
-	_fail(ERROR, err)
+	self._fail(ERROR, err)
 }

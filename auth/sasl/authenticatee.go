@@ -1,4 +1,4 @@
-package crammd5
+package sasl
 
 import (
 	"fmt"
@@ -8,6 +8,8 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/auth"
+	"github.com/mesos/mesos-go/auth/sasl/mech"
+	helper "github.com/mesos/mesos-go/auth/sasl/mesos"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
@@ -15,9 +17,8 @@ import (
 )
 
 var (
-	pidLock        sync.Mutex
-	pid            int
-	supportedMechs map[string]struct{}
+	pidLock sync.Mutex
+	pid     int
 )
 
 type statusType int32
@@ -40,13 +41,8 @@ type authenticateeProcess struct {
 	status     statusType
 	done       chan struct{}
 	result     error
-	mech       *mechanism
-	stepFn     stepFunc
-}
-
-func init() {
-	supportedMechs = make(map[string]struct{})
-	supportedMechs["CRAM-MD5"] = struct{}{}
+	mech       mech.Interface
+	stepFn     mech.StepFunc
 }
 
 func nextPid() int {
@@ -90,7 +86,8 @@ func Authenticatee(ctx context.Context, pid, client upid.UPID, credential mesos.
 }
 
 func newAuthenticatee(ctx context.Context, client upid.UPID, credential mesos.Credential) *authenticateeProcess {
-	pid := &upid.UPID{ID: fmt.Sprintf("crammd5_authenticatee(%d)", nextPid())}
+	// pid := &upid.UPID{ID: fmt.Sprintf("crammd5_authenticatee(%d)", nextPid())} // TODO(jdef): crammd5 prefix needed?
+	pid := &upid.UPID{ID: fmt.Sprintf("sasl_authenticatee(%d)", nextPid())}
 	transport := messenger.NewMesosMessenger(pid)
 	initialStatus := READY
 
@@ -179,33 +176,37 @@ func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPI
 		self.terminate(status, ERROR, fmt.Errorf("Expected AuthenticationMechanismsMessage, not %T", pbMsg))
 		return
 	}
+
 	mechanisms := msg.GetMechanisms()
 	log.Infof("Received SASL authentication mechanisms: %v", mechanisms)
 
-	selectedMech := ""
-	for _, m := range mechanisms {
-		if _, ok := supportedMechs[m]; ok {
-			selectedMech = m
-			break
-		}
-	}
+	selectedMech, factory := mech.SelectSupported(mechanisms)
 	if selectedMech == "" {
 		self.terminate(status, ERROR, auth.UnsupportedMechanism)
 		return
 	}
 
-	message := &mesos.AuthenticationStartMessage{
-		Mechanism: proto.String(selectedMech),
-		// TODO(jdef): Assuming that no data is really needed here since CRAM-MD5 is
-		// a single round-trip protocol initiated by the server. Other mechs
-		// may need data from an initial step here.
+	if m, f, err := factory(&helper.CredentialHandler{&self.credential}); err != nil {
+		self.terminate(status, ERROR, err)
+		return
+	} else {
+		self.mech = m
+		self.stepFn = f
 	}
 
-	self.mech = &mechanism{
-		username: self.credential.GetPrincipal(),
-		secret:   self.credential.GetSecret(),
+	// execute initialization step...
+	nextf, data, err := self.stepFn(self.mech, nil)
+	if err != nil {
+		self.terminate(status, ERROR, err)
+		return
+	} else {
+		self.stepFn = nextf
 	}
-	self.stepFn = challengeResponse
+
+	message := &mesos.AuthenticationStartMessage{
+		Mechanism: proto.String(selectedMech),
+		Data:      proto.String(string(data)), // may be nil, depends on init step
+	}
 
 	if err := self.Send(ctx, from, message); err != nil {
 		self.terminate(status, ERROR, err)

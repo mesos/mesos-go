@@ -29,11 +29,14 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/auth"
-	"github.com/mesos/mesos-go/auth/crammd5"
+	"github.com/mesos/mesos-go/auth/sasl"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
+
+	// plugins
+	_ "github.com/mesos/mesos-go/auth/sasl/mech/crammd5"
 )
 
 const (
@@ -432,7 +435,7 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 	if driver.credential != nil {
 		client := driver.messenger.UPID()
 		pid := driver.MasterPid
-		f := auth.AuthenticateeFunc(crammd5.Authenticatee)
+		f := auth.AuthenticateeFunc(sasl.Authenticatee)
 		if err := func() error {
 			ctx, cancel := context.WithTimeout(context.Background(), authTimeout)
 			defer cancel()

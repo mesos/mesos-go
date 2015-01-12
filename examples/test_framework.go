@@ -21,13 +21,15 @@
 package main
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
 	"flag"
+	"io/ioutil"
+	"strconv"
+
+	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
 	sched "github.com/mesos/mesos-go/scheduler"
-	"strconv"
 )
 
 const (
@@ -35,9 +37,13 @@ const (
 	MEM_PER_TASK  = 128
 )
 
-var master = flag.String("master", "127.0.0.1:5050", "Master address <ip:port>")
-var execUri = flag.String("executor", "./test_executor", "Path to test executor")
-var taskCount = flag.String("task-count", "5", "Total task count to run.")
+var (
+	master = flag.String("master", "127.0.0.1:5050", "Master address <ip:port>")
+	execUri = flag.String("executor", "./test_executor", "Path to test executor")
+	taskCount = flag.String("task-count", "5", "Total task count to run.")
+	mesosAuthPrincipal  = flag.String("mesos_authentication_principal", "", "Mesos authentication principal.")
+	mesosAuthSecretFile = flag.String("mesos_authentication_secret_file", "", "Mesos authentication secret file.")
+)
 
 type ExampleScheduler struct {
 	executor      *mesos.ExecutorInfo
@@ -185,11 +191,24 @@ func main() {
 		Name: proto.String("Test Framework (Go)"),
 	}
 
+	cred := (*mesos.Credential)(nil)
+	if *mesosAuthPrincipal != "" {
+                fwinfo.Principal = proto.String(*mesosAuthPrincipal)
+                secret, err := ioutil.ReadFile(*mesosAuthSecretFile)
+                if err != nil {
+                        log.Fatal(err)
+                }
+                cred = &mesos.Credential{
+                        Principal: proto.String(*mesosAuthPrincipal),
+                        Secret:    secret,
+                }
+        }
+
 	driver, err := sched.NewMesosSchedulerDriver(
 		newExampleScheduler(exec),
 		fwinfo,
 		*master,
-		nil,
+		cred,
 	)
 
 	if err != nil {

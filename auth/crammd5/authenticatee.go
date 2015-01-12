@@ -45,6 +45,7 @@ type authenticateeProcess struct {
 }
 
 func init() {
+	supportedMechs = make(map[string]struct{})
 	supportedMechs["CRAM-MD5"] = struct{}{} //TODO(jdef) needs verification
 }
 
@@ -122,6 +123,9 @@ func (self *authenticateeProcess) initialize() {
 	self.Install(self.completed, &mesos.AuthenticationCompletedMessage{})
 	self.Install(self.failed, &mesos.AuthenticationFailedMessage{})
 	self.Install(self.errored, &mesos.AuthenticationErrorMessage{})
+	if err := self.Start(); err != nil {
+		self._fail(ERROR, err)
+	}
 }
 
 func (self *authenticateeProcess) mechanisms (from *upid.UPID, pbMsg proto.Message) {

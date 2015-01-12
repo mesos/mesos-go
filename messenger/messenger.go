@@ -115,7 +115,7 @@ func (m *MesosMessenger) Send(ctx context.Context, upid *upid.UPID, msg proto.Me
 	name := getMessageName(msg)
 	log.V(2).Infof("Sending message %v to %v\n", name, upid)
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		return ctx.Err()
 	case m.encodingQueue <- &Message{upid, name, msg, nil}:
 		return nil
@@ -205,7 +205,7 @@ func (m *MesosMessenger) encodeLoop() {
 				}
 				msg.Bytes = b
 				select {
-				case <- ctx.Done():
+				case <-ctx.Done():
 					return ctx.Err()
 				case m.sendingQueue <- msg:
 					return nil
@@ -218,7 +218,6 @@ func (m *MesosMessenger) encodeLoop() {
 	}
 }
 
-
 func (m *MesosMessenger) reportError(err error) {
 	log.V(2).Info(err)
 	//TODO(jdef) implement timeout for context
@@ -228,9 +227,9 @@ func (m *MesosMessenger) reportError(err error) {
 	c := make(chan error, 1)
 	go func() { c <- m.Route(ctx, m.UPID(), &mesos.FrameworkErrorMessage{Message: proto.String(err.Error())}) }()
 	select {
-	case <- ctx.Done():
-		<- c // wait for Route to return
-	case e := <- c:
+	case <-ctx.Done():
+		<-c // wait for Route to return
+	case e := <-c:
 		log.Error("failed to report error %v due to: %v", err, e)
 	}
 }
@@ -250,13 +249,13 @@ func (m *MesosMessenger) sendLoop() {
 				go func() { c <- m.tr.Send(ctx, msg) }()
 
 				select {
-				case <- ctx.Done():
+				case <-ctx.Done():
 					// TODO(jdef) once transport layer offers cancellation we could force-
 					// cancel the current request here. In the meantime, let's hope the
 					// transport layer is using the context to detect cancelled requests.
-					<- c // wait for Send to return
+					<-c // wait for Send to return
 					return ctx.Err()
-				case err := <- c:
+				case err := <-c:
 					return err
 				}
 			}()

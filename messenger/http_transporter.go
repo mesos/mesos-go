@@ -64,11 +64,11 @@ func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) error {
 		return err
 	}
 	return t.httpDo(ctx, req, func(resp *http.Response, err error) error {
-        	if err != nil {
+		if err != nil {
 			log.Infof("Failed to POST: %v\n", err)
-            		return err
-        	}
-        	defer resp.Body.Close()
+			return err
+		}
+		defer resp.Body.Close()
 
 		// ensure master acknowledgement.
 		if (resp.StatusCode != http.StatusOK) &&
@@ -82,16 +82,16 @@ func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) error {
 }
 
 func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(*http.Response, error) error) error {
-    c := make(chan error, 1)
-    go func() { c <- f(t.client.Do(req)) }()
-    select {
-    case <-ctx.Done():
-        t.tr.CancelRequest(req)
-        <-c // Wait for f to return.
-        return ctx.Err()
-    case err := <-c:
-        return err
-    }
+	c := make(chan error, 1)
+	go func() { c <- f(t.client.Do(req)) }()
+	select {
+	case <-ctx.Done():
+		t.tr.CancelRequest(req)
+		<-c // Wait for f to return.
+		return ctx.Err()
+	case err := <-c:
+		return err
+	}
 }
 
 // Recv returns the message, one at a time.
@@ -102,7 +102,7 @@ func (t *HTTPTransporter) Recv() *Message {
 //Inject places a message into the incoming message queue.
 func (t *HTTPTransporter) Inject(ctx context.Context, msg *Message) error {
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		return ctx.Err()
 	case t.messageQueue <- msg:
 		return nil

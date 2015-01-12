@@ -224,20 +224,20 @@ func (driver *MesosExecutorDriver) reregistered(from *upid.UPID, pbMsg proto.Mes
 }
 
 func (driver *MesosExecutorDriver) send(upid *upid.UPID, msg proto.Message) error {
-        //TODO(jdef) should implement timeout here
-        ctx, cancel := context.WithCancel(context.Background())
-        defer cancel()
+	//TODO(jdef) should implement timeout here
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-        c := make(chan error, 1)
-        go func() { c <- driver.messenger.Send(ctx, upid, msg) }()
+	c := make(chan error, 1)
+	go func() { c <- driver.messenger.Send(ctx, upid, msg) }()
 
-        select {
-        case <- ctx.Done():
-                <- c // wait for Send(...)
-                return ctx.Err()
-        case err := <- c:
-                return err
-        }
+	select {
+	case <-ctx.Done():
+		<-c // wait for Send(...)
+		return ctx.Err()
+	case err := <-c:
+		return err
+	}
 }
 
 func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Message) {

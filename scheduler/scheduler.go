@@ -310,10 +310,10 @@ func (driver *MesosSchedulerDriver) send(upid *upid.UPID, msg proto.Message) err
 	go func() { c <- driver.messenger.Send(ctx, upid, msg) }()
 
 	select {
-	case <- ctx.Done():
-		<- c // wait for Send(...)
+	case <-ctx.Done():
+		<-c // wait for Send(...)
 		return ctx.Err()
-	case err := <- c:
+	case err := <-c:
 		return err
 	}
 }
@@ -429,7 +429,7 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 		client := driver.messenger.UPID()
 		pid := driver.MasterPid
 		f := auth.AuthenticateeFunc(crammd5.Authenticatee)
-		if err := <- f(*pid, *client, *driver.credential); err != nil {
+		if err := <-f(*pid, *client, *driver.credential); err != nil {
 			log.Errorf("Scheduler failed to authenticate: %v\n", err)
 			return driver.Status(), err
 		}

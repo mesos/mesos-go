@@ -5,6 +5,7 @@ import (
 
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/upid"
+	"golang.org/x/net/context"
 )
 
 type Authenticatee interface {
@@ -18,13 +19,13 @@ type Authenticatee interface {
 	// retried. Discarding the future will cause the future to fail if
 	// it hasn't already completed since we have already started the
 	// authentication procedure and can't reliably cancel.
-	Authenticate(pid, client upid.UPID, creds mesos.Credential) <-chan error
+	Authenticate(ctx context.Context, pid, client upid.UPID, creds mesos.Credential) <-chan error
 }
 
-type AuthenticateeFunc func(pid, client upid.UPID, credendial mesos.Credential) <-chan error
+type AuthenticateeFunc func(ctx context.Context, pid, client upid.UPID, credendial mesos.Credential) <-chan error
 
-func (f AuthenticateeFunc) Authenticate(pid, client upid.UPID, creds mesos.Credential) <-chan error {
-	return f(pid, client, creds)
+func (f AuthenticateeFunc) Authenticate(ctx context.Context, pid, client upid.UPID, creds mesos.Credential) <-chan error {
+	return f(ctx, pid, client, creds)
 }
 
 var (

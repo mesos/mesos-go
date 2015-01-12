@@ -36,14 +36,13 @@ type authenticateeProcess struct {
 	credential mesos.Credential
 	client     upid.UPID
 	status     statusType
-	initOnce   sync.Once
 	done       chan struct{}
 	result     error
-	ctx        context.Context
-	cancel     context.CancelFunc
 	mech       *mechanism
 	stepFn     stepFunc
 }
+
+type handlerFn func(ctx context.Context, from *upid.UPID, pbMsg proto.Message)
 
 func init() {
 	supportedMechs = make(map[string]struct{})
@@ -57,18 +56,17 @@ func nextPid() int {
 	return pid
 }
 
-func Authenticatee(pid, client upid.UPID, credential mesos.Credential) <-chan error {
+func Authenticatee(ctx context.Context, pid, client upid.UPID, credential mesos.Credential) <-chan error {
 
 	c := make(chan error, 1)
 	f := func() error {
-		auth := newAuthenticatee(client, credential)
-		defer auth.cancel()
+		auth := newAuthenticatee(ctx, client, credential)
+		auth.authenticate(ctx, pid)
 
-		auth.authenticate(pid)
 		select {
-		case <-auth.ctx.Done():
+		case <-ctx.Done():
 			<-auth.done
-			return auth.ctx.Err()
+			return ctx.Err()
 		case <-auth.done:
 			return auth.result
 		}
@@ -77,19 +75,42 @@ func Authenticatee(pid, client upid.UPID, credential mesos.Credential) <-chan er
 	return c
 }
 
-func newAuthenticatee(client upid.UPID, credential mesos.Credential) *authenticateeProcess {
+func newAuthenticatee(ctx context.Context, client upid.UPID, credential mesos.Credential) *authenticateeProcess {
 	pid := &upid.UPID{ID: fmt.Sprintf("crammd5_authenticatee(%d)", nextPid())}
-	messenger := messenger.NewMesosMessenger(pid)
-	ctx, cancel := context.WithCancel(context.Background()) // TODO(jdef) support timeout
-	return &authenticateeProcess{
-		MesosMessenger: messenger,
+	transport := messenger.NewMesosMessenger(pid)
+	proc := &authenticateeProcess{
+		MesosMessenger: transport,
 		client:         client,
 		credential:     credential,
 		status:         READY,
 		done:           make(chan struct{}),
-		ctx:            ctx,
-		cancel:         cancel,
 	}
+	withContext := func(f handlerFn) messenger.MessageHandler {
+		return func(from *upid.UPID, m proto.Message) {
+			f(ctx, from, m)
+		}
+	}
+	// Anticipate mechanisms and steps from the server
+	handlers := []struct {
+		f handlerFn
+		m proto.Message
+	}{
+		{proc.mechanisms, &mesos.AuthenticationMechanismsMessage{}},
+		{proc.step, &mesos.AuthenticationStepMessage{}},
+		{proc.completed, &mesos.AuthenticationCompletedMessage{}},
+		{proc.failed, &mesos.AuthenticationFailedMessage{}},
+		{proc.errored, &mesos.AuthenticationErrorMessage{}},
+	}
+	for _, h := range handlers {
+		if err := proc.Install(withContext(h.f), h.m); err != nil {
+			proc._fail(ERROR, err)
+			return proc
+		}
+	}
+	if err := proc.Start(); err != nil {
+		proc._fail(ERROR, err)
+	}
+	return proc
 }
 
 func (self *authenticateeProcess) _fail(s statusType, err error) {
@@ -98,38 +119,21 @@ func (self *authenticateeProcess) _fail(s statusType, err error) {
 	close(self.done)
 }
 
-func (self *authenticateeProcess) send(upid *upid.UPID, msg proto.Message) error {
-	return self.Send(self.ctx, upid, msg)
-}
-
-func (self *authenticateeProcess) authenticate(pid upid.UPID) {
-	self.initOnce.Do(self.initialize)
+func (self *authenticateeProcess) authenticate(ctx context.Context, pid upid.UPID) {
 	if self.status != READY {
 		return
 	}
 	message := &mesos.AuthenticateMessage{
 		Pid: proto.String(self.client.String()),
 	}
-	if err := self.send(&pid, message); err != nil {
+	if err := self.Send(ctx, &pid, message); err != nil {
 		self._fail(ERROR, err)
 	} else {
 		self.status = STARTING
 	}
 }
 
-func (self *authenticateeProcess) initialize() {
-	// Anticipate mechanisms and steps from the server
-	self.Install(self.mechanisms, &mesos.AuthenticationMechanismsMessage{})
-	self.Install(self.step, &mesos.AuthenticationStepMessage{})
-	self.Install(self.completed, &mesos.AuthenticationCompletedMessage{})
-	self.Install(self.failed, &mesos.AuthenticationFailedMessage{})
-	self.Install(self.errored, &mesos.AuthenticationErrorMessage{})
-	if err := self.Start(); err != nil {
-		self._fail(ERROR, err)
-	}
-}
-
-func (self *authenticateeProcess) mechanisms(from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	if self.status != STARTING {
 		self._fail(ERROR, fmt.Errorf("Unexpected authentication 'mechanisms' received"))
 		return
@@ -169,14 +173,14 @@ func (self *authenticateeProcess) mechanisms(from *upid.UPID, pbMsg proto.Messag
 	}
 	self.stepFn = challengeResponse
 
-	if err := self.send(from, message); err != nil {
+	if err := self.Send(ctx, from, message); err != nil {
 		self._fail(ERROR, err)
 	} else {
 		self.status = STEPPING
 	}
 }
 
-func (self *authenticateeProcess) step(from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) step(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	if self.status != STEPPING {
 		self._fail(ERROR, fmt.Errorf("Unexpected authentication 'step' received"))
 		return
@@ -205,12 +209,12 @@ func (self *authenticateeProcess) step(from *upid.UPID, pbMsg proto.Message) {
 	if len(output) > 0 {
 		message.Data = output
 	}
-	if err := self.send(from, message); err != nil {
+	if err := self.Send(ctx, from, message); err != nil {
 		self._fail(ERROR, err)
 	}
 }
 
-func (self *authenticateeProcess) completed(from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) completed(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	if self.status != STEPPING {
 		self._fail(ERROR, fmt.Errorf("Unexpected authentication 'completed' received"))
 		return
@@ -221,11 +225,11 @@ func (self *authenticateeProcess) completed(from *upid.UPID, pbMsg proto.Message
 	close(self.done)
 }
 
-func (self *authenticateeProcess) failed(from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) failed(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	self._fail(FAILED, auth.AuthenticationFailed)
 }
 
-func (self *authenticateeProcess) errored(from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) errored(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	var err error
 	if msg, ok := pbMsg.(*mesos.AuthenticationErrorMessage); !ok {
 		err = fmt.Errorf("Expected AuthenticationErrorMessage, not %T", pbMsg)

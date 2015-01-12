@@ -36,6 +36,10 @@ import (
 	"golang.org/x/net/context"
 )
 
+const (
+	authTimeout = 5 * time.Second // timeout interval for an authentication attempt
+)
+
 // Concrete implementation of a SchedulerDriver that connects a
 // Scheduler with a Mesos master. The MesosSchedulerDriver is
 // thread-safe.
@@ -429,7 +433,11 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 		client := driver.messenger.UPID()
 		pid := driver.MasterPid
 		f := auth.AuthenticateeFunc(crammd5.Authenticatee)
-		if err := <-f(*pid, *client, *driver.credential); err != nil {
+		if err := func() error {
+			ctx, cancel := context.WithTimeout(context.Background(), authTimeout)
+			defer cancel()
+			return <-f(ctx, *pid, *client, *driver.credential)
+		}(); err != nil {
 			log.Errorf("Scheduler failed to authenticate: %v\n", err)
 			return driver.Status(), err
 		}

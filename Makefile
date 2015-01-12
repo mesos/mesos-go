@@ -37,3 +37,6 @@ test-executor:
 
 format:
 	go fmt ${LIBS:%=$(PKG_PREFIX)/%}
+
+test:
+	go test ${LIBS:%=$(PKG_PREFIX)/%}

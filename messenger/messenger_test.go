@@ -14,6 +14,7 @@ import (
 	"github.com/mesos/mesos-go/messenger/testmessage"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -154,7 +155,7 @@ func TestMessengerFailToSend(t *testing.T) {
 	assert.NoError(t, err)
 	m := NewMesosMessenger(upid)
 	assert.NoError(t, m.Start())
-	assert.Error(t, m.Send(upid, &testmessage.SmallMessage{}))
+	assert.Error(t, m.Send(context.TODO(), upid, &testmessage.SmallMessage{}))
 }
 
 func TestMessenger(t *testing.T) {
@@ -178,7 +179,7 @@ func TestMessenger(t *testing.T) {
 
 	go func() {
 		for _, msg := range messages {
-			assert.NoError(t, m1.Send(upid2, msg))
+			assert.NoError(t, m1.Send(context.TODO(), upid2, msg))
 		}
 	}()
 
@@ -213,7 +214,7 @@ func BenchmarkMessengerSendSmallMessage(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	wg.Wait()
 }
@@ -236,7 +237,7 @@ func BenchmarkMessengerSendMediumMessage(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	wg.Wait()
 }
@@ -259,7 +260,7 @@ func BenchmarkMessengerSendBigMessage(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	wg.Wait()
 }
@@ -282,7 +283,7 @@ func BenchmarkMessengerSendLargeMessage(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	wg.Wait()
 }
@@ -305,7 +306,7 @@ func BenchmarkMessengerSendMixedMessage(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	wg.Wait()
 }
@@ -329,7 +330,7 @@ func BenchmarkMessengerSendRecvSmallMessage(b *testing.B) {
 	time.Sleep(time.Second) // Avoid race on upid.
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	globalWG.Wait()
 }
@@ -353,7 +354,7 @@ func BenchmarkMessengerSendRecvMediumMessage(b *testing.B) {
 	time.Sleep(time.Second) // Avoid race on upid.
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	globalWG.Wait()
 }
@@ -377,7 +378,7 @@ func BenchmarkMessengerSendRecvBigMessage(b *testing.B) {
 	time.Sleep(time.Second) // Avoid race on upid.
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	globalWG.Wait()
 }
@@ -400,7 +401,7 @@ func BenchmarkMessengerSendRecvLargeMessage(b *testing.B) {
 	time.Sleep(time.Second) // Avoid race on upid.
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	globalWG.Wait()
 }
@@ -426,7 +427,7 @@ func BenchmarkMessengerSendRecvMixedMessage(b *testing.B) {
 	time.Sleep(time.Second) // Avoid race on upid.
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		m1.Send(upid2, messages[i%1000])
+		m1.Send(context.TODO(), upid2, messages[i%1000])
 	}
 	globalWG.Wait()
 }

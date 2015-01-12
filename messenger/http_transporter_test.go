@@ -2,15 +2,17 @@ package messenger
 
 import (
 	"fmt"
-	"github.com/mesos/mesos-go/messenger/testmessage"
-	"github.com/mesos/mesos-go/upid"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/mesos/mesos-go/messenger/testmessage"
+	"github.com/mesos/mesos-go/upid"
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func TestTransporterNew(t *testing.T) {
@@ -52,7 +54,7 @@ func TestTransporterSend(t *testing.T) {
 	// make transport call.
 	transport := NewHTTPTransporter(fromUpid)
 	msg.UPID = toUpid
-	err = transport.Send(msg)
+	err = transport.Send(context.TODO(), msg)
 	assert.NoError(t, err)
 }
 
@@ -94,7 +96,7 @@ func TestTransporterStartAndSend(t *testing.T) {
 		Name:         msgName,
 		ProtoMessage: protoMsg,
 	}
-	sender.Send(msg)
+	sender.Send(context.TODO(), msg)
 
 	select {
 	case <-time.After(time.Second * 5):
@@ -141,7 +143,7 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 		Name:         msgName,
 		ProtoMessage: protoMsg,
 	}
-	sender.Send(msg)
+	sender.Send(context.TODO(), msg)
 
 	select {
 	case <-time.After(time.Second * 5):
@@ -176,7 +178,7 @@ func TestTransporterStartAndInject(t *testing.T) {
 		Name:         msgName,
 		ProtoMessage: protoMsg,
 	}
-	receiver.Inject(msg)
+	receiver.Inject(context.TODO(), msg)
 
 	select {
 	case <-time.After(time.Millisecond * 5):

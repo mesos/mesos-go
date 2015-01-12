@@ -8,7 +8,9 @@ LIBS :=	detector \
 	mesosutil \
 	messenger \
 	scheduler \
-	upid
+	upid \
+	auth \
+	auth/crammd5
 
 .PHONY: format all go-clean pkg-build-install test-framework test-executor
 

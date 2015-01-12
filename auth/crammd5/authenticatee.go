@@ -61,6 +61,9 @@ func Authenticatee(ctx context.Context, pid, client upid.UPID, credential mesos.
 	c := make(chan error, 1)
 	f := func() error {
 		auth := newAuthenticatee(ctx, client, credential)
+		if auth.status == READY {
+			defer auth.Stop()
+		}
 		auth.authenticate(ctx, pid)
 
 		select {

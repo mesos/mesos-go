@@ -3,8 +3,8 @@ package auth
 import (
 	"errors"
 
-	"github.com/mesos/mesos-go/upid"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/upid"
 )
 
 type Authenticatee interface {
@@ -21,7 +21,7 @@ type Authenticatee interface {
 	Authenticate(pid, client upid.UPID, creds mesos.Credential) <-chan error
 }
 
-type AuthenticateeFunc func (pid, client upid.UPID, credendial mesos.Credential) <-chan error
+type AuthenticateeFunc func(pid, client upid.UPID, credendial mesos.Credential) <-chan error
 
 func (f AuthenticateeFunc) Authenticate(pid, client upid.UPID, creds mesos.Credential) <-chan error {
 	return f(pid, client, creds)
@@ -29,4 +29,5 @@ func (f AuthenticateeFunc) Authenticate(pid, client upid.UPID, creds mesos.Crede
 
 var (
 	AuthenticationFailed = errors.New("authentication failed")
+	UnsupportedMechanism = errors.New("failed to identify a compatible mechanism")
 )

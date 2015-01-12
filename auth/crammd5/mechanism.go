@@ -16,7 +16,7 @@ var (
 
 type mechanism struct {
 	username string
-	secret []byte
+	secret   []byte
 }
 
 type stepFunc func(m *mechanism, data []byte) (stepFunc, []byte, error)
@@ -38,5 +38,5 @@ func challengeResponse(m *mechanism, data []byte) (stepFunc, []byte, error) {
 }
 
 func illegalState(m *mechanism, data []byte) (stepFunc, []byte, error) {
-	return illegalState,nil,illegalStateErr
+	return illegalState, nil, illegalStateErr
 }

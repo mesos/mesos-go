@@ -6,10 +6,10 @@ import (
 
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
-        "github.com/mesos/mesos-go/auth"
-        "github.com/mesos/mesos-go/messenger"
-        "github.com/mesos/mesos-go/upid"
-        mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/auth"
+	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/messenger"
+	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
 )
 
@@ -20,14 +20,15 @@ var (
 )
 
 type statusType int
+
 const (
-    READY statusType = iota
-    STARTING
-    STEPPING
-    COMPLETED
-    FAILED
-    ERROR
-    DISCARDED
+	READY statusType = iota
+	STARTING
+	STEPPING
+	COMPLETED
+	FAILED
+	ERROR
+	DISCARDED
 )
 
 type authenticateeProcess struct {
@@ -46,7 +47,7 @@ type authenticateeProcess struct {
 
 func init() {
 	supportedMechs = make(map[string]struct{})
-	supportedMechs["CRAM-MD5"] = struct{}{} //TODO(jdef) needs verification
+	supportedMechs["CRAM-MD5"] = struct{}{}
 }
 
 func nextPid() int {
@@ -56,7 +57,7 @@ func nextPid() int {
 	return pid
 }
 
-func Authenticatee(pid, client upid.UPID, credential mesos.Credential) <- chan error {
+func Authenticatee(pid, client upid.UPID, credential mesos.Credential) <-chan error {
 
 	c := make(chan error, 1)
 	f := func() error {
@@ -65,10 +66,10 @@ func Authenticatee(pid, client upid.UPID, credential mesos.Credential) <- chan e
 
 		auth.authenticate(pid)
 		select {
-		case <- auth.ctx.Done():
-			<- auth.done
+		case <-auth.ctx.Done():
+			<-auth.done
 			return auth.ctx.Err()
-		case <- auth.done:
+		case <-auth.done:
 			return auth.result
 		}
 	}
@@ -77,17 +78,17 @@ func Authenticatee(pid, client upid.UPID, credential mesos.Credential) <- chan e
 }
 
 func newAuthenticatee(client upid.UPID, credential mesos.Credential) *authenticateeProcess {
-	pid := &upid.UPID{ID: fmt.Sprintf("crammd5_authenticatee(%d)",nextPid())}
+	pid := &upid.UPID{ID: fmt.Sprintf("crammd5_authenticatee(%d)", nextPid())}
 	messenger := messenger.NewMesosMessenger(pid)
 	ctx, cancel := context.WithCancel(context.Background()) // TODO(jdef) support timeout
 	return &authenticateeProcess{
 		MesosMessenger: messenger,
-		client: client,
-		credential: credential,
-		status: READY,
-		done: make(chan struct{}),
-		ctx: ctx,
-		cancel: cancel,
+		client:         client,
+		credential:     credential,
+		status:         READY,
+		done:           make(chan struct{}),
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 }
 
@@ -128,7 +129,7 @@ func (self *authenticateeProcess) initialize() {
 	}
 }
 
-func (self *authenticateeProcess) mechanisms (from *upid.UPID, pbMsg proto.Message) {
+func (self *authenticateeProcess) mechanisms(from *upid.UPID, pbMsg proto.Message) {
 	if self.status != STARTING {
 		self._fail(ERROR, fmt.Errorf("Unexpected authentication 'mechanisms' received"))
 		return
@@ -151,19 +152,20 @@ func (self *authenticateeProcess) mechanisms (from *upid.UPID, pbMsg proto.Messa
 		}
 	}
 	if selectedMech == "" {
-		self._fail(ERROR, fmt.Errorf("failed to identify a compatible mechanism")) // TODO(jdef) convert to specific error code
+		self._fail(ERROR, auth.UnsupportedMechanism)
 		return
 	}
 
 	message := &mesos.AuthenticationStartMessage{
 		Mechanism: proto.String(selectedMech),
-		// TODO(jdef) assuming that no data is really needed here since CRAM-MD5 is
-		// a single round-trip protocol initiated by the server
+		// TODO(jdef): Assuming that no data is really needed here since CRAM-MD5 is
+		// a single round-trip protocol initiated by the server. Other mechs
+		// may need data from an initial step here.
 	}
 
 	self.mech = &mechanism{
 		username: self.credential.GetPrincipal(),
-		secret: self.credential.GetSecret(),
+		secret:   self.credential.GetSecret(),
 	}
 	self.stepFn = challengeResponse
 

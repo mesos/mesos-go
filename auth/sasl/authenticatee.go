@@ -102,7 +102,7 @@ func newConfig(client upid.UPID, credential mesos.Credential) *authenticateeConf
 // only to be called if/when ctx.Done() has been signalled.
 func (self *authenticateeProcess) discard(ctx context.Context) error {
 	err := ctx.Err()
-	status := StatusFrom(ctx)
+	status := statusFrom(ctx)
 	for ; status < _TERMINAL; status = (&self.status).get() {
 		if self.terminate(status, DISCARDED, err) {
 			break
@@ -120,7 +120,7 @@ func newAuthenticatee(ctx context.Context, config *authenticateeConfig) (context
 		status:     initialStatus,
 		done:       make(chan struct{}),
 	}
-	ctx = WithStatus(ctx, initialStatus)
+	ctx = withStatus(ctx, initialStatus)
 	err := proc.installHandlers(ctx)
 	if err == nil {
 		err = proc.startTransport()
@@ -157,7 +157,7 @@ func (self *authenticateeProcess) installHandlers(ctx context.Context) error {
 	withContext := func(f handlerFn) messenger.MessageHandler {
 		return func(from *upid.UPID, m proto.Message) {
 			status := (&self.status).get()
-			f(WithStatus(ctx, status), from, m)
+			f(withStatus(ctx, status), from, m)
 		}
 	}
 
@@ -191,7 +191,7 @@ func (self *authenticateeProcess) terminate(old, new statusType, err error) bool
 }
 
 func (self *authenticateeProcess) authenticate(ctx context.Context, pid upid.UPID) {
-	status := StatusFrom(ctx)
+	status := statusFrom(ctx)
 	if status != READY {
 		return
 	}
@@ -206,7 +206,7 @@ func (self *authenticateeProcess) authenticate(ctx context.Context, pid upid.UPI
 }
 
 func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
-	status := StatusFrom(ctx)
+	status := statusFrom(ctx)
 	if status != STARTING {
 		self.terminate(status, ERROR, UnexpectedAuthenticationMechanisms)
 		return
@@ -258,7 +258,7 @@ func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPI
 }
 
 func (self *authenticateeProcess) step(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
-	status := StatusFrom(ctx)
+	status := statusFrom(ctx)
 	if status != STEPPING {
 		self.terminate(status, ERROR, UnexpectedAuthenticationStep)
 		return
@@ -293,7 +293,7 @@ func (self *authenticateeProcess) step(ctx context.Context, from *upid.UPID, pbM
 }
 
 func (self *authenticateeProcess) completed(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
-	status := StatusFrom(ctx)
+	status := statusFrom(ctx)
 	if status != STEPPING {
 		self.terminate(status, ERROR, fmt.Errorf("Unexpected authentication 'completed' received"))
 		return
@@ -304,7 +304,7 @@ func (self *authenticateeProcess) completed(ctx context.Context, from *upid.UPID
 }
 
 func (self *authenticateeProcess) failed(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
-	status := StatusFrom(ctx)
+	status := statusFrom(ctx)
 	self.terminate(status, FAILED, auth.AuthenticationFailed)
 }
 
@@ -315,6 +315,6 @@ func (self *authenticateeProcess) errored(ctx context.Context, from *upid.UPID, 
 	} else {
 		err = fmt.Errorf("Authentication error: %s", msg.GetError())
 	}
-	status := StatusFrom(ctx)
+	status := statusFrom(ctx)
 	self.terminate(status, ERROR, err)
 }

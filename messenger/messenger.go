@@ -250,9 +250,7 @@ func (m *MesosMessenger) sendLoop() {
 
 				select {
 				case <-ctx.Done():
-					// TODO(jdef) once transport layer offers cancellation we could force-
-					// cancel the current request here. In the meantime, let's hope the
-					// transport layer is using the context to detect cancelled requests.
+					// Transport layer must use the context to detect cancelled requests.
 					<-c // wait for Send to return
 					return ctx.Err()
 				case err := <-c:

@@ -23,19 +23,22 @@ var (
 
 	UnexpectedAuthenticationMechanisms = errors.New("Unexpected authentication 'mechanisms' received")
 	UnexpectedAuthenticationStep       = errors.New("Unexpected authentication 'step' received")
+	UnexpectedAuthenticationCompleted  = errors.New("Unexpected authentication 'completed' received")
+	UnexpectedAuthenticatorPid         = errors.New("Unexpected authentator pid") // authenticator pid changed mid-process
+	UnsupportedMechanism               = errors.New("failed to identify a compatible mechanism")
 )
 
 type statusType int32
 
 const (
-	READY statusType = iota
-	STARTING
-	STEPPING
-	_TERMINAL // meta status, should never be assigned: all status types following are "terminal"
-	COMPLETED
-	FAILED
-	ERROR
-	DISCARDED
+	statusReady statusType = iota
+	statusStarting
+	statusStepping
+	_statusTerminal // meta status, should never be assigned: all status types following are "terminal"
+	statusCompleted
+	statusFailed
+	statusError
+	statusDiscarded
 )
 
 type authenticateeProcess struct {
@@ -44,9 +47,10 @@ type authenticateeProcess struct {
 	client     upid.UPID
 	status     statusType
 	done       chan struct{}
-	result     error
+	err        error
 	mech       mech.Interface
 	stepFn     mech.StepFunc
+	from       *upid.UPID
 }
 
 type authenticateeConfig struct {
@@ -82,7 +86,7 @@ func Authenticatee(ctx context.Context, pid, client upid.UPID, credential mesos.
 		case <-ctx.Done():
 			return auth.discard(ctx)
 		case <-auth.done:
-			return auth.result
+			return auth.err
 		}
 	}
 	go func() { c <- f() }()
@@ -103,8 +107,8 @@ func newConfig(client upid.UPID, credential mesos.Credential) *authenticateeConf
 func (self *authenticateeProcess) discard(ctx context.Context) error {
 	err := ctx.Err()
 	status := statusFrom(ctx)
-	for ; status < _TERMINAL; status = (&self.status).get() {
-		if self.terminate(status, DISCARDED, err) {
+	for ; status < _statusTerminal; status = (&self.status).get() {
+		if self.terminate(status, statusDiscarded, err) {
 			break
 		}
 	}
@@ -112,7 +116,7 @@ func (self *authenticateeProcess) discard(ctx context.Context) error {
 }
 
 func newAuthenticatee(ctx context.Context, config *authenticateeConfig) (context.Context, *authenticateeProcess) {
-	initialStatus := READY
+	initialStatus := statusReady
 	proc := &authenticateeProcess{
 		transport:  config.transport,
 		client:     config.client,
@@ -126,7 +130,7 @@ func newAuthenticatee(ctx context.Context, config *authenticateeConfig) (context
 		err = proc.startTransport()
 	}
 	if err != nil {
-		proc.terminate(initialStatus, ERROR, err)
+		proc.terminate(initialStatus, statusError, err)
 	}
 	return ctx, proc
 }
@@ -157,7 +161,11 @@ func (self *authenticateeProcess) installHandlers(ctx context.Context) error {
 	withContext := func(f handlerFn) messenger.MessageHandler {
 		return func(from *upid.UPID, m proto.Message) {
 			status := (&self.status).get()
-			f(withStatus(ctx, status), from, m)
+			if self.from != nil && !self.from.Equal(from) {
+				self.terminate(status, statusError, UnexpectedAuthenticatorPid)
+			} else {
+				f(withStatus(ctx, status), from, m)
+			}
 		}
 	}
 
@@ -183,7 +191,10 @@ func (self *authenticateeProcess) installHandlers(ctx context.Context) error {
 // return true if the authentication status was updated (if true, self.done will have been closed)
 func (self *authenticateeProcess) terminate(old, new statusType, err error) bool {
 	if (&self.status).swap(old, new) {
-		self.result = err
+		self.err = err
+		if self.mech != nil {
+			self.mech.Discard()
+		}
 		close(self.done)
 		return true
 	}
@@ -192,30 +203,29 @@ func (self *authenticateeProcess) terminate(old, new statusType, err error) bool
 
 func (self *authenticateeProcess) authenticate(ctx context.Context, pid upid.UPID) {
 	status := statusFrom(ctx)
-	if status != READY {
+	if status != statusReady {
 		return
 	}
 	message := &mesos.AuthenticateMessage{
 		Pid: proto.String(self.client.String()),
 	}
 	if err := self.transport.Send(ctx, &pid, message); err != nil {
-		self.terminate(status, ERROR, err)
+		self.terminate(status, statusError, err)
 	} else {
-		(&self.status).swap(status, STARTING)
+		(&self.status).swap(status, statusStarting)
 	}
 }
 
 func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	status := statusFrom(ctx)
-	if status != STARTING {
-		self.terminate(status, ERROR, UnexpectedAuthenticationMechanisms)
+	if status != statusStarting {
+		self.terminate(status, statusError, UnexpectedAuthenticationMechanisms)
 		return
 	}
-	// TODO(mesos:benh): Store 'from' in order to ensure we only communicate
-	// with the same Authenticator.
+
 	msg, ok := pbMsg.(*mesos.AuthenticationMechanismsMessage)
 	if !ok {
-		self.terminate(status, ERROR, fmt.Errorf("Expected AuthenticationMechanismsMessage, not %T", pbMsg))
+		self.terminate(status, statusError, fmt.Errorf("Expected AuthenticationMechanismsMessage, not %T", pbMsg))
 		return
 	}
 
@@ -224,22 +234,23 @@ func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPI
 
 	selectedMech, factory := mech.SelectSupported(mechanisms)
 	if selectedMech == "" {
-		self.terminate(status, ERROR, auth.UnsupportedMechanism)
+		self.terminate(status, statusError, UnsupportedMechanism)
 		return
 	}
 
 	if m, f, err := factory(&helper.CredentialHandler{&self.credential}); err != nil {
-		self.terminate(status, ERROR, err)
+		self.terminate(status, statusError, err)
 		return
 	} else {
 		self.mech = m
 		self.stepFn = f
+		self.from = from
 	}
 
 	// execute initialization step...
 	nextf, data, err := self.stepFn(self.mech, nil)
 	if err != nil {
-		self.terminate(status, ERROR, err)
+		self.terminate(status, statusError, err)
 		return
 	} else {
 		self.stepFn = nextf
@@ -251,24 +262,24 @@ func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPI
 	}
 
 	if err := self.transport.Send(ctx, from, message); err != nil {
-		self.terminate(status, ERROR, err)
+		self.terminate(status, statusError, err)
 	} else {
-		(&self.status).swap(status, STEPPING)
+		(&self.status).swap(status, statusStepping)
 	}
 }
 
 func (self *authenticateeProcess) step(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	status := statusFrom(ctx)
-	if status != STEPPING {
-		self.terminate(status, ERROR, UnexpectedAuthenticationStep)
+	if status != statusStepping {
+		self.terminate(status, statusError, UnexpectedAuthenticationStep)
 		return
 	}
 
-	log.Infof("Received SASL authentication step")
+	log.Info("Received SASL authentication step")
 
 	msg, ok := pbMsg.(*mesos.AuthenticationStepMessage)
 	if !ok {
-		self.terminate(status, ERROR, fmt.Errorf("Expected AuthenticationStepMessage, not %T", pbMsg))
+		self.terminate(status, statusError, fmt.Errorf("Expected AuthenticationStepMessage, not %T", pbMsg))
 		return
 	}
 
@@ -276,7 +287,7 @@ func (self *authenticateeProcess) step(ctx context.Context, from *upid.UPID, pbM
 	fn, output, err := self.stepFn(self.mech, input)
 
 	if err != nil {
-		self.terminate(status, ERROR, fmt.Errorf("failed to perform authentication step: %v", err))
+		self.terminate(status, statusError, fmt.Errorf("failed to perform authentication step: %v", err))
 		return
 	}
 	self.stepFn = fn
@@ -288,24 +299,24 @@ func (self *authenticateeProcess) step(ctx context.Context, from *upid.UPID, pbM
 		message.Data = output
 	}
 	if err := self.transport.Send(ctx, from, message); err != nil {
-		self.terminate(status, ERROR, err)
+		self.terminate(status, statusError, err)
 	}
 }
 
 func (self *authenticateeProcess) completed(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	status := statusFrom(ctx)
-	if status != STEPPING {
-		self.terminate(status, ERROR, fmt.Errorf("Unexpected authentication 'completed' received"))
+	if status != statusStepping {
+		self.terminate(status, statusError, UnexpectedAuthenticationCompleted)
 		return
 	}
 
-	log.Infof("Authentication success")
-	self.terminate(status, COMPLETED, nil)
+	log.Info("Authentication success")
+	self.terminate(status, statusCompleted, nil)
 }
 
 func (self *authenticateeProcess) failed(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	status := statusFrom(ctx)
-	self.terminate(status, FAILED, auth.AuthenticationFailed)
+	self.terminate(status, statusFailed, auth.AuthenticationFailed)
 }
 
 func (self *authenticateeProcess) errored(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
@@ -316,5 +327,5 @@ func (self *authenticateeProcess) errored(ctx context.Context, from *upid.UPID, 
 		err = fmt.Errorf("Authentication error: %s", msg.GetError())
 	}
 	status := statusFrom(ctx)
-	self.terminate(status, ERROR, err)
+	self.terminate(status, statusError, err)
 }

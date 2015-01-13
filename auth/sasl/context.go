@@ -1,8 +1,6 @@
 package sasl
 
 import (
-	"errors"
-
 	"golang.org/x/net/context"
 )
 
@@ -14,10 +12,6 @@ type _key int
 // different integer values.
 const (
 	statusKey _key = iota
-)
-
-var (
-	NilProcessErr = errors.New("nil authenticateeProcess has no status")
 )
 
 func withStatus(ctx context.Context, s statusType) context.Context {

@@ -30,5 +30,4 @@ func (f AuthenticateeFunc) Authenticate(ctx context.Context, pid, client upid.UP
 
 var (
 	AuthenticationFailed = errors.New("authentication failed")
-	UnsupportedMechanism = errors.New("failed to identify a compatible mechanism")
 )

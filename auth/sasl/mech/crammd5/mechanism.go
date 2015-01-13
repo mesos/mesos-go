@@ -4,7 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/md5"
 	"encoding/hex"
-	"errors"
 	"io"
 
 	log "github.com/golang/glog"
@@ -13,8 +12,7 @@ import (
 )
 
 var (
-	illegalStateErr = errors.New("illegal mechanism state")
-	Name            = "CRAM-MD5" // name this mechanism is registered with
+	Name = "CRAM-MD5" // name this mechanism is registered with
 )
 
 func init() {
@@ -27,6 +25,10 @@ type mechanism struct {
 
 func (m *mechanism) Handler() callback.Handler {
 	return m.handler
+}
+
+func (m *mechanism) Discard() {
+	// noop
 }
 
 func newInstance(h callback.Handler) (mech.Interface, mech.StepFunc, error) {
@@ -50,18 +52,14 @@ func challengeResponse(m mech.Interface, data []byte) (mech.StepFunc, []byte, er
 	secret := callback.NewPassword("", false)
 
 	if err := m.Handler().Handle(username, secret); err != nil {
-		return illegalState, nil, err
+		return mech.IllegalState, nil, err
 	}
 	hash := hmac.New(md5.New, secret.Get())
 	if _, err := io.WriteString(hash, decoded); err != nil {
-		return illegalState, nil, err
+		return mech.IllegalState, nil, err
 	}
 
 	codes := hex.EncodeToString(hash.Sum(nil))
 	msg := username.Get() + " " + codes
 	return nil, []byte(msg), nil
-}
-
-func illegalState(m mech.Interface, data []byte) (mech.StepFunc, []byte, error) {
-	return illegalState, nil, illegalStateErr
 }

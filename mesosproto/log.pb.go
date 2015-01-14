@@ -26,32 +26,31 @@
 */
 package mesosproto
 
-import proto "code.google.com/p/gogoprotobuf/proto"
-import json "encoding/json"
+import proto "github.com/gogo/protobuf/proto"
 import math "math"
 
 // discarding unused import gogoproto "code.google.com/p/gogoprotobuf/gogoproto/gogo.pb"
 
 import io "io"
-import code_google_com_p_gogoprotobuf_proto "code.google.com/p/gogoprotobuf/proto"
-
 import fmt "fmt"
+import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
+
+import fmt1 "fmt"
 import strings "strings"
 import reflect "reflect"
 
-import fmt1 "fmt"
+import fmt2 "fmt"
 import strings1 "strings"
-import code_google_com_p_gogoprotobuf_proto1 "code.google.com/p/gogoprotobuf/proto"
+import github_com_gogo_protobuf_proto1 "github.com/gogo/protobuf/proto"
 import sort "sort"
 import strconv "strconv"
 import reflect1 "reflect"
 
-import fmt2 "fmt"
+import fmt3 "fmt"
 import bytes "bytes"
 
-// Reference proto, json, and math imports to suppress error if they are not otherwise used.
+// Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = &json.SyntaxError{}
 var _ = math.Inf
 
 type Action_Type int32
@@ -658,7 +657,7 @@ func (m *Promise) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Proposal", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -683,7 +682,7 @@ func (m *Promise) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -717,7 +716,7 @@ func (m *Action) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Position", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -734,7 +733,7 @@ func (m *Action) Unmarshal(data []byte) error {
 			m.Position = &v
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Promised", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -751,7 +750,7 @@ func (m *Action) Unmarshal(data []byte) error {
 			m.Promised = &v
 		case 3:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Performed", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -768,7 +767,7 @@ func (m *Action) Unmarshal(data []byte) error {
 			m.Performed = &v
 		case 4:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Learned", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -786,7 +785,7 @@ func (m *Action) Unmarshal(data []byte) error {
 			m.Learned = &b
 		case 5:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}
 			var v Action_Type
 			for shift := uint(0); ; shift += 7 {
@@ -803,7 +802,7 @@ func (m *Action) Unmarshal(data []byte) error {
 			m.Type = &v
 		case 6:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Nop", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -830,7 +829,7 @@ func (m *Action) Unmarshal(data []byte) error {
 			index = postIndex
 		case 7:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Append", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -857,7 +856,7 @@ func (m *Action) Unmarshal(data []byte) error {
 			index = postIndex
 		case 8:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Truncate", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -892,7 +891,7 @@ func (m *Action) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -933,7 +932,7 @@ func (m *Action_Nop) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -967,7 +966,7 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Bytes", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -985,11 +984,11 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Bytes = append(m.Bytes, data[index:postIndex]...)
+			m.Bytes = append([]byte{}, data[index:postIndex]...)
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Cksum", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -1007,7 +1006,7 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Cksum = append(m.Cksum, data[index:postIndex]...)
+			m.Cksum = append([]byte{}, data[index:postIndex]...)
 			index = postIndex
 		default:
 			var sizeOfWire int
@@ -1019,7 +1018,7 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1053,7 +1052,7 @@ func (m *Action_Truncate) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field To", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1078,7 +1077,7 @@ func (m *Action_Truncate) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1112,7 +1111,7 @@ func (m *Metadata) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
 			}
 			var v Metadata_Status
 			for shift := uint(0); ; shift += 7 {
@@ -1129,7 +1128,7 @@ func (m *Metadata) Unmarshal(data []byte) error {
 			m.Status = &v
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Promised", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1154,7 +1153,7 @@ func (m *Metadata) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1188,7 +1187,7 @@ func (m *Record) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}
 			var v Record_Type
 			for shift := uint(0); ; shift += 7 {
@@ -1205,7 +1204,7 @@ func (m *Record) Unmarshal(data []byte) error {
 			m.Type = &v
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Promise", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1232,7 +1231,7 @@ func (m *Record) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Action", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1259,7 +1258,7 @@ func (m *Record) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1294,7 +1293,7 @@ func (m *Record) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1328,7 +1327,7 @@ func (m *PromiseRequest) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Proposal", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1345,7 +1344,7 @@ func (m *PromiseRequest) Unmarshal(data []byte) error {
 			m.Proposal = &v
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Position", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1370,7 +1369,7 @@ func (m *PromiseRequest) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1404,7 +1403,7 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Okay", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -1422,7 +1421,7 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 			m.Okay = &b
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Proposal", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1439,7 +1438,7 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 			m.Proposal = &v
 		case 4:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Position", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1456,7 +1455,7 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 			m.Position = &v
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Action", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1491,7 +1490,7 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1525,7 +1524,7 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Proposal", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1542,7 +1541,7 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			m.Proposal = &v
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Position", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1559,7 +1558,7 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			m.Position = &v
 		case 3:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Learned", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -1577,7 +1576,7 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			m.Learned = &b
 		case 4:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}
 			var v Action_Type
 			for shift := uint(0); ; shift += 7 {
@@ -1594,7 +1593,7 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			m.Type = &v
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Nop", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1621,7 +1620,7 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			index = postIndex
 		case 6:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Append", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1648,7 +1647,7 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			index = postIndex
 		case 7:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Truncate", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1683,7 +1682,7 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1717,7 +1716,7 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Okay", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -1735,7 +1734,7 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 			m.Okay = &b
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Proposal", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1752,7 +1751,7 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 			m.Proposal = &v
 		case 3:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Position", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1777,7 +1776,7 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1811,7 +1810,7 @@ func (m *LearnedMessage) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Action", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1846,7 +1845,7 @@ func (m *LearnedMessage) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1887,7 +1886,7 @@ func (m *RecoverRequest) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1921,7 +1920,7 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
 			}
 			var v Metadata_Status
 			for shift := uint(0); ; shift += 7 {
@@ -1938,7 +1937,7 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 			m.Status = &v
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Begin", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1955,7 +1954,7 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 			m.Begin = &v
 		case 3:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field End", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1980,7 +1979,7 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -1999,7 +1998,7 @@ func (this *Promise) String() string {
 	}
 	s := strings.Join([]string{`&Promise{`,
 		`Proposal:` + valueToStringLog(this.Proposal) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2014,10 +2013,10 @@ func (this *Action) String() string {
 		`Performed:` + valueToStringLog(this.Performed) + `,`,
 		`Learned:` + valueToStringLog(this.Learned) + `,`,
 		`Type:` + valueToStringLog(this.Type) + `,`,
-		`Nop:` + strings.Replace(fmt.Sprintf("%v", this.Nop), "Action_Nop", "Action_Nop", 1) + `,`,
-		`Append:` + strings.Replace(fmt.Sprintf("%v", this.Append), "Action_Append", "Action_Append", 1) + `,`,
-		`Truncate:` + strings.Replace(fmt.Sprintf("%v", this.Truncate), "Action_Truncate", "Action_Truncate", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Nop:` + strings.Replace(fmt1.Sprintf("%v", this.Nop), "Action_Nop", "Action_Nop", 1) + `,`,
+		`Append:` + strings.Replace(fmt1.Sprintf("%v", this.Append), "Action_Append", "Action_Append", 1) + `,`,
+		`Truncate:` + strings.Replace(fmt1.Sprintf("%v", this.Truncate), "Action_Truncate", "Action_Truncate", 1) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2027,7 +2026,7 @@ func (this *Action_Nop) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Action_Nop{`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2039,7 +2038,7 @@ func (this *Action_Append) String() string {
 	s := strings.Join([]string{`&Action_Append{`,
 		`Bytes:` + valueToStringLog(this.Bytes) + `,`,
 		`Cksum:` + valueToStringLog(this.Cksum) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2050,7 +2049,7 @@ func (this *Action_Truncate) String() string {
 	}
 	s := strings.Join([]string{`&Action_Truncate{`,
 		`To:` + valueToStringLog(this.To) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2062,7 +2061,7 @@ func (this *Metadata) String() string {
 	s := strings.Join([]string{`&Metadata{`,
 		`Status:` + valueToStringLog(this.Status) + `,`,
 		`Promised:` + valueToStringLog(this.Promised) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2073,10 +2072,10 @@ func (this *Record) String() string {
 	}
 	s := strings.Join([]string{`&Record{`,
 		`Type:` + valueToStringLog(this.Type) + `,`,
-		`Promise:` + strings.Replace(fmt.Sprintf("%v", this.Promise), "Promise", "Promise", 1) + `,`,
-		`Action:` + strings.Replace(fmt.Sprintf("%v", this.Action), "Action", "Action", 1) + `,`,
-		`Metadata:` + strings.Replace(fmt.Sprintf("%v", this.Metadata), "Metadata", "Metadata", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Promise:` + strings.Replace(fmt1.Sprintf("%v", this.Promise), "Promise", "Promise", 1) + `,`,
+		`Action:` + strings.Replace(fmt1.Sprintf("%v", this.Action), "Action", "Action", 1) + `,`,
+		`Metadata:` + strings.Replace(fmt1.Sprintf("%v", this.Metadata), "Metadata", "Metadata", 1) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2088,7 +2087,7 @@ func (this *PromiseRequest) String() string {
 	s := strings.Join([]string{`&PromiseRequest{`,
 		`Proposal:` + valueToStringLog(this.Proposal) + `,`,
 		`Position:` + valueToStringLog(this.Position) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2101,8 +2100,8 @@ func (this *PromiseResponse) String() string {
 		`Okay:` + valueToStringLog(this.Okay) + `,`,
 		`Proposal:` + valueToStringLog(this.Proposal) + `,`,
 		`Position:` + valueToStringLog(this.Position) + `,`,
-		`Action:` + strings.Replace(fmt.Sprintf("%v", this.Action), "Action", "Action", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Action:` + strings.Replace(fmt1.Sprintf("%v", this.Action), "Action", "Action", 1) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2116,10 +2115,10 @@ func (this *WriteRequest) String() string {
 		`Position:` + valueToStringLog(this.Position) + `,`,
 		`Learned:` + valueToStringLog(this.Learned) + `,`,
 		`Type:` + valueToStringLog(this.Type) + `,`,
-		`Nop:` + strings.Replace(fmt.Sprintf("%v", this.Nop), "Action_Nop", "Action_Nop", 1) + `,`,
-		`Append:` + strings.Replace(fmt.Sprintf("%v", this.Append), "Action_Append", "Action_Append", 1) + `,`,
-		`Truncate:` + strings.Replace(fmt.Sprintf("%v", this.Truncate), "Action_Truncate", "Action_Truncate", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Nop:` + strings.Replace(fmt1.Sprintf("%v", this.Nop), "Action_Nop", "Action_Nop", 1) + `,`,
+		`Append:` + strings.Replace(fmt1.Sprintf("%v", this.Append), "Action_Append", "Action_Append", 1) + `,`,
+		`Truncate:` + strings.Replace(fmt1.Sprintf("%v", this.Truncate), "Action_Truncate", "Action_Truncate", 1) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2132,7 +2131,7 @@ func (this *WriteResponse) String() string {
 		`Okay:` + valueToStringLog(this.Okay) + `,`,
 		`Proposal:` + valueToStringLog(this.Proposal) + `,`,
 		`Position:` + valueToStringLog(this.Position) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2142,8 +2141,8 @@ func (this *LearnedMessage) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&LearnedMessage{`,
-		`Action:` + strings.Replace(fmt.Sprintf("%v", this.Action), "Action", "Action", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Action:` + strings.Replace(fmt1.Sprintf("%v", this.Action), "Action", "Action", 1) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2153,7 +2152,7 @@ func (this *RecoverRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&RecoverRequest{`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2166,7 +2165,7 @@ func (this *RecoverResponse) String() string {
 		`Status:` + valueToStringLog(this.Status) + `,`,
 		`Begin:` + valueToStringLog(this.Begin) + `,`,
 		`End:` + valueToStringLog(this.End) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2177,7 +2176,7 @@ func valueToStringLog(v interface{}) string {
 		return "nil"
 	}
 	pv := reflect.Indirect(rv).Interface()
-	return fmt.Sprintf("*%v", pv)
+	return fmt1.Sprintf("*%v", pv)
 }
 func (m *Promise) Size() (n int) {
 	var l int
@@ -2190,6 +2189,7 @@ func (m *Promise) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Action) Size() (n int) {
 	var l int
 	_ = l
@@ -2225,6 +2225,7 @@ func (m *Action) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Action_Nop) Size() (n int) {
 	var l int
 	_ = l
@@ -2233,6 +2234,7 @@ func (m *Action_Nop) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Action_Append) Size() (n int) {
 	var l int
 	_ = l
@@ -2249,6 +2251,7 @@ func (m *Action_Append) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Action_Truncate) Size() (n int) {
 	var l int
 	_ = l
@@ -2260,6 +2263,7 @@ func (m *Action_Truncate) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Metadata) Size() (n int) {
 	var l int
 	_ = l
@@ -2274,6 +2278,7 @@ func (m *Metadata) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Record) Size() (n int) {
 	var l int
 	_ = l
@@ -2297,6 +2302,7 @@ func (m *Record) Size() (n int) {
 	}
 	return n
 }
+
 func (m *PromiseRequest) Size() (n int) {
 	var l int
 	_ = l
@@ -2311,6 +2317,7 @@ func (m *PromiseRequest) Size() (n int) {
 	}
 	return n
 }
+
 func (m *PromiseResponse) Size() (n int) {
 	var l int
 	_ = l
@@ -2332,6 +2339,7 @@ func (m *PromiseResponse) Size() (n int) {
 	}
 	return n
 }
+
 func (m *WriteRequest) Size() (n int) {
 	var l int
 	_ = l
@@ -2364,6 +2372,7 @@ func (m *WriteRequest) Size() (n int) {
 	}
 	return n
 }
+
 func (m *WriteResponse) Size() (n int) {
 	var l int
 	_ = l
@@ -2381,6 +2390,7 @@ func (m *WriteResponse) Size() (n int) {
 	}
 	return n
 }
+
 func (m *LearnedMessage) Size() (n int) {
 	var l int
 	_ = l
@@ -2393,6 +2403,7 @@ func (m *LearnedMessage) Size() (n int) {
 	}
 	return n
 }
+
 func (m *RecoverRequest) Size() (n int) {
 	var l int
 	_ = l
@@ -2401,6 +2412,7 @@ func (m *RecoverRequest) Size() (n int) {
 	}
 	return n
 }
+
 func (m *RecoverResponse) Size() (n int) {
 	var l int
 	_ = l
@@ -2748,6 +2760,7 @@ func (m *Promise) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Action) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -2828,6 +2841,7 @@ func (m *Action) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Action_Nop) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -2848,6 +2862,7 @@ func (m *Action_Nop) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Action_Append) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -2880,6 +2895,7 @@ func (m *Action_Append) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Action_Truncate) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -2905,6 +2921,7 @@ func (m *Action_Truncate) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Metadata) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -2935,6 +2952,7 @@ func (m *Metadata) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Record) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -2990,6 +3008,7 @@ func (m *Record) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *PromiseRequest) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -3020,6 +3039,7 @@ func (m *PromiseRequest) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *PromiseResponse) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -3070,6 +3090,7 @@ func (m *PromiseResponse) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *WriteRequest) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -3145,6 +3166,7 @@ func (m *WriteRequest) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *WriteResponse) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -3185,6 +3207,7 @@ func (m *WriteResponse) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *LearnedMessage) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -3215,6 +3238,7 @@ func (m *LearnedMessage) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *RecoverRequest) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -3235,6 +3259,7 @@ func (m *RecoverRequest) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *RecoverResponse) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -3270,6 +3295,7 @@ func (m *RecoverResponse) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func encodeFixed64Log(data []byte, offset int, v uint64) int {
 	data[offset] = uint8(v)
 	data[offset+1] = uint8(v >> 8)
@@ -3301,98 +3327,150 @@ func (this *Promise) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.Promise{` + `Proposal:` + valueToGoStringLog(this.Proposal, "uint64"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.Promise{` +
+		`Proposal:` + valueToGoStringLog(this.Proposal, "uint64"),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Action) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.Action{` + `Position:` + valueToGoStringLog(this.Position, "uint64"), `Promised:` + valueToGoStringLog(this.Promised, "uint64"), `Performed:` + valueToGoStringLog(this.Performed, "uint64"), `Learned:` + valueToGoStringLog(this.Learned, "bool"), `Type:` + valueToGoStringLog(this.Type, "mesosproto.Action_Type"), `Nop:` + fmt1.Sprintf("%#v", this.Nop), `Append:` + fmt1.Sprintf("%#v", this.Append), `Truncate:` + fmt1.Sprintf("%#v", this.Truncate), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.Action{` +
+		`Position:` + valueToGoStringLog(this.Position, "uint64"),
+		`Promised:` + valueToGoStringLog(this.Promised, "uint64"),
+		`Performed:` + valueToGoStringLog(this.Performed, "uint64"),
+		`Learned:` + valueToGoStringLog(this.Learned, "bool"),
+		`Type:` + valueToGoStringLog(this.Type, "mesosproto.Action_Type"),
+		`Nop:` + fmt2.Sprintf("%#v", this.Nop),
+		`Append:` + fmt2.Sprintf("%#v", this.Append),
+		`Truncate:` + fmt2.Sprintf("%#v", this.Truncate),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Action_Nop) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.Action_Nop{` + `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.Action_Nop{` +
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Action_Append) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.Action_Append{` + `Bytes:` + valueToGoStringLog(this.Bytes, "byte"), `Cksum:` + valueToGoStringLog(this.Cksum, "byte"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.Action_Append{` +
+		`Bytes:` + valueToGoStringLog(this.Bytes, "byte"),
+		`Cksum:` + valueToGoStringLog(this.Cksum, "byte"),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Action_Truncate) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.Action_Truncate{` + `To:` + valueToGoStringLog(this.To, "uint64"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.Action_Truncate{` +
+		`To:` + valueToGoStringLog(this.To, "uint64"),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Metadata) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.Metadata{` + `Status:` + valueToGoStringLog(this.Status, "mesosproto.Metadata_Status"), `Promised:` + valueToGoStringLog(this.Promised, "uint64"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.Metadata{` +
+		`Status:` + valueToGoStringLog(this.Status, "mesosproto.Metadata_Status"),
+		`Promised:` + valueToGoStringLog(this.Promised, "uint64"),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Record) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.Record{` + `Type:` + valueToGoStringLog(this.Type, "mesosproto.Record_Type"), `Promise:` + fmt1.Sprintf("%#v", this.Promise), `Action:` + fmt1.Sprintf("%#v", this.Action), `Metadata:` + fmt1.Sprintf("%#v", this.Metadata), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.Record{` +
+		`Type:` + valueToGoStringLog(this.Type, "mesosproto.Record_Type"),
+		`Promise:` + fmt2.Sprintf("%#v", this.Promise),
+		`Action:` + fmt2.Sprintf("%#v", this.Action),
+		`Metadata:` + fmt2.Sprintf("%#v", this.Metadata),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *PromiseRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.PromiseRequest{` + `Proposal:` + valueToGoStringLog(this.Proposal, "uint64"), `Position:` + valueToGoStringLog(this.Position, "uint64"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.PromiseRequest{` +
+		`Proposal:` + valueToGoStringLog(this.Proposal, "uint64"),
+		`Position:` + valueToGoStringLog(this.Position, "uint64"),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *PromiseResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.PromiseResponse{` + `Okay:` + valueToGoStringLog(this.Okay, "bool"), `Proposal:` + valueToGoStringLog(this.Proposal, "uint64"), `Position:` + valueToGoStringLog(this.Position, "uint64"), `Action:` + fmt1.Sprintf("%#v", this.Action), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.PromiseResponse{` +
+		`Okay:` + valueToGoStringLog(this.Okay, "bool"),
+		`Proposal:` + valueToGoStringLog(this.Proposal, "uint64"),
+		`Position:` + valueToGoStringLog(this.Position, "uint64"),
+		`Action:` + fmt2.Sprintf("%#v", this.Action),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *WriteRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.WriteRequest{` + `Proposal:` + valueToGoStringLog(this.Proposal, "uint64"), `Position:` + valueToGoStringLog(this.Position, "uint64"), `Learned:` + valueToGoStringLog(this.Learned, "bool"), `Type:` + valueToGoStringLog(this.Type, "mesosproto.Action_Type"), `Nop:` + fmt1.Sprintf("%#v", this.Nop), `Append:` + fmt1.Sprintf("%#v", this.Append), `Truncate:` + fmt1.Sprintf("%#v", this.Truncate), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.WriteRequest{` +
+		`Proposal:` + valueToGoStringLog(this.Proposal, "uint64"),
+		`Position:` + valueToGoStringLog(this.Position, "uint64"),
+		`Learned:` + valueToGoStringLog(this.Learned, "bool"),
+		`Type:` + valueToGoStringLog(this.Type, "mesosproto.Action_Type"),
+		`Nop:` + fmt2.Sprintf("%#v", this.Nop),
+		`Append:` + fmt2.Sprintf("%#v", this.Append),
+		`Truncate:` + fmt2.Sprintf("%#v", this.Truncate),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *WriteResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.WriteResponse{` + `Okay:` + valueToGoStringLog(this.Okay, "bool"), `Proposal:` + valueToGoStringLog(this.Proposal, "uint64"), `Position:` + valueToGoStringLog(this.Position, "uint64"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.WriteResponse{` +
+		`Okay:` + valueToGoStringLog(this.Okay, "bool"),
+		`Proposal:` + valueToGoStringLog(this.Proposal, "uint64"),
+		`Position:` + valueToGoStringLog(this.Position, "uint64"),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *LearnedMessage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.LearnedMessage{` + `Action:` + fmt1.Sprintf("%#v", this.Action), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.LearnedMessage{` +
+		`Action:` + fmt2.Sprintf("%#v", this.Action),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *RecoverRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.RecoverRequest{` + `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.RecoverRequest{` +
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *RecoverResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&mesosproto.RecoverResponse{` + `Status:` + valueToGoStringLog(this.Status, "mesosproto.Metadata_Status"), `Begin:` + valueToGoStringLog(this.Begin, "uint64"), `End:` + valueToGoStringLog(this.End, "uint64"), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&mesosproto.RecoverResponse{` +
+		`Status:` + valueToGoStringLog(this.Status, "mesosproto.Metadata_Status"),
+		`Begin:` + valueToGoStringLog(this.Begin, "uint64"),
+		`End:` + valueToGoStringLog(this.End, "uint64"),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func valueToGoStringLog(v interface{}, typ string) string {
@@ -3401,9 +3479,9 @@ func valueToGoStringLog(v interface{}, typ string) string {
 		return "nil"
 	}
 	pv := reflect1.Indirect(rv).Interface()
-	return fmt1.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
+	return fmt2.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
-func extensionToGoStringLog(e map[int32]code_google_com_p_gogoprotobuf_proto1.Extension) string {
+func extensionToGoStringLog(e map[int32]github_com_gogo_protobuf_proto1.Extension) string {
 	if e == nil {
 		return "nil"
 	}
@@ -3425,32 +3503,32 @@ func (this *Promise) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Promise)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Promise")
+		return fmt3.Errorf("that is not of type *Promise")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Promise but is nil && this != nil")
+		return fmt3.Errorf("that is type *Promise but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Promisebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *Promisebut is not nil && this == nil")
 	}
 	if this.Proposal != nil && that1.Proposal != nil {
 		if *this.Proposal != *that1.Proposal {
-			return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
+			return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
 		}
 	} else if this.Proposal != nil {
-		return fmt2.Errorf("this.Proposal == nil && that.Proposal != nil")
+		return fmt3.Errorf("this.Proposal == nil && that.Proposal != nil")
 	} else if that1.Proposal != nil {
-		return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
+		return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3493,77 +3571,77 @@ func (this *Action) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Action)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Action")
+		return fmt3.Errorf("that is not of type *Action")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Action but is nil && this != nil")
+		return fmt3.Errorf("that is type *Action but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Actionbut is not nil && this == nil")
+		return fmt3.Errorf("that is type *Actionbut is not nil && this == nil")
 	}
 	if this.Position != nil && that1.Position != nil {
 		if *this.Position != *that1.Position {
-			return fmt2.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
+			return fmt3.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
 		}
 	} else if this.Position != nil {
-		return fmt2.Errorf("this.Position == nil && that.Position != nil")
+		return fmt3.Errorf("this.Position == nil && that.Position != nil")
 	} else if that1.Position != nil {
-		return fmt2.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
+		return fmt3.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
 	}
 	if this.Promised != nil && that1.Promised != nil {
 		if *this.Promised != *that1.Promised {
-			return fmt2.Errorf("Promised this(%v) Not Equal that(%v)", *this.Promised, *that1.Promised)
+			return fmt3.Errorf("Promised this(%v) Not Equal that(%v)", *this.Promised, *that1.Promised)
 		}
 	} else if this.Promised != nil {
-		return fmt2.Errorf("this.Promised == nil && that.Promised != nil")
+		return fmt3.Errorf("this.Promised == nil && that.Promised != nil")
 	} else if that1.Promised != nil {
-		return fmt2.Errorf("Promised this(%v) Not Equal that(%v)", this.Promised, that1.Promised)
+		return fmt3.Errorf("Promised this(%v) Not Equal that(%v)", this.Promised, that1.Promised)
 	}
 	if this.Performed != nil && that1.Performed != nil {
 		if *this.Performed != *that1.Performed {
-			return fmt2.Errorf("Performed this(%v) Not Equal that(%v)", *this.Performed, *that1.Performed)
+			return fmt3.Errorf("Performed this(%v) Not Equal that(%v)", *this.Performed, *that1.Performed)
 		}
 	} else if this.Performed != nil {
-		return fmt2.Errorf("this.Performed == nil && that.Performed != nil")
+		return fmt3.Errorf("this.Performed == nil && that.Performed != nil")
 	} else if that1.Performed != nil {
-		return fmt2.Errorf("Performed this(%v) Not Equal that(%v)", this.Performed, that1.Performed)
+		return fmt3.Errorf("Performed this(%v) Not Equal that(%v)", this.Performed, that1.Performed)
 	}
 	if this.Learned != nil && that1.Learned != nil {
 		if *this.Learned != *that1.Learned {
-			return fmt2.Errorf("Learned this(%v) Not Equal that(%v)", *this.Learned, *that1.Learned)
+			return fmt3.Errorf("Learned this(%v) Not Equal that(%v)", *this.Learned, *that1.Learned)
 		}
 	} else if this.Learned != nil {
-		return fmt2.Errorf("this.Learned == nil && that.Learned != nil")
+		return fmt3.Errorf("this.Learned == nil && that.Learned != nil")
 	} else if that1.Learned != nil {
-		return fmt2.Errorf("Learned this(%v) Not Equal that(%v)", this.Learned, that1.Learned)
+		return fmt3.Errorf("Learned this(%v) Not Equal that(%v)", this.Learned, that1.Learned)
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
-			return fmt2.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
+			return fmt3.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
 		}
 	} else if this.Type != nil {
-		return fmt2.Errorf("this.Type == nil && that.Type != nil")
+		return fmt3.Errorf("this.Type == nil && that.Type != nil")
 	} else if that1.Type != nil {
-		return fmt2.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+		return fmt3.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
 	if !this.Nop.Equal(that1.Nop) {
-		return fmt2.Errorf("Nop this(%v) Not Equal that(%v)", this.Nop, that1.Nop)
+		return fmt3.Errorf("Nop this(%v) Not Equal that(%v)", this.Nop, that1.Nop)
 	}
 	if !this.Append.Equal(that1.Append) {
-		return fmt2.Errorf("Append this(%v) Not Equal that(%v)", this.Append, that1.Append)
+		return fmt3.Errorf("Append this(%v) Not Equal that(%v)", this.Append, that1.Append)
 	}
 	if !this.Truncate.Equal(that1.Truncate) {
-		return fmt2.Errorf("Truncate this(%v) Not Equal that(%v)", this.Truncate, that1.Truncate)
+		return fmt3.Errorf("Truncate this(%v) Not Equal that(%v)", this.Truncate, that1.Truncate)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3651,23 +3729,23 @@ func (this *Action_Nop) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Action_Nop)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Action_Nop")
+		return fmt3.Errorf("that is not of type *Action_Nop")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Action_Nop but is nil && this != nil")
+		return fmt3.Errorf("that is type *Action_Nop but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Action_Nopbut is not nil && this == nil")
+		return fmt3.Errorf("that is type *Action_Nopbut is not nil && this == nil")
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3701,29 +3779,29 @@ func (this *Action_Append) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Action_Append)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Action_Append")
+		return fmt3.Errorf("that is not of type *Action_Append")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Action_Append but is nil && this != nil")
+		return fmt3.Errorf("that is type *Action_Append but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Action_Appendbut is not nil && this == nil")
+		return fmt3.Errorf("that is type *Action_Appendbut is not nil && this == nil")
 	}
 	if !bytes.Equal(this.Bytes, that1.Bytes) {
-		return fmt2.Errorf("Bytes this(%v) Not Equal that(%v)", this.Bytes, that1.Bytes)
+		return fmt3.Errorf("Bytes this(%v) Not Equal that(%v)", this.Bytes, that1.Bytes)
 	}
 	if !bytes.Equal(this.Cksum, that1.Cksum) {
-		return fmt2.Errorf("Cksum this(%v) Not Equal that(%v)", this.Cksum, that1.Cksum)
+		return fmt3.Errorf("Cksum this(%v) Not Equal that(%v)", this.Cksum, that1.Cksum)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3763,32 +3841,32 @@ func (this *Action_Truncate) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Action_Truncate)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Action_Truncate")
+		return fmt3.Errorf("that is not of type *Action_Truncate")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Action_Truncate but is nil && this != nil")
+		return fmt3.Errorf("that is type *Action_Truncate but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Action_Truncatebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *Action_Truncatebut is not nil && this == nil")
 	}
 	if this.To != nil && that1.To != nil {
 		if *this.To != *that1.To {
-			return fmt2.Errorf("To this(%v) Not Equal that(%v)", *this.To, *that1.To)
+			return fmt3.Errorf("To this(%v) Not Equal that(%v)", *this.To, *that1.To)
 		}
 	} else if this.To != nil {
-		return fmt2.Errorf("this.To == nil && that.To != nil")
+		return fmt3.Errorf("this.To == nil && that.To != nil")
 	} else if that1.To != nil {
-		return fmt2.Errorf("To this(%v) Not Equal that(%v)", this.To, that1.To)
+		return fmt3.Errorf("To this(%v) Not Equal that(%v)", this.To, that1.To)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3831,41 +3909,41 @@ func (this *Metadata) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Metadata)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Metadata")
+		return fmt3.Errorf("that is not of type *Metadata")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Metadata but is nil && this != nil")
+		return fmt3.Errorf("that is type *Metadata but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Metadatabut is not nil && this == nil")
+		return fmt3.Errorf("that is type *Metadatabut is not nil && this == nil")
 	}
 	if this.Status != nil && that1.Status != nil {
 		if *this.Status != *that1.Status {
-			return fmt2.Errorf("Status this(%v) Not Equal that(%v)", *this.Status, *that1.Status)
+			return fmt3.Errorf("Status this(%v) Not Equal that(%v)", *this.Status, *that1.Status)
 		}
 	} else if this.Status != nil {
-		return fmt2.Errorf("this.Status == nil && that.Status != nil")
+		return fmt3.Errorf("this.Status == nil && that.Status != nil")
 	} else if that1.Status != nil {
-		return fmt2.Errorf("Status this(%v) Not Equal that(%v)", this.Status, that1.Status)
+		return fmt3.Errorf("Status this(%v) Not Equal that(%v)", this.Status, that1.Status)
 	}
 	if this.Promised != nil && that1.Promised != nil {
 		if *this.Promised != *that1.Promised {
-			return fmt2.Errorf("Promised this(%v) Not Equal that(%v)", *this.Promised, *that1.Promised)
+			return fmt3.Errorf("Promised this(%v) Not Equal that(%v)", *this.Promised, *that1.Promised)
 		}
 	} else if this.Promised != nil {
-		return fmt2.Errorf("this.Promised == nil && that.Promised != nil")
+		return fmt3.Errorf("this.Promised == nil && that.Promised != nil")
 	} else if that1.Promised != nil {
-		return fmt2.Errorf("Promised this(%v) Not Equal that(%v)", this.Promised, that1.Promised)
+		return fmt3.Errorf("Promised this(%v) Not Equal that(%v)", this.Promised, that1.Promised)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -3917,41 +3995,41 @@ func (this *Record) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Record)
 	if !ok {
-		return fmt2.Errorf("that is not of type *Record")
+		return fmt3.Errorf("that is not of type *Record")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *Record but is nil && this != nil")
+		return fmt3.Errorf("that is type *Record but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *Recordbut is not nil && this == nil")
+		return fmt3.Errorf("that is type *Recordbut is not nil && this == nil")
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
-			return fmt2.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
+			return fmt3.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
 		}
 	} else if this.Type != nil {
-		return fmt2.Errorf("this.Type == nil && that.Type != nil")
+		return fmt3.Errorf("this.Type == nil && that.Type != nil")
 	} else if that1.Type != nil {
-		return fmt2.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+		return fmt3.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
 	if !this.Promise.Equal(that1.Promise) {
-		return fmt2.Errorf("Promise this(%v) Not Equal that(%v)", this.Promise, that1.Promise)
+		return fmt3.Errorf("Promise this(%v) Not Equal that(%v)", this.Promise, that1.Promise)
 	}
 	if !this.Action.Equal(that1.Action) {
-		return fmt2.Errorf("Action this(%v) Not Equal that(%v)", this.Action, that1.Action)
+		return fmt3.Errorf("Action this(%v) Not Equal that(%v)", this.Action, that1.Action)
 	}
 	if !this.Metadata.Equal(that1.Metadata) {
-		return fmt2.Errorf("Metadata this(%v) Not Equal that(%v)", this.Metadata, that1.Metadata)
+		return fmt3.Errorf("Metadata this(%v) Not Equal that(%v)", this.Metadata, that1.Metadata)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -4003,41 +4081,41 @@ func (this *PromiseRequest) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*PromiseRequest)
 	if !ok {
-		return fmt2.Errorf("that is not of type *PromiseRequest")
+		return fmt3.Errorf("that is not of type *PromiseRequest")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *PromiseRequest but is nil && this != nil")
+		return fmt3.Errorf("that is type *PromiseRequest but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *PromiseRequestbut is not nil && this == nil")
+		return fmt3.Errorf("that is type *PromiseRequestbut is not nil && this == nil")
 	}
 	if this.Proposal != nil && that1.Proposal != nil {
 		if *this.Proposal != *that1.Proposal {
-			return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
+			return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
 		}
 	} else if this.Proposal != nil {
-		return fmt2.Errorf("this.Proposal == nil && that.Proposal != nil")
+		return fmt3.Errorf("this.Proposal == nil && that.Proposal != nil")
 	} else if that1.Proposal != nil {
-		return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
+		return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
 	}
 	if this.Position != nil && that1.Position != nil {
 		if *this.Position != *that1.Position {
-			return fmt2.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
+			return fmt3.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
 		}
 	} else if this.Position != nil {
-		return fmt2.Errorf("this.Position == nil && that.Position != nil")
+		return fmt3.Errorf("this.Position == nil && that.Position != nil")
 	} else if that1.Position != nil {
-		return fmt2.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
+		return fmt3.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -4089,53 +4167,53 @@ func (this *PromiseResponse) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*PromiseResponse)
 	if !ok {
-		return fmt2.Errorf("that is not of type *PromiseResponse")
+		return fmt3.Errorf("that is not of type *PromiseResponse")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *PromiseResponse but is nil && this != nil")
+		return fmt3.Errorf("that is type *PromiseResponse but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *PromiseResponsebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *PromiseResponsebut is not nil && this == nil")
 	}
 	if this.Okay != nil && that1.Okay != nil {
 		if *this.Okay != *that1.Okay {
-			return fmt2.Errorf("Okay this(%v) Not Equal that(%v)", *this.Okay, *that1.Okay)
+			return fmt3.Errorf("Okay this(%v) Not Equal that(%v)", *this.Okay, *that1.Okay)
 		}
 	} else if this.Okay != nil {
-		return fmt2.Errorf("this.Okay == nil && that.Okay != nil")
+		return fmt3.Errorf("this.Okay == nil && that.Okay != nil")
 	} else if that1.Okay != nil {
-		return fmt2.Errorf("Okay this(%v) Not Equal that(%v)", this.Okay, that1.Okay)
+		return fmt3.Errorf("Okay this(%v) Not Equal that(%v)", this.Okay, that1.Okay)
 	}
 	if this.Proposal != nil && that1.Proposal != nil {
 		if *this.Proposal != *that1.Proposal {
-			return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
+			return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
 		}
 	} else if this.Proposal != nil {
-		return fmt2.Errorf("this.Proposal == nil && that.Proposal != nil")
+		return fmt3.Errorf("this.Proposal == nil && that.Proposal != nil")
 	} else if that1.Proposal != nil {
-		return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
+		return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
 	}
 	if this.Position != nil && that1.Position != nil {
 		if *this.Position != *that1.Position {
-			return fmt2.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
+			return fmt3.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
 		}
 	} else if this.Position != nil {
-		return fmt2.Errorf("this.Position == nil && that.Position != nil")
+		return fmt3.Errorf("this.Position == nil && that.Position != nil")
 	} else if that1.Position != nil {
-		return fmt2.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
+		return fmt3.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
 	}
 	if !this.Action.Equal(that1.Action) {
-		return fmt2.Errorf("Action this(%v) Not Equal that(%v)", this.Action, that1.Action)
+		return fmt3.Errorf("Action this(%v) Not Equal that(%v)", this.Action, that1.Action)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -4199,68 +4277,68 @@ func (this *WriteRequest) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*WriteRequest)
 	if !ok {
-		return fmt2.Errorf("that is not of type *WriteRequest")
+		return fmt3.Errorf("that is not of type *WriteRequest")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *WriteRequest but is nil && this != nil")
+		return fmt3.Errorf("that is type *WriteRequest but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *WriteRequestbut is not nil && this == nil")
+		return fmt3.Errorf("that is type *WriteRequestbut is not nil && this == nil")
 	}
 	if this.Proposal != nil && that1.Proposal != nil {
 		if *this.Proposal != *that1.Proposal {
-			return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
+			return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
 		}
 	} else if this.Proposal != nil {
-		return fmt2.Errorf("this.Proposal == nil && that.Proposal != nil")
+		return fmt3.Errorf("this.Proposal == nil && that.Proposal != nil")
 	} else if that1.Proposal != nil {
-		return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
+		return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
 	}
 	if this.Position != nil && that1.Position != nil {
 		if *this.Position != *that1.Position {
-			return fmt2.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
+			return fmt3.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
 		}
 	} else if this.Position != nil {
-		return fmt2.Errorf("this.Position == nil && that.Position != nil")
+		return fmt3.Errorf("this.Position == nil && that.Position != nil")
 	} else if that1.Position != nil {
-		return fmt2.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
+		return fmt3.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
 	}
 	if this.Learned != nil && that1.Learned != nil {
 		if *this.Learned != *that1.Learned {
-			return fmt2.Errorf("Learned this(%v) Not Equal that(%v)", *this.Learned, *that1.Learned)
+			return fmt3.Errorf("Learned this(%v) Not Equal that(%v)", *this.Learned, *that1.Learned)
 		}
 	} else if this.Learned != nil {
-		return fmt2.Errorf("this.Learned == nil && that.Learned != nil")
+		return fmt3.Errorf("this.Learned == nil && that.Learned != nil")
 	} else if that1.Learned != nil {
-		return fmt2.Errorf("Learned this(%v) Not Equal that(%v)", this.Learned, that1.Learned)
+		return fmt3.Errorf("Learned this(%v) Not Equal that(%v)", this.Learned, that1.Learned)
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
-			return fmt2.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
+			return fmt3.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
 		}
 	} else if this.Type != nil {
-		return fmt2.Errorf("this.Type == nil && that.Type != nil")
+		return fmt3.Errorf("this.Type == nil && that.Type != nil")
 	} else if that1.Type != nil {
-		return fmt2.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+		return fmt3.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
 	if !this.Nop.Equal(that1.Nop) {
-		return fmt2.Errorf("Nop this(%v) Not Equal that(%v)", this.Nop, that1.Nop)
+		return fmt3.Errorf("Nop this(%v) Not Equal that(%v)", this.Nop, that1.Nop)
 	}
 	if !this.Append.Equal(that1.Append) {
-		return fmt2.Errorf("Append this(%v) Not Equal that(%v)", this.Append, that1.Append)
+		return fmt3.Errorf("Append this(%v) Not Equal that(%v)", this.Append, that1.Append)
 	}
 	if !this.Truncate.Equal(that1.Truncate) {
-		return fmt2.Errorf("Truncate this(%v) Not Equal that(%v)", this.Truncate, that1.Truncate)
+		return fmt3.Errorf("Truncate this(%v) Not Equal that(%v)", this.Truncate, that1.Truncate)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -4339,50 +4417,50 @@ func (this *WriteResponse) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*WriteResponse)
 	if !ok {
-		return fmt2.Errorf("that is not of type *WriteResponse")
+		return fmt3.Errorf("that is not of type *WriteResponse")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *WriteResponse but is nil && this != nil")
+		return fmt3.Errorf("that is type *WriteResponse but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *WriteResponsebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *WriteResponsebut is not nil && this == nil")
 	}
 	if this.Okay != nil && that1.Okay != nil {
 		if *this.Okay != *that1.Okay {
-			return fmt2.Errorf("Okay this(%v) Not Equal that(%v)", *this.Okay, *that1.Okay)
+			return fmt3.Errorf("Okay this(%v) Not Equal that(%v)", *this.Okay, *that1.Okay)
 		}
 	} else if this.Okay != nil {
-		return fmt2.Errorf("this.Okay == nil && that.Okay != nil")
+		return fmt3.Errorf("this.Okay == nil && that.Okay != nil")
 	} else if that1.Okay != nil {
-		return fmt2.Errorf("Okay this(%v) Not Equal that(%v)", this.Okay, that1.Okay)
+		return fmt3.Errorf("Okay this(%v) Not Equal that(%v)", this.Okay, that1.Okay)
 	}
 	if this.Proposal != nil && that1.Proposal != nil {
 		if *this.Proposal != *that1.Proposal {
-			return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
+			return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
 		}
 	} else if this.Proposal != nil {
-		return fmt2.Errorf("this.Proposal == nil && that.Proposal != nil")
+		return fmt3.Errorf("this.Proposal == nil && that.Proposal != nil")
 	} else if that1.Proposal != nil {
-		return fmt2.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
+		return fmt3.Errorf("Proposal this(%v) Not Equal that(%v)", this.Proposal, that1.Proposal)
 	}
 	if this.Position != nil && that1.Position != nil {
 		if *this.Position != *that1.Position {
-			return fmt2.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
+			return fmt3.Errorf("Position this(%v) Not Equal that(%v)", *this.Position, *that1.Position)
 		}
 	} else if this.Position != nil {
-		return fmt2.Errorf("this.Position == nil && that.Position != nil")
+		return fmt3.Errorf("this.Position == nil && that.Position != nil")
 	} else if that1.Position != nil {
-		return fmt2.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
+		return fmt3.Errorf("Position this(%v) Not Equal that(%v)", this.Position, that1.Position)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -4443,26 +4521,26 @@ func (this *LearnedMessage) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*LearnedMessage)
 	if !ok {
-		return fmt2.Errorf("that is not of type *LearnedMessage")
+		return fmt3.Errorf("that is not of type *LearnedMessage")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *LearnedMessage but is nil && this != nil")
+		return fmt3.Errorf("that is type *LearnedMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *LearnedMessagebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *LearnedMessagebut is not nil && this == nil")
 	}
 	if !this.Action.Equal(that1.Action) {
-		return fmt2.Errorf("Action this(%v) Not Equal that(%v)", this.Action, that1.Action)
+		return fmt3.Errorf("Action this(%v) Not Equal that(%v)", this.Action, that1.Action)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -4499,23 +4577,23 @@ func (this *RecoverRequest) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*RecoverRequest)
 	if !ok {
-		return fmt2.Errorf("that is not of type *RecoverRequest")
+		return fmt3.Errorf("that is not of type *RecoverRequest")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *RecoverRequest but is nil && this != nil")
+		return fmt3.Errorf("that is type *RecoverRequest but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *RecoverRequestbut is not nil && this == nil")
+		return fmt3.Errorf("that is type *RecoverRequestbut is not nil && this == nil")
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -4549,50 +4627,50 @@ func (this *RecoverResponse) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*RecoverResponse)
 	if !ok {
-		return fmt2.Errorf("that is not of type *RecoverResponse")
+		return fmt3.Errorf("that is not of type *RecoverResponse")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *RecoverResponse but is nil && this != nil")
+		return fmt3.Errorf("that is type *RecoverResponse but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *RecoverResponsebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *RecoverResponsebut is not nil && this == nil")
 	}
 	if this.Status != nil && that1.Status != nil {
 		if *this.Status != *that1.Status {
-			return fmt2.Errorf("Status this(%v) Not Equal that(%v)", *this.Status, *that1.Status)
+			return fmt3.Errorf("Status this(%v) Not Equal that(%v)", *this.Status, *that1.Status)
 		}
 	} else if this.Status != nil {
-		return fmt2.Errorf("this.Status == nil && that.Status != nil")
+		return fmt3.Errorf("this.Status == nil && that.Status != nil")
 	} else if that1.Status != nil {
-		return fmt2.Errorf("Status this(%v) Not Equal that(%v)", this.Status, that1.Status)
+		return fmt3.Errorf("Status this(%v) Not Equal that(%v)", this.Status, that1.Status)
 	}
 	if this.Begin != nil && that1.Begin != nil {
 		if *this.Begin != *that1.Begin {
-			return fmt2.Errorf("Begin this(%v) Not Equal that(%v)", *this.Begin, *that1.Begin)
+			return fmt3.Errorf("Begin this(%v) Not Equal that(%v)", *this.Begin, *that1.Begin)
 		}
 	} else if this.Begin != nil {
-		return fmt2.Errorf("this.Begin == nil && that.Begin != nil")
+		return fmt3.Errorf("this.Begin == nil && that.Begin != nil")
 	} else if that1.Begin != nil {
-		return fmt2.Errorf("Begin this(%v) Not Equal that(%v)", this.Begin, that1.Begin)
+		return fmt3.Errorf("Begin this(%v) Not Equal that(%v)", this.Begin, that1.Begin)
 	}
 	if this.End != nil && that1.End != nil {
 		if *this.End != *that1.End {
-			return fmt2.Errorf("End this(%v) Not Equal that(%v)", *this.End, *that1.End)
+			return fmt3.Errorf("End this(%v) Not Equal that(%v)", *this.End, *that1.End)
 		}
 	} else if this.End != nil {
-		return fmt2.Errorf("this.End == nil && that.End != nil")
+		return fmt3.Errorf("this.End == nil && that.End != nil")
 	} else if that1.End != nil {
-		return fmt2.Errorf("End this(%v) Not Equal that(%v)", this.End, that1.End)
+		return fmt3.Errorf("End this(%v) Not Equal that(%v)", this.End, that1.End)
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }

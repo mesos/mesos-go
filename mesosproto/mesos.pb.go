@@ -4,35 +4,34 @@
 
 package mesosproto
 
-import proto "code.google.com/p/gogoprotobuf/proto"
-import json "encoding/json"
+import proto "github.com/gogo/protobuf/proto"
 import math "math"
 
 // discarding unused import gogoproto "code.google.com/p/gogoprotobuf/gogoproto/gogo.pb"
 
 import io1 "io"
 import math1 "math"
-import code_google_com_p_gogoprotobuf_proto2 "code.google.com/p/gogoprotobuf/proto"
+import fmt4 "fmt"
+import github_com_gogo_protobuf_proto2 "github.com/gogo/protobuf/proto"
 
-import fmt3 "fmt"
+import fmt5 "fmt"
 import strings2 "strings"
 import reflect2 "reflect"
 
 import math2 "math"
 
-import fmt4 "fmt"
+import fmt6 "fmt"
 import strings3 "strings"
-import code_google_com_p_gogoprotobuf_proto3 "code.google.com/p/gogoprotobuf/proto"
+import github_com_gogo_protobuf_proto3 "github.com/gogo/protobuf/proto"
 import sort1 "sort"
 import strconv1 "strconv"
 import reflect3 "reflect"
 
-import fmt5 "fmt"
+import fmt7 "fmt"
 import bytes1 "bytes"
 
-// Reference proto, json, and math imports to suppress error if they are not otherwise used.
+// Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = &json.SyntaxError{}
 var _ = math.Inf
 
 // *
@@ -2464,7 +2463,7 @@ func (m *FrameworkID) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2495,7 +2494,7 @@ func (m *FrameworkID) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -2529,7 +2528,7 @@ func (m *OfferID) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2560,7 +2559,7 @@ func (m *OfferID) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -2594,7 +2593,7 @@ func (m *SlaveID) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2625,7 +2624,7 @@ func (m *SlaveID) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -2659,7 +2658,7 @@ func (m *TaskID) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2690,7 +2689,7 @@ func (m *TaskID) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -2724,7 +2723,7 @@ func (m *ExecutorID) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2755,7 +2754,7 @@ func (m *ExecutorID) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -2789,7 +2788,7 @@ func (m *ContainerID) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2820,7 +2819,7 @@ func (m *ContainerID) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -2854,7 +2853,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field User", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2877,7 +2876,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2900,7 +2899,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2927,7 +2926,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field FailoverTimeout", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -2947,7 +2946,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			m.FailoverTimeout = &v2
 		case 5:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Checkpoint", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -2965,7 +2964,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			m.Checkpoint = &b
 		case 6:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Role", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2988,7 +2987,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 7:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Hostname", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3011,7 +3010,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 8:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Principal", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3042,7 +3041,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -3076,7 +3075,7 @@ func (m *HealthCheck) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Http", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3103,7 +3102,7 @@ func (m *HealthCheck) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field DelaySeconds", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -3123,7 +3122,7 @@ func (m *HealthCheck) Unmarshal(data []byte) error {
 			m.DelaySeconds = &v2
 		case 3:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field IntervalSeconds", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -3143,7 +3142,7 @@ func (m *HealthCheck) Unmarshal(data []byte) error {
 			m.IntervalSeconds = &v2
 		case 4:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field TimeoutSeconds", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -3163,7 +3162,7 @@ func (m *HealthCheck) Unmarshal(data []byte) error {
 			m.TimeoutSeconds = &v2
 		case 5:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Failures", wireType)
 			}
 			var v uint32
 			for shift := uint(0); ; shift += 7 {
@@ -3180,7 +3179,7 @@ func (m *HealthCheck) Unmarshal(data []byte) error {
 			m.Failures = &v
 		case 6:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field GracePeriodSeconds", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -3200,7 +3199,7 @@ func (m *HealthCheck) Unmarshal(data []byte) error {
 			m.GracePeriodSeconds = &v2
 		case 7:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Command", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3235,7 +3234,7 @@ func (m *HealthCheck) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -3269,7 +3268,7 @@ func (m *HealthCheck_HTTP) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Port", wireType)
 			}
 			var v uint32
 			for shift := uint(0); ; shift += 7 {
@@ -3286,7 +3285,7 @@ func (m *HealthCheck_HTTP) Unmarshal(data []byte) error {
 			m.Port = &v
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Path", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3309,7 +3308,7 @@ func (m *HealthCheck_HTTP) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Statuses", wireType)
 			}
 			var v uint32
 			for shift := uint(0); ; shift += 7 {
@@ -3334,7 +3333,7 @@ func (m *HealthCheck_HTTP) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -3368,7 +3367,7 @@ func (m *CommandInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Container", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3395,7 +3394,7 @@ func (m *CommandInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Uris", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3418,7 +3417,7 @@ func (m *CommandInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Environment", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3445,7 +3444,7 @@ func (m *CommandInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3468,7 +3467,7 @@ func (m *CommandInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field User", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3499,7 +3498,7 @@ func (m *CommandInfo) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -3533,7 +3532,7 @@ func (m *CommandInfo_URI) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3556,7 +3555,7 @@ func (m *CommandInfo_URI) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Executable", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -3574,7 +3573,7 @@ func (m *CommandInfo_URI) Unmarshal(data []byte) error {
 			m.Executable = &b
 		case 3:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Extract", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -3600,7 +3599,7 @@ func (m *CommandInfo_URI) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -3634,7 +3633,7 @@ func (m *CommandInfo_ContainerInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Image", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3657,7 +3656,7 @@ func (m *CommandInfo_ContainerInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Options", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3687,7 +3686,7 @@ func (m *CommandInfo_ContainerInfo) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -3721,7 +3720,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field ExecutorId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3748,7 +3747,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 8:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field FrameworkId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3775,7 +3774,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 7:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Command", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3802,7 +3801,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3825,7 +3824,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 9:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3848,7 +3847,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 10:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Source", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3871,7 +3870,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Data", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -3889,7 +3888,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io1.ErrUnexpectedEOF
 			}
-			m.Data = append(m.Data, data[index:postIndex]...)
+			m.Data = append([]byte{}, data[index:postIndex]...)
 			index = postIndex
 		default:
 			var sizeOfWire int
@@ -3901,7 +3900,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -3935,7 +3934,7 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3958,7 +3957,7 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Ip", wireType)
 			}
 			var v uint32
 			for shift := uint(0); ; shift += 7 {
@@ -3975,7 +3974,7 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 			m.Ip = &v
 		case 3:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Port", wireType)
 			}
 			var v uint32
 			for shift := uint(0); ; shift += 7 {
@@ -3992,7 +3991,7 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 			m.Port = &v
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Pid", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4015,7 +4014,7 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Hostname", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4046,7 +4045,7 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -4080,7 +4079,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Hostname", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4103,7 +4102,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 8:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Port", wireType)
 			}
 			var v int32
 			for shift := uint(0); ; shift += 7 {
@@ -4120,7 +4119,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 			m.Port = &v
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4143,7 +4142,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Attributes", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4166,7 +4165,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 6:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4193,7 +4192,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 7:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Checkpoint", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -4211,7 +4210,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 			m.Checkpoint = &b
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field WebuiHostname", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4234,7 +4233,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field WebuiPort", wireType)
 			}
 			var v int32
 			for shift := uint(0); ; shift += 7 {
@@ -4259,7 +4258,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -4293,7 +4292,7 @@ func (m *Value) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}
 			var v Value_Type
 			for shift := uint(0); ; shift += 7 {
@@ -4310,7 +4309,7 @@ func (m *Value) Unmarshal(data []byte) error {
 			m.Type = &v
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Scalar", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4337,7 +4336,7 @@ func (m *Value) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Ranges", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4364,7 +4363,7 @@ func (m *Value) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Set", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4391,7 +4390,7 @@ func (m *Value) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Text", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4426,7 +4425,7 @@ func (m *Value) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -4460,7 +4459,7 @@ func (m *Value_Scalar) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -4488,7 +4487,7 @@ func (m *Value_Scalar) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -4522,7 +4521,7 @@ func (m *Value_Range) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Begin", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4539,7 +4538,7 @@ func (m *Value_Range) Unmarshal(data []byte) error {
 			m.Begin = &v
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field End", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4564,7 +4563,7 @@ func (m *Value_Range) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -4598,7 +4597,7 @@ func (m *Value_Ranges) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Range", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4629,7 +4628,7 @@ func (m *Value_Ranges) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -4663,7 +4662,7 @@ func (m *Value_Set) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Item", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4693,7 +4692,7 @@ func (m *Value_Set) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -4727,7 +4726,7 @@ func (m *Value_Text) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4758,7 +4757,7 @@ func (m *Value_Text) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -4792,7 +4791,7 @@ func (m *Attribute) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4815,7 +4814,7 @@ func (m *Attribute) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}
 			var v Value_Type
 			for shift := uint(0); ; shift += 7 {
@@ -4832,7 +4831,7 @@ func (m *Attribute) Unmarshal(data []byte) error {
 			m.Type = &v
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Scalar", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4859,7 +4858,7 @@ func (m *Attribute) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Ranges", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4886,7 +4885,7 @@ func (m *Attribute) Unmarshal(data []byte) error {
 			index = postIndex
 		case 6:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Set", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4913,7 +4912,7 @@ func (m *Attribute) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Text", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4948,7 +4947,7 @@ func (m *Attribute) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -4982,7 +4981,7 @@ func (m *Resource) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5005,7 +5004,7 @@ func (m *Resource) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}
 			var v Value_Type
 			for shift := uint(0); ; shift += 7 {
@@ -5022,7 +5021,7 @@ func (m *Resource) Unmarshal(data []byte) error {
 			m.Type = &v
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Scalar", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5049,7 +5048,7 @@ func (m *Resource) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Ranges", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5076,7 +5075,7 @@ func (m *Resource) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Set", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5103,7 +5102,7 @@ func (m *Resource) Unmarshal(data []byte) error {
 			index = postIndex
 		case 6:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Role", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5134,7 +5133,7 @@ func (m *Resource) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -5168,7 +5167,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -5188,7 +5187,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.Timestamp = &v2
 		case 2:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CpusUserTimeSecs", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -5208,7 +5207,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.CpusUserTimeSecs = &v2
 		case 3:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CpusSystemTimeSecs", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -5228,7 +5227,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.CpusSystemTimeSecs = &v2
 		case 4:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CpusLimit", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -5248,7 +5247,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.CpusLimit = &v2
 		case 7:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CpusNrPeriods", wireType)
 			}
 			var v uint32
 			for shift := uint(0); ; shift += 7 {
@@ -5265,7 +5264,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.CpusNrPeriods = &v
 		case 8:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CpusNrThrottled", wireType)
 			}
 			var v uint32
 			for shift := uint(0); ; shift += 7 {
@@ -5282,7 +5281,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.CpusNrThrottled = &v
 		case 9:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CpusThrottledTimeSecs", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -5302,7 +5301,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.CpusThrottledTimeSecs = &v2
 		case 5:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field MemRssBytes", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5319,7 +5318,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.MemRssBytes = &v
 		case 6:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field MemLimitBytes", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5336,7 +5335,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.MemLimitBytes = &v
 		case 10:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field MemFileBytes", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5353,7 +5352,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.MemFileBytes = &v
 		case 11:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field MemAnonBytes", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5370,7 +5369,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.MemAnonBytes = &v
 		case 12:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field MemMappedFileBytes", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5387,7 +5386,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			m.MemMappedFileBytes = &v
 		case 13:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Perf", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5422,7 +5421,7 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -5456,7 +5455,7 @@ func (m *ResourceUsage) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5483,7 +5482,7 @@ func (m *ResourceUsage) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field FrameworkId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5510,7 +5509,7 @@ func (m *ResourceUsage) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field ExecutorId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5537,7 +5536,7 @@ func (m *ResourceUsage) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field ExecutorName", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5560,7 +5559,7 @@ func (m *ResourceUsage) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field TaskId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5587,7 +5586,7 @@ func (m *ResourceUsage) Unmarshal(data []byte) error {
 			index = postIndex
 		case 6:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Statistics", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5622,7 +5621,7 @@ func (m *ResourceUsage) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -5656,7 +5655,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -5676,7 +5675,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.Timestamp = &v2
 		case 2:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Duration", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -5696,7 +5695,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.Duration = &v2
 		case 3:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Cycles", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5713,7 +5712,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.Cycles = &v
 		case 4:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field StalledCyclesFrontend", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5730,7 +5729,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.StalledCyclesFrontend = &v
 		case 5:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field StalledCyclesBackend", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5747,7 +5746,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.StalledCyclesBackend = &v
 		case 6:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Instructions", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5764,7 +5763,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.Instructions = &v
 		case 7:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CacheReferences", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5781,7 +5780,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.CacheReferences = &v
 		case 8:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CacheMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5798,7 +5797,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.CacheMisses = &v
 		case 9:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Branches", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5815,7 +5814,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.Branches = &v
 		case 10:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field BranchMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5832,7 +5831,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.BranchMisses = &v
 		case 11:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field BusCycles", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5849,7 +5848,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.BusCycles = &v
 		case 12:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field RefCycles", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5866,7 +5865,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.RefCycles = &v
 		case 13:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CpuClock", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -5886,7 +5885,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.CpuClock = &v2
 		case 14:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field TaskClock", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -5906,7 +5905,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.TaskClock = &v2
 		case 15:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field PageFaults", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5923,7 +5922,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.PageFaults = &v
 		case 16:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field MinorFaults", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5940,7 +5939,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.MinorFaults = &v
 		case 17:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field MajorFaults", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5957,7 +5956,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.MajorFaults = &v
 		case 18:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field ContextSwitches", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5974,7 +5973,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.ContextSwitches = &v
 		case 19:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field CpuMigrations", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -5991,7 +5990,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.CpuMigrations = &v
 		case 20:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field AlignmentFaults", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6008,7 +6007,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.AlignmentFaults = &v
 		case 21:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field EmulationFaults", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6025,7 +6024,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.EmulationFaults = &v
 		case 22:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1DcacheLoads", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6042,7 +6041,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1DcacheLoads = &v
 		case 23:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1DcacheLoadMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6059,7 +6058,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1DcacheLoadMisses = &v
 		case 24:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1DcacheStores", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6076,7 +6075,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1DcacheStores = &v
 		case 25:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1DcacheStoreMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6093,7 +6092,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1DcacheStoreMisses = &v
 		case 26:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1DcachePrefetches", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6110,7 +6109,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1DcachePrefetches = &v
 		case 27:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1DcachePrefetchMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6127,7 +6126,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1DcachePrefetchMisses = &v
 		case 28:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1IcacheLoads", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6144,7 +6143,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1IcacheLoads = &v
 		case 29:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1IcacheLoadMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6161,7 +6160,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1IcacheLoadMisses = &v
 		case 30:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1IcachePrefetches", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6178,7 +6177,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1IcachePrefetches = &v
 		case 31:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field L1IcachePrefetchMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6195,7 +6194,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.L1IcachePrefetchMisses = &v
 		case 32:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field LlcLoads", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6212,7 +6211,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.LlcLoads = &v
 		case 33:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field LlcLoadMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6229,7 +6228,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.LlcLoadMisses = &v
 		case 34:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field LlcStores", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6246,7 +6245,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.LlcStores = &v
 		case 35:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field LlcStoreMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6263,7 +6262,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.LlcStoreMisses = &v
 		case 36:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field LlcPrefetches", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6280,7 +6279,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.LlcPrefetches = &v
 		case 37:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field LlcPrefetchMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6297,7 +6296,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.LlcPrefetchMisses = &v
 		case 38:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field DtlbLoads", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6314,7 +6313,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.DtlbLoads = &v
 		case 39:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field DtlbLoadMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6331,7 +6330,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.DtlbLoadMisses = &v
 		case 40:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field DtlbStores", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6348,7 +6347,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.DtlbStores = &v
 		case 41:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field DtlbStoreMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6365,7 +6364,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.DtlbStoreMisses = &v
 		case 42:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field DtlbPrefetches", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6382,7 +6381,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.DtlbPrefetches = &v
 		case 43:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field DtlbPrefetchMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6399,7 +6398,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.DtlbPrefetchMisses = &v
 		case 44:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field ItlbLoads", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6416,7 +6415,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.ItlbLoads = &v
 		case 45:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field ItlbLoadMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6433,7 +6432,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.ItlbLoadMisses = &v
 		case 46:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field BranchLoads", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6450,7 +6449,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.BranchLoads = &v
 		case 47:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field BranchLoadMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6467,7 +6466,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.BranchLoadMisses = &v
 		case 48:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field NodeLoads", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6484,7 +6483,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.NodeLoads = &v
 		case 49:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field NodeLoadMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6501,7 +6500,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.NodeLoadMisses = &v
 		case 50:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field NodeStores", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6518,7 +6517,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.NodeStores = &v
 		case 51:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field NodeStoreMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6535,7 +6534,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.NodeStoreMisses = &v
 		case 52:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field NodePrefetches", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6552,7 +6551,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			m.NodePrefetches = &v
 		case 53:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field NodePrefetchMisses", wireType)
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6577,7 +6576,7 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -6611,7 +6610,7 @@ func (m *Request) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6638,7 +6637,7 @@ func (m *Request) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6669,7 +6668,7 @@ func (m *Request) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -6703,7 +6702,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6730,7 +6729,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field FrameworkId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6757,7 +6756,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6784,7 +6783,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Hostname", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6807,7 +6806,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6830,7 +6829,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 			index = postIndex
 		case 7:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Attributes", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6853,7 +6852,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 			index = postIndex
 		case 6:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field ExecutorIds", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6884,7 +6883,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -6918,7 +6917,7 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6941,7 +6940,7 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field TaskId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6968,7 +6967,7 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6995,7 +6994,7 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Resources", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7018,7 +7017,7 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Executor", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7045,7 +7044,7 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 7:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Command", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7072,7 +7071,7 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			index = postIndex
 		case 6:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Data", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -7090,11 +7089,11 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io1.ErrUnexpectedEOF
 			}
-			m.Data = append(m.Data, data[index:postIndex]...)
+			m.Data = append([]byte{}, data[index:postIndex]...)
 			index = postIndex
 		case 8:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field HealthCheck", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7129,7 +7128,7 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7163,7 +7162,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field TaskId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7190,7 +7189,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field State", wireType)
 			}
 			var v TaskState
 			for shift := uint(0); ; shift += 7 {
@@ -7207,7 +7206,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			m.State = &v
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Message", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -7230,7 +7229,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Data", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -7248,11 +7247,11 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io1.ErrUnexpectedEOF
 			}
-			m.Data = append(m.Data, data[index:postIndex]...)
+			m.Data = append([]byte{}, data[index:postIndex]...)
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7279,7 +7278,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			index = postIndex
 		case 7:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field ExecutorId", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7306,7 +7305,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			index = postIndex
 		case 6:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -7326,7 +7325,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			m.Timestamp = &v2
 		case 8:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Healthy", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -7352,7 +7351,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7386,7 +7385,7 @@ func (m *Filters) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field RefuseSeconds", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -7414,7 +7413,7 @@ func (m *Filters) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7448,7 +7447,7 @@ func (m *Environment) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Variables", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7479,7 +7478,7 @@ func (m *Environment) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7513,7 +7512,7 @@ func (m *Environment_Variable) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -7536,7 +7535,7 @@ func (m *Environment_Variable) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -7567,7 +7566,7 @@ func (m *Environment_Variable) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7601,7 +7600,7 @@ func (m *Parameter) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Key", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -7624,7 +7623,7 @@ func (m *Parameter) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -7655,7 +7654,7 @@ func (m *Parameter) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7689,7 +7688,7 @@ func (m *Parameters) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Parameter", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7720,7 +7719,7 @@ func (m *Parameters) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7754,7 +7753,7 @@ func (m *Credential) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Principal", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -7777,7 +7776,7 @@ func (m *Credential) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Secret", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -7795,7 +7794,7 @@ func (m *Credential) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io1.ErrUnexpectedEOF
 			}
-			m.Secret = append(m.Secret, data[index:postIndex]...)
+			m.Secret = append([]byte{}, data[index:postIndex]...)
 			index = postIndex
 		default:
 			var sizeOfWire int
@@ -7807,7 +7806,7 @@ func (m *Credential) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7848,7 +7847,7 @@ func (m *ACL) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7882,7 +7881,7 @@ func (m *ACL_Entity) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}
 			var v ACL_Entity_Type
 			for shift := uint(0); ; shift += 7 {
@@ -7899,7 +7898,7 @@ func (m *ACL_Entity) Unmarshal(data []byte) error {
 			m.Type = &v
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Values", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -7929,7 +7928,7 @@ func (m *ACL_Entity) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -7963,7 +7962,7 @@ func (m *ACL_RunTasks) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Principals", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -7990,7 +7989,7 @@ func (m *ACL_RunTasks) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Users", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8025,7 +8024,7 @@ func (m *ACL_RunTasks) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -8059,7 +8058,7 @@ func (m *ACL_ReceiveOffers) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Principals", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8086,7 +8085,7 @@ func (m *ACL_ReceiveOffers) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Roles", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8121,7 +8120,7 @@ func (m *ACL_ReceiveOffers) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -8155,7 +8154,7 @@ func (m *ACL_HTTPGet) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Usernames", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8182,7 +8181,7 @@ func (m *ACL_HTTPGet) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Ips", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8209,7 +8208,7 @@ func (m *ACL_HTTPGet) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Hostnames", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8236,7 +8235,7 @@ func (m *ACL_HTTPGet) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Urls", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8271,7 +8270,7 @@ func (m *ACL_HTTPGet) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -8305,7 +8304,7 @@ func (m *ACL_HTTPPut) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Usernames", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8332,7 +8331,7 @@ func (m *ACL_HTTPPut) Unmarshal(data []byte) error {
 			index = postIndex
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Ips", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8359,7 +8358,7 @@ func (m *ACL_HTTPPut) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Hostnames", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8386,7 +8385,7 @@ func (m *ACL_HTTPPut) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Urls", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8421,7 +8420,7 @@ func (m *ACL_HTTPPut) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -8455,7 +8454,7 @@ func (m *ACLs) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Permissive", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -8473,7 +8472,7 @@ func (m *ACLs) Unmarshal(data []byte) error {
 			m.Permissive = &b
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field RunTasks", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8496,7 +8495,7 @@ func (m *ACLs) Unmarshal(data []byte) error {
 			index = postIndex
 		case 3:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field ReceiveOffers", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8519,7 +8518,7 @@ func (m *ACLs) Unmarshal(data []byte) error {
 			index = postIndex
 		case 4:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field HttpGet", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8542,7 +8541,7 @@ func (m *ACLs) Unmarshal(data []byte) error {
 			index = postIndex
 		case 5:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field HttpPut", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8573,7 +8572,7 @@ func (m *ACLs) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -8607,7 +8606,7 @@ func (m *RateLimit) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 1 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Qps", wireType)
 			}
 			var v uint64
 			i := index + 8
@@ -8627,7 +8626,7 @@ func (m *RateLimit) Unmarshal(data []byte) error {
 			m.Qps = &v2
 		case 2:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Principal", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -8658,7 +8657,7 @@ func (m *RateLimit) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -8692,7 +8691,7 @@ func (m *RateLimits) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto2.ErrWrongType
+				return fmt4.Errorf("proto: wrong wireType = %d for field Limits", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8723,7 +8722,7 @@ func (m *RateLimits) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto2.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto2.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -8742,7 +8741,7 @@ func (this *FrameworkID) String() string {
 	}
 	s := strings2.Join([]string{`&FrameworkID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8753,7 +8752,7 @@ func (this *OfferID) String() string {
 	}
 	s := strings2.Join([]string{`&OfferID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8764,7 +8763,7 @@ func (this *SlaveID) String() string {
 	}
 	s := strings2.Join([]string{`&SlaveID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8775,7 +8774,7 @@ func (this *TaskID) String() string {
 	}
 	s := strings2.Join([]string{`&TaskID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8786,7 +8785,7 @@ func (this *ExecutorID) String() string {
 	}
 	s := strings2.Join([]string{`&ExecutorID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8797,7 +8796,7 @@ func (this *ContainerID) String() string {
 	}
 	s := strings2.Join([]string{`&ContainerID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8809,13 +8808,13 @@ func (this *FrameworkInfo) String() string {
 	s := strings2.Join([]string{`&FrameworkInfo{`,
 		`User:` + valueToStringMesos(this.User) + `,`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
-		`Id:` + strings2.Replace(fmt3.Sprintf("%v", this.Id), "FrameworkID", "FrameworkID", 1) + `,`,
+		`Id:` + strings2.Replace(fmt5.Sprintf("%v", this.Id), "FrameworkID", "FrameworkID", 1) + `,`,
 		`FailoverTimeout:` + valueToStringMesos(this.FailoverTimeout) + `,`,
 		`Checkpoint:` + valueToStringMesos(this.Checkpoint) + `,`,
 		`Role:` + valueToStringMesos(this.Role) + `,`,
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
 		`Principal:` + valueToStringMesos(this.Principal) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8825,14 +8824,14 @@ func (this *HealthCheck) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&HealthCheck{`,
-		`Http:` + strings2.Replace(fmt3.Sprintf("%v", this.Http), "HealthCheck_HTTP", "HealthCheck_HTTP", 1) + `,`,
+		`Http:` + strings2.Replace(fmt5.Sprintf("%v", this.Http), "HealthCheck_HTTP", "HealthCheck_HTTP", 1) + `,`,
 		`DelaySeconds:` + valueToStringMesos(this.DelaySeconds) + `,`,
 		`IntervalSeconds:` + valueToStringMesos(this.IntervalSeconds) + `,`,
 		`TimeoutSeconds:` + valueToStringMesos(this.TimeoutSeconds) + `,`,
 		`Failures:` + valueToStringMesos(this.Failures) + `,`,
 		`GracePeriodSeconds:` + valueToStringMesos(this.GracePeriodSeconds) + `,`,
-		`Command:` + strings2.Replace(fmt3.Sprintf("%v", this.Command), "CommandInfo", "CommandInfo", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Command:` + strings2.Replace(fmt5.Sprintf("%v", this.Command), "CommandInfo", "CommandInfo", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8844,8 +8843,8 @@ func (this *HealthCheck_HTTP) String() string {
 	s := strings2.Join([]string{`&HealthCheck_HTTP{`,
 		`Port:` + valueToStringMesos(this.Port) + `,`,
 		`Path:` + valueToStringMesos(this.Path) + `,`,
-		`Statuses:` + fmt3.Sprintf("%v", this.Statuses) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Statuses:` + fmt5.Sprintf("%v", this.Statuses) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8855,12 +8854,12 @@ func (this *CommandInfo) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&CommandInfo{`,
-		`Container:` + strings2.Replace(fmt3.Sprintf("%v", this.Container), "CommandInfo_ContainerInfo", "CommandInfo_ContainerInfo", 1) + `,`,
-		`Uris:` + strings2.Replace(fmt3.Sprintf("%v", this.Uris), "CommandInfo_URI", "CommandInfo_URI", 1) + `,`,
-		`Environment:` + strings2.Replace(fmt3.Sprintf("%v", this.Environment), "Environment", "Environment", 1) + `,`,
+		`Container:` + strings2.Replace(fmt5.Sprintf("%v", this.Container), "CommandInfo_ContainerInfo", "CommandInfo_ContainerInfo", 1) + `,`,
+		`Uris:` + strings2.Replace(fmt5.Sprintf("%v", this.Uris), "CommandInfo_URI", "CommandInfo_URI", 1) + `,`,
+		`Environment:` + strings2.Replace(fmt5.Sprintf("%v", this.Environment), "Environment", "Environment", 1) + `,`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
 		`User:` + valueToStringMesos(this.User) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8873,7 +8872,7 @@ func (this *CommandInfo_URI) String() string {
 		`Value:` + valueToStringMesos(this.Value) + `,`,
 		`Executable:` + valueToStringMesos(this.Executable) + `,`,
 		`Extract:` + valueToStringMesos(this.Extract) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8884,8 +8883,8 @@ func (this *CommandInfo_ContainerInfo) String() string {
 	}
 	s := strings2.Join([]string{`&CommandInfo_ContainerInfo{`,
 		`Image:` + valueToStringMesos(this.Image) + `,`,
-		`Options:` + fmt3.Sprintf("%v", this.Options) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Options:` + fmt5.Sprintf("%v", this.Options) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8895,14 +8894,14 @@ func (this *ExecutorInfo) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&ExecutorInfo{`,
-		`ExecutorId:` + strings2.Replace(fmt3.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
-		`FrameworkId:` + strings2.Replace(fmt3.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
-		`Command:` + strings2.Replace(fmt3.Sprintf("%v", this.Command), "CommandInfo", "CommandInfo", 1) + `,`,
-		`Resources:` + strings2.Replace(fmt3.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
+		`ExecutorId:` + strings2.Replace(fmt5.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
+		`FrameworkId:` + strings2.Replace(fmt5.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
+		`Command:` + strings2.Replace(fmt5.Sprintf("%v", this.Command), "CommandInfo", "CommandInfo", 1) + `,`,
+		`Resources:` + strings2.Replace(fmt5.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
 		`Source:` + valueToStringMesos(this.Source) + `,`,
 		`Data:` + valueToStringMesos(this.Data) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8917,7 +8916,7 @@ func (this *MasterInfo) String() string {
 		`Port:` + valueToStringMesos(this.Port) + `,`,
 		`Pid:` + valueToStringMesos(this.Pid) + `,`,
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8929,13 +8928,13 @@ func (this *SlaveInfo) String() string {
 	s := strings2.Join([]string{`&SlaveInfo{`,
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
 		`Port:` + valueToStringMesos(this.Port) + `,`,
-		`Resources:` + strings2.Replace(fmt3.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
-		`Attributes:` + strings2.Replace(fmt3.Sprintf("%v", this.Attributes), "Attribute", "Attribute", 1) + `,`,
-		`Id:` + strings2.Replace(fmt3.Sprintf("%v", this.Id), "SlaveID", "SlaveID", 1) + `,`,
+		`Resources:` + strings2.Replace(fmt5.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
+		`Attributes:` + strings2.Replace(fmt5.Sprintf("%v", this.Attributes), "Attribute", "Attribute", 1) + `,`,
+		`Id:` + strings2.Replace(fmt5.Sprintf("%v", this.Id), "SlaveID", "SlaveID", 1) + `,`,
 		`Checkpoint:` + valueToStringMesos(this.Checkpoint) + `,`,
 		`WebuiHostname:` + valueToStringMesos(this.WebuiHostname) + `,`,
 		`WebuiPort:` + valueToStringMesos(this.WebuiPort) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8946,11 +8945,11 @@ func (this *Value) String() string {
 	}
 	s := strings2.Join([]string{`&Value{`,
 		`Type:` + valueToStringMesos(this.Type) + `,`,
-		`Scalar:` + strings2.Replace(fmt3.Sprintf("%v", this.Scalar), "Value_Scalar", "Value_Scalar", 1) + `,`,
-		`Ranges:` + strings2.Replace(fmt3.Sprintf("%v", this.Ranges), "Value_Ranges", "Value_Ranges", 1) + `,`,
-		`Set:` + strings2.Replace(fmt3.Sprintf("%v", this.Set), "Value_Set", "Value_Set", 1) + `,`,
-		`Text:` + strings2.Replace(fmt3.Sprintf("%v", this.Text), "Value_Text", "Value_Text", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Scalar:` + strings2.Replace(fmt5.Sprintf("%v", this.Scalar), "Value_Scalar", "Value_Scalar", 1) + `,`,
+		`Ranges:` + strings2.Replace(fmt5.Sprintf("%v", this.Ranges), "Value_Ranges", "Value_Ranges", 1) + `,`,
+		`Set:` + strings2.Replace(fmt5.Sprintf("%v", this.Set), "Value_Set", "Value_Set", 1) + `,`,
+		`Text:` + strings2.Replace(fmt5.Sprintf("%v", this.Text), "Value_Text", "Value_Text", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8961,7 +8960,7 @@ func (this *Value_Scalar) String() string {
 	}
 	s := strings2.Join([]string{`&Value_Scalar{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8973,7 +8972,7 @@ func (this *Value_Range) String() string {
 	s := strings2.Join([]string{`&Value_Range{`,
 		`Begin:` + valueToStringMesos(this.Begin) + `,`,
 		`End:` + valueToStringMesos(this.End) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8983,8 +8982,8 @@ func (this *Value_Ranges) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&Value_Ranges{`,
-		`Range:` + strings2.Replace(fmt3.Sprintf("%v", this.Range), "Value_Range", "Value_Range", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Range:` + strings2.Replace(fmt5.Sprintf("%v", this.Range), "Value_Range", "Value_Range", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -8994,8 +8993,8 @@ func (this *Value_Set) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&Value_Set{`,
-		`Item:` + fmt3.Sprintf("%v", this.Item) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Item:` + fmt5.Sprintf("%v", this.Item) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9006,7 +9005,7 @@ func (this *Value_Text) String() string {
 	}
 	s := strings2.Join([]string{`&Value_Text{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9018,11 +9017,11 @@ func (this *Attribute) String() string {
 	s := strings2.Join([]string{`&Attribute{`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
 		`Type:` + valueToStringMesos(this.Type) + `,`,
-		`Scalar:` + strings2.Replace(fmt3.Sprintf("%v", this.Scalar), "Value_Scalar", "Value_Scalar", 1) + `,`,
-		`Ranges:` + strings2.Replace(fmt3.Sprintf("%v", this.Ranges), "Value_Ranges", "Value_Ranges", 1) + `,`,
-		`Set:` + strings2.Replace(fmt3.Sprintf("%v", this.Set), "Value_Set", "Value_Set", 1) + `,`,
-		`Text:` + strings2.Replace(fmt3.Sprintf("%v", this.Text), "Value_Text", "Value_Text", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Scalar:` + strings2.Replace(fmt5.Sprintf("%v", this.Scalar), "Value_Scalar", "Value_Scalar", 1) + `,`,
+		`Ranges:` + strings2.Replace(fmt5.Sprintf("%v", this.Ranges), "Value_Ranges", "Value_Ranges", 1) + `,`,
+		`Set:` + strings2.Replace(fmt5.Sprintf("%v", this.Set), "Value_Set", "Value_Set", 1) + `,`,
+		`Text:` + strings2.Replace(fmt5.Sprintf("%v", this.Text), "Value_Text", "Value_Text", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9034,11 +9033,11 @@ func (this *Resource) String() string {
 	s := strings2.Join([]string{`&Resource{`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
 		`Type:` + valueToStringMesos(this.Type) + `,`,
-		`Scalar:` + strings2.Replace(fmt3.Sprintf("%v", this.Scalar), "Value_Scalar", "Value_Scalar", 1) + `,`,
-		`Ranges:` + strings2.Replace(fmt3.Sprintf("%v", this.Ranges), "Value_Ranges", "Value_Ranges", 1) + `,`,
-		`Set:` + strings2.Replace(fmt3.Sprintf("%v", this.Set), "Value_Set", "Value_Set", 1) + `,`,
+		`Scalar:` + strings2.Replace(fmt5.Sprintf("%v", this.Scalar), "Value_Scalar", "Value_Scalar", 1) + `,`,
+		`Ranges:` + strings2.Replace(fmt5.Sprintf("%v", this.Ranges), "Value_Ranges", "Value_Ranges", 1) + `,`,
+		`Set:` + strings2.Replace(fmt5.Sprintf("%v", this.Set), "Value_Set", "Value_Set", 1) + `,`,
 		`Role:` + valueToStringMesos(this.Role) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9060,8 +9059,8 @@ func (this *ResourceStatistics) String() string {
 		`MemFileBytes:` + valueToStringMesos(this.MemFileBytes) + `,`,
 		`MemAnonBytes:` + valueToStringMesos(this.MemAnonBytes) + `,`,
 		`MemMappedFileBytes:` + valueToStringMesos(this.MemMappedFileBytes) + `,`,
-		`Perf:` + strings2.Replace(fmt3.Sprintf("%v", this.Perf), "PerfStatistics", "PerfStatistics", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Perf:` + strings2.Replace(fmt5.Sprintf("%v", this.Perf), "PerfStatistics", "PerfStatistics", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9071,13 +9070,13 @@ func (this *ResourceUsage) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&ResourceUsage{`,
-		`SlaveId:` + strings2.Replace(fmt3.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
-		`FrameworkId:` + strings2.Replace(fmt3.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
-		`ExecutorId:` + strings2.Replace(fmt3.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
+		`SlaveId:` + strings2.Replace(fmt5.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`FrameworkId:` + strings2.Replace(fmt5.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
+		`ExecutorId:` + strings2.Replace(fmt5.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
 		`ExecutorName:` + valueToStringMesos(this.ExecutorName) + `,`,
-		`TaskId:` + strings2.Replace(fmt3.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
-		`Statistics:` + strings2.Replace(fmt3.Sprintf("%v", this.Statistics), "ResourceStatistics", "ResourceStatistics", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`TaskId:` + strings2.Replace(fmt5.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
+		`Statistics:` + strings2.Replace(fmt5.Sprintf("%v", this.Statistics), "ResourceStatistics", "ResourceStatistics", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9140,7 +9139,7 @@ func (this *PerfStatistics) String() string {
 		`NodeStoreMisses:` + valueToStringMesos(this.NodeStoreMisses) + `,`,
 		`NodePrefetches:` + valueToStringMesos(this.NodePrefetches) + `,`,
 		`NodePrefetchMisses:` + valueToStringMesos(this.NodePrefetchMisses) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9150,9 +9149,9 @@ func (this *Request) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&Request{`,
-		`SlaveId:` + strings2.Replace(fmt3.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
-		`Resources:` + strings2.Replace(fmt3.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`SlaveId:` + strings2.Replace(fmt5.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`Resources:` + strings2.Replace(fmt5.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9162,14 +9161,14 @@ func (this *Offer) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&Offer{`,
-		`Id:` + strings2.Replace(fmt3.Sprintf("%v", this.Id), "OfferID", "OfferID", 1) + `,`,
-		`FrameworkId:` + strings2.Replace(fmt3.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
-		`SlaveId:` + strings2.Replace(fmt3.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`Id:` + strings2.Replace(fmt5.Sprintf("%v", this.Id), "OfferID", "OfferID", 1) + `,`,
+		`FrameworkId:` + strings2.Replace(fmt5.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
+		`SlaveId:` + strings2.Replace(fmt5.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
-		`Resources:` + strings2.Replace(fmt3.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
-		`Attributes:` + strings2.Replace(fmt3.Sprintf("%v", this.Attributes), "Attribute", "Attribute", 1) + `,`,
-		`ExecutorIds:` + strings2.Replace(fmt3.Sprintf("%v", this.ExecutorIds), "ExecutorID", "ExecutorID", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Resources:` + strings2.Replace(fmt5.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
+		`Attributes:` + strings2.Replace(fmt5.Sprintf("%v", this.Attributes), "Attribute", "Attribute", 1) + `,`,
+		`ExecutorIds:` + strings2.Replace(fmt5.Sprintf("%v", this.ExecutorIds), "ExecutorID", "ExecutorID", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9180,14 +9179,14 @@ func (this *TaskInfo) String() string {
 	}
 	s := strings2.Join([]string{`&TaskInfo{`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
-		`TaskId:` + strings2.Replace(fmt3.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
-		`SlaveId:` + strings2.Replace(fmt3.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
-		`Resources:` + strings2.Replace(fmt3.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
-		`Executor:` + strings2.Replace(fmt3.Sprintf("%v", this.Executor), "ExecutorInfo", "ExecutorInfo", 1) + `,`,
-		`Command:` + strings2.Replace(fmt3.Sprintf("%v", this.Command), "CommandInfo", "CommandInfo", 1) + `,`,
+		`TaskId:` + strings2.Replace(fmt5.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
+		`SlaveId:` + strings2.Replace(fmt5.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`Resources:` + strings2.Replace(fmt5.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
+		`Executor:` + strings2.Replace(fmt5.Sprintf("%v", this.Executor), "ExecutorInfo", "ExecutorInfo", 1) + `,`,
+		`Command:` + strings2.Replace(fmt5.Sprintf("%v", this.Command), "CommandInfo", "CommandInfo", 1) + `,`,
 		`Data:` + valueToStringMesos(this.Data) + `,`,
-		`HealthCheck:` + strings2.Replace(fmt3.Sprintf("%v", this.HealthCheck), "HealthCheck", "HealthCheck", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`HealthCheck:` + strings2.Replace(fmt5.Sprintf("%v", this.HealthCheck), "HealthCheck", "HealthCheck", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9197,15 +9196,15 @@ func (this *TaskStatus) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&TaskStatus{`,
-		`TaskId:` + strings2.Replace(fmt3.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
+		`TaskId:` + strings2.Replace(fmt5.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
 		`State:` + valueToStringMesos(this.State) + `,`,
 		`Message:` + valueToStringMesos(this.Message) + `,`,
 		`Data:` + valueToStringMesos(this.Data) + `,`,
-		`SlaveId:` + strings2.Replace(fmt3.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
-		`ExecutorId:` + strings2.Replace(fmt3.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
+		`SlaveId:` + strings2.Replace(fmt5.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`ExecutorId:` + strings2.Replace(fmt5.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
 		`Timestamp:` + valueToStringMesos(this.Timestamp) + `,`,
 		`Healthy:` + valueToStringMesos(this.Healthy) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9216,7 +9215,7 @@ func (this *Filters) String() string {
 	}
 	s := strings2.Join([]string{`&Filters{`,
 		`RefuseSeconds:` + valueToStringMesos(this.RefuseSeconds) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9226,8 +9225,8 @@ func (this *Environment) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&Environment{`,
-		`Variables:` + strings2.Replace(fmt3.Sprintf("%v", this.Variables), "Environment_Variable", "Environment_Variable", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Variables:` + strings2.Replace(fmt5.Sprintf("%v", this.Variables), "Environment_Variable", "Environment_Variable", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9239,7 +9238,7 @@ func (this *Environment_Variable) String() string {
 	s := strings2.Join([]string{`&Environment_Variable{`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9251,7 +9250,7 @@ func (this *Parameter) String() string {
 	s := strings2.Join([]string{`&Parameter{`,
 		`Key:` + valueToStringMesos(this.Key) + `,`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9261,8 +9260,8 @@ func (this *Parameters) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&Parameters{`,
-		`Parameter:` + strings2.Replace(fmt3.Sprintf("%v", this.Parameter), "Parameter", "Parameter", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Parameter:` + strings2.Replace(fmt5.Sprintf("%v", this.Parameter), "Parameter", "Parameter", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9274,7 +9273,7 @@ func (this *Credential) String() string {
 	s := strings2.Join([]string{`&Credential{`,
 		`Principal:` + valueToStringMesos(this.Principal) + `,`,
 		`Secret:` + valueToStringMesos(this.Secret) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9284,7 +9283,7 @@ func (this *ACL) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&ACL{`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9295,8 +9294,8 @@ func (this *ACL_Entity) String() string {
 	}
 	s := strings2.Join([]string{`&ACL_Entity{`,
 		`Type:` + valueToStringMesos(this.Type) + `,`,
-		`Values:` + fmt3.Sprintf("%v", this.Values) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Values:` + fmt5.Sprintf("%v", this.Values) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9306,9 +9305,9 @@ func (this *ACL_RunTasks) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&ACL_RunTasks{`,
-		`Principals:` + strings2.Replace(fmt3.Sprintf("%v", this.Principals), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`Users:` + strings2.Replace(fmt3.Sprintf("%v", this.Users), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Principals:` + strings2.Replace(fmt5.Sprintf("%v", this.Principals), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`Users:` + strings2.Replace(fmt5.Sprintf("%v", this.Users), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9318,9 +9317,9 @@ func (this *ACL_ReceiveOffers) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&ACL_ReceiveOffers{`,
-		`Principals:` + strings2.Replace(fmt3.Sprintf("%v", this.Principals), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`Roles:` + strings2.Replace(fmt3.Sprintf("%v", this.Roles), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Principals:` + strings2.Replace(fmt5.Sprintf("%v", this.Principals), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`Roles:` + strings2.Replace(fmt5.Sprintf("%v", this.Roles), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9330,11 +9329,11 @@ func (this *ACL_HTTPGet) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&ACL_HTTPGet{`,
-		`Usernames:` + strings2.Replace(fmt3.Sprintf("%v", this.Usernames), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`Ips:` + strings2.Replace(fmt3.Sprintf("%v", this.Ips), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`Hostnames:` + strings2.Replace(fmt3.Sprintf("%v", this.Hostnames), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`Urls:` + strings2.Replace(fmt3.Sprintf("%v", this.Urls), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Usernames:` + strings2.Replace(fmt5.Sprintf("%v", this.Usernames), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`Ips:` + strings2.Replace(fmt5.Sprintf("%v", this.Ips), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`Hostnames:` + strings2.Replace(fmt5.Sprintf("%v", this.Hostnames), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`Urls:` + strings2.Replace(fmt5.Sprintf("%v", this.Urls), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9344,11 +9343,11 @@ func (this *ACL_HTTPPut) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&ACL_HTTPPut{`,
-		`Usernames:` + strings2.Replace(fmt3.Sprintf("%v", this.Usernames), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`Ips:` + strings2.Replace(fmt3.Sprintf("%v", this.Ips), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`Hostnames:` + strings2.Replace(fmt3.Sprintf("%v", this.Hostnames), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`Urls:` + strings2.Replace(fmt3.Sprintf("%v", this.Urls), "ACL_Entity", "ACL_Entity", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Usernames:` + strings2.Replace(fmt5.Sprintf("%v", this.Usernames), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`Ips:` + strings2.Replace(fmt5.Sprintf("%v", this.Ips), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`Hostnames:` + strings2.Replace(fmt5.Sprintf("%v", this.Hostnames), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`Urls:` + strings2.Replace(fmt5.Sprintf("%v", this.Urls), "ACL_Entity", "ACL_Entity", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9359,11 +9358,11 @@ func (this *ACLs) String() string {
 	}
 	s := strings2.Join([]string{`&ACLs{`,
 		`Permissive:` + valueToStringMesos(this.Permissive) + `,`,
-		`RunTasks:` + strings2.Replace(fmt3.Sprintf("%v", this.RunTasks), "ACL_RunTasks", "ACL_RunTasks", 1) + `,`,
-		`ReceiveOffers:` + strings2.Replace(fmt3.Sprintf("%v", this.ReceiveOffers), "ACL_ReceiveOffers", "ACL_ReceiveOffers", 1) + `,`,
-		`HttpGet:` + strings2.Replace(fmt3.Sprintf("%v", this.HttpGet), "ACL_HTTPGet", "ACL_HTTPGet", 1) + `,`,
-		`HttpPut:` + strings2.Replace(fmt3.Sprintf("%v", this.HttpPut), "ACL_HTTPPut", "ACL_HTTPPut", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`RunTasks:` + strings2.Replace(fmt5.Sprintf("%v", this.RunTasks), "ACL_RunTasks", "ACL_RunTasks", 1) + `,`,
+		`ReceiveOffers:` + strings2.Replace(fmt5.Sprintf("%v", this.ReceiveOffers), "ACL_ReceiveOffers", "ACL_ReceiveOffers", 1) + `,`,
+		`HttpGet:` + strings2.Replace(fmt5.Sprintf("%v", this.HttpGet), "ACL_HTTPGet", "ACL_HTTPGet", 1) + `,`,
+		`HttpPut:` + strings2.Replace(fmt5.Sprintf("%v", this.HttpPut), "ACL_HTTPPut", "ACL_HTTPPut", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9375,7 +9374,7 @@ func (this *RateLimit) String() string {
 	s := strings2.Join([]string{`&RateLimit{`,
 		`Qps:` + valueToStringMesos(this.Qps) + `,`,
 		`Principal:` + valueToStringMesos(this.Principal) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9385,8 +9384,8 @@ func (this *RateLimits) String() string {
 		return "nil"
 	}
 	s := strings2.Join([]string{`&RateLimits{`,
-		`Limits:` + strings2.Replace(fmt3.Sprintf("%v", this.Limits), "RateLimit", "RateLimit", 1) + `,`,
-		`XXX_unrecognized:` + fmt3.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Limits:` + strings2.Replace(fmt5.Sprintf("%v", this.Limits), "RateLimit", "RateLimit", 1) + `,`,
+		`XXX_unrecognized:` + fmt5.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -9397,7 +9396,7 @@ func valueToStringMesos(v interface{}) string {
 		return "nil"
 	}
 	pv := reflect2.Indirect(rv).Interface()
-	return fmt3.Sprintf("*%v", pv)
+	return fmt5.Sprintf("*%v", pv)
 }
 func (m *FrameworkID) Size() (n int) {
 	var l int
@@ -9411,6 +9410,7 @@ func (m *FrameworkID) Size() (n int) {
 	}
 	return n
 }
+
 func (m *OfferID) Size() (n int) {
 	var l int
 	_ = l
@@ -9423,6 +9423,7 @@ func (m *OfferID) Size() (n int) {
 	}
 	return n
 }
+
 func (m *SlaveID) Size() (n int) {
 	var l int
 	_ = l
@@ -9435,6 +9436,7 @@ func (m *SlaveID) Size() (n int) {
 	}
 	return n
 }
+
 func (m *TaskID) Size() (n int) {
 	var l int
 	_ = l
@@ -9447,6 +9449,7 @@ func (m *TaskID) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ExecutorID) Size() (n int) {
 	var l int
 	_ = l
@@ -9459,6 +9462,7 @@ func (m *ExecutorID) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ContainerID) Size() (n int) {
 	var l int
 	_ = l
@@ -9471,6 +9475,7 @@ func (m *ContainerID) Size() (n int) {
 	}
 	return n
 }
+
 func (m *FrameworkInfo) Size() (n int) {
 	var l int
 	_ = l
@@ -9509,6 +9514,7 @@ func (m *FrameworkInfo) Size() (n int) {
 	}
 	return n
 }
+
 func (m *HealthCheck) Size() (n int) {
 	var l int
 	_ = l
@@ -9540,6 +9546,7 @@ func (m *HealthCheck) Size() (n int) {
 	}
 	return n
 }
+
 func (m *HealthCheck_HTTP) Size() (n int) {
 	var l int
 	_ = l
@@ -9560,6 +9567,7 @@ func (m *HealthCheck_HTTP) Size() (n int) {
 	}
 	return n
 }
+
 func (m *CommandInfo) Size() (n int) {
 	var l int
 	_ = l
@@ -9590,6 +9598,7 @@ func (m *CommandInfo) Size() (n int) {
 	}
 	return n
 }
+
 func (m *CommandInfo_URI) Size() (n int) {
 	var l int
 	_ = l
@@ -9608,6 +9617,7 @@ func (m *CommandInfo_URI) Size() (n int) {
 	}
 	return n
 }
+
 func (m *CommandInfo_ContainerInfo) Size() (n int) {
 	var l int
 	_ = l
@@ -9626,6 +9636,7 @@ func (m *CommandInfo_ContainerInfo) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ExecutorInfo) Size() (n int) {
 	var l int
 	_ = l
@@ -9664,6 +9675,7 @@ func (m *ExecutorInfo) Size() (n int) {
 	}
 	return n
 }
+
 func (m *MasterInfo) Size() (n int) {
 	var l int
 	_ = l
@@ -9690,6 +9702,7 @@ func (m *MasterInfo) Size() (n int) {
 	}
 	return n
 }
+
 func (m *SlaveInfo) Size() (n int) {
 	var l int
 	_ = l
@@ -9698,7 +9711,7 @@ func (m *SlaveInfo) Size() (n int) {
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.Port != nil {
-		n += 1 + sovMesos(uint64(uint32(*m.Port)))
+		n += 1 + sovMesos(uint64(*m.Port))
 	}
 	if len(m.Resources) > 0 {
 		for _, e := range m.Resources {
@@ -9724,13 +9737,14 @@ func (m *SlaveInfo) Size() (n int) {
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.WebuiPort != nil {
-		n += 1 + sovMesos(uint64(uint32(*m.WebuiPort)))
+		n += 1 + sovMesos(uint64(*m.WebuiPort))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
+
 func (m *Value) Size() (n int) {
 	var l int
 	_ = l
@@ -9758,6 +9772,7 @@ func (m *Value) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Value_Scalar) Size() (n int) {
 	var l int
 	_ = l
@@ -9769,6 +9784,7 @@ func (m *Value_Scalar) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Value_Range) Size() (n int) {
 	var l int
 	_ = l
@@ -9783,6 +9799,7 @@ func (m *Value_Range) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Value_Ranges) Size() (n int) {
 	var l int
 	_ = l
@@ -9797,6 +9814,7 @@ func (m *Value_Ranges) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Value_Set) Size() (n int) {
 	var l int
 	_ = l
@@ -9811,6 +9829,7 @@ func (m *Value_Set) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Value_Text) Size() (n int) {
 	var l int
 	_ = l
@@ -9823,6 +9842,7 @@ func (m *Value_Text) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Attribute) Size() (n int) {
 	var l int
 	_ = l
@@ -9854,6 +9874,7 @@ func (m *Attribute) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Resource) Size() (n int) {
 	var l int
 	_ = l
@@ -9885,6 +9906,7 @@ func (m *Resource) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ResourceStatistics) Size() (n int) {
 	var l int
 	_ = l
@@ -9933,6 +9955,7 @@ func (m *ResourceStatistics) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ResourceUsage) Size() (n int) {
 	var l int
 	_ = l
@@ -9965,6 +9988,7 @@ func (m *ResourceUsage) Size() (n int) {
 	}
 	return n
 }
+
 func (m *PerfStatistics) Size() (n int) {
 	var l int
 	_ = l
@@ -10132,6 +10156,7 @@ func (m *PerfStatistics) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Request) Size() (n int) {
 	var l int
 	_ = l
@@ -10150,6 +10175,7 @@ func (m *Request) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Offer) Size() (n int) {
 	var l int
 	_ = l
@@ -10192,6 +10218,7 @@ func (m *Offer) Size() (n int) {
 	}
 	return n
 }
+
 func (m *TaskInfo) Size() (n int) {
 	var l int
 	_ = l
@@ -10234,6 +10261,7 @@ func (m *TaskInfo) Size() (n int) {
 	}
 	return n
 }
+
 func (m *TaskStatus) Size() (n int) {
 	var l int
 	_ = l
@@ -10271,6 +10299,7 @@ func (m *TaskStatus) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Filters) Size() (n int) {
 	var l int
 	_ = l
@@ -10282,6 +10311,7 @@ func (m *Filters) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Environment) Size() (n int) {
 	var l int
 	_ = l
@@ -10296,6 +10326,7 @@ func (m *Environment) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Environment_Variable) Size() (n int) {
 	var l int
 	_ = l
@@ -10312,6 +10343,7 @@ func (m *Environment_Variable) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Parameter) Size() (n int) {
 	var l int
 	_ = l
@@ -10328,6 +10360,7 @@ func (m *Parameter) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Parameters) Size() (n int) {
 	var l int
 	_ = l
@@ -10342,6 +10375,7 @@ func (m *Parameters) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Credential) Size() (n int) {
 	var l int
 	_ = l
@@ -10358,6 +10392,7 @@ func (m *Credential) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ACL) Size() (n int) {
 	var l int
 	_ = l
@@ -10366,6 +10401,7 @@ func (m *ACL) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ACL_Entity) Size() (n int) {
 	var l int
 	_ = l
@@ -10383,6 +10419,7 @@ func (m *ACL_Entity) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ACL_RunTasks) Size() (n int) {
 	var l int
 	_ = l
@@ -10399,6 +10436,7 @@ func (m *ACL_RunTasks) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ACL_ReceiveOffers) Size() (n int) {
 	var l int
 	_ = l
@@ -10415,6 +10453,7 @@ func (m *ACL_ReceiveOffers) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ACL_HTTPGet) Size() (n int) {
 	var l int
 	_ = l
@@ -10439,6 +10478,7 @@ func (m *ACL_HTTPGet) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ACL_HTTPPut) Size() (n int) {
 	var l int
 	_ = l
@@ -10463,6 +10503,7 @@ func (m *ACL_HTTPPut) Size() (n int) {
 	}
 	return n
 }
+
 func (m *ACLs) Size() (n int) {
 	var l int
 	_ = l
@@ -10498,6 +10539,7 @@ func (m *ACLs) Size() (n int) {
 	}
 	return n
 }
+
 func (m *RateLimit) Size() (n int) {
 	var l int
 	_ = l
@@ -10513,6 +10555,7 @@ func (m *RateLimit) Size() (n int) {
 	}
 	return n
 }
+
 func (m *RateLimits) Size() (n int) {
 	var l int
 	_ = l
@@ -11796,6 +11839,7 @@ func (m *FrameworkID) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *OfferID) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -11822,6 +11866,7 @@ func (m *OfferID) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *SlaveID) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -11848,6 +11893,7 @@ func (m *SlaveID) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *TaskID) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -11874,6 +11920,7 @@ func (m *TaskID) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ExecutorID) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -11900,6 +11947,7 @@ func (m *ExecutorID) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ContainerID) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -11926,6 +11974,7 @@ func (m *ContainerID) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *FrameworkInfo) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12001,6 +12050,7 @@ func (m *FrameworkInfo) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *HealthCheck) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12066,6 +12116,7 @@ func (m *HealthCheck) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *HealthCheck_HTTP) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12104,6 +12155,7 @@ func (m *HealthCheck_HTTP) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *CommandInfo) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12168,6 +12220,7 @@ func (m *CommandInfo) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *CommandInfo_URI) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12214,6 +12267,7 @@ func (m *CommandInfo_URI) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *CommandInfo_ContainerInfo) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12255,6 +12309,7 @@ func (m *CommandInfo_ContainerInfo) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ExecutorInfo) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12335,6 +12390,7 @@ func (m *ExecutorInfo) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *MasterInfo) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12383,6 +12439,7 @@ func (m *MasterInfo) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *SlaveInfo) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12407,7 +12464,7 @@ func (m *SlaveInfo) MarshalTo(data []byte) (n int, err error) {
 	if m.Port != nil {
 		data[i] = 0x40
 		i++
-		i = encodeVarintMesos(data, i, uint64(uint32(*m.Port)))
+		i = encodeVarintMesos(data, i, uint64(*m.Port))
 	}
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
@@ -12462,13 +12519,14 @@ func (m *SlaveInfo) MarshalTo(data []byte) (n int, err error) {
 	if m.WebuiPort != nil {
 		data[i] = 0x20
 		i++
-		i = encodeVarintMesos(data, i, uint64(uint32(*m.WebuiPort)))
+		i = encodeVarintMesos(data, i, uint64(*m.WebuiPort))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
+
 func (m *Value) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12534,6 +12592,7 @@ func (m *Value) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Value_Scalar) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12559,6 +12618,7 @@ func (m *Value_Scalar) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Value_Range) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12589,6 +12649,7 @@ func (m *Value_Range) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Value_Ranges) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12621,6 +12682,7 @@ func (m *Value_Ranges) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Value_Set) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12656,6 +12718,7 @@ func (m *Value_Set) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Value_Text) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12682,6 +12745,7 @@ func (m *Value_Text) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Attribute) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12753,6 +12817,7 @@ func (m *Attribute) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Resource) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12820,6 +12885,7 @@ func (m *Resource) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ResourceStatistics) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12910,6 +12976,7 @@ func (m *ResourceStatistics) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ResourceUsage) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -12986,6 +13053,7 @@ func (m *ResourceUsage) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *PerfStatistics) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13347,6 +13415,7 @@ func (m *PerfStatistics) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Request) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13389,6 +13458,7 @@ func (m *Request) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Offer) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13481,6 +13551,7 @@ func (m *Offer) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *TaskInfo) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13575,6 +13646,7 @@ func (m *TaskInfo) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *TaskStatus) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13657,6 +13729,7 @@ func (m *TaskStatus) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Filters) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13682,6 +13755,7 @@ func (m *Filters) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Environment) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13714,6 +13788,7 @@ func (m *Environment) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Environment_Variable) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13746,6 +13821,7 @@ func (m *Environment_Variable) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Parameter) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13778,6 +13854,7 @@ func (m *Parameter) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Parameters) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13810,6 +13887,7 @@ func (m *Parameters) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *Credential) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13842,6 +13920,7 @@ func (m *Credential) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ACL) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13862,6 +13941,7 @@ func (m *ACL) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ACL_Entity) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13902,6 +13982,7 @@ func (m *ACL_Entity) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ACL_RunTasks) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13942,6 +14023,7 @@ func (m *ACL_RunTasks) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ACL_ReceiveOffers) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -13982,6 +14064,7 @@ func (m *ACL_ReceiveOffers) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ACL_HTTPGet) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -14042,6 +14125,7 @@ func (m *ACL_HTTPGet) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ACL_HTTPPut) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -14102,6 +14186,7 @@ func (m *ACL_HTTPPut) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *ACLs) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -14180,6 +14265,7 @@ func (m *ACLs) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *RateLimit) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -14211,6 +14297,7 @@ func (m *RateLimit) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *RateLimits) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -14243,6 +14330,7 @@ func (m *RateLimits) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func encodeFixed64Mesos(data []byte, offset int, v uint64) int {
 	data[offset] = uint8(v)
 	data[offset+1] = uint8(v >> 8)
@@ -14274,315 +14362,565 @@ func (this *FrameworkID) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.FrameworkID{` + `Value:` + valueToGoStringMesos(this.Value, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.FrameworkID{` +
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *OfferID) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.OfferID{` + `Value:` + valueToGoStringMesos(this.Value, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.OfferID{` +
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *SlaveID) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.SlaveID{` + `Value:` + valueToGoStringMesos(this.Value, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.SlaveID{` +
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *TaskID) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.TaskID{` + `Value:` + valueToGoStringMesos(this.Value, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.TaskID{` +
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ExecutorID) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ExecutorID{` + `Value:` + valueToGoStringMesos(this.Value, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ExecutorID{` +
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ContainerID) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ContainerID{` + `Value:` + valueToGoStringMesos(this.Value, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ContainerID{` +
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *FrameworkInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.FrameworkInfo{` + `User:` + valueToGoStringMesos(this.User, "string"), `Name:` + valueToGoStringMesos(this.Name, "string"), `Id:` + fmt4.Sprintf("%#v", this.Id), `FailoverTimeout:` + valueToGoStringMesos(this.FailoverTimeout, "float64"), `Checkpoint:` + valueToGoStringMesos(this.Checkpoint, "bool"), `Role:` + valueToGoStringMesos(this.Role, "string"), `Hostname:` + valueToGoStringMesos(this.Hostname, "string"), `Principal:` + valueToGoStringMesos(this.Principal, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.FrameworkInfo{` +
+		`User:` + valueToGoStringMesos(this.User, "string"),
+		`Name:` + valueToGoStringMesos(this.Name, "string"),
+		`Id:` + fmt6.Sprintf("%#v", this.Id),
+		`FailoverTimeout:` + valueToGoStringMesos(this.FailoverTimeout, "float64"),
+		`Checkpoint:` + valueToGoStringMesos(this.Checkpoint, "bool"),
+		`Role:` + valueToGoStringMesos(this.Role, "string"),
+		`Hostname:` + valueToGoStringMesos(this.Hostname, "string"),
+		`Principal:` + valueToGoStringMesos(this.Principal, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *HealthCheck) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.HealthCheck{` + `Http:` + fmt4.Sprintf("%#v", this.Http), `DelaySeconds:` + valueToGoStringMesos(this.DelaySeconds, "float64"), `IntervalSeconds:` + valueToGoStringMesos(this.IntervalSeconds, "float64"), `TimeoutSeconds:` + valueToGoStringMesos(this.TimeoutSeconds, "float64"), `Failures:` + valueToGoStringMesos(this.Failures, "uint32"), `GracePeriodSeconds:` + valueToGoStringMesos(this.GracePeriodSeconds, "float64"), `Command:` + fmt4.Sprintf("%#v", this.Command), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.HealthCheck{` +
+		`Http:` + fmt6.Sprintf("%#v", this.Http),
+		`DelaySeconds:` + valueToGoStringMesos(this.DelaySeconds, "float64"),
+		`IntervalSeconds:` + valueToGoStringMesos(this.IntervalSeconds, "float64"),
+		`TimeoutSeconds:` + valueToGoStringMesos(this.TimeoutSeconds, "float64"),
+		`Failures:` + valueToGoStringMesos(this.Failures, "uint32"),
+		`GracePeriodSeconds:` + valueToGoStringMesos(this.GracePeriodSeconds, "float64"),
+		`Command:` + fmt6.Sprintf("%#v", this.Command),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *HealthCheck_HTTP) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.HealthCheck_HTTP{` + `Port:` + valueToGoStringMesos(this.Port, "uint32"), `Path:` + valueToGoStringMesos(this.Path, "string"), `Statuses:` + fmt4.Sprintf("%#v", this.Statuses), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.HealthCheck_HTTP{` +
+		`Port:` + valueToGoStringMesos(this.Port, "uint32"),
+		`Path:` + valueToGoStringMesos(this.Path, "string"),
+		`Statuses:` + fmt6.Sprintf("%#v", this.Statuses),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *CommandInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.CommandInfo{` + `Container:` + fmt4.Sprintf("%#v", this.Container), `Uris:` + fmt4.Sprintf("%#v", this.Uris), `Environment:` + fmt4.Sprintf("%#v", this.Environment), `Value:` + valueToGoStringMesos(this.Value, "string"), `User:` + valueToGoStringMesos(this.User, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.CommandInfo{` +
+		`Container:` + fmt6.Sprintf("%#v", this.Container),
+		`Uris:` + fmt6.Sprintf("%#v", this.Uris),
+		`Environment:` + fmt6.Sprintf("%#v", this.Environment),
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`User:` + valueToGoStringMesos(this.User, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *CommandInfo_URI) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.CommandInfo_URI{` + `Value:` + valueToGoStringMesos(this.Value, "string"), `Executable:` + valueToGoStringMesos(this.Executable, "bool"), `Extract:` + valueToGoStringMesos(this.Extract, "bool"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.CommandInfo_URI{` +
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`Executable:` + valueToGoStringMesos(this.Executable, "bool"),
+		`Extract:` + valueToGoStringMesos(this.Extract, "bool"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *CommandInfo_ContainerInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.CommandInfo_ContainerInfo{` + `Image:` + valueToGoStringMesos(this.Image, "string"), `Options:` + fmt4.Sprintf("%#v", this.Options), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.CommandInfo_ContainerInfo{` +
+		`Image:` + valueToGoStringMesos(this.Image, "string"),
+		`Options:` + fmt6.Sprintf("%#v", this.Options),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ExecutorInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ExecutorInfo{` + `ExecutorId:` + fmt4.Sprintf("%#v", this.ExecutorId), `FrameworkId:` + fmt4.Sprintf("%#v", this.FrameworkId), `Command:` + fmt4.Sprintf("%#v", this.Command), `Resources:` + fmt4.Sprintf("%#v", this.Resources), `Name:` + valueToGoStringMesos(this.Name, "string"), `Source:` + valueToGoStringMesos(this.Source, "string"), `Data:` + valueToGoStringMesos(this.Data, "byte"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ExecutorInfo{` +
+		`ExecutorId:` + fmt6.Sprintf("%#v", this.ExecutorId),
+		`FrameworkId:` + fmt6.Sprintf("%#v", this.FrameworkId),
+		`Command:` + fmt6.Sprintf("%#v", this.Command),
+		`Resources:` + fmt6.Sprintf("%#v", this.Resources),
+		`Name:` + valueToGoStringMesos(this.Name, "string"),
+		`Source:` + valueToGoStringMesos(this.Source, "string"),
+		`Data:` + valueToGoStringMesos(this.Data, "byte"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *MasterInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.MasterInfo{` + `Id:` + valueToGoStringMesos(this.Id, "string"), `Ip:` + valueToGoStringMesos(this.Ip, "uint32"), `Port:` + valueToGoStringMesos(this.Port, "uint32"), `Pid:` + valueToGoStringMesos(this.Pid, "string"), `Hostname:` + valueToGoStringMesos(this.Hostname, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.MasterInfo{` +
+		`Id:` + valueToGoStringMesos(this.Id, "string"),
+		`Ip:` + valueToGoStringMesos(this.Ip, "uint32"),
+		`Port:` + valueToGoStringMesos(this.Port, "uint32"),
+		`Pid:` + valueToGoStringMesos(this.Pid, "string"),
+		`Hostname:` + valueToGoStringMesos(this.Hostname, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *SlaveInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.SlaveInfo{` + `Hostname:` + valueToGoStringMesos(this.Hostname, "string"), `Port:` + valueToGoStringMesos(this.Port, "int32"), `Resources:` + fmt4.Sprintf("%#v", this.Resources), `Attributes:` + fmt4.Sprintf("%#v", this.Attributes), `Id:` + fmt4.Sprintf("%#v", this.Id), `Checkpoint:` + valueToGoStringMesos(this.Checkpoint, "bool"), `WebuiHostname:` + valueToGoStringMesos(this.WebuiHostname, "string"), `WebuiPort:` + valueToGoStringMesos(this.WebuiPort, "int32"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.SlaveInfo{` +
+		`Hostname:` + valueToGoStringMesos(this.Hostname, "string"),
+		`Port:` + valueToGoStringMesos(this.Port, "int32"),
+		`Resources:` + fmt6.Sprintf("%#v", this.Resources),
+		`Attributes:` + fmt6.Sprintf("%#v", this.Attributes),
+		`Id:` + fmt6.Sprintf("%#v", this.Id),
+		`Checkpoint:` + valueToGoStringMesos(this.Checkpoint, "bool"),
+		`WebuiHostname:` + valueToGoStringMesos(this.WebuiHostname, "string"),
+		`WebuiPort:` + valueToGoStringMesos(this.WebuiPort, "int32"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Value) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Value{` + `Type:` + valueToGoStringMesos(this.Type, "mesosproto.Value_Type"), `Scalar:` + fmt4.Sprintf("%#v", this.Scalar), `Ranges:` + fmt4.Sprintf("%#v", this.Ranges), `Set:` + fmt4.Sprintf("%#v", this.Set), `Text:` + fmt4.Sprintf("%#v", this.Text), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Value{` +
+		`Type:` + valueToGoStringMesos(this.Type, "mesosproto.Value_Type"),
+		`Scalar:` + fmt6.Sprintf("%#v", this.Scalar),
+		`Ranges:` + fmt6.Sprintf("%#v", this.Ranges),
+		`Set:` + fmt6.Sprintf("%#v", this.Set),
+		`Text:` + fmt6.Sprintf("%#v", this.Text),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Value_Scalar) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Value_Scalar{` + `Value:` + valueToGoStringMesos(this.Value, "float64"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Value_Scalar{` +
+		`Value:` + valueToGoStringMesos(this.Value, "float64"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Value_Range) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Value_Range{` + `Begin:` + valueToGoStringMesos(this.Begin, "uint64"), `End:` + valueToGoStringMesos(this.End, "uint64"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Value_Range{` +
+		`Begin:` + valueToGoStringMesos(this.Begin, "uint64"),
+		`End:` + valueToGoStringMesos(this.End, "uint64"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Value_Ranges) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Value_Ranges{` + `Range:` + fmt4.Sprintf("%#v", this.Range), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Value_Ranges{` +
+		`Range:` + fmt6.Sprintf("%#v", this.Range),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Value_Set) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Value_Set{` + `Item:` + fmt4.Sprintf("%#v", this.Item), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Value_Set{` +
+		`Item:` + fmt6.Sprintf("%#v", this.Item),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Value_Text) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Value_Text{` + `Value:` + valueToGoStringMesos(this.Value, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Value_Text{` +
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Attribute) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Attribute{` + `Name:` + valueToGoStringMesos(this.Name, "string"), `Type:` + valueToGoStringMesos(this.Type, "mesosproto.Value_Type"), `Scalar:` + fmt4.Sprintf("%#v", this.Scalar), `Ranges:` + fmt4.Sprintf("%#v", this.Ranges), `Set:` + fmt4.Sprintf("%#v", this.Set), `Text:` + fmt4.Sprintf("%#v", this.Text), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Attribute{` +
+		`Name:` + valueToGoStringMesos(this.Name, "string"),
+		`Type:` + valueToGoStringMesos(this.Type, "mesosproto.Value_Type"),
+		`Scalar:` + fmt6.Sprintf("%#v", this.Scalar),
+		`Ranges:` + fmt6.Sprintf("%#v", this.Ranges),
+		`Set:` + fmt6.Sprintf("%#v", this.Set),
+		`Text:` + fmt6.Sprintf("%#v", this.Text),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Resource) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Resource{` + `Name:` + valueToGoStringMesos(this.Name, "string"), `Type:` + valueToGoStringMesos(this.Type, "mesosproto.Value_Type"), `Scalar:` + fmt4.Sprintf("%#v", this.Scalar), `Ranges:` + fmt4.Sprintf("%#v", this.Ranges), `Set:` + fmt4.Sprintf("%#v", this.Set), `Role:` + valueToGoStringMesos(this.Role, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Resource{` +
+		`Name:` + valueToGoStringMesos(this.Name, "string"),
+		`Type:` + valueToGoStringMesos(this.Type, "mesosproto.Value_Type"),
+		`Scalar:` + fmt6.Sprintf("%#v", this.Scalar),
+		`Ranges:` + fmt6.Sprintf("%#v", this.Ranges),
+		`Set:` + fmt6.Sprintf("%#v", this.Set),
+		`Role:` + valueToGoStringMesos(this.Role, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ResourceStatistics) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ResourceStatistics{` + `Timestamp:` + valueToGoStringMesos(this.Timestamp, "float64"), `CpusUserTimeSecs:` + valueToGoStringMesos(this.CpusUserTimeSecs, "float64"), `CpusSystemTimeSecs:` + valueToGoStringMesos(this.CpusSystemTimeSecs, "float64"), `CpusLimit:` + valueToGoStringMesos(this.CpusLimit, "float64"), `CpusNrPeriods:` + valueToGoStringMesos(this.CpusNrPeriods, "uint32"), `CpusNrThrottled:` + valueToGoStringMesos(this.CpusNrThrottled, "uint32"), `CpusThrottledTimeSecs:` + valueToGoStringMesos(this.CpusThrottledTimeSecs, "float64"), `MemRssBytes:` + valueToGoStringMesos(this.MemRssBytes, "uint64"), `MemLimitBytes:` + valueToGoStringMesos(this.MemLimitBytes, "uint64"), `MemFileBytes:` + valueToGoStringMesos(this.MemFileBytes, "uint64"), `MemAnonBytes:` + valueToGoStringMesos(this.MemAnonBytes, "uint64"), `MemMappedFileBytes:` + valueToGoStringMesos(this.MemMappedFileBytes, "uint64"), `Perf:` + fmt4.Sprintf("%#v", this.Perf), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ResourceStatistics{` +
+		`Timestamp:` + valueToGoStringMesos(this.Timestamp, "float64"),
+		`CpusUserTimeSecs:` + valueToGoStringMesos(this.CpusUserTimeSecs, "float64"),
+		`CpusSystemTimeSecs:` + valueToGoStringMesos(this.CpusSystemTimeSecs, "float64"),
+		`CpusLimit:` + valueToGoStringMesos(this.CpusLimit, "float64"),
+		`CpusNrPeriods:` + valueToGoStringMesos(this.CpusNrPeriods, "uint32"),
+		`CpusNrThrottled:` + valueToGoStringMesos(this.CpusNrThrottled, "uint32"),
+		`CpusThrottledTimeSecs:` + valueToGoStringMesos(this.CpusThrottledTimeSecs, "float64"),
+		`MemRssBytes:` + valueToGoStringMesos(this.MemRssBytes, "uint64"),
+		`MemLimitBytes:` + valueToGoStringMesos(this.MemLimitBytes, "uint64"),
+		`MemFileBytes:` + valueToGoStringMesos(this.MemFileBytes, "uint64"),
+		`MemAnonBytes:` + valueToGoStringMesos(this.MemAnonBytes, "uint64"),
+		`MemMappedFileBytes:` + valueToGoStringMesos(this.MemMappedFileBytes, "uint64"),
+		`Perf:` + fmt6.Sprintf("%#v", this.Perf),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ResourceUsage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ResourceUsage{` + `SlaveId:` + fmt4.Sprintf("%#v", this.SlaveId), `FrameworkId:` + fmt4.Sprintf("%#v", this.FrameworkId), `ExecutorId:` + fmt4.Sprintf("%#v", this.ExecutorId), `ExecutorName:` + valueToGoStringMesos(this.ExecutorName, "string"), `TaskId:` + fmt4.Sprintf("%#v", this.TaskId), `Statistics:` + fmt4.Sprintf("%#v", this.Statistics), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ResourceUsage{` +
+		`SlaveId:` + fmt6.Sprintf("%#v", this.SlaveId),
+		`FrameworkId:` + fmt6.Sprintf("%#v", this.FrameworkId),
+		`ExecutorId:` + fmt6.Sprintf("%#v", this.ExecutorId),
+		`ExecutorName:` + valueToGoStringMesos(this.ExecutorName, "string"),
+		`TaskId:` + fmt6.Sprintf("%#v", this.TaskId),
+		`Statistics:` + fmt6.Sprintf("%#v", this.Statistics),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *PerfStatistics) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.PerfStatistics{` + `Timestamp:` + valueToGoStringMesos(this.Timestamp, "float64"), `Duration:` + valueToGoStringMesos(this.Duration, "float64"), `Cycles:` + valueToGoStringMesos(this.Cycles, "uint64"), `StalledCyclesFrontend:` + valueToGoStringMesos(this.StalledCyclesFrontend, "uint64"), `StalledCyclesBackend:` + valueToGoStringMesos(this.StalledCyclesBackend, "uint64"), `Instructions:` + valueToGoStringMesos(this.Instructions, "uint64"), `CacheReferences:` + valueToGoStringMesos(this.CacheReferences, "uint64"), `CacheMisses:` + valueToGoStringMesos(this.CacheMisses, "uint64"), `Branches:` + valueToGoStringMesos(this.Branches, "uint64"), `BranchMisses:` + valueToGoStringMesos(this.BranchMisses, "uint64"), `BusCycles:` + valueToGoStringMesos(this.BusCycles, "uint64"), `RefCycles:` + valueToGoStringMesos(this.RefCycles, "uint64"), `CpuClock:` + valueToGoStringMesos(this.CpuClock, "float64"), `TaskClock:` + valueToGoStringMesos(this.TaskClock, "float64"), `PageFaults:` + valueToGoStringMesos(this.PageFaults, "uint64"), `MinorFaults:` + valueToGoStringMesos(this.MinorFaults, "uint64"), `MajorFaults:` + valueToGoStringMesos(this.MajorFaults, "uint64"), `ContextSwitches:` + valueToGoStringMesos(this.ContextSwitches, "uint64"), `CpuMigrations:` + valueToGoStringMesos(this.CpuMigrations, "uint64"), `AlignmentFaults:` + valueToGoStringMesos(this.AlignmentFaults, "uint64"), `EmulationFaults:` + valueToGoStringMesos(this.EmulationFaults, "uint64"), `L1DcacheLoads:` + valueToGoStringMesos(this.L1DcacheLoads, "uint64"), `L1DcacheLoadMisses:` + valueToGoStringMesos(this.L1DcacheLoadMisses, "uint64"), `L1DcacheStores:` + valueToGoStringMesos(this.L1DcacheStores, "uint64"), `L1DcacheStoreMisses:` + valueToGoStringMesos(this.L1DcacheStoreMisses, "uint64"), `L1DcachePrefetches:` + valueToGoStringMesos(this.L1DcachePrefetches, "uint64"), `L1DcachePrefetchMisses:` + valueToGoStringMesos(this.L1DcachePrefetchMisses, "uint64"), `L1IcacheLoads:` + valueToGoStringMesos(this.L1IcacheLoads, "uint64"), `L1IcacheLoadMisses:` + valueToGoStringMesos(this.L1IcacheLoadMisses, "uint64"), `L1IcachePrefetches:` + valueToGoStringMesos(this.L1IcachePrefetches, "uint64"), `L1IcachePrefetchMisses:` + valueToGoStringMesos(this.L1IcachePrefetchMisses, "uint64"), `LlcLoads:` + valueToGoStringMesos(this.LlcLoads, "uint64"), `LlcLoadMisses:` + valueToGoStringMesos(this.LlcLoadMisses, "uint64"), `LlcStores:` + valueToGoStringMesos(this.LlcStores, "uint64"), `LlcStoreMisses:` + valueToGoStringMesos(this.LlcStoreMisses, "uint64"), `LlcPrefetches:` + valueToGoStringMesos(this.LlcPrefetches, "uint64"), `LlcPrefetchMisses:` + valueToGoStringMesos(this.LlcPrefetchMisses, "uint64"), `DtlbLoads:` + valueToGoStringMesos(this.DtlbLoads, "uint64"), `DtlbLoadMisses:` + valueToGoStringMesos(this.DtlbLoadMisses, "uint64"), `DtlbStores:` + valueToGoStringMesos(this.DtlbStores, "uint64"), `DtlbStoreMisses:` + valueToGoStringMesos(this.DtlbStoreMisses, "uint64"), `DtlbPrefetches:` + valueToGoStringMesos(this.DtlbPrefetches, "uint64"), `DtlbPrefetchMisses:` + valueToGoStringMesos(this.DtlbPrefetchMisses, "uint64"), `ItlbLoads:` + valueToGoStringMesos(this.ItlbLoads, "uint64"), `ItlbLoadMisses:` + valueToGoStringMesos(this.ItlbLoadMisses, "uint64"), `BranchLoads:` + valueToGoStringMesos(this.BranchLoads, "uint64"), `BranchLoadMisses:` + valueToGoStringMesos(this.BranchLoadMisses, "uint64"), `NodeLoads:` + valueToGoStringMesos(this.NodeLoads, "uint64"), `NodeLoadMisses:` + valueToGoStringMesos(this.NodeLoadMisses, "uint64"), `NodeStores:` + valueToGoStringMesos(this.NodeStores, "uint64"), `NodeStoreMisses:` + valueToGoStringMesos(this.NodeStoreMisses, "uint64"), `NodePrefetches:` + valueToGoStringMesos(this.NodePrefetches, "uint64"), `NodePrefetchMisses:` + valueToGoStringMesos(this.NodePrefetchMisses, "uint64"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.PerfStatistics{` +
+		`Timestamp:` + valueToGoStringMesos(this.Timestamp, "float64"),
+		`Duration:` + valueToGoStringMesos(this.Duration, "float64"),
+		`Cycles:` + valueToGoStringMesos(this.Cycles, "uint64"),
+		`StalledCyclesFrontend:` + valueToGoStringMesos(this.StalledCyclesFrontend, "uint64"),
+		`StalledCyclesBackend:` + valueToGoStringMesos(this.StalledCyclesBackend, "uint64"),
+		`Instructions:` + valueToGoStringMesos(this.Instructions, "uint64"),
+		`CacheReferences:` + valueToGoStringMesos(this.CacheReferences, "uint64"),
+		`CacheMisses:` + valueToGoStringMesos(this.CacheMisses, "uint64"),
+		`Branches:` + valueToGoStringMesos(this.Branches, "uint64"),
+		`BranchMisses:` + valueToGoStringMesos(this.BranchMisses, "uint64"),
+		`BusCycles:` + valueToGoStringMesos(this.BusCycles, "uint64"),
+		`RefCycles:` + valueToGoStringMesos(this.RefCycles, "uint64"),
+		`CpuClock:` + valueToGoStringMesos(this.CpuClock, "float64"),
+		`TaskClock:` + valueToGoStringMesos(this.TaskClock, "float64"),
+		`PageFaults:` + valueToGoStringMesos(this.PageFaults, "uint64"),
+		`MinorFaults:` + valueToGoStringMesos(this.MinorFaults, "uint64"),
+		`MajorFaults:` + valueToGoStringMesos(this.MajorFaults, "uint64"),
+		`ContextSwitches:` + valueToGoStringMesos(this.ContextSwitches, "uint64"),
+		`CpuMigrations:` + valueToGoStringMesos(this.CpuMigrations, "uint64"),
+		`AlignmentFaults:` + valueToGoStringMesos(this.AlignmentFaults, "uint64"),
+		`EmulationFaults:` + valueToGoStringMesos(this.EmulationFaults, "uint64"),
+		`L1DcacheLoads:` + valueToGoStringMesos(this.L1DcacheLoads, "uint64"),
+		`L1DcacheLoadMisses:` + valueToGoStringMesos(this.L1DcacheLoadMisses, "uint64"),
+		`L1DcacheStores:` + valueToGoStringMesos(this.L1DcacheStores, "uint64"),
+		`L1DcacheStoreMisses:` + valueToGoStringMesos(this.L1DcacheStoreMisses, "uint64"),
+		`L1DcachePrefetches:` + valueToGoStringMesos(this.L1DcachePrefetches, "uint64"),
+		`L1DcachePrefetchMisses:` + valueToGoStringMesos(this.L1DcachePrefetchMisses, "uint64"),
+		`L1IcacheLoads:` + valueToGoStringMesos(this.L1IcacheLoads, "uint64"),
+		`L1IcacheLoadMisses:` + valueToGoStringMesos(this.L1IcacheLoadMisses, "uint64"),
+		`L1IcachePrefetches:` + valueToGoStringMesos(this.L1IcachePrefetches, "uint64"),
+		`L1IcachePrefetchMisses:` + valueToGoStringMesos(this.L1IcachePrefetchMisses, "uint64"),
+		`LlcLoads:` + valueToGoStringMesos(this.LlcLoads, "uint64"),
+		`LlcLoadMisses:` + valueToGoStringMesos(this.LlcLoadMisses, "uint64"),
+		`LlcStores:` + valueToGoStringMesos(this.LlcStores, "uint64"),
+		`LlcStoreMisses:` + valueToGoStringMesos(this.LlcStoreMisses, "uint64"),
+		`LlcPrefetches:` + valueToGoStringMesos(this.LlcPrefetches, "uint64"),
+		`LlcPrefetchMisses:` + valueToGoStringMesos(this.LlcPrefetchMisses, "uint64"),
+		`DtlbLoads:` + valueToGoStringMesos(this.DtlbLoads, "uint64"),
+		`DtlbLoadMisses:` + valueToGoStringMesos(this.DtlbLoadMisses, "uint64"),
+		`DtlbStores:` + valueToGoStringMesos(this.DtlbStores, "uint64"),
+		`DtlbStoreMisses:` + valueToGoStringMesos(this.DtlbStoreMisses, "uint64"),
+		`DtlbPrefetches:` + valueToGoStringMesos(this.DtlbPrefetches, "uint64"),
+		`DtlbPrefetchMisses:` + valueToGoStringMesos(this.DtlbPrefetchMisses, "uint64"),
+		`ItlbLoads:` + valueToGoStringMesos(this.ItlbLoads, "uint64"),
+		`ItlbLoadMisses:` + valueToGoStringMesos(this.ItlbLoadMisses, "uint64"),
+		`BranchLoads:` + valueToGoStringMesos(this.BranchLoads, "uint64"),
+		`BranchLoadMisses:` + valueToGoStringMesos(this.BranchLoadMisses, "uint64"),
+		`NodeLoads:` + valueToGoStringMesos(this.NodeLoads, "uint64"),
+		`NodeLoadMisses:` + valueToGoStringMesos(this.NodeLoadMisses, "uint64"),
+		`NodeStores:` + valueToGoStringMesos(this.NodeStores, "uint64"),
+		`NodeStoreMisses:` + valueToGoStringMesos(this.NodeStoreMisses, "uint64"),
+		`NodePrefetches:` + valueToGoStringMesos(this.NodePrefetches, "uint64"),
+		`NodePrefetchMisses:` + valueToGoStringMesos(this.NodePrefetchMisses, "uint64"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Request) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Request{` + `SlaveId:` + fmt4.Sprintf("%#v", this.SlaveId), `Resources:` + fmt4.Sprintf("%#v", this.Resources), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Request{` +
+		`SlaveId:` + fmt6.Sprintf("%#v", this.SlaveId),
+		`Resources:` + fmt6.Sprintf("%#v", this.Resources),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Offer) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Offer{` + `Id:` + fmt4.Sprintf("%#v", this.Id), `FrameworkId:` + fmt4.Sprintf("%#v", this.FrameworkId), `SlaveId:` + fmt4.Sprintf("%#v", this.SlaveId), `Hostname:` + valueToGoStringMesos(this.Hostname, "string"), `Resources:` + fmt4.Sprintf("%#v", this.Resources), `Attributes:` + fmt4.Sprintf("%#v", this.Attributes), `ExecutorIds:` + fmt4.Sprintf("%#v", this.ExecutorIds), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Offer{` +
+		`Id:` + fmt6.Sprintf("%#v", this.Id),
+		`FrameworkId:` + fmt6.Sprintf("%#v", this.FrameworkId),
+		`SlaveId:` + fmt6.Sprintf("%#v", this.SlaveId),
+		`Hostname:` + valueToGoStringMesos(this.Hostname, "string"),
+		`Resources:` + fmt6.Sprintf("%#v", this.Resources),
+		`Attributes:` + fmt6.Sprintf("%#v", this.Attributes),
+		`ExecutorIds:` + fmt6.Sprintf("%#v", this.ExecutorIds),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *TaskInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.TaskInfo{` + `Name:` + valueToGoStringMesos(this.Name, "string"), `TaskId:` + fmt4.Sprintf("%#v", this.TaskId), `SlaveId:` + fmt4.Sprintf("%#v", this.SlaveId), `Resources:` + fmt4.Sprintf("%#v", this.Resources), `Executor:` + fmt4.Sprintf("%#v", this.Executor), `Command:` + fmt4.Sprintf("%#v", this.Command), `Data:` + valueToGoStringMesos(this.Data, "byte"), `HealthCheck:` + fmt4.Sprintf("%#v", this.HealthCheck), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.TaskInfo{` +
+		`Name:` + valueToGoStringMesos(this.Name, "string"),
+		`TaskId:` + fmt6.Sprintf("%#v", this.TaskId),
+		`SlaveId:` + fmt6.Sprintf("%#v", this.SlaveId),
+		`Resources:` + fmt6.Sprintf("%#v", this.Resources),
+		`Executor:` + fmt6.Sprintf("%#v", this.Executor),
+		`Command:` + fmt6.Sprintf("%#v", this.Command),
+		`Data:` + valueToGoStringMesos(this.Data, "byte"),
+		`HealthCheck:` + fmt6.Sprintf("%#v", this.HealthCheck),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *TaskStatus) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.TaskStatus{` + `TaskId:` + fmt4.Sprintf("%#v", this.TaskId), `State:` + valueToGoStringMesos(this.State, "mesosproto.TaskState"), `Message:` + valueToGoStringMesos(this.Message, "string"), `Data:` + valueToGoStringMesos(this.Data, "byte"), `SlaveId:` + fmt4.Sprintf("%#v", this.SlaveId), `ExecutorId:` + fmt4.Sprintf("%#v", this.ExecutorId), `Timestamp:` + valueToGoStringMesos(this.Timestamp, "float64"), `Healthy:` + valueToGoStringMesos(this.Healthy, "bool"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.TaskStatus{` +
+		`TaskId:` + fmt6.Sprintf("%#v", this.TaskId),
+		`State:` + valueToGoStringMesos(this.State, "mesosproto.TaskState"),
+		`Message:` + valueToGoStringMesos(this.Message, "string"),
+		`Data:` + valueToGoStringMesos(this.Data, "byte"),
+		`SlaveId:` + fmt6.Sprintf("%#v", this.SlaveId),
+		`ExecutorId:` + fmt6.Sprintf("%#v", this.ExecutorId),
+		`Timestamp:` + valueToGoStringMesos(this.Timestamp, "float64"),
+		`Healthy:` + valueToGoStringMesos(this.Healthy, "bool"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Filters) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Filters{` + `RefuseSeconds:` + valueToGoStringMesos(this.RefuseSeconds, "float64"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Filters{` +
+		`RefuseSeconds:` + valueToGoStringMesos(this.RefuseSeconds, "float64"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Environment) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Environment{` + `Variables:` + fmt4.Sprintf("%#v", this.Variables), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Environment{` +
+		`Variables:` + fmt6.Sprintf("%#v", this.Variables),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Environment_Variable) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Environment_Variable{` + `Name:` + valueToGoStringMesos(this.Name, "string"), `Value:` + valueToGoStringMesos(this.Value, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Environment_Variable{` +
+		`Name:` + valueToGoStringMesos(this.Name, "string"),
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Parameter) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Parameter{` + `Key:` + valueToGoStringMesos(this.Key, "string"), `Value:` + valueToGoStringMesos(this.Value, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Parameter{` +
+		`Key:` + valueToGoStringMesos(this.Key, "string"),
+		`Value:` + valueToGoStringMesos(this.Value, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Parameters) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Parameters{` + `Parameter:` + fmt4.Sprintf("%#v", this.Parameter), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Parameters{` +
+		`Parameter:` + fmt6.Sprintf("%#v", this.Parameter),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *Credential) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.Credential{` + `Principal:` + valueToGoStringMesos(this.Principal, "string"), `Secret:` + valueToGoStringMesos(this.Secret, "byte"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.Credential{` +
+		`Principal:` + valueToGoStringMesos(this.Principal, "string"),
+		`Secret:` + valueToGoStringMesos(this.Secret, "byte"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ACL) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ACL{` + `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ACL{` +
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ACL_Entity) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ACL_Entity{` + `Type:` + valueToGoStringMesos(this.Type, "mesosproto.ACL_Entity_Type"), `Values:` + fmt4.Sprintf("%#v", this.Values), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ACL_Entity{` +
+		`Type:` + valueToGoStringMesos(this.Type, "mesosproto.ACL_Entity_Type"),
+		`Values:` + fmt6.Sprintf("%#v", this.Values),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ACL_RunTasks) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ACL_RunTasks{` + `Principals:` + fmt4.Sprintf("%#v", this.Principals), `Users:` + fmt4.Sprintf("%#v", this.Users), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ACL_RunTasks{` +
+		`Principals:` + fmt6.Sprintf("%#v", this.Principals),
+		`Users:` + fmt6.Sprintf("%#v", this.Users),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ACL_ReceiveOffers) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ACL_ReceiveOffers{` + `Principals:` + fmt4.Sprintf("%#v", this.Principals), `Roles:` + fmt4.Sprintf("%#v", this.Roles), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ACL_ReceiveOffers{` +
+		`Principals:` + fmt6.Sprintf("%#v", this.Principals),
+		`Roles:` + fmt6.Sprintf("%#v", this.Roles),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ACL_HTTPGet) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ACL_HTTPGet{` + `Usernames:` + fmt4.Sprintf("%#v", this.Usernames), `Ips:` + fmt4.Sprintf("%#v", this.Ips), `Hostnames:` + fmt4.Sprintf("%#v", this.Hostnames), `Urls:` + fmt4.Sprintf("%#v", this.Urls), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ACL_HTTPGet{` +
+		`Usernames:` + fmt6.Sprintf("%#v", this.Usernames),
+		`Ips:` + fmt6.Sprintf("%#v", this.Ips),
+		`Hostnames:` + fmt6.Sprintf("%#v", this.Hostnames),
+		`Urls:` + fmt6.Sprintf("%#v", this.Urls),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ACL_HTTPPut) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ACL_HTTPPut{` + `Usernames:` + fmt4.Sprintf("%#v", this.Usernames), `Ips:` + fmt4.Sprintf("%#v", this.Ips), `Hostnames:` + fmt4.Sprintf("%#v", this.Hostnames), `Urls:` + fmt4.Sprintf("%#v", this.Urls), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ACL_HTTPPut{` +
+		`Usernames:` + fmt6.Sprintf("%#v", this.Usernames),
+		`Ips:` + fmt6.Sprintf("%#v", this.Ips),
+		`Hostnames:` + fmt6.Sprintf("%#v", this.Hostnames),
+		`Urls:` + fmt6.Sprintf("%#v", this.Urls),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *ACLs) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.ACLs{` + `Permissive:` + valueToGoStringMesos(this.Permissive, "bool"), `RunTasks:` + fmt4.Sprintf("%#v", this.RunTasks), `ReceiveOffers:` + fmt4.Sprintf("%#v", this.ReceiveOffers), `HttpGet:` + fmt4.Sprintf("%#v", this.HttpGet), `HttpPut:` + fmt4.Sprintf("%#v", this.HttpPut), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.ACLs{` +
+		`Permissive:` + valueToGoStringMesos(this.Permissive, "bool"),
+		`RunTasks:` + fmt6.Sprintf("%#v", this.RunTasks),
+		`ReceiveOffers:` + fmt6.Sprintf("%#v", this.ReceiveOffers),
+		`HttpGet:` + fmt6.Sprintf("%#v", this.HttpGet),
+		`HttpPut:` + fmt6.Sprintf("%#v", this.HttpPut),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *RateLimit) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.RateLimit{` + `Qps:` + valueToGoStringMesos(this.Qps, "float64"), `Principal:` + valueToGoStringMesos(this.Principal, "string"), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.RateLimit{` +
+		`Qps:` + valueToGoStringMesos(this.Qps, "float64"),
+		`Principal:` + valueToGoStringMesos(this.Principal, "string"),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *RateLimits) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings3.Join([]string{`&mesosproto.RateLimits{` + `Limits:` + fmt4.Sprintf("%#v", this.Limits), `XXX_unrecognized:` + fmt4.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings3.Join([]string{`&mesosproto.RateLimits{` +
+		`Limits:` + fmt6.Sprintf("%#v", this.Limits),
+		`XXX_unrecognized:` + fmt6.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func valueToGoStringMesos(v interface{}, typ string) string {
@@ -14591,9 +14929,9 @@ func valueToGoStringMesos(v interface{}, typ string) string {
 		return "nil"
 	}
 	pv := reflect3.Indirect(rv).Interface()
-	return fmt4.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
+	return fmt6.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
-func extensionToGoStringMesos(e map[int32]code_google_com_p_gogoprotobuf_proto3.Extension) string {
+func extensionToGoStringMesos(e map[int32]github_com_gogo_protobuf_proto3.Extension) string {
 	if e == nil {
 		return "nil"
 	}
@@ -14615,32 +14953,32 @@ func (this *FrameworkID) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*FrameworkID)
 	if !ok {
-		return fmt5.Errorf("that is not of type *FrameworkID")
+		return fmt7.Errorf("that is not of type *FrameworkID")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *FrameworkID but is nil && this != nil")
+		return fmt7.Errorf("that is type *FrameworkID but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *FrameworkIDbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *FrameworkIDbut is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -14683,32 +15021,32 @@ func (this *OfferID) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*OfferID)
 	if !ok {
-		return fmt5.Errorf("that is not of type *OfferID")
+		return fmt7.Errorf("that is not of type *OfferID")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *OfferID but is nil && this != nil")
+		return fmt7.Errorf("that is type *OfferID but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *OfferIDbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *OfferIDbut is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -14751,32 +15089,32 @@ func (this *SlaveID) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*SlaveID)
 	if !ok {
-		return fmt5.Errorf("that is not of type *SlaveID")
+		return fmt7.Errorf("that is not of type *SlaveID")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *SlaveID but is nil && this != nil")
+		return fmt7.Errorf("that is type *SlaveID but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *SlaveIDbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *SlaveIDbut is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -14819,32 +15157,32 @@ func (this *TaskID) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*TaskID)
 	if !ok {
-		return fmt5.Errorf("that is not of type *TaskID")
+		return fmt7.Errorf("that is not of type *TaskID")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *TaskID but is nil && this != nil")
+		return fmt7.Errorf("that is type *TaskID but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *TaskIDbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *TaskIDbut is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -14887,32 +15225,32 @@ func (this *ExecutorID) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ExecutorID)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ExecutorID")
+		return fmt7.Errorf("that is not of type *ExecutorID")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ExecutorID but is nil && this != nil")
+		return fmt7.Errorf("that is type *ExecutorID but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ExecutorIDbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ExecutorIDbut is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -14955,32 +15293,32 @@ func (this *ContainerID) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ContainerID)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ContainerID")
+		return fmt7.Errorf("that is not of type *ContainerID")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ContainerID but is nil && this != nil")
+		return fmt7.Errorf("that is type *ContainerID but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ContainerIDbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ContainerIDbut is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -15023,89 +15361,89 @@ func (this *FrameworkInfo) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*FrameworkInfo)
 	if !ok {
-		return fmt5.Errorf("that is not of type *FrameworkInfo")
+		return fmt7.Errorf("that is not of type *FrameworkInfo")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *FrameworkInfo but is nil && this != nil")
+		return fmt7.Errorf("that is type *FrameworkInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *FrameworkInfobut is not nil && this == nil")
+		return fmt7.Errorf("that is type *FrameworkInfobut is not nil && this == nil")
 	}
 	if this.User != nil && that1.User != nil {
 		if *this.User != *that1.User {
-			return fmt5.Errorf("User this(%v) Not Equal that(%v)", *this.User, *that1.User)
+			return fmt7.Errorf("User this(%v) Not Equal that(%v)", *this.User, *that1.User)
 		}
 	} else if this.User != nil {
-		return fmt5.Errorf("this.User == nil && that.User != nil")
+		return fmt7.Errorf("this.User == nil && that.User != nil")
 	} else if that1.User != nil {
-		return fmt5.Errorf("User this(%v) Not Equal that(%v)", this.User, that1.User)
+		return fmt7.Errorf("User this(%v) Not Equal that(%v)", this.User, that1.User)
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
-			return fmt5.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
+			return fmt7.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
 		}
 	} else if this.Name != nil {
-		return fmt5.Errorf("this.Name == nil && that.Name != nil")
+		return fmt7.Errorf("this.Name == nil && that.Name != nil")
 	} else if that1.Name != nil {
-		return fmt5.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+		return fmt7.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
 	if !this.Id.Equal(that1.Id) {
-		return fmt5.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+		return fmt7.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
 	if this.FailoverTimeout != nil && that1.FailoverTimeout != nil {
 		if *this.FailoverTimeout != *that1.FailoverTimeout {
-			return fmt5.Errorf("FailoverTimeout this(%v) Not Equal that(%v)", *this.FailoverTimeout, *that1.FailoverTimeout)
+			return fmt7.Errorf("FailoverTimeout this(%v) Not Equal that(%v)", *this.FailoverTimeout, *that1.FailoverTimeout)
 		}
 	} else if this.FailoverTimeout != nil {
-		return fmt5.Errorf("this.FailoverTimeout == nil && that.FailoverTimeout != nil")
+		return fmt7.Errorf("this.FailoverTimeout == nil && that.FailoverTimeout != nil")
 	} else if that1.FailoverTimeout != nil {
-		return fmt5.Errorf("FailoverTimeout this(%v) Not Equal that(%v)", this.FailoverTimeout, that1.FailoverTimeout)
+		return fmt7.Errorf("FailoverTimeout this(%v) Not Equal that(%v)", this.FailoverTimeout, that1.FailoverTimeout)
 	}
 	if this.Checkpoint != nil && that1.Checkpoint != nil {
 		if *this.Checkpoint != *that1.Checkpoint {
-			return fmt5.Errorf("Checkpoint this(%v) Not Equal that(%v)", *this.Checkpoint, *that1.Checkpoint)
+			return fmt7.Errorf("Checkpoint this(%v) Not Equal that(%v)", *this.Checkpoint, *that1.Checkpoint)
 		}
 	} else if this.Checkpoint != nil {
-		return fmt5.Errorf("this.Checkpoint == nil && that.Checkpoint != nil")
+		return fmt7.Errorf("this.Checkpoint == nil && that.Checkpoint != nil")
 	} else if that1.Checkpoint != nil {
-		return fmt5.Errorf("Checkpoint this(%v) Not Equal that(%v)", this.Checkpoint, that1.Checkpoint)
+		return fmt7.Errorf("Checkpoint this(%v) Not Equal that(%v)", this.Checkpoint, that1.Checkpoint)
 	}
 	if this.Role != nil && that1.Role != nil {
 		if *this.Role != *that1.Role {
-			return fmt5.Errorf("Role this(%v) Not Equal that(%v)", *this.Role, *that1.Role)
+			return fmt7.Errorf("Role this(%v) Not Equal that(%v)", *this.Role, *that1.Role)
 		}
 	} else if this.Role != nil {
-		return fmt5.Errorf("this.Role == nil && that.Role != nil")
+		return fmt7.Errorf("this.Role == nil && that.Role != nil")
 	} else if that1.Role != nil {
-		return fmt5.Errorf("Role this(%v) Not Equal that(%v)", this.Role, that1.Role)
+		return fmt7.Errorf("Role this(%v) Not Equal that(%v)", this.Role, that1.Role)
 	}
 	if this.Hostname != nil && that1.Hostname != nil {
 		if *this.Hostname != *that1.Hostname {
-			return fmt5.Errorf("Hostname this(%v) Not Equal that(%v)", *this.Hostname, *that1.Hostname)
+			return fmt7.Errorf("Hostname this(%v) Not Equal that(%v)", *this.Hostname, *that1.Hostname)
 		}
 	} else if this.Hostname != nil {
-		return fmt5.Errorf("this.Hostname == nil && that.Hostname != nil")
+		return fmt7.Errorf("this.Hostname == nil && that.Hostname != nil")
 	} else if that1.Hostname != nil {
-		return fmt5.Errorf("Hostname this(%v) Not Equal that(%v)", this.Hostname, that1.Hostname)
+		return fmt7.Errorf("Hostname this(%v) Not Equal that(%v)", this.Hostname, that1.Hostname)
 	}
 	if this.Principal != nil && that1.Principal != nil {
 		if *this.Principal != *that1.Principal {
-			return fmt5.Errorf("Principal this(%v) Not Equal that(%v)", *this.Principal, *that1.Principal)
+			return fmt7.Errorf("Principal this(%v) Not Equal that(%v)", *this.Principal, *that1.Principal)
 		}
 	} else if this.Principal != nil {
-		return fmt5.Errorf("this.Principal == nil && that.Principal != nil")
+		return fmt7.Errorf("this.Principal == nil && that.Principal != nil")
 	} else if that1.Principal != nil {
-		return fmt5.Errorf("Principal this(%v) Not Equal that(%v)", this.Principal, that1.Principal)
+		return fmt7.Errorf("Principal this(%v) Not Equal that(%v)", this.Principal, that1.Principal)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -15205,74 +15543,74 @@ func (this *HealthCheck) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*HealthCheck)
 	if !ok {
-		return fmt5.Errorf("that is not of type *HealthCheck")
+		return fmt7.Errorf("that is not of type *HealthCheck")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *HealthCheck but is nil && this != nil")
+		return fmt7.Errorf("that is type *HealthCheck but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *HealthCheckbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *HealthCheckbut is not nil && this == nil")
 	}
 	if !this.Http.Equal(that1.Http) {
-		return fmt5.Errorf("Http this(%v) Not Equal that(%v)", this.Http, that1.Http)
+		return fmt7.Errorf("Http this(%v) Not Equal that(%v)", this.Http, that1.Http)
 	}
 	if this.DelaySeconds != nil && that1.DelaySeconds != nil {
 		if *this.DelaySeconds != *that1.DelaySeconds {
-			return fmt5.Errorf("DelaySeconds this(%v) Not Equal that(%v)", *this.DelaySeconds, *that1.DelaySeconds)
+			return fmt7.Errorf("DelaySeconds this(%v) Not Equal that(%v)", *this.DelaySeconds, *that1.DelaySeconds)
 		}
 	} else if this.DelaySeconds != nil {
-		return fmt5.Errorf("this.DelaySeconds == nil && that.DelaySeconds != nil")
+		return fmt7.Errorf("this.DelaySeconds == nil && that.DelaySeconds != nil")
 	} else if that1.DelaySeconds != nil {
-		return fmt5.Errorf("DelaySeconds this(%v) Not Equal that(%v)", this.DelaySeconds, that1.DelaySeconds)
+		return fmt7.Errorf("DelaySeconds this(%v) Not Equal that(%v)", this.DelaySeconds, that1.DelaySeconds)
 	}
 	if this.IntervalSeconds != nil && that1.IntervalSeconds != nil {
 		if *this.IntervalSeconds != *that1.IntervalSeconds {
-			return fmt5.Errorf("IntervalSeconds this(%v) Not Equal that(%v)", *this.IntervalSeconds, *that1.IntervalSeconds)
+			return fmt7.Errorf("IntervalSeconds this(%v) Not Equal that(%v)", *this.IntervalSeconds, *that1.IntervalSeconds)
 		}
 	} else if this.IntervalSeconds != nil {
-		return fmt5.Errorf("this.IntervalSeconds == nil && that.IntervalSeconds != nil")
+		return fmt7.Errorf("this.IntervalSeconds == nil && that.IntervalSeconds != nil")
 	} else if that1.IntervalSeconds != nil {
-		return fmt5.Errorf("IntervalSeconds this(%v) Not Equal that(%v)", this.IntervalSeconds, that1.IntervalSeconds)
+		return fmt7.Errorf("IntervalSeconds this(%v) Not Equal that(%v)", this.IntervalSeconds, that1.IntervalSeconds)
 	}
 	if this.TimeoutSeconds != nil && that1.TimeoutSeconds != nil {
 		if *this.TimeoutSeconds != *that1.TimeoutSeconds {
-			return fmt5.Errorf("TimeoutSeconds this(%v) Not Equal that(%v)", *this.TimeoutSeconds, *that1.TimeoutSeconds)
+			return fmt7.Errorf("TimeoutSeconds this(%v) Not Equal that(%v)", *this.TimeoutSeconds, *that1.TimeoutSeconds)
 		}
 	} else if this.TimeoutSeconds != nil {
-		return fmt5.Errorf("this.TimeoutSeconds == nil && that.TimeoutSeconds != nil")
+		return fmt7.Errorf("this.TimeoutSeconds == nil && that.TimeoutSeconds != nil")
 	} else if that1.TimeoutSeconds != nil {
-		return fmt5.Errorf("TimeoutSeconds this(%v) Not Equal that(%v)", this.TimeoutSeconds, that1.TimeoutSeconds)
+		return fmt7.Errorf("TimeoutSeconds this(%v) Not Equal that(%v)", this.TimeoutSeconds, that1.TimeoutSeconds)
 	}
 	if this.Failures != nil && that1.Failures != nil {
 		if *this.Failures != *that1.Failures {
-			return fmt5.Errorf("Failures this(%v) Not Equal that(%v)", *this.Failures, *that1.Failures)
+			return fmt7.Errorf("Failures this(%v) Not Equal that(%v)", *this.Failures, *that1.Failures)
 		}
 	} else if this.Failures != nil {
-		return fmt5.Errorf("this.Failures == nil && that.Failures != nil")
+		return fmt7.Errorf("this.Failures == nil && that.Failures != nil")
 	} else if that1.Failures != nil {
-		return fmt5.Errorf("Failures this(%v) Not Equal that(%v)", this.Failures, that1.Failures)
+		return fmt7.Errorf("Failures this(%v) Not Equal that(%v)", this.Failures, that1.Failures)
 	}
 	if this.GracePeriodSeconds != nil && that1.GracePeriodSeconds != nil {
 		if *this.GracePeriodSeconds != *that1.GracePeriodSeconds {
-			return fmt5.Errorf("GracePeriodSeconds this(%v) Not Equal that(%v)", *this.GracePeriodSeconds, *that1.GracePeriodSeconds)
+			return fmt7.Errorf("GracePeriodSeconds this(%v) Not Equal that(%v)", *this.GracePeriodSeconds, *that1.GracePeriodSeconds)
 		}
 	} else if this.GracePeriodSeconds != nil {
-		return fmt5.Errorf("this.GracePeriodSeconds == nil && that.GracePeriodSeconds != nil")
+		return fmt7.Errorf("this.GracePeriodSeconds == nil && that.GracePeriodSeconds != nil")
 	} else if that1.GracePeriodSeconds != nil {
-		return fmt5.Errorf("GracePeriodSeconds this(%v) Not Equal that(%v)", this.GracePeriodSeconds, that1.GracePeriodSeconds)
+		return fmt7.Errorf("GracePeriodSeconds this(%v) Not Equal that(%v)", this.GracePeriodSeconds, that1.GracePeriodSeconds)
 	}
 	if !this.Command.Equal(that1.Command) {
-		return fmt5.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
+		return fmt7.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -15357,49 +15695,49 @@ func (this *HealthCheck_HTTP) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*HealthCheck_HTTP)
 	if !ok {
-		return fmt5.Errorf("that is not of type *HealthCheck_HTTP")
+		return fmt7.Errorf("that is not of type *HealthCheck_HTTP")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *HealthCheck_HTTP but is nil && this != nil")
+		return fmt7.Errorf("that is type *HealthCheck_HTTP but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *HealthCheck_HTTPbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *HealthCheck_HTTPbut is not nil && this == nil")
 	}
 	if this.Port != nil && that1.Port != nil {
 		if *this.Port != *that1.Port {
-			return fmt5.Errorf("Port this(%v) Not Equal that(%v)", *this.Port, *that1.Port)
+			return fmt7.Errorf("Port this(%v) Not Equal that(%v)", *this.Port, *that1.Port)
 		}
 	} else if this.Port != nil {
-		return fmt5.Errorf("this.Port == nil && that.Port != nil")
+		return fmt7.Errorf("this.Port == nil && that.Port != nil")
 	} else if that1.Port != nil {
-		return fmt5.Errorf("Port this(%v) Not Equal that(%v)", this.Port, that1.Port)
+		return fmt7.Errorf("Port this(%v) Not Equal that(%v)", this.Port, that1.Port)
 	}
 	if this.Path != nil && that1.Path != nil {
 		if *this.Path != *that1.Path {
-			return fmt5.Errorf("Path this(%v) Not Equal that(%v)", *this.Path, *that1.Path)
+			return fmt7.Errorf("Path this(%v) Not Equal that(%v)", *this.Path, *that1.Path)
 		}
 	} else if this.Path != nil {
-		return fmt5.Errorf("this.Path == nil && that.Path != nil")
+		return fmt7.Errorf("this.Path == nil && that.Path != nil")
 	} else if that1.Path != nil {
-		return fmt5.Errorf("Path this(%v) Not Equal that(%v)", this.Path, that1.Path)
+		return fmt7.Errorf("Path this(%v) Not Equal that(%v)", this.Path, that1.Path)
 	}
 	if len(this.Statuses) != len(that1.Statuses) {
-		return fmt5.Errorf("Statuses this(%v) Not Equal that(%v)", len(this.Statuses), len(that1.Statuses))
+		return fmt7.Errorf("Statuses this(%v) Not Equal that(%v)", len(this.Statuses), len(that1.Statuses))
 	}
 	for i := range this.Statuses {
 		if this.Statuses[i] != that1.Statuses[i] {
-			return fmt5.Errorf("Statuses this[%v](%v) Not Equal that[%v](%v)", i, this.Statuses[i], i, that1.Statuses[i])
+			return fmt7.Errorf("Statuses this[%v](%v) Not Equal that[%v](%v)", i, this.Statuses[i], i, that1.Statuses[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -15459,55 +15797,55 @@ func (this *CommandInfo) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*CommandInfo)
 	if !ok {
-		return fmt5.Errorf("that is not of type *CommandInfo")
+		return fmt7.Errorf("that is not of type *CommandInfo")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *CommandInfo but is nil && this != nil")
+		return fmt7.Errorf("that is type *CommandInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *CommandInfobut is not nil && this == nil")
+		return fmt7.Errorf("that is type *CommandInfobut is not nil && this == nil")
 	}
 	if !this.Container.Equal(that1.Container) {
-		return fmt5.Errorf("Container this(%v) Not Equal that(%v)", this.Container, that1.Container)
+		return fmt7.Errorf("Container this(%v) Not Equal that(%v)", this.Container, that1.Container)
 	}
 	if len(this.Uris) != len(that1.Uris) {
-		return fmt5.Errorf("Uris this(%v) Not Equal that(%v)", len(this.Uris), len(that1.Uris))
+		return fmt7.Errorf("Uris this(%v) Not Equal that(%v)", len(this.Uris), len(that1.Uris))
 	}
 	for i := range this.Uris {
 		if !this.Uris[i].Equal(that1.Uris[i]) {
-			return fmt5.Errorf("Uris this[%v](%v) Not Equal that[%v](%v)", i, this.Uris[i], i, that1.Uris[i])
+			return fmt7.Errorf("Uris this[%v](%v) Not Equal that[%v](%v)", i, this.Uris[i], i, that1.Uris[i])
 		}
 	}
 	if !this.Environment.Equal(that1.Environment) {
-		return fmt5.Errorf("Environment this(%v) Not Equal that(%v)", this.Environment, that1.Environment)
+		return fmt7.Errorf("Environment this(%v) Not Equal that(%v)", this.Environment, that1.Environment)
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if this.User != nil && that1.User != nil {
 		if *this.User != *that1.User {
-			return fmt5.Errorf("User this(%v) Not Equal that(%v)", *this.User, *that1.User)
+			return fmt7.Errorf("User this(%v) Not Equal that(%v)", *this.User, *that1.User)
 		}
 	} else if this.User != nil {
-		return fmt5.Errorf("this.User == nil && that.User != nil")
+		return fmt7.Errorf("this.User == nil && that.User != nil")
 	} else if that1.User != nil {
-		return fmt5.Errorf("User this(%v) Not Equal that(%v)", this.User, that1.User)
+		return fmt7.Errorf("User this(%v) Not Equal that(%v)", this.User, that1.User)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -15573,50 +15911,50 @@ func (this *CommandInfo_URI) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*CommandInfo_URI)
 	if !ok {
-		return fmt5.Errorf("that is not of type *CommandInfo_URI")
+		return fmt7.Errorf("that is not of type *CommandInfo_URI")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *CommandInfo_URI but is nil && this != nil")
+		return fmt7.Errorf("that is type *CommandInfo_URI but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *CommandInfo_URIbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *CommandInfo_URIbut is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if this.Executable != nil && that1.Executable != nil {
 		if *this.Executable != *that1.Executable {
-			return fmt5.Errorf("Executable this(%v) Not Equal that(%v)", *this.Executable, *that1.Executable)
+			return fmt7.Errorf("Executable this(%v) Not Equal that(%v)", *this.Executable, *that1.Executable)
 		}
 	} else if this.Executable != nil {
-		return fmt5.Errorf("this.Executable == nil && that.Executable != nil")
+		return fmt7.Errorf("this.Executable == nil && that.Executable != nil")
 	} else if that1.Executable != nil {
-		return fmt5.Errorf("Executable this(%v) Not Equal that(%v)", this.Executable, that1.Executable)
+		return fmt7.Errorf("Executable this(%v) Not Equal that(%v)", this.Executable, that1.Executable)
 	}
 	if this.Extract != nil && that1.Extract != nil {
 		if *this.Extract != *that1.Extract {
-			return fmt5.Errorf("Extract this(%v) Not Equal that(%v)", *this.Extract, *that1.Extract)
+			return fmt7.Errorf("Extract this(%v) Not Equal that(%v)", *this.Extract, *that1.Extract)
 		}
 	} else if this.Extract != nil {
-		return fmt5.Errorf("this.Extract == nil && that.Extract != nil")
+		return fmt7.Errorf("this.Extract == nil && that.Extract != nil")
 	} else if that1.Extract != nil {
-		return fmt5.Errorf("Extract this(%v) Not Equal that(%v)", this.Extract, that1.Extract)
+		return fmt7.Errorf("Extract this(%v) Not Equal that(%v)", this.Extract, that1.Extract)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -15677,40 +16015,40 @@ func (this *CommandInfo_ContainerInfo) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*CommandInfo_ContainerInfo)
 	if !ok {
-		return fmt5.Errorf("that is not of type *CommandInfo_ContainerInfo")
+		return fmt7.Errorf("that is not of type *CommandInfo_ContainerInfo")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *CommandInfo_ContainerInfo but is nil && this != nil")
+		return fmt7.Errorf("that is type *CommandInfo_ContainerInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *CommandInfo_ContainerInfobut is not nil && this == nil")
+		return fmt7.Errorf("that is type *CommandInfo_ContainerInfobut is not nil && this == nil")
 	}
 	if this.Image != nil && that1.Image != nil {
 		if *this.Image != *that1.Image {
-			return fmt5.Errorf("Image this(%v) Not Equal that(%v)", *this.Image, *that1.Image)
+			return fmt7.Errorf("Image this(%v) Not Equal that(%v)", *this.Image, *that1.Image)
 		}
 	} else if this.Image != nil {
-		return fmt5.Errorf("this.Image == nil && that.Image != nil")
+		return fmt7.Errorf("this.Image == nil && that.Image != nil")
 	} else if that1.Image != nil {
-		return fmt5.Errorf("Image this(%v) Not Equal that(%v)", this.Image, that1.Image)
+		return fmt7.Errorf("Image this(%v) Not Equal that(%v)", this.Image, that1.Image)
 	}
 	if len(this.Options) != len(that1.Options) {
-		return fmt5.Errorf("Options this(%v) Not Equal that(%v)", len(this.Options), len(that1.Options))
+		return fmt7.Errorf("Options this(%v) Not Equal that(%v)", len(this.Options), len(that1.Options))
 	}
 	for i := range this.Options {
 		if this.Options[i] != that1.Options[i] {
-			return fmt5.Errorf("Options this[%v](%v) Not Equal that[%v](%v)", i, this.Options[i], i, that1.Options[i])
+			return fmt7.Errorf("Options this[%v](%v) Not Equal that[%v](%v)", i, this.Options[i], i, that1.Options[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -15761,61 +16099,61 @@ func (this *ExecutorInfo) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ExecutorInfo)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ExecutorInfo")
+		return fmt7.Errorf("that is not of type *ExecutorInfo")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ExecutorInfo but is nil && this != nil")
+		return fmt7.Errorf("that is type *ExecutorInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ExecutorInfobut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ExecutorInfobut is not nil && this == nil")
 	}
 	if !this.ExecutorId.Equal(that1.ExecutorId) {
-		return fmt5.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
+		return fmt7.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
-		return fmt5.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
+		return fmt7.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
 	}
 	if !this.Command.Equal(that1.Command) {
-		return fmt5.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
+		return fmt7.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
 	}
 	if len(this.Resources) != len(that1.Resources) {
-		return fmt5.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
+		return fmt7.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
 	}
 	for i := range this.Resources {
 		if !this.Resources[i].Equal(that1.Resources[i]) {
-			return fmt5.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
+			return fmt7.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
 		}
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
-			return fmt5.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
+			return fmt7.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
 		}
 	} else if this.Name != nil {
-		return fmt5.Errorf("this.Name == nil && that.Name != nil")
+		return fmt7.Errorf("this.Name == nil && that.Name != nil")
 	} else if that1.Name != nil {
-		return fmt5.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+		return fmt7.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
 	if this.Source != nil && that1.Source != nil {
 		if *this.Source != *that1.Source {
-			return fmt5.Errorf("Source this(%v) Not Equal that(%v)", *this.Source, *that1.Source)
+			return fmt7.Errorf("Source this(%v) Not Equal that(%v)", *this.Source, *that1.Source)
 		}
 	} else if this.Source != nil {
-		return fmt5.Errorf("this.Source == nil && that.Source != nil")
+		return fmt7.Errorf("this.Source == nil && that.Source != nil")
 	} else if that1.Source != nil {
-		return fmt5.Errorf("Source this(%v) Not Equal that(%v)", this.Source, that1.Source)
+		return fmt7.Errorf("Source this(%v) Not Equal that(%v)", this.Source, that1.Source)
 	}
 	if !bytes1.Equal(this.Data, that1.Data) {
-		return fmt5.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
+		return fmt7.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -15887,68 +16225,68 @@ func (this *MasterInfo) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*MasterInfo)
 	if !ok {
-		return fmt5.Errorf("that is not of type *MasterInfo")
+		return fmt7.Errorf("that is not of type *MasterInfo")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *MasterInfo but is nil && this != nil")
+		return fmt7.Errorf("that is type *MasterInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *MasterInfobut is not nil && this == nil")
+		return fmt7.Errorf("that is type *MasterInfobut is not nil && this == nil")
 	}
 	if this.Id != nil && that1.Id != nil {
 		if *this.Id != *that1.Id {
-			return fmt5.Errorf("Id this(%v) Not Equal that(%v)", *this.Id, *that1.Id)
+			return fmt7.Errorf("Id this(%v) Not Equal that(%v)", *this.Id, *that1.Id)
 		}
 	} else if this.Id != nil {
-		return fmt5.Errorf("this.Id == nil && that.Id != nil")
+		return fmt7.Errorf("this.Id == nil && that.Id != nil")
 	} else if that1.Id != nil {
-		return fmt5.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+		return fmt7.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
 	if this.Ip != nil && that1.Ip != nil {
 		if *this.Ip != *that1.Ip {
-			return fmt5.Errorf("Ip this(%v) Not Equal that(%v)", *this.Ip, *that1.Ip)
+			return fmt7.Errorf("Ip this(%v) Not Equal that(%v)", *this.Ip, *that1.Ip)
 		}
 	} else if this.Ip != nil {
-		return fmt5.Errorf("this.Ip == nil && that.Ip != nil")
+		return fmt7.Errorf("this.Ip == nil && that.Ip != nil")
 	} else if that1.Ip != nil {
-		return fmt5.Errorf("Ip this(%v) Not Equal that(%v)", this.Ip, that1.Ip)
+		return fmt7.Errorf("Ip this(%v) Not Equal that(%v)", this.Ip, that1.Ip)
 	}
 	if this.Port != nil && that1.Port != nil {
 		if *this.Port != *that1.Port {
-			return fmt5.Errorf("Port this(%v) Not Equal that(%v)", *this.Port, *that1.Port)
+			return fmt7.Errorf("Port this(%v) Not Equal that(%v)", *this.Port, *that1.Port)
 		}
 	} else if this.Port != nil {
-		return fmt5.Errorf("this.Port == nil && that.Port != nil")
+		return fmt7.Errorf("this.Port == nil && that.Port != nil")
 	} else if that1.Port != nil {
-		return fmt5.Errorf("Port this(%v) Not Equal that(%v)", this.Port, that1.Port)
+		return fmt7.Errorf("Port this(%v) Not Equal that(%v)", this.Port, that1.Port)
 	}
 	if this.Pid != nil && that1.Pid != nil {
 		if *this.Pid != *that1.Pid {
-			return fmt5.Errorf("Pid this(%v) Not Equal that(%v)", *this.Pid, *that1.Pid)
+			return fmt7.Errorf("Pid this(%v) Not Equal that(%v)", *this.Pid, *that1.Pid)
 		}
 	} else if this.Pid != nil {
-		return fmt5.Errorf("this.Pid == nil && that.Pid != nil")
+		return fmt7.Errorf("this.Pid == nil && that.Pid != nil")
 	} else if that1.Pid != nil {
-		return fmt5.Errorf("Pid this(%v) Not Equal that(%v)", this.Pid, that1.Pid)
+		return fmt7.Errorf("Pid this(%v) Not Equal that(%v)", this.Pid, that1.Pid)
 	}
 	if this.Hostname != nil && that1.Hostname != nil {
 		if *this.Hostname != *that1.Hostname {
-			return fmt5.Errorf("Hostname this(%v) Not Equal that(%v)", *this.Hostname, *that1.Hostname)
+			return fmt7.Errorf("Hostname this(%v) Not Equal that(%v)", *this.Hostname, *that1.Hostname)
 		}
 	} else if this.Hostname != nil {
-		return fmt5.Errorf("this.Hostname == nil && that.Hostname != nil")
+		return fmt7.Errorf("this.Hostname == nil && that.Hostname != nil")
 	} else if that1.Hostname != nil {
-		return fmt5.Errorf("Hostname this(%v) Not Equal that(%v)", this.Hostname, that1.Hostname)
+		return fmt7.Errorf("Hostname this(%v) Not Equal that(%v)", this.Hostname, that1.Hostname)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16027,87 +16365,87 @@ func (this *SlaveInfo) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*SlaveInfo)
 	if !ok {
-		return fmt5.Errorf("that is not of type *SlaveInfo")
+		return fmt7.Errorf("that is not of type *SlaveInfo")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *SlaveInfo but is nil && this != nil")
+		return fmt7.Errorf("that is type *SlaveInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *SlaveInfobut is not nil && this == nil")
+		return fmt7.Errorf("that is type *SlaveInfobut is not nil && this == nil")
 	}
 	if this.Hostname != nil && that1.Hostname != nil {
 		if *this.Hostname != *that1.Hostname {
-			return fmt5.Errorf("Hostname this(%v) Not Equal that(%v)", *this.Hostname, *that1.Hostname)
+			return fmt7.Errorf("Hostname this(%v) Not Equal that(%v)", *this.Hostname, *that1.Hostname)
 		}
 	} else if this.Hostname != nil {
-		return fmt5.Errorf("this.Hostname == nil && that.Hostname != nil")
+		return fmt7.Errorf("this.Hostname == nil && that.Hostname != nil")
 	} else if that1.Hostname != nil {
-		return fmt5.Errorf("Hostname this(%v) Not Equal that(%v)", this.Hostname, that1.Hostname)
+		return fmt7.Errorf("Hostname this(%v) Not Equal that(%v)", this.Hostname, that1.Hostname)
 	}
 	if this.Port != nil && that1.Port != nil {
 		if *this.Port != *that1.Port {
-			return fmt5.Errorf("Port this(%v) Not Equal that(%v)", *this.Port, *that1.Port)
+			return fmt7.Errorf("Port this(%v) Not Equal that(%v)", *this.Port, *that1.Port)
 		}
 	} else if this.Port != nil {
-		return fmt5.Errorf("this.Port == nil && that.Port != nil")
+		return fmt7.Errorf("this.Port == nil && that.Port != nil")
 	} else if that1.Port != nil {
-		return fmt5.Errorf("Port this(%v) Not Equal that(%v)", this.Port, that1.Port)
+		return fmt7.Errorf("Port this(%v) Not Equal that(%v)", this.Port, that1.Port)
 	}
 	if len(this.Resources) != len(that1.Resources) {
-		return fmt5.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
+		return fmt7.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
 	}
 	for i := range this.Resources {
 		if !this.Resources[i].Equal(that1.Resources[i]) {
-			return fmt5.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
+			return fmt7.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
 		}
 	}
 	if len(this.Attributes) != len(that1.Attributes) {
-		return fmt5.Errorf("Attributes this(%v) Not Equal that(%v)", len(this.Attributes), len(that1.Attributes))
+		return fmt7.Errorf("Attributes this(%v) Not Equal that(%v)", len(this.Attributes), len(that1.Attributes))
 	}
 	for i := range this.Attributes {
 		if !this.Attributes[i].Equal(that1.Attributes[i]) {
-			return fmt5.Errorf("Attributes this[%v](%v) Not Equal that[%v](%v)", i, this.Attributes[i], i, that1.Attributes[i])
+			return fmt7.Errorf("Attributes this[%v](%v) Not Equal that[%v](%v)", i, this.Attributes[i], i, that1.Attributes[i])
 		}
 	}
 	if !this.Id.Equal(that1.Id) {
-		return fmt5.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+		return fmt7.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
 	if this.Checkpoint != nil && that1.Checkpoint != nil {
 		if *this.Checkpoint != *that1.Checkpoint {
-			return fmt5.Errorf("Checkpoint this(%v) Not Equal that(%v)", *this.Checkpoint, *that1.Checkpoint)
+			return fmt7.Errorf("Checkpoint this(%v) Not Equal that(%v)", *this.Checkpoint, *that1.Checkpoint)
 		}
 	} else if this.Checkpoint != nil {
-		return fmt5.Errorf("this.Checkpoint == nil && that.Checkpoint != nil")
+		return fmt7.Errorf("this.Checkpoint == nil && that.Checkpoint != nil")
 	} else if that1.Checkpoint != nil {
-		return fmt5.Errorf("Checkpoint this(%v) Not Equal that(%v)", this.Checkpoint, that1.Checkpoint)
+		return fmt7.Errorf("Checkpoint this(%v) Not Equal that(%v)", this.Checkpoint, that1.Checkpoint)
 	}
 	if this.WebuiHostname != nil && that1.WebuiHostname != nil {
 		if *this.WebuiHostname != *that1.WebuiHostname {
-			return fmt5.Errorf("WebuiHostname this(%v) Not Equal that(%v)", *this.WebuiHostname, *that1.WebuiHostname)
+			return fmt7.Errorf("WebuiHostname this(%v) Not Equal that(%v)", *this.WebuiHostname, *that1.WebuiHostname)
 		}
 	} else if this.WebuiHostname != nil {
-		return fmt5.Errorf("this.WebuiHostname == nil && that.WebuiHostname != nil")
+		return fmt7.Errorf("this.WebuiHostname == nil && that.WebuiHostname != nil")
 	} else if that1.WebuiHostname != nil {
-		return fmt5.Errorf("WebuiHostname this(%v) Not Equal that(%v)", this.WebuiHostname, that1.WebuiHostname)
+		return fmt7.Errorf("WebuiHostname this(%v) Not Equal that(%v)", this.WebuiHostname, that1.WebuiHostname)
 	}
 	if this.WebuiPort != nil && that1.WebuiPort != nil {
 		if *this.WebuiPort != *that1.WebuiPort {
-			return fmt5.Errorf("WebuiPort this(%v) Not Equal that(%v)", *this.WebuiPort, *that1.WebuiPort)
+			return fmt7.Errorf("WebuiPort this(%v) Not Equal that(%v)", *this.WebuiPort, *that1.WebuiPort)
 		}
 	} else if this.WebuiPort != nil {
-		return fmt5.Errorf("this.WebuiPort == nil && that.WebuiPort != nil")
+		return fmt7.Errorf("this.WebuiPort == nil && that.WebuiPort != nil")
 	} else if that1.WebuiPort != nil {
-		return fmt5.Errorf("WebuiPort this(%v) Not Equal that(%v)", this.WebuiPort, that1.WebuiPort)
+		return fmt7.Errorf("WebuiPort this(%v) Not Equal that(%v)", this.WebuiPort, that1.WebuiPort)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16205,44 +16543,44 @@ func (this *Value) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Value)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Value")
+		return fmt7.Errorf("that is not of type *Value")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Value but is nil && this != nil")
+		return fmt7.Errorf("that is type *Value but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Valuebut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Valuebut is not nil && this == nil")
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
-			return fmt5.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
+			return fmt7.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
 		}
 	} else if this.Type != nil {
-		return fmt5.Errorf("this.Type == nil && that.Type != nil")
+		return fmt7.Errorf("this.Type == nil && that.Type != nil")
 	} else if that1.Type != nil {
-		return fmt5.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+		return fmt7.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
 	if !this.Scalar.Equal(that1.Scalar) {
-		return fmt5.Errorf("Scalar this(%v) Not Equal that(%v)", this.Scalar, that1.Scalar)
+		return fmt7.Errorf("Scalar this(%v) Not Equal that(%v)", this.Scalar, that1.Scalar)
 	}
 	if !this.Ranges.Equal(that1.Ranges) {
-		return fmt5.Errorf("Ranges this(%v) Not Equal that(%v)", this.Ranges, that1.Ranges)
+		return fmt7.Errorf("Ranges this(%v) Not Equal that(%v)", this.Ranges, that1.Ranges)
 	}
 	if !this.Set.Equal(that1.Set) {
-		return fmt5.Errorf("Set this(%v) Not Equal that(%v)", this.Set, that1.Set)
+		return fmt7.Errorf("Set this(%v) Not Equal that(%v)", this.Set, that1.Set)
 	}
 	if !this.Text.Equal(that1.Text) {
-		return fmt5.Errorf("Text this(%v) Not Equal that(%v)", this.Text, that1.Text)
+		return fmt7.Errorf("Text this(%v) Not Equal that(%v)", this.Text, that1.Text)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16297,32 +16635,32 @@ func (this *Value_Scalar) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Value_Scalar)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Value_Scalar")
+		return fmt7.Errorf("that is not of type *Value_Scalar")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Value_Scalar but is nil && this != nil")
+		return fmt7.Errorf("that is type *Value_Scalar but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Value_Scalarbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Value_Scalarbut is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16365,41 +16703,41 @@ func (this *Value_Range) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Value_Range)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Value_Range")
+		return fmt7.Errorf("that is not of type *Value_Range")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Value_Range but is nil && this != nil")
+		return fmt7.Errorf("that is type *Value_Range but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Value_Rangebut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Value_Rangebut is not nil && this == nil")
 	}
 	if this.Begin != nil && that1.Begin != nil {
 		if *this.Begin != *that1.Begin {
-			return fmt5.Errorf("Begin this(%v) Not Equal that(%v)", *this.Begin, *that1.Begin)
+			return fmt7.Errorf("Begin this(%v) Not Equal that(%v)", *this.Begin, *that1.Begin)
 		}
 	} else if this.Begin != nil {
-		return fmt5.Errorf("this.Begin == nil && that.Begin != nil")
+		return fmt7.Errorf("this.Begin == nil && that.Begin != nil")
 	} else if that1.Begin != nil {
-		return fmt5.Errorf("Begin this(%v) Not Equal that(%v)", this.Begin, that1.Begin)
+		return fmt7.Errorf("Begin this(%v) Not Equal that(%v)", this.Begin, that1.Begin)
 	}
 	if this.End != nil && that1.End != nil {
 		if *this.End != *that1.End {
-			return fmt5.Errorf("End this(%v) Not Equal that(%v)", *this.End, *that1.End)
+			return fmt7.Errorf("End this(%v) Not Equal that(%v)", *this.End, *that1.End)
 		}
 	} else if this.End != nil {
-		return fmt5.Errorf("this.End == nil && that.End != nil")
+		return fmt7.Errorf("this.End == nil && that.End != nil")
 	} else if that1.End != nil {
-		return fmt5.Errorf("End this(%v) Not Equal that(%v)", this.End, that1.End)
+		return fmt7.Errorf("End this(%v) Not Equal that(%v)", this.End, that1.End)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16451,31 +16789,31 @@ func (this *Value_Ranges) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Value_Ranges)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Value_Ranges")
+		return fmt7.Errorf("that is not of type *Value_Ranges")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Value_Ranges but is nil && this != nil")
+		return fmt7.Errorf("that is type *Value_Ranges but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Value_Rangesbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Value_Rangesbut is not nil && this == nil")
 	}
 	if len(this.Range) != len(that1.Range) {
-		return fmt5.Errorf("Range this(%v) Not Equal that(%v)", len(this.Range), len(that1.Range))
+		return fmt7.Errorf("Range this(%v) Not Equal that(%v)", len(this.Range), len(that1.Range))
 	}
 	for i := range this.Range {
 		if !this.Range[i].Equal(that1.Range[i]) {
-			return fmt5.Errorf("Range this[%v](%v) Not Equal that[%v](%v)", i, this.Range[i], i, that1.Range[i])
+			return fmt7.Errorf("Range this[%v](%v) Not Equal that[%v](%v)", i, this.Range[i], i, that1.Range[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16517,31 +16855,31 @@ func (this *Value_Set) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Value_Set)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Value_Set")
+		return fmt7.Errorf("that is not of type *Value_Set")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Value_Set but is nil && this != nil")
+		return fmt7.Errorf("that is type *Value_Set but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Value_Setbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Value_Setbut is not nil && this == nil")
 	}
 	if len(this.Item) != len(that1.Item) {
-		return fmt5.Errorf("Item this(%v) Not Equal that(%v)", len(this.Item), len(that1.Item))
+		return fmt7.Errorf("Item this(%v) Not Equal that(%v)", len(this.Item), len(that1.Item))
 	}
 	for i := range this.Item {
 		if this.Item[i] != that1.Item[i] {
-			return fmt5.Errorf("Item this[%v](%v) Not Equal that[%v](%v)", i, this.Item[i], i, that1.Item[i])
+			return fmt7.Errorf("Item this[%v](%v) Not Equal that[%v](%v)", i, this.Item[i], i, that1.Item[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16583,32 +16921,32 @@ func (this *Value_Text) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Value_Text)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Value_Text")
+		return fmt7.Errorf("that is not of type *Value_Text")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Value_Text but is nil && this != nil")
+		return fmt7.Errorf("that is type *Value_Text but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Value_Textbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Value_Textbut is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16651,53 +16989,53 @@ func (this *Attribute) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Attribute)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Attribute")
+		return fmt7.Errorf("that is not of type *Attribute")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Attribute but is nil && this != nil")
+		return fmt7.Errorf("that is type *Attribute but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Attributebut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Attributebut is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
-			return fmt5.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
+			return fmt7.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
 		}
 	} else if this.Name != nil {
-		return fmt5.Errorf("this.Name == nil && that.Name != nil")
+		return fmt7.Errorf("this.Name == nil && that.Name != nil")
 	} else if that1.Name != nil {
-		return fmt5.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+		return fmt7.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
-			return fmt5.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
+			return fmt7.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
 		}
 	} else if this.Type != nil {
-		return fmt5.Errorf("this.Type == nil && that.Type != nil")
+		return fmt7.Errorf("this.Type == nil && that.Type != nil")
 	} else if that1.Type != nil {
-		return fmt5.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+		return fmt7.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
 	if !this.Scalar.Equal(that1.Scalar) {
-		return fmt5.Errorf("Scalar this(%v) Not Equal that(%v)", this.Scalar, that1.Scalar)
+		return fmt7.Errorf("Scalar this(%v) Not Equal that(%v)", this.Scalar, that1.Scalar)
 	}
 	if !this.Ranges.Equal(that1.Ranges) {
-		return fmt5.Errorf("Ranges this(%v) Not Equal that(%v)", this.Ranges, that1.Ranges)
+		return fmt7.Errorf("Ranges this(%v) Not Equal that(%v)", this.Ranges, that1.Ranges)
 	}
 	if !this.Set.Equal(that1.Set) {
-		return fmt5.Errorf("Set this(%v) Not Equal that(%v)", this.Set, that1.Set)
+		return fmt7.Errorf("Set this(%v) Not Equal that(%v)", this.Set, that1.Set)
 	}
 	if !this.Text.Equal(that1.Text) {
-		return fmt5.Errorf("Text this(%v) Not Equal that(%v)", this.Text, that1.Text)
+		return fmt7.Errorf("Text this(%v) Not Equal that(%v)", this.Text, that1.Text)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16761,59 +17099,59 @@ func (this *Resource) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Resource)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Resource")
+		return fmt7.Errorf("that is not of type *Resource")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Resource but is nil && this != nil")
+		return fmt7.Errorf("that is type *Resource but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Resourcebut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Resourcebut is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
-			return fmt5.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
+			return fmt7.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
 		}
 	} else if this.Name != nil {
-		return fmt5.Errorf("this.Name == nil && that.Name != nil")
+		return fmt7.Errorf("this.Name == nil && that.Name != nil")
 	} else if that1.Name != nil {
-		return fmt5.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+		return fmt7.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
-			return fmt5.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
+			return fmt7.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
 		}
 	} else if this.Type != nil {
-		return fmt5.Errorf("this.Type == nil && that.Type != nil")
+		return fmt7.Errorf("this.Type == nil && that.Type != nil")
 	} else if that1.Type != nil {
-		return fmt5.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+		return fmt7.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
 	if !this.Scalar.Equal(that1.Scalar) {
-		return fmt5.Errorf("Scalar this(%v) Not Equal that(%v)", this.Scalar, that1.Scalar)
+		return fmt7.Errorf("Scalar this(%v) Not Equal that(%v)", this.Scalar, that1.Scalar)
 	}
 	if !this.Ranges.Equal(that1.Ranges) {
-		return fmt5.Errorf("Ranges this(%v) Not Equal that(%v)", this.Ranges, that1.Ranges)
+		return fmt7.Errorf("Ranges this(%v) Not Equal that(%v)", this.Ranges, that1.Ranges)
 	}
 	if !this.Set.Equal(that1.Set) {
-		return fmt5.Errorf("Set this(%v) Not Equal that(%v)", this.Set, that1.Set)
+		return fmt7.Errorf("Set this(%v) Not Equal that(%v)", this.Set, that1.Set)
 	}
 	if this.Role != nil && that1.Role != nil {
 		if *this.Role != *that1.Role {
-			return fmt5.Errorf("Role this(%v) Not Equal that(%v)", *this.Role, *that1.Role)
+			return fmt7.Errorf("Role this(%v) Not Equal that(%v)", *this.Role, *that1.Role)
 		}
 	} else if this.Role != nil {
-		return fmt5.Errorf("this.Role == nil && that.Role != nil")
+		return fmt7.Errorf("this.Role == nil && that.Role != nil")
 	} else if that1.Role != nil {
-		return fmt5.Errorf("Role this(%v) Not Equal that(%v)", this.Role, that1.Role)
+		return fmt7.Errorf("Role this(%v) Not Equal that(%v)", this.Role, that1.Role)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -16883,134 +17221,134 @@ func (this *ResourceStatistics) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ResourceStatistics)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ResourceStatistics")
+		return fmt7.Errorf("that is not of type *ResourceStatistics")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ResourceStatistics but is nil && this != nil")
+		return fmt7.Errorf("that is type *ResourceStatistics but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ResourceStatisticsbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ResourceStatisticsbut is not nil && this == nil")
 	}
 	if this.Timestamp != nil && that1.Timestamp != nil {
 		if *this.Timestamp != *that1.Timestamp {
-			return fmt5.Errorf("Timestamp this(%v) Not Equal that(%v)", *this.Timestamp, *that1.Timestamp)
+			return fmt7.Errorf("Timestamp this(%v) Not Equal that(%v)", *this.Timestamp, *that1.Timestamp)
 		}
 	} else if this.Timestamp != nil {
-		return fmt5.Errorf("this.Timestamp == nil && that.Timestamp != nil")
+		return fmt7.Errorf("this.Timestamp == nil && that.Timestamp != nil")
 	} else if that1.Timestamp != nil {
-		return fmt5.Errorf("Timestamp this(%v) Not Equal that(%v)", this.Timestamp, that1.Timestamp)
+		return fmt7.Errorf("Timestamp this(%v) Not Equal that(%v)", this.Timestamp, that1.Timestamp)
 	}
 	if this.CpusUserTimeSecs != nil && that1.CpusUserTimeSecs != nil {
 		if *this.CpusUserTimeSecs != *that1.CpusUserTimeSecs {
-			return fmt5.Errorf("CpusUserTimeSecs this(%v) Not Equal that(%v)", *this.CpusUserTimeSecs, *that1.CpusUserTimeSecs)
+			return fmt7.Errorf("CpusUserTimeSecs this(%v) Not Equal that(%v)", *this.CpusUserTimeSecs, *that1.CpusUserTimeSecs)
 		}
 	} else if this.CpusUserTimeSecs != nil {
-		return fmt5.Errorf("this.CpusUserTimeSecs == nil && that.CpusUserTimeSecs != nil")
+		return fmt7.Errorf("this.CpusUserTimeSecs == nil && that.CpusUserTimeSecs != nil")
 	} else if that1.CpusUserTimeSecs != nil {
-		return fmt5.Errorf("CpusUserTimeSecs this(%v) Not Equal that(%v)", this.CpusUserTimeSecs, that1.CpusUserTimeSecs)
+		return fmt7.Errorf("CpusUserTimeSecs this(%v) Not Equal that(%v)", this.CpusUserTimeSecs, that1.CpusUserTimeSecs)
 	}
 	if this.CpusSystemTimeSecs != nil && that1.CpusSystemTimeSecs != nil {
 		if *this.CpusSystemTimeSecs != *that1.CpusSystemTimeSecs {
-			return fmt5.Errorf("CpusSystemTimeSecs this(%v) Not Equal that(%v)", *this.CpusSystemTimeSecs, *that1.CpusSystemTimeSecs)
+			return fmt7.Errorf("CpusSystemTimeSecs this(%v) Not Equal that(%v)", *this.CpusSystemTimeSecs, *that1.CpusSystemTimeSecs)
 		}
 	} else if this.CpusSystemTimeSecs != nil {
-		return fmt5.Errorf("this.CpusSystemTimeSecs == nil && that.CpusSystemTimeSecs != nil")
+		return fmt7.Errorf("this.CpusSystemTimeSecs == nil && that.CpusSystemTimeSecs != nil")
 	} else if that1.CpusSystemTimeSecs != nil {
-		return fmt5.Errorf("CpusSystemTimeSecs this(%v) Not Equal that(%v)", this.CpusSystemTimeSecs, that1.CpusSystemTimeSecs)
+		return fmt7.Errorf("CpusSystemTimeSecs this(%v) Not Equal that(%v)", this.CpusSystemTimeSecs, that1.CpusSystemTimeSecs)
 	}
 	if this.CpusLimit != nil && that1.CpusLimit != nil {
 		if *this.CpusLimit != *that1.CpusLimit {
-			return fmt5.Errorf("CpusLimit this(%v) Not Equal that(%v)", *this.CpusLimit, *that1.CpusLimit)
+			return fmt7.Errorf("CpusLimit this(%v) Not Equal that(%v)", *this.CpusLimit, *that1.CpusLimit)
 		}
 	} else if this.CpusLimit != nil {
-		return fmt5.Errorf("this.CpusLimit == nil && that.CpusLimit != nil")
+		return fmt7.Errorf("this.CpusLimit == nil && that.CpusLimit != nil")
 	} else if that1.CpusLimit != nil {
-		return fmt5.Errorf("CpusLimit this(%v) Not Equal that(%v)", this.CpusLimit, that1.CpusLimit)
+		return fmt7.Errorf("CpusLimit this(%v) Not Equal that(%v)", this.CpusLimit, that1.CpusLimit)
 	}
 	if this.CpusNrPeriods != nil && that1.CpusNrPeriods != nil {
 		if *this.CpusNrPeriods != *that1.CpusNrPeriods {
-			return fmt5.Errorf("CpusNrPeriods this(%v) Not Equal that(%v)", *this.CpusNrPeriods, *that1.CpusNrPeriods)
+			return fmt7.Errorf("CpusNrPeriods this(%v) Not Equal that(%v)", *this.CpusNrPeriods, *that1.CpusNrPeriods)
 		}
 	} else if this.CpusNrPeriods != nil {
-		return fmt5.Errorf("this.CpusNrPeriods == nil && that.CpusNrPeriods != nil")
+		return fmt7.Errorf("this.CpusNrPeriods == nil && that.CpusNrPeriods != nil")
 	} else if that1.CpusNrPeriods != nil {
-		return fmt5.Errorf("CpusNrPeriods this(%v) Not Equal that(%v)", this.CpusNrPeriods, that1.CpusNrPeriods)
+		return fmt7.Errorf("CpusNrPeriods this(%v) Not Equal that(%v)", this.CpusNrPeriods, that1.CpusNrPeriods)
 	}
 	if this.CpusNrThrottled != nil && that1.CpusNrThrottled != nil {
 		if *this.CpusNrThrottled != *that1.CpusNrThrottled {
-			return fmt5.Errorf("CpusNrThrottled this(%v) Not Equal that(%v)", *this.CpusNrThrottled, *that1.CpusNrThrottled)
+			return fmt7.Errorf("CpusNrThrottled this(%v) Not Equal that(%v)", *this.CpusNrThrottled, *that1.CpusNrThrottled)
 		}
 	} else if this.CpusNrThrottled != nil {
-		return fmt5.Errorf("this.CpusNrThrottled == nil && that.CpusNrThrottled != nil")
+		return fmt7.Errorf("this.CpusNrThrottled == nil && that.CpusNrThrottled != nil")
 	} else if that1.CpusNrThrottled != nil {
-		return fmt5.Errorf("CpusNrThrottled this(%v) Not Equal that(%v)", this.CpusNrThrottled, that1.CpusNrThrottled)
+		return fmt7.Errorf("CpusNrThrottled this(%v) Not Equal that(%v)", this.CpusNrThrottled, that1.CpusNrThrottled)
 	}
 	if this.CpusThrottledTimeSecs != nil && that1.CpusThrottledTimeSecs != nil {
 		if *this.CpusThrottledTimeSecs != *that1.CpusThrottledTimeSecs {
-			return fmt5.Errorf("CpusThrottledTimeSecs this(%v) Not Equal that(%v)", *this.CpusThrottledTimeSecs, *that1.CpusThrottledTimeSecs)
+			return fmt7.Errorf("CpusThrottledTimeSecs this(%v) Not Equal that(%v)", *this.CpusThrottledTimeSecs, *that1.CpusThrottledTimeSecs)
 		}
 	} else if this.CpusThrottledTimeSecs != nil {
-		return fmt5.Errorf("this.CpusThrottledTimeSecs == nil && that.CpusThrottledTimeSecs != nil")
+		return fmt7.Errorf("this.CpusThrottledTimeSecs == nil && that.CpusThrottledTimeSecs != nil")
 	} else if that1.CpusThrottledTimeSecs != nil {
-		return fmt5.Errorf("CpusThrottledTimeSecs this(%v) Not Equal that(%v)", this.CpusThrottledTimeSecs, that1.CpusThrottledTimeSecs)
+		return fmt7.Errorf("CpusThrottledTimeSecs this(%v) Not Equal that(%v)", this.CpusThrottledTimeSecs, that1.CpusThrottledTimeSecs)
 	}
 	if this.MemRssBytes != nil && that1.MemRssBytes != nil {
 		if *this.MemRssBytes != *that1.MemRssBytes {
-			return fmt5.Errorf("MemRssBytes this(%v) Not Equal that(%v)", *this.MemRssBytes, *that1.MemRssBytes)
+			return fmt7.Errorf("MemRssBytes this(%v) Not Equal that(%v)", *this.MemRssBytes, *that1.MemRssBytes)
 		}
 	} else if this.MemRssBytes != nil {
-		return fmt5.Errorf("this.MemRssBytes == nil && that.MemRssBytes != nil")
+		return fmt7.Errorf("this.MemRssBytes == nil && that.MemRssBytes != nil")
 	} else if that1.MemRssBytes != nil {
-		return fmt5.Errorf("MemRssBytes this(%v) Not Equal that(%v)", this.MemRssBytes, that1.MemRssBytes)
+		return fmt7.Errorf("MemRssBytes this(%v) Not Equal that(%v)", this.MemRssBytes, that1.MemRssBytes)
 	}
 	if this.MemLimitBytes != nil && that1.MemLimitBytes != nil {
 		if *this.MemLimitBytes != *that1.MemLimitBytes {
-			return fmt5.Errorf("MemLimitBytes this(%v) Not Equal that(%v)", *this.MemLimitBytes, *that1.MemLimitBytes)
+			return fmt7.Errorf("MemLimitBytes this(%v) Not Equal that(%v)", *this.MemLimitBytes, *that1.MemLimitBytes)
 		}
 	} else if this.MemLimitBytes != nil {
-		return fmt5.Errorf("this.MemLimitBytes == nil && that.MemLimitBytes != nil")
+		return fmt7.Errorf("this.MemLimitBytes == nil && that.MemLimitBytes != nil")
 	} else if that1.MemLimitBytes != nil {
-		return fmt5.Errorf("MemLimitBytes this(%v) Not Equal that(%v)", this.MemLimitBytes, that1.MemLimitBytes)
+		return fmt7.Errorf("MemLimitBytes this(%v) Not Equal that(%v)", this.MemLimitBytes, that1.MemLimitBytes)
 	}
 	if this.MemFileBytes != nil && that1.MemFileBytes != nil {
 		if *this.MemFileBytes != *that1.MemFileBytes {
-			return fmt5.Errorf("MemFileBytes this(%v) Not Equal that(%v)", *this.MemFileBytes, *that1.MemFileBytes)
+			return fmt7.Errorf("MemFileBytes this(%v) Not Equal that(%v)", *this.MemFileBytes, *that1.MemFileBytes)
 		}
 	} else if this.MemFileBytes != nil {
-		return fmt5.Errorf("this.MemFileBytes == nil && that.MemFileBytes != nil")
+		return fmt7.Errorf("this.MemFileBytes == nil && that.MemFileBytes != nil")
 	} else if that1.MemFileBytes != nil {
-		return fmt5.Errorf("MemFileBytes this(%v) Not Equal that(%v)", this.MemFileBytes, that1.MemFileBytes)
+		return fmt7.Errorf("MemFileBytes this(%v) Not Equal that(%v)", this.MemFileBytes, that1.MemFileBytes)
 	}
 	if this.MemAnonBytes != nil && that1.MemAnonBytes != nil {
 		if *this.MemAnonBytes != *that1.MemAnonBytes {
-			return fmt5.Errorf("MemAnonBytes this(%v) Not Equal that(%v)", *this.MemAnonBytes, *that1.MemAnonBytes)
+			return fmt7.Errorf("MemAnonBytes this(%v) Not Equal that(%v)", *this.MemAnonBytes, *that1.MemAnonBytes)
 		}
 	} else if this.MemAnonBytes != nil {
-		return fmt5.Errorf("this.MemAnonBytes == nil && that.MemAnonBytes != nil")
+		return fmt7.Errorf("this.MemAnonBytes == nil && that.MemAnonBytes != nil")
 	} else if that1.MemAnonBytes != nil {
-		return fmt5.Errorf("MemAnonBytes this(%v) Not Equal that(%v)", this.MemAnonBytes, that1.MemAnonBytes)
+		return fmt7.Errorf("MemAnonBytes this(%v) Not Equal that(%v)", this.MemAnonBytes, that1.MemAnonBytes)
 	}
 	if this.MemMappedFileBytes != nil && that1.MemMappedFileBytes != nil {
 		if *this.MemMappedFileBytes != *that1.MemMappedFileBytes {
-			return fmt5.Errorf("MemMappedFileBytes this(%v) Not Equal that(%v)", *this.MemMappedFileBytes, *that1.MemMappedFileBytes)
+			return fmt7.Errorf("MemMappedFileBytes this(%v) Not Equal that(%v)", *this.MemMappedFileBytes, *that1.MemMappedFileBytes)
 		}
 	} else if this.MemMappedFileBytes != nil {
-		return fmt5.Errorf("this.MemMappedFileBytes == nil && that.MemMappedFileBytes != nil")
+		return fmt7.Errorf("this.MemMappedFileBytes == nil && that.MemMappedFileBytes != nil")
 	} else if that1.MemMappedFileBytes != nil {
-		return fmt5.Errorf("MemMappedFileBytes this(%v) Not Equal that(%v)", this.MemMappedFileBytes, that1.MemMappedFileBytes)
+		return fmt7.Errorf("MemMappedFileBytes this(%v) Not Equal that(%v)", this.MemMappedFileBytes, that1.MemMappedFileBytes)
 	}
 	if !this.Perf.Equal(that1.Perf) {
-		return fmt5.Errorf("Perf this(%v) Not Equal that(%v)", this.Perf, that1.Perf)
+		return fmt7.Errorf("Perf this(%v) Not Equal that(%v)", this.Perf, that1.Perf)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -17155,47 +17493,47 @@ func (this *ResourceUsage) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ResourceUsage)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ResourceUsage")
+		return fmt7.Errorf("that is not of type *ResourceUsage")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ResourceUsage but is nil && this != nil")
+		return fmt7.Errorf("that is type *ResourceUsage but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ResourceUsagebut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ResourceUsagebut is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt5.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+		return fmt7.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
-		return fmt5.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
+		return fmt7.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
 	}
 	if !this.ExecutorId.Equal(that1.ExecutorId) {
-		return fmt5.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
+		return fmt7.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
 	}
 	if this.ExecutorName != nil && that1.ExecutorName != nil {
 		if *this.ExecutorName != *that1.ExecutorName {
-			return fmt5.Errorf("ExecutorName this(%v) Not Equal that(%v)", *this.ExecutorName, *that1.ExecutorName)
+			return fmt7.Errorf("ExecutorName this(%v) Not Equal that(%v)", *this.ExecutorName, *that1.ExecutorName)
 		}
 	} else if this.ExecutorName != nil {
-		return fmt5.Errorf("this.ExecutorName == nil && that.ExecutorName != nil")
+		return fmt7.Errorf("this.ExecutorName == nil && that.ExecutorName != nil")
 	} else if that1.ExecutorName != nil {
-		return fmt5.Errorf("ExecutorName this(%v) Not Equal that(%v)", this.ExecutorName, that1.ExecutorName)
+		return fmt7.Errorf("ExecutorName this(%v) Not Equal that(%v)", this.ExecutorName, that1.ExecutorName)
 	}
 	if !this.TaskId.Equal(that1.TaskId) {
-		return fmt5.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
+		return fmt7.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
 	}
 	if !this.Statistics.Equal(that1.Statistics) {
-		return fmt5.Errorf("Statistics this(%v) Not Equal that(%v)", this.Statistics, that1.Statistics)
+		return fmt7.Errorf("Statistics this(%v) Not Equal that(%v)", this.Statistics, that1.Statistics)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -17253,500 +17591,500 @@ func (this *PerfStatistics) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*PerfStatistics)
 	if !ok {
-		return fmt5.Errorf("that is not of type *PerfStatistics")
+		return fmt7.Errorf("that is not of type *PerfStatistics")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *PerfStatistics but is nil && this != nil")
+		return fmt7.Errorf("that is type *PerfStatistics but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *PerfStatisticsbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *PerfStatisticsbut is not nil && this == nil")
 	}
 	if this.Timestamp != nil && that1.Timestamp != nil {
 		if *this.Timestamp != *that1.Timestamp {
-			return fmt5.Errorf("Timestamp this(%v) Not Equal that(%v)", *this.Timestamp, *that1.Timestamp)
+			return fmt7.Errorf("Timestamp this(%v) Not Equal that(%v)", *this.Timestamp, *that1.Timestamp)
 		}
 	} else if this.Timestamp != nil {
-		return fmt5.Errorf("this.Timestamp == nil && that.Timestamp != nil")
+		return fmt7.Errorf("this.Timestamp == nil && that.Timestamp != nil")
 	} else if that1.Timestamp != nil {
-		return fmt5.Errorf("Timestamp this(%v) Not Equal that(%v)", this.Timestamp, that1.Timestamp)
+		return fmt7.Errorf("Timestamp this(%v) Not Equal that(%v)", this.Timestamp, that1.Timestamp)
 	}
 	if this.Duration != nil && that1.Duration != nil {
 		if *this.Duration != *that1.Duration {
-			return fmt5.Errorf("Duration this(%v) Not Equal that(%v)", *this.Duration, *that1.Duration)
+			return fmt7.Errorf("Duration this(%v) Not Equal that(%v)", *this.Duration, *that1.Duration)
 		}
 	} else if this.Duration != nil {
-		return fmt5.Errorf("this.Duration == nil && that.Duration != nil")
+		return fmt7.Errorf("this.Duration == nil && that.Duration != nil")
 	} else if that1.Duration != nil {
-		return fmt5.Errorf("Duration this(%v) Not Equal that(%v)", this.Duration, that1.Duration)
+		return fmt7.Errorf("Duration this(%v) Not Equal that(%v)", this.Duration, that1.Duration)
 	}
 	if this.Cycles != nil && that1.Cycles != nil {
 		if *this.Cycles != *that1.Cycles {
-			return fmt5.Errorf("Cycles this(%v) Not Equal that(%v)", *this.Cycles, *that1.Cycles)
+			return fmt7.Errorf("Cycles this(%v) Not Equal that(%v)", *this.Cycles, *that1.Cycles)
 		}
 	} else if this.Cycles != nil {
-		return fmt5.Errorf("this.Cycles == nil && that.Cycles != nil")
+		return fmt7.Errorf("this.Cycles == nil && that.Cycles != nil")
 	} else if that1.Cycles != nil {
-		return fmt5.Errorf("Cycles this(%v) Not Equal that(%v)", this.Cycles, that1.Cycles)
+		return fmt7.Errorf("Cycles this(%v) Not Equal that(%v)", this.Cycles, that1.Cycles)
 	}
 	if this.StalledCyclesFrontend != nil && that1.StalledCyclesFrontend != nil {
 		if *this.StalledCyclesFrontend != *that1.StalledCyclesFrontend {
-			return fmt5.Errorf("StalledCyclesFrontend this(%v) Not Equal that(%v)", *this.StalledCyclesFrontend, *that1.StalledCyclesFrontend)
+			return fmt7.Errorf("StalledCyclesFrontend this(%v) Not Equal that(%v)", *this.StalledCyclesFrontend, *that1.StalledCyclesFrontend)
 		}
 	} else if this.StalledCyclesFrontend != nil {
-		return fmt5.Errorf("this.StalledCyclesFrontend == nil && that.StalledCyclesFrontend != nil")
+		return fmt7.Errorf("this.StalledCyclesFrontend == nil && that.StalledCyclesFrontend != nil")
 	} else if that1.StalledCyclesFrontend != nil {
-		return fmt5.Errorf("StalledCyclesFrontend this(%v) Not Equal that(%v)", this.StalledCyclesFrontend, that1.StalledCyclesFrontend)
+		return fmt7.Errorf("StalledCyclesFrontend this(%v) Not Equal that(%v)", this.StalledCyclesFrontend, that1.StalledCyclesFrontend)
 	}
 	if this.StalledCyclesBackend != nil && that1.StalledCyclesBackend != nil {
 		if *this.StalledCyclesBackend != *that1.StalledCyclesBackend {
-			return fmt5.Errorf("StalledCyclesBackend this(%v) Not Equal that(%v)", *this.StalledCyclesBackend, *that1.StalledCyclesBackend)
+			return fmt7.Errorf("StalledCyclesBackend this(%v) Not Equal that(%v)", *this.StalledCyclesBackend, *that1.StalledCyclesBackend)
 		}
 	} else if this.StalledCyclesBackend != nil {
-		return fmt5.Errorf("this.StalledCyclesBackend == nil && that.StalledCyclesBackend != nil")
+		return fmt7.Errorf("this.StalledCyclesBackend == nil && that.StalledCyclesBackend != nil")
 	} else if that1.StalledCyclesBackend != nil {
-		return fmt5.Errorf("StalledCyclesBackend this(%v) Not Equal that(%v)", this.StalledCyclesBackend, that1.StalledCyclesBackend)
+		return fmt7.Errorf("StalledCyclesBackend this(%v) Not Equal that(%v)", this.StalledCyclesBackend, that1.StalledCyclesBackend)
 	}
 	if this.Instructions != nil && that1.Instructions != nil {
 		if *this.Instructions != *that1.Instructions {
-			return fmt5.Errorf("Instructions this(%v) Not Equal that(%v)", *this.Instructions, *that1.Instructions)
+			return fmt7.Errorf("Instructions this(%v) Not Equal that(%v)", *this.Instructions, *that1.Instructions)
 		}
 	} else if this.Instructions != nil {
-		return fmt5.Errorf("this.Instructions == nil && that.Instructions != nil")
+		return fmt7.Errorf("this.Instructions == nil && that.Instructions != nil")
 	} else if that1.Instructions != nil {
-		return fmt5.Errorf("Instructions this(%v) Not Equal that(%v)", this.Instructions, that1.Instructions)
+		return fmt7.Errorf("Instructions this(%v) Not Equal that(%v)", this.Instructions, that1.Instructions)
 	}
 	if this.CacheReferences != nil && that1.CacheReferences != nil {
 		if *this.CacheReferences != *that1.CacheReferences {
-			return fmt5.Errorf("CacheReferences this(%v) Not Equal that(%v)", *this.CacheReferences, *that1.CacheReferences)
+			return fmt7.Errorf("CacheReferences this(%v) Not Equal that(%v)", *this.CacheReferences, *that1.CacheReferences)
 		}
 	} else if this.CacheReferences != nil {
-		return fmt5.Errorf("this.CacheReferences == nil && that.CacheReferences != nil")
+		return fmt7.Errorf("this.CacheReferences == nil && that.CacheReferences != nil")
 	} else if that1.CacheReferences != nil {
-		return fmt5.Errorf("CacheReferences this(%v) Not Equal that(%v)", this.CacheReferences, that1.CacheReferences)
+		return fmt7.Errorf("CacheReferences this(%v) Not Equal that(%v)", this.CacheReferences, that1.CacheReferences)
 	}
 	if this.CacheMisses != nil && that1.CacheMisses != nil {
 		if *this.CacheMisses != *that1.CacheMisses {
-			return fmt5.Errorf("CacheMisses this(%v) Not Equal that(%v)", *this.CacheMisses, *that1.CacheMisses)
+			return fmt7.Errorf("CacheMisses this(%v) Not Equal that(%v)", *this.CacheMisses, *that1.CacheMisses)
 		}
 	} else if this.CacheMisses != nil {
-		return fmt5.Errorf("this.CacheMisses == nil && that.CacheMisses != nil")
+		return fmt7.Errorf("this.CacheMisses == nil && that.CacheMisses != nil")
 	} else if that1.CacheMisses != nil {
-		return fmt5.Errorf("CacheMisses this(%v) Not Equal that(%v)", this.CacheMisses, that1.CacheMisses)
+		return fmt7.Errorf("CacheMisses this(%v) Not Equal that(%v)", this.CacheMisses, that1.CacheMisses)
 	}
 	if this.Branches != nil && that1.Branches != nil {
 		if *this.Branches != *that1.Branches {
-			return fmt5.Errorf("Branches this(%v) Not Equal that(%v)", *this.Branches, *that1.Branches)
+			return fmt7.Errorf("Branches this(%v) Not Equal that(%v)", *this.Branches, *that1.Branches)
 		}
 	} else if this.Branches != nil {
-		return fmt5.Errorf("this.Branches == nil && that.Branches != nil")
+		return fmt7.Errorf("this.Branches == nil && that.Branches != nil")
 	} else if that1.Branches != nil {
-		return fmt5.Errorf("Branches this(%v) Not Equal that(%v)", this.Branches, that1.Branches)
+		return fmt7.Errorf("Branches this(%v) Not Equal that(%v)", this.Branches, that1.Branches)
 	}
 	if this.BranchMisses != nil && that1.BranchMisses != nil {
 		if *this.BranchMisses != *that1.BranchMisses {
-			return fmt5.Errorf("BranchMisses this(%v) Not Equal that(%v)", *this.BranchMisses, *that1.BranchMisses)
+			return fmt7.Errorf("BranchMisses this(%v) Not Equal that(%v)", *this.BranchMisses, *that1.BranchMisses)
 		}
 	} else if this.BranchMisses != nil {
-		return fmt5.Errorf("this.BranchMisses == nil && that.BranchMisses != nil")
+		return fmt7.Errorf("this.BranchMisses == nil && that.BranchMisses != nil")
 	} else if that1.BranchMisses != nil {
-		return fmt5.Errorf("BranchMisses this(%v) Not Equal that(%v)", this.BranchMisses, that1.BranchMisses)
+		return fmt7.Errorf("BranchMisses this(%v) Not Equal that(%v)", this.BranchMisses, that1.BranchMisses)
 	}
 	if this.BusCycles != nil && that1.BusCycles != nil {
 		if *this.BusCycles != *that1.BusCycles {
-			return fmt5.Errorf("BusCycles this(%v) Not Equal that(%v)", *this.BusCycles, *that1.BusCycles)
+			return fmt7.Errorf("BusCycles this(%v) Not Equal that(%v)", *this.BusCycles, *that1.BusCycles)
 		}
 	} else if this.BusCycles != nil {
-		return fmt5.Errorf("this.BusCycles == nil && that.BusCycles != nil")
+		return fmt7.Errorf("this.BusCycles == nil && that.BusCycles != nil")
 	} else if that1.BusCycles != nil {
-		return fmt5.Errorf("BusCycles this(%v) Not Equal that(%v)", this.BusCycles, that1.BusCycles)
+		return fmt7.Errorf("BusCycles this(%v) Not Equal that(%v)", this.BusCycles, that1.BusCycles)
 	}
 	if this.RefCycles != nil && that1.RefCycles != nil {
 		if *this.RefCycles != *that1.RefCycles {
-			return fmt5.Errorf("RefCycles this(%v) Not Equal that(%v)", *this.RefCycles, *that1.RefCycles)
+			return fmt7.Errorf("RefCycles this(%v) Not Equal that(%v)", *this.RefCycles, *that1.RefCycles)
 		}
 	} else if this.RefCycles != nil {
-		return fmt5.Errorf("this.RefCycles == nil && that.RefCycles != nil")
+		return fmt7.Errorf("this.RefCycles == nil && that.RefCycles != nil")
 	} else if that1.RefCycles != nil {
-		return fmt5.Errorf("RefCycles this(%v) Not Equal that(%v)", this.RefCycles, that1.RefCycles)
+		return fmt7.Errorf("RefCycles this(%v) Not Equal that(%v)", this.RefCycles, that1.RefCycles)
 	}
 	if this.CpuClock != nil && that1.CpuClock != nil {
 		if *this.CpuClock != *that1.CpuClock {
-			return fmt5.Errorf("CpuClock this(%v) Not Equal that(%v)", *this.CpuClock, *that1.CpuClock)
+			return fmt7.Errorf("CpuClock this(%v) Not Equal that(%v)", *this.CpuClock, *that1.CpuClock)
 		}
 	} else if this.CpuClock != nil {
-		return fmt5.Errorf("this.CpuClock == nil && that.CpuClock != nil")
+		return fmt7.Errorf("this.CpuClock == nil && that.CpuClock != nil")
 	} else if that1.CpuClock != nil {
-		return fmt5.Errorf("CpuClock this(%v) Not Equal that(%v)", this.CpuClock, that1.CpuClock)
+		return fmt7.Errorf("CpuClock this(%v) Not Equal that(%v)", this.CpuClock, that1.CpuClock)
 	}
 	if this.TaskClock != nil && that1.TaskClock != nil {
 		if *this.TaskClock != *that1.TaskClock {
-			return fmt5.Errorf("TaskClock this(%v) Not Equal that(%v)", *this.TaskClock, *that1.TaskClock)
+			return fmt7.Errorf("TaskClock this(%v) Not Equal that(%v)", *this.TaskClock, *that1.TaskClock)
 		}
 	} else if this.TaskClock != nil {
-		return fmt5.Errorf("this.TaskClock == nil && that.TaskClock != nil")
+		return fmt7.Errorf("this.TaskClock == nil && that.TaskClock != nil")
 	} else if that1.TaskClock != nil {
-		return fmt5.Errorf("TaskClock this(%v) Not Equal that(%v)", this.TaskClock, that1.TaskClock)
+		return fmt7.Errorf("TaskClock this(%v) Not Equal that(%v)", this.TaskClock, that1.TaskClock)
 	}
 	if this.PageFaults != nil && that1.PageFaults != nil {
 		if *this.PageFaults != *that1.PageFaults {
-			return fmt5.Errorf("PageFaults this(%v) Not Equal that(%v)", *this.PageFaults, *that1.PageFaults)
+			return fmt7.Errorf("PageFaults this(%v) Not Equal that(%v)", *this.PageFaults, *that1.PageFaults)
 		}
 	} else if this.PageFaults != nil {
-		return fmt5.Errorf("this.PageFaults == nil && that.PageFaults != nil")
+		return fmt7.Errorf("this.PageFaults == nil && that.PageFaults != nil")
 	} else if that1.PageFaults != nil {
-		return fmt5.Errorf("PageFaults this(%v) Not Equal that(%v)", this.PageFaults, that1.PageFaults)
+		return fmt7.Errorf("PageFaults this(%v) Not Equal that(%v)", this.PageFaults, that1.PageFaults)
 	}
 	if this.MinorFaults != nil && that1.MinorFaults != nil {
 		if *this.MinorFaults != *that1.MinorFaults {
-			return fmt5.Errorf("MinorFaults this(%v) Not Equal that(%v)", *this.MinorFaults, *that1.MinorFaults)
+			return fmt7.Errorf("MinorFaults this(%v) Not Equal that(%v)", *this.MinorFaults, *that1.MinorFaults)
 		}
 	} else if this.MinorFaults != nil {
-		return fmt5.Errorf("this.MinorFaults == nil && that.MinorFaults != nil")
+		return fmt7.Errorf("this.MinorFaults == nil && that.MinorFaults != nil")
 	} else if that1.MinorFaults != nil {
-		return fmt5.Errorf("MinorFaults this(%v) Not Equal that(%v)", this.MinorFaults, that1.MinorFaults)
+		return fmt7.Errorf("MinorFaults this(%v) Not Equal that(%v)", this.MinorFaults, that1.MinorFaults)
 	}
 	if this.MajorFaults != nil && that1.MajorFaults != nil {
 		if *this.MajorFaults != *that1.MajorFaults {
-			return fmt5.Errorf("MajorFaults this(%v) Not Equal that(%v)", *this.MajorFaults, *that1.MajorFaults)
+			return fmt7.Errorf("MajorFaults this(%v) Not Equal that(%v)", *this.MajorFaults, *that1.MajorFaults)
 		}
 	} else if this.MajorFaults != nil {
-		return fmt5.Errorf("this.MajorFaults == nil && that.MajorFaults != nil")
+		return fmt7.Errorf("this.MajorFaults == nil && that.MajorFaults != nil")
 	} else if that1.MajorFaults != nil {
-		return fmt5.Errorf("MajorFaults this(%v) Not Equal that(%v)", this.MajorFaults, that1.MajorFaults)
+		return fmt7.Errorf("MajorFaults this(%v) Not Equal that(%v)", this.MajorFaults, that1.MajorFaults)
 	}
 	if this.ContextSwitches != nil && that1.ContextSwitches != nil {
 		if *this.ContextSwitches != *that1.ContextSwitches {
-			return fmt5.Errorf("ContextSwitches this(%v) Not Equal that(%v)", *this.ContextSwitches, *that1.ContextSwitches)
+			return fmt7.Errorf("ContextSwitches this(%v) Not Equal that(%v)", *this.ContextSwitches, *that1.ContextSwitches)
 		}
 	} else if this.ContextSwitches != nil {
-		return fmt5.Errorf("this.ContextSwitches == nil && that.ContextSwitches != nil")
+		return fmt7.Errorf("this.ContextSwitches == nil && that.ContextSwitches != nil")
 	} else if that1.ContextSwitches != nil {
-		return fmt5.Errorf("ContextSwitches this(%v) Not Equal that(%v)", this.ContextSwitches, that1.ContextSwitches)
+		return fmt7.Errorf("ContextSwitches this(%v) Not Equal that(%v)", this.ContextSwitches, that1.ContextSwitches)
 	}
 	if this.CpuMigrations != nil && that1.CpuMigrations != nil {
 		if *this.CpuMigrations != *that1.CpuMigrations {
-			return fmt5.Errorf("CpuMigrations this(%v) Not Equal that(%v)", *this.CpuMigrations, *that1.CpuMigrations)
+			return fmt7.Errorf("CpuMigrations this(%v) Not Equal that(%v)", *this.CpuMigrations, *that1.CpuMigrations)
 		}
 	} else if this.CpuMigrations != nil {
-		return fmt5.Errorf("this.CpuMigrations == nil && that.CpuMigrations != nil")
+		return fmt7.Errorf("this.CpuMigrations == nil && that.CpuMigrations != nil")
 	} else if that1.CpuMigrations != nil {
-		return fmt5.Errorf("CpuMigrations this(%v) Not Equal that(%v)", this.CpuMigrations, that1.CpuMigrations)
+		return fmt7.Errorf("CpuMigrations this(%v) Not Equal that(%v)", this.CpuMigrations, that1.CpuMigrations)
 	}
 	if this.AlignmentFaults != nil && that1.AlignmentFaults != nil {
 		if *this.AlignmentFaults != *that1.AlignmentFaults {
-			return fmt5.Errorf("AlignmentFaults this(%v) Not Equal that(%v)", *this.AlignmentFaults, *that1.AlignmentFaults)
+			return fmt7.Errorf("AlignmentFaults this(%v) Not Equal that(%v)", *this.AlignmentFaults, *that1.AlignmentFaults)
 		}
 	} else if this.AlignmentFaults != nil {
-		return fmt5.Errorf("this.AlignmentFaults == nil && that.AlignmentFaults != nil")
+		return fmt7.Errorf("this.AlignmentFaults == nil && that.AlignmentFaults != nil")
 	} else if that1.AlignmentFaults != nil {
-		return fmt5.Errorf("AlignmentFaults this(%v) Not Equal that(%v)", this.AlignmentFaults, that1.AlignmentFaults)
+		return fmt7.Errorf("AlignmentFaults this(%v) Not Equal that(%v)", this.AlignmentFaults, that1.AlignmentFaults)
 	}
 	if this.EmulationFaults != nil && that1.EmulationFaults != nil {
 		if *this.EmulationFaults != *that1.EmulationFaults {
-			return fmt5.Errorf("EmulationFaults this(%v) Not Equal that(%v)", *this.EmulationFaults, *that1.EmulationFaults)
+			return fmt7.Errorf("EmulationFaults this(%v) Not Equal that(%v)", *this.EmulationFaults, *that1.EmulationFaults)
 		}
 	} else if this.EmulationFaults != nil {
-		return fmt5.Errorf("this.EmulationFaults == nil && that.EmulationFaults != nil")
+		return fmt7.Errorf("this.EmulationFaults == nil && that.EmulationFaults != nil")
 	} else if that1.EmulationFaults != nil {
-		return fmt5.Errorf("EmulationFaults this(%v) Not Equal that(%v)", this.EmulationFaults, that1.EmulationFaults)
+		return fmt7.Errorf("EmulationFaults this(%v) Not Equal that(%v)", this.EmulationFaults, that1.EmulationFaults)
 	}
 	if this.L1DcacheLoads != nil && that1.L1DcacheLoads != nil {
 		if *this.L1DcacheLoads != *that1.L1DcacheLoads {
-			return fmt5.Errorf("L1DcacheLoads this(%v) Not Equal that(%v)", *this.L1DcacheLoads, *that1.L1DcacheLoads)
+			return fmt7.Errorf("L1DcacheLoads this(%v) Not Equal that(%v)", *this.L1DcacheLoads, *that1.L1DcacheLoads)
 		}
 	} else if this.L1DcacheLoads != nil {
-		return fmt5.Errorf("this.L1DcacheLoads == nil && that.L1DcacheLoads != nil")
+		return fmt7.Errorf("this.L1DcacheLoads == nil && that.L1DcacheLoads != nil")
 	} else if that1.L1DcacheLoads != nil {
-		return fmt5.Errorf("L1DcacheLoads this(%v) Not Equal that(%v)", this.L1DcacheLoads, that1.L1DcacheLoads)
+		return fmt7.Errorf("L1DcacheLoads this(%v) Not Equal that(%v)", this.L1DcacheLoads, that1.L1DcacheLoads)
 	}
 	if this.L1DcacheLoadMisses != nil && that1.L1DcacheLoadMisses != nil {
 		if *this.L1DcacheLoadMisses != *that1.L1DcacheLoadMisses {
-			return fmt5.Errorf("L1DcacheLoadMisses this(%v) Not Equal that(%v)", *this.L1DcacheLoadMisses, *that1.L1DcacheLoadMisses)
+			return fmt7.Errorf("L1DcacheLoadMisses this(%v) Not Equal that(%v)", *this.L1DcacheLoadMisses, *that1.L1DcacheLoadMisses)
 		}
 	} else if this.L1DcacheLoadMisses != nil {
-		return fmt5.Errorf("this.L1DcacheLoadMisses == nil && that.L1DcacheLoadMisses != nil")
+		return fmt7.Errorf("this.L1DcacheLoadMisses == nil && that.L1DcacheLoadMisses != nil")
 	} else if that1.L1DcacheLoadMisses != nil {
-		return fmt5.Errorf("L1DcacheLoadMisses this(%v) Not Equal that(%v)", this.L1DcacheLoadMisses, that1.L1DcacheLoadMisses)
+		return fmt7.Errorf("L1DcacheLoadMisses this(%v) Not Equal that(%v)", this.L1DcacheLoadMisses, that1.L1DcacheLoadMisses)
 	}
 	if this.L1DcacheStores != nil && that1.L1DcacheStores != nil {
 		if *this.L1DcacheStores != *that1.L1DcacheStores {
-			return fmt5.Errorf("L1DcacheStores this(%v) Not Equal that(%v)", *this.L1DcacheStores, *that1.L1DcacheStores)
+			return fmt7.Errorf("L1DcacheStores this(%v) Not Equal that(%v)", *this.L1DcacheStores, *that1.L1DcacheStores)
 		}
 	} else if this.L1DcacheStores != nil {
-		return fmt5.Errorf("this.L1DcacheStores == nil && that.L1DcacheStores != nil")
+		return fmt7.Errorf("this.L1DcacheStores == nil && that.L1DcacheStores != nil")
 	} else if that1.L1DcacheStores != nil {
-		return fmt5.Errorf("L1DcacheStores this(%v) Not Equal that(%v)", this.L1DcacheStores, that1.L1DcacheStores)
+		return fmt7.Errorf("L1DcacheStores this(%v) Not Equal that(%v)", this.L1DcacheStores, that1.L1DcacheStores)
 	}
 	if this.L1DcacheStoreMisses != nil && that1.L1DcacheStoreMisses != nil {
 		if *this.L1DcacheStoreMisses != *that1.L1DcacheStoreMisses {
-			return fmt5.Errorf("L1DcacheStoreMisses this(%v) Not Equal that(%v)", *this.L1DcacheStoreMisses, *that1.L1DcacheStoreMisses)
+			return fmt7.Errorf("L1DcacheStoreMisses this(%v) Not Equal that(%v)", *this.L1DcacheStoreMisses, *that1.L1DcacheStoreMisses)
 		}
 	} else if this.L1DcacheStoreMisses != nil {
-		return fmt5.Errorf("this.L1DcacheStoreMisses == nil && that.L1DcacheStoreMisses != nil")
+		return fmt7.Errorf("this.L1DcacheStoreMisses == nil && that.L1DcacheStoreMisses != nil")
 	} else if that1.L1DcacheStoreMisses != nil {
-		return fmt5.Errorf("L1DcacheStoreMisses this(%v) Not Equal that(%v)", this.L1DcacheStoreMisses, that1.L1DcacheStoreMisses)
+		return fmt7.Errorf("L1DcacheStoreMisses this(%v) Not Equal that(%v)", this.L1DcacheStoreMisses, that1.L1DcacheStoreMisses)
 	}
 	if this.L1DcachePrefetches != nil && that1.L1DcachePrefetches != nil {
 		if *this.L1DcachePrefetches != *that1.L1DcachePrefetches {
-			return fmt5.Errorf("L1DcachePrefetches this(%v) Not Equal that(%v)", *this.L1DcachePrefetches, *that1.L1DcachePrefetches)
+			return fmt7.Errorf("L1DcachePrefetches this(%v) Not Equal that(%v)", *this.L1DcachePrefetches, *that1.L1DcachePrefetches)
 		}
 	} else if this.L1DcachePrefetches != nil {
-		return fmt5.Errorf("this.L1DcachePrefetches == nil && that.L1DcachePrefetches != nil")
+		return fmt7.Errorf("this.L1DcachePrefetches == nil && that.L1DcachePrefetches != nil")
 	} else if that1.L1DcachePrefetches != nil {
-		return fmt5.Errorf("L1DcachePrefetches this(%v) Not Equal that(%v)", this.L1DcachePrefetches, that1.L1DcachePrefetches)
+		return fmt7.Errorf("L1DcachePrefetches this(%v) Not Equal that(%v)", this.L1DcachePrefetches, that1.L1DcachePrefetches)
 	}
 	if this.L1DcachePrefetchMisses != nil && that1.L1DcachePrefetchMisses != nil {
 		if *this.L1DcachePrefetchMisses != *that1.L1DcachePrefetchMisses {
-			return fmt5.Errorf("L1DcachePrefetchMisses this(%v) Not Equal that(%v)", *this.L1DcachePrefetchMisses, *that1.L1DcachePrefetchMisses)
+			return fmt7.Errorf("L1DcachePrefetchMisses this(%v) Not Equal that(%v)", *this.L1DcachePrefetchMisses, *that1.L1DcachePrefetchMisses)
 		}
 	} else if this.L1DcachePrefetchMisses != nil {
-		return fmt5.Errorf("this.L1DcachePrefetchMisses == nil && that.L1DcachePrefetchMisses != nil")
+		return fmt7.Errorf("this.L1DcachePrefetchMisses == nil && that.L1DcachePrefetchMisses != nil")
 	} else if that1.L1DcachePrefetchMisses != nil {
-		return fmt5.Errorf("L1DcachePrefetchMisses this(%v) Not Equal that(%v)", this.L1DcachePrefetchMisses, that1.L1DcachePrefetchMisses)
+		return fmt7.Errorf("L1DcachePrefetchMisses this(%v) Not Equal that(%v)", this.L1DcachePrefetchMisses, that1.L1DcachePrefetchMisses)
 	}
 	if this.L1IcacheLoads != nil && that1.L1IcacheLoads != nil {
 		if *this.L1IcacheLoads != *that1.L1IcacheLoads {
-			return fmt5.Errorf("L1IcacheLoads this(%v) Not Equal that(%v)", *this.L1IcacheLoads, *that1.L1IcacheLoads)
+			return fmt7.Errorf("L1IcacheLoads this(%v) Not Equal that(%v)", *this.L1IcacheLoads, *that1.L1IcacheLoads)
 		}
 	} else if this.L1IcacheLoads != nil {
-		return fmt5.Errorf("this.L1IcacheLoads == nil && that.L1IcacheLoads != nil")
+		return fmt7.Errorf("this.L1IcacheLoads == nil && that.L1IcacheLoads != nil")
 	} else if that1.L1IcacheLoads != nil {
-		return fmt5.Errorf("L1IcacheLoads this(%v) Not Equal that(%v)", this.L1IcacheLoads, that1.L1IcacheLoads)
+		return fmt7.Errorf("L1IcacheLoads this(%v) Not Equal that(%v)", this.L1IcacheLoads, that1.L1IcacheLoads)
 	}
 	if this.L1IcacheLoadMisses != nil && that1.L1IcacheLoadMisses != nil {
 		if *this.L1IcacheLoadMisses != *that1.L1IcacheLoadMisses {
-			return fmt5.Errorf("L1IcacheLoadMisses this(%v) Not Equal that(%v)", *this.L1IcacheLoadMisses, *that1.L1IcacheLoadMisses)
+			return fmt7.Errorf("L1IcacheLoadMisses this(%v) Not Equal that(%v)", *this.L1IcacheLoadMisses, *that1.L1IcacheLoadMisses)
 		}
 	} else if this.L1IcacheLoadMisses != nil {
-		return fmt5.Errorf("this.L1IcacheLoadMisses == nil && that.L1IcacheLoadMisses != nil")
+		return fmt7.Errorf("this.L1IcacheLoadMisses == nil && that.L1IcacheLoadMisses != nil")
 	} else if that1.L1IcacheLoadMisses != nil {
-		return fmt5.Errorf("L1IcacheLoadMisses this(%v) Not Equal that(%v)", this.L1IcacheLoadMisses, that1.L1IcacheLoadMisses)
+		return fmt7.Errorf("L1IcacheLoadMisses this(%v) Not Equal that(%v)", this.L1IcacheLoadMisses, that1.L1IcacheLoadMisses)
 	}
 	if this.L1IcachePrefetches != nil && that1.L1IcachePrefetches != nil {
 		if *this.L1IcachePrefetches != *that1.L1IcachePrefetches {
-			return fmt5.Errorf("L1IcachePrefetches this(%v) Not Equal that(%v)", *this.L1IcachePrefetches, *that1.L1IcachePrefetches)
+			return fmt7.Errorf("L1IcachePrefetches this(%v) Not Equal that(%v)", *this.L1IcachePrefetches, *that1.L1IcachePrefetches)
 		}
 	} else if this.L1IcachePrefetches != nil {
-		return fmt5.Errorf("this.L1IcachePrefetches == nil && that.L1IcachePrefetches != nil")
+		return fmt7.Errorf("this.L1IcachePrefetches == nil && that.L1IcachePrefetches != nil")
 	} else if that1.L1IcachePrefetches != nil {
-		return fmt5.Errorf("L1IcachePrefetches this(%v) Not Equal that(%v)", this.L1IcachePrefetches, that1.L1IcachePrefetches)
+		return fmt7.Errorf("L1IcachePrefetches this(%v) Not Equal that(%v)", this.L1IcachePrefetches, that1.L1IcachePrefetches)
 	}
 	if this.L1IcachePrefetchMisses != nil && that1.L1IcachePrefetchMisses != nil {
 		if *this.L1IcachePrefetchMisses != *that1.L1IcachePrefetchMisses {
-			return fmt5.Errorf("L1IcachePrefetchMisses this(%v) Not Equal that(%v)", *this.L1IcachePrefetchMisses, *that1.L1IcachePrefetchMisses)
+			return fmt7.Errorf("L1IcachePrefetchMisses this(%v) Not Equal that(%v)", *this.L1IcachePrefetchMisses, *that1.L1IcachePrefetchMisses)
 		}
 	} else if this.L1IcachePrefetchMisses != nil {
-		return fmt5.Errorf("this.L1IcachePrefetchMisses == nil && that.L1IcachePrefetchMisses != nil")
+		return fmt7.Errorf("this.L1IcachePrefetchMisses == nil && that.L1IcachePrefetchMisses != nil")
 	} else if that1.L1IcachePrefetchMisses != nil {
-		return fmt5.Errorf("L1IcachePrefetchMisses this(%v) Not Equal that(%v)", this.L1IcachePrefetchMisses, that1.L1IcachePrefetchMisses)
+		return fmt7.Errorf("L1IcachePrefetchMisses this(%v) Not Equal that(%v)", this.L1IcachePrefetchMisses, that1.L1IcachePrefetchMisses)
 	}
 	if this.LlcLoads != nil && that1.LlcLoads != nil {
 		if *this.LlcLoads != *that1.LlcLoads {
-			return fmt5.Errorf("LlcLoads this(%v) Not Equal that(%v)", *this.LlcLoads, *that1.LlcLoads)
+			return fmt7.Errorf("LlcLoads this(%v) Not Equal that(%v)", *this.LlcLoads, *that1.LlcLoads)
 		}
 	} else if this.LlcLoads != nil {
-		return fmt5.Errorf("this.LlcLoads == nil && that.LlcLoads != nil")
+		return fmt7.Errorf("this.LlcLoads == nil && that.LlcLoads != nil")
 	} else if that1.LlcLoads != nil {
-		return fmt5.Errorf("LlcLoads this(%v) Not Equal that(%v)", this.LlcLoads, that1.LlcLoads)
+		return fmt7.Errorf("LlcLoads this(%v) Not Equal that(%v)", this.LlcLoads, that1.LlcLoads)
 	}
 	if this.LlcLoadMisses != nil && that1.LlcLoadMisses != nil {
 		if *this.LlcLoadMisses != *that1.LlcLoadMisses {
-			return fmt5.Errorf("LlcLoadMisses this(%v) Not Equal that(%v)", *this.LlcLoadMisses, *that1.LlcLoadMisses)
+			return fmt7.Errorf("LlcLoadMisses this(%v) Not Equal that(%v)", *this.LlcLoadMisses, *that1.LlcLoadMisses)
 		}
 	} else if this.LlcLoadMisses != nil {
-		return fmt5.Errorf("this.LlcLoadMisses == nil && that.LlcLoadMisses != nil")
+		return fmt7.Errorf("this.LlcLoadMisses == nil && that.LlcLoadMisses != nil")
 	} else if that1.LlcLoadMisses != nil {
-		return fmt5.Errorf("LlcLoadMisses this(%v) Not Equal that(%v)", this.LlcLoadMisses, that1.LlcLoadMisses)
+		return fmt7.Errorf("LlcLoadMisses this(%v) Not Equal that(%v)", this.LlcLoadMisses, that1.LlcLoadMisses)
 	}
 	if this.LlcStores != nil && that1.LlcStores != nil {
 		if *this.LlcStores != *that1.LlcStores {
-			return fmt5.Errorf("LlcStores this(%v) Not Equal that(%v)", *this.LlcStores, *that1.LlcStores)
+			return fmt7.Errorf("LlcStores this(%v) Not Equal that(%v)", *this.LlcStores, *that1.LlcStores)
 		}
 	} else if this.LlcStores != nil {
-		return fmt5.Errorf("this.LlcStores == nil && that.LlcStores != nil")
+		return fmt7.Errorf("this.LlcStores == nil && that.LlcStores != nil")
 	} else if that1.LlcStores != nil {
-		return fmt5.Errorf("LlcStores this(%v) Not Equal that(%v)", this.LlcStores, that1.LlcStores)
+		return fmt7.Errorf("LlcStores this(%v) Not Equal that(%v)", this.LlcStores, that1.LlcStores)
 	}
 	if this.LlcStoreMisses != nil && that1.LlcStoreMisses != nil {
 		if *this.LlcStoreMisses != *that1.LlcStoreMisses {
-			return fmt5.Errorf("LlcStoreMisses this(%v) Not Equal that(%v)", *this.LlcStoreMisses, *that1.LlcStoreMisses)
+			return fmt7.Errorf("LlcStoreMisses this(%v) Not Equal that(%v)", *this.LlcStoreMisses, *that1.LlcStoreMisses)
 		}
 	} else if this.LlcStoreMisses != nil {
-		return fmt5.Errorf("this.LlcStoreMisses == nil && that.LlcStoreMisses != nil")
+		return fmt7.Errorf("this.LlcStoreMisses == nil && that.LlcStoreMisses != nil")
 	} else if that1.LlcStoreMisses != nil {
-		return fmt5.Errorf("LlcStoreMisses this(%v) Not Equal that(%v)", this.LlcStoreMisses, that1.LlcStoreMisses)
+		return fmt7.Errorf("LlcStoreMisses this(%v) Not Equal that(%v)", this.LlcStoreMisses, that1.LlcStoreMisses)
 	}
 	if this.LlcPrefetches != nil && that1.LlcPrefetches != nil {
 		if *this.LlcPrefetches != *that1.LlcPrefetches {
-			return fmt5.Errorf("LlcPrefetches this(%v) Not Equal that(%v)", *this.LlcPrefetches, *that1.LlcPrefetches)
+			return fmt7.Errorf("LlcPrefetches this(%v) Not Equal that(%v)", *this.LlcPrefetches, *that1.LlcPrefetches)
 		}
 	} else if this.LlcPrefetches != nil {
-		return fmt5.Errorf("this.LlcPrefetches == nil && that.LlcPrefetches != nil")
+		return fmt7.Errorf("this.LlcPrefetches == nil && that.LlcPrefetches != nil")
 	} else if that1.LlcPrefetches != nil {
-		return fmt5.Errorf("LlcPrefetches this(%v) Not Equal that(%v)", this.LlcPrefetches, that1.LlcPrefetches)
+		return fmt7.Errorf("LlcPrefetches this(%v) Not Equal that(%v)", this.LlcPrefetches, that1.LlcPrefetches)
 	}
 	if this.LlcPrefetchMisses != nil && that1.LlcPrefetchMisses != nil {
 		if *this.LlcPrefetchMisses != *that1.LlcPrefetchMisses {
-			return fmt5.Errorf("LlcPrefetchMisses this(%v) Not Equal that(%v)", *this.LlcPrefetchMisses, *that1.LlcPrefetchMisses)
+			return fmt7.Errorf("LlcPrefetchMisses this(%v) Not Equal that(%v)", *this.LlcPrefetchMisses, *that1.LlcPrefetchMisses)
 		}
 	} else if this.LlcPrefetchMisses != nil {
-		return fmt5.Errorf("this.LlcPrefetchMisses == nil && that.LlcPrefetchMisses != nil")
+		return fmt7.Errorf("this.LlcPrefetchMisses == nil && that.LlcPrefetchMisses != nil")
 	} else if that1.LlcPrefetchMisses != nil {
-		return fmt5.Errorf("LlcPrefetchMisses this(%v) Not Equal that(%v)", this.LlcPrefetchMisses, that1.LlcPrefetchMisses)
+		return fmt7.Errorf("LlcPrefetchMisses this(%v) Not Equal that(%v)", this.LlcPrefetchMisses, that1.LlcPrefetchMisses)
 	}
 	if this.DtlbLoads != nil && that1.DtlbLoads != nil {
 		if *this.DtlbLoads != *that1.DtlbLoads {
-			return fmt5.Errorf("DtlbLoads this(%v) Not Equal that(%v)", *this.DtlbLoads, *that1.DtlbLoads)
+			return fmt7.Errorf("DtlbLoads this(%v) Not Equal that(%v)", *this.DtlbLoads, *that1.DtlbLoads)
 		}
 	} else if this.DtlbLoads != nil {
-		return fmt5.Errorf("this.DtlbLoads == nil && that.DtlbLoads != nil")
+		return fmt7.Errorf("this.DtlbLoads == nil && that.DtlbLoads != nil")
 	} else if that1.DtlbLoads != nil {
-		return fmt5.Errorf("DtlbLoads this(%v) Not Equal that(%v)", this.DtlbLoads, that1.DtlbLoads)
+		return fmt7.Errorf("DtlbLoads this(%v) Not Equal that(%v)", this.DtlbLoads, that1.DtlbLoads)
 	}
 	if this.DtlbLoadMisses != nil && that1.DtlbLoadMisses != nil {
 		if *this.DtlbLoadMisses != *that1.DtlbLoadMisses {
-			return fmt5.Errorf("DtlbLoadMisses this(%v) Not Equal that(%v)", *this.DtlbLoadMisses, *that1.DtlbLoadMisses)
+			return fmt7.Errorf("DtlbLoadMisses this(%v) Not Equal that(%v)", *this.DtlbLoadMisses, *that1.DtlbLoadMisses)
 		}
 	} else if this.DtlbLoadMisses != nil {
-		return fmt5.Errorf("this.DtlbLoadMisses == nil && that.DtlbLoadMisses != nil")
+		return fmt7.Errorf("this.DtlbLoadMisses == nil && that.DtlbLoadMisses != nil")
 	} else if that1.DtlbLoadMisses != nil {
-		return fmt5.Errorf("DtlbLoadMisses this(%v) Not Equal that(%v)", this.DtlbLoadMisses, that1.DtlbLoadMisses)
+		return fmt7.Errorf("DtlbLoadMisses this(%v) Not Equal that(%v)", this.DtlbLoadMisses, that1.DtlbLoadMisses)
 	}
 	if this.DtlbStores != nil && that1.DtlbStores != nil {
 		if *this.DtlbStores != *that1.DtlbStores {
-			return fmt5.Errorf("DtlbStores this(%v) Not Equal that(%v)", *this.DtlbStores, *that1.DtlbStores)
+			return fmt7.Errorf("DtlbStores this(%v) Not Equal that(%v)", *this.DtlbStores, *that1.DtlbStores)
 		}
 	} else if this.DtlbStores != nil {
-		return fmt5.Errorf("this.DtlbStores == nil && that.DtlbStores != nil")
+		return fmt7.Errorf("this.DtlbStores == nil && that.DtlbStores != nil")
 	} else if that1.DtlbStores != nil {
-		return fmt5.Errorf("DtlbStores this(%v) Not Equal that(%v)", this.DtlbStores, that1.DtlbStores)
+		return fmt7.Errorf("DtlbStores this(%v) Not Equal that(%v)", this.DtlbStores, that1.DtlbStores)
 	}
 	if this.DtlbStoreMisses != nil && that1.DtlbStoreMisses != nil {
 		if *this.DtlbStoreMisses != *that1.DtlbStoreMisses {
-			return fmt5.Errorf("DtlbStoreMisses this(%v) Not Equal that(%v)", *this.DtlbStoreMisses, *that1.DtlbStoreMisses)
+			return fmt7.Errorf("DtlbStoreMisses this(%v) Not Equal that(%v)", *this.DtlbStoreMisses, *that1.DtlbStoreMisses)
 		}
 	} else if this.DtlbStoreMisses != nil {
-		return fmt5.Errorf("this.DtlbStoreMisses == nil && that.DtlbStoreMisses != nil")
+		return fmt7.Errorf("this.DtlbStoreMisses == nil && that.DtlbStoreMisses != nil")
 	} else if that1.DtlbStoreMisses != nil {
-		return fmt5.Errorf("DtlbStoreMisses this(%v) Not Equal that(%v)", this.DtlbStoreMisses, that1.DtlbStoreMisses)
+		return fmt7.Errorf("DtlbStoreMisses this(%v) Not Equal that(%v)", this.DtlbStoreMisses, that1.DtlbStoreMisses)
 	}
 	if this.DtlbPrefetches != nil && that1.DtlbPrefetches != nil {
 		if *this.DtlbPrefetches != *that1.DtlbPrefetches {
-			return fmt5.Errorf("DtlbPrefetches this(%v) Not Equal that(%v)", *this.DtlbPrefetches, *that1.DtlbPrefetches)
+			return fmt7.Errorf("DtlbPrefetches this(%v) Not Equal that(%v)", *this.DtlbPrefetches, *that1.DtlbPrefetches)
 		}
 	} else if this.DtlbPrefetches != nil {
-		return fmt5.Errorf("this.DtlbPrefetches == nil && that.DtlbPrefetches != nil")
+		return fmt7.Errorf("this.DtlbPrefetches == nil && that.DtlbPrefetches != nil")
 	} else if that1.DtlbPrefetches != nil {
-		return fmt5.Errorf("DtlbPrefetches this(%v) Not Equal that(%v)", this.DtlbPrefetches, that1.DtlbPrefetches)
+		return fmt7.Errorf("DtlbPrefetches this(%v) Not Equal that(%v)", this.DtlbPrefetches, that1.DtlbPrefetches)
 	}
 	if this.DtlbPrefetchMisses != nil && that1.DtlbPrefetchMisses != nil {
 		if *this.DtlbPrefetchMisses != *that1.DtlbPrefetchMisses {
-			return fmt5.Errorf("DtlbPrefetchMisses this(%v) Not Equal that(%v)", *this.DtlbPrefetchMisses, *that1.DtlbPrefetchMisses)
+			return fmt7.Errorf("DtlbPrefetchMisses this(%v) Not Equal that(%v)", *this.DtlbPrefetchMisses, *that1.DtlbPrefetchMisses)
 		}
 	} else if this.DtlbPrefetchMisses != nil {
-		return fmt5.Errorf("this.DtlbPrefetchMisses == nil && that.DtlbPrefetchMisses != nil")
+		return fmt7.Errorf("this.DtlbPrefetchMisses == nil && that.DtlbPrefetchMisses != nil")
 	} else if that1.DtlbPrefetchMisses != nil {
-		return fmt5.Errorf("DtlbPrefetchMisses this(%v) Not Equal that(%v)", this.DtlbPrefetchMisses, that1.DtlbPrefetchMisses)
+		return fmt7.Errorf("DtlbPrefetchMisses this(%v) Not Equal that(%v)", this.DtlbPrefetchMisses, that1.DtlbPrefetchMisses)
 	}
 	if this.ItlbLoads != nil && that1.ItlbLoads != nil {
 		if *this.ItlbLoads != *that1.ItlbLoads {
-			return fmt5.Errorf("ItlbLoads this(%v) Not Equal that(%v)", *this.ItlbLoads, *that1.ItlbLoads)
+			return fmt7.Errorf("ItlbLoads this(%v) Not Equal that(%v)", *this.ItlbLoads, *that1.ItlbLoads)
 		}
 	} else if this.ItlbLoads != nil {
-		return fmt5.Errorf("this.ItlbLoads == nil && that.ItlbLoads != nil")
+		return fmt7.Errorf("this.ItlbLoads == nil && that.ItlbLoads != nil")
 	} else if that1.ItlbLoads != nil {
-		return fmt5.Errorf("ItlbLoads this(%v) Not Equal that(%v)", this.ItlbLoads, that1.ItlbLoads)
+		return fmt7.Errorf("ItlbLoads this(%v) Not Equal that(%v)", this.ItlbLoads, that1.ItlbLoads)
 	}
 	if this.ItlbLoadMisses != nil && that1.ItlbLoadMisses != nil {
 		if *this.ItlbLoadMisses != *that1.ItlbLoadMisses {
-			return fmt5.Errorf("ItlbLoadMisses this(%v) Not Equal that(%v)", *this.ItlbLoadMisses, *that1.ItlbLoadMisses)
+			return fmt7.Errorf("ItlbLoadMisses this(%v) Not Equal that(%v)", *this.ItlbLoadMisses, *that1.ItlbLoadMisses)
 		}
 	} else if this.ItlbLoadMisses != nil {
-		return fmt5.Errorf("this.ItlbLoadMisses == nil && that.ItlbLoadMisses != nil")
+		return fmt7.Errorf("this.ItlbLoadMisses == nil && that.ItlbLoadMisses != nil")
 	} else if that1.ItlbLoadMisses != nil {
-		return fmt5.Errorf("ItlbLoadMisses this(%v) Not Equal that(%v)", this.ItlbLoadMisses, that1.ItlbLoadMisses)
+		return fmt7.Errorf("ItlbLoadMisses this(%v) Not Equal that(%v)", this.ItlbLoadMisses, that1.ItlbLoadMisses)
 	}
 	if this.BranchLoads != nil && that1.BranchLoads != nil {
 		if *this.BranchLoads != *that1.BranchLoads {
-			return fmt5.Errorf("BranchLoads this(%v) Not Equal that(%v)", *this.BranchLoads, *that1.BranchLoads)
+			return fmt7.Errorf("BranchLoads this(%v) Not Equal that(%v)", *this.BranchLoads, *that1.BranchLoads)
 		}
 	} else if this.BranchLoads != nil {
-		return fmt5.Errorf("this.BranchLoads == nil && that.BranchLoads != nil")
+		return fmt7.Errorf("this.BranchLoads == nil && that.BranchLoads != nil")
 	} else if that1.BranchLoads != nil {
-		return fmt5.Errorf("BranchLoads this(%v) Not Equal that(%v)", this.BranchLoads, that1.BranchLoads)
+		return fmt7.Errorf("BranchLoads this(%v) Not Equal that(%v)", this.BranchLoads, that1.BranchLoads)
 	}
 	if this.BranchLoadMisses != nil && that1.BranchLoadMisses != nil {
 		if *this.BranchLoadMisses != *that1.BranchLoadMisses {
-			return fmt5.Errorf("BranchLoadMisses this(%v) Not Equal that(%v)", *this.BranchLoadMisses, *that1.BranchLoadMisses)
+			return fmt7.Errorf("BranchLoadMisses this(%v) Not Equal that(%v)", *this.BranchLoadMisses, *that1.BranchLoadMisses)
 		}
 	} else if this.BranchLoadMisses != nil {
-		return fmt5.Errorf("this.BranchLoadMisses == nil && that.BranchLoadMisses != nil")
+		return fmt7.Errorf("this.BranchLoadMisses == nil && that.BranchLoadMisses != nil")
 	} else if that1.BranchLoadMisses != nil {
-		return fmt5.Errorf("BranchLoadMisses this(%v) Not Equal that(%v)", this.BranchLoadMisses, that1.BranchLoadMisses)
+		return fmt7.Errorf("BranchLoadMisses this(%v) Not Equal that(%v)", this.BranchLoadMisses, that1.BranchLoadMisses)
 	}
 	if this.NodeLoads != nil && that1.NodeLoads != nil {
 		if *this.NodeLoads != *that1.NodeLoads {
-			return fmt5.Errorf("NodeLoads this(%v) Not Equal that(%v)", *this.NodeLoads, *that1.NodeLoads)
+			return fmt7.Errorf("NodeLoads this(%v) Not Equal that(%v)", *this.NodeLoads, *that1.NodeLoads)
 		}
 	} else if this.NodeLoads != nil {
-		return fmt5.Errorf("this.NodeLoads == nil && that.NodeLoads != nil")
+		return fmt7.Errorf("this.NodeLoads == nil && that.NodeLoads != nil")
 	} else if that1.NodeLoads != nil {
-		return fmt5.Errorf("NodeLoads this(%v) Not Equal that(%v)", this.NodeLoads, that1.NodeLoads)
+		return fmt7.Errorf("NodeLoads this(%v) Not Equal that(%v)", this.NodeLoads, that1.NodeLoads)
 	}
 	if this.NodeLoadMisses != nil && that1.NodeLoadMisses != nil {
 		if *this.NodeLoadMisses != *that1.NodeLoadMisses {
-			return fmt5.Errorf("NodeLoadMisses this(%v) Not Equal that(%v)", *this.NodeLoadMisses, *that1.NodeLoadMisses)
+			return fmt7.Errorf("NodeLoadMisses this(%v) Not Equal that(%v)", *this.NodeLoadMisses, *that1.NodeLoadMisses)
 		}
 	} else if this.NodeLoadMisses != nil {
-		return fmt5.Errorf("this.NodeLoadMisses == nil && that.NodeLoadMisses != nil")
+		return fmt7.Errorf("this.NodeLoadMisses == nil && that.NodeLoadMisses != nil")
 	} else if that1.NodeLoadMisses != nil {
-		return fmt5.Errorf("NodeLoadMisses this(%v) Not Equal that(%v)", this.NodeLoadMisses, that1.NodeLoadMisses)
+		return fmt7.Errorf("NodeLoadMisses this(%v) Not Equal that(%v)", this.NodeLoadMisses, that1.NodeLoadMisses)
 	}
 	if this.NodeStores != nil && that1.NodeStores != nil {
 		if *this.NodeStores != *that1.NodeStores {
-			return fmt5.Errorf("NodeStores this(%v) Not Equal that(%v)", *this.NodeStores, *that1.NodeStores)
+			return fmt7.Errorf("NodeStores this(%v) Not Equal that(%v)", *this.NodeStores, *that1.NodeStores)
 		}
 	} else if this.NodeStores != nil {
-		return fmt5.Errorf("this.NodeStores == nil && that.NodeStores != nil")
+		return fmt7.Errorf("this.NodeStores == nil && that.NodeStores != nil")
 	} else if that1.NodeStores != nil {
-		return fmt5.Errorf("NodeStores this(%v) Not Equal that(%v)", this.NodeStores, that1.NodeStores)
+		return fmt7.Errorf("NodeStores this(%v) Not Equal that(%v)", this.NodeStores, that1.NodeStores)
 	}
 	if this.NodeStoreMisses != nil && that1.NodeStoreMisses != nil {
 		if *this.NodeStoreMisses != *that1.NodeStoreMisses {
-			return fmt5.Errorf("NodeStoreMisses this(%v) Not Equal that(%v)", *this.NodeStoreMisses, *that1.NodeStoreMisses)
+			return fmt7.Errorf("NodeStoreMisses this(%v) Not Equal that(%v)", *this.NodeStoreMisses, *that1.NodeStoreMisses)
 		}
 	} else if this.NodeStoreMisses != nil {
-		return fmt5.Errorf("this.NodeStoreMisses == nil && that.NodeStoreMisses != nil")
+		return fmt7.Errorf("this.NodeStoreMisses == nil && that.NodeStoreMisses != nil")
 	} else if that1.NodeStoreMisses != nil {
-		return fmt5.Errorf("NodeStoreMisses this(%v) Not Equal that(%v)", this.NodeStoreMisses, that1.NodeStoreMisses)
+		return fmt7.Errorf("NodeStoreMisses this(%v) Not Equal that(%v)", this.NodeStoreMisses, that1.NodeStoreMisses)
 	}
 	if this.NodePrefetches != nil && that1.NodePrefetches != nil {
 		if *this.NodePrefetches != *that1.NodePrefetches {
-			return fmt5.Errorf("NodePrefetches this(%v) Not Equal that(%v)", *this.NodePrefetches, *that1.NodePrefetches)
+			return fmt7.Errorf("NodePrefetches this(%v) Not Equal that(%v)", *this.NodePrefetches, *that1.NodePrefetches)
 		}
 	} else if this.NodePrefetches != nil {
-		return fmt5.Errorf("this.NodePrefetches == nil && that.NodePrefetches != nil")
+		return fmt7.Errorf("this.NodePrefetches == nil && that.NodePrefetches != nil")
 	} else if that1.NodePrefetches != nil {
-		return fmt5.Errorf("NodePrefetches this(%v) Not Equal that(%v)", this.NodePrefetches, that1.NodePrefetches)
+		return fmt7.Errorf("NodePrefetches this(%v) Not Equal that(%v)", this.NodePrefetches, that1.NodePrefetches)
 	}
 	if this.NodePrefetchMisses != nil && that1.NodePrefetchMisses != nil {
 		if *this.NodePrefetchMisses != *that1.NodePrefetchMisses {
-			return fmt5.Errorf("NodePrefetchMisses this(%v) Not Equal that(%v)", *this.NodePrefetchMisses, *that1.NodePrefetchMisses)
+			return fmt7.Errorf("NodePrefetchMisses this(%v) Not Equal that(%v)", *this.NodePrefetchMisses, *that1.NodePrefetchMisses)
 		}
 	} else if this.NodePrefetchMisses != nil {
-		return fmt5.Errorf("this.NodePrefetchMisses == nil && that.NodePrefetchMisses != nil")
+		return fmt7.Errorf("this.NodePrefetchMisses == nil && that.NodePrefetchMisses != nil")
 	} else if that1.NodePrefetchMisses != nil {
-		return fmt5.Errorf("NodePrefetchMisses this(%v) Not Equal that(%v)", this.NodePrefetchMisses, that1.NodePrefetchMisses)
+		return fmt7.Errorf("NodePrefetchMisses this(%v) Not Equal that(%v)", this.NodePrefetchMisses, that1.NodePrefetchMisses)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -18257,34 +18595,34 @@ func (this *Request) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Request)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Request")
+		return fmt7.Errorf("that is not of type *Request")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Request but is nil && this != nil")
+		return fmt7.Errorf("that is type *Request but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Requestbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Requestbut is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt5.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+		return fmt7.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
 	}
 	if len(this.Resources) != len(that1.Resources) {
-		return fmt5.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
+		return fmt7.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
 	}
 	for i := range this.Resources {
 		if !this.Resources[i].Equal(that1.Resources[i]) {
-			return fmt5.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
+			return fmt7.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -18329,65 +18667,65 @@ func (this *Offer) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Offer)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Offer")
+		return fmt7.Errorf("that is not of type *Offer")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Offer but is nil && this != nil")
+		return fmt7.Errorf("that is type *Offer but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Offerbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Offerbut is not nil && this == nil")
 	}
 	if !this.Id.Equal(that1.Id) {
-		return fmt5.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+		return fmt7.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
-		return fmt5.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
+		return fmt7.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt5.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+		return fmt7.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
 	}
 	if this.Hostname != nil && that1.Hostname != nil {
 		if *this.Hostname != *that1.Hostname {
-			return fmt5.Errorf("Hostname this(%v) Not Equal that(%v)", *this.Hostname, *that1.Hostname)
+			return fmt7.Errorf("Hostname this(%v) Not Equal that(%v)", *this.Hostname, *that1.Hostname)
 		}
 	} else if this.Hostname != nil {
-		return fmt5.Errorf("this.Hostname == nil && that.Hostname != nil")
+		return fmt7.Errorf("this.Hostname == nil && that.Hostname != nil")
 	} else if that1.Hostname != nil {
-		return fmt5.Errorf("Hostname this(%v) Not Equal that(%v)", this.Hostname, that1.Hostname)
+		return fmt7.Errorf("Hostname this(%v) Not Equal that(%v)", this.Hostname, that1.Hostname)
 	}
 	if len(this.Resources) != len(that1.Resources) {
-		return fmt5.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
+		return fmt7.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
 	}
 	for i := range this.Resources {
 		if !this.Resources[i].Equal(that1.Resources[i]) {
-			return fmt5.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
+			return fmt7.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
 		}
 	}
 	if len(this.Attributes) != len(that1.Attributes) {
-		return fmt5.Errorf("Attributes this(%v) Not Equal that(%v)", len(this.Attributes), len(that1.Attributes))
+		return fmt7.Errorf("Attributes this(%v) Not Equal that(%v)", len(this.Attributes), len(that1.Attributes))
 	}
 	for i := range this.Attributes {
 		if !this.Attributes[i].Equal(that1.Attributes[i]) {
-			return fmt5.Errorf("Attributes this[%v](%v) Not Equal that[%v](%v)", i, this.Attributes[i], i, that1.Attributes[i])
+			return fmt7.Errorf("Attributes this[%v](%v) Not Equal that[%v](%v)", i, this.Attributes[i], i, that1.Attributes[i])
 		}
 	}
 	if len(this.ExecutorIds) != len(that1.ExecutorIds) {
-		return fmt5.Errorf("ExecutorIds this(%v) Not Equal that(%v)", len(this.ExecutorIds), len(that1.ExecutorIds))
+		return fmt7.Errorf("ExecutorIds this(%v) Not Equal that(%v)", len(this.ExecutorIds), len(that1.ExecutorIds))
 	}
 	for i := range this.ExecutorIds {
 		if !this.ExecutorIds[i].Equal(that1.ExecutorIds[i]) {
-			return fmt5.Errorf("ExecutorIds this[%v](%v) Not Equal that[%v](%v)", i, this.ExecutorIds[i], i, that1.ExecutorIds[i])
+			return fmt7.Errorf("ExecutorIds this[%v](%v) Not Equal that[%v](%v)", i, this.ExecutorIds[i], i, that1.ExecutorIds[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -18463,58 +18801,58 @@ func (this *TaskInfo) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*TaskInfo)
 	if !ok {
-		return fmt5.Errorf("that is not of type *TaskInfo")
+		return fmt7.Errorf("that is not of type *TaskInfo")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *TaskInfo but is nil && this != nil")
+		return fmt7.Errorf("that is type *TaskInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *TaskInfobut is not nil && this == nil")
+		return fmt7.Errorf("that is type *TaskInfobut is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
-			return fmt5.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
+			return fmt7.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
 		}
 	} else if this.Name != nil {
-		return fmt5.Errorf("this.Name == nil && that.Name != nil")
+		return fmt7.Errorf("this.Name == nil && that.Name != nil")
 	} else if that1.Name != nil {
-		return fmt5.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+		return fmt7.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
 	if !this.TaskId.Equal(that1.TaskId) {
-		return fmt5.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
+		return fmt7.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt5.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+		return fmt7.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
 	}
 	if len(this.Resources) != len(that1.Resources) {
-		return fmt5.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
+		return fmt7.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
 	}
 	for i := range this.Resources {
 		if !this.Resources[i].Equal(that1.Resources[i]) {
-			return fmt5.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
+			return fmt7.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
 		}
 	}
 	if !this.Executor.Equal(that1.Executor) {
-		return fmt5.Errorf("Executor this(%v) Not Equal that(%v)", this.Executor, that1.Executor)
+		return fmt7.Errorf("Executor this(%v) Not Equal that(%v)", this.Executor, that1.Executor)
 	}
 	if !this.Command.Equal(that1.Command) {
-		return fmt5.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
+		return fmt7.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
 	}
 	if !bytes1.Equal(this.Data, that1.Data) {
-		return fmt5.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
+		return fmt7.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
 	}
 	if !this.HealthCheck.Equal(that1.HealthCheck) {
-		return fmt5.Errorf("HealthCheck this(%v) Not Equal that(%v)", this.HealthCheck, that1.HealthCheck)
+		return fmt7.Errorf("HealthCheck this(%v) Not Equal that(%v)", this.HealthCheck, that1.HealthCheck)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -18583,71 +18921,71 @@ func (this *TaskStatus) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*TaskStatus)
 	if !ok {
-		return fmt5.Errorf("that is not of type *TaskStatus")
+		return fmt7.Errorf("that is not of type *TaskStatus")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *TaskStatus but is nil && this != nil")
+		return fmt7.Errorf("that is type *TaskStatus but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *TaskStatusbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *TaskStatusbut is not nil && this == nil")
 	}
 	if !this.TaskId.Equal(that1.TaskId) {
-		return fmt5.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
+		return fmt7.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
 	}
 	if this.State != nil && that1.State != nil {
 		if *this.State != *that1.State {
-			return fmt5.Errorf("State this(%v) Not Equal that(%v)", *this.State, *that1.State)
+			return fmt7.Errorf("State this(%v) Not Equal that(%v)", *this.State, *that1.State)
 		}
 	} else if this.State != nil {
-		return fmt5.Errorf("this.State == nil && that.State != nil")
+		return fmt7.Errorf("this.State == nil && that.State != nil")
 	} else if that1.State != nil {
-		return fmt5.Errorf("State this(%v) Not Equal that(%v)", this.State, that1.State)
+		return fmt7.Errorf("State this(%v) Not Equal that(%v)", this.State, that1.State)
 	}
 	if this.Message != nil && that1.Message != nil {
 		if *this.Message != *that1.Message {
-			return fmt5.Errorf("Message this(%v) Not Equal that(%v)", *this.Message, *that1.Message)
+			return fmt7.Errorf("Message this(%v) Not Equal that(%v)", *this.Message, *that1.Message)
 		}
 	} else if this.Message != nil {
-		return fmt5.Errorf("this.Message == nil && that.Message != nil")
+		return fmt7.Errorf("this.Message == nil && that.Message != nil")
 	} else if that1.Message != nil {
-		return fmt5.Errorf("Message this(%v) Not Equal that(%v)", this.Message, that1.Message)
+		return fmt7.Errorf("Message this(%v) Not Equal that(%v)", this.Message, that1.Message)
 	}
 	if !bytes1.Equal(this.Data, that1.Data) {
-		return fmt5.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
+		return fmt7.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt5.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+		return fmt7.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
 	}
 	if !this.ExecutorId.Equal(that1.ExecutorId) {
-		return fmt5.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
+		return fmt7.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
 	}
 	if this.Timestamp != nil && that1.Timestamp != nil {
 		if *this.Timestamp != *that1.Timestamp {
-			return fmt5.Errorf("Timestamp this(%v) Not Equal that(%v)", *this.Timestamp, *that1.Timestamp)
+			return fmt7.Errorf("Timestamp this(%v) Not Equal that(%v)", *this.Timestamp, *that1.Timestamp)
 		}
 	} else if this.Timestamp != nil {
-		return fmt5.Errorf("this.Timestamp == nil && that.Timestamp != nil")
+		return fmt7.Errorf("this.Timestamp == nil && that.Timestamp != nil")
 	} else if that1.Timestamp != nil {
-		return fmt5.Errorf("Timestamp this(%v) Not Equal that(%v)", this.Timestamp, that1.Timestamp)
+		return fmt7.Errorf("Timestamp this(%v) Not Equal that(%v)", this.Timestamp, that1.Timestamp)
 	}
 	if this.Healthy != nil && that1.Healthy != nil {
 		if *this.Healthy != *that1.Healthy {
-			return fmt5.Errorf("Healthy this(%v) Not Equal that(%v)", *this.Healthy, *that1.Healthy)
+			return fmt7.Errorf("Healthy this(%v) Not Equal that(%v)", *this.Healthy, *that1.Healthy)
 		}
 	} else if this.Healthy != nil {
-		return fmt5.Errorf("this.Healthy == nil && that.Healthy != nil")
+		return fmt7.Errorf("this.Healthy == nil && that.Healthy != nil")
 	} else if that1.Healthy != nil {
-		return fmt5.Errorf("Healthy this(%v) Not Equal that(%v)", this.Healthy, that1.Healthy)
+		return fmt7.Errorf("Healthy this(%v) Not Equal that(%v)", this.Healthy, that1.Healthy)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -18729,32 +19067,32 @@ func (this *Filters) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Filters)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Filters")
+		return fmt7.Errorf("that is not of type *Filters")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Filters but is nil && this != nil")
+		return fmt7.Errorf("that is type *Filters but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Filtersbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Filtersbut is not nil && this == nil")
 	}
 	if this.RefuseSeconds != nil && that1.RefuseSeconds != nil {
 		if *this.RefuseSeconds != *that1.RefuseSeconds {
-			return fmt5.Errorf("RefuseSeconds this(%v) Not Equal that(%v)", *this.RefuseSeconds, *that1.RefuseSeconds)
+			return fmt7.Errorf("RefuseSeconds this(%v) Not Equal that(%v)", *this.RefuseSeconds, *that1.RefuseSeconds)
 		}
 	} else if this.RefuseSeconds != nil {
-		return fmt5.Errorf("this.RefuseSeconds == nil && that.RefuseSeconds != nil")
+		return fmt7.Errorf("this.RefuseSeconds == nil && that.RefuseSeconds != nil")
 	} else if that1.RefuseSeconds != nil {
-		return fmt5.Errorf("RefuseSeconds this(%v) Not Equal that(%v)", this.RefuseSeconds, that1.RefuseSeconds)
+		return fmt7.Errorf("RefuseSeconds this(%v) Not Equal that(%v)", this.RefuseSeconds, that1.RefuseSeconds)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -18797,31 +19135,31 @@ func (this *Environment) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Environment)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Environment")
+		return fmt7.Errorf("that is not of type *Environment")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Environment but is nil && this != nil")
+		return fmt7.Errorf("that is type *Environment but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Environmentbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Environmentbut is not nil && this == nil")
 	}
 	if len(this.Variables) != len(that1.Variables) {
-		return fmt5.Errorf("Variables this(%v) Not Equal that(%v)", len(this.Variables), len(that1.Variables))
+		return fmt7.Errorf("Variables this(%v) Not Equal that(%v)", len(this.Variables), len(that1.Variables))
 	}
 	for i := range this.Variables {
 		if !this.Variables[i].Equal(that1.Variables[i]) {
-			return fmt5.Errorf("Variables this[%v](%v) Not Equal that[%v](%v)", i, this.Variables[i], i, that1.Variables[i])
+			return fmt7.Errorf("Variables this[%v](%v) Not Equal that[%v](%v)", i, this.Variables[i], i, that1.Variables[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -18863,41 +19201,41 @@ func (this *Environment_Variable) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Environment_Variable)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Environment_Variable")
+		return fmt7.Errorf("that is not of type *Environment_Variable")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Environment_Variable but is nil && this != nil")
+		return fmt7.Errorf("that is type *Environment_Variable but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Environment_Variablebut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Environment_Variablebut is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
-			return fmt5.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
+			return fmt7.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
 		}
 	} else if this.Name != nil {
-		return fmt5.Errorf("this.Name == nil && that.Name != nil")
+		return fmt7.Errorf("this.Name == nil && that.Name != nil")
 	} else if that1.Name != nil {
-		return fmt5.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+		return fmt7.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -18949,41 +19287,41 @@ func (this *Parameter) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Parameter)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Parameter")
+		return fmt7.Errorf("that is not of type *Parameter")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Parameter but is nil && this != nil")
+		return fmt7.Errorf("that is type *Parameter but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Parameterbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Parameterbut is not nil && this == nil")
 	}
 	if this.Key != nil && that1.Key != nil {
 		if *this.Key != *that1.Key {
-			return fmt5.Errorf("Key this(%v) Not Equal that(%v)", *this.Key, *that1.Key)
+			return fmt7.Errorf("Key this(%v) Not Equal that(%v)", *this.Key, *that1.Key)
 		}
 	} else if this.Key != nil {
-		return fmt5.Errorf("this.Key == nil && that.Key != nil")
+		return fmt7.Errorf("this.Key == nil && that.Key != nil")
 	} else if that1.Key != nil {
-		return fmt5.Errorf("Key this(%v) Not Equal that(%v)", this.Key, that1.Key)
+		return fmt7.Errorf("Key this(%v) Not Equal that(%v)", this.Key, that1.Key)
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
-			return fmt5.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
+			return fmt7.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
 		}
 	} else if this.Value != nil {
-		return fmt5.Errorf("this.Value == nil && that.Value != nil")
+		return fmt7.Errorf("this.Value == nil && that.Value != nil")
 	} else if that1.Value != nil {
-		return fmt5.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+		return fmt7.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19035,31 +19373,31 @@ func (this *Parameters) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Parameters)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Parameters")
+		return fmt7.Errorf("that is not of type *Parameters")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Parameters but is nil && this != nil")
+		return fmt7.Errorf("that is type *Parameters but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Parametersbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Parametersbut is not nil && this == nil")
 	}
 	if len(this.Parameter) != len(that1.Parameter) {
-		return fmt5.Errorf("Parameter this(%v) Not Equal that(%v)", len(this.Parameter), len(that1.Parameter))
+		return fmt7.Errorf("Parameter this(%v) Not Equal that(%v)", len(this.Parameter), len(that1.Parameter))
 	}
 	for i := range this.Parameter {
 		if !this.Parameter[i].Equal(that1.Parameter[i]) {
-			return fmt5.Errorf("Parameter this[%v](%v) Not Equal that[%v](%v)", i, this.Parameter[i], i, that1.Parameter[i])
+			return fmt7.Errorf("Parameter this[%v](%v) Not Equal that[%v](%v)", i, this.Parameter[i], i, that1.Parameter[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19101,35 +19439,35 @@ func (this *Credential) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*Credential)
 	if !ok {
-		return fmt5.Errorf("that is not of type *Credential")
+		return fmt7.Errorf("that is not of type *Credential")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *Credential but is nil && this != nil")
+		return fmt7.Errorf("that is type *Credential but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *Credentialbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *Credentialbut is not nil && this == nil")
 	}
 	if this.Principal != nil && that1.Principal != nil {
 		if *this.Principal != *that1.Principal {
-			return fmt5.Errorf("Principal this(%v) Not Equal that(%v)", *this.Principal, *that1.Principal)
+			return fmt7.Errorf("Principal this(%v) Not Equal that(%v)", *this.Principal, *that1.Principal)
 		}
 	} else if this.Principal != nil {
-		return fmt5.Errorf("this.Principal == nil && that.Principal != nil")
+		return fmt7.Errorf("this.Principal == nil && that.Principal != nil")
 	} else if that1.Principal != nil {
-		return fmt5.Errorf("Principal this(%v) Not Equal that(%v)", this.Principal, that1.Principal)
+		return fmt7.Errorf("Principal this(%v) Not Equal that(%v)", this.Principal, that1.Principal)
 	}
 	if !bytes1.Equal(this.Secret, that1.Secret) {
-		return fmt5.Errorf("Secret this(%v) Not Equal that(%v)", this.Secret, that1.Secret)
+		return fmt7.Errorf("Secret this(%v) Not Equal that(%v)", this.Secret, that1.Secret)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19175,23 +19513,23 @@ func (this *ACL) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ACL)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ACL")
+		return fmt7.Errorf("that is not of type *ACL")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ACL but is nil && this != nil")
+		return fmt7.Errorf("that is type *ACL but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ACLbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ACLbut is not nil && this == nil")
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19225,40 +19563,40 @@ func (this *ACL_Entity) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ACL_Entity)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ACL_Entity")
+		return fmt7.Errorf("that is not of type *ACL_Entity")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ACL_Entity but is nil && this != nil")
+		return fmt7.Errorf("that is type *ACL_Entity but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ACL_Entitybut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ACL_Entitybut is not nil && this == nil")
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
-			return fmt5.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
+			return fmt7.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
 		}
 	} else if this.Type != nil {
-		return fmt5.Errorf("this.Type == nil && that.Type != nil")
+		return fmt7.Errorf("this.Type == nil && that.Type != nil")
 	} else if that1.Type != nil {
-		return fmt5.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+		return fmt7.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
 	if len(this.Values) != len(that1.Values) {
-		return fmt5.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
+		return fmt7.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
 	}
 	for i := range this.Values {
 		if this.Values[i] != that1.Values[i] {
-			return fmt5.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
+			return fmt7.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19309,29 +19647,29 @@ func (this *ACL_RunTasks) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ACL_RunTasks)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ACL_RunTasks")
+		return fmt7.Errorf("that is not of type *ACL_RunTasks")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ACL_RunTasks but is nil && this != nil")
+		return fmt7.Errorf("that is type *ACL_RunTasks but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ACL_RunTasksbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ACL_RunTasksbut is not nil && this == nil")
 	}
 	if !this.Principals.Equal(that1.Principals) {
-		return fmt5.Errorf("Principals this(%v) Not Equal that(%v)", this.Principals, that1.Principals)
+		return fmt7.Errorf("Principals this(%v) Not Equal that(%v)", this.Principals, that1.Principals)
 	}
 	if !this.Users.Equal(that1.Users) {
-		return fmt5.Errorf("Users this(%v) Not Equal that(%v)", this.Users, that1.Users)
+		return fmt7.Errorf("Users this(%v) Not Equal that(%v)", this.Users, that1.Users)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19371,29 +19709,29 @@ func (this *ACL_ReceiveOffers) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ACL_ReceiveOffers)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ACL_ReceiveOffers")
+		return fmt7.Errorf("that is not of type *ACL_ReceiveOffers")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ACL_ReceiveOffers but is nil && this != nil")
+		return fmt7.Errorf("that is type *ACL_ReceiveOffers but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ACL_ReceiveOffersbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ACL_ReceiveOffersbut is not nil && this == nil")
 	}
 	if !this.Principals.Equal(that1.Principals) {
-		return fmt5.Errorf("Principals this(%v) Not Equal that(%v)", this.Principals, that1.Principals)
+		return fmt7.Errorf("Principals this(%v) Not Equal that(%v)", this.Principals, that1.Principals)
 	}
 	if !this.Roles.Equal(that1.Roles) {
-		return fmt5.Errorf("Roles this(%v) Not Equal that(%v)", this.Roles, that1.Roles)
+		return fmt7.Errorf("Roles this(%v) Not Equal that(%v)", this.Roles, that1.Roles)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19433,35 +19771,35 @@ func (this *ACL_HTTPGet) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ACL_HTTPGet)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ACL_HTTPGet")
+		return fmt7.Errorf("that is not of type *ACL_HTTPGet")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ACL_HTTPGet but is nil && this != nil")
+		return fmt7.Errorf("that is type *ACL_HTTPGet but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ACL_HTTPGetbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ACL_HTTPGetbut is not nil && this == nil")
 	}
 	if !this.Usernames.Equal(that1.Usernames) {
-		return fmt5.Errorf("Usernames this(%v) Not Equal that(%v)", this.Usernames, that1.Usernames)
+		return fmt7.Errorf("Usernames this(%v) Not Equal that(%v)", this.Usernames, that1.Usernames)
 	}
 	if !this.Ips.Equal(that1.Ips) {
-		return fmt5.Errorf("Ips this(%v) Not Equal that(%v)", this.Ips, that1.Ips)
+		return fmt7.Errorf("Ips this(%v) Not Equal that(%v)", this.Ips, that1.Ips)
 	}
 	if !this.Hostnames.Equal(that1.Hostnames) {
-		return fmt5.Errorf("Hostnames this(%v) Not Equal that(%v)", this.Hostnames, that1.Hostnames)
+		return fmt7.Errorf("Hostnames this(%v) Not Equal that(%v)", this.Hostnames, that1.Hostnames)
 	}
 	if !this.Urls.Equal(that1.Urls) {
-		return fmt5.Errorf("Urls this(%v) Not Equal that(%v)", this.Urls, that1.Urls)
+		return fmt7.Errorf("Urls this(%v) Not Equal that(%v)", this.Urls, that1.Urls)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19507,35 +19845,35 @@ func (this *ACL_HTTPPut) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ACL_HTTPPut)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ACL_HTTPPut")
+		return fmt7.Errorf("that is not of type *ACL_HTTPPut")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ACL_HTTPPut but is nil && this != nil")
+		return fmt7.Errorf("that is type *ACL_HTTPPut but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ACL_HTTPPutbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ACL_HTTPPutbut is not nil && this == nil")
 	}
 	if !this.Usernames.Equal(that1.Usernames) {
-		return fmt5.Errorf("Usernames this(%v) Not Equal that(%v)", this.Usernames, that1.Usernames)
+		return fmt7.Errorf("Usernames this(%v) Not Equal that(%v)", this.Usernames, that1.Usernames)
 	}
 	if !this.Ips.Equal(that1.Ips) {
-		return fmt5.Errorf("Ips this(%v) Not Equal that(%v)", this.Ips, that1.Ips)
+		return fmt7.Errorf("Ips this(%v) Not Equal that(%v)", this.Ips, that1.Ips)
 	}
 	if !this.Hostnames.Equal(that1.Hostnames) {
-		return fmt5.Errorf("Hostnames this(%v) Not Equal that(%v)", this.Hostnames, that1.Hostnames)
+		return fmt7.Errorf("Hostnames this(%v) Not Equal that(%v)", this.Hostnames, that1.Hostnames)
 	}
 	if !this.Urls.Equal(that1.Urls) {
-		return fmt5.Errorf("Urls this(%v) Not Equal that(%v)", this.Urls, that1.Urls)
+		return fmt7.Errorf("Urls this(%v) Not Equal that(%v)", this.Urls, that1.Urls)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19581,64 +19919,64 @@ func (this *ACLs) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*ACLs)
 	if !ok {
-		return fmt5.Errorf("that is not of type *ACLs")
+		return fmt7.Errorf("that is not of type *ACLs")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *ACLs but is nil && this != nil")
+		return fmt7.Errorf("that is type *ACLs but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *ACLsbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *ACLsbut is not nil && this == nil")
 	}
 	if this.Permissive != nil && that1.Permissive != nil {
 		if *this.Permissive != *that1.Permissive {
-			return fmt5.Errorf("Permissive this(%v) Not Equal that(%v)", *this.Permissive, *that1.Permissive)
+			return fmt7.Errorf("Permissive this(%v) Not Equal that(%v)", *this.Permissive, *that1.Permissive)
 		}
 	} else if this.Permissive != nil {
-		return fmt5.Errorf("this.Permissive == nil && that.Permissive != nil")
+		return fmt7.Errorf("this.Permissive == nil && that.Permissive != nil")
 	} else if that1.Permissive != nil {
-		return fmt5.Errorf("Permissive this(%v) Not Equal that(%v)", this.Permissive, that1.Permissive)
+		return fmt7.Errorf("Permissive this(%v) Not Equal that(%v)", this.Permissive, that1.Permissive)
 	}
 	if len(this.RunTasks) != len(that1.RunTasks) {
-		return fmt5.Errorf("RunTasks this(%v) Not Equal that(%v)", len(this.RunTasks), len(that1.RunTasks))
+		return fmt7.Errorf("RunTasks this(%v) Not Equal that(%v)", len(this.RunTasks), len(that1.RunTasks))
 	}
 	for i := range this.RunTasks {
 		if !this.RunTasks[i].Equal(that1.RunTasks[i]) {
-			return fmt5.Errorf("RunTasks this[%v](%v) Not Equal that[%v](%v)", i, this.RunTasks[i], i, that1.RunTasks[i])
+			return fmt7.Errorf("RunTasks this[%v](%v) Not Equal that[%v](%v)", i, this.RunTasks[i], i, that1.RunTasks[i])
 		}
 	}
 	if len(this.ReceiveOffers) != len(that1.ReceiveOffers) {
-		return fmt5.Errorf("ReceiveOffers this(%v) Not Equal that(%v)", len(this.ReceiveOffers), len(that1.ReceiveOffers))
+		return fmt7.Errorf("ReceiveOffers this(%v) Not Equal that(%v)", len(this.ReceiveOffers), len(that1.ReceiveOffers))
 	}
 	for i := range this.ReceiveOffers {
 		if !this.ReceiveOffers[i].Equal(that1.ReceiveOffers[i]) {
-			return fmt5.Errorf("ReceiveOffers this[%v](%v) Not Equal that[%v](%v)", i, this.ReceiveOffers[i], i, that1.ReceiveOffers[i])
+			return fmt7.Errorf("ReceiveOffers this[%v](%v) Not Equal that[%v](%v)", i, this.ReceiveOffers[i], i, that1.ReceiveOffers[i])
 		}
 	}
 	if len(this.HttpGet) != len(that1.HttpGet) {
-		return fmt5.Errorf("HttpGet this(%v) Not Equal that(%v)", len(this.HttpGet), len(that1.HttpGet))
+		return fmt7.Errorf("HttpGet this(%v) Not Equal that(%v)", len(this.HttpGet), len(that1.HttpGet))
 	}
 	for i := range this.HttpGet {
 		if !this.HttpGet[i].Equal(that1.HttpGet[i]) {
-			return fmt5.Errorf("HttpGet this[%v](%v) Not Equal that[%v](%v)", i, this.HttpGet[i], i, that1.HttpGet[i])
+			return fmt7.Errorf("HttpGet this[%v](%v) Not Equal that[%v](%v)", i, this.HttpGet[i], i, that1.HttpGet[i])
 		}
 	}
 	if len(this.HttpPut) != len(that1.HttpPut) {
-		return fmt5.Errorf("HttpPut this(%v) Not Equal that(%v)", len(this.HttpPut), len(that1.HttpPut))
+		return fmt7.Errorf("HttpPut this(%v) Not Equal that(%v)", len(this.HttpPut), len(that1.HttpPut))
 	}
 	for i := range this.HttpPut {
 		if !this.HttpPut[i].Equal(that1.HttpPut[i]) {
-			return fmt5.Errorf("HttpPut this[%v](%v) Not Equal that[%v](%v)", i, this.HttpPut[i], i, that1.HttpPut[i])
+			return fmt7.Errorf("HttpPut this[%v](%v) Not Equal that[%v](%v)", i, this.HttpPut[i], i, that1.HttpPut[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19713,41 +20051,41 @@ func (this *RateLimit) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*RateLimit)
 	if !ok {
-		return fmt5.Errorf("that is not of type *RateLimit")
+		return fmt7.Errorf("that is not of type *RateLimit")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *RateLimit but is nil && this != nil")
+		return fmt7.Errorf("that is type *RateLimit but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *RateLimitbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *RateLimitbut is not nil && this == nil")
 	}
 	if this.Qps != nil && that1.Qps != nil {
 		if *this.Qps != *that1.Qps {
-			return fmt5.Errorf("Qps this(%v) Not Equal that(%v)", *this.Qps, *that1.Qps)
+			return fmt7.Errorf("Qps this(%v) Not Equal that(%v)", *this.Qps, *that1.Qps)
 		}
 	} else if this.Qps != nil {
-		return fmt5.Errorf("this.Qps == nil && that.Qps != nil")
+		return fmt7.Errorf("this.Qps == nil && that.Qps != nil")
 	} else if that1.Qps != nil {
-		return fmt5.Errorf("Qps this(%v) Not Equal that(%v)", this.Qps, that1.Qps)
+		return fmt7.Errorf("Qps this(%v) Not Equal that(%v)", this.Qps, that1.Qps)
 	}
 	if this.Principal != nil && that1.Principal != nil {
 		if *this.Principal != *that1.Principal {
-			return fmt5.Errorf("Principal this(%v) Not Equal that(%v)", *this.Principal, *that1.Principal)
+			return fmt7.Errorf("Principal this(%v) Not Equal that(%v)", *this.Principal, *that1.Principal)
 		}
 	} else if this.Principal != nil {
-		return fmt5.Errorf("this.Principal == nil && that.Principal != nil")
+		return fmt7.Errorf("this.Principal == nil && that.Principal != nil")
 	} else if that1.Principal != nil {
-		return fmt5.Errorf("Principal this(%v) Not Equal that(%v)", this.Principal, that1.Principal)
+		return fmt7.Errorf("Principal this(%v) Not Equal that(%v)", this.Principal, that1.Principal)
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -19799,31 +20137,31 @@ func (this *RateLimits) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that == nil && this != nil")
+		return fmt7.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*RateLimits)
 	if !ok {
-		return fmt5.Errorf("that is not of type *RateLimits")
+		return fmt7.Errorf("that is not of type *RateLimits")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt5.Errorf("that is type *RateLimits but is nil && this != nil")
+		return fmt7.Errorf("that is type *RateLimits but is nil && this != nil")
 	} else if this == nil {
-		return fmt5.Errorf("that is type *RateLimitsbut is not nil && this == nil")
+		return fmt7.Errorf("that is type *RateLimitsbut is not nil && this == nil")
 	}
 	if len(this.Limits) != len(that1.Limits) {
-		return fmt5.Errorf("Limits this(%v) Not Equal that(%v)", len(this.Limits), len(that1.Limits))
+		return fmt7.Errorf("Limits this(%v) Not Equal that(%v)", len(this.Limits), len(that1.Limits))
 	}
 	for i := range this.Limits {
 		if !this.Limits[i].Equal(that1.Limits[i]) {
-			return fmt5.Errorf("Limits this[%v](%v) Not Equal that[%v](%v)", i, this.Limits[i], i, that1.Limits[i])
+			return fmt7.Errorf("Limits this[%v](%v) Not Equal that[%v](%v)", i, this.Limits[i], i, that1.Limits[i])
 		}
 	}
 	if !bytes1.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt5.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt7.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }

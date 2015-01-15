@@ -19,6 +19,7 @@
 package scheduler
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/user"
@@ -30,6 +31,7 @@ import (
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/auth"
 	"github.com/mesos/mesos-go/auth/sasl"
+	"github.com/mesos/mesos-go/auth/sasl/mech"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
@@ -37,7 +39,13 @@ import (
 )
 
 const (
-	authTimeout = 5 * time.Second // timeout interval for an authentication attempt
+	authTimeout  = 5 * time.Second // timeout interval for an authentication attempt
+	saslProvider = "SASL"
+)
+
+var (
+	authProvider = flag.String("mesos_authentication_provider", saslProvider,
+		fmt.Sprintf("Authentication provider to use, default is SASL that supports mechanisms: %+v", mech.ListSupported()))
 )
 
 // Concrete implementation of a SchedulerDriver that connects a
@@ -161,6 +169,10 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.slaveLost, &mesos.LostSlaveMessage{})
 	driver.messenger.Install(driver.frameworkMessageRcvd, &mesos.ExecutorToFrameworkMessage{})
 	driver.messenger.Install(driver.frameworkErrorRcvd, &mesos.FrameworkErrorMessage{})
+
+	// install default authentication providers; extensions of this scheduler implementation
+	// are responsible for registering any additional providers they want to support.
+	auth.RegisterAuthenticateeProvider(saslProvider, auth.AuthenticateeFunc(sasl.Authenticatee))
 	return nil
 }
 
@@ -430,13 +442,16 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 
 	// authenticate?
 	if driver.credential != nil {
-		client := driver.messenger.UPID()
-		pid := driver.MasterPid
-		f := auth.AuthenticateeFunc(sasl.Authenticatee)
 		if err := func() error {
 			ctx, cancel := context.WithTimeout(context.Background(), authTimeout)
 			defer cancel()
-			return <-f(ctx, *pid, *client, *driver.credential)
+			handler := &CredentialHandler{
+				pid:        driver.MasterPid,
+				client:     driver.messenger.UPID(),
+				credential: driver.credential,
+			}
+			ctx = auth.WithLoginName(ctx, *authProvider)
+			return <-auth.Login(ctx, handler)
 		}(); err != nil {
 			log.Errorf("Scheduler failed to authenticate: %v\n", err)
 			return driver.Status(), err

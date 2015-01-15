@@ -3,11 +3,10 @@ EXAMPLES = examples
 PKG_PREFIX := github.com/mesos/mesos-go
 LIBS :=	\
 	auth \
+	auth/callback \
 	auth/sasl \
-	auth/sasl/callback \
 	auth/sasl/mech \
 	auth/sasl/mech/crammd5 \
-	auth/sasl/mesos \
 	detector \
 	executor \
 	healthchecker \

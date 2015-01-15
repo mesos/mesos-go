@@ -7,7 +7,7 @@ import (
 	"io"
 
 	log "github.com/golang/glog"
-	"github.com/mesos/mesos-go/auth/sasl/callback"
+	"github.com/mesos/mesos-go/auth/callback"
 	"github.com/mesos/mesos-go/auth/sasl/mech"
 )
 

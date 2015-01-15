@@ -9,8 +9,8 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/auth"
+	"github.com/mesos/mesos-go/auth/callback"
 	"github.com/mesos/mesos-go/auth/sasl/mech"
-	helper "github.com/mesos/mesos-go/auth/sasl/mesos"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
@@ -42,21 +42,21 @@ const (
 )
 
 type authenticateeProcess struct {
-	transport  messenger.Messenger
-	credential mesos.Credential
-	client     upid.UPID
-	status     statusType
-	done       chan struct{}
-	err        error
-	mech       mech.Interface
-	stepFn     mech.StepFunc
-	from       *upid.UPID
+	transport messenger.Messenger
+	client    upid.UPID
+	status    statusType
+	done      chan struct{}
+	err       error
+	mech      mech.Interface
+	stepFn    mech.StepFunc
+	from      *upid.UPID
+	handler   callback.Handler
 }
 
 type authenticateeConfig struct {
-	client     upid.UPID           // pid of the client we're attempting to authenticate
-	credential mesos.Credential    // user-specified credentials
-	transport  messenger.Messenger // mesos communications transport
+	client    upid.UPID // pid of the client we're attempting to authenticate
+	handler   callback.Handler
+	transport messenger.Messenger // mesos communications transport
 }
 
 func nextPid() int {
@@ -74,13 +74,18 @@ func (s *statusType) swap(old, new statusType) bool {
 	return old != new && atomic.CompareAndSwapInt32((*int32)(s), int32(old), int32(new))
 }
 
-func Authenticatee(ctx context.Context, pid, client upid.UPID, credential mesos.Credential) <-chan error {
+func Authenticatee(ctx context.Context, handler callback.Handler) <-chan error {
+
+	ip := callback.NewInterprocess()
+	if err := handler.Handle(ip); err != nil {
+		return auth.LoginError(err)
+	}
 
 	c := make(chan error, 1)
 	f := func() error {
-		config := newConfig(client, credential)
+		config := newConfig(ip.Client(), handler)
 		ctx, auth := newAuthenticatee(ctx, config)
-		auth.authenticate(ctx, pid)
+		auth.authenticate(ctx, ip.Server())
 
 		select {
 		case <-ctx.Done():
@@ -93,12 +98,12 @@ func Authenticatee(ctx context.Context, pid, client upid.UPID, credential mesos.
 	return c
 }
 
-func newConfig(client upid.UPID, credential mesos.Credential) *authenticateeConfig {
+func newConfig(client upid.UPID, handler callback.Handler) *authenticateeConfig {
 	tpid := &upid.UPID{ID: fmt.Sprintf("sasl_authenticatee(%d)", nextPid())}
 	return &authenticateeConfig{
-		client:     client,
-		credential: credential,
-		transport:  messenger.NewMesosMessenger(tpid),
+		client:    client,
+		handler:   handler,
+		transport: messenger.NewMesosMessenger(tpid),
 	}
 }
 
@@ -118,11 +123,11 @@ func (self *authenticateeProcess) discard(ctx context.Context) error {
 func newAuthenticatee(ctx context.Context, config *authenticateeConfig) (context.Context, *authenticateeProcess) {
 	initialStatus := statusReady
 	proc := &authenticateeProcess{
-		transport:  config.transport,
-		client:     config.client,
-		credential: config.credential,
-		status:     initialStatus,
-		done:       make(chan struct{}),
+		transport: config.transport,
+		client:    config.client,
+		handler:   config.handler,
+		status:    initialStatus,
+		done:      make(chan struct{}),
 	}
 	ctx = withStatus(ctx, initialStatus)
 	err := proc.installHandlers(ctx)
@@ -238,7 +243,7 @@ func (self *authenticateeProcess) mechanisms(ctx context.Context, from *upid.UPI
 		return
 	}
 
-	if m, f, err := factory(&helper.CredentialHandler{&self.credential}); err != nil {
+	if m, f, err := factory(self.handler); err != nil {
 		self.terminate(status, statusError, err)
 		return
 	} else {

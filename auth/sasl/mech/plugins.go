@@ -24,6 +24,16 @@ func Register(name string, f Factory) error {
 	return nil
 }
 
+func ListSupported() (list []string) {
+	mechLock.Lock()
+	defer mechLock.Unlock()
+
+	for mechname := range supportedMechs {
+		list = append(list, mechname)
+	}
+	return list
+}
+
 func SelectSupported(mechanisms []string) (selectedMech string, factory Factory) {
 	mechLock.Lock()
 	defer mechLock.Unlock()

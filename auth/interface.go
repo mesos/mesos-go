@@ -2,32 +2,50 @@ package auth
 
 import (
 	"errors"
+	"fmt"
+	"sync"
 
-	mesos "github.com/mesos/mesos-go/mesosproto"
-	"github.com/mesos/mesos-go/upid"
+	log "github.com/golang/glog"
+	"github.com/mesos/mesos-go/auth/callback"
 	"golang.org/x/net/context"
 )
 
 type Authenticatee interface {
-	// 'pid' is the process to authenticate against (master).
-	// 'client' is the process to be authenticated (slave / framework).
-	// 'credential' is used to authenticate the 'client'.
-	// Returns true if successfully authenticated otherwise false or an
-	// error. Note that we distinguish authentication failure (false)
-	// from a failed future in the event the future failed due to a
-	// transient error and authentication can (should) be
-	// retried. Discarding the future will cause the future to fail if
-	// it hasn't already completed since we have already started the
-	// authentication procedure and can't reliably cancel.
-	Authenticate(ctx context.Context, pid, client upid.UPID, creds mesos.Credential) <-chan error
+	// Returns no errors if successfully authenticated, otherwise a single
+	// error.
+	Authenticate(ctx context.Context, handler callback.Handler) <-chan error
 }
 
-type AuthenticateeFunc func(ctx context.Context, pid, client upid.UPID, credendial mesos.Credential) <-chan error
+type AuthenticateeFunc func(ctx context.Context, handler callback.Handler) <-chan error
 
-func (f AuthenticateeFunc) Authenticate(ctx context.Context, pid, client upid.UPID, creds mesos.Credential) <-chan error {
-	return f(ctx, pid, client, creds)
+func (f AuthenticateeFunc) Authenticate(ctx context.Context, handler callback.Handler) <-chan error {
+	return f(ctx, handler)
 }
 
 var (
 	AuthenticationFailed = errors.New("authentication failed")
+
+	authenticateeProviders = make(map[string]Authenticatee)
+	providerLock           sync.Mutex
 )
+
+func RegisterAuthenticateeProvider(name string, auth Authenticatee) (err error) {
+	providerLock.Lock()
+	defer providerLock.Unlock()
+
+	if _, found := authenticateeProviders[name]; found {
+		err = fmt.Errorf("authentication provider already registered: %v", name)
+	} else {
+		authenticateeProviders[name] = auth
+		log.V(1).Infof("registered authentication provider: %v", name)
+	}
+	return
+}
+
+func getAuthenticateeProvider(name string) (provider Authenticatee, ok bool) {
+	providerLock.Lock()
+	defer providerLock.Unlock()
+
+	provider, ok = authenticateeProviders[name]
+	return
+}

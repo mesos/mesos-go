@@ -3,7 +3,7 @@ package mech
 import (
 	"errors"
 
-	"github.com/mesos/mesos-go/auth/sasl/callback"
+	"github.com/mesos/mesos-go/auth/callback"
 )
 
 var (

@@ -20,7 +20,7 @@ package executor
 
 import (
 	"code.google.com/p/go-uuid/uuid"
-	"code.google.com/p/gogoprotobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"

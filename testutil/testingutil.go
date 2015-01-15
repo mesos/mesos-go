@@ -21,8 +21,8 @@ package testutil
 
 import (
 	"bytes"
-	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"

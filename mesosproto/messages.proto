@@ -19,7 +19,7 @@
 package mesosproto;
 
 import "mesos.proto";
-import "code.google.com/p/gogoprotobuf/gogoproto/gogo.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 
 // TODO(benh): Provide comments for each of these messages. Also,

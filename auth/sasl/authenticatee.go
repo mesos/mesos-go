@@ -85,13 +85,13 @@ func (s *statusType) swap(old, new statusType) bool {
 
 func Authenticatee(ctx context.Context, handler callback.Handler) <-chan error {
 
-	ip := callback.NewInterprocess()
-	if err := handler.Handle(ip); err != nil {
-		return auth.LoginError(err)
-	}
-
 	c := make(chan error, 1)
 	f := func() error {
+		ip := callback.NewInterprocess()
+		if err := handler.Handle(ip); err != nil {
+			return err
+		}
+
 		config := newConfig(ip.Client(), handler)
 		ctx, auth := newAuthenticatee(ctx, config)
 		auth.authenticate(ctx, ip.Server())
@@ -112,7 +112,7 @@ func newConfig(client upid.UPID, handler callback.Handler) *authenticateeConfig 
 	return &authenticateeConfig{
 		client:    client,
 		handler:   handler,
-		transport: messenger.NewMesosMessenger(tpid),
+		transport: messenger.NewHttp(tpid),
 	}
 }
 

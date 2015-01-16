@@ -20,3 +20,9 @@ type Handler interface {
 	// may return an Unsupported error on failure
 	Handle(callbacks ...Interface) error
 }
+
+type HandlerFunc func(callbacks ...Interface) error
+
+func (f HandlerFunc) Handle(callbacks ...Interface) error {
+	return f(callbacks...)
+}

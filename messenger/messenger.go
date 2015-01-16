@@ -74,18 +74,22 @@ type MesosMessenger struct {
 }
 
 // NewMesosMessenger creates a new mesos messenger.
-func NewMesosMessenger(upid *upid.UPID) *MesosMessenger {
+func NewHttp(upid *upid.UPID) *MesosMessenger {
+	return New(upid, NewHTTPTransporter(upid))
+}
+
+func New(upid *upid.UPID, t Transporter) *MesosMessenger {
 	return &MesosMessenger{
 		upid:              upid,
 		encodingQueue:     make(chan *Message, defaultQueueSize),
 		sendingQueue:      make(chan *Message, defaultQueueSize),
 		installedMessages: make(map[string]reflect.Type),
 		installedHandlers: make(map[string]MessageHandler),
-		tr:                NewHTTPTransporter(upid),
+		tr:                t,
 	}
 }
 
-// Install installs the handler with the given message.
+/// Install installs the handler with the given message.
 func (m *MesosMessenger) Install(handler MessageHandler, msg proto.Message) error {
 	// Check if the message is a pointer.
 	mtype := reflect.TypeOf(msg)

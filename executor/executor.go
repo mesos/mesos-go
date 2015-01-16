@@ -78,7 +78,7 @@ func NewMesosExecutorDriver(exec Executor) (*MesosExecutorDriver, error) {
 		workDir:   ".",
 	}
 	// TODO(yifan): Set executor cnt.
-	driver.messenger = messenger.NewMesosMessenger(&upid.UPID{ID: "executor(1)"})
+	driver.messenger = messenger.NewHttp(&upid.UPID{ID: "executor(1)"})
 	if err := driver.init(); err != nil {
 		log.Errorf("Failed to initialize the driver: %v\n", err)
 		return nil, err

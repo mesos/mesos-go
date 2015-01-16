@@ -6,7 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"code.google.com/p/gogoprotobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/auth"
 	"github.com/mesos/mesos-go/auth/callback"

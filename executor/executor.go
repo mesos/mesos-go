@@ -225,7 +225,7 @@ func (driver *MesosExecutorDriver) reregistered(from *upid.UPID, pbMsg proto.Mes
 
 func (driver *MesosExecutorDriver) send(upid *upid.UPID, msg proto.Message) error {
 	//TODO(jdef) should implement timeout here
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
 	c := make(chan error, 1)

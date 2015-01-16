@@ -196,7 +196,7 @@ func (m *MesosMessenger) encodeLoop() {
 		case msg := <-m.encodingQueue:
 			e := func() error {
 				//TODO(jdef) implement timeout for context
-				ctx, cancel := context.WithCancel(context.Background())
+				ctx, cancel := context.WithCancel(context.TODO())
 				defer cancel()
 
 				b, err := proto.Marshal(msg.ProtoMessage)
@@ -221,7 +221,7 @@ func (m *MesosMessenger) encodeLoop() {
 func (m *MesosMessenger) reportError(err error) {
 	log.V(2).Info(err)
 	//TODO(jdef) implement timeout for context
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
 	c := make(chan error, 1)
@@ -242,7 +242,7 @@ func (m *MesosMessenger) sendLoop() {
 		case msg := <-m.sendingQueue:
 			e := func() error {
 				//TODO(jdef) implement timeout for context
-				ctx, cancel := context.WithCancel(context.Background())
+				ctx, cancel := context.WithCancel(context.TODO())
 				defer cancel()
 
 				c := make(chan error, 1)

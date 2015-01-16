@@ -39,12 +39,11 @@ import (
 )
 
 const (
-	authTimeout  = 5 * time.Second // timeout interval for an authentication attempt
-	saslProvider = "SASL"
+	authTimeout = 5 * time.Second // timeout interval for an authentication attempt
 )
 
 var (
-	authProvider = flag.String("mesos_authentication_provider", saslProvider,
+	authProvider = flag.String("mesos_authentication_provider", sasl.ProviderName,
 		fmt.Sprintf("Authentication provider to use, default is SASL that supports mechanisms: %+v", mech.ListSupported()))
 )
 
@@ -169,10 +168,6 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.slaveLost, &mesos.LostSlaveMessage{})
 	driver.messenger.Install(driver.frameworkMessageRcvd, &mesos.ExecutorToFrameworkMessage{})
 	driver.messenger.Install(driver.frameworkErrorRcvd, &mesos.FrameworkErrorMessage{})
-
-	// install default authentication providers; extensions of this scheduler implementation
-	// are responsible for registering any additional providers they want to support.
-	auth.RegisterAuthenticateeProvider(saslProvider, auth.AuthenticateeFunc(sasl.Authenticatee))
 	return nil
 }
 
@@ -319,7 +314,7 @@ func (driver *MesosSchedulerDriver) resourceOfferRescinded(from *upid.UPID, pbMs
 
 func (driver *MesosSchedulerDriver) send(upid *upid.UPID, msg proto.Message) error {
 	//TODO(jdef) should implement timeout here
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
 	c := make(chan error, 1)

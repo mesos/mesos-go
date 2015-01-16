@@ -39,6 +39,9 @@ const (
 	statusFailed
 	statusError
 	statusDiscarded
+
+	// this login provider name is automatically registered with the auth package; see init()
+	ProviderName = "SASL"
 )
 
 type authenticateeProcess struct {
@@ -57,6 +60,12 @@ type authenticateeConfig struct {
 	client    upid.UPID // pid of the client we're attempting to authenticate
 	handler   callback.Handler
 	transport messenger.Messenger // mesos communications transport
+}
+
+func init() {
+	if err := auth.RegisterAuthenticateeProvider(ProviderName, auth.AuthenticateeFunc(Authenticatee)); err != nil {
+		log.Error(err)
+	}
 }
 
 func nextPid() int {

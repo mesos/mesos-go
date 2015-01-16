@@ -48,8 +48,8 @@ func challengeResponse(m mech.Interface, data []byte) (mech.StepFunc, []byte, er
 	decoded := string(data)
 	log.V(4).Infof("challenge(decoded): %s", decoded) // for deep debugging only
 
-	username := callback.NewName("", "")
-	secret := callback.NewPassword("", false)
+	username := callback.NewName()
+	secret := callback.NewPassword()
 
 	if err := m.Handler().Handle(username, secret); err != nil {
 		return mech.IllegalState, nil, err

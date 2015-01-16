@@ -19,8 +19,8 @@
 package scheduler
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/messenger"

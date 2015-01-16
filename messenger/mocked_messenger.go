@@ -21,7 +21,7 @@ package messenger
 import (
 	"reflect"
 
-	"code.google.com/p/gogoprotobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/mock"
 )

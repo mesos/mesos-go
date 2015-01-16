@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"code.google.com/p/gogoprotobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/messenger/testmessage"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"

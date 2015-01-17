@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/mesos/mesos-go",
-	"GoVersion": "go1.3",
+	"GoVersion": "go1.4",
 	"Packages": [
 		"./..."
 	],
@@ -11,8 +11,8 @@
 			"Rev": "7dda39b2e7d5e265014674c5af696ba4186679e9"
 		},
 		{
-			"ImportPath": "code.google.com/p/gogoprotobuf/proto",
-			"Rev": "d228c1a206c3a756d7ec6cc3579d92d00c35a161"
+			"ImportPath": "github.com/gogo/protobuf/proto",
+			"Rev": "ab6cea4a44ef42b748cd88d2d372047b75806e0c"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",

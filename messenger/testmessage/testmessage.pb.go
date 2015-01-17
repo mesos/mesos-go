@@ -16,32 +16,31 @@ It has these top-level messages:
 */
 package testmessage
 
-import proto "code.google.com/p/gogoprotobuf/proto"
-import json "encoding/json"
+import proto "github.com/gogo/protobuf/proto"
 import math "math"
 
-// discarding unused import gogoproto "code.google.com/p/gogoprotobuf/gogoproto/gogo.pb"
+// discarding unused import gogoproto "github.com/gogo/protobuf/gogoproto/gogo.pb"
 
 import io "io"
-import code_google_com_p_gogoprotobuf_proto "code.google.com/p/gogoprotobuf/proto"
-
 import fmt "fmt"
+import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
+
+import fmt1 "fmt"
 import strings "strings"
 import reflect "reflect"
 
-import fmt1 "fmt"
+import fmt2 "fmt"
 import strings1 "strings"
-import code_google_com_p_gogoprotobuf_proto1 "code.google.com/p/gogoprotobuf/proto"
+import github_com_gogo_protobuf_proto1 "github.com/gogo/protobuf/proto"
 import sort "sort"
 import strconv "strconv"
 import reflect1 "reflect"
 
-import fmt2 "fmt"
+import fmt3 "fmt"
 import bytes "bytes"
 
-// Reference proto, json, and math imports to suppress error if they are not otherwise used.
+// Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = &json.SyntaxError{}
 var _ = math.Inf
 
 type SmallMessage struct {
@@ -127,7 +126,7 @@ func (m *SmallMessage) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Values", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -157,7 +156,7 @@ func (m *SmallMessage) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -191,7 +190,7 @@ func (m *MediumMessage) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Values", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -221,7 +220,7 @@ func (m *MediumMessage) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -255,7 +254,7 @@ func (m *BigMessage) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Values", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -285,7 +284,7 @@ func (m *BigMessage) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -319,7 +318,7 @@ func (m *LargeMessage) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return code_google_com_p_gogoprotobuf_proto.ErrWrongType
+				return fmt.Errorf("proto: wrong wireType = %d for field Values", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -349,7 +348,7 @@ func (m *LargeMessage) Unmarshal(data []byte) error {
 				}
 			}
 			index -= sizeOfWire
-			skippy, err := code_google_com_p_gogoprotobuf_proto.Skip(data[index:])
+			skippy, err := github_com_gogo_protobuf_proto.Skip(data[index:])
 			if err != nil {
 				return err
 			}
@@ -367,8 +366,8 @@ func (this *SmallMessage) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&SmallMessage{`,
-		`Values:` + fmt.Sprintf("%v", this.Values) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Values:` + fmt1.Sprintf("%v", this.Values) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -378,8 +377,8 @@ func (this *MediumMessage) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&MediumMessage{`,
-		`Values:` + fmt.Sprintf("%v", this.Values) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Values:` + fmt1.Sprintf("%v", this.Values) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -389,8 +388,8 @@ func (this *BigMessage) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&BigMessage{`,
-		`Values:` + fmt.Sprintf("%v", this.Values) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Values:` + fmt1.Sprintf("%v", this.Values) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -400,8 +399,8 @@ func (this *LargeMessage) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&LargeMessage{`,
-		`Values:` + fmt.Sprintf("%v", this.Values) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`Values:` + fmt1.Sprintf("%v", this.Values) + `,`,
+		`XXX_unrecognized:` + fmt1.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -412,7 +411,7 @@ func valueToStringTestmessage(v interface{}) string {
 		return "nil"
 	}
 	pv := reflect.Indirect(rv).Interface()
-	return fmt.Sprintf("*%v", pv)
+	return fmt1.Sprintf("*%v", pv)
 }
 func (m *SmallMessage) Size() (n int) {
 	var l int
@@ -428,6 +427,7 @@ func (m *SmallMessage) Size() (n int) {
 	}
 	return n
 }
+
 func (m *MediumMessage) Size() (n int) {
 	var l int
 	_ = l
@@ -442,6 +442,7 @@ func (m *MediumMessage) Size() (n int) {
 	}
 	return n
 }
+
 func (m *BigMessage) Size() (n int) {
 	var l int
 	_ = l
@@ -456,6 +457,7 @@ func (m *BigMessage) Size() (n int) {
 	}
 	return n
 }
+
 func (m *LargeMessage) Size() (n int) {
 	var l int
 	_ = l
@@ -649,6 +651,7 @@ func (m *SmallMessage) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *MediumMessage) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -684,6 +687,7 @@ func (m *MediumMessage) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *BigMessage) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -719,6 +723,7 @@ func (m *BigMessage) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func (m *LargeMessage) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -754,6 +759,7 @@ func (m *LargeMessage) MarshalTo(data []byte) (n int, err error) {
 	}
 	return i, nil
 }
+
 func encodeFixed64Testmessage(data []byte, offset int, v uint64) int {
 	data[offset] = uint8(v)
 	data[offset+1] = uint8(v >> 8)
@@ -785,28 +791,36 @@ func (this *SmallMessage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&testmessage.SmallMessage{` + `Values:` + fmt1.Sprintf("%#v", this.Values), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&testmessage.SmallMessage{` +
+		`Values:` + fmt2.Sprintf("%#v", this.Values),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *MediumMessage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&testmessage.MediumMessage{` + `Values:` + fmt1.Sprintf("%#v", this.Values), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&testmessage.MediumMessage{` +
+		`Values:` + fmt2.Sprintf("%#v", this.Values),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *BigMessage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&testmessage.BigMessage{` + `Values:` + fmt1.Sprintf("%#v", this.Values), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&testmessage.BigMessage{` +
+		`Values:` + fmt2.Sprintf("%#v", this.Values),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func (this *LargeMessage) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings1.Join([]string{`&testmessage.LargeMessage{` + `Values:` + fmt1.Sprintf("%#v", this.Values), `XXX_unrecognized:` + fmt1.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
+	s := strings1.Join([]string{`&testmessage.LargeMessage{` +
+		`Values:` + fmt2.Sprintf("%#v", this.Values),
+		`XXX_unrecognized:` + fmt2.Sprintf("%#v", this.XXX_unrecognized) + `}`}, ", ")
 	return s
 }
 func valueToGoStringTestmessage(v interface{}, typ string) string {
@@ -815,9 +829,9 @@ func valueToGoStringTestmessage(v interface{}, typ string) string {
 		return "nil"
 	}
 	pv := reflect1.Indirect(rv).Interface()
-	return fmt1.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
+	return fmt2.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
-func extensionToGoStringTestmessage(e map[int32]code_google_com_p_gogoprotobuf_proto1.Extension) string {
+func extensionToGoStringTestmessage(e map[int32]github_com_gogo_protobuf_proto1.Extension) string {
 	if e == nil {
 		return "nil"
 	}
@@ -839,31 +853,31 @@ func (this *SmallMessage) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*SmallMessage)
 	if !ok {
-		return fmt2.Errorf("that is not of type *SmallMessage")
+		return fmt3.Errorf("that is not of type *SmallMessage")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *SmallMessage but is nil && this != nil")
+		return fmt3.Errorf("that is type *SmallMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *SmallMessagebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *SmallMessagebut is not nil && this == nil")
 	}
 	if len(this.Values) != len(that1.Values) {
-		return fmt2.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
+		return fmt3.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
 	}
 	for i := range this.Values {
 		if this.Values[i] != that1.Values[i] {
-			return fmt2.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
+			return fmt3.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
 		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -905,31 +919,31 @@ func (this *MediumMessage) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*MediumMessage)
 	if !ok {
-		return fmt2.Errorf("that is not of type *MediumMessage")
+		return fmt3.Errorf("that is not of type *MediumMessage")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *MediumMessage but is nil && this != nil")
+		return fmt3.Errorf("that is type *MediumMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *MediumMessagebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *MediumMessagebut is not nil && this == nil")
 	}
 	if len(this.Values) != len(that1.Values) {
-		return fmt2.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
+		return fmt3.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
 	}
 	for i := range this.Values {
 		if this.Values[i] != that1.Values[i] {
-			return fmt2.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
+			return fmt3.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
 		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -971,31 +985,31 @@ func (this *BigMessage) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*BigMessage)
 	if !ok {
-		return fmt2.Errorf("that is not of type *BigMessage")
+		return fmt3.Errorf("that is not of type *BigMessage")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *BigMessage but is nil && this != nil")
+		return fmt3.Errorf("that is type *BigMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *BigMessagebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *BigMessagebut is not nil && this == nil")
 	}
 	if len(this.Values) != len(that1.Values) {
-		return fmt2.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
+		return fmt3.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
 	}
 	for i := range this.Values {
 		if this.Values[i] != that1.Values[i] {
-			return fmt2.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
+			return fmt3.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
 		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -1037,31 +1051,31 @@ func (this *LargeMessage) VerboseEqual(that interface{}) error {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that == nil && this != nil")
+		return fmt3.Errorf("that == nil && this != nil")
 	}
 
 	that1, ok := that.(*LargeMessage)
 	if !ok {
-		return fmt2.Errorf("that is not of type *LargeMessage")
+		return fmt3.Errorf("that is not of type *LargeMessage")
 	}
 	if that1 == nil {
 		if this == nil {
 			return nil
 		}
-		return fmt2.Errorf("that is type *LargeMessage but is nil && this != nil")
+		return fmt3.Errorf("that is type *LargeMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt2.Errorf("that is type *LargeMessagebut is not nil && this == nil")
+		return fmt3.Errorf("that is type *LargeMessagebut is not nil && this == nil")
 	}
 	if len(this.Values) != len(that1.Values) {
-		return fmt2.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
+		return fmt3.Errorf("Values this(%v) Not Equal that(%v)", len(this.Values), len(that1.Values))
 	}
 	for i := range this.Values {
 		if this.Values[i] != that1.Values[i] {
-			return fmt2.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
+			return fmt3.Errorf("Values this[%v](%v) Not Equal that[%v](%v)", i, this.Values[i], i, that1.Values[i])
 		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt2.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+		return fmt3.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }

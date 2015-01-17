@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"strings"
 
-	"code.google.com/p/gogoprotobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/upid"
 )
 

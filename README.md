@@ -26,6 +26,7 @@ This is a very early version of the project.  Howerver, here is a list of things
 - Install Protocol Buffer tools 2.5 or higher locally - See http://code.google.com/p/protobuf/
 - Apache Mesos 0.19 or newer
 - GNU Make
+- [godep](https://github.com/tools/godep)
 
 ## Build Instructions
 The following instructions is to build the code from `github`.The project uses the `GoDep` for dependency management.

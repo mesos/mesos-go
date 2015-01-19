@@ -301,6 +301,95 @@ func BenchmarkOperation_SnapshotProtoUnmarshal(b *testing14.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
+func TestOperation_DiffProto(t *testing14.T) {
+	popr := math_rand14.New(math_rand14.NewSource(time14.Now().UnixNano()))
+	p := NewPopulatedOperation_Diff(popr, false)
+	data, err := github_com_gogo_protobuf_proto8.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	msg := &Operation_Diff{}
+	if err := github_com_gogo_protobuf_proto8.Unmarshal(data, msg); err != nil {
+		panic(err)
+	}
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Proto %#v", msg, p)
+	}
+}
+
+func TestOperation_DiffMarshalTo(t *testing14.T) {
+	popr := math_rand14.New(math_rand14.NewSource(time14.Now().UnixNano()))
+	p := NewPopulatedOperation_Diff(popr, false)
+	size := p.Size()
+	data := make([]byte, size)
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	_, err := p.MarshalTo(data)
+	if err != nil {
+		panic(err)
+	}
+	msg := &Operation_Diff{}
+	if err := github_com_gogo_protobuf_proto8.Unmarshal(data, msg); err != nil {
+		panic(err)
+	}
+	for i := range data {
+		data[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Proto %#v", msg, p)
+	}
+}
+
+func BenchmarkOperation_DiffProtoMarshal(b *testing14.B) {
+	popr := math_rand14.New(math_rand14.NewSource(616))
+	total := 0
+	pops := make([]*Operation_Diff, 10000)
+	for i := 0; i < 10000; i++ {
+		pops[i] = NewPopulatedOperation_Diff(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		data, err := github_com_gogo_protobuf_proto8.Marshal(pops[i%10000])
+		if err != nil {
+			panic(err)
+		}
+		total += len(data)
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func BenchmarkOperation_DiffProtoUnmarshal(b *testing14.B) {
+	popr := math_rand14.New(math_rand14.NewSource(616))
+	total := 0
+	datas := make([][]byte, 10000)
+	for i := 0; i < 10000; i++ {
+		data, err := github_com_gogo_protobuf_proto8.Marshal(NewPopulatedOperation_Diff(popr, false))
+		if err != nil {
+			panic(err)
+		}
+		datas[i] = data
+	}
+	msg := &Operation_Diff{}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += len(datas[i%10000])
+		if err := github_com_gogo_protobuf_proto8.Unmarshal(datas[i%10000], msg); err != nil {
+			panic(err)
+		}
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
 func TestOperation_ExpungeProto(t *testing14.T) {
 	popr := math_rand14.New(math_rand14.NewSource(time14.Now().UnixNano()))
 	p := NewPopulatedOperation_Expunge(popr, false)
@@ -447,6 +536,25 @@ func TestOperation_SnapshotJSON(t *testing15.T) {
 		t.Fatalf("%#v !Json Equal %#v", msg, p)
 	}
 }
+func TestOperation_DiffJSON(t *testing15.T) {
+	popr := math_rand15.New(math_rand15.NewSource(time15.Now().UnixNano()))
+	p := NewPopulatedOperation_Diff(popr, true)
+	jsondata, err := encoding_json2.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	msg := &Operation_Diff{}
+	err = encoding_json2.Unmarshal(jsondata, msg)
+	if err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Json Equal %#v", msg, p)
+	}
+}
 func TestOperation_ExpungeJSON(t *testing15.T) {
 	popr := math_rand15.New(math_rand15.NewSource(time15.Now().UnixNano()))
 	p := NewPopulatedOperation_Expunge(popr, true)
@@ -562,6 +670,38 @@ func TestOperation_SnapshotProtoCompactText(t *testing16.T) {
 	}
 }
 
+func TestOperation_DiffProtoText(t *testing16.T) {
+	popr := math_rand16.New(math_rand16.NewSource(time16.Now().UnixNano()))
+	p := NewPopulatedOperation_Diff(popr, true)
+	data := github_com_gogo_protobuf_proto9.MarshalTextString(p)
+	msg := &Operation_Diff{}
+	if err := github_com_gogo_protobuf_proto9.UnmarshalText(data, msg); err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Proto %#v", msg, p)
+	}
+}
+
+func TestOperation_DiffProtoCompactText(t *testing16.T) {
+	popr := math_rand16.New(math_rand16.NewSource(time16.Now().UnixNano()))
+	p := NewPopulatedOperation_Diff(popr, true)
+	data := github_com_gogo_protobuf_proto9.CompactTextString(p)
+	msg := &Operation_Diff{}
+	if err := github_com_gogo_protobuf_proto9.UnmarshalText(data, msg); err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseProto %#v, since %v", msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("%#v !Proto %#v", msg, p)
+	}
+}
+
 func TestOperation_ExpungeProtoText(t *testing16.T) {
 	popr := math_rand16.New(math_rand16.NewSource(time16.Now().UnixNano()))
 	p := NewPopulatedOperation_Expunge(popr, true)
@@ -615,6 +755,15 @@ func TestOperationStringer(t *testing17.T) {
 func TestOperation_SnapshotStringer(t *testing17.T) {
 	popr := math_rand17.New(math_rand17.NewSource(time17.Now().UnixNano()))
 	p := NewPopulatedOperation_Snapshot(popr, false)
+	s1 := p.String()
+	s2 := fmt4.Sprintf("%v", p)
+	if s1 != s2 {
+		t.Fatalf("String want %v got %v", s1, s2)
+	}
+}
+func TestOperation_DiffStringer(t *testing17.T) {
+	popr := math_rand17.New(math_rand17.NewSource(time17.Now().UnixNano()))
+	p := NewPopulatedOperation_Diff(popr, false)
 	s1 := p.String()
 	s2 := fmt4.Sprintf("%v", p)
 	if s1 != s2 {
@@ -735,6 +884,41 @@ func BenchmarkOperation_SnapshotSize(b *testing18.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
+func TestOperation_DiffSize(t *testing18.T) {
+	popr := math_rand18.New(math_rand18.NewSource(time18.Now().UnixNano()))
+	p := NewPopulatedOperation_Diff(popr, true)
+	size2 := github_com_gogo_protobuf_proto10.Size(p)
+	data, err := github_com_gogo_protobuf_proto10.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	size := p.Size()
+	if len(data) != size {
+		t.Fatalf("size %v != marshalled size %v", size, len(data))
+	}
+	if size2 != size {
+		t.Fatalf("size %v != before marshal proto.Size %v", size, size2)
+	}
+	size3 := github_com_gogo_protobuf_proto10.Size(p)
+	if size3 != size {
+		t.Fatalf("size %v != after marshal proto.Size %v", size, size3)
+	}
+}
+
+func BenchmarkOperation_DiffSize(b *testing18.B) {
+	popr := math_rand18.New(math_rand18.NewSource(616))
+	total := 0
+	pops := make([]*Operation_Diff, 1000)
+	for i := 0; i < 1000; i++ {
+		pops[i] = NewPopulatedOperation_Diff(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += pops[i%1000].Size()
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
 func TestOperation_ExpungeSize(t *testing18.T) {
 	popr := math_rand18.New(math_rand18.NewSource(time18.Now().UnixNano()))
 	p := NewPopulatedOperation_Expunge(popr, true)
@@ -809,6 +993,19 @@ func TestOperation_SnapshotGoString(t *testing19.T) {
 		panic(err)
 	}
 }
+func TestOperation_DiffGoString(t *testing19.T) {
+	popr := math_rand19.New(math_rand19.NewSource(time19.Now().UnixNano()))
+	p := NewPopulatedOperation_Diff(popr, false)
+	s1 := p.GoString()
+	s2 := fmt5.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser2.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
 func TestOperation_ExpungeGoString(t *testing19.T) {
 	popr := math_rand19.New(math_rand19.NewSource(time19.Now().UnixNano()))
 	p := NewPopulatedOperation_Expunge(popr, false)
@@ -860,6 +1057,21 @@ func TestOperation_SnapshotVerboseEqual(t *testing20.T) {
 		panic(err)
 	}
 	msg := &Operation_Snapshot{}
+	if err := github_com_gogo_protobuf_proto11.Unmarshal(data, msg); err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
+	}
+}
+func TestOperation_DiffVerboseEqual(t *testing20.T) {
+	popr := math_rand20.New(math_rand20.NewSource(time20.Now().UnixNano()))
+	p := NewPopulatedOperation_Diff(popr, false)
+	data, err := github_com_gogo_protobuf_proto11.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	msg := &Operation_Diff{}
 	if err := github_com_gogo_protobuf_proto11.Unmarshal(data, msg); err != nil {
 		panic(err)
 	}

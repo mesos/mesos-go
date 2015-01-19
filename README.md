@@ -24,7 +24,7 @@ This is a very early version of the project.  Howerver, here is a list of things
 - Go 1.3 or higher
 - A standard and working Go workspace setup
 - Install Protocol Buffer tools 2.5 or higher locally - See http://code.google.com/p/protobuf/
-- Apache Mesos 0.19 or newer
+- Apache Mesos 0.20.0 or newer
 - GNU Make
 - [godep](https://github.com/tools/godep)
 

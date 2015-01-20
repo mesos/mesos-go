@@ -436,6 +436,10 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 	}
 
 	// authenticate?
+	//TODO(jdef) perhaps at some point in the future this will get pushed down into
+	//the messenger layer (e.g. to use HTTP-based authentication). We'd probably still
+	//specify the callback.Handler here, along with the user-selected authentication
+	//provider. Perhaps in the form of some messenger.AuthenticationConfig.
 	if driver.credential != nil {
 		if err := func() error {
 			ctx, cancel := context.WithTimeout(context.Background(), authTimeout)

@@ -16,9 +16,8 @@ This is a very early version of the project.  Howerver, here is a list of things
 - Example programs on how to use the API
 
 ##### Work in Progress...
-- No leading master detection yet
-- No Authentication/Authorization via SASL
-- Visit project issues list for detail 
+- Leading master detection
+- Authentication/Authorization via SASL
 
 ## Pre-Requisites
 - Go 1.3 or higher

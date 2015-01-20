@@ -19,17 +19,18 @@
 package scheduler
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"fmt"
+	"os"
+	"os/user"
+	"sync"
+	"time"
+
+	"code.google.com/p/go-uuid/uuid"
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
-	"os"
-	"os/user"
-	"sync"
-	"time"
 )
 
 // Concrete implementation of a SchedulerDriver that connects a
@@ -606,7 +607,10 @@ func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) (mesos.Status
 		return driver.Status(), fmt.Errorf("Not connected to master")
 	}
 
-	message := &mesos.KillTaskMessage{TaskId: taskId}
+	message := &mesos.KillTaskMessage{
+		TaskId:      taskId,
+		FrameworkId: driver.FrameworkInfo.Id,
+	}
 
 	if err := driver.messenger.Send(driver.MasterPid, message); err != nil {
 		log.Errorf("Failed to send KillTask message: %v\n", err)

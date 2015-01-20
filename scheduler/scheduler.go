@@ -445,8 +445,8 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 				client:     driver.messenger.UPID(),
 				credential: driver.credential,
 			}
-			ctx = auth.WithLoginName(ctx, *authProvider)
-			return <-auth.Login(ctx, handler)
+			ctx = auth.WithLoginProvider(ctx, *authProvider)
+			return auth.Login(ctx, handler)
 		}(); err != nil {
 			log.Errorf("Scheduler failed to authenticate: %v\n", err)
 			return driver.Status(), err

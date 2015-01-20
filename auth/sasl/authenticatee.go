@@ -83,28 +83,23 @@ func (s *statusType) swap(old, new statusType) bool {
 	return old != new && atomic.CompareAndSwapInt32((*int32)(s), int32(old), int32(new))
 }
 
-func Authenticatee(ctx context.Context, handler callback.Handler) <-chan error {
+func Authenticatee(ctx context.Context, handler callback.Handler) error {
 
-	c := make(chan error, 1)
-	f := func() error {
-		ip := callback.NewInterprocess()
-		if err := handler.Handle(ip); err != nil {
-			return err
-		}
-
-		config := newConfig(ip.Client(), handler)
-		ctx, auth := newAuthenticatee(ctx, config)
-		auth.authenticate(ctx, ip.Server())
-
-		select {
-		case <-ctx.Done():
-			return auth.discard(ctx)
-		case <-auth.done:
-			return auth.err
-		}
+	ip := callback.NewInterprocess()
+	if err := handler.Handle(ip); err != nil {
+		return err
 	}
-	go func() { c <- f() }()
-	return c
+
+	config := newConfig(ip.Client(), handler)
+	ctx, auth := newAuthenticatee(ctx, config)
+	auth.authenticate(ctx, ip.Server())
+
+	select {
+	case <-ctx.Done():
+		return auth.discard(ctx)
+	case <-auth.done:
+		return auth.err
+	}
 }
 
 func newConfig(client upid.UPID, handler callback.Handler) *authenticateeConfig {

@@ -129,8 +129,10 @@ func NewMesosSchedulerDriver(
 		driver.MasterPid = m
 	}
 
+	schedulerPid := &upid.UPID{ID: "scheduler(1)", Host: *framework.Hostname}
+
 	//TODO keep scheduler counter to for proper PID.
-	driver.messenger = messenger.NewMesosMessenger(&upid.UPID{ID: "scheduler(1)"})
+	driver.messenger = messenger.NewMesosMessenger(schedulerPid)
 	if err := driver.init(); err != nil {
 		log.Errorf("Failed to initialize the scheduler driver: %v\n", err)
 		return nil, err

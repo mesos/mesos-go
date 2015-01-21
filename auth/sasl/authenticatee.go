@@ -62,8 +62,29 @@ type authenticateeConfig struct {
 	transport messenger.Messenger // mesos communications transport
 }
 
+type transportFactory interface {
+	makeTransport() messenger.Messenger
+}
+
+type transportFactoryFunc func() messenger.Messenger
+
+func (f transportFactoryFunc) makeTransport() messenger.Messenger {
+	return f()
+}
+
 func init() {
-	if err := auth.RegisterAuthenticateeProvider(ProviderName, auth.AuthenticateeFunc(Authenticatee)); err != nil {
+	factory := transportFactoryFunc(func() messenger.Messenger {
+		tpid := &upid.UPID{ID: fmt.Sprintf("sasl_authenticatee(%d)", nextPid())}
+		return messenger.NewHttp(tpid)
+	})
+	delegate := auth.AuthenticateeFunc(func(ctx context.Context, handler callback.Handler) error {
+		if impl, err := makeAuthenticatee(handler, factory); err != nil {
+			return err
+		} else {
+			return impl.Authenticate(ctx, handler)
+		}
+	})
+	if err := auth.RegisterAuthenticateeProvider(ProviderName, delegate); err != nil {
 		log.Error(err)
 	}
 }
@@ -83,32 +104,29 @@ func (s *statusType) swap(old, new statusType) bool {
 	return old != new && atomic.CompareAndSwapInt32((*int32)(s), int32(old), int32(new))
 }
 
-func Authenticatee(ctx context.Context, handler callback.Handler) error {
+// build a new authenticatee implementation using the given callbacks and a new transport instance
+func makeAuthenticatee(handler callback.Handler, factory transportFactory) (auth.Authenticatee, error) {
 
 	ip := callback.NewInterprocess()
 	if err := handler.Handle(ip); err != nil {
-		return err
+		return nil, err
 	}
-
-	config := newConfig(ip.Client(), handler)
-	ctx, auth := newAuthenticatee(ctx, config)
-	auth.authenticate(ctx, ip.Server())
-
-	select {
-	case <-ctx.Done():
-		return auth.discard(ctx)
-	case <-auth.done:
-		return auth.err
-	}
-}
-
-func newConfig(client upid.UPID, handler callback.Handler) *authenticateeConfig {
-	tpid := &upid.UPID{ID: fmt.Sprintf("sasl_authenticatee(%d)", nextPid())}
-	return &authenticateeConfig{
-		client:    client,
+	config := &authenticateeConfig{
+		client:    ip.Client(),
 		handler:   handler,
-		transport: messenger.NewHttp(tpid),
+		transport: factory.makeTransport(),
 	}
+	return auth.AuthenticateeFunc(func(ctx context.Context, handler callback.Handler) error {
+		ctx, auth := newAuthenticatee(ctx, config)
+		auth.authenticate(ctx, ip.Server())
+
+		select {
+		case <-ctx.Done():
+			return auth.discard(ctx)
+		case <-auth.done:
+			return auth.err
+		}
+	}), nil
 }
 
 // Terminate the authentication process upon context cancellation;

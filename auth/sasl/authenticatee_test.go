@@ -1,10 +1,12 @@
 package sasl
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/auth/callback"
+	"github.com/mesos/mesos-go/auth/sasl/mech/crammd5"
+	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
@@ -12,41 +14,12 @@ import (
 	"golang.org/x/net/context"
 )
 
-//TODO(jdef) move MockTransporter to the messenger package
-type MockTransporter struct {
-	mock.Mock
+type MockTransport struct {
+	*messenger.MockedMessenger
 }
 
-func (m *MockTransporter) Send(ctx context.Context, msg *messenger.Message) error {
-	args := m.Called(ctx, msg)
-	return args.Error(0)
-}
-func (m *MockTransporter) Listen() error {
-	args := m.Called()
-	return args.Error(0)
-}
-func (m *MockTransporter) Recv() *messenger.Message {
-	args := m.Called()
-	return args.Get(0).(*messenger.Message)
-}
-func (m *MockTransporter) Inject(ctx context.Context, msg *messenger.Message) error {
-	args := m.Called(ctx, msg)
-	return args.Error(0)
-}
-func (m *MockTransporter) Install(messageName string) {
-	m.Called(messageName)
-}
-func (m *MockTransporter) Start() error {
-	args := m.Called()
-	return args.Error(0)
-}
-func (m *MockTransporter) Stop() error {
-	args := m.Called()
-	return args.Error(0)
-}
-func (m *MockTransporter) UPID() *upid.UPID {
-	args := m.Called()
-	return args.Get(0).(*upid.UPID)
+func (m *MockTransport) Send(ctx context.Context, upid *upid.UPID, msg proto.Message) error {
+	return m.Called(mock.Anything, upid, msg).Error(0)
 }
 
 func TestAuthticatee_validLogin(t *testing.T) {
@@ -57,6 +30,16 @@ func TestAuthticatee_validLogin(t *testing.T) {
 		Host: "b.net",
 		Port: "789",
 	}
+	server := upid.UPID{
+		ID:   "serv",
+		Host: "a.com",
+		Port: "123",
+	}
+	tpid := upid.UPID{
+		ID:   "sasl_transport",
+		Host: "g.org",
+		Port: "456",
+	}
 	handler := callback.HandlerFunc(func(cb ...callback.Interface) error {
 		for _, c := range cb {
 			switch c := c.(type) {
@@ -65,46 +48,46 @@ func TestAuthticatee_validLogin(t *testing.T) {
 			case *callback.Password:
 				c.Set([]byte("bar"))
 			case *callback.Interprocess:
-				c.Set(upid.UPID{ID: "serv", Host: "a.com", Port: "123"}, client)
+				c.Set(server, client)
 			default:
 				return &callback.Unsupported{c}
 			}
 		}
 		return nil
 	})
+	factory := transportFactoryFunc(func() messenger.Messenger {
+		transport := &MockTransport{messenger.NewMockedMessenger()}
+		transport.On("Install").Return(nil)
+		transport.On("UPID").Return(&tpid)
+		transport.On("Start").Return(nil)
+		transport.On("Stop").Return(nil)
+		transport.On("Send", mock.Anything, &server, &mesos.AuthenticateMessage{
+			Pid: proto.String(client.String()),
+		}).Return(nil).Once()
 
-	// TODO(jdef) there's too much duplication between this and sasl.Authenticatee
+		transport.On("Send", mock.Anything, &server, &mesos.AuthenticationStartMessage{
+			Mechanism: proto.String(crammd5.Name),
+			Data:      proto.String(""), // may be nil, depends on init step
+		}).Return(nil).Once()
 
-	ip := callback.NewInterprocess()
-	assert.Nil(handler.Handle(ip))
+		transport.On("Send", mock.Anything, &server, &mesos.AuthenticationStepMessage{
+			Data: []byte(`foo cc7fd96cd80123ea844a7dba29a594ed`),
+		}).Return(nil).Once()
 
-	tpid := &upid.UPID{ID: fmt.Sprintf("mock_authenticatee(%d)", nextPid())}
-	transport := &MockTransporter{}
-	transport.On("Install", "mesos.internal.AuthenticationMechanismsMessage").Return(nil)
-	transport.On("Install", "mesos.internal.AuthenticationStepMessage").Return(nil)
-	transport.On("Install", "mesos.internal.AuthenticationCompletedMessage").Return(nil)
-	transport.On("Install", "mesos.internal.AuthenticationFailedMessage").Return(nil)
-	transport.On("Install", "mesos.internal.AuthenticationErrorMessage").Return(nil)
-	transport.On("Listen").Return(nil)
-	transport.On("UPID").Return(tpid)
-	transport.On("Start").Return(nil)
-	transport.On("Stop").Return(nil)
+		go func() {
+			transport.Recv(&server, &mesos.AuthenticationMechanismsMessage{
+				Mechanisms: []string{crammd5.Name},
+			})
+			transport.Recv(&server, &mesos.AuthenticationStepMessage{
+				Data: []byte(`lsd;lfkgjs;dlfkgjs;dfklg`),
+			})
+			transport.Recv(&server, &mesos.AuthenticationCompletedMessage{})
+		}()
+		return transport
+	})
+	login, err := makeAuthenticatee(handler, factory)
+	assert.Nil(err)
 
-	//TODO(jdef) set transport expectations
-
-	config := &authenticateeConfig{
-		client:    ip.Client(),
-		handler:   handler,
-		transport: messenger.New(tpid, transport),
-	}
-	ctx, auth := newAuthenticatee(ctx, config)
-	auth.authenticate(ctx, ip.Server())
-
-	select {
-	case <-ctx.Done():
-		t.Fatal(auth.discard(ctx))
-	case <-auth.done:
-		assert.Nil(auth.err)
-	}
-	transport.AssertExpectations(t)
+	err = login.Authenticate(ctx, handler)
+	assert.Nil(err)
 }

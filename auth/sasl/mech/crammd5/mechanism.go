@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"io"
 
 	log "github.com/golang/glog"
@@ -13,6 +14,9 @@ import (
 
 var (
 	Name = "CRAM-MD5" // name this mechanism is registered with
+
+	//TODO(jdef) is this a generic SASL error? if so, move it up to mech
+	challengeDataRequired = errors.New("challenge data may not be empty")
 )
 
 func init() {
@@ -45,6 +49,9 @@ func newInstance(h callback.Handler) (mech.Interface, mech.StepFunc, error) {
 // algorithm lifted from wikipedia: http://en.wikipedia.org/wiki/CRAM-MD5
 // except that the SASL mechanism used by Mesos doesn't leverage base64 encoding
 func challengeResponse(m mech.Interface, data []byte) (mech.StepFunc, []byte, error) {
+	if len(data) == 0 {
+		return mech.IllegalState, nil, challengeDataRequired
+	}
 	decoded := string(data)
 	log.V(4).Infof("challenge(decoded): %s", decoded) // for deep debugging only
 

@@ -135,7 +135,7 @@ func runTestServer(b *testing.B, wg *sync.WaitGroup) *httptest.Server {
 }
 
 func TestMessengerFailToInstall(t *testing.T) {
-	m := NewMesosMessenger(&upid.UPID{ID: "mesos"})
+	m := NewHttp(&upid.UPID{ID: "mesos"})
 	handler := func(from *upid.UPID, pbMsg proto.Message) {}
 	assert.NotNil(t, m)
 	assert.NoError(t, m.Install(handler, &testmessage.SmallMessage{}))
@@ -144,8 +144,8 @@ func TestMessengerFailToInstall(t *testing.T) {
 
 func TestMessengerFailToStart(t *testing.T) {
 	port := strconv.Itoa(getNewPort())
-	m1 := NewMesosMessenger(&upid.UPID{ID: "mesos", Host: "localhost", Port: port})
-	m2 := NewMesosMessenger(&upid.UPID{ID: "mesos", Host: "localhost", Port: port})
+	m1 := NewHttp(&upid.UPID{ID: "mesos", Host: "localhost", Port: port})
+	m2 := NewHttp(&upid.UPID{ID: "mesos", Host: "localhost", Port: port})
 	assert.NoError(t, m1.Start())
 	assert.Error(t, m2.Start())
 }
@@ -153,7 +153,7 @@ func TestMessengerFailToStart(t *testing.T) {
 func TestMessengerFailToSend(t *testing.T) {
 	upid, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
 	assert.NoError(t, err)
-	m := NewMesosMessenger(upid)
+	m := NewHttp(upid)
 	assert.NoError(t, m.Start())
 	assert.Error(t, m.Send(context.TODO(), upid, &testmessage.SmallMessage{}))
 }
@@ -166,8 +166,8 @@ func TestMessenger(t *testing.T) {
 	upid2, err := upid.Parse(fmt.Sprintf("mesos2@localhost:%d", getNewPort()))
 	assert.NoError(t, err)
 
-	m1 := NewMesosMessenger(upid1)
-	m2 := NewMesosMessenger(upid2)
+	m1 := NewHttp(upid1)
+	m2 := NewHttp(upid2)
 
 	done := make(chan struct{})
 	counts := make([]int, 4)
@@ -209,7 +209,7 @@ func BenchmarkMessengerSendSmallMessage(b *testing.B) {
 
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
+	m1 := NewHttp(upid1)
 	assert.NoError(b, m1.Start())
 
 	b.ResetTimer()
@@ -232,7 +232,7 @@ func BenchmarkMessengerSendMediumMessage(b *testing.B) {
 	upid2, err := upid.Parse(fmt.Sprintf("testserver@%s", srv.Listener.Addr().String()))
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
+	m1 := NewHttp(upid1)
 	assert.NoError(b, m1.Start())
 
 	b.ResetTimer()
@@ -255,7 +255,7 @@ func BenchmarkMessengerSendBigMessage(b *testing.B) {
 	upid2, err := upid.Parse(fmt.Sprintf("testserver@%s", srv.Listener.Addr().String()))
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
+	m1 := NewHttp(upid1)
 	assert.NoError(b, m1.Start())
 
 	b.ResetTimer()
@@ -278,7 +278,7 @@ func BenchmarkMessengerSendLargeMessage(b *testing.B) {
 	upid2, err := upid.Parse(fmt.Sprintf("testserver@%s", srv.Listener.Addr().String()))
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
+	m1 := NewHttp(upid1)
 	assert.NoError(b, m1.Start())
 
 	b.ResetTimer()
@@ -301,7 +301,7 @@ func BenchmarkMessengerSendMixedMessage(b *testing.B) {
 	upid2, err := upid.Parse(fmt.Sprintf("testserver@%s", srv.Listener.Addr().String()))
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
+	m1 := NewHttp(upid1)
 	assert.NoError(b, m1.Start())
 
 	b.ResetTimer()
@@ -321,8 +321,8 @@ func BenchmarkMessengerSendRecvSmallMessage(b *testing.B) {
 	upid2, err := upid.Parse(fmt.Sprintf("mesos2@localhost:%d", getNewPort()))
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
-	m2 := NewMesosMessenger(upid2)
+	m1 := NewHttp(upid1)
+	m2 := NewHttp(upid2)
 	assert.NoError(b, m1.Start())
 	assert.NoError(b, m2.Start())
 	assert.NoError(b, m2.Install(noopHandler, &testmessage.SmallMessage{}))
@@ -345,8 +345,8 @@ func BenchmarkMessengerSendRecvMediumMessage(b *testing.B) {
 	upid2, err := upid.Parse(fmt.Sprintf("mesos2@localhost:%d", getNewPort()))
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
-	m2 := NewMesosMessenger(upid2)
+	m1 := NewHttp(upid1)
+	m2 := NewHttp(upid2)
 	assert.NoError(b, m1.Start())
 	assert.NoError(b, m2.Start())
 	assert.NoError(b, m2.Install(noopHandler, &testmessage.MediumMessage{}))
@@ -369,8 +369,8 @@ func BenchmarkMessengerSendRecvBigMessage(b *testing.B) {
 	upid2, err := upid.Parse(fmt.Sprintf("mesos2@localhost:%d", getNewPort()))
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
-	m2 := NewMesosMessenger(upid2)
+	m1 := NewHttp(upid1)
+	m2 := NewHttp(upid2)
 	assert.NoError(b, m1.Start())
 	assert.NoError(b, m2.Start())
 	assert.NoError(b, m2.Install(noopHandler, &testmessage.BigMessage{}))
@@ -392,8 +392,8 @@ func BenchmarkMessengerSendRecvLargeMessage(b *testing.B) {
 	upid2, err := upid.Parse(fmt.Sprintf("mesos2@localhost:%d", getNewPort()))
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
-	m2 := NewMesosMessenger(upid2)
+	m1 := NewHttp(upid1)
+	m2 := NewHttp(upid2)
 	assert.NoError(b, m1.Start())
 	assert.NoError(b, m2.Start())
 	assert.NoError(b, m2.Install(noopHandler, &testmessage.LargeMessage{}))
@@ -415,8 +415,8 @@ func BenchmarkMessengerSendRecvMixedMessage(b *testing.B) {
 	upid2, err := upid.Parse(fmt.Sprintf("mesos2@localhost:%d", getNewPort()))
 	assert.NoError(b, err)
 
-	m1 := NewMesosMessenger(upid1)
-	m2 := NewMesosMessenger(upid2)
+	m1 := NewHttp(upid1)
+	m2 := NewHttp(upid2)
 	assert.NoError(b, m1.Start())
 	assert.NoError(b, m2.Start())
 	assert.NoError(b, m2.Install(noopHandler, &testmessage.SmallMessage{}))

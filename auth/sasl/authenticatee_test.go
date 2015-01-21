@@ -2,6 +2,7 @@ package sasl
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/auth/callback"
@@ -55,8 +56,9 @@ func TestAuthticatee_validLogin(t *testing.T) {
 		}
 		return nil
 	})
+	var transport *MockTransport
 	factory := transportFactoryFunc(func() messenger.Messenger {
-		transport := &MockTransport{messenger.NewMockedMessenger()}
+		transport = &MockTransport{messenger.NewMockedMessenger()}
 		transport.On("Install").Return(nil)
 		transport.On("UPID").Return(&tpid)
 		transport.On("Start").Return(nil)
@@ -90,4 +92,7 @@ func TestAuthticatee_validLogin(t *testing.T) {
 
 	err = login.Authenticate(ctx, handler)
 	assert.Nil(err)
+	assert.NotNil(transport)
+	time.Sleep(1 * time.Second) // wait for the authenticator to shut down
+	transport.AssertExpectations(t)
 }

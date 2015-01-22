@@ -17,10 +17,8 @@
  */
 
 /*
-The zookeeper package is internal and wraps zookeeper client functionalities from
-github.com/samuel/go-zookeeper/ to use for .  The zookeeper package provides
-two main components: ZkClient and ZkClientWatcher.  ZkClient is the main
-entry point to interact with zookeeper servers.  ZkClientWatcher is an
-interface that provides callback to handle Zookeeper watched events.
+The detector package houses implementation of master detectors.
+The default implementation is the zookeeper master detector.
+It uses zookeeper to detect the lead Mesos master during startup/failover.
 */
-package zookeeper
+package detector

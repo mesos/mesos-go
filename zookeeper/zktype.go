@@ -4,10 +4,10 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-// ZkConn Interface to facade zk.Conn type.
+// ZkConnector Interface to facade zk.Conn type.
 // Since github.com/samuel/go-zookeeper does not provide an interface
 // for the zk.Conn object, this allows for mocking and easier testing.
-type ZkConn interface {
+type ZkConnector interface {
 	Close()
 	Children(string) ([]string, *zk.Stat, error)
 	ChildrenW(string) ([]string, *zk.Stat, <-chan zk.Event, error)
@@ -17,13 +17,13 @@ type ZkConn interface {
 // ZkClient interface to interact with and listen for events from
 // a Zookeeper server.
 type ZkClient interface {
-	Connect([]string, string, ZkClientWatcher) error
+	Connect([]string, string, ZkWatcher) error
 	WatchChildren(string) error
 	Disconnect()
 }
 
 // Interface to handle watcher callback actions from ZkClient
-type ZkClientWatcher interface {
+type ZkWatcher interface {
 	//Will be called when ZkClient is connected.
 	Connected(ZkClient)
 

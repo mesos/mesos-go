@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package zookeeper
+package detector
 
 import (
 	"github.com/samuel/go-zookeeper/zk"
@@ -24,7 +24,7 @@ import (
 )
 
 // Impersontates a zk.Connection
-// It implements interface ZkConnector
+// It implements interface zkConnector
 type MockZkConnector struct {
 	mock.Mock
 }

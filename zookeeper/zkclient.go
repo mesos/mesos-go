@@ -26,31 +26,28 @@ import (
 	"time"
 )
 
-type ZkClientObject struct {
-	Conn      ZkConn
+type ZkClientConnector struct {
+	Conn      ZkConnector
 	connected bool
 	stopCh    chan bool
 
-	watcher  ZkClientWatcher
+	watcher  ZkWatcher
 	rootNode ZkNode
 	hosts    []string
 }
 
-func NewZkClientObject() ZkClient {
-	return newZkClientObject()
+//Creates a new ZkClientConnector that implements ZkClient.
+func NewZkClientConnector() *ZkClientConnector {
+	return new(ZkClientConnector)
 }
 
-func newZkClientObject() *ZkClientObject {
-	return new(ZkClientObject)
-}
-
-func (c *ZkClientObject) Connect(uris []string, path string, watcher ZkClientWatcher) error {
+func (c *ZkClientConnector) Connect(uris []string, path string, watcher ZkWatcher) error {
 	if c.connected {
 		return nil
 	}
 
 	c.watcher = watcher
-	c.rootNode = NewZkDataNode(c, path)
+	c.rootNode = NewZkPath(c, path)
 	conn, ch, err := zk.Connect(uris, time.Second*5)
 	if err != nil {
 		return err
@@ -111,7 +108,7 @@ func (c *ZkClientObject) Connect(uris []string, path string, watcher ZkClientWat
 	return nil
 }
 
-func (c *ZkClientObject) WatchChildren(path string) error {
+func (c *ZkClientConnector) WatchChildren(path string) error {
 	if !c.connected {
 		return errors.New("Not connected to server.")
 	}
@@ -138,7 +135,7 @@ func (c *ZkClientObject) WatchChildren(path string) error {
 
 			switch e.Type {
 			case zk.EventNodeChildrenChanged:
-				node := NewZkDataNode(c, e.Path)
+				node := NewZkPath(c, e.Path)
 				if c.watcher != nil {
 					c.watcher.ChildrenChanged(c, node)
 				}
@@ -153,7 +150,7 @@ func (c *ZkClientObject) WatchChildren(path string) error {
 	return nil
 }
 
-func (c *ZkClientObject) Disconnect() {
+func (c *ZkClientConnector) Disconnect() {
 	c.Conn.Close()
 	c.connected = false
 	//c.stopCh <- true

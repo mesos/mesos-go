@@ -23,24 +23,24 @@ import (
 	"sort"
 )
 
-//ZkDataNode is an implementation of ZkNode.
+//ZkPath is an implementation of ZkNode.
 //It represents a zookeeper path entry with data and possibly children nodes.
-type ZkDataNode struct {
+type ZkPath struct {
 	Path     string
-	zkClient *ZkClientObject
+	ZkClient *ZkClientConnector
 }
 
-//NewZkDataNode creates a new ZkDataNode instance.
-func NewZkDataNode(zkClient *ZkClientObject, path string) ZkNode {
-	return &ZkDataNode{Path: path, zkClient: zkClient}
+//NewZkPath creates a new ZkPath instance.
+func NewZkPath(ZkClient *ZkClientConnector, path string) ZkNode {
+	return &ZkPath{Path: path, ZkClient: ZkClient}
 }
 
-func (n *ZkDataNode) Data() ([]byte, error) {
-	if !n.zkClient.connected {
+func (n *ZkPath) Data() ([]byte, error) {
+	if !n.ZkClient.connected {
 		return nil, errors.New("Unable to retrieve node data, client not connected.")
 	}
 
-	data, _, err := n.zkClient.Conn.Get(n.Path)
+	data, _, err := n.ZkClient.Conn.Get(n.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -48,12 +48,12 @@ func (n *ZkDataNode) Data() ([]byte, error) {
 	return data, nil
 }
 
-func (n *ZkDataNode) List() ([]ZkNode, error) {
-	if !n.zkClient.connected {
+func (n *ZkPath) List() ([]ZkNode, error) {
+	if !n.ZkClient.connected {
 		return nil, errors.New("Unable to list node children, client not connected.")
 	}
 
-	children, _, err := n.zkClient.Conn.Children(n.Path)
+	children, _, err := n.ZkClient.Conn.Children(n.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -63,11 +63,11 @@ func (n *ZkDataNode) List() ([]ZkNode, error) {
 
 	list := make([]ZkNode, len(children))
 	for i, child := range children {
-		list[i] = NewZkDataNode(n.zkClient, child)
+		list[i] = NewZkPath(n.ZkClient, child)
 	}
 	return list, nil
 }
 
-func (n *ZkDataNode) String() string {
+func (n *ZkPath) String() string {
 	return n.Path
 }

@@ -61,4 +61,7 @@ func TestUPIDEqual(t *testing.T) {
 	assert.False(t, u1.Equal(u3))
 	assert.False(t, u1.Equal(u4))
 	assert.False(t, u1.Equal(u5))
+	assert.False(t, u1.Equal(nil))
+	assert.False(t, (*UPID)(nil).Equal(u5))
+	assert.True(t, (*UPID)(nil).Equal(nil))
 }

@@ -50,13 +50,17 @@ func Parse(input string) (*UPID, error) {
 
 // String returns the string representation.
 func (u *UPID) String() string {
+	if u == nil {
+		return ""
+	}
 	return fmt.Sprintf("%s@%s:%s", u.ID, u.Host, u.Port)
 }
 
 // Equal returns true if two upid is equal
 func (u *UPID) Equal(upid *UPID) bool {
-	if u.ID == upid.ID && u.Host == upid.Host && u.Port == upid.Port {
-		return true
+	if u == nil {
+		return upid == nil
+	} else {
+		return upid != nil && u.ID == upid.ID && u.Host == upid.Host && u.Port == upid.Port
 	}
-	return false
 }

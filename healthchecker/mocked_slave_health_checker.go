@@ -21,8 +21,8 @@ package healthchecker
 import (
 	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/mesos/mesos-go/upid"
+	"github.com/stretchr/testify/mock"
 )
 
 type MockedHealthChecker struct {

@@ -20,12 +20,14 @@ package messenger
 
 import (
 	"github.com/mesos/mesos-go/upid"
+	"golang.org/x/net/context"
 )
 
 // Transporter defines methods for communicating with remote processes.
 type Transporter interface {
-	//Send sends message to remote process.
-	Send(msg *Message) error
+	//Send sends message to remote process. Must use context to determine
+	//cancelled requests.
+	Send(ctx context.Context, msg *Message) error
 
 	//Listen blocks and listens for incoming messages.
 	Listen() error
@@ -33,8 +35,9 @@ type Transporter interface {
 	//Rcvd receives and delegate message handling to installed handlers.
 	Recv() *Message
 
-	//Inject injects a message to the incoming queue.
-	Inject(msg *Message) error
+	//Inject injects a message to the incoming queue. Must use context to
+	//determine cancelled requests.
+	Inject(ctx context.Context, msg *Message) error
 
 	//Install mount an handler based on incoming message name.
 	Install(messageName string)

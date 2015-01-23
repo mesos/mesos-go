@@ -24,6 +24,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/mock"
+	"golang.org/x/net/context"
 )
 
 type message struct {
@@ -55,11 +56,11 @@ func (m *MockedMessenger) Install(handler MessageHandler, msg proto.Message) err
 }
 
 // Send is a mocked implementation.
-func (m *MockedMessenger) Send(upid *upid.UPID, msg proto.Message) error {
+func (m *MockedMessenger) Send(ctx context.Context, upid *upid.UPID, msg proto.Message) error {
 	return m.Called().Error(0)
 }
 
-func (m *MockedMessenger) Route(upid *upid.UPID, msg proto.Message) error {
+func (m *MockedMessenger) Route(ctx context.Context, upid *upid.UPID, msg proto.Message) error {
 	return m.Called().Error(0)
 }
 

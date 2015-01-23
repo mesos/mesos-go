@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	log "github.com/golang/glog"
+	"golang.org/x/net/context"
 )
 
 // HTTPTransporter implements the interfaces of the Transporter.
@@ -37,44 +38,60 @@ type HTTPTransporter struct {
 	upid         *upid.UPID
 	listener     net.Listener // TODO(yifan): Change to TCPListener.
 	mux          *http.ServeMux
+	tr           *http.Transport
 	client       *http.Client // TODO(yifan): Set read/write deadline.
 	messageQueue chan *Message
 }
 
 // NewHTTPTransporter creates a new http transporter.
 func NewHTTPTransporter(upid *upid.UPID) *HTTPTransporter {
+	tr := &http.Transport{}
 	return &HTTPTransporter{
 		upid:         upid,
 		messageQueue: make(chan *Message, defaultQueueSize),
 		mux:          http.NewServeMux(),
-		client:       new(http.Client),
+		client:       &http.Client{Transport: tr},
+		tr:           tr,
 	}
 }
 
 // Send sends the message to its specified upid.
-func (t *HTTPTransporter) Send(msg *Message) error {
+func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) error {
 	log.V(2).Infof("Sending message to %v via http\n", msg.UPID)
 	req, err := t.makeLibprocessRequest(msg)
 	if err != nil {
 		log.Errorf("Failed to make libprocess request: %v\n", err)
 		return err
 	}
-	resp, err := t.client.Do(req)
-	if err != nil {
-		log.Errorf("Failed to POST: %v\n", err)
+	return t.httpDo(ctx, req, func(resp *http.Response, err error) error {
+		if err != nil {
+			log.Infof("Failed to POST: %v\n", err)
+			return err
+		}
+		defer resp.Body.Close()
+
+		// ensure master acknowledgement.
+		if (resp.StatusCode != http.StatusOK) &&
+			(resp.StatusCode != http.StatusAccepted) {
+			msg := fmt.Sprintf("Master %s rejected %s.  Returned status %s.", msg.UPID, msg.RequestURI(), resp.Status)
+			log.Warning(msg)
+			return fmt.Errorf(msg)
+		}
+		return nil
+	})
+}
+
+func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(*http.Response, error) error) error {
+	c := make(chan error, 1)
+	go func() { c <- f(t.client.Do(req)) }()
+	select {
+	case <-ctx.Done():
+		t.tr.CancelRequest(req)
+		<-c // Wait for f to return.
+		return ctx.Err()
+	case err := <-c:
 		return err
 	}
-	defer resp.Body.Close()
-
-	// ensure master acknowledgement.
-	if (resp.StatusCode != http.StatusOK) &&
-		(resp.StatusCode != http.StatusAccepted) {
-		msg := fmt.Sprintf("Master %s rejected %s.  Returned status %s.", msg.UPID, msg.RequestURI(), resp.Status)
-		log.Errorln(msg)
-		return fmt.Errorf(msg)
-	}
-
-	return nil
 }
 
 // Recv returns the message, one at a time.
@@ -83,9 +100,13 @@ func (t *HTTPTransporter) Recv() *Message {
 }
 
 //Inject places a message into the incoming message queue.
-func (t *HTTPTransporter) Inject(msg *Message) error {
-	t.messageQueue <- msg
-	return nil
+func (t *HTTPTransporter) Inject(ctx context.Context, msg *Message) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case t.messageQueue <- msg:
+		return nil
+	}
 }
 
 // Install the request URI according to the message's name.

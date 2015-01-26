@@ -22,22 +22,34 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
 	sched "github.com/mesos/mesos-go/scheduler"
-	"strconv"
 )
 
 const (
 	CPUS_PER_TASK = 1
 	MEM_PER_TASK  = 128
+	defaultArtifactPort = 12345
 )
 
-var master = flag.String("master", "127.0.0.1:5050", "Master address <ip:port>")
-var execUri = flag.String("executor", "./test_executor", "Path to test executor")
-var taskCount = flag.String("task-count", "5", "Total task count to run.")
+var (
+	address = flag.String("address", "127.0.0.1", "Binding address for artifact server")
+	artifactPort = flag.Int("artifactPort", defaultArtifactPort, "Binding port for artifact server")
+	master = flag.String("master", "127.0.0.1:5050", "Master address <ip:port>")
+	executorPath = flag.String("executor", "./test_executor", "Path to test executor")
+	taskCount = flag.String("task-count", "5", "Total task count to run.")
+	mesosAuthPrincipal  = flag.String("mesos_authentication_principal", "", "Mesos authentication principal.")
+	mesosAuthSecretFile = flag.String("mesos_authentication_secret_file", "", "Mesos authentication secret file.")
+)
 
 type ExampleScheduler struct {
 	executor      *mesos.ExecutorInfo
@@ -167,17 +179,58 @@ func init() {
 	log.Infoln("Initializing the Example Scheduler...")
 }
 
+// returns (downloadURI, basename(path))
+func serveExecutorArtifact(path string) (*string, string) {
+        serveFile := func(pattern string, filename string) {
+                http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+                        http.ServeFile(w, r, filename)
+                })
+        }
+
+        // Create base path (http://foobar:5000/<base>)
+        pathSplit := strings.Split(path, "/")
+        var base string
+        if len(pathSplit) > 0 {
+                base = pathSplit[len(pathSplit)-1]
+        } else {
+                base = path
+        }
+        serveFile("/"+base, path)
+
+        hostURI := fmt.Sprintf("http://%s:%d/%s", *address, *artifactPort, base)
+        log.V(2).Infof("Hosting artifact '%s' at '%s'", path, hostURI)
+
+        return &hostURI, base
+}
+
+func prepareExecutorInfo() *mesos.ExecutorInfo {
+        executorUris := []*mesos.CommandInfo_URI{}
+        uri, executorCmd := serveExecutorArtifact(*executorPath)
+        executorUris = append(executorUris, &mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
+
+        executorCommand := fmt.Sprintf("./%s", executorCmd)
+
+        go http.ListenAndServe(fmt.Sprintf("%s:%d", *address, *artifactPort), nil)
+        log.V(2).Info("Serving executor artifacts...")
+
+        // Create mesos scheduler driver.
+        return &mesos.ExecutorInfo{
+		ExecutorId: util.NewExecutorID("default"),
+		Name:       proto.String("Test Executor (Go)"),
+		Source:     proto.String("go_test"),
+                Command: &mesos.CommandInfo{
+                        Value: proto.String(executorCommand),
+                        Uris:  executorUris,
+                },
+        }
+}
+
 // ----------------------- func main() ------------------------- //
 
 func main() {
 
 	// build command executor
-	exec := &mesos.ExecutorInfo{
-		ExecutorId: util.NewExecutorID("default"),
-		Name:       proto.String("Test Executor (Go)"),
-		Source:     proto.String("go_test"),
-		Command:    util.NewCommandInfo(*execUri),
-	}
+	exec := prepareExecutorInfo()
 
 	// the framework
 	fwinfo := &mesos.FrameworkInfo{
@@ -185,11 +238,24 @@ func main() {
 		Name: proto.String("Test Framework (Go)"),
 	}
 
+	cred := (*mesos.Credential)(nil)
+	if *mesosAuthPrincipal != "" {
+                fwinfo.Principal = proto.String(*mesosAuthPrincipal)
+                secret, err := ioutil.ReadFile(*mesosAuthSecretFile)
+                if err != nil {
+                        log.Fatal(err)
+                }
+                cred = &mesos.Credential{
+                        Principal: proto.String(*mesosAuthPrincipal),
+                        Secret:    secret,
+                }
+        }
+
 	driver, err := sched.NewMesosSchedulerDriver(
 		newExampleScheduler(exec),
 		fwinfo,
 		*master,
-		nil,
+		cred,
 	)
 
 	if err != nil {

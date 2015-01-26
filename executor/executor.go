@@ -19,17 +19,19 @@
 package executor
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"fmt"
+	"os"
+	"sync"
+	"time"
+
+	"code.google.com/p/go-uuid/uuid"
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
-	"os"
-	"sync"
-	"time"
+	"golang.org/x/net/context"
 )
 
 // MesosExecutorDriver is a implementation of the ExecutorDriver.
@@ -76,7 +78,7 @@ func NewMesosExecutorDriver(exec Executor) (*MesosExecutorDriver, error) {
 		workDir:   ".",
 	}
 	// TODO(yifan): Set executor cnt.
-	driver.messenger = messenger.NewMesosMessenger(&upid.UPID{ID: "executor(1)"})
+	driver.messenger = messenger.NewHttp(&upid.UPID{ID: "executor(1)"})
 	if err := driver.init(); err != nil {
 		log.Errorf("Failed to initialize the driver: %v\n", err)
 		return nil, err
@@ -221,6 +223,23 @@ func (driver *MesosExecutorDriver) reregistered(from *upid.UPID, pbMsg proto.Mes
 	driver.exec.Reregistered(driver, slaveInfo)
 }
 
+func (driver *MesosExecutorDriver) send(upid *upid.UPID, msg proto.Message) error {
+	//TODO(jdef) should implement timeout here
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
+	c := make(chan error, 1)
+	go func() { c <- driver.messenger.Send(ctx, upid, msg) }()
+
+	select {
+	case <-ctx.Done():
+		<-c // wait for Send(...)
+		return ctx.Err()
+	case err := <-c:
+		return err
+	}
+}
+
 func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Message) {
 	log.Infoln("Executor driver reconnect")
 
@@ -248,7 +267,7 @@ func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Messag
 		message.Tasks = append(message.Tasks, t)
 	}
 	// Send the message.
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+	if err := driver.send(driver.slaveUPID, message); err != nil {
 		log.Errorf("Failed to send %v: %v\n")
 	}
 }
@@ -379,7 +398,7 @@ func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
 		ExecutorId:  driver.executorID,
 	}
 
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+	if err := driver.send(driver.slaveUPID, message); err != nil {
 		stat := driver.Status()
 		log.Errorf("Stopping the executor, failed to send %v: %v\n", message, err)
 		err0 := driver.stop(stat)
@@ -494,7 +513,7 @@ func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskS
 		Pid:    proto.String(driver.self.String()),
 	}
 	// Send the message.
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+	if err := driver.send(driver.slaveUPID, message); err != nil {
 		log.Errorf("Failed to send %v: %v\n", message, err)
 		return driver.status, err
 	}
@@ -535,7 +554,7 @@ func (driver *MesosExecutorDriver) SendFrameworkMessage(data string) (mesosproto
 	}
 
 	// Send the message.
-	if err := driver.messenger.Send(driver.slaveUPID, message); err != nil {
+	if err := driver.send(driver.slaveUPID, message); err != nil {
 		log.Errorln("Failed to send message %v: %v", message, err)
 		return driver.status, err
 	}

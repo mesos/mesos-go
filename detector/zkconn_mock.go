@@ -19,6 +19,7 @@
 package detector
 
 import (
+	log "github.com/golang/glog"
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/mock"
 )
@@ -38,6 +39,7 @@ func (conn *MockZkConnector) Close() {
 }
 
 func (conn *MockZkConnector) ChildrenW(path string) ([]string, *zk.Stat, <-chan zk.Event, error) {
+	log.V(2).Infoln("Invoking Mocked zk.Conn.ChidrenW")
 	args := conn.Called(path)
 	return args.Get(0).([]string),
 		args.Get(1).(*zk.Stat),

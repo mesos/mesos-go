@@ -9,33 +9,9 @@ import (
 	"time"
 )
 
-// zkChildrenWatcher interface for handling watcher event
-// when zk.EventNodeChildrenChanged.
-type zkChildrenWatcher interface {
-	childrenChanged(*zkClient, string)
-}
-
-// zkChildrenWatcherFunk adapter function type to facade the interface.
-type zkChildrenWatcherFunc func(*zkClient, string)
-
-func (fn zkChildrenWatcherFunc) childrenChanged(zkc *zkClient, path string) {
-	fn(zkc, path)
-}
-
-// zkErrorWatcher interface for handling errors.
-type zkErrorWatcher interface {
-	errorOccured(*zkClient, error)
-}
-
-// zkErrorWatcherFunc adapter function to facade zkErrorWatcher.
-type zkErrorWatcherFunc func(*zkClient, error)
-
-func (fn zkErrorWatcherFunc) errorOccured(zkc *zkClient, err error) {
-	fn(zkc, err)
-}
-
 type zkClient struct {
 	conn            zkConnector
+	connFactory     zkConnFactory
 	hosts           []string
 	connTimeout     time.Duration
 	connected       bool
@@ -60,7 +36,18 @@ func (zkc *zkClient) connect() error {
 		return nil
 	}
 
-	conn, ch, err := zk.Connect(zkc.hosts, zkc.connTimeout)
+	var conn zkConnector
+	var ch <-chan zk.Event
+	var err error
+
+	if zkc.connFactory == nil {
+		var c *zk.Conn
+		c, ch, err = zk.Connect(zkc.hosts, zkc.connTimeout)
+		conn = zkConnector(c)
+	} else {
+		conn, ch, err = zkc.connFactory.create()
+	}
+
 	if err != nil {
 		return err
 	}
@@ -85,7 +72,7 @@ func (zkc *zkClient) connect() error {
 
 				case zk.StateConnected:
 					zkc.connected = true
-					log.Infoln("Connected to zookeeper at", zkc.hosts)
+					log.Infoln("ZkClient connected to server.")
 					close(waitConnCh)
 
 				case zk.StateSyncConnected:
@@ -110,6 +97,7 @@ func (zkc *zkClient) connect() error {
 			log.Errorf(err.Error())
 			return err
 		}
+		log.V(2).Infoln("Connection confirmed.")
 	case <-time.After(zkc.connTimeout):
 		return fmt.Errorf("Unable to confirm connection after %v.", time.Second*5)
 	}
@@ -148,8 +136,12 @@ func (zkc *zkClient) watchChildren(path string) error {
 
 			switch e.Type {
 			case zk.EventNodeChildrenChanged:
+				log.V(2).Infoln("Handling: zk.EventNodeChildrenChanged")
 				if zkc.childrenWatcher != nil {
+					log.V(2).Infoln("ChildrenWatcher handler found.")
 					zkc.childrenWatcher.childrenChanged(zkc, e.Path)
+				} else {
+					log.Warningln("WARN: No ChildrenWatcher handler found.")
 				}
 			}
 		}

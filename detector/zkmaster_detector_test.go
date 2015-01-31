@@ -1,11 +1,13 @@
 package detector
 
 import (
-	_ "github.com/golang/glog"
+	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
-	_ "github.com/samuel/go-zookeeper/zk"
+	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
 	"net/url"
+	"strconv"
+	"sync"
 	"testing"
 	"time"
 )
@@ -51,7 +53,8 @@ func TestZkMasterDetectorChildrenChanged(t *testing.T) {
 	assert.True(t, c.connected)
 
 	md.Detect(func(master *mesos.MasterInfo) {
-		println("Hello!")
+		assert.NotNil(t, master)
+		assert.Equal(t, master.GetId(), "master@localhost:5050")
 		wCh <- struct{}{}
 	})
 
@@ -60,46 +63,67 @@ func TestZkMasterDetectorChildrenChanged(t *testing.T) {
 	case <-time.After(time.Second * 3):
 		panic("Waited too long...")
 	}
-
 }
 
-// type testDataNode string
+func TestZkMasterDetectMultiple(t *testing.T) {
+	ch0 := make(chan zk.Event, 1)
+	ch1 := make(chan zk.Event, 1)
+	var wg sync.WaitGroup
 
-// func (n testDataNode) Data() ([]byte, error) {
-// 	return []byte("Hello"), nil
-// }
+	ch0 <- zk.Event{
+		State: zk.StateConnected,
+		Path:  test_zk_path,
+	}
 
-// func (n testDataNode) List() ([]zookeeper.ZkNode, error) {
-// 	return []zookeeper.ZkNode{
-// 		testDataNode("info_001"),
-// 		testDataNode("info_002"),
-// 		testDataNode("info_003"),
-// 	}, nil
-// }
+	c, err := newZkClient(test_zk_hosts, test_zk_path)
+	assert.NoError(t, err)
 
-// func (n testDataNode) String() string {
-// 	return string(n)
-// }
+	connector := makeMockConnector(test_zk_path, ch1)
+	c.connFactory = zkConnFactoryFunc(func() (zkConnector, <-chan zk.Event, error) {
+		log.V(2).Infof("**** Using zk.Conn adapter ****")
+		return connector, ch0, nil
+	})
 
-// func createClient(watcher zookeeper.ZkWatcher) *zookeeper.ZkClientConnector {
-// 	c := zookeeper.NewZkClientConnector()
-// 	conn := NewMockZkConnector()
-// 	conn.On("Close").Return(nil)
-// 	conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, chEvent, nil)
-// 	conn.On("Children").Return([]string{"x", "a", "d"}, &zk.Stat{}, nil)
-// 	conn.On("Get", path).Return([]byte("Hello"), &zk.Stat{}, nil)
-// 	c.Conn = conn
-// 	c.connected = true
-// 	c.rootNode = NewZkPath(c, path)
-// 	return c
+	md, err := NewZkMasterDetector(zkurl)
+	assert.NoError(t, err)
+	md.zkClient = c
+	md.zkClient.childrenWatcher = zkChildrenWatcherFunc(md.childrenChanged)
 
-// 	// c := zookeeper.New()
-// 	// c.Connected = true
-// 	// c.Watcher = watcher
-// 	// c.WatchChildren("/mesos")
-// 	// c.On("Connect").Return(nil)
-// 	// c.On("WatchChildren").Return(nil)
-// 	// c.On("Disconnect").Return()
+	err = md.Start()
+	assert.NoError(t, err)
+	assert.True(t, c.connected)
 
-// 	// return c
-// }
+	md.Detect(func(master *mesos.MasterInfo) {
+		log.V(2).Infoln("Leader change detected.")
+		wg.Done()
+	})
+
+	// **** Test 4 consecutive ChildrenChangedEvents ******
+	// setup event changes
+	sequences := [][]string{
+		[]string{"info_005", "info_010", "info_022"},
+		[]string{"info_014", "info_010", "info_005"},
+		[]string{"info_005", "info_004", "info_022"},
+		[]string{"info_017", "info_099", "info_200"},
+	}
+	wg.Add(3) // leader changes 3 times.
+
+	go func() {
+		conn := NewMockZkConnector()
+		md.zkClient.conn = conn
+
+		for i := range sequences {
+			path := "/test" + strconv.Itoa(i)
+			conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, (<-chan zk.Event)(ch1), nil)
+			conn.On("Children", path).Return(sequences[i], &zk.Stat{}, nil)
+			conn.On("Get", path).Return(makeTestMasterInfo(), &zk.Stat{}, nil)
+			md.zkClient.rootPath = path
+			ch1 <- zk.Event{
+				Type: zk.EventNodeChildrenChanged,
+				Path: path,
+			}
+		}
+	}()
+
+	wg.Wait()
+}

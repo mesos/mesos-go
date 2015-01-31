@@ -22,7 +22,10 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	"math"
 	"net/url"
+	"strconv"
+	"strings"
 )
 
 // ZkMasterDetector uses ZooKeeper to detect new leading master.
@@ -74,27 +77,20 @@ func (md *ZkMasterDetector) Stop() error {
 
 func (md *ZkMasterDetector) childrenChanged(zkc *zkClient, path string) {
 	list, err := zkc.list(path)
-
 	if err != nil {
-		log.Errorf("Unable to retrieve children list for %s\n", path)
-		return
-	}
-	if len(list) == 0 {
-		log.Errorf("Node %s has no children\n", path)
 		return
 	}
 
-	log.V(2).Infoln("ChildrenChanged handler invoked for path ", path)
+	topNode := md.selectTopNode(list)
 
-	// list is sorted (ascending).  So, first element is leader.
-	leaderNode := list[0]
-	if md.leaderNode == path {
-		log.V(2).Infof("Ignoring ChildrenChanged event for node %s, leader has not changed.", path)
+	if md.leaderNode == topNode {
+		log.V(2).Infof("Ignoring children-changed event %s, leader has not changed.", path)
 		return
 	}
 
-	md.leaderNode = leaderNode
-	log.V(2).Infoln("Leader path set to ", path)
+	log.V(2).Infof("Changing leader node from %s -> %s\n", md.leaderNode, topNode)
+	md.leaderNode = topNode
+
 	data, err := zkc.data(path)
 	if err != nil {
 		log.Errorln("Unable to retrieve leader data:", err.Error())
@@ -122,4 +118,29 @@ func (md *ZkMasterDetector) Detect(f func(*mesos.MasterInfo)) error {
 	}
 
 	return nil
+}
+
+func (md *ZkMasterDetector) selectTopNode(list []string) string {
+	var leaderSeq uint64 = math.MaxUint64
+
+	for _, v := range list {
+		seqStr := strings.TrimPrefix(v, md.nodePrefix)
+		seq, err := strconv.ParseUint(seqStr, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		if seq < leaderSeq {
+			leaderSeq = seq
+		}
+	}
+
+	if leaderSeq == math.MaxInt64 {
+		log.V(3).Infoln("No top node found.")
+		return ""
+	}
+
+	node := md.nodePrefix + strconv.FormatUint(leaderSeq, 10)
+	log.V(3).Infoln("Top node selected: ", node)
+	return node
 }

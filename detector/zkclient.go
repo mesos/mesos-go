@@ -5,7 +5,6 @@ import (
 	"fmt"
 	log "github.com/golang/glog"
 	"github.com/samuel/go-zookeeper/zk"
-	"sort"
 	"time"
 )
 
@@ -166,8 +165,6 @@ func (zkc *zkClient) list(path string) ([]string, error) {
 		return nil, err
 	}
 
-	// sort children (ascending).
-	sort.Strings(children)
 	return children, nil
 }
 

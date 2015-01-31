@@ -66,10 +66,9 @@ func TestZkClientWatchChildren(t *testing.T) {
 		children, err := c.list(path)
 		assert.NoError(t, err)
 		assert.Equal(t, 3, len(children))
-		// assert sorted children
-		assert.Equal(t, "a", children[0])
-		assert.Equal(t, "d", children[1])
-		assert.Equal(t, "x", children[2])
+		assert.Equal(t, "info_0", children[0])
+		assert.Equal(t, "info_5", children[1])
+		assert.Equal(t, "info_10", children[2])
 		wCh <- struct{}{}
 	})
 
@@ -145,15 +144,17 @@ func makeMockConnector(path string, chEvent <-chan zk.Event) *MockZkConnector {
 	conn := NewMockZkConnector()
 	conn.On("Close").Return(nil)
 	conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, chEvent, nil)
-	conn.On("Children").Return([]string{"x", "a", "d"}, &zk.Stat{}, nil)
+	conn.On("Children", path).Return([]string{"info_0", "info_5", "info_10"}, &zk.Stat{}, nil)
+	conn.On("Get", path).Return(makeTestMasterInfo(), &zk.Stat{}, nil)
 
+	return conn
+}
+
+func makeTestMasterInfo() []byte {
 	miPb := util.NewMasterInfo("master@localhost:5050", 123456789, 400)
 	data, err := proto.Marshal(miPb)
 	if err != nil {
 		panic(err)
 	}
-
-	conn.On("Get", path).Return(data, &zk.Stat{}, nil)
-
-	return conn
+	return data
 }

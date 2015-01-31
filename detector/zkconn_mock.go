@@ -48,9 +48,10 @@ func (conn *MockZkConnector) ChildrenW(path string) ([]string, *zk.Stat, <-chan 
 }
 
 func (conn *MockZkConnector) Children(path string) ([]string, *zk.Stat, error) {
-	return conn.Called().Get(0).([]string),
-		conn.Called().Get(1).(*zk.Stat),
-		conn.Called().Error(2)
+	args := conn.Called(path)
+	return args.Get(0).([]string),
+		args.Get(1).(*zk.Stat),
+		args.Error(2)
 }
 
 func (conn *MockZkConnector) Get(path string) ([]byte, *zk.Stat, error) {

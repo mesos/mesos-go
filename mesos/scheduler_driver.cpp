@@ -240,6 +240,24 @@ SchedulerDriverStatus scheduler_launchTasks(
   return mdriver->launchTasks(offer, taskInfos, filters_);
 }
 
+SchedulerDriverStatus scheduler_reconcileTasks(
+    SchedulerDriverPtr driver,
+    ProtobufObj* statuses)
+{
+  TRACE("scheduler_reconcileTasks()\n");
+  assert(driver != NULL);
+  assert(statuses != NULL);
+
+  MesosSchedulerDriver* mdriver =
+      reinterpret_cast<MesosSchedulerDriver*>(driver);
+
+  vector<TaskStatus> taskStatuses;
+  if (!utils::deserialize<TaskStatus>(taskStatuses, statuses)) {
+    return DRIVER_ABORTED;
+  }
+
+  return mdriver->reconcileTasks(taskStatuses);
+}
 
 SchedulerDriverStatus scheduler_killTask(
     SchedulerDriverPtr driver,

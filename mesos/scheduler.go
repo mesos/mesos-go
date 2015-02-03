@@ -84,17 +84,18 @@ type Scheduler interface {
 // ScheduerDriver defines the interfaces that needed to be implemented.
 type SchedulerDriver interface {
 	Init() error
-	Start() (Status,error)
-	Stop(bool) (Status,error)
-	Abort() (Status,error)
-	Join() (Status,error)
-	Run() (Status,error)
+	Start() (Status, error)
+	Stop(bool) (Status, error)
+	Abort() (Status, error)
+	Join() (Status, error)
+	Run() (Status, error)
 	RequestResources([]*Request) error
 	LaunchTasks(*OfferID, []*TaskInfo, *Filters) error
 	KillTask(*TaskID) error
 	DeclineOffer(*OfferID, *Filters) error
 	ReviveOffers() error
 	SendFrameworkMessage(*ExecutorID, *SlaveID, string) error
+	ReconcileTasks([]*TaskStatus) error
 	Destroy()
 	Wait()
 }
@@ -376,6 +377,32 @@ func (sdriver *MesosSchedulerDriver) SendFrameworkMessage(
 			&executorMessage,
 			&slaveMessage,
 			cdata)
+	} else {
+		return ErrSchedulerNotInitialized
+	}
+
+	return nil
+}
+
+func (sdriver *MesosSchedulerDriver) ReconcileTasks(statusList []*TaskStatus) error {
+	if sdriver.driver != nil {
+		var statusData []byte
+		for _, status := range statusList {
+			statusItemData, err := serializeItem(status)
+			if err != nil {
+				return err
+			}
+			statusData = append(statusData, statusItemData...)
+		}
+
+		statusListObj := C.ProtobufObj{
+			data: unsafe.Pointer(&statusData[0]),
+			size: C.size_t(len(statusData)),
+		}
+
+		C.scheduler_reconcileTasks(
+			C.SchedulerDriverPtr(sdriver.driver),
+			&statusListObj)
 	} else {
 		return ErrSchedulerNotInitialized
 	}

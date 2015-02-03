@@ -137,6 +137,10 @@ SchedulerPtrPair scheduler_init(
 
 void scheduler_destroy(void* driver, void* scheduler);
 
+SchedulerDriverStatus scheduler_reconcileTasks(
+    SchedulerDriverPtr driver,
+    ProtobufObj* statuses);
+
 //
 // Executor driver calls
 //

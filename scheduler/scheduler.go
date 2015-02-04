@@ -662,7 +662,10 @@ func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) (mesos.Status
 		return driver.Status(), fmt.Errorf("Not connected to master")
 	}
 
-	message := &mesos.KillTaskMessage{TaskId: taskId}
+	message := &mesos.KillTaskMessage{
+		FrameworkId: driver.FrameworkInfo.Id,
+		TaskId:      taskId,
+	}
 
 	if err := driver.send(driver.MasterPid, message); err != nil {
 		log.Errorf("Failed to send KillTask message: %v\n", err)

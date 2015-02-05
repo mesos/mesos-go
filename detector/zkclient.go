@@ -12,8 +12,15 @@ type zkClient struct {
 	conn            zkConnector
 	connFactory     zkConnFactory
 	hosts           []string
+	sessionTimeout  time.Duration
 	connTimeout     time.Duration
+	connecting      bool
 	connected       bool
+	reconnCount     int
+	reconnMax       int
+	reconnDelay     time.Duration
+	state           zk.State
+	sessionId       int64
 	stopCh          chan bool
 	rootPath        string
 	childrenWatcher zkChildrenWatcher
@@ -23,7 +30,10 @@ type zkClient struct {
 func newZkClient(hosts []string, path string) (*zkClient, error) {
 	zkc := new(zkClient)
 	zkc.hosts = hosts
-	zkc.connTimeout = time.Second * 5
+	zkc.sessionTimeout = time.Second * 60
+	zkc.connTimeout = time.Second * 20
+	zkc.reconnMax = 5
+	zkc.reconnDelay = time.Second * 5
 	zkc.rootPath = path
 
 	// TODO: validate  URIs
@@ -31,20 +41,59 @@ func newZkClient(hosts []string, path string) (*zkClient, error) {
 }
 
 func (zkc *zkClient) connect() error {
-	if zkc.connected {
+	if zkc.connected || zkc.connecting {
 		return nil
 	}
 
+	zkc.reconnCount = 0
+	zkc.connecting = true
+	err := zkc.doConnect()
+	if err != nil {
+		return err
+	}
+	zkc.connecting = false
+	return nil
+}
+
+func (zkc *zkClient) reconnect() error {
+	if zkc.connecting {
+		log.V(4).Infoln("Ignoring reconnect, currently connecting.")
+		return nil
+	}
+
+	// have we reached max count.
+	// call connect() to reset count.
+	if zkc.reconnCount >= zkc.reconnMax {
+		log.V(4).Infoln("Ignoring reconnect, reconnMax reached. Call connect() to reset.")
+		return nil
+	}
+	log.V(4).Infoln("Delaying reconnection for ", zkc.reconnDelay)
+	<-time.After(zkc.reconnDelay)
+
+	zkc.conn.Close() // kill any current conn.
+	zkc.connected = false
+	err := zkc.doConnect()
+	if err != nil {
+		return err
+	}
+	zkc.reconnCount++
+	return nil
+}
+
+func (zkc *zkClient) doConnect() error {
 	var conn zkConnector
 	var ch <-chan zk.Event
 	var err error
 
+	// create zkConnector instance
 	if zkc.connFactory == nil {
 		var c *zk.Conn
 		c, ch, err = zk.Connect(zkc.hosts, zkc.connTimeout)
 		conn = zkConnector(c)
+		log.V(4).Infof("Created connection object of type %T\n", conn)
 	} else {
 		conn, ch, err = zkc.connFactory.create()
+		log.V(4).Infof("Created connection object of type %T\n", conn)
 	}
 
 	if err != nil {
@@ -52,10 +101,9 @@ func (zkc *zkClient) connect() error {
 	}
 
 	zkc.conn = conn
-
-	// make sure connection succeeds: wait for conn notification.
+	zkc.connecting = true
 	waitConnCh := make(chan struct{})
-	go func() {
+	go func(waitCh chan struct{}) {
 		for {
 			select {
 			case e := <-ch:
@@ -70,34 +118,34 @@ func (zkc *zkClient) connect() error {
 					log.Infoln("Connecting to zookeeper...")
 
 				case zk.StateConnected:
-					zkc.connected = true
-					log.Infoln("ZkClient connected to server.")
-					close(waitConnCh)
+					zkc.onConnected(e)
+					close(waitCh)
 
 				case zk.StateSyncConnected:
-					zkc.connected = true
 					log.Infoln("SyncConnected to zookper server")
+
 				case zk.StateDisconnected:
-					log.Infoln("Disconnected from zookeeper server")
-					zkc.disconnect()
+					zkc.onDisconnected(e)
+
 				case zk.StateExpired:
 					log.Infoln("Zookeeper client session expired, disconnecting.")
 					//zkc.disconnect()
 				}
 			}
 		}
-	}()
+	}(waitConnCh)
 
 	// wait for connected confirmation
 	select {
 	case <-waitConnCh:
+		zkc.connecting = false
 		if !zkc.connected {
-			err := errors.New("Unabe to confirm connected state.")
-			log.Errorf(err.Error())
-			return err
+			log.V(4).Infof("No connection established within %s\n", zkc.connTimeout.String())
+			return zkc.reconnect()
 		}
 		log.V(2).Infoln("Connection confirmed.")
 	case <-time.After(zkc.connTimeout):
+		zkc.connecting = false
 		return fmt.Errorf("Unable to confirm connection after %v.", time.Second*5)
 	}
 
@@ -105,6 +153,12 @@ func (zkc *zkClient) connect() error {
 }
 
 func (zkc *zkClient) disconnect() error {
+	if !zkc.connected {
+		return nil
+	}
+	zkc.conn.Close()
+	zkc.connecting = false
+	zkc.connected = false
 	return nil
 }
 
@@ -153,6 +207,25 @@ func (zkc *zkClient) watchChildren(path string) error {
 		}
 	}(children)
 	return nil
+}
+
+func (zkc *zkClient) onConnected(e zk.Event) {
+	if zkc.connected {
+		return
+	}
+	zkc.connected = true
+	zkc.state = e.State
+	log.Infoln("ZkClient connected to server.")
+}
+
+func (zkc *zkClient) onDisconnected(e zk.Event) {
+	if !zkc.connected {
+		return
+	}
+	zkc.connected = false
+	zkc.state = e.State
+	log.Infoln("Disconnected from the server, reconnecting...")
+	zkc.reconnect() // try to reconnect
 }
 
 func (zkc *zkClient) list(path string) ([]string, error) {

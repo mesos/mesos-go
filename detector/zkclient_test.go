@@ -53,6 +53,59 @@ func TestZkClientConnect(t *testing.T) {
 	assert.False(t, c.connected)
 	c.connect()
 	assert.True(t, c.connected)
+	assert.False(t, c.connecting)
+}
+
+func TestZkClientDisconnect(t *testing.T) {
+	c, err := makeZkClient()
+	assert.False(t, c.connected)
+	err = c.connect()
+	assert.NoError(t, err)
+	assert.True(t, c.connected)
+	err = c.disconnect()
+	assert.NoError(t, err)
+	assert.False(t, c.connected)
+}
+
+func TestZkClientDisconnectedEvent(t *testing.T) {
+	ch0 := make(chan zk.Event, 3)
+	ch1 := make(chan zk.Event, 1)
+
+	c, err := newZkClient(test_zk_hosts, test_zk_path)
+	assert.NoError(t, err)
+
+	c.connFactory = zkConnFactoryFunc(func() (zkConnector, <-chan zk.Event, error) {
+		log.V(2).Infof("**** Using zk.Conn adapter ****")
+		connector := makeMockConnector(test_zk_path, ch1)
+		return connector, ch0, nil
+	})
+
+	// put connecting, connected events.
+	ch0 <- zk.Event{
+		State: zk.StateConnecting,
+		Path:  test_zk_path,
+	}
+	ch0 <- zk.Event{
+		State: zk.StateConnected,
+		Path:  test_zk_path,
+	}
+	time.Sleep(time.Millisecond * 7)
+	assert.False(t, c.connected)
+	c.connect()
+	assert.True(t, c.connected)
+	assert.False(t, c.connecting)
+
+	// send disconnecting
+	// c.reconnDelay = time.Millisecond * 100
+
+	// ch0 <- zk.Event{
+	// 	State: zk.StateDisconnected,
+	// 	Path:  test_zk_path,
+	// }
+	// time.Sleep(time.Millisecond * 5000)
+	// assert.True(t, c.connected)
+	// assert.False(t, c.connecting)
+
 }
 
 func TestZkClientWatchChildren(t *testing.T) {

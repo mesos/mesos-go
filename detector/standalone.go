@@ -5,23 +5,23 @@ import (
 	mesos "github.com/mesos/mesos-go/mesosproto"
 )
 
-type StandaloneMasterDetector struct {
+type Standalone struct {
 	ch chan *mesos.MasterInfo
 }
 
 // Create a new stand alone master detector.
-func NewStandaloneMasterDetector() *StandaloneMasterDetector {
-	return &StandaloneMasterDetector{make(chan *mesos.MasterInfo)}
+func NewStandalone() *Standalone {
+	return &Standalone{make(chan *mesos.MasterInfo)}
 }
 
 // Trigger a master detected event.
-func (s *StandaloneMasterDetector) Appoint(m *mesos.MasterInfo) {
+func (s *Standalone) Appoint(m *mesos.MasterInfo) {
 	log.V(2).Infoln("Appoint")
 	s.ch <- m
 }
 
 // Detecting the new master.
-func (s *StandaloneMasterDetector) Detect(receiver chan *mesos.MasterInfo) error {
+func (s *Standalone) Detect(o MasterChanged) error {
 	// go func() {
 	// 	for {
 	// 		receiver <- s.ch
@@ -32,6 +32,11 @@ func (s *StandaloneMasterDetector) Detect(receiver chan *mesos.MasterInfo) error
 }
 
 // Stop the detection.
-func (s *StandaloneMasterDetector) Stop() {
-	close(s.ch)
+func (s *Standalone) Stop() {
+	select {
+	case <-s.ch:
+		// already closed, don't close it again
+	default:
+		close(s.ch)
+	}
 }

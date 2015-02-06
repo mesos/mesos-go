@@ -1,16 +1,17 @@
-package detector
+package zoo
 
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	log "github.com/golang/glog"
 	"github.com/samuel/go-zookeeper/zk"
-	"time"
 )
 
-type zkClient struct {
-	conn            zkConnector
-	connFactory     zkConnFactory
+type Client struct {
+	conn            Connector
+	connFactory     Factory
 	hosts           []string
 	sessionTimeout  time.Duration
 	connTimeout     time.Duration
@@ -23,12 +24,12 @@ type zkClient struct {
 	sessionId       int64
 	stopCh          chan bool
 	rootPath        string
-	childrenWatcher zkChildrenWatcher
-	errorWatcher    zkErrorWatcher
+	childrenWatcher ChildWatcher
+	errorWatcher    ErrorWatcher
 }
 
-func newZkClient(hosts []string, path string) (*zkClient, error) {
-	zkc := new(zkClient)
+func newClient(hosts []string, path string) (*Client, error) {
+	zkc := new(Client)
 	zkc.hosts = hosts
 	zkc.sessionTimeout = time.Second * 60
 	zkc.connTimeout = time.Second * 20
@@ -40,7 +41,7 @@ func newZkClient(hosts []string, path string) (*zkClient, error) {
 	return zkc, nil
 }
 
-func (zkc *zkClient) connect() error {
+func (zkc *Client) connect() error {
 	if zkc.connected || zkc.connecting {
 		return nil
 	}
@@ -55,7 +56,7 @@ func (zkc *zkClient) connect() error {
 	return nil
 }
 
-func (zkc *zkClient) reconnect() error {
+func (zkc *Client) reconnect() error {
 	if zkc.connecting {
 		log.V(4).Infoln("Ignoring reconnect, currently connecting.")
 		return nil
@@ -80,16 +81,16 @@ func (zkc *zkClient) reconnect() error {
 	return nil
 }
 
-func (zkc *zkClient) doConnect() error {
-	var conn zkConnector
+func (zkc *Client) doConnect() error {
+	var conn Connector
 	var ch <-chan zk.Event
 	var err error
 
-	// create zkConnector instance
+	// create Connector instance
 	if zkc.connFactory == nil {
 		var c *zk.Conn
 		c, ch, err = zk.Connect(zkc.hosts, zkc.connTimeout)
-		conn = zkConnector(c)
+		conn = Connector(c)
 		log.V(4).Infof("Created connection object of type %T\n", conn)
 	} else {
 		conn, ch, err = zkc.connFactory.create()
@@ -152,7 +153,7 @@ func (zkc *zkClient) doConnect() error {
 	return nil
 }
 
-func (zkc *zkClient) disconnect() error {
+func (zkc *Client) disconnect() error {
 	if !zkc.connected {
 		return nil
 	}
@@ -162,7 +163,7 @@ func (zkc *zkClient) disconnect() error {
 	return nil
 }
 
-func (zkc *zkClient) watchChildren(path string) error {
+func (zkc *Client) watchChildren(path string) error {
 	if !zkc.connected {
 		return errors.New("Not connected to server.")
 	}
@@ -209,16 +210,16 @@ func (zkc *zkClient) watchChildren(path string) error {
 	return nil
 }
 
-func (zkc *zkClient) onConnected(e zk.Event) {
+func (zkc *Client) onConnected(e zk.Event) {
 	if zkc.connected {
 		return
 	}
 	zkc.connected = true
 	zkc.state = e.State
-	log.Infoln("ZkClient connected to server.")
+	log.Infoln("zk client connected to server.")
 }
 
-func (zkc *zkClient) onDisconnected(e zk.Event) {
+func (zkc *Client) onDisconnected(e zk.Event) {
 	if !zkc.connected {
 		return
 	}
@@ -228,7 +229,7 @@ func (zkc *zkClient) onDisconnected(e zk.Event) {
 	zkc.reconnect() // try to reconnect
 }
 
-func (zkc *zkClient) list(path string) ([]string, error) {
+func (zkc *Client) list(path string) ([]string, error) {
 	if !zkc.connected {
 		return nil, errors.New("Unable to list children, client not connected.")
 	}
@@ -241,7 +242,7 @@ func (zkc *zkClient) list(path string) ([]string, error) {
 	return children, nil
 }
 
-func (zkc *zkClient) data(path string) ([]byte, error) {
+func (zkc *Client) data(path string) ([]byte, error) {
 	if !zkc.connected {
 		return nil, errors.New("Unable to retrieve node data, client not connected.")
 	}

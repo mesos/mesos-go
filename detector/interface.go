@@ -22,11 +22,23 @@ import (
 	mesos "github.com/mesos/mesos-go/mesosproto"
 )
 
+type MasterChanged interface {
+	// Invoked when the master changes
+	Notify(*mesos.MasterInfo)
+}
+
+// func/interface adapter
+type AsMasterChanged func(*mesos.MasterInfo)
+
+func (f AsMasterChanged) Notify(mi *mesos.MasterInfo) {
+	f(mi)
+}
+
 // An abstraction of a Master detector which can be used to
 // detect the leading master from a group.
-type MasterDetector interface {
+type Master interface {
 	// Detect new master election. Every time a new master is
-	// elected, the detector will call the passed function.
+	// elected, the detector will alert the observer.
 	// If it fails to start detection, then an error is returned.
-	Detect(func(*mesos.MasterInfo)) error
+	Detect(MasterChanged) error
 }

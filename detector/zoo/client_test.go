@@ -1,27 +1,28 @@
-package detector
+package zoo
 
 import (
 	"errors"
+	"os"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"strings"
-	"testing"
-	"time"
 )
 
 var test_zk_hosts = []string{"localhost:2181"}
 var test_zk_path = "/test"
 
-func TestZkClientNew(t *testing.T) {
+func TestClientNew(t *testing.T) {
 	path := "/mesos"
 	chEvent := make(chan zk.Event)
 	connector := makeMockConnector(path, chEvent)
 
-	c, err := newZkClient(test_zk_hosts, path)
+	c, err := newClient(test_zk_hosts, path)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
 	assert.False(t, c.connected)
@@ -32,12 +33,12 @@ func TestZkClientNew(t *testing.T) {
 // This test requires zookeeper to be running.
 // You must also set env variable ZK_HOSTS to point to zk hosts.
 // The zk package does not offer a way to mock its connection function.
-func TestZkClientConnectIntegration(t *testing.T) {
+func TestClientConnectIntegration(t *testing.T) {
 	if os.Getenv("ZK_HOSTS") == "" {
 		t.Skip("Skipping zk-server connection test: missing env ZK_HOSTS.")
 	}
 	hosts := strings.Split(os.Getenv("ZK_HOSTS"), ",")
-	c, err := newZkClient(hosts, "/mesos")
+	c, err := newClient(hosts, "/mesos")
 	assert.NoError(t, err)
 	err = c.connect()
 	assert.NoError(t, err)
@@ -47,8 +48,8 @@ func TestZkClientConnectIntegration(t *testing.T) {
 	assert.True(t, c.connected)
 }
 
-func TestZkClientConnect(t *testing.T) {
-	c, err := makeZkClient()
+func TestClientConnect(t *testing.T) {
+	c, err := makeClient()
 	assert.NoError(t, err)
 	assert.False(t, c.connected)
 	c.connect()
@@ -56,8 +57,8 @@ func TestZkClientConnect(t *testing.T) {
 	assert.False(t, c.connecting)
 }
 
-func TestZkClientDisconnect(t *testing.T) {
-	c, err := makeZkClient()
+func TestClientDisconnect(t *testing.T) {
+	c, err := makeClient()
 	assert.False(t, c.connected)
 	err = c.connect()
 	assert.NoError(t, err)
@@ -67,14 +68,14 @@ func TestZkClientDisconnect(t *testing.T) {
 	assert.False(t, c.connected)
 }
 
-func TestZkClientDisconnectedEvent(t *testing.T) {
+func TestClientDisconnectedEvent(t *testing.T) {
 	ch0 := make(chan zk.Event, 3)
 	ch1 := make(chan zk.Event, 1)
 
-	c, err := newZkClient(test_zk_hosts, test_zk_path)
+	c, err := newClient(test_zk_hosts, test_zk_path)
 	assert.NoError(t, err)
 
-	c.connFactory = zkConnFactoryFunc(func() (zkConnector, <-chan zk.Event, error) {
+	c.connFactory = asFactory(func() (Connector, <-chan zk.Event, error) {
 		log.V(2).Infof("**** Using zk.Conn adapter ****")
 		connector := makeMockConnector(test_zk_path, ch1)
 		return connector, ch0, nil
@@ -110,13 +111,13 @@ func TestZkClientDisconnectedEvent(t *testing.T) {
 
 }
 
-func TestZkClientWatchChildren(t *testing.T) {
-	c, err := makeZkClient()
+func TestClientWatchChildren(t *testing.T) {
+	c, err := makeClient()
 	assert.NoError(t, err)
 	err = c.connect()
 	assert.NoError(t, err)
 	wCh := make(chan struct{}, 1)
-	c.childrenWatcher = zkChildrenWatcherFunc(func(zkc *zkClient, path string) {
+	c.childrenWatcher = asChildWatcher(func(zkc *Client, path string) {
 		log.V(4).Infoln("Path", path, "changed!")
 		children, err := c.list(path)
 		assert.NoError(t, err)
@@ -137,7 +138,7 @@ func TestZkClientWatchChildren(t *testing.T) {
 	}
 }
 
-func TestZkClientWatchErrors(t *testing.T) {
+func TestClientWatchErrors(t *testing.T) {
 	path := "/test"
 	ch := make(chan zk.Event, 1)
 	ch <- zk.Event{
@@ -146,12 +147,12 @@ func TestZkClientWatchErrors(t *testing.T) {
 		Err:  errors.New("Event Error"),
 	}
 
-	c, err := makeZkClient()
+	c, err := makeClient()
 	c.connected = true
 	assert.NoError(t, err)
 	c.conn = makeMockConnector(path, (<-chan zk.Event)(ch))
 	wCh := make(chan struct{}, 1)
-	c.errorWatcher = zkErrorWatcherFunc(func(zkc *zkClient, err error) {
+	c.errorWatcher = asErrorWatcher(func(zkc *Client, err error) {
 		assert.Error(t, err)
 		wCh <- struct{}{}
 	})
@@ -166,7 +167,7 @@ func TestZkClientWatchErrors(t *testing.T) {
 
 }
 
-func makeZkClient() (*zkClient, error) {
+func makeClient() (*Client, error) {
 	ch0 := make(chan zk.Event, 1)
 	ch1 := make(chan zk.Event, 1)
 
@@ -180,12 +181,12 @@ func makeZkClient() (*zkClient, error) {
 		Path: test_zk_path,
 	}
 
-	c, err := newZkClient(test_zk_hosts, test_zk_path)
+	c, err := newClient(test_zk_hosts, test_zk_path)
 	if err != nil {
 		return nil, err
 	}
 
-	c.connFactory = zkConnFactoryFunc(func() (zkConnector, <-chan zk.Event, error) {
+	c.connFactory = asFactory(func() (Connector, <-chan zk.Event, error) {
 		log.V(2).Infof("**** Using zk.Conn adapter ****")
 		connector := makeMockConnector(test_zk_path, ch1)
 		return connector, ch0, nil
@@ -194,9 +195,9 @@ func makeZkClient() (*zkClient, error) {
 	return c, nil
 }
 
-func makeMockConnector(path string, chEvent <-chan zk.Event) *MockZkConnector {
-	log.V(2).Infoln("Making zkConnector mock.")
-	conn := NewMockZkConnector()
+func makeMockConnector(path string, chEvent <-chan zk.Event) *MockConnector {
+	log.V(2).Infoln("Making Connector mock.")
+	conn := NewMockConnector()
 	conn.On("Close").Return(nil)
 	conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, chEvent, nil)
 	conn.On("Children", path).Return([]string{"info_0", "info_5", "info_10"}, &zk.Stat{}, nil)

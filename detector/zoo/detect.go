@@ -16,66 +16,68 @@
  * limitations under the License.
  */
 
-package detector
+package zoo
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
-	log "github.com/golang/glog"
-	mesos "github.com/mesos/mesos-go/mesosproto"
 	"math"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/gogo/protobuf/proto"
+	log "github.com/golang/glog"
+	"github.com/mesos/mesos-go/detector"
+	mesos "github.com/mesos/mesos-go/mesosproto"
 )
 
-// ZkMasterDetector uses ZooKeeper to detect new leading master.
-type ZkMasterDetector struct {
-	zkPath       string
-	zkHosts      []string
-	zkClient     *zkClient
-	leaderNode   string
-	url          *url.URL
-	nodePrefix   string
-	detectedFunc func(*mesos.MasterInfo)
+// Detector uses ZooKeeper to detect new leading master.
+type MasterDetector struct {
+	zkPath     string
+	zkHosts    []string
+	client     *Client
+	leaderNode string
+	url        *url.URL
+	nodePrefix string
+	obs        detector.MasterChanged
 }
 
 // Internal constructor function
-func NewZkMasterDetector(zkurls string) (*ZkMasterDetector, error) {
+func NewMasterDetector(zkurls string) (*MasterDetector, error) {
 	u, err := url.Parse(zkurls)
 	if err != nil {
 		log.Fatalln("Failed to parse url", err)
 		return nil, err
 	}
 
-	detector := new(ZkMasterDetector)
+	detector := new(MasterDetector)
 	detector.url = u
 	detector.zkHosts = append(detector.zkHosts, u.Host)
 	detector.zkPath = u.Path
 	detector.nodePrefix = "info_"
 
-	detector.zkClient, err = newZkClient(detector.zkHosts, detector.zkPath)
+	detector.client, err = newClient(detector.zkHosts, detector.zkPath)
 	if err != nil {
 		return nil, err
 	}
 
-	detector.zkClient.childrenWatcher = zkChildrenWatcherFunc(detector.childrenChanged)
+	detector.client.childrenWatcher = asChildWatcher(detector.childrenChanged)
 
 	log.V(2).Infoln("Created new detector, watching ", detector.zkHosts, detector.zkPath)
 	return detector, nil
 }
 
-func (md *ZkMasterDetector) Start() error {
-	if err := md.zkClient.connect(); err != nil {
+func (md *MasterDetector) Start() error {
+	if err := md.client.connect(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (md *ZkMasterDetector) Stop() error {
+func (md *MasterDetector) Stop() error {
 	return nil
 }
 
-func (md *ZkMasterDetector) childrenChanged(zkc *zkClient, path string) {
+func (md *MasterDetector) childrenChanged(zkc *Client, path string) {
 	list, err := zkc.list(path)
 	if err != nil {
 		return
@@ -103,16 +105,16 @@ func (md *ZkMasterDetector) childrenChanged(zkc *zkClient, path string) {
 		return
 	}
 
-	if md.detectedFunc != nil {
-		md.detectedFunc(masterInfo)
+	if md.obs != nil {
+		md.obs.Notify(masterInfo)
 	}
 }
 
-func (md *ZkMasterDetector) Detect(f func(*mesos.MasterInfo)) error {
+func (md *MasterDetector) Detect(f detector.MasterChanged) error {
 	log.V(2).Infoln("Detect function installed.")
-	md.detectedFunc = f
+	md.obs = f
 
-	err := md.zkClient.watchChildren(".") // watch the current path (speci)
+	err := md.client.watchChildren(".") // watch the current path (speci)
 	if err != nil {
 		return err
 	}
@@ -120,7 +122,7 @@ func (md *ZkMasterDetector) Detect(f func(*mesos.MasterInfo)) error {
 	return nil
 }
 
-func (md *ZkMasterDetector) selectTopNode(list []string) string {
+func (md *MasterDetector) selectTopNode(list []string) string {
 	var leaderSeq uint64 = math.MaxUint64
 
 	for _, v := range list {

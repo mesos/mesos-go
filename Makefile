@@ -8,6 +8,7 @@ LIBS :=	\
 	auth/sasl/mech \
 	auth/sasl/mech/crammd5 \
 	detector \
+	detector/zoo \
 	executor \
 	healthchecker \
 	mesosproto \

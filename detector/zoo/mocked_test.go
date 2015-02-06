@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package detector
+package zoo
 
 import (
 	log "github.com/golang/glog"
@@ -25,20 +25,20 @@ import (
 )
 
 // Impersontates a zk.Connection
-// It implements interface zkConnector
-type MockZkConnector struct {
+// It implements interface Connector
+type MockConnector struct {
 	mock.Mock
 }
 
-func NewMockZkConnector() *MockZkConnector {
-	return new(MockZkConnector)
+func NewMockConnector() *MockConnector {
+	return new(MockConnector)
 }
 
-func (conn *MockZkConnector) Close() {
+func (conn *MockConnector) Close() {
 	conn.Called()
 }
 
-func (conn *MockZkConnector) ChildrenW(path string) ([]string, *zk.Stat, <-chan zk.Event, error) {
+func (conn *MockConnector) ChildrenW(path string) ([]string, *zk.Stat, <-chan zk.Event, error) {
 	log.V(2).Infoln("Invoking Mocked zk.Conn.ChidrenW")
 	args := conn.Called(path)
 	return args.Get(0).([]string),
@@ -47,14 +47,14 @@ func (conn *MockZkConnector) ChildrenW(path string) ([]string, *zk.Stat, <-chan 
 		args.Error(3)
 }
 
-func (conn *MockZkConnector) Children(path string) ([]string, *zk.Stat, error) {
+func (conn *MockConnector) Children(path string) ([]string, *zk.Stat, error) {
 	args := conn.Called(path)
 	return args.Get(0).([]string),
 		args.Get(1).(*zk.Stat),
 		args.Error(2)
 }
 
-func (conn *MockZkConnector) Get(path string) ([]byte, *zk.Stat, error) {
+func (conn *MockConnector) Get(path string) ([]byte, *zk.Stat, error) {
 	args := conn.Called(path)
 	return args.Get(0).([]byte),
 		args.Get(1).(*zk.Stat),

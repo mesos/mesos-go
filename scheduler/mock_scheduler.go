@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/stretchr/testify/mock"
 )
@@ -49,6 +50,7 @@ func (sched *MockScheduler) ExecutorLost(SchedulerDriver, *mesos.ExecutorID, *me
 	sched.Called()
 }
 
-func (sched *MockScheduler) Error(SchedulerDriver, string) {
+func (sched *MockScheduler) Error(d SchedulerDriver, msg string) {
+	log.Error(msg)
 	sched.Called()
 }

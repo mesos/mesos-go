@@ -108,7 +108,7 @@ func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) (sendError err
 		sendError = t.httpDo(ctx, req, func(resp *http.Response, err error) error {
 			if err != nil {
 				if isRecoverableError(err) {
-					return &recoverableError{Err:err}
+					return &recoverableError{Err: err}
 				}
 				log.Infof("Failed to POST: %v\n", err)
 				return err

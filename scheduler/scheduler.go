@@ -490,8 +490,7 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 	log.Infoln("Mesos scheduler driver started with PID=", driver.self.String())
 
 	// register framework
-	// TODO(jdef) eventually do this asynchronously
-	driver.doReliableRegistration(float64(registrationBackoffFactor))
+	go driver.doReliableRegistration(float64(registrationBackoffFactor))
 
 	// TODO(VV) Monitor Master Connection
 
@@ -530,7 +529,10 @@ func (driver *MesosSchedulerDriver) doReliableRegistration(maxBackoff float64) {
 func (driver *MesosSchedulerDriver) registerOnce() (proceed bool) {
 
 	proceed = true
-	var failover bool
+	var (
+		failover bool
+		pid      *upid.UPID
+	)
 
 	func() {
 		driver.lock.RLock()
@@ -542,32 +544,30 @@ func (driver *MesosSchedulerDriver) registerOnce() (proceed bool) {
 			proceed = false
 		}
 		failover = driver.failover
+		pid = driver.MasterPid
 	}()
 	if proceed {
 		// register framework
 		var message proto.Message
 		if driver.FrameworkInfo.Id != nil && len(driver.FrameworkInfo.Id.GetValue()) > 0 {
 			// not the first time, or failing over
+			log.V(1).Infof("Reregistering with master: %v", pid)
 			message = &mesos.ReregisterFrameworkMessage{
 				Framework: driver.FrameworkInfo,
 				Failover:  proto.Bool(failover),
 			}
 		} else {
+			log.V(1).Infof("Registering with master: %v", pid)
 			message = &mesos.RegisterFrameworkMessage{
 				Framework: driver.FrameworkInfo,
 			}
 		}
-
-		go func() {
-			log.V(1).Infoln("Registering with master", driver.MasterPid)
-			if err := driver.send(driver.MasterPid, message); err != nil {
-				log.Errorf("failed to send RegisterFramework message: %v", err)
-				stat := driver.Status()
-				if err = driver.stop(stat); err != nil {
-					log.Errorf("failed to stop scheduler driver: %v", err)
-				}
+		if err := driver.send(pid, message); err != nil {
+			log.Errorf("failed to send RegisterFramework message: %v", err)
+			if _, err = driver.Stop(failover); err != nil {
+				log.Errorf("failed to stop scheduler driver: %v", err)
 			}
-		}()
+		}
 	}
 	return
 }
@@ -625,7 +625,14 @@ func (driver *MesosSchedulerDriver) Stop(failover bool) (mesos.Status, error) {
 func (driver *MesosSchedulerDriver) stop(stopStatus mesos.Status) error {
 	// stop messenger
 	err := driver.messenger.Stop()
-	defer close(driver.stopCh)
+	defer func() {
+		select {
+		case <-driver.stopCh:
+			// already closed
+		default:
+			close(driver.stopCh)
+		}
+	}()
 
 	driver.setStatus(stopStatus)
 	driver.setStopped(true)

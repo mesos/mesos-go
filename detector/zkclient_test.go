@@ -95,6 +95,8 @@ func TestZkClientDisconnectedEvent(t *testing.T) {
 	assert.True(t, c.connected)
 	assert.False(t, c.connecting)
 
+	//TODO(vlv) - Need to add discontinuity test.
+
 	// send disconnecting
 	// c.reconnDelay = time.Millisecond * 100
 

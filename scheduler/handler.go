@@ -22,7 +22,7 @@ func (h *CredentialHandler) Handle(callbacks ...callback.Interface) error {
 		case *callback.Interprocess:
 			cb.Set(*(h.pid), *(h.client))
 		default:
-			return &callback.Unsupported{cb}
+			return &callback.Unsupported{Callback: cb}
 		}
 	}
 	return nil

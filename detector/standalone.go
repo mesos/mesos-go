@@ -7,7 +7,7 @@ import (
 
 type Standalone struct {
 	current *mesos.MasterInfo
-	ch chan *mesos.MasterInfo
+	ch      chan *mesos.MasterInfo
 }
 
 // Create a new stand alone master detector.

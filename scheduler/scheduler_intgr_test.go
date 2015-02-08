@@ -34,8 +34,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// testScuduler is used for testing Schduler callbacks.
+// testScheduler is used for testing Schduler callbacks.
 type testScheduler struct {
+	framework *mesos.FrameworkInfo
+
 	ch chan bool
 	wg *sync.WaitGroup
 	t  *testing.T
@@ -43,7 +45,7 @@ type testScheduler struct {
 
 func (sched *testScheduler) Registered(dr SchedulerDriver, fw *mesos.FrameworkID, mi *mesos.MasterInfo) {
 	log.Infoln("Sched.Registered() called.")
-	assert.Equal(sched.t, fw.GetValue(), framework.Id.GetValue())
+	assert.Equal(sched.t, fw.GetValue(), sched.framework.Id.GetValue())
 	assert.Equal(sched.t, mi.GetIp(), uint32(123456))
 	sched.ch <- true
 }
@@ -108,12 +110,14 @@ func (sched *testScheduler) Error(dr SchedulerDriver, err string) {
 }
 
 func newTestScheduler() *testScheduler {
-	return &testScheduler{ch: make(chan bool)}
+	framework := newFramework()
+	return &testScheduler{framework: framework, ch: make(chan bool)}
 }
 
 // ---------------------------------- Tests ---------------------------------- //
 
 func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
+	framework := newFramework()
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("RCVD request ", req.URL)
 
@@ -151,6 +155,7 @@ func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
 }
 
 func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
+	framework := newFramework()
 	// start mock master server to handle connection
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
@@ -188,6 +193,7 @@ func TestSchedulerDriverFrameworkRegisteredEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
+	framework := newFramework()
 	// start mock master server to handle connection
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
@@ -225,6 +231,7 @@ func TestSchedulerDriverFrameworkReregisteredEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
+	framework := newFramework()
 	// start mock master server to handle connection
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
@@ -268,6 +275,7 @@ func TestSchedulerDriverResourceOffersEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
+	framework := newFramework()
 	// start mock master server to handle connection
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
@@ -304,6 +312,7 @@ func TestSchedulerDriverRescindOfferEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
+	framework := newFramework()
 	var wg sync.WaitGroup
 	wg.Add(2)
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
@@ -352,6 +361,7 @@ func TestSchedulerDriverStatusUpdatedEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverLostSlaveEvent(t *testing.T) {
+	framework := newFramework()
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)
@@ -388,6 +398,7 @@ func TestSchedulerDriverLostSlaveEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverFrameworkMessageEvent(t *testing.T) {
+	framework := newFramework()
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)
@@ -427,6 +438,7 @@ func TestSchedulerDriverFrameworkMessageEvent(t *testing.T) {
 }
 
 func TestSchedulerDriverFrameworkErrorEvent(t *testing.T) {
+	framework := newFramework()
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
 		rsp.WriteHeader(http.StatusAccepted)

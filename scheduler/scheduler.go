@@ -423,6 +423,14 @@ func (driver *MesosSchedulerDriver) frameworkErrorRcvd(from *upid.UPID, pbMsg pr
 	driver.error(msg.GetMessage(), true)
 }
 
+// currentFrameworkID returns the current framework ID or emptystring if there is none
+func (driver *MesosSchedulerDriver) currentFrameworkID() string {
+	if driver.FrameworkInfo.Id == nil {
+		return ""
+	}
+	return driver.FrameworkInfo.Id.GetValue()
+}
+
 // ---------------------- Interface Methods ---------------------- //
 
 // Starts the scheduler driver.
@@ -466,8 +474,18 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 	}
 
 	// register framework
-	message := &mesos.RegisterFrameworkMessage{
-		Framework: driver.FrameworkInfo,
+	var message proto.Message
+	if driver.currentFrameworkID() == "" {
+		// Touched for the very first time.
+		message = &mesos.RegisterFrameworkMessage{
+			Framework: driver.FrameworkInfo,
+		}
+	} else {
+		// Not the first time, or failing over.
+		message = &mesos.ReregisterFrameworkMessage{
+			Framework: driver.FrameworkInfo,
+			Failover:  proto.Bool(true),
+		}
 	}
 
 	log.V(3).Infoln("Registering with master", driver.MasterPid)

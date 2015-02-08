@@ -118,6 +118,8 @@ func newTestScheduler() *testScheduler {
 
 func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
 	framework := newFramework()
+	framework.Id = nil
+
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("RCVD request ", req.URL)
 
@@ -134,6 +136,46 @@ func TestSchedulerDriverRegisterFrameworkMessage(t *testing.T) {
 		}
 
 		assert.NotNil(t, message)
+		info := message.GetFramework()
+		assert.NotNil(t, info)
+		assert.Equal(t, framework.GetName(), info.GetName())
+		assert.Equal(t, "", info.GetId().GetValue())
+		rsp.WriteHeader(http.StatusOK)
+	})
+	defer server.Close()
+
+	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), framework, server.Addr, nil)
+	assert.NoError(t, err)
+	assert.True(t, driver.Stopped())
+
+	stat, err := driver.Start()
+	assert.NoError(t, err)
+	assert.False(t, driver.Stopped())
+	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
+
+	<-time.After(time.Millisecond * 3)
+}
+
+func TestSchedulerDriverReregisterFrameworkMessage(t *testing.T) {
+	framework := newFramework()
+
+	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
+		log.Infoln("RCVD request ", req.URL)
+
+		data, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			t.Fatalf("Missing ReregisteredFramework data from scheduler.")
+		}
+		defer req.Body.Close()
+
+		message := new(mesos.ReregisterFrameworkMessage)
+		err = proto.Unmarshal(data, message)
+		if err != nil {
+			t.Fatal("Problem unmarshaling expected ReregisterFrameworkMessage")
+		}
+
+		assert.NotNil(t, message)
+		assert.True(t, message.GetFailover())
 		info := message.GetFramework()
 		assert.NotNil(t, info)
 		assert.Equal(t, framework.GetName(), info.GetName())

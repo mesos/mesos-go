@@ -20,16 +20,17 @@ package scheduler
 
 import (
 	"fmt"
+	"os"
+	"os/user"
+	"testing"
+	"time"
+
 	"github.com/gogo/protobuf/proto"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"os/user"
-	"testing"
-	"time"
 )
 
 var (

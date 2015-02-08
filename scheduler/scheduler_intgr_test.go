@@ -19,18 +19,19 @@
 package scheduler
 
 import (
-	"github.com/gogo/protobuf/proto"
-	log "github.com/golang/glog"
-	mesos "github.com/mesos/mesos-go/mesosproto"
-	util "github.com/mesos/mesos-go/mesosutil"
-	"github.com/mesos/mesos-go/testutil"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/gogo/protobuf/proto"
+	log "github.com/golang/glog"
+	mesos "github.com/mesos/mesos-go/mesosproto"
+	util "github.com/mesos/mesos-go/mesosutil"
+	"github.com/mesos/mesos-go/testutil"
+	"github.com/stretchr/testify/assert"
 )
 
 // testScuduler is used for testing Schduler callbacks.

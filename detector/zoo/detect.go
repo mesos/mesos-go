@@ -86,6 +86,7 @@ func (md *MasterDetector) Stop() error {
 	return nil
 }
 
+//TODO(jdef) execute async because we don't want to stall our client's event loop
 func (md *MasterDetector) childrenChanged(zkc *Client, path string) {
 	list, err := zkc.list(path)
 	if err != nil {
@@ -124,8 +125,20 @@ func (md *MasterDetector) Detect(f detector.MasterChanged) error {
 		f = ignoreChanged
 	}
 	md.obs = f
+
 	log.V(2).Infoln("Detect function installed.")
-	return md.client.watchChildren(".") // watch the current path (speci)
+
+	watchEnded, err := md.client.watchChildren(currentPath) // watch the current path (speci)
+	if err != nil {
+		return err
+	}
+	go func() {
+		select {
+		case <-watchEnded:
+			f.Notify(nil)
+		}
+	}()
+	return nil
 }
 
 func selectTopNode(list []string) string {

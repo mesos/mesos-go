@@ -2,6 +2,7 @@ package zoo
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -15,7 +16,10 @@ import (
 )
 
 var test_zk_hosts = []string{"localhost:2181"}
-var test_zk_path = "/test"
+
+const (
+	test_zk_path = "/test"
+)
 
 func TestClientNew(t *testing.T) {
 	path := "/mesos"
@@ -128,7 +132,7 @@ func TestClientWatchChildren(t *testing.T) {
 		wCh <- struct{}{}
 	})
 
-	err = c.watchChildren(".")
+	_, err = c.watchChildren(currentPath)
 	assert.NoError(t, err)
 
 	select {
@@ -157,7 +161,7 @@ func TestClientWatchErrors(t *testing.T) {
 		wCh <- struct{}{}
 	})
 
-	c.watchChildren(".")
+	c.watchChildren(currentPath)
 
 	select {
 	case <-wCh:
@@ -168,18 +172,25 @@ func TestClientWatchErrors(t *testing.T) {
 }
 
 func makeClient() (*Client, error) {
-	ch0 := make(chan zk.Event, 1)
+	ch0 := make(chan zk.Event, 2)
 	ch1 := make(chan zk.Event, 1)
 
 	ch0 <- zk.Event{
 		State: zk.StateConnected,
 		Path:  test_zk_path,
 	}
-
 	ch1 <- zk.Event{
 		Type: zk.EventNodeChildrenChanged,
 		Path: test_zk_path,
 	}
+	go func() {
+		time.Sleep(1 * time.Second)
+		ch0 <- zk.Event{
+			State: zk.StateDisconnected,
+		}
+		close(ch0)
+		close(ch1)
+	}()
 
 	c, err := newClient(test_zk_hosts, test_zk_path)
 	if err != nil {
@@ -204,6 +215,15 @@ func makeMockConnector(path string, chEvent <-chan zk.Event) *MockConnector {
 	conn.On("Get", path).Return(makeTestMasterInfo(), &zk.Stat{}, nil)
 
 	return conn
+}
+
+func newTestMasterInfo(id int) []byte {
+	miPb := util.NewMasterInfo(fmt.Sprintf("master(%d)@localhost:5050", id), 123456789, 400)
+	data, err := proto.Marshal(miPb)
+	if err != nil {
+		panic(err)
+	}
+	return data
 }
 
 func makeTestMasterInfo() []byte {

@@ -2,7 +2,6 @@ package zoo
 
 import (
 	"net/url"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -14,8 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var zkurl = "zk://127.0.0.1:2181/mesos"
-var zkurl_bad = "zk://127.0.0.1:2181"
+const (
+	zkurl     = "zk://127.0.0.1:2181/mesos"
+	zkurl_bad = "zk://127.0.0.1:2181"
+)
 
 func TestMasterDetectorNew(t *testing.T) {
 	md, err := NewMasterDetector(zkurl)
@@ -54,23 +55,40 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, c.connected)
 
+	called := 0
 	md.Detect(detector.AsMasterChanged(func(master *mesos.MasterInfo) {
-		assert.NotNil(t, master)
-		assert.Equal(t, master.GetId(), "master@localhost:5050")
-		wCh <- struct{}{}
+		//expect 2 calls in sequence: the first setting a master
+		//and the second clearing it
+		switch called++; called {
+		case 1:
+			assert.NotNil(t, master)
+			assert.Equal(t, master.GetId(), "master@localhost:5050")
+			wCh <- struct{}{}
+		case 2:
+			assert.Nil(t, master)
+			wCh <- struct{}{}
+		default:
+			t.Fatalf("unexpected notification call attempt %d", called)
+		}
 	}))
 
+	startWait := time.Now()
 	select {
 	case <-wCh:
 	case <-time.After(time.Second * 3):
 		panic("Waited too long...")
 	}
+
+	// wait for the disconnect event, should be triggered
+	// 1s after the connected event
+	waited := time.Now().Sub(startWait)
+	time.Sleep((2 * time.Second) - waited)
+	assert.False(t, c.connected)
 }
 
 func TestMasterDetectMultiple(t *testing.T) {
-	ch0 := make(chan zk.Event, 1)
-	ch1 := make(chan zk.Event, 1)
-	var wg sync.WaitGroup
+	ch0 := make(chan zk.Event, 5)
+	ch1 := make(chan zk.Event, 5)
 
 	ch0 <- zk.Event{
 		State: zk.StateConnected,
@@ -80,7 +98,10 @@ func TestMasterDetectMultiple(t *testing.T) {
 	c, err := newClient(test_zk_hosts, test_zk_path)
 	assert.NoError(t, err)
 
-	connector := makeMockConnector(test_zk_path, ch1)
+	connector := NewMockConnector()
+	connector.On("Close").Return(nil)
+	connector.On("ChildrenW", test_zk_path).Return([]string{test_zk_path}, &zk.Stat{}, (<-chan zk.Event)(ch1), nil)
+
 	c.connFactory = asFactory(func() (Connector, <-chan zk.Event, error) {
 		log.V(2).Infof("**** Using zk.Conn adapter ****")
 		return connector, ch0, nil
@@ -88,17 +109,14 @@ func TestMasterDetectMultiple(t *testing.T) {
 
 	md, err := NewMasterDetector(zkurl)
 	assert.NoError(t, err)
+
+	c.childrenWatcher = asChildWatcher(md.childrenChanged)
+	c.reconnMax = 0 // disable reconnection attempts
 	md.client = c
-	md.client.childrenWatcher = asChildWatcher(md.childrenChanged)
 
 	err = md.Start()
 	assert.NoError(t, err)
 	assert.True(t, c.connected)
-
-	md.Detect(detector.AsMasterChanged(func(master *mesos.MasterInfo) {
-		log.V(2).Infoln("Leader change detected.")
-		wg.Done()
-	}))
 
 	// **** Test 4 consecutive ChildrenChangedEvents ******
 	// setup event changes
@@ -108,26 +126,54 @@ func TestMasterDetectMultiple(t *testing.T) {
 		[]string{"info_005", "info_004", "info_022"},
 		[]string{"info_017", "info_099", "info_200"},
 	}
-	wg.Add(3) // leader changes 3 times.
+
+	var wg sync.WaitGroup
+	startTime := time.Now()
+	md.Detect(detector.AsMasterChanged(func(master *mesos.MasterInfo) {
+		t.Logf("Leader change detected at %v: %+v", time.Now().Sub(startTime), master)
+		wg.Done()
+	}))
+
+	wg.Add(len(sequences) + 1)
 
 	go func() {
-		conn := NewMockConnector()
-		md.client.conn = conn
-
 		for i := range sequences {
-			path := "/test" + strconv.Itoa(i)
-			conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, (<-chan zk.Event)(ch1), nil)
-			conn.On("Children", path).Return(sequences[i], &zk.Stat{}, nil)
-			conn.On("Get", path).Return(makeTestMasterInfo(), &zk.Stat{}, nil)
-			md.client.rootPath = path
+			t.Logf("testing master change sequence %d", i)
+			connector.On("Children", test_zk_path).Return(sequences[i], &zk.Stat{}, nil).Once()
+			connector.On("Get", test_zk_path).Return(newTestMasterInfo(i), &zk.Stat{}, nil).Once()
 			ch1 <- zk.Event{
 				Type: zk.EventNodeChildrenChanged,
-				Path: path,
+				Path: test_zk_path,
 			}
+			time.Sleep(100 * time.Millisecond) // give async routines time to catch up
+		}
+		time.Sleep(1 * time.Second) // give async routines time to catch up
+		t.Logf("disconnecting...")
+		ch0 <- zk.Event{
+			State: zk.StateDisconnected,
+		}
+		//TODO(jdef) does order of close matter here? probably, meaking client code is weak
+		close(ch0)
+		time.Sleep(500 * time.Millisecond) // give async routines time to catch up
+		close(ch1)
+	}()
+	completed := make(chan struct{})
+	go func() {
+		defer close(completed)
+		wg.Wait()
+	}()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatal(r)
 		}
 	}()
 
-	wg.Wait()
+	select {
+	case <-time.After(3 * time.Second):
+		panic("timed out waiting for master changes to propagate")
+	case <-completed:
+	}
 }
 
 func TestMasterDetect_none(t *testing.T) {

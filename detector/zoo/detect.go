@@ -19,6 +19,7 @@
 package zoo
 
 import (
+	"fmt"
 	"math"
 	"net/url"
 	"strconv"
@@ -30,6 +31,14 @@ import (
 	mesos "github.com/mesos/mesos-go/mesosproto"
 )
 
+const (
+	// prefix for nodes listed at the ZK URL path
+	nodePrefix = "info_"
+)
+
+// reasonable default for a noop change listener
+var ignoreChanged = detector.AsMasterChanged(func(*mesos.MasterInfo) {})
+
 // Detector uses ZooKeeper to detect new leading master.
 type MasterDetector struct {
 	zkPath     string
@@ -37,7 +46,6 @@ type MasterDetector struct {
 	client     *Client
 	leaderNode string
 	url        *url.URL
-	nodePrefix string
 	obs        detector.MasterChanged
 }
 
@@ -49,11 +57,12 @@ func NewMasterDetector(zkurls string) (*MasterDetector, error) {
 		return nil, err
 	}
 
-	detector := new(MasterDetector)
-	detector.url = u
-	detector.zkHosts = append(detector.zkHosts, u.Host)
-	detector.zkPath = u.Path
-	detector.nodePrefix = "info_"
+	detector := &MasterDetector{
+		url:     u,
+		zkHosts: []string{u.Host}, //TODO(jdef) support multiple hosts
+		zkPath:  u.Path,
+		obs:     ignoreChanged,
+	}
 
 	detector.client, err = newClient(detector.zkHosts, detector.zkPath)
 	if err != nil {
@@ -83,7 +92,7 @@ func (md *MasterDetector) childrenChanged(zkc *Client, path string) {
 		return
 	}
 
-	topNode := md.selectTopNode(list)
+	topNode := selectTopNode(list)
 
 	if md.leaderNode == topNode {
 		log.V(2).Infof("Ignoring children-changed event %s, leader has not changed.", path)
@@ -111,38 +120,35 @@ func (md *MasterDetector) childrenChanged(zkc *Client, path string) {
 }
 
 func (md *MasterDetector) Detect(f detector.MasterChanged) error {
-	log.V(2).Infoln("Detect function installed.")
-	md.obs = f
-
-	err := md.client.watchChildren(".") // watch the current path (speci)
-	if err != nil {
-		return err
+	if f == nil {
+		f = ignoreChanged
 	}
-
-	return nil
+	md.obs = f
+	log.V(2).Infoln("Detect function installed.")
+	return md.client.watchChildren(".") // watch the current path (speci)
 }
 
-func (md *MasterDetector) selectTopNode(list []string) string {
+func selectTopNode(list []string) string {
 	var leaderSeq uint64 = math.MaxUint64
 
 	for _, v := range list {
-		seqStr := strings.TrimPrefix(v, md.nodePrefix)
+		seqStr := strings.TrimPrefix(v, nodePrefix)
 		seq, err := strconv.ParseUint(seqStr, 10, 64)
 		if err != nil {
+			log.Warningf("unexpected zk node format '%s': %v", seqStr, err)
 			continue
 		}
-
 		if seq < leaderSeq {
 			leaderSeq = seq
 		}
 	}
 
-	if leaderSeq == math.MaxInt64 {
+	if leaderSeq == math.MaxUint64 {
 		log.V(3).Infoln("No top node found.")
 		return ""
 	}
 
-	node := md.nodePrefix + strconv.FormatUint(leaderSeq, 10)
-	log.V(3).Infoln("Top node selected: ", node)
+	node := fmt.Sprintf("%s%d", nodePrefix, leaderSeq)
+	log.V(3).Infof("Top node selected: '%s'", node)
 	return node
 }

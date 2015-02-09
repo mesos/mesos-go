@@ -129,3 +129,10 @@ func TestMasterDetectMultiple(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestMasterDetect_none(t *testing.T) {
+	assert := assert.New(t)
+	nodeList := []string{}
+	node := selectTopNode(nodeList)
+	assert.Equal("", node)
+}

@@ -134,7 +134,8 @@ func TestMasterDetectMultiple(t *testing.T) {
 		wg.Done()
 	}))
 
-	wg.Add(len(sequences) + 1)
+	// 3 leadership changes + disconnect (leader change to '')
+	wg.Add(4)
 
 	go func() {
 		for i := range sequences {
@@ -170,7 +171,7 @@ func TestMasterDetectMultiple(t *testing.T) {
 	}()
 
 	select {
-	case <-time.After(3 * time.Second):
+	case <-time.After(2 * time.Second):
 		panic("timed out waiting for master changes to propagate")
 	case <-completed:
 	}

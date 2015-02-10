@@ -51,7 +51,7 @@ $ cd examples
 $ go build -tags=test-sched -o test-framework test_framework.go
 
 # build test-executor
-$ go build -tags=test-exec -o test-executor test_framework.go
+$ go build -tags=test-exec -o test-executor test_executor.go
 ```
 ## Running the Example
 ### Start Mesos

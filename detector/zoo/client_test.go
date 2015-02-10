@@ -29,7 +29,7 @@ func TestClientNew(t *testing.T) {
 	c, err := newClient(test_zk_hosts, path)
 	assert.NoError(t, err)
 	assert.NotNil(t, c)
-	assert.False(t, c.connected)
+	assert.False(t, c.isConnected())
 	c.conn = connector
 
 }
@@ -49,28 +49,30 @@ func TestClientConnectIntegration(t *testing.T) {
 
 	err = c.connect()
 	assert.NoError(t, err)
-	assert.True(t, c.connected)
+	assert.True(t, c.isConnected())
 }
 
 func TestClientConnect(t *testing.T) {
 	c, err := makeClient()
 	assert.NoError(t, err)
-	assert.False(t, c.connected)
+	assert.False(t, c.isConnected())
 	c.connect()
-	assert.True(t, c.connected)
-	assert.False(t, c.connecting)
+	assert.True(t, c.isConnected())
+	assert.False(t, c.isConnecting())
 }
 
+/*TODO(jdef) commented this out because I killed "disconnect()" since no one else was using it
 func TestClientDisconnect(t *testing.T) {
 	c, err := makeClient()
-	assert.False(t, c.connected)
+	assert.False(t, c.isConnected())
 	err = c.connect()
 	assert.NoError(t, err)
-	assert.True(t, c.connected)
+	assert.True(t, c.isConnected())
 	err = c.disconnect()
 	assert.NoError(t, err)
-	assert.False(t, c.connected)
+	assert.False(t, c.isConnected())
 }
+*/
 
 func TestClientDisconnectedEvent(t *testing.T) {
 	ch0 := make(chan zk.Event, 3)
@@ -95,10 +97,10 @@ func TestClientDisconnectedEvent(t *testing.T) {
 		Path:  test_zk_path,
 	}
 	time.Sleep(time.Millisecond * 7)
-	assert.False(t, c.connected)
+	assert.False(t, c.isConnected())
 	c.connect()
-	assert.True(t, c.connected)
-	assert.False(t, c.connecting)
+	assert.True(t, c.isConnected())
+	assert.False(t, c.isConnecting())
 
 	//TODO(vlv) - Need to add discontinuity test.
 
@@ -110,8 +112,8 @@ func TestClientDisconnectedEvent(t *testing.T) {
 	// 	Path:  test_zk_path,
 	// }
 	// time.Sleep(time.Millisecond * 5000)
-	// assert.True(t, c.connected)
-	// assert.False(t, c.connecting)
+	// assert.True(t, c.isConnected())
+	// assert.False(t, c.isConnecting())
 
 }
 
@@ -152,7 +154,8 @@ func TestClientWatchErrors(t *testing.T) {
 	}
 
 	c, err := makeClient()
-	c.connected = true
+	c.state = connectedState
+
 	assert.NoError(t, err)
 	c.conn = makeMockConnector(path, (<-chan zk.Event)(ch))
 	wCh := make(chan struct{}, 1)

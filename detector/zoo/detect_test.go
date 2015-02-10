@@ -29,13 +29,13 @@ func TestMasterDetectorNew(t *testing.T) {
 
 func TestMasterDetectorStart(t *testing.T) {
 	c, err := makeClient()
-	assert.False(t, c.connected)
+	assert.False(t, c.isConnected())
 	md, err := NewMasterDetector(zkurl)
 	assert.NoError(t, err)
 	md.client = c // override zk.Conn with our own.
 	err = md.Start()
 	assert.NoError(t, err)
-	assert.True(t, c.connected)
+	assert.True(t, c.isConnected())
 }
 
 func TestMasterDetectorChildrenChanged(t *testing.T) {
@@ -43,7 +43,7 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 
 	c, err := makeClient()
 	assert.NoError(t, err)
-	assert.False(t, c.connected)
+	assert.False(t, c.isConnected())
 
 	md, err := NewMasterDetector(zkurl)
 	assert.NoError(t, err)
@@ -53,7 +53,7 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 
 	err = md.Start()
 	assert.NoError(t, err)
-	assert.True(t, c.connected)
+	assert.True(t, c.isConnected())
 
 	called := 0
 	md.Detect(detector.AsMasterChanged(func(master *mesos.MasterInfo) {
@@ -83,7 +83,7 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 	// 1s after the connected event
 	waited := time.Now().Sub(startWait)
 	time.Sleep((2 * time.Second) - waited)
-	assert.False(t, c.connected)
+	assert.False(t, c.isConnected())
 }
 
 func TestMasterDetectMultiple(t *testing.T) {
@@ -116,7 +116,7 @@ func TestMasterDetectMultiple(t *testing.T) {
 
 	err = md.Start()
 	assert.NoError(t, err)
-	assert.True(t, c.connected)
+	assert.True(t, c.isConnected())
 
 	// **** Test 4 consecutive ChildrenChangedEvents ******
 	// setup event changes

@@ -49,7 +49,6 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 	assert.NoError(t, err)
 	// override zk.Conn with our own.
 	md.client = c
-	md.client.childrenWatcher = asChildWatcher(md.childrenChanged)
 
 	err = md.Start()
 	assert.NoError(t, err)
@@ -110,7 +109,6 @@ func TestMasterDetectMultiple(t *testing.T) {
 	md, err := NewMasterDetector(zkurl)
 	assert.NoError(t, err)
 
-	c.childrenWatcher = asChildWatcher(md.childrenChanged)
 	c.reconnMax = 0 // disable reconnection attempts
 	md.client = c
 

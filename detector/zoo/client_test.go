@@ -123,7 +123,7 @@ func TestClientWatchChildren(t *testing.T) {
 	err = c.connect()
 	assert.NoError(t, err)
 	wCh := make(chan struct{}, 1)
-	c.childrenWatcher = asChildWatcher(func(zkc *Client, path string) {
+	childrenWatcher := ChildWatcher(func(zkc *Client, path string) {
 		log.V(4).Infoln("Path", path, "changed!")
 		children, err := c.list(path)
 		assert.NoError(t, err)
@@ -134,7 +134,7 @@ func TestClientWatchChildren(t *testing.T) {
 		wCh <- struct{}{}
 	})
 
-	_, err = c.watchChildren(currentPath)
+	_, err = c.watchChildren(currentPath, childrenWatcher)
 	assert.NoError(t, err)
 
 	select {
@@ -159,12 +159,12 @@ func TestClientWatchErrors(t *testing.T) {
 	assert.NoError(t, err)
 	c.conn = makeMockConnector(path, (<-chan zk.Event)(ch))
 	wCh := make(chan struct{}, 1)
-	c.errorWatcher = asErrorWatcher(func(zkc *Client, err error) {
+	c.errorHandler = ErrorHandler(func(zkc *Client, err error) {
 		assert.Error(t, err)
 		wCh <- struct{}{}
 	})
 
-	c.watchChildren(currentPath)
+	c.watchChildren(currentPath, ChildWatcher(func(*Client, string) {}))
 
 	select {
 	case <-wCh:

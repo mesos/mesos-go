@@ -69,8 +69,6 @@ func NewMasterDetector(zkurls string) (*MasterDetector, error) {
 		return nil, err
 	}
 
-	detector.client.childrenWatcher = asChildWatcher(detector.childrenChanged)
-
 	log.V(2).Infoln("Created new detector, watching ", detector.zkHosts, detector.zkPath)
 	return detector, nil
 }
@@ -128,7 +126,7 @@ func (md *MasterDetector) Detect(f detector.MasterChanged) error {
 
 	log.V(2).Infoln("Detect function installed.")
 
-	watchEnded, err := md.client.watchChildren(currentPath) // watch the current path (speci)
+	watchEnded, err := md.client.watchChildren(currentPath, ChildWatcher(md.childrenChanged))
 	if err != nil {
 		return err
 	}

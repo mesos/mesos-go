@@ -268,7 +268,7 @@ func (driver *MesosExecutorDriver) reconnect(from *upid.UPID, pbMsg proto.Messag
 	}
 	// Send the message.
 	if err := driver.send(driver.slaveUPID, message); err != nil {
-		log.Errorf("Failed to send %v: %v\n")
+		log.Errorf("Failed to send %v: %v\n", message, err)
 	}
 }
 

@@ -51,7 +51,7 @@ func TestAuthticatee_validLogin(t *testing.T) {
 			case *callback.Interprocess:
 				c.Set(server, client)
 			default:
-				return &callback.Unsupported{c}
+				return &callback.Unsupported{Callback: c}
 			}
 		}
 		return nil

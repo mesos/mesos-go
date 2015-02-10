@@ -42,3 +42,7 @@ func (s *Standalone) Stop() {
 		close(s.ch)
 	}
 }
+
+func (s *Standalone) Done() <-chan struct{} {
+	return nil
+}

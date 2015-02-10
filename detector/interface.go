@@ -41,4 +41,6 @@ type Master interface {
 	// elected, the detector will alert the observer.
 	// If it fails to start detection, then an error is returned.
 	Detect(MasterChanged) error
+	// returns a chan that, when closed, indicates the detector has terminated
+	Done() <-chan struct{}
 }

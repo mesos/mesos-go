@@ -44,10 +44,13 @@ func TestClientConnectIntegration(t *testing.T) {
 	hosts := strings.Split(os.Getenv("ZK_HOSTS"), ",")
 	c, err := newClient(hosts, "/mesos")
 	assert.NoError(t, err)
-	err = c.connect()
+	c.errorHandler = ErrorHandler(func(c *Client, e error) {
+		err = e
+	})
+	c.connect()
 	assert.NoError(t, err)
 
-	err = c.connect()
+	c.connect()
 	assert.NoError(t, err)
 	assert.True(t, c.isConnected())
 }
@@ -81,11 +84,11 @@ func TestClientDisconnectedEvent(t *testing.T) {
 	c, err := newClient(test_zk_hosts, test_zk_path)
 	assert.NoError(t, err)
 
-	c.connFactory = asFactory(func() (Connector, <-chan zk.Event, error) {
+	c.setFactory(asFactory(func() (Connector, <-chan zk.Event, error) {
 		log.V(2).Infof("**** Using zk.Conn adapter ****")
 		connector := makeMockConnector(test_zk_path, ch1)
 		return connector, ch0, nil
-	})
+	}))
 
 	// put connecting, connected events.
 	ch0 <- zk.Event{
@@ -120,7 +123,10 @@ func TestClientDisconnectedEvent(t *testing.T) {
 func TestClientWatchChildren(t *testing.T) {
 	c, err := makeClient()
 	assert.NoError(t, err)
-	err = c.connect()
+	c.errorHandler = ErrorHandler(func(c *Client, e error) {
+		err = e
+	})
+	c.connect()
 	assert.NoError(t, err)
 	wCh := make(chan struct{}, 1)
 	childrenWatcher := ChildWatcher(func(zkc *Client, path string) {
@@ -200,11 +206,18 @@ func makeClient() (*Client, error) {
 		return nil, err
 	}
 
-	c.connFactory = asFactory(func() (Connector, <-chan zk.Event, error) {
+	// only allow a single connection
+	first := true
+	c.setFactory(asFactory(func() (Connector, <-chan zk.Event, error) {
+		if !first {
+			return nil, nil, errors.New("only a single connection attempt allowed for mock connector")
+		} else {
+			first = false
+		}
 		log.V(2).Infof("**** Using zk.Conn adapter ****")
 		connector := makeMockConnector(test_zk_path, ch1)
 		return connector, ch0, nil
-	})
+	}))
 
 	return c, nil
 }

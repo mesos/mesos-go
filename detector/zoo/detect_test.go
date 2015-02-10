@@ -1,6 +1,7 @@
 package zoo
 
 import (
+	"errors"
 	"net/url"
 	"sync"
 	"testing"
@@ -32,8 +33,11 @@ func TestMasterDetectorStart(t *testing.T) {
 	assert.False(t, c.isConnected())
 	md, err := NewMasterDetector(zkurl)
 	assert.NoError(t, err)
+	c.errorHandler = ErrorHandler(func(c *Client, e error) {
+		err = e
+	})
 	md.client = c // override zk.Conn with our own.
-	err = md.Start()
+	md.Start()
 	assert.NoError(t, err)
 	assert.True(t, c.isConnected())
 }
@@ -48,9 +52,12 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 	md, err := NewMasterDetector(zkurl)
 	assert.NoError(t, err)
 	// override zk.Conn with our own.
+	c.errorHandler = ErrorHandler(func(c *Client, e error) {
+		err = e
+	})
 	md.client = c
 
-	err = md.Start()
+	md.Start()
 	assert.NoError(t, err)
 	assert.True(t, c.isConnected())
 
@@ -101,18 +108,25 @@ func TestMasterDetectMultiple(t *testing.T) {
 	connector.On("Close").Return(nil)
 	connector.On("ChildrenW", test_zk_path).Return([]string{test_zk_path}, &zk.Stat{}, (<-chan zk.Event)(ch1), nil)
 
-	c.connFactory = asFactory(func() (Connector, <-chan zk.Event, error) {
+	first := true
+	c.setFactory(asFactory(func() (Connector, <-chan zk.Event, error) {
 		log.V(2).Infof("**** Using zk.Conn adapter ****")
+		if !first {
+			return nil, nil, errors.New("only 1 connector allowed")
+		} else {
+			first = false
+		}
 		return connector, ch0, nil
-	})
+	}))
 
 	md, err := NewMasterDetector(zkurl)
 	assert.NoError(t, err)
 
-	c.reconnMax = 0 // disable reconnection attempts
+	c.errorHandler = ErrorHandler(func(c *Client, e error) {
+		err = e
+	})
 	md.client = c
-
-	err = md.Start()
+	md.Start()
 	assert.NoError(t, err)
 	assert.True(t, c.isConnected())
 

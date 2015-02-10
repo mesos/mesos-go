@@ -74,14 +74,18 @@ func NewMasterDetector(zkurls string) (*MasterDetector, error) {
 }
 
 func (md *MasterDetector) Start() error {
-	if err := md.client.connect(); err != nil {
-		return err
-	}
+	md.client.connect()
 	return nil
 }
 
 func (md *MasterDetector) Stop() error {
+	md.client.stop()
 	return nil
+}
+
+// returns a chan that, when closed, indicates termination of the detector
+func (md *MasterDetector) Done() <-chan struct{} {
+	return md.client.stopped()
 }
 
 //TODO(jdef) execute async because we don't want to stall our client's event loop
@@ -134,6 +138,8 @@ func (md *MasterDetector) Detect(f detector.MasterChanged) error {
 		select {
 		case <-watchEnded:
 			f.Notify(nil)
+		case <-md.client.stopped():
+			return
 		}
 	}()
 	return nil

@@ -72,7 +72,13 @@ func (m *MockedMessenger) Start() error {
 
 // Stop is a mocked implementation.
 func (m *MockedMessenger) Stop() error {
-	close(m.stop)
+	// don't close an already-closed channel
+	select {
+	case <-m.stop:
+		// noop
+	default:
+		close(m.stop)
+	}
 	return m.Called().Error(0)
 }
 

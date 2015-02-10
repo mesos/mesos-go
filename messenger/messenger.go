@@ -234,7 +234,9 @@ func (m *MesosMessenger) reportError(err error) {
 	case <-ctx.Done():
 		<-c // wait for Route to return
 	case e := <-c:
-		log.Errorf("failed to report error %v due to: %v", err, e)
+		if e != nil {
+			log.Errorf("failed to report error %v due to: %v", err, e)
+		}
 	}
 }
 

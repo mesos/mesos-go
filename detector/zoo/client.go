@@ -263,13 +263,14 @@ func (zkc *Client) watchChildren(path string, watcher ChildWatcher) (<-chan stru
 func (zkc *Client) _watchChildren(watchPath string, zkevents <-chan zk.Event, watcher ChildWatcher) {
 	var err error
 	for {
+	eventLoop:
 		for {
 			select {
 			case <-zkc.shouldStop:
 				return
 			case e, ok := <-zkevents:
 				if !ok {
-					return
+					break eventLoop
 				} else if e.Err != nil {
 					log.Errorf("Received error while watching path %s: %s", watchPath, e.Err.Error())
 					zkc.errorHandler(zkc, e.Err)

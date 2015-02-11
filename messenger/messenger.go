@@ -94,7 +94,7 @@ func (m *MesosMessenger) Install(handler MessageHandler, msg proto.Message) erro
 	// Check if the message is a pointer.
 	mtype := reflect.TypeOf(msg)
 	if mtype.Kind() != reflect.Ptr {
-		return fmt.Errorf("Message %v is not a Ptr type")
+		return fmt.Errorf("Message %v is not a Ptr type", msg)
 	}
 
 	// Check if the message is already installed.
@@ -234,7 +234,9 @@ func (m *MesosMessenger) reportError(err error) {
 	case <-ctx.Done():
 		<-c // wait for Route to return
 	case e := <-c:
-		log.Errorf("failed to report error %v due to: %v", err, e)
+		if e != nil {
+			log.Errorf("failed to report error %v due to: %v", err, e)
+		}
 	}
 }
 

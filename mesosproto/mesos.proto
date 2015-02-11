@@ -126,6 +126,9 @@ message ContainerID {
  * in authentication. This field is used for framework API rate
  * exporting and limiting and should be set even if authentication is
  * not enabled if these features are desired.
+ * The webui_url field allows a framework to advertise its web UI, so
+ * that the Mesos web UI can link to it. It is expected to be a full
+ * URL, for example http://my-scheduler.example.com:8080/.
  */
 message FrameworkInfo {
   required string user = 1;
@@ -136,14 +139,15 @@ message FrameworkInfo {
   optional string role = 6 [default = "*"];
   optional string hostname = 7;
   optional string principal = 8;
+  optional string webui_url = 9;
 }
 
 
 /**
  * Describes a health check for a task or executor (or any arbitrary
  * process/command). A "strategy" is picked by specifying one of the
- * optional fields, currently only 'http' is supported. Specifying
- * more than one strategy is an error.
+ * optional fields, currently only 'http' and 'command' are
+ * supported. Specifying more than one strategy is an error.
  */
 message HealthCheck {
   // Describes an HTTP health check.
@@ -190,7 +194,7 @@ message HealthCheck {
   optional double timeout_seconds = 4 [default = 20.0];
 
   // Number of consecutive failures until considered unhealthy.
-  optional uint32 failures = 5 [default = 3];
+  optional uint32 consecutive_failures = 5 [default = 3];
 
   // Amount of time to allow failed health checks since launch.
   optional double grace_period_seconds = 6 [default = 10.0];
@@ -242,8 +246,22 @@ message CommandInfo {
 
   optional Environment environment = 2;
 
-  // Actual command (i.e., 'echo hello world').
-  required string value = 3;
+  // There are two ways to specify the command:
+  // 1) If 'shell == true', the command will be launched via shell
+  //		(i.e., /bin/sh -c 'value'). The 'value' specified will be
+  //		treated as the shell command. The 'arguments' will be ignored.
+  // 2) If 'shell == false', the command will be launched by passing
+  //		arguments to an executable. The 'value' specified will be
+  //		treated as the filename of the executable. The 'arguments'
+  //		will be treated as the arguments to the executable. This is
+  //		similar to how POSIX exec families launch processes (i.e.,
+  //		execlp(value, arguments(0), arguments(1), ...)).
+  // NOTE: The field 'value' is changed from 'required' to 'optional'
+  // in 0.20.0. It will only cause issues if a new framework is
+  // connecting to an old master.
+  optional bool shell = 6 [default = true];
+  optional string value = 3;
+  repeated string arguments = 7;
 
   // Enables executor and tasks to run as a specific user. If the user
   // field is present both in FrameworkInfo and here, the CommandInfo
@@ -260,6 +278,10 @@ message ExecutorInfo {
   required ExecutorID executor_id = 1;
   optional FrameworkID framework_id = 8; // TODO(benh): Make this required.
   required CommandInfo command = 7;
+  // Executor provided with a container will launch the container
+  // with the executor's CommandInfo and we expect the container to
+  // act as a Mesos executor.
+  optional ContainerInfo container = 11;
   repeated Resource resources = 5;
   optional string name = 9;
 
@@ -302,10 +324,6 @@ message SlaveInfo {
   repeated Attribute attributes = 5;
   optional SlaveID id = 6;
   optional bool checkpoint = 7 [default = false];
-
-  // Deprecated!
-  optional string webui_hostname = 2;
-  optional int32 webui_port = 4 [default = 8081];
 }
 
 
@@ -415,10 +433,26 @@ message ResourceStatistics {
   optional uint64 mem_mapped_file_bytes = 12;
 
   // TODO(bmahler): Add disk usage.
-  // TODO(bmahler): Add network usage?
 
   // Perf statistics.
   optional PerfStatistics perf = 13;
+
+  // Network Usage Information:
+  optional uint64 net_rx_packets = 14;
+  optional uint64 net_rx_bytes = 15;
+  optional uint64 net_rx_errors = 16;
+  optional uint64 net_rx_dropped = 17;
+  optional uint64 net_tx_packets = 18;
+  optional uint64 net_tx_bytes = 19;
+  optional uint64 net_tx_errors = 20;
+  optional uint64 net_tx_dropped = 21;
+
+  // The kernel keeps track of RTT (round-trip time) for its TCP
+  // sockets. RTT is a way to tell the latency of a container.
+  optional double net_tcp_rtt_microsecs_p50 = 22;
+  optional double net_tcp_rtt_microsecs_p90 = 23;
+  optional double net_tcp_rtt_microsecs_p95 = 24;
+  optional double net_tcp_rtt_microsecs_p99 = 25;
 }
 
 
@@ -566,6 +600,9 @@ message TaskInfo {
   repeated Resource resources = 4;
   optional ExecutorInfo executor = 5;
   optional CommandInfo command = 7;
+  // Task provided with a container will launch the container as part
+  // of this task paired with the task's CommandInfo.
+  optional ContainerInfo container = 9;
   optional bytes data = 6;
   // A health check for the task (currently in *alpha* and initial
   // support will only be for TaskInfo's that have a CommandInfo).
@@ -581,15 +618,16 @@ message TaskInfo {
  * another task).
  */
 enum TaskState {
-  TASK_STAGING = 6;  // Initial state. Framework status updates should not use.
+  TASK_STAGING = 6; // Initial state. Framework status updates should not use.
   TASK_STARTING = 0;
   TASK_RUNNING = 1;
-  TASK_FINISHED = 2; // TERMINAL.
-  TASK_FAILED = 3;   // TERMINAL.
-  TASK_KILLED = 4;   // TERMINAL.
-  TASK_LOST = 5;     // TERMINAL.
-
-  // TODO(benh): TASK_ERROR = 7; // TERMINAL.
+  TASK_FINISHED = 2; // TERMINAL. The task finished successfully.
+  TASK_FAILED = 3; // TERMINAL. The task failed to finish successfully.
+  TASK_KILLED = 4; // TERMINAL. The task was killed by the executor.
+  TASK_LOST = 5; // TERMINAL. The task failed but can be rescheduled.
+  // TASK_ERROR is currently unused but will be introduced in 0.22.0.
+  // TODO(dhamon): Start using TASK_ERROR.
+  TASK_ERROR = 7; // TERMINAL. The task description contains an error.
 }
 
 
@@ -597,9 +635,39 @@ enum TaskState {
  * Describes the current status of a task.
  */
 message TaskStatus {
+  /** Describes the source of the task status update. */
+  enum Source {
+    SOURCE_MASTER = 0;
+    SOURCE_SLAVE = 1;
+    SOURCE_EXECUTOR = 2;
+  }
+
+  /** Detailed reason for the task status update. */
+  enum Reason {
+    REASON_COMMAND_EXECUTOR_FAILED = 0;
+    REASON_EXECUTOR_TERMINATED = 1;
+    REASON_EXECUTOR_UNREGISTERED = 2;
+    REASON_FRAMEWORK_REMOVED = 3;
+    REASON_GC_ERROR = 4;
+    REASON_INVALID_FRAMEWORKID = 5;
+    REASON_INVALID_OFFERS = 6;
+    REASON_MASTER_DISCONNECTED = 7;
+    REASON_MEMORY_LIMIT = 8;
+    REASON_RECONCILIATION = 9;
+    REASON_SLAVE_DISCONNECTED = 10;
+    REASON_SLAVE_REMOVED = 11;
+    REASON_SLAVE_RESTARTED = 12;
+    REASON_SLAVE_UNKNOWN = 13;
+    REASON_TASK_INVALID = 14;
+    REASON_TASK_UNAUTHORIZED = 15;
+    REASON_TASK_UNKNOWN = 16;
+  }
+
   required TaskID task_id = 1;
   required TaskState state = 2;
   optional string message = 4; // Possible message explaining state.
+  optional Source source = 9;
+  optional Reason reason = 10;
   optional bytes data = 3;
   optional SlaveID slave_id = 5;
   optional ExecutorID executor_id = 7; // TODO(benh): Use in master/slave.
@@ -660,16 +728,27 @@ message Parameters {
 
 
 /**
- * Credential used for authentication.
+ * Credential used in various places for authentication and
+ * authorization.
  *
- * NOTE: The 'principal' is used for authenticating the framework or slave
- * with the master. This is different from 'FrameworkInfo.user'
- * which is used to determine the user under which the framework's
- * executors/tasks are run.
+ * NOTE: A 'principal' is different from 'FrameworkInfo.user'. The
+ * former is used for authentication and authorization while the
+ * latter is used to determine the default user under which the
+ * framework's executors/tasks are run.
  */
 message Credential {
   required string principal = 1;
   optional bytes secret = 2;
+}
+
+
+/**
+ * Credentials used for framework authentication, HTTP authentication
+ * (where the common 'username' and 'password' are captured as
+ * 'principal' and 'secret' respectively), etc.
+ */
+message Credentials {
+  repeated Credential credentials = 1;
 }
 
 
@@ -693,7 +772,15 @@ message ACL {
   }
 
   // ACLs.
-  message RunTasks {
+  message RegisterFramework {
+    // Subjects.
+    required Entity principals = 1; // Framework principals.
+
+    // Objects.
+    required Entity roles = 2; // Roles for resource offers.
+  }
+
+  message RunTask {
     // Subjects.
     required Entity principals = 1; // Framework principals.
 
@@ -701,32 +788,14 @@ message ACL {
     required Entity users = 2; // Users to run the tasks/executors as.
   }
 
-  message ReceiveOffers {
+  // Which principals are authorized to shutdown frameworks of other
+  // principals.
+  message ShutdownFramework {
     // Subjects.
-    required Entity principals = 1; // Framework principals.
+    required Entity principals = 1;
 
     // Objects.
-    required Entity roles = 2; // Resource roles that can be offered.
-  }
-
-  message HTTPGet {
-    // Subjects (At least one of these should be set).
-    optional Entity usernames = 1; // HTTP authentication based usernames.
-    optional Entity ips = 2;
-    optional Entity hostnames = 3;
-
-    // Objects.
-    required Entity urls = 4;
-  }
-
-  message HTTPPut {
-    // Subjects (At least one of these should be set).
-    optional Entity usernames = 1; // HTTP authentication based usernames.
-    optional Entity ips = 2;
-    optional Entity hostnames = 3;
-
-    // Objects.
-    required Entity urls = 4;
+    required Entity framework_principals = 2;
   }
 }
 
@@ -752,10 +821,9 @@ message ACL {
  */
 message ACLs {
   optional bool permissive = 1 [default = true];
-  repeated ACL.RunTasks run_tasks = 2;
-  repeated ACL.ReceiveOffers receive_offers = 3;
-  repeated ACL.HTTPGet http_get = 4;
-  repeated ACL.HTTPPut http_put = 5;
+  repeated ACL.RegisterFramework register_frameworks = 2;
+  repeated ACL.RunTask run_tasks = 3;
+  repeated ACL.ShutdownFramework shutdown_frameworks = 4;
 }
 
 
@@ -765,25 +833,110 @@ message ACLs {
  * principal.
  */
 message RateLimit {
-  // Leaving QPS unset gives it unlimited rate (i.e., not throttled).
+  // Leaving QPS unset gives it unlimited rate (i.e., not throttled),
+  // which also implies unlimited capacity.
   optional double qps = 1;
 
   // Principal of framework(s) to be throttled. Should match
   // FrameworkInfo.princpal and Credential.principal (if using authentication).
   required string principal = 2;
+
+  // Max number of outstanding messages from frameworks of this principal
+  // allowed by master before the next message is dropped and an error is sent
+  // back to the sender. Messages received before the capacity is reached are
+  // still going to be processed after the error is sent.
+  // If unspecified, this principal is assigned unlimited capacity.
+  // NOTE: This value is ignored if 'qps' is not set.
+  optional uint64 capacity = 3;
 }
 
 
 /**
  * Collection of RateLimit.
- * Frameworks without rate limits defined here are not throttled.
- * TODO(xujyan): Currently when a framework is not specified in 'limits' it is
- * not throttled. This can be done more explicitly by adding a RateLimit entry
- * without setting its 'qps'. We should consider adding an optional
- * 'aggregate_default_qps' which can be used to throttle the frameworks not
- * specified here.
+ * Frameworks without rate limits defined here are not throttled unless
+ * 'aggregate_default_qps' is specified.
  */
 message RateLimits {
   // Items should have unique principals.
   repeated RateLimit limits = 1;
+
+  // All the frameworks not specified in 'limits' get this default rate.
+  // This rate is an aggregate rate for all of them, i.e., their combined
+  // traffic is throttled together at this rate.
+  optional double aggregate_default_qps = 2;
+
+  // All the frameworks not specified in 'limits' get this default capacity.
+  // This is an aggregate value similar to 'aggregate_default_qps'.
+  optional uint64 aggregate_default_capacity = 3;
+}
+
+
+/**
+ * Describes a volume mapping either from host to container or vice
+ * versa. Both paths can either refer to a directory or a file.
+ */
+message Volume {
+  // Absolute path pointing to a directory or file in the container.
+  required string container_path = 1;
+
+  // Absolute path pointing to a directory or file on the host or a path
+  // relative to the container work directory.
+  optional string host_path = 2;
+
+  enum Mode {
+    RW = 1; // read-write.
+    RO = 2; // read-only.
+  }
+
+  required Mode mode = 3;
+}
+
+
+/**
+ * Describes a container configuration and allows extensible
+ * configurations for different container implementations.
+ */
+message ContainerInfo {
+  // All container implementation types.
+  enum Type {
+    DOCKER = 1;
+    MESOS = 2;
+  }
+
+  message DockerInfo {
+    // The docker image that is going to be passed to the registry.
+    required string image = 1;
+
+    // Network options.
+    enum Network {
+      HOST = 1;
+      BRIDGE = 2;
+      NONE = 3;
+    }
+
+    optional Network network = 2 [default = HOST];
+
+    message PortMapping {
+      required uint32 host_port = 1;
+      required uint32 container_port = 2;
+      // Protocol to expose as (ie: tcp, udp).
+      optional string protocol = 3;
+    }
+
+    repeated PortMapping port_mappings = 3;
+
+    optional bool privileged = 4 [default = false];
+
+    // Allowing arbitrary parameters to be passed to docker CLI.
+    // Note that anything passed to this field is not guranteed
+    // to be supported moving forward, as we might move away from
+    // the docker CLI.
+    repeated Parameter parameters = 5;
+  }
+
+  required Type type = 1;
+  repeated Volume volumes = 2;
+  optional string hostname = 4;
+
+  optional DockerInfo docker = 3;
 }

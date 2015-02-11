@@ -16,25 +16,9 @@
  * limitations under the License.
  */
 
+/*
+The detector package houses implementation of master detectors.
+The default implementation is the zookeeper master detector.
+It uses zookeeper to detect the lead Mesos master during startup/failover.
+*/
 package detector
-
-import (
-	mesos "github.com/mesos/mesos-go/mesosproto"
-)
-
-// An abstraction of a Master detector which can be used to
-// detect the leading master from a group.
-type MasterDetector interface {
-	// Detect new master election. Every tiem a new master is
-	// elected, the MasterInfo will be send back through the
-	// receiver channel.
-	//
-	// If it fails to start detection, then an error is returned.
-	//
-	// If some error happends during detection, then the receiver
-	// channel will be closed.
-	Detect(receiver chan *mesos.MasterInfo)
-
-	// Stop detection.
-	Stop()
-}

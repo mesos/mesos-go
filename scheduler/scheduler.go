@@ -45,6 +45,10 @@ const (
 var (
 	authProvider = flag.String("mesos_authentication_provider", sasl.ProviderName,
 		fmt.Sprintf("Authentication provider to use, default is SASL that supports mechanisms: %+v", mech.ListSupported()))
+	schedulerHost = flag.String("mesos_scheduler_ip", "0.0.0.0",
+		fmt.Sprintf("TCP4 Address for the Scheduler to bind"))
+	schedulerPort = flag.String("mesos_scheduler_port", "0",
+		fmt.Sprintf("TCP Port for the Scheduler to bind"))
 )
 
 // Concrete implementation of a SchedulerDriver that connects a
@@ -147,7 +151,11 @@ func NewMesosSchedulerDriver(
 	}
 
 	//TODO keep scheduler counter to for proper PID.
-	driver.messenger = messenger.NewHttp(&upid.UPID{ID: "scheduler(1)"})
+	driver.messenger = messenger.NewHttp(&upid.UPID{
+		ID:   "scheduler(1)",
+		Host: *schedulerHost,
+		Port: *schedulerPort,
+	})
 	if err := driver.init(); err != nil {
 		log.Errorf("Failed to initialize the scheduler driver: %v\n", err)
 		return nil, err
@@ -662,7 +670,10 @@ func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) (mesos.Status
 		return driver.Status(), fmt.Errorf("Not connected to master")
 	}
 
-	message := &mesos.KillTaskMessage{TaskId: taskId}
+	message := &mesos.KillTaskMessage{
+		FrameworkId: driver.FrameworkInfo.Id,
+		TaskId:      taskId,
+	}
 
 	if err := driver.send(driver.MasterPid, message); err != nil {
 		log.Errorf("Failed to send KillTask message: %v\n", err)

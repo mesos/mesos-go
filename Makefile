@@ -8,6 +8,7 @@ LIBS :=	\
 	auth/sasl/mech \
 	auth/sasl/mech/crammd5 \
 	detector \
+	detector/zoo \
 	executor \
 	healthchecker \
 	mesosproto \
@@ -16,7 +17,7 @@ LIBS :=	\
 	scheduler \
 	upid
 
-.PHONY: format all go-clean pkg-build-install test-framework test-executor
+.PHONY: format all go-clean pkg-build-install test-framework test-executor vet
 
 all: go-clean pkg-build-install test-framework test-executor
 
@@ -36,6 +37,9 @@ test-executor:
 
 format:
 	go fmt ${LIBS:%=$(PKG_PREFIX)/%}
+
+vet:
+	go vet ${LIBS:%=$(PKG_PREFIX)/%}
 
 test:
 	go test ${LIBS:%=$(PKG_PREFIX)/%}

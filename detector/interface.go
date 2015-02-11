@@ -19,23 +19,28 @@
 package detector
 
 import (
-	"net/url"
-
-	_ "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 )
 
-// A ZooKeeperMasterDetector uses ZooKeeper to detect new leading master.
-type ZooKeeperMasterDetector struct {
-	previous *mesos.MasterInfo
-	url      *url.URL
+type MasterChanged interface {
+	// Invoked when the master changes
+	Notify(*mesos.MasterInfo)
 }
 
-// Create a new ZooKeeperMasterDetector.
-func NewZooKeeperMasterDetector(rawurl string) (*ZooKeeperMasterDetector, error) {
-	// url, err := url.Parse(rawurl)
-	// if err != nil {
-	// 	log.Fatalln("Failed to parse url", err)
-	// }
-	return nil, nil
+// func/interface adapter
+type AsMasterChanged func(*mesos.MasterInfo)
+
+func (f AsMasterChanged) Notify(mi *mesos.MasterInfo) {
+	f(mi)
+}
+
+// An abstraction of a Master detector which can be used to
+// detect the leading master from a group.
+type Master interface {
+	// Detect new master election. Every time a new master is
+	// elected, the detector will alert the observer.
+	// If it fails to start detection, then an error is returned.
+	Detect(MasterChanged) error
+	// returns a chan that, when closed, indicates the detector has terminated
+	Done() <-chan struct{}
 }

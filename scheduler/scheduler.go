@@ -34,6 +34,7 @@ import (
 	"github.com/mesos/mesos-go/auth"
 	"github.com/mesos/mesos-go/auth/sasl"
 	"github.com/mesos/mesos-go/auth/sasl/mech"
+	"github.com/mesos/mesos-go/detector"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
@@ -86,6 +87,7 @@ type MesosSchedulerDriver struct {
 	stopped         bool
 	status          mesos.Status
 	messenger       messenger.Messenger
+	masterDetector  detector.Master
 	connected       bool
 	connection      uuid.UUID
 	local           bool
@@ -150,16 +152,23 @@ func NewMesosSchedulerDriver(
 		credential:    credential,
 		failover:      framework.Id != nil && len(framework.Id.GetValue()) > 0,
 	}
+
 	if framework.FailoverTimeout != nil && *framework.FailoverTimeout > 0 {
 		driver.failoverTimeout = *framework.FailoverTimeout * float64(time.Second)
 		log.V(1).Infof("found failover_timeout = %v", time.Duration(driver.failoverTimeout))
 	}
 
-	if m, err := upid.Parse("master@" + master); err != nil {
+	if md, err := detector.New(master); err != nil {
 		return nil, err
 	} else {
-		driver.MasterPid = m
+		driver.masterDetector = md
 	}
+
+	// if m, err := upid.Parse("master@" + master); err != nil {
+	// 	return nil, err
+	// } else {
+	// 	driver.MasterPid = m
+	// }
 
 	//TODO keep scheduler counter to for proper PID.
 	driver.messenger = messenger.NewHttp(&upid.UPID{
@@ -167,6 +176,7 @@ func NewMesosSchedulerDriver(
 		Host: *schedulerHost,
 		Port: *schedulerPort,
 	})
+
 	if err := driver.init(); err != nil {
 		log.Errorf("Failed to initialize the scheduler driver: %v\n", err)
 		return nil, err
@@ -187,7 +197,14 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.slaveLost, &mesos.LostSlaveMessage{})
 	driver.messenger.Install(driver.frameworkMessageRcvd, &mesos.ExecutorToFrameworkMessage{})
 	driver.messenger.Install(driver.frameworkErrorRcvd, &mesos.FrameworkErrorMessage{})
+
+	driver.masterDetector.Detect(detector.AsMasterChanged(driver.masterDetected))
 	return nil
+}
+
+// lead master detection callback.
+func (driver *MesosSchedulerDriver) masterDetected(master *mesos.MasterInfo) {
+
 }
 
 // ------------------------- Accessors ----------------------- //

@@ -99,6 +99,7 @@ type MesosSchedulerDriver struct {
 	updates         map[string]*mesos.StatusUpdate // Key is a UUID string.
 	tasks           map[string]*mesos.TaskInfo     // Key is a UUID string.
 	credential      *mesos.Credential
+	authenticated   bool
 }
 
 // Create a new mesos scheduler driver with the given
@@ -204,7 +205,50 @@ func (driver *MesosSchedulerDriver) init() error {
 
 // lead master detection callback.
 func (driver *MesosSchedulerDriver) masterDetected(master *mesos.MasterInfo) {
+	if driver.Status() == mesos.Status_DRIVER_ABORTED {
+		log.Info("Ignoring master change because the driver is aborted.")
+		return
+	}
 
+	// Reconnect every time a master is dected.
+	if driver.Connected() {
+		log.V(3).Info("Disconnecting scheduler.")
+		driver.Scheduler.Disconnected(driver)
+	}
+
+	driver.setConnected(false)
+
+	if master != nil {
+		log.Infof("New master %s detected\n", master.String())
+
+		pid, err := upid.Parse(master.GetPid())
+		if err != nil {
+			panic("Unable to parse Master's PID value.") // this should not happen.
+		}
+
+		driver.MasterPid = pid // save for downstream ops.
+
+		if driver.credential != nil {
+			if err := driver.authenticate(); err != nil {
+				log.Errorf("Scheduler failed to authenticate: %v\n", err)
+				return
+			}
+
+			func() {
+				driver.lock.Lock()
+				defer driver.lock.Unlock()
+				driver.authenticated = true
+			}()
+
+		} else {
+			log.Infoln("No credentials were provided. " +
+				"Attempting to register scheduler without authentication.")
+			// register framework
+			go driver.doReliableRegistration(float64(registrationBackoffFactor))
+		}
+	} else {
+		log.Infoln("No new master detected.")
+	}
 }
 
 // ------------------------- Accessors ----------------------- //
@@ -478,40 +522,33 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 		return driver.Status(), err
 	}
 
-	// authenticate?
-	//TODO(jdef) perhaps at some point in the future this will get pushed down into
-	//the messenger layer (e.g. to use HTTP-based authentication). We'd probably still
-	//specify the callback.Handler here, along with the user-selected authentication
-	//provider. Perhaps in the form of some messenger.AuthenticationConfig.
-	if driver.credential != nil {
-		if err := func() error {
-			ctx, cancel := context.WithTimeout(context.Background(), authTimeout)
-			defer cancel()
-			handler := &CredentialHandler{
-				pid:        driver.MasterPid,
-				client:     driver.messenger.UPID(),
-				credential: driver.credential,
-			}
-			ctx = auth.WithLoginProvider(ctx, *authProvider)
-			return auth.Login(ctx, handler)
-		}(); err != nil {
-			log.Errorf("Scheduler failed to authenticate: %v\n", err)
-			return driver.Status(), err
-		}
-	}
-
 	driver.self = driver.messenger.UPID()
 	driver.setStatus(mesos.Status_DRIVER_RUNNING)
 	driver.setStopped(false)
 
 	log.Infoln("Mesos scheduler driver started with PID=", driver.self.String())
 
-	// register framework
-	go driver.doReliableRegistration(float64(registrationBackoffFactor))
-
-	// TODO(VV) Monitor Master Connection
-
 	return driver.Status(), nil
+}
+
+// authenticate?
+//TODO(jdef) perhaps at some point in the future this will get pushed down into
+//the messenger layer (e.g. to use HTTP-based authentication). We'd probably still
+//specify the callback.Handler here, along with the user-selected authentication
+//provider. Perhaps in the form of some messenger.AuthenticationConfig.
+
+// authenticate using the installed authentication plugin.
+func (driver *MesosSchedulerDriver) authenticate() error {
+	log.Infoln("Authenticating with master.")
+	ctx, cancel := context.WithTimeout(context.Background(), authTimeout)
+	defer cancel()
+	handler := &CredentialHandler{
+		pid:        driver.MasterPid,
+		client:     driver.messenger.UPID(),
+		credential: driver.credential,
+	}
+	ctx = auth.WithLoginProvider(ctx, *authProvider)
+	return auth.Login(ctx, handler)
 }
 
 func (driver *MesosSchedulerDriver) doReliableRegistration(maxBackoff float64) {

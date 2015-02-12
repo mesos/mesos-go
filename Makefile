@@ -38,13 +38,8 @@ test-executor:
 format:
 	go fmt ${LIBS:%=$(PKG_PREFIX)/%}
 
-<<<<<<< HEAD
 vet:
 	go vet ${LIBS:%=$(PKG_PREFIX)/%}
 
 test:
 	go test ${LIBS:%=$(PKG_PREFIX)/%}
-=======
-test test.v:
-	flags=""; test "$@" != "test.v" || flags="-v"; pkg="${TEST}"; test -n "$$pkg" || pkg="${LIBS:%=$(PKG_PREFIX)/%}"; go test $$flags $$pkg
->>>>>>> c711d04dfcc7319dd52476272947c5e758d3d2aa

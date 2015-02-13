@@ -59,12 +59,13 @@ func TestSchedulerSuite(t *testing.T) {
 }
 
 func TestSchedulerDriverNew(t *testing.T) {
-	masterAddr := "localhost:5050"
+	masterAddr := "127.0.0.1:5050"
 	mUpid, err := upid.Parse("master@" + masterAddr)
 	assert.NoError(t, err)
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), &mesos.FrameworkInfo{}, masterAddr, nil)
 	assert.NotNil(t, driver)
 	assert.NoError(t, err)
+	fmt.Println("driver.MasterPid =", driver.MasterPid.String())
 	assert.True(t, driver.MasterPid.Equal(mUpid))
 	user, _ := user.Current()
 	assert.Equal(t, user.Username, driver.FrameworkInfo.GetUser())

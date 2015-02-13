@@ -159,17 +159,29 @@ func NewMesosSchedulerDriver(
 		log.V(1).Infof("found failover_timeout = %v", time.Duration(driver.failoverTimeout))
 	}
 
+	// initialize new detector.
 	if md, err := detector.New(master); err != nil {
 		return nil, err
 	} else {
 		driver.masterDetector = md
-	}
 
-	// if m, err := upid.Parse("master@" + master); err != nil {
-	// 	return nil, err
-	// } else {
-	// 	driver.MasterPid = m
-	// }
+		// if standalone detector, apply master value immediately.
+		sa, ok := md.(*detector.Standalone)
+		if ok {
+			f := detector.AsMasterChanged(func(mi *mesos.MasterInfo) {
+				pid, err := upid.Parse(mi.GetPid())
+				if err != nil {
+					log.Errorf("Unable to parse standalone PID, panic! %v\n", mi.GetPid())
+					panic("Unable to parse standalone PID value.") // should never get here
+				}
+				driver.MasterPid = pid
+			})
+			err := sa.Detect(f)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	//TODO keep scheduler counter to for proper PID.
 	driver.messenger = messenger.NewHttp(&upid.UPID{

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
@@ -101,5 +102,7 @@ func createMasterInfo(pid *upid.UPID) *mesos.MasterInfo {
 		return nil
 	}
 	packedip := binary.BigEndian.Uint32(ip) // network byte order is big-endian
-	return util.NewMasterInfo(pid.ID, packedip, uint32(port))
+	mi := util.NewMasterInfo(pid.ID, packedip, uint32(port))
+	mi.Pid = proto.String(pid.String())
+	return mi
 }

@@ -23,13 +23,8 @@ func (s *Standalone) Appoint(m *mesos.MasterInfo) {
 }
 
 // Detecting the new master.
-func (s *Standalone) Detect(o MasterChanged) error {
-	// go func() {
-	// 	for {
-	// 		receiver <- s.ch
-	// 		log.V(2).Infoln("Master detected")
-	// 	}
-	// }()
+func (s *Standalone) Detect(mc MasterChanged) error {
+	mc.Notify(s.current)
 	return nil
 }
 

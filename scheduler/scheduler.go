@@ -164,7 +164,6 @@ func NewMesosSchedulerDriver(
 		return nil, err
 	} else {
 		driver.masterDetector = md
-
 		// if standalone detector, apply master value immediately.
 		sa, ok := md.(*detector.Standalone)
 		if ok {
@@ -231,7 +230,7 @@ func (driver *MesosSchedulerDriver) masterDetected(master *mesos.MasterInfo) {
 	driver.setConnected(false)
 
 	if master != nil {
-		log.Infof("New master %s detected\n", master.String())
+		log.Infof("New master %s detected\n", master.GetPid())
 
 		pid, err := upid.Parse(master.GetPid())
 		if err != nil {

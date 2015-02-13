@@ -46,9 +46,23 @@ func Register(prefix string, f PluginFactory) error {
 }
 
 func New(spec string) (m Master, err error) {
-	if spec == "" {
+
+	switch f, pluginFound := MatchingPlugin(spec); {
+	case pluginFound:
+		m, err = f(spec)
+
+	case spec == "":
 		m = NewStandalone(nil)
-	} else if strings.HasPrefix(spec, "file://") {
+
+	case strings.HasPrefix(spec, "master@"):
+		var pid *upid.UPID
+		if pid, err = upid.Parse(spec); err == nil {
+			m = NewStandalone(createMasterInfo(pid))
+		} else {
+			log.Errorf("Error while parsing %s: %s\n", spec, err)
+		}
+
+	case strings.HasPrefix(spec, "file://"):
 		var body []byte
 		path := spec[7:]
 		body, err = ioutil.ReadFile(path)
@@ -57,19 +71,14 @@ func New(spec string) (m Master, err error) {
 		} else {
 			m, err = New(string(body))
 		}
-	} else if f, ok := MatchingPlugin(spec); ok {
-		m, err = f(spec)
-	} else if strings.HasPrefix("master@", spec) {
-		var pid *upid.UPID
-		if pid, err = upid.Parse(spec); err == nil {
-			m = NewStandalone(createMasterInfo(pid))
-		}
-	} else {
+
+	default:
 		var pid *upid.UPID
 		if pid, err = upid.Parse("master@" + spec); err == nil {
 			m = NewStandalone(createMasterInfo(pid))
 		}
 	}
+
 	return
 }
 

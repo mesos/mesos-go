@@ -83,6 +83,7 @@ func (zkc *Client) stateChange(from, to stateType) bool {
 	return atomic.CompareAndSwapInt32((*int32)(&zkc.state), int32(from), int32(to))
 }
 
+// connect to zookeeper, blocks on the initial call to doConnect()
 func (zkc *Client) connect() {
 	select {
 	case <-zkc.shouldStop:

@@ -14,5 +14,6 @@ func TestDectorFactoryNew_ZkPrefix(t *testing.T) {
 	assert.NoError(err)
 	assert.IsType(&MasterDetector{}, m)
 	md := m.(*MasterDetector)
-	md.Stop()
+	t.Logf("canceling detector")
+	md.Cancel()
 }

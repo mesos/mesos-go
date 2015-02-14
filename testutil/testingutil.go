@@ -41,22 +41,22 @@ type MockMesosHttpServer struct {
 	Addr   string
 	server *httptest.Server
 	t      *testing.T
-	when   map[string]func()
+	when   map[string]http.HandlerFunc
 }
 
 type When interface {
-	Do(func())
+	Do(http.HandlerFunc)
 }
 
-type WhenFunc func(func())
+type WhenFunc func(http.HandlerFunc)
 
-func (w WhenFunc) Do(f func()) {
+func (w WhenFunc) Do(f http.HandlerFunc) {
 	w(f)
 }
 
 func (m *MockMesosHttpServer) On(uri string) When {
 	log.V(2).Infof("when %v do something special", uri)
-	return WhenFunc(func(f func()) {
+	return WhenFunc(func(f http.HandlerFunc) {
 		log.V(2).Infof("registered callback for %v", uri)
 		m.when[uri] = f
 	})
@@ -64,14 +64,14 @@ func (m *MockMesosHttpServer) On(uri string) When {
 
 func NewMockMasterHttpServer(t *testing.T, handler func(rsp http.ResponseWriter, req *http.Request)) *MockMesosHttpServer {
 	var server *httptest.Server
-	when := make(map[string]func())
+	when := make(map[string]http.HandlerFunc)
 	stateHandler := func(rsp http.ResponseWriter, req *http.Request){
                 if "/state.json" == req.RequestURI {
                         state := fmt.Sprintf(`{ "leader": "master@%v" }`, server.Listener.Addr())
 			log.V(1).Infof("returning JSON %v", state)
                         io.WriteString(rsp, state)
 		} else if f, found := when[req.RequestURI]; found {
-			f()
+			f(rsp, req)
 		} else {
 			handler(rsp,req)
 		}

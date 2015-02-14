@@ -2,6 +2,7 @@ package detector
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -17,8 +18,23 @@ import (
 )
 
 var (
-	pluginLock sync.Mutex
-	plugins    = map[string]PluginFactory{}
+	pluginLock     sync.Mutex
+	plugins        = map[string]PluginFactory{}
+	EmptySpecError = errors.New("empty master specification")
+
+	defaultFactory = PluginFactory(func(spec string) (Master, error) {
+		if len(spec) == 0 {
+			return nil, EmptySpecError
+		}
+		if strings.Index(spec, "@") < 0 {
+			spec = "master@" + spec
+		}
+		if pid, err := upid.Parse(spec); err == nil {
+			return NewStandalone(CreateMasterInfo(pid)), nil
+		} else {
+			return nil, err
+		}
+	})
 )
 
 type PluginFactory func(string) (Master, error)
@@ -46,7 +62,6 @@ func Register(prefix string, f PluginFactory) error {
 }
 
 func New(spec string) (m Master, err error) {
-
 	if strings.HasPrefix(spec, "file://") {
 		var body []byte
 		path := spec[7:]
@@ -58,16 +73,8 @@ func New(spec string) (m Master, err error) {
 		}
 	} else if f, ok := MatchingPlugin(spec); ok {
 		m, err = f(spec)
-	} else if strings.HasPrefix("master@", spec) {
-		var pid *upid.UPID
-		if pid, err = upid.Parse(spec); err == nil {
-			m = NewStandalone(CreateMasterInfo(pid))
-		}
 	} else {
-		var pid *upid.UPID
-		if pid, err = upid.Parse("master@" + spec); err == nil {
-			m = NewStandalone(CreateMasterInfo(pid))
-		}
+		m, err = defaultFactory(spec)
 	}
 
 	return

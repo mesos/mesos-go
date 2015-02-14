@@ -1,8 +1,9 @@
 package detector
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type testDetector string
@@ -11,26 +12,46 @@ func (d testDetector) Detect(f MasterChanged) error { return nil }
 
 func (d testDetector) Done() <-chan struct{} { return make(<-chan struct{}) }
 
+// unregister a factory plugin according to its prefix.
+// this is part of the testing module on purpose: during normal execution there
+// should be no need to dynamically unregister plugins.
+func Unregister(prefix string) {
+	pluginLock.Lock()
+	defer pluginLock.Unlock()
+	delete(plugins, prefix)
+}
+
 func TestDetectorFactoryRegister(t *testing.T) {
-	Register("bbm:", func(spec string) (Master, error) {
+	prefix := "bbm:"
+	Register(prefix, func(spec string) (Master, error) {
 		return testDetector("Hello!"), nil
 	})
-	f, ok := plugins["bbm:"]
+	defer Unregister(prefix)
+
+	f, ok := MatchingPlugin(prefix)
+
 	assert.True(t, ok)
 	assert.NotNil(t, f)
 }
 
 func TestDectorFactoryNew_EmptySpec(t *testing.T) {
+	assert := assert.New(t)
 	m, err := New("")
-	assert.NoError(t, err)
-	sa, ok := m.(*Standalone)
-	assert.True(t, ok)
+	assert.NotNil(err)
+	assert.Nil(m)
 }
 
-// TODO figure out how to test without cyclic import
-// func TestDectorFactoryNew_ZkPrefix(t *testing.T) {
-// 	m, err := New("zk://127.0.0.1:5050/mesos")
-// 	assert.NoError(t, err)
-// 	sa, ok := m.(zoo.MasterDetector)
-// 	assert.True(t, ok)
-// }
+func TestDectorFactoryNew_InvalidSpec(t *testing.T) {
+	assert := assert.New(t)
+	m, err := New("localhost")
+	assert.NotNil(err)
+	assert.Nil(m)
+}
+
+func TestDectorFactoryNew_TrivialSpec(t *testing.T) {
+	assert := assert.New(t)
+	m, err := New("localhost:1")
+	assert.NoError(err)
+	assert.NotNil(m)
+	assert.IsType(&Standalone{}, m)
+}

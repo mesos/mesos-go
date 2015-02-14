@@ -115,7 +115,7 @@ func (sched *testScheduler) Error(dr SchedulerDriver, err string) {
 
 func (sched *testScheduler) waitForCallback(timeout time.Duration) bool {
 	if timeout == 0 {
-		timeout = 500 * time.Millisecond
+		timeout = 2 * time.Second
 	}
 	select {
 	case <-sched.ch:
@@ -346,6 +346,7 @@ func (suite *SchedulerIntegrationTestSuite) TestSchedulerDriverStatusUpdatedEven
 	var wg sync.WaitGroup
 	wg.Add(2)
 	suite.config = mockServerConfigurator(func(frameworkId *mesos.FrameworkID, suite *SchedulerIntegrationTestSuite) {
+		defaultMockServerConfigurator(frameworkId, suite)
 		suite.server.On("/master/mesos.internal.StatusUpdateAcknowledgementMessage").Do(func(rsp http.ResponseWriter, req *http.Request) {
 			log.Infoln("Master cvd ACK")
 			data, _ := ioutil.ReadAll(req.Body)

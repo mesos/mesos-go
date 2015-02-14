@@ -113,6 +113,18 @@ func (sched *testScheduler) Error(dr SchedulerDriver, err string) {
 	sched.ch <- true
 }
 
+func (sched *testScheduler) waitForCallback(timeout time.Duration) {
+	if timeout == 0 {
+		timeout = 500 * time.Millisecond
+	}
+	select {
+	case <-sched.ch:
+		//callback complete
+	case <-time.After(timeout):
+		sched.T().Fatalf("timed out after waiting %v for callback", timeout)
+	}
+}
+
 func newTestScheduler(s *SchedulerTestSuite) *testScheduler {
 	return &testScheduler{ch: make(chan bool), s: s}
 }
@@ -232,23 +244,23 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverFrameworkReregisteredEvent()
 	}
 }
 
-func (suite *SchedulerTestSuite) TestSchedulerDriverResourceOffersEvent() {
+func (suite *SchedulerTestSuite) newServerWithRegisteredFramework() (*testutil.MockMesosHttpServer, *MesosSchedulerDriver, *testScheduler, bool) {
 	t := suite.T()
 	// start mock master server to handle connection
 	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		log.Infoln("MockMaster - rcvd ", req.RequestURI)
+		ioutil.ReadAll(req.Body)
+		defer req.Body.Close()
 		rsp.WriteHeader(http.StatusAccepted)
 	})
-
-	defer server.Close()
-
-	ch := make(chan bool)
-	sched := newTestScheduler(suite)
-	sched.ch = ch
 
 	t.Logf("test HTTP server listening on %v", server.Addr)
 	frameworkId := suite.framework.Id
 	suite.framework.Id = nil
+
+	sched := newTestScheduler(suite)
+	sched.ch = make(chan bool)
+
 	driver, err := NewMesosSchedulerDriver(sched, suite.framework, server.Addr, nil)
 	assert.NoError(t, err)
 
@@ -263,7 +275,16 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverResourceOffersEvent() {
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	assert.True(t, waitForConnected(t, driver, 2*time.Second))
+	return server, driver, sched, waitForConnected(t, driver, 2*time.Second)
+}
+
+func (suite *SchedulerTestSuite) TestSchedulerDriverResourceOffersEvent() {
+	t := suite.T()
+	server, driver, sched, ok := suite.newServerWithRegisteredFramework()
+	if server != nil {
+		defer server.Close()
+	}
+	assert.True(t, ok, "failed to establish running test server and driver")
 
 	// Send a event to this SchedulerDriver (via http) to test handlers.
 	offer := util.NewOffer(
@@ -279,34 +300,16 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverResourceOffersEvent() {
 
 	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
-
-	select {
-	case <-ch:
-	case <-time.After(time.Millisecond * 2):
-		log.Errorf("Tired of waiting for scheduler callback.")
-	}
+	sched.waitForCallback(0)
 }
 
 func (suite *SchedulerTestSuite) TestSchedulerDriverRescindOfferEvent() {
 	t := suite.T()
-	// start mock master server to handle connection
-	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
-		log.Infoln("MockMaster - rcvd ", req.RequestURI)
-		rsp.WriteHeader(http.StatusAccepted)
-	})
-
-	defer server.Close()
-
-	ch := make(chan bool)
-	sched := newTestScheduler(suite)
-	sched.ch = ch
-
-	driver, err := NewMesosSchedulerDriver(sched, suite.framework, server.Addr, nil)
-	assert.NoError(t, err)
-	stat, err := driver.Start()
-	assert.NoError(t, err)
-	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	assert.True(t, waitForConnected(t, driver, 2*time.Second))
+	server, driver, sched, ok := suite.newServerWithRegisteredFramework()
+	if server != nil {
+		defer server.Close()
+	}
+	assert.True(t, ok, "failed to establish running test server and driver")
 
 	// Send a event to this SchedulerDriver (via http) to test handlers.
 	pbMsg := &mesos.RescindResourceOfferMessage{
@@ -315,12 +318,7 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverRescindOfferEvent() {
 
 	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
-
-	select {
-	case <-ch:
-	case <-time.After(time.Millisecond * 2):
-		log.Errorf("Tired of waiting for scheduler callback.")
-	}
+	sched.waitForCallback(0)
 }
 
 func (suite *SchedulerTestSuite) TestSchedulerDriverStatusUpdatedEvent() {
@@ -373,23 +371,11 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverStatusUpdatedEvent() {
 
 func (suite *SchedulerTestSuite) TestSchedulerDriverLostSlaveEvent() {
 	t := suite.T()
-	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
-		log.Infoln("MockMaster - rcvd ", req.RequestURI)
-		rsp.WriteHeader(http.StatusAccepted)
-	})
-
-	defer server.Close()
-
-	ch := make(chan bool)
-	sched := newTestScheduler(suite)
-	sched.ch = ch
-
-	driver, err := NewMesosSchedulerDriver(sched, suite.framework, server.Addr, nil)
-	assert.NoError(t, err)
-	stat, err := driver.Start()
-	assert.NoError(t, err)
-	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	assert.True(t, waitForConnected(t, driver, 2*time.Second))
+	server, driver, sched, ok := suite.newServerWithRegisteredFramework()
+	if server != nil {
+		defer server.Close()
+	}
+	assert.True(t, ok, "failed to establish running test server and driver")
 
 	// Send a event to this SchedulerDriver (via http) to test handlers.	offer := util.NewOffer(
 	pbMsg := &mesos.LostSlaveMessage{
@@ -398,34 +384,16 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverLostSlaveEvent() {
 
 	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
-
-	<-time.After(time.Millisecond * 1)
-	select {
-	case <-ch:
-	case <-time.After(time.Millisecond * 2):
-		log.Errorf("Tired of waiting for scheduler callback.")
-	}
+	sched.waitForCallback(0)
 }
 
 func (suite *SchedulerTestSuite) TestSchedulerDriverFrameworkMessageEvent() {
 	t := suite.T()
-	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
-		log.Infoln("MockMaster - rcvd ", req.RequestURI)
-		rsp.WriteHeader(http.StatusAccepted)
-	})
-
-	defer server.Close()
-
-	ch := make(chan bool)
-	sched := newTestScheduler(suite)
-	sched.ch = ch
-
-	driver, err := NewMesosSchedulerDriver(sched, suite.framework, server.Addr, nil)
-	assert.NoError(t, err)
-	stat, err := driver.Start()
-	assert.NoError(t, err)
-	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	assert.True(t, waitForConnected(t, driver, 2*time.Second))
+	server, driver, sched, ok := suite.newServerWithRegisteredFramework()
+	if server != nil {
+		defer server.Close()
+	}
+	assert.True(t, ok, "failed to establish running test server and driver")
 
 	// Send a event to this SchedulerDriver (via http) to test handlers.	offer := util.NewOffer(
 	pbMsg := &mesos.ExecutorToFrameworkMessage{
@@ -437,13 +405,7 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverFrameworkMessageEvent() {
 
 	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
-
-	<-time.After(time.Millisecond * 1)
-	select {
-	case <-ch:
-	case <-time.After(time.Millisecond * 2):
-		log.Errorf("Tired of waiting for scheduler callback.")
-	}
+	sched.waitForCallback(0)
 }
 
 func waitForConnected(t *testing.T, driver *MesosSchedulerDriver, timeout time.Duration) bool {
@@ -465,24 +427,11 @@ func waitForConnected(t *testing.T, driver *MesosSchedulerDriver, timeout time.D
 
 func (suite *SchedulerTestSuite) TestSchedulerDriverFrameworkErrorEvent() {
 	t := suite.T()
-	server := testutil.NewMockMasterHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
-		log.Infoln("MockMaster - rcvd ", req.RequestURI)
-		rsp.WriteHeader(http.StatusAccepted)
-	})
-
-	defer server.Close()
-
-	ch := make(chan bool)
-	sched := newTestScheduler(suite)
-	sched.ch = ch
-
-	driver, err := NewMesosSchedulerDriver(sched, suite.framework, server.Addr, nil)
-	assert.NoError(t, err)
-	stat, err := driver.Start()
-	assert.NoError(t, err)
-	assert.Equal(t, mesos.Status_DRIVER_RUNNING, stat)
-	assert.NotNil(t, driver.self, "driver must have been assigned a pid")
-	assert.True(t, waitForConnected(t, driver, 2*time.Second))
+	server, driver, sched, ok := suite.newServerWithRegisteredFramework()
+	if server != nil {
+		defer server.Close()
+	}
+	assert.True(t, ok, "failed to establish running test server and driver")
 
 	// Send an error event to this SchedulerDriver (via http) to test handlers.
 	pbMsg := &mesos.FrameworkErrorMessage{
@@ -491,13 +440,6 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverFrameworkErrorEvent() {
 
 	c := testutil.NewMockMesosClient(t, server.PID)
 	c.SendMessage(driver.self, pbMsg)
-
-	<-time.After(time.Millisecond * 1)
-	select {
-	case <-ch:
-	case <-time.After(time.Millisecond * 2):
-		log.Errorf("Tired of waiting for scheduler callback.")
-	}
-
+	sched.waitForCallback(0)
 	assert.Equal(t, mesos.Status_DRIVER_ABORTED, driver.Status())
 }

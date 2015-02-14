@@ -71,13 +71,19 @@ func (m *MockDetector) Done() <-chan struct{} {
 	return nil
 }
 
-type SchedulerTestSuite struct {
-	suite.Suite
+func (m *MockDetector) Cancel() {}
+
+type SchedulerTestSuiteCore struct {
 	master      string
 	masterUpid  string
 	masterId    string
 	frameworkID string
 	framework   *mesos.FrameworkInfo
+}
+
+type SchedulerTestSuite struct {
+	suite.Suite
+	SchedulerTestSuiteCore
 }
 
 func (s *SchedulerTestSuite) registerMockDetector(prefix string) error {
@@ -92,7 +98,7 @@ func (s *SchedulerTestSuite) registerMockDetector(prefix string) error {
 	}))
 }
 
-func (s *SchedulerTestSuite) SetupTest() {
+func (s *SchedulerTestSuiteCore) SetupTest() {
 	s.master = "127.0.0.1:8080"
 	s.masterUpid = "master(2)@" + s.master
 	s.masterId = "some-master-id-uuid"
@@ -105,6 +111,7 @@ func (s *SchedulerTestSuite) SetupTest() {
 }
 
 func TestSchedulerSuite(t *testing.T) {
+	t.Logf("running scheduler test suite..")
 	suite.Run(t, new(SchedulerTestSuite))
 }
 
@@ -177,7 +184,6 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverStartWithRegistrationFailure
 	messenger := messenger.NewMockedMessenger()
 	messenger.On("Start").Return(nil)
 	messenger.On("UPID").Return(&upid.UPID{})
-	messenger.On("Send").Return(fmt.Errorf("messenger failed to send"))
 	messenger.On("Stop").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(sched, suite.framework, suite.master, nil)
@@ -193,8 +199,8 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverStartWithRegistrationFailure
 
 	time.Sleep(5 * time.Second) // wait a bit, registration should be looping...
 
-	suite.True(driver.Stopped())
-	suite.Equal(mesos.Status_DRIVER_STOPPED, driver.Status())
+	suite.False(driver.Stopped())
+	suite.Equal(mesos.Status_DRIVER_RUNNING, driver.Status())
 
 	// stop the driver, should not panic!
 	driver.Stop(false) // not failing over
@@ -323,6 +329,9 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverAbort() {
 	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
+	suite.NotNil(driver, "expected valid driver")
+	suite.NoError(err)
+
 	driver.messenger = messenger
 	suite.NoError(err)
 	suite.True(driver.Stopped())

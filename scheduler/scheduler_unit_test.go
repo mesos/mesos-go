@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/detector"
+	log "github.com/golang/glog"
+	"github.com/mesos/mesos-go/detector"
 	"github.com/mesos/mesos-go/detector/zoo"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
@@ -29,12 +31,48 @@ import (
 	"github.com/mesos/mesos-go/upid"
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"os"
 	"os/user"
+	"sync"
 	"testing"
 	"time"
 )
+
+var (
+	registerMockDetectorOnce sync.Once
+)
+
+func ensureMockDetectorRegistered() {
+	registerMockDetectorOnce.Do(func() {
+		var s *SchedulerTestSuite
+		err := s.registerMockDetector("testing://")
+		if err != nil {
+			log.Error(err)
+		}
+	})
+}
+
+type MockDetector struct {
+	mock.Mock
+	address string
+}
+
+func (m *MockDetector) Detect(listener detector.MasterChanged) error {
+	if listener != nil {
+		if pid, err := upid.Parse("master(2)@" + m.address); err != nil {
+			return err
+		} else {
+			go listener.Notify(detector.CreateMasterInfo(pid))
+		}
+	}
+	return nil
+}
+
+func (m *MockDetector) Done() <-chan struct{} {
+	return nil
+}
 
 type SchedulerTestSuite struct {
 	suite.Suite
@@ -43,6 +81,18 @@ type SchedulerTestSuite struct {
 	masterId    string
 	frameworkID string
 	framework   *mesos.FrameworkInfo
+}
+
+func (s *SchedulerTestSuite) registerMockDetector(prefix string) error {
+	address := ""
+	if s != nil {
+		address = s.master
+	} else {
+		address = "127.0.0.1:8080"
+	}
+	return detector.Register(prefix, detector.PluginFactory(func(spec string) (detector.Master, error) {
+		return &MockDetector{address: address}, nil
+	}))
 }
 
 func (s *SchedulerTestSuite) SetupTest() {
@@ -62,13 +112,10 @@ func TestSchedulerSuite(t *testing.T) {
 }
 
 func TestSchedulerDriverNew(t *testing.T) {
-	masterAddr := "127.0.0.1:5050"
-	mUpid, err := upid.Parse("master@" + masterAddr)
-	assert.NoError(t, err)
+	masterAddr := "localhost:5050"
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), &mesos.FrameworkInfo{}, masterAddr, nil)
 	assert.NotNil(t, driver)
 	assert.NoError(t, err)
-	assert.True(t, driver.MasterPid.Equal(mUpid))
 	user, _ := user.Current()
 	assert.Equal(t, user.Username, driver.FrameworkInfo.GetUser())
 	host, _ := os.Hostname()
@@ -294,6 +341,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverStopOK() {
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
+	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
 	driver.messenger = messenger
@@ -324,6 +372,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverAbort() {
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
+	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
 	driver.messenger = messenger
@@ -355,6 +404,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverLunchTasksUnstarted() {
 
 	// Set expections and return values.
 	messenger := messenger.NewMockedMessenger()
+	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(sched, suite.framework, suite.master, nil)
 	driver.messenger = messenger
@@ -380,6 +430,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverLaunchTasksWithError() {
 	msgr.On("Send").Return(nil)
 	msgr.On("UPID").Return(&upid.UPID{})
 	msgr.On("Stop").Return(nil)
+	msgr.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(sched, suite.framework, suite.master, nil)
 	driver.messenger = msgr
@@ -400,6 +451,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverLaunchTasksWithError() {
 	msgr2.On("UPID").Return(&upid.UPID{})
 	msgr2.On("Send").Return(fmt.Errorf("Unable to send message"))
 	msgr2.On("Stop").Return(nil)
+	msgr.On("Route").Return(nil)
 	driver.messenger = msgr2
 
 	// setup an offer
@@ -441,6 +493,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverLaunchTasks() {
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
+	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
 	driver.messenger = messenger
@@ -479,6 +532,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverKillTask() {
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
+	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
 	driver.messenger = messenger
@@ -504,6 +558,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverRequestResources() {
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
+	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
 	driver.messenger = messenger
@@ -538,6 +593,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverReviveOffers() {
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
+	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
 	driver.messenger = messenger
@@ -559,6 +615,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverSendFrameworkMessage() {
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
+	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
 	driver.messenger = messenger
@@ -584,6 +641,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverReconcileTasks() {
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
+	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
 	driver.messenger = messenger

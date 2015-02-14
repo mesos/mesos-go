@@ -47,22 +47,7 @@ func Register(prefix string, f PluginFactory) error {
 
 func New(spec string) (m Master, err error) {
 
-	switch f, pluginFound := MatchingPlugin(spec); {
-	case pluginFound:
-		m, err = f(spec)
-
-	case spec == "":
-		m = NewStandalone(nil)
-
-	case strings.HasPrefix(spec, "master@"):
-		var pid *upid.UPID
-		if pid, err = upid.Parse(spec); err == nil {
-			m = NewStandalone(createMasterInfo(pid))
-		} else {
-			log.Errorf("Error while parsing %s: %s\n", spec, err)
-		}
-
-	case strings.HasPrefix(spec, "file://"):
+	if strings.HasPrefix(spec, "file://") {
 		var body []byte
 		path := spec[7:]
 		body, err = ioutil.ReadFile(path)
@@ -71,11 +56,17 @@ func New(spec string) (m Master, err error) {
 		} else {
 			m, err = New(string(body))
 		}
-
-	default:
+	} else if f, ok := MatchingPlugin(spec); ok {
+		m, err = f(spec)
+	} else if strings.HasPrefix("master@", spec) {
+		var pid *upid.UPID
+		if pid, err = upid.Parse(spec); err == nil {
+			m = NewStandalone(CreateMasterInfo(pid))
+		}
+	} else {
 		var pid *upid.UPID
 		if pid, err = upid.Parse("master@" + spec); err == nil {
-			m = NewStandalone(createMasterInfo(pid))
+			m = NewStandalone(CreateMasterInfo(pid))
 		}
 	}
 
@@ -94,24 +85,34 @@ func MatchingPlugin(spec string) (PluginFactory, bool) {
 	return nil, false
 }
 
-func createMasterInfo(pid *upid.UPID) *mesos.MasterInfo {
+func CreateMasterInfo(pid *upid.UPID) *mesos.MasterInfo {
 	port, err := strconv.Atoi(pid.Port)
 	if err != nil {
 		log.Errorf("failed to parse port: %v", err)
 		return nil
 	}
-	ip := net.ParseIP(pid.Host)
-	if ip == nil {
-		log.Errorf("failed to parse IP address: '%v'", pid.Host)
+	//TODO(jdef) attempt to resolve host to IP address
+	var ipv4 net.IP
+	if addrs, err := net.LookupIP(pid.Host); err == nil {
+		for _, ip := range addrs {
+			if ip = ip.To4(); ip != nil {
+				ipv4 = ip
+				break
+			}
+		}
+		if ipv4 == nil {
+			log.Errorf("host does not resolve to an IPv4 address: %v", pid.Host)
+			return nil
+		}
+	} else {
+		log.Errorf("failed to lookup IPs for host '%v': %v", pid.Host, err)
 		return nil
 	}
-	ip = ip.To4()
-	if ip == nil {
-		log.Errorf("IP address is not IPv4: %v", pid.Host)
-		return nil
-	}
-	packedip := binary.BigEndian.Uint32(ip) // network byte order is big-endian
+	packedip := binary.BigEndian.Uint32(ipv4) // network byte order is big-endian
 	mi := util.NewMasterInfo(pid.ID, packedip, uint32(port))
 	mi.Pid = proto.String(pid.String())
+	if pid.Host != "" {
+		mi.Hostname = proto.String(pid.Host)
+	}
 	return mi
 }

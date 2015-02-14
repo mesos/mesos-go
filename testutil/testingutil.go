@@ -22,6 +22,7 @@ package testutil
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/upid"
@@ -40,17 +41,49 @@ type MockMesosHttpServer struct {
 	Addr   string
 	server *httptest.Server
 	t      *testing.T
+	when   map[string]func()
+}
+
+type When interface {
+	Do(func())
+}
+
+type WhenFunc func(func())
+
+func (w WhenFunc) Do(f func()) {
+	w(f)
+}
+
+func (m *MockMesosHttpServer) On(uri string) When {
+	log.V(2).Infof("when %v do something special", uri)
+	return WhenFunc(func(f func()) {
+		log.V(2).Infof("registered callback for %v", uri)
+		m.when[uri] = f
+	})
 }
 
 func NewMockMasterHttpServer(t *testing.T, handler func(rsp http.ResponseWriter, req *http.Request)) *MockMesosHttpServer {
-	server := httptest.NewServer(http.HandlerFunc(handler))
+	var server *httptest.Server
+	when := make(map[string]func())
+	stateHandler := func(rsp http.ResponseWriter, req *http.Request){
+                if "/state.json" == req.RequestURI {
+                        state := fmt.Sprintf(`{ "leader": "master@%v" }`, server.Listener.Addr())
+			log.V(1).Infof("returning JSON %v", state)
+                        io.WriteString(rsp, state)
+		} else if f, found := when[req.RequestURI]; found {
+			f()
+		} else {
+			handler(rsp,req)
+		}
+	}
+	server = httptest.NewServer(http.HandlerFunc(stateHandler))
 	assert.NotNil(t, server)
 	addr := server.Listener.Addr().String()
 	pid, err := upid.Parse("master@" + addr)
 	assert.NoError(t, err)
 	assert.NotNil(t, pid)
 	log.Infoln("Created test Master http server with PID", pid.String())
-	return &MockMesosHttpServer{PID: pid, Addr: addr, server: server, t: t}
+	return &MockMesosHttpServer{PID: pid, Addr: addr, server: server, t: t, when: when}
 }
 
 func NewMockSlaveHttpServer(t *testing.T, handler func(rsp http.ResponseWriter, req *http.Request)) *MockMesosHttpServer {

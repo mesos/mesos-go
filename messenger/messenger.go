@@ -113,7 +113,9 @@ func (m *MesosMessenger) Install(handler MessageHandler, msg proto.Message) erro
 // When an error is generated, the error can be communicated by placing
 // a message on the incoming queue to be handled upstream.
 func (m *MesosMessenger) Send(ctx context.Context, upid *upid.UPID, msg proto.Message) error {
-	if upid.Equal(m.upid) {
+	if upid == nil {
+		panic("cannot sent a message to a nil pid")
+	} else if upid.Equal(m.upid) {
 		return fmt.Errorf("Send the message to self")
 	}
 	name := getMessageName(msg)

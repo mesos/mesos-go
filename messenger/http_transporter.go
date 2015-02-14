@@ -239,6 +239,9 @@ func (t *HTTPTransporter) messageHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (t *HTTPTransporter) makeLibprocessRequest(msg *Message) (*http.Request, error) {
+	if msg.UPID == nil {
+		panic(fmt.Sprintf("message is missing UPID: %+v", msg))
+	}
 	hostport := net.JoinHostPort(msg.UPID.Host, msg.UPID.Port)
 	targetURL := fmt.Sprintf("http://%s%s", hostport, msg.RequestURI())
 	log.V(2).Infof("libproc target URL %s", targetURL)

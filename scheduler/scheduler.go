@@ -19,6 +19,7 @@
 package scheduler
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"math"
@@ -54,6 +55,7 @@ var (
 		fmt.Sprintf("TCP4 Address for the Scheduler to bind"))
 	schedulerPort = flag.String("mesos_scheduler_port", "0",
 		fmt.Sprintf("TCP Port for the Scheduler to bind"))
+	AuthenticationCanceledError = errors.New("authentication canceled")
 )
 
 // Concrete implementation of a SchedulerDriver that connects a
@@ -100,6 +102,8 @@ type MesosSchedulerDriver struct {
 	tasks           map[string]*mesos.TaskInfo     // Key is a UUID string.
 	credential      *mesos.Credential
 	authenticated   bool
+	authenticating  chan struct{} // signalling chan
+	reauthenticate  bool
 }
 
 // Create a new mesos scheduler driver with the given
@@ -148,7 +152,6 @@ func NewMesosSchedulerDriver(
 		stopCh:        make(chan struct{}),
 		status:        mesos.Status_DRIVER_NOT_STARTED,
 		stopped:       true,
-		connected:     false,
 		cache:         newSchedCache(),
 		credential:    credential,
 		failover:      framework.Id != nil && len(framework.Id.GetValue()) > 0,
@@ -198,25 +201,33 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(driver.slaveLost, &mesos.LostSlaveMessage{})
 	driver.messenger.Install(driver.frameworkMessageRcvd, &mesos.ExecutorToFrameworkMessage{})
 	driver.messenger.Install(driver.frameworkErrorRcvd, &mesos.FrameworkErrorMessage{})
-
-	driver.masterDetector.Detect(detector.AsMasterChanged(driver.masterDetected))
+	driver.messenger.Install(driver.handleMasterChanged, &mesos.InternalMasterChangeDetected{})
+	driver.messenger.Install(driver.handleAuthenticationResult, &mesos.InternalAuthenticationResult{})
 	return nil
 }
 
 // lead master detection callback.
-func (driver *MesosSchedulerDriver) masterDetected(master *mesos.MasterInfo) {
+func (driver *MesosSchedulerDriver) handleMasterChanged(from *upid.UPID, pbMsg proto.Message) {
 	if driver.Status() == mesos.Status_DRIVER_ABORTED {
 		log.Info("Ignoring master change because the driver is aborted.")
+		return
+	} else if !from.Equal(driver.self) {
+		log.Errorf("ignoring master changed message received from upid '%v'", from)
 		return
 	}
 
 	// Reconnect every time a master is dected.
 	if driver.Connected() {
 		log.V(3).Info("Disconnecting scheduler.")
+		driver.MasterPid = nil
 		driver.Scheduler.Disconnected(driver)
 	}
 
+	msg := pbMsg.(*mesos.InternalMasterChangeDetected)
+	master := msg.Master
+
 	driver.setConnected(false)
+	driver.authenticated = false
 
 	if master != nil {
 		log.Infof("New master %s detected\n", master.String())
@@ -227,28 +238,115 @@ func (driver *MesosSchedulerDriver) masterDetected(master *mesos.MasterInfo) {
 		}
 
 		driver.MasterPid = pid // save for downstream ops.
-
-		if driver.credential != nil {
-			if err := driver.authenticate(); err != nil {
-				log.Errorf("Scheduler failed to authenticate: %v\n", err)
-				return
-			}
-
-			func() {
-				driver.lock.Lock()
-				defer driver.lock.Unlock()
-				driver.authenticated = true
-			}()
-
-		} else {
-			log.Infoln("No credentials were provided. " +
-				"Attempting to register scheduler without authentication.")
-			// register framework
-			go driver.doReliableRegistration(float64(registrationBackoffFactor))
-		}
+		driver.tryAuthentication()
 	} else {
-		log.Infoln("No new master detected.")
+		log.Infoln("No master detected.")
 	}
+}
+
+func (driver *MesosSchedulerDriver) tryAuthentication() {
+	if driver.authenticated {
+		// programming error
+		panic("already authenticated")
+	}
+
+	masterPid := driver.MasterPid // save for referencing later in goroutine
+	if masterPid == nil {
+		log.Info("skipping authentication attempt because we lost the master")
+		return
+	}
+
+	if driver.authenticating != nil {
+		// authentication is in progress, try to cancel it
+		driver.closeAuthenticating()
+
+		// force a retry in authenticate()
+		driver.reauthenticate = true
+		return
+	}
+
+	if driver.credential != nil {
+		// authentication can block and we don't want to hold up the messenger loop
+		authenticating := make(chan struct{})
+		go func() {
+			result := &mesos.InternalAuthenticationResult{
+				//TODO(jdef): is this really needed?
+				Success:   proto.Bool(false),
+				Completed: proto.Bool(false),
+			}
+			if err := driver.authenticate(masterPid, authenticating); err != nil {
+				log.Errorf("Scheduler failed to authenticate: %v\n", err)
+				if err == auth.AuthenticationFailed {
+					result.Completed = proto.Bool(true)
+				}
+			} else {
+				result.Completed = proto.Bool(true)
+				result.Success = proto.Bool(true)
+			}
+			func() {
+				// protect against panics from already closed channel
+				defer func() { recover() }()
+				close(authenticating)
+			}()
+			driver.messenger.Route(context.TODO(), driver.messenger.UPID(), result)
+		}()
+		driver.authenticating = authenticating
+	} else {
+		log.Infoln("No credentials were provided. " +
+			"Attempting to register scheduler without authentication.")
+		driver.authenticated = true
+		go driver.doReliableRegistration(float64(registrationBackoffFactor))
+	}
+}
+
+func (driver *MesosSchedulerDriver) closeAuthenticating() {
+	// someone already may have closed it, so recover
+	// (this is pretty hackish)
+	defer func() { recover() }()
+	close(driver.authenticating)
+}
+
+func (driver *MesosSchedulerDriver) handleAuthenticationResult(from *upid.UPID, pbMsg proto.Message) {
+	if driver.Status() != mesos.Status_DRIVER_RUNNING {
+		log.V(1).Info("ignoring authenticate because driver is not running")
+		return
+	}
+	if !from.Equal(driver.self) {
+		log.Errorf("ignoring authentication result message received from upid '%v'", from)
+		return
+	}
+	if driver.authenticated {
+		// programming error
+		panic("already authenticated")
+	}
+	if driver.authenticating == nil {
+		// programming error
+		panic("missing authenticating signal")
+	}
+	if driver.MasterPid == nil {
+		log.Infoln("ignoring authentication result because master is lost")
+		driver.closeAuthenticating()
+		// disable future retries until we get a new master
+		driver.reauthenticate = false
+		return
+	}
+	msg := pbMsg.(*mesos.InternalAuthenticationResult)
+	if driver.reauthenticate || !msg.GetCompleted() {
+		log.Infof("failed to authenticate with master %v: master changed", driver.MasterPid)
+		driver.closeAuthenticating()
+		driver.authenticating = nil
+		driver.reauthenticate = false
+
+		driver.tryAuthentication()
+		return
+	}
+	if !msg.GetSuccess() {
+		log.Errorf("master %v refused authentication", driver.MasterPid)
+		return
+	}
+	driver.authenticated = true
+	driver.authenticating = nil
+	go driver.doReliableRegistration(float64(registrationBackoffFactor))
 }
 
 // ------------------------- Accessors ----------------------- //
@@ -296,21 +394,25 @@ func (driver *MesosSchedulerDriver) frameworkRegistered(from *upid.UPID, pbMsg p
 
 	msg := pbMsg.(*mesos.FrameworkRegisteredMessage)
 	masterInfo := msg.GetMasterInfo()
-	masterPid := msg.GetMasterInfo().GetPid()
+	masterPid := masterInfo.GetPid()
 	frameworkId := msg.GetFrameworkId()
 
 	if driver.Status() == mesos.Status_DRIVER_ABORTED {
-		log.Infof("Ignoring FrameworkRegisteredMessage from master %s, driver is aborted!\n", masterPid)
+		log.Infof("ignoring FrameworkRegisteredMessage from master %s, driver is aborted", masterPid)
 		return
 	}
 
 	if driver.connected {
-		log.Infoln("Ignoring FrameworkRegisteredMessage from master, driver is already connected!\n", masterPid)
+		log.Infoln("ignoring FrameworkRegisteredMessage from master, driver is already connected", masterPid)
 		return
 	}
 
 	if driver.stopped {
-		log.Infof("Ignoring FrameworkRegisteredMessage from master %s, driver is stopped!\n", masterPid)
+		log.Infof("ignoring FrameworkRegisteredMessage from master %s, driver is stopped", masterPid)
+		return
+	}
+	if !driver.MasterPid.Equal(from) {
+		log.Warningf("ignoring framework registered message because it was sent from '%v' instead of leading master '%v'", from, driver.MasterPid)
 		return
 	}
 
@@ -330,9 +432,12 @@ func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg
 		log.Infoln("Ignoring FrameworkReregisteredMessage from master, driver is aborted!")
 		return
 	}
-
 	if driver.connected {
 		log.Infoln("Ignoring FrameworkReregisteredMessage from master,driver is already connected!")
+		return
+	}
+	if !driver.MasterPid.Equal(from) {
+		log.Warningf("ignoring framework re-registered message because it was sent from '%v' instead of leading master '%v'", from, driver.MasterPid)
 		return
 	}
 
@@ -370,7 +475,7 @@ func (driver *MesosSchedulerDriver) resourcesOffered(from *upid.UPID, pbMsg prot
 			driver.cache.putOffer(offer, pid)
 			log.V(1).Infof("Cached offer %s from SlavePID %s", offer.Id.GetValue(), pid)
 		} else {
-			log.V(1).Infoln("Failed to parse offer PID:", pid)
+			log.Warningf("Failed to parse offer PID '%v': %v", pid, err)
 		}
 	}
 
@@ -423,9 +528,12 @@ func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.M
 		log.V(1).Infoln("Ignoring StatusUpdate message, the driver is aborted!")
 		return
 	}
-
 	if !driver.connected {
 		log.V(1).Infoln("Ignoring StatusUpdate message, the driver is not connected!")
+		return
+	}
+	if !driver.MasterPid.Equal(from) {
+		log.Warningf("ignoring status message because it was sent from '%v' instead of leading master '%v'", from, driver.MasterPid)
 		return
 	}
 
@@ -526,29 +634,54 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 	driver.setStatus(mesos.Status_DRIVER_RUNNING)
 	driver.setStopped(false)
 
-	log.Infoln("Mesos scheduler driver started with PID=", driver.self.String())
+	log.Infof("Mesos scheduler driver started with PID=%v", driver.self)
 
+	// start the detector AFTER we have a self pid from the messenger, otherwise things get ugly.
+	// route detector callbacks over the messenger bus, maintaining serial callback execution.
+	listener := detector.AsMasterChanged(func(m *mesos.MasterInfo) {
+		driver.messenger.Route(context.TODO(), driver.self, &mesos.InternalMasterChangeDetected{
+			Master: m,
+		})
+	})
+	log.V(1).Infof("starting master detector %T: %+v", driver.masterDetector, driver.masterDetector)
+	driver.masterDetector.Detect(listener)
+
+	log.V(2).Info("master detector started")
 	return driver.Status(), nil
 }
 
-// authenticate?
-//TODO(jdef) perhaps at some point in the future this will get pushed down into
-//the messenger layer (e.g. to use HTTP-based authentication). We'd probably still
-//specify the callback.Handler here, along with the user-selected authentication
-//provider. Perhaps in the form of some messenger.AuthenticationConfig.
-
-// authenticate using the installed authentication plugin.
-func (driver *MesosSchedulerDriver) authenticate() error {
-	log.Infoln("Authenticating with master.")
+// authenticate against the spec'd master pid using the configured authenticationProvider.
+// the authentication process is canceled upon either closing of the authenticating chan, or
+// else because it timed out (authTimeout).
+//
+// TODO(jdef) perhaps at some point in the future this will get pushed down into
+// the messenger layer (e.g. to use HTTP-based authentication). We'd probably still
+// specify the callback.Handler here, along with the user-selected authentication
+// provider. Perhaps in the form of some messenger.AuthenticationConfig.
+//
+func (driver *MesosSchedulerDriver) authenticate(pid *upid.UPID, authenticating <-chan struct{}) error {
+	log.Infof("authenticating with master %v", pid)
 	ctx, cancel := context.WithTimeout(context.Background(), authTimeout)
-	defer cancel()
 	handler := &CredentialHandler{
-		pid:        driver.MasterPid,
-		client:     driver.messenger.UPID(),
+		pid:        pid,
+		client:     driver.self,
 		credential: driver.credential,
 	}
 	ctx = auth.WithLoginProvider(ctx, *authProvider)
-	return auth.Login(ctx, handler)
+	ch := make(chan error, 1)
+	go func() { ch <- auth.Login(ctx, handler) }()
+	select {
+	case <-ctx.Done():
+		<-ch
+		return ctx.Err()
+	case <-authenticating:
+		cancel()
+		<-ch
+		return AuthenticationCanceledError
+	case e := <-ch:
+		cancel()
+		return e
+	}
 }
 
 func (driver *MesosSchedulerDriver) doReliableRegistration(maxBackoff float64) {
@@ -582,25 +715,23 @@ func (driver *MesosSchedulerDriver) doReliableRegistration(maxBackoff float64) {
 // return true if we should attempt another registration later
 func (driver *MesosSchedulerDriver) registerOnce() (proceed bool) {
 
-	proceed = true
 	var (
 		failover bool
 		pid      *upid.UPID
 	)
-
-	func() {
+	if func() bool {
 		driver.lock.RLock()
 		defer driver.lock.RUnlock()
 
 		//TODO(jdef) also, check that we know which master to send to; if none, return false
-		//TODO(jdef) also, if authentication is also asynchronous, check if we have credentials && !authenticated, if so, return false
-		if driver.stopped || driver.connected {
-			proceed = false
+		if driver.stopped || driver.connected || (driver.credential != nil && !driver.authenticated) {
+			log.Infof("skipping registration request: stopped=%v, connected=%v, authenticated=%v", driver.stopped, driver.connected, driver.authenticated)
+			return false
 		}
 		failover = driver.failover
 		pid = driver.MasterPid
-	}()
-	if proceed {
+		return true
+	}() {
 		// register framework
 		var message proto.Message
 		if driver.FrameworkInfo.Id != nil && len(driver.FrameworkInfo.Id.GetValue()) > 0 {
@@ -703,11 +834,9 @@ func (driver *MesosSchedulerDriver) Abort() (mesos.Status, error) {
 	log.Infof("Aborting framework [%s]\n", driver.FrameworkInfo.GetId().GetValue())
 	if stat := driver.Status(); stat != mesos.Status_DRIVER_RUNNING {
 		return stat, fmt.Errorf("Unable to Abort, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
-	}
-
-	if !driver.connected {
+	} else if !driver.connected {
 		log.Infoln("Ignoring Abort, master is disconnected.")
-		return driver.Status(), fmt.Errorf("Unable to Abort, driver not connected.")
+		return stat, fmt.Errorf("Unable to Abort, driver not connected.")
 	}
 	_, err := driver.Stop(true)
 	stat := mesos.Status_DRIVER_ABORTED
@@ -941,6 +1070,6 @@ func (driver *MesosSchedulerDriver) error(err string, abortDriver bool) {
 		driver.Abort()
 	}
 
-	log.V(3).Infoln("Sending error '", err, "'")
+	log.V(3).Infof("Sending error '%v'", err)
 	driver.Scheduler.Error(driver, err)
 }

@@ -11,6 +11,7 @@ type testDetector string
 func (d testDetector) Detect(f MasterChanged) error { return nil }
 
 func (d testDetector) Done() <-chan struct{} { return make(<-chan struct{}) }
+func (d testDetector) Cancel()               {}
 
 // unregister a factory plugin according to its prefix.
 // this is part of the testing module on purpose: during normal execution there

@@ -43,4 +43,6 @@ type Master interface {
 	Detect(MasterChanged) error
 	// returns a chan that, when closed, indicates the detector has terminated
 	Done() <-chan struct{}
+	// cancel the detector. it's ok to call this multiple times, or even if Detect() hasn't been invoked yet.
+	Cancel()
 }

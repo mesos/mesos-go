@@ -843,6 +843,7 @@ func (driver *MesosSchedulerDriver) stop(stopStatus mesos.Status) error {
 }
 
 func (driver *MesosSchedulerDriver) Abort() (mesos.Status, error) {
+	defer driver.masterDetector.Cancel()
 	log.Infof("Aborting framework [%s]\n", driver.FrameworkInfo.GetId().GetValue())
 	if stat := driver.Status(); stat != mesos.Status_DRIVER_RUNNING {
 		return stat, fmt.Errorf("Unable to Abort, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)

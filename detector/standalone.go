@@ -22,11 +22,13 @@ const (
 )
 
 type Standalone struct {
-	ch       chan *mesos.MasterInfo
-	client   *http.Client
-	tr       *http.Transport
-	pollOnce sync.Once
-	initial  *mesos.MasterInfo
+	ch         chan *mesos.MasterInfo
+	client     *http.Client
+	tr         *http.Transport
+	pollOnce   sync.Once
+	initial    *mesos.MasterInfo
+	done       chan struct{}
+	cancelOnce sync.Once
 }
 
 // Create a new stand alone master detector.
@@ -42,6 +44,7 @@ func NewStandalone(mi *mesos.MasterInfo) *Standalone {
 		},
 		tr:      tr,
 		initial: mi,
+		done:    make(chan struct{}),
 	}
 }
 
@@ -60,9 +63,18 @@ func (s *Standalone) Detect(o MasterChanged) error {
 		log.V(1).Info("spawning asyc master detector listener")
 		go func() {
 			log.V(2).Infof("waiting for polled to send updates")
-			for mi := range s.ch {
-				log.V(1).Infof("detected master change: %+v", mi)
-				o.Notify(mi)
+		pollWaiter:
+			for {
+				select {
+				case mi, ok := <-s.ch:
+					if !ok {
+						break pollWaiter
+					}
+					log.V(1).Infof("detected master change: %+v", mi)
+					o.Notify(mi)
+				case <-s.done:
+					return
+				}
 			}
 			o.Notify(nil)
 		}()
@@ -73,7 +85,11 @@ func (s *Standalone) Detect(o MasterChanged) error {
 }
 
 func (s *Standalone) Done() <-chan struct{} {
-	return nil
+	return s.done
+}
+
+func (s *Standalone) Cancel() {
+	s.cancelOnce.Do(func() { close(s.done) })
 }
 
 // poll for changes to master leadership
@@ -111,6 +127,9 @@ func (s *Standalone) poller() {
 					// no one heard the master change, oh well - poll again
 					cancel()
 					continue
+				case <-s.done:
+					cancel()
+					return
 				}
 			} else {
 				log.V(2).Infof("no change to master leadership: '%v'", lastpid)

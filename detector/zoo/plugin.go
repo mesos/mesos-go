@@ -6,6 +6,10 @@ import (
 
 func init() {
 	detector.Register("zk://", detector.PluginFactory(func(spec string) (detector.Master, error) {
-		return NewMasterDetector(spec)
+		md, err := NewMasterDetector(spec)
+		if err == nil {
+			md.client.connect()
+		}
+		return md, err
 	}))
 }

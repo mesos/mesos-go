@@ -170,8 +170,9 @@ func NewMesosSchedulerDriver(
 			f := detector.AsMasterChanged(func(mi *mesos.MasterInfo) {
 				pid, err := upid.Parse(mi.GetPid())
 				if err != nil {
-					log.Errorf("Unable to parse standalone PID, panic! %v\n", mi.GetPid())
-					panic("Unable to parse standalone PID value.") // should never get here
+					msg := fmt.Sprintf("Unable to parse standalone PID [%s]. Panic!\n", mi.GetPid())
+					log.Errorf(msg)
+					panic(msg) // should never get here
 				}
 				driver.MasterPid = pid
 			})

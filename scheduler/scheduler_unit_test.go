@@ -21,10 +21,13 @@ package scheduler
 import (
 	"fmt"
 	"github.com/gogo/protobuf/proto"
+	"github.com/mesos/mesos-go/detector"
+	"github.com/mesos/mesos-go/detector/zoo"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
+	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"os"
@@ -83,9 +86,47 @@ func TestSchedulerDriverNew_WithPid(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestSchedulerDriverNew_WithZkUrl(t *testing.T) {
+	masterAddr := "zk://127.0.0.1:5050/mesos"
+	mUpid, err := upid.Parse("master@127.0.0.1:5050")
+	assert.NoError(t, err)
+	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), &mesos.FrameworkInfo{}, masterAddr, nil)
+	assert.NotNil(t, driver)
+	assert.NoError(t, err)
+
+	md, err := zoo.NewMockMasterDetector(masterAddr)
+	assert.NoError(t, err)
+	assert.NotNil(t, md)
+	driver.masterDetector = md
+
+	md.ScheduleConnEvent(zk.StateConnected)
+	md.ScheduleSessEvent(zk.EventNodeChildrenChanged)
+	md.Start()
+
+	done := make(chan struct{})
+	go func() {
+		driver.masterDetector.Detect(detector.AsMasterChanged(func(m *mesos.MasterInfo) {
+			assert.NotNil(t, m)
+			pid, err := upid.Parse(m.GetPid())
+			assert.NoError(t, err)
+			assert.True(t, mUpid.Equal(pid))
+			close(done)
+		}))
+	}()
+
+	time.Sleep(time.Microsecond * 100) // stall for event propagation.
+
+	select {
+	case <-done:
+	case <-time.After(time.Millisecond * 1000):
+		t.Errorf("Timed out waiting for children event.")
+
+	}
+}
+
 func (suite *SchedulerTestSuite) TestSchedulerDriverNew_WithFrameworkInfo_Override() {
 	suite.framework.Hostname = proto.String("local-host")
-	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, "localhost:5050", nil)
+	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, "127.0.0.1:5050", nil)
 	suite.NoError(err)
 	suite.Equal(driver.FrameworkInfo.GetUser(), "test-user")
 	suite.Equal("local-host", driver.FrameworkInfo.GetHostname())

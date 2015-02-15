@@ -25,6 +25,7 @@ func TestDectorFactoryNew_EmptySpec(t *testing.T) {
 	assert.NoError(t, err)
 	sa, ok := m.(*Standalone)
 	assert.True(t, ok)
+	assert.NotNil(t, sa)
 }
 
 // TODO figure out how to test without cyclic import

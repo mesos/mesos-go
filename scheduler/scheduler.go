@@ -167,23 +167,6 @@ func NewMesosSchedulerDriver(
 		return nil, err
 	} else {
 		driver.masterDetector = md
-		// if standalone detector, apply master value immediately.
-		sa, ok := md.(*detector.Standalone)
-		if ok {
-			f := detector.AsMasterChanged(func(mi *mesos.MasterInfo) {
-				pid, err := upid.Parse(mi.GetPid())
-				if err != nil {
-					msg := fmt.Sprintf("Unable to parse standalone PID [%s]. Panic!\n", mi.GetPid())
-					log.Errorf(msg)
-					panic(msg) // should never get here
-				}
-				driver.MasterPid = pid
-			})
-			err := sa.Detect(f)
-			if err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	//TODO keep scheduler counter to for proper PID.

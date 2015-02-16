@@ -21,7 +21,6 @@ package scheduler
 import (
 	"fmt"
 	"github.com/gogo/protobuf/proto"
-	"github.com/mesos/mesos-go/detector"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/detector"
 	"github.com/mesos/mesos-go/detector/zoo"
@@ -136,7 +135,8 @@ func TestSchedulerDriverNew_WithPid(t *testing.T) {
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), &mesos.FrameworkInfo{}, masterAddr, nil)
 	assert.NotNil(t, driver)
 	assert.NoError(t, err)
-	assert.True(t, driver.MasterPid.Equal(mUpid))
+	driver.handleMasterChanged(driver.self, &mesos.InternalMasterChangeDetected{Master: &mesos.MasterInfo{Pid: proto.String(mUpid.String())}})
+	assert.True(t, driver.MasterPid.Equal(mUpid), fmt.Sprintf("expected upid %+v instead of %+v", mUpid, driver.MasterPid))
 	assert.NoError(t, err)
 }
 

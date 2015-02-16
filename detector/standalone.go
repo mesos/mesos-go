@@ -19,6 +19,7 @@ import (
 const (
 	mesosHttpClientTimeout  = 10 * time.Second //TODO(jdef) configurable via fiag?
 	mesosLeaderSyncInterval = 30 * time.Second //TODO(jdef) configurable via fiag?
+	defaultMesosMasterPort  = 5050
 )
 
 type Standalone struct {
@@ -104,7 +105,7 @@ func (s *Standalone) poller() {
 		return
 	}
 	addr := *s.initial.Hostname
-	port := uint32(5050)
+	port := uint32(defaultMesosMasterPort)
 	if s.initial.Port != nil && *s.initial.Port != 0 {
 		port = *s.initial.Port
 	}

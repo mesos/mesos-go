@@ -73,18 +73,6 @@ func NewMasterDetector(zkurls string) (*MasterDetector, error) {
 	return detector, nil
 }
 
-/*
-func (md *MasterDetector) Start() error {
-	md.client.connect()
-	return nil
-}
-
-func (md *MasterDetector) Stop() error {
-	md.client.stop()
-	return nil
-}
-*/
-
 // returns a chan that, when closed, indicates termination of the detector
 func (md *MasterDetector) Done() <-chan struct{} {
 	return md.client.stopped()

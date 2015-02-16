@@ -384,6 +384,9 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverAbort() {
 	messenger.On("Route").Return(nil)
 
 	driver, err := NewMesosSchedulerDriver(NewMockScheduler(), suite.framework, suite.master, nil)
+	suite.NotNil(driver, "expected valid driver")
+	suite.NoError(err)
+
 	driver.messenger = messenger
 	suite.NoError(err)
 	suite.True(driver.Stopped())

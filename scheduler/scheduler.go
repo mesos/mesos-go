@@ -637,17 +637,19 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 
 	log.Infof("Mesos scheduler driver started with PID=%v", driver.self)
 
-	// start the detector AFTER we have a self pid from the messenger, otherwise things get ugly.
-	// route detector callbacks over the messenger bus, maintaining serial callback execution.
 	listener := detector.AsMasterChanged(func(m *mesos.MasterInfo) {
 		driver.messenger.Route(context.TODO(), driver.self, &mesos.InternalMasterChangeDetected{
 			Master: m,
 		})
 	})
+
+	// register with Detect() AFTER we have a self pid from the messenger, otherwise things get ugly
+	// because our internal messaging depends on it. detector callbacks are routed over the messenger
+	// bus, maintaining serial (concurrency-safe) callback execution.
 	log.V(1).Infof("starting master detector %T: %+v", driver.masterDetector, driver.masterDetector)
 	driver.masterDetector.Detect(listener)
 
-	log.V(2).Info("master detector started")
+	log.V(2).Infoln("master detector started")
 	return driver.Status(), nil
 }
 

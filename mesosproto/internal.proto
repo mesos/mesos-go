@@ -18,4 +18,6 @@ message InternalAuthenticationResult {
 	required bool success = 1;
 	// true if the authentication process completed, successfully or not
 	required bool completed = 2;
+	// master pid that this result pertains to
+	required string pid = 3;
 }

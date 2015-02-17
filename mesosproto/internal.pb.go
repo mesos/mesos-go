@@ -43,8 +43,10 @@ type InternalAuthenticationResult struct {
 	// true only if the authentication process completed and login was successful
 	Success *bool `protobuf:"varint,1,req,name=success" json:"success,omitempty"`
 	// true if the authentication process completed, successfully or not
-	Completed        *bool  `protobuf:"varint,2,req,name=completed" json:"completed,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	Completed *bool `protobuf:"varint,2,req,name=completed" json:"completed,omitempty"`
+	// master pid that this result pertains to
+	Pid              *string `protobuf:"bytes,3,req,name=pid" json:"pid,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *InternalAuthenticationResult) Reset()         { *m = InternalAuthenticationResult{} }
@@ -63,6 +65,13 @@ func (m *InternalAuthenticationResult) GetCompleted() bool {
 		return *m.Completed
 	}
 	return false
+}
+
+func (m *InternalAuthenticationResult) GetPid() string {
+	if m != nil && m.Pid != nil {
+		return *m.Pid
+	}
+	return ""
 }
 
 func init() {

@@ -55,8 +55,34 @@ var (
 		fmt.Sprintf("TCP4 Address for the Scheduler to bind"))
 	schedulerPort = flag.String("mesos_scheduler_port", "0",
 		fmt.Sprintf("TCP Port for the Scheduler to bind"))
-	AuthenticationCanceledError = errors.New("authentication canceled")
+	authenticationCanceledError = errors.New("authentication canceled")
 )
+
+// helper to track authentication progress and to prevent multiple close() ops
+// against a signalling chan. it's safe to invoke the func's of this struct
+// even if the receiver pointer is nil.
+type authenticationAttempt struct {
+	done     chan struct{}
+	doneOnce sync.Once
+}
+
+func (a *authenticationAttempt) cancel() {
+	if a != nil {
+		a.doneOnce.Do(func() { close(a.done) })
+	}
+}
+
+func (a *authenticationAttempt) inProgress() bool {
+	if a != nil {
+		select {
+		case <-a.done:
+			return false
+		default:
+			return true
+		}
+	}
+	return false
+}
 
 // Concrete implementation of a SchedulerDriver that connects a
 // Scheduler with a Mesos master. The MesosSchedulerDriver is
@@ -92,9 +118,6 @@ type MesosSchedulerDriver struct {
 	masterDetector  detector.Master
 	connected       bool
 	connection      uuid.UUID
-	local           bool
-	checkpoint      bool
-	recoveryTimeout time.Duration
 	failoverTimeout float64
 	failover        bool
 	cache           *schedCache
@@ -102,7 +125,7 @@ type MesosSchedulerDriver struct {
 	tasks           map[string]*mesos.TaskInfo     // Key is a UUID string.
 	credential      *mesos.Credential
 	authenticated   bool
-	authenticating  chan struct{} // signalling chan
+	authenticating  *authenticationAttempt
 	reauthenticate  bool
 }
 
@@ -251,23 +274,23 @@ func (driver *MesosSchedulerDriver) tryAuthentication() {
 		return
 	}
 
-	if driver.authenticating != nil {
-		// authentication is in progress, try to cancel it
-		driver.closeAuthenticating()
-
-		// force a retry in authenticate()
+	if driver.authenticating.inProgress() {
+		// authentication is in progress, try to cancel it (we may too late already)
+		driver.authenticating.cancel()
 		driver.reauthenticate = true
 		return
 	}
 
 	if driver.credential != nil {
 		// authentication can block and we don't want to hold up the messenger loop
-		authenticating := make(chan struct{})
+		authenticating := &authenticationAttempt{done: make(chan struct{})}
 		go func() {
+			defer authenticating.cancel()
 			result := &mesos.InternalAuthenticationResult{
 				//TODO(jdef): is this really needed?
 				Success:   proto.Bool(false),
 				Completed: proto.Bool(false),
+				Pid:       proto.String(masterPid.String()),
 			}
 			if err := driver.authenticate(masterPid, authenticating); err != nil {
 				log.Errorf("Scheduler failed to authenticate: %v\n", err)
@@ -278,11 +301,7 @@ func (driver *MesosSchedulerDriver) tryAuthentication() {
 				result.Completed = proto.Bool(true)
 				result.Success = proto.Bool(true)
 			}
-			func() {
-				// protect against panics from already closed channel
-				defer func() { recover() }()
-				close(authenticating)
-			}()
+			// don't reference driver.authenticating here since it may have changed
 			driver.messenger.Route(context.TODO(), driver.messenger.UPID(), result)
 		}()
 		driver.authenticating = authenticating
@@ -292,13 +311,6 @@ func (driver *MesosSchedulerDriver) tryAuthentication() {
 		driver.authenticated = true
 		go driver.doReliableRegistration(float64(registrationBackoffFactor))
 	}
-}
-
-func (driver *MesosSchedulerDriver) closeAuthenticating() {
-	// someone already may have closed it, so recover
-	// (this is pretty hackish)
-	defer func() { recover() }()
-	close(driver.authenticating)
 }
 
 func (driver *MesosSchedulerDriver) handleAuthenticationResult(from *upid.UPID, pbMsg proto.Message) {
@@ -314,24 +326,19 @@ func (driver *MesosSchedulerDriver) handleAuthenticationResult(from *upid.UPID, 
 		// programming error
 		panic("already authenticated")
 	}
-	if driver.authenticating == nil {
-		// programming error
-		panic("missing authenticating signal")
-	}
 	if driver.MasterPid == nil {
 		log.Infoln("ignoring authentication result because master is lost")
-		driver.closeAuthenticating()
+		driver.authenticating.cancel() // cancel any in-progress background attempt
+
 		// disable future retries until we get a new master
 		driver.reauthenticate = false
 		return
 	}
 	msg := pbMsg.(*mesos.InternalAuthenticationResult)
-	if driver.reauthenticate || !msg.GetCompleted() {
+	if driver.reauthenticate || !msg.GetCompleted() || driver.MasterPid.String() != msg.GetPid() {
 		log.Infof("failed to authenticate with master %v: master changed", driver.MasterPid)
-		driver.closeAuthenticating()
-		driver.authenticating = nil
+		driver.authenticating.cancel() // cancel any in-progress background authentication
 		driver.reauthenticate = false
-
 		driver.tryAuthentication()
 		return
 	}
@@ -340,7 +347,6 @@ func (driver *MesosSchedulerDriver) handleAuthenticationResult(from *upid.UPID, 
 		return
 	}
 	driver.authenticated = true
-	driver.authenticating = nil
 	go driver.doReliableRegistration(float64(registrationBackoffFactor))
 }
 
@@ -646,7 +652,7 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 }
 
 // authenticate against the spec'd master pid using the configured authenticationProvider.
-// the authentication process is canceled upon either closing of the authenticating chan, or
+// the authentication process is canceled upon either cancelation of authenticating, or
 // else because it timed out (authTimeout).
 //
 // TODO(jdef) perhaps at some point in the future this will get pushed down into
@@ -654,7 +660,7 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 // specify the callback.Handler here, along with the user-selected authentication
 // provider. Perhaps in the form of some messenger.AuthenticationConfig.
 //
-func (driver *MesosSchedulerDriver) authenticate(pid *upid.UPID, authenticating <-chan struct{}) error {
+func (driver *MesosSchedulerDriver) authenticate(pid *upid.UPID, authenticating *authenticationAttempt) error {
 	log.Infof("authenticating with master %v", pid)
 	ctx, cancel := context.WithTimeout(context.Background(), authTimeout)
 	handler := &CredentialHandler{
@@ -669,10 +675,10 @@ func (driver *MesosSchedulerDriver) authenticate(pid *upid.UPID, authenticating 
 	case <-ctx.Done():
 		<-ch
 		return ctx.Err()
-	case <-authenticating:
+	case <-authenticating.done:
 		cancel()
 		<-ch
-		return AuthenticationCanceledError
+		return authenticationCanceledError
 	case e := <-ch:
 		cancel()
 		return e

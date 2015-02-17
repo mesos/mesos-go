@@ -93,7 +93,13 @@ func (s *Standalone) Cancel() {
 	s.cancelOnce.Do(func() { close(s.done) })
 }
 
-// poll for changes to master leadership
+// poll for changes to master leadership via current leader's /state.json endpoint.
+// we start with the `initial` leader, aborting if none was specified. thereafter,
+// the `leader` property of the state.json is used to identify the next leader that
+// should be polled.
+//
+// TODO(jdef) somehow determine all masters in cluster from the state.json?
+//
 func (s *Standalone) poller() {
 	if s.initial == nil {
 		log.Warningf("aborting master poller since initial master info is nil")

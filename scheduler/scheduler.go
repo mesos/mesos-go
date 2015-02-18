@@ -169,6 +169,7 @@ func NewMesosSchedulerDriver(
 		if ok {
 			f := detector.AsMasterChanged(func(mi *mesos.MasterInfo) {
 				pid, err := upid.Parse(mi.GetPid())
+				log.Infof("Applying standalone master [%s].\n", mi.GetPid())
 				if err != nil {
 					msg := fmt.Sprintf("Unable to parse standalone PID [%s]. Panic!\n", mi.GetPid())
 					log.Errorf(msg)
@@ -240,24 +241,22 @@ func (driver *MesosSchedulerDriver) masterDetected(master *mesos.MasterInfo) {
 
 		driver.MasterPid = pid // save for downstream ops.
 
-		if driver.credential != nil {
-			if err := driver.authenticate(); err != nil {
-				log.Errorf("Scheduler failed to authenticate: %v\n", err)
-				return
-			}
-
-			func() {
+		if driver.credential != nil && !driver.authenticated {
+			go func() {
 				driver.lock.Lock()
 				defer driver.lock.Unlock()
+				err := driver.authenticate()
+				if err != nil {
+					log.Errorf("Scheduler failed to authenticate: %v\n", err)
+				}
 				driver.authenticated = true
 			}()
-
 		} else {
 			log.Infoln("No credentials were provided. " +
 				"Attempting to register scheduler without authentication.")
-			// register framework
-			go driver.doReliableRegistration(float64(registrationBackoffFactor))
 		}
+		// register framework
+		go driver.doReliableRegistration(float64(registrationBackoffFactor))
 	} else {
 		log.Infoln("No new master detected.")
 	}
@@ -537,8 +536,11 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 	driver.self = driver.messenger.UPID()
 	driver.setStatus(mesos.Status_DRIVER_RUNNING)
 	driver.setStopped(false)
-
 	log.Infoln("Mesos scheduler driver started with PID=", driver.self.String())
+
+	if err := driver.masterDetector.Start(); err != nil {
+		return driver.Status(), err
+	}
 
 	return driver.Status(), nil
 }

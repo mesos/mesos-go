@@ -15,6 +15,10 @@ func NewStandalone(mi *mesos.MasterInfo) *Standalone {
 	return &Standalone{current: mi, ch: make(chan *mesos.MasterInfo)}
 }
 
+func (s *Standalone) Start() error {
+	return nil
+}
+
 // Trigger a master detected event.
 func (s *Standalone) Appoint(m *mesos.MasterInfo) {
 	log.V(2).Infoln("Appoint")

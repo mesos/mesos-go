@@ -41,12 +41,14 @@ var ignoreChanged = detector.AsMasterChanged(func(*mesos.MasterInfo) {})
 
 // Detector uses ZooKeeper to detect new leading master.
 type MasterDetector struct {
-	zkPath     string
-	zkHosts    []string
-	client     *Client
-	leaderNode string
-	url        *url.URL
-	obs        detector.MasterChanged
+	zkPath       string
+	zkHosts      []string
+	client       *Client
+	leaderNode   string
+	url          *url.URL
+	obs          detector.MasterChanged
+	started      bool
+	errorHandler ErrorHandler
 }
 
 // Internal constructor function
@@ -68,8 +70,13 @@ func NewMasterDetector(zkurls string) (*MasterDetector, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	log.V(2).Infoln("Created new detector, watching ", detector.zkHosts, detector.zkPath)
+
+	// define error-handling
+	detector.client.errorHandler = ErrorHandler(func(c *Client, err error) {
+		log.Errorln("Encountered error:", err)
+	})
+
 	return detector, nil
 }
 
@@ -142,6 +149,7 @@ func (md *MasterDetector) Detect(f detector.MasterChanged) error {
 			return
 		}
 	}()
+
 	return nil
 }
 

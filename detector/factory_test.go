@@ -7,6 +7,7 @@ import (
 
 type testDetector string
 
+func (d testDetector) Start() error                 { return nil }
 func (d testDetector) Detect(f MasterChanged) error { return nil }
 
 func (d testDetector) Done() <-chan struct{} { return make(<-chan struct{}) }

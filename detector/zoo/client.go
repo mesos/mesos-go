@@ -92,6 +92,7 @@ func (zkc *Client) connect() {
 		zkc.connectOnce.Do(func() {
 			if zkc.stateChange(disconnectedState, connectionRequestedState) {
 				if err := zkc.doConnect(); err != nil {
+					log.Error(err)
 					zkc.errorHandler(zkc, err)
 				}
 			}
@@ -107,6 +108,7 @@ func (zkc *Client) connect() {
 						return
 					case <-zkc.shouldReconn:
 						if err := zkc.reconnect(); err != nil {
+							log.Error(err)
 							zkc.errorHandler(zkc, err)
 						}
 					}

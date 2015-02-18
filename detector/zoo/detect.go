@@ -70,13 +70,8 @@ func NewMasterDetector(zkurls string) (*MasterDetector, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	log.V(2).Infoln("Created new detector, watching ", detector.zkHosts, detector.zkPath)
-
-	// define error-handling
-	detector.client.errorHandler = ErrorHandler(func(c *Client, err error) {
-		log.Errorln("Encountered error:", err)
-	})
-
 	return detector, nil
 }
 

@@ -19,6 +19,7 @@
 package executor
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"sync"
@@ -59,6 +60,13 @@ type MesosExecutorDriver struct {
 	tasks           map[string]*mesosproto.TaskInfo     // Key is a UUID string. TODO(yifan): Not used yet.
 }
 
+var (
+	executorHost = flag.String("mesos_executor_host", "0.0.0.0",
+		fmt.Sprintf("TCP4 address for the executor to bind"))
+	executorPort = flag.String("mesos_executor_port", "0",
+		fmt.Sprintf("TCP4 port for the executor to bind"))
+)
+
 // NewMesosExecutorDriver creates a new mesos executor driver.
 func NewMesosExecutorDriver(exec Executor) (*MesosExecutorDriver, error) {
 	if exec == nil {
@@ -78,7 +86,11 @@ func NewMesosExecutorDriver(exec Executor) (*MesosExecutorDriver, error) {
 		workDir:   ".",
 	}
 	// TODO(yifan): Set executor cnt.
-	driver.messenger = messenger.NewHttp(&upid.UPID{ID: "executor(1)"})
+	driver.messenger = messenger.NewHttp(&upid.UPID{
+		ID:   "executor(1)",
+		Host: *executorHost,
+		Port: *executorPort,
+	})
 	if err := driver.init(); err != nil {
 		log.Errorf("Failed to initialize the driver: %v\n", err)
 		return nil, err

@@ -181,6 +181,7 @@ func (t *HTTPTransporter) Install(msgName string) {
 func (t *HTTPTransporter) Listen() error {
 	host := t.upid.Host
 	port := t.upid.Port
+
 	// NOTE: Explicitly specifies IPv4 because Libprocess
 	// only supports IPv4 for now.
 	ln, err := net.Listen("tcp4", net.JoinHostPort(host, port))

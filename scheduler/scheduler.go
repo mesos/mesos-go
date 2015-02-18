@@ -936,7 +936,7 @@ func (driver *MesosSchedulerDriver) pushLostTask(taskInfo *mesos.TaskInfo, why s
 
 func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) (mesos.Status, error) {
 	if stat := driver.Status(); stat != mesos.Status_DRIVER_RUNNING {
-		return stat, fmt.Errorf("Unable to LaunchTasks, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
+		return stat, fmt.Errorf("Unable to KillTask, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
 	}
 
 	if !driver.connected {
@@ -959,7 +959,7 @@ func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) (mesos.Status
 
 func (driver *MesosSchedulerDriver) RequestResources(requests []*mesos.Request) (mesos.Status, error) {
 	if stat := driver.Status(); stat != mesos.Status_DRIVER_RUNNING {
-		return stat, fmt.Errorf("Unable to LaunchTasks, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
+		return stat, fmt.Errorf("Unable to RequestResources, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
 	}
 
 	if !driver.connected {
@@ -981,12 +981,13 @@ func (driver *MesosSchedulerDriver) RequestResources(requests []*mesos.Request) 
 }
 
 func (driver *MesosSchedulerDriver) DeclineOffer(offerId *mesos.OfferID, filters *mesos.Filters) (mesos.Status, error) {
+	// launching an empty task list will decline the offer
 	return driver.LaunchTasks([]*mesos.OfferID{offerId}, []*mesos.TaskInfo{}, filters)
 }
 
 func (driver *MesosSchedulerDriver) ReviveOffers() (mesos.Status, error) {
 	if stat := driver.Status(); stat != mesos.Status_DRIVER_RUNNING {
-		return stat, fmt.Errorf("Unable to LaunchTasks, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
+		return stat, fmt.Errorf("Unable to ReviveOffers, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
 	}
 	if !driver.connected {
 		log.Infoln("Ignoring revive offers message, disconnected from master.")
@@ -1006,7 +1007,7 @@ func (driver *MesosSchedulerDriver) ReviveOffers() (mesos.Status, error) {
 
 func (driver *MesosSchedulerDriver) SendFrameworkMessage(executorId *mesos.ExecutorID, slaveId *mesos.SlaveID, data string) (mesos.Status, error) {
 	if stat := driver.Status(); stat != mesos.Status_DRIVER_RUNNING {
-		return stat, fmt.Errorf("Unable to LaunchTasks, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
+		return stat, fmt.Errorf("Unable to SendFrameworkMessage, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
 	}
 	if !driver.connected {
 		log.Infoln("Ignoring send framework message, disconnected from master.")
@@ -1043,7 +1044,7 @@ func (driver *MesosSchedulerDriver) SendFrameworkMessage(executorId *mesos.Execu
 
 func (driver *MesosSchedulerDriver) ReconcileTasks(statuses []*mesos.TaskStatus) (mesos.Status, error) {
 	if stat := driver.Status(); stat != mesos.Status_DRIVER_RUNNING {
-		return stat, fmt.Errorf("Unable to LaunchTasks, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
+		return stat, fmt.Errorf("Unable to ReconcileTasks, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
 	}
 	if !driver.connected {
 		log.Infoln("Ignoring send Reconcile Tasks message, disconnected from master.")

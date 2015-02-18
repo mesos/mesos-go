@@ -160,14 +160,16 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverNew_WithZkUrl() {
 		close(done)
 	}))
 
-	//TODO revisit, detector not responding.
-	// md.ScheduleSessEvent(zk.EventNodeChildrenChanged)
+	//TODO(vlad) revisit, detector not responding.
 
+	//NOTE(jdef) this works for me, I wonder if the timeouts are too short, or if
+	//GOMAXPROCS settings are affecting the result?
+
+	// md.ScheduleSessEvent(zk.EventNodeChildrenChanged)
 	// select {
 	// case <-done:
 	// case <-time.After(time.Millisecond * 1000):
 	// 	suite.T().Errorf("Timed out waiting for children event.")
-
 	// }
 }
 

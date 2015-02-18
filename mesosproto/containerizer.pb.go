@@ -7,6 +7,7 @@
 
 	It is generated from these files:
 		containerizer.proto
+		internal.proto
 		log.proto
 		mesos.proto
 		messages.proto

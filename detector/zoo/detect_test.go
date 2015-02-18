@@ -37,7 +37,7 @@ func TestMasterDetectorStart(t *testing.T) {
 		err = e
 	})
 	md.client = c // override zk.Conn with our own.
-	md.Start()
+	md.client.connect()
 	assert.NoError(t, err)
 	assert.True(t, c.isConnected())
 }
@@ -56,8 +56,7 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 		err = e
 	})
 	md.client = c
-
-	md.Start()
+	md.client.connect()
 	assert.NoError(t, err)
 	assert.True(t, c.isConnected())
 
@@ -126,7 +125,7 @@ func TestMasterDetectMultiple(t *testing.T) {
 		err = e
 	})
 	md.client = c
-	md.Start()
+	md.client.connect()
 	assert.NoError(t, err)
 	assert.True(t, c.isConnected())
 

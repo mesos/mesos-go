@@ -37,13 +37,17 @@ func (f AsMasterChanged) Notify(mi *mesos.MasterInfo) {
 // An abstraction of a Master detector which can be used to
 // detect the leading master from a group.
 type Master interface {
-	// Starts the the detector
-	Start() error
-
-	// Detect new master election. Every time a new master is
-	// elected, the detector will alert the observer.
-	// If it fails to start detection, then an error is returned.
+	// Detect new master election. Every time a new master is elected, the
+	// detector will alert the observer. The first call to Detect is expected
+	// to kickstart any background detection processing (and not before then).
+	// If detection startup fails, or the listener cannot be added, then an
+	// error is returned.
 	Detect(MasterChanged) error
+
 	// returns a chan that, when closed, indicates the detector has terminated
 	Done() <-chan struct{}
+
+	// cancel the detector. it's ok to call this multiple times, or even if
+	// Detect() hasn't been invoked yet.
+	Cancel()
 }

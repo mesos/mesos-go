@@ -2,6 +2,7 @@ package detector
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
@@ -16,8 +18,23 @@ import (
 )
 
 var (
-	pluginLock sync.Mutex
-	plugins    = map[string]PluginFactory{}
+	pluginLock     sync.Mutex
+	plugins        = map[string]PluginFactory{}
+	EmptySpecError = errors.New("empty master specification")
+
+	defaultFactory = PluginFactory(func(spec string) (Master, error) {
+		if len(spec) == 0 {
+			return nil, EmptySpecError
+		}
+		if strings.Index(spec, "@") < 0 {
+			spec = "master@" + spec
+		}
+		if pid, err := upid.Parse(spec); err == nil {
+			return NewStandalone(CreateMasterInfo(pid)), nil
+		} else {
+			return nil, err
+		}
+	})
 )
 
 type PluginFactory func(string) (Master, error)
@@ -44,10 +61,23 @@ func Register(prefix string, f PluginFactory) error {
 	return nil
 }
 
+// Create a new detector given the provided specification. Examples are:
+//
+//   - file://{path_to_local_file}
+//   - {ipaddress}:{port}
+//   - master@{ip_address}:{port}
+//   - master({id})@{ip_address}:{port}
+//
+// Support for the file:// prefix is intentionally hardcoded so that it may
+// not be inadvertently overridden by a custom plugin implementation. Custom
+// plugins are supported via the Register and MatchingPlugin funcs.
+//
+// Furthermore it is expected that master detectors returned from this func
+// are not yet running and will only begin to spawn requisite background
+// processing upon, or some time after, the first invocation of their Detect.
+//
 func New(spec string) (m Master, err error) {
-	if spec == "" {
-		m = NewStandalone(nil)
-	} else if strings.HasPrefix(spec, "file://") {
+	if strings.HasPrefix(spec, "file://") {
 		var body []byte
 		path := spec[7:]
 		body, err = ioutil.ReadFile(path)
@@ -58,17 +88,10 @@ func New(spec string) (m Master, err error) {
 		}
 	} else if f, ok := MatchingPlugin(spec); ok {
 		m, err = f(spec)
-	} else if strings.HasPrefix("master@", spec) {
-		var pid *upid.UPID
-		if pid, err = upid.Parse(spec); err == nil {
-			m = NewStandalone(createMasterInfo(pid))
-		}
 	} else {
-		var pid *upid.UPID
-		if pid, err = upid.Parse("master@" + spec); err == nil {
-			m = NewStandalone(createMasterInfo(pid))
-		}
+		m, err = defaultFactory(spec)
 	}
+
 	return
 }
 
@@ -84,22 +107,42 @@ func MatchingPlugin(spec string) (PluginFactory, bool) {
 	return nil, false
 }
 
-func createMasterInfo(pid *upid.UPID) *mesos.MasterInfo {
+// Super-useful utility func that attempts to build a mesos.MasterInfo from a
+// upid.UPID specification. An attempt is made to determine the IP address of
+// the UPID's Host and any errors during such resolution will result in a nil
+// returned result. A nil result is also returned upon errors parsing the Port
+// specification of the UPID.
+//
+// TODO(jdef) make this a func of upid.UPID so that callers can invoke somePid.MasterInfo()?
+//
+func CreateMasterInfo(pid *upid.UPID) *mesos.MasterInfo {
 	port, err := strconv.Atoi(pid.Port)
 	if err != nil {
 		log.Errorf("failed to parse port: %v", err)
 		return nil
 	}
-	ip := net.ParseIP(pid.Host)
-	if ip == nil {
-		log.Errorf("failed to parse IP address: '%v'", pid.Host)
+	//TODO(jdef) what about (future) ipv6 support?
+	var ipv4 net.IP
+	if addrs, err := net.LookupIP(pid.Host); err == nil {
+		for _, ip := range addrs {
+			if ip = ip.To4(); ip != nil {
+				ipv4 = ip
+				break
+			}
+		}
+		if ipv4 == nil {
+			log.Errorf("host does not resolve to an IPv4 address: %v", pid.Host)
+			return nil
+		}
+	} else {
+		log.Errorf("failed to lookup IPs for host '%v': %v", pid.Host, err)
 		return nil
 	}
-	ip = ip.To4()
-	if ip == nil {
-		log.Errorf("IP address is not IPv4: %v", pid.Host)
-		return nil
+	packedip := binary.BigEndian.Uint32(ipv4) // network byte order is big-endian
+	mi := util.NewMasterInfo(pid.ID, packedip, uint32(port))
+	mi.Pid = proto.String(pid.String())
+	if pid.Host != "" {
+		mi.Hostname = proto.String(pid.Host)
 	}
-	packedip := binary.BigEndian.Uint32(ip) // network byte order is big-endian
-	return util.NewMasterInfo(pid.ID, packedip, uint32(port))
+	return mi
 }

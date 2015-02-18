@@ -24,6 +24,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
@@ -41,12 +43,13 @@ var ignoreChanged = detector.AsMasterChanged(func(*mesos.MasterInfo) {})
 
 // Detector uses ZooKeeper to detect new leading master.
 type MasterDetector struct {
-	zkPath     string
-	zkHosts    []string
-	client     *Client
-	leaderNode string
-	url        *url.URL
-	obs        detector.MasterChanged
+	zkPath          string
+	zkHosts         []string
+	client          *Client
+	leaderNode      string
+	url             *url.URL
+	bootstrap       sync.Once // for one-time zk client initiation
+	ignoreInstalled int32     // only install, at most, one ignoreChanged listener; see MasterDetector.Detect
 }
 
 // Internal constructor function
@@ -59,28 +62,22 @@ func NewMasterDetector(zkurls string) (*MasterDetector, error) {
 
 	detector := &MasterDetector{
 		url:     u,
-		zkHosts: []string{u.Host}, //TODO(jdef) support multiple hosts
+		zkHosts: []string{u.Host},
 		zkPath:  u.Path,
-		obs:     ignoreChanged,
 	}
 
 	detector.client, err = newClient(detector.zkHosts, detector.zkPath)
 	if err != nil {
 		return nil, err
 	}
-
 	log.V(2).Infoln("Created new detector, watching ", detector.zkHosts, detector.zkPath)
+
+	// define error-handling
+	detector.client.errorHandler = ErrorHandler(func(c *Client, err error) {
+		log.Errorln("Encountered error:", err)
+	})
+
 	return detector, nil
-}
-
-func (md *MasterDetector) Start() error {
-	md.client.connect()
-	return nil
-}
-
-func (md *MasterDetector) Stop() error {
-	md.client.stop()
-	return nil
 }
 
 // returns a chan that, when closed, indicates termination of the detector
@@ -88,61 +85,78 @@ func (md *MasterDetector) Done() <-chan struct{} {
 	return md.client.stopped()
 }
 
-//TODO(jdef) execute async because we don't want to stall our client's event loop
-func (md *MasterDetector) childrenChanged(zkc *Client, path string) {
+func (md *MasterDetector) Cancel() {
+	md.client.stop()
+}
+
+//TODO(jdef) execute async because we don't want to stall our client's event loop? if so
+//then we also probably want serial event delivery (aka. delivery via a chan) but then we
+//have to deal with chan buffer sizes .. ugh. This is probably the least painful for now.
+func (md *MasterDetector) childrenChanged(zkc *Client, path string, obs detector.MasterChanged) {
 	list, err := zkc.list(path)
 	if err != nil {
+		log.Warning(err)
 		return
 	}
 
 	topNode := selectTopNode(list)
 
 	if md.leaderNode == topNode {
-		log.V(2).Infof("Ignoring children-changed event %s, leader has not changed.", path)
+		log.V(2).Infof("ignoring children-changed event, leader has not changed: %v", path)
 		return
 	}
 
-	log.V(2).Infof("Changing leader node from %s -> %s\n", md.leaderNode, topNode)
+	log.V(2).Infof("changing leader node from %s -> %s", md.leaderNode, topNode)
 	md.leaderNode = topNode
 
 	data, err := zkc.data(path)
 	if err != nil {
-		log.Errorln("Unable to retrieve leader data:", err.Error())
+		log.Errorf("unable to retrieve leader data: %v", err.Error())
 		return
 	}
+
 	masterInfo := new(mesos.MasterInfo)
 	err = proto.Unmarshal(data, masterInfo)
 	if err != nil {
-		log.Errorln("Unable to unmarshall MasterInfo data from zookeeper.")
+		log.Errorf("unable to unmarshall MasterInfo data from zookeeper: %v", err)
 		return
 	}
-
-	if md.obs != nil {
-		md.obs.Notify(masterInfo)
-	}
+	obs.Notify(masterInfo)
 }
 
-func (md *MasterDetector) Detect(f detector.MasterChanged) error {
+// the first call to Detect will kickstart a connection to zookeeper. a nil change listener may
+// be spec'd, result of which is a detector that will still listen for master changes and record
+// leaderhip changes internally but no listener would be notified. Detect may be called more than
+// once, and each time the spec'd listener will be added to the list of those receiving notifications.
+func (md *MasterDetector) Detect(f detector.MasterChanged) (err error) {
+	// kickstart zk client connectivity
+	md.bootstrap.Do(func() { go md.client.connect() })
+
 	if f == nil {
-		f = ignoreChanged
-	}
-	md.obs = f
-
-	log.V(2).Infoln("Detect function installed.")
-
-	watchEnded, err := md.client.watchChildren(currentPath, ChildWatcher(md.childrenChanged))
-	if err != nil {
-		return err
-	}
-	go func() {
-		select {
-		case <-watchEnded:
-			f.Notify(nil)
-		case <-md.client.stopped():
+		// only ever install, at most, one ignoreChanged listener. multiple instances of it
+		// just consume resources and generate misleading log messages.
+		if !atomic.CompareAndSwapInt32(&md.ignoreInstalled, 0, 1) {
 			return
 		}
-	}()
-	return nil
+		f = ignoreChanged
+	}
+
+	// we let the golang runtime manage our listener list for us, in form of goroutines that
+	// callback to the master change notification listen func's
+	if watchEnded, err := md.client.watchChildren(currentPath, ChildWatcher(func(zkc *Client, path string) {
+		md.childrenChanged(zkc, path, f)
+	})); err == nil {
+		log.V(2).Infoln("detector listener installed")
+		go func() {
+			select {
+			case <-watchEnded:
+				f.Notify(nil)
+			case <-md.client.stopped():
+				return
+			}
+		}()
+	}
+	return
 }
 
 func selectTopNode(list []string) string {

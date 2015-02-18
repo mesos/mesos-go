@@ -2,9 +2,10 @@ package zoo
 
 import (
 	"errors"
+	"fmt"
+
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
-	_ "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/samuel/go-zookeeper/zk"
 )
@@ -30,7 +31,7 @@ func NewMockMasterDetector(zkurls string) (*MockMasterDetector, error) {
 	path := m.zkPath
 	connector := NewMockConnector()
 	connector.On("Children", path).Return([]string{"info_0", "info_5", "info_10"}, &zk.Stat{}, nil)
-	connector.On("Get", path).Return(m.makeMasterInfo(), &zk.Stat{}, nil)
+	connector.On("Get", fmt.Sprintf("%s/info_0", path)).Return(m.makeMasterInfo(), &zk.Stat{}, nil)
 	connector.On("Close").Return(nil)
 	connector.On("ChildrenW", md.zkPath).Return([]string{m.zkPath}, &zk.Stat{}, (<-chan zk.Event)(m.sesCh), nil)
 

@@ -26,6 +26,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
@@ -88,6 +89,7 @@ func (md *MasterDetector) Cancel() {
 //then we also probably want serial event delivery (aka. delivery via a chan) but then we
 //have to deal with chan buffer sizes .. ugh. This is probably the least painful for now.
 func (md *MasterDetector) childrenChanged(zkc *Client, path string, obs detector.MasterChanged) {
+	log.V(2).Infof("fetching children at path '%v'", path)
 	list, err := zkc.list(path)
 	if err != nil {
 		log.Warning(err)
@@ -104,7 +106,7 @@ func (md *MasterDetector) childrenChanged(zkc *Client, path string, obs detector
 	log.V(2).Infof("changing leader node from %s -> %s", md.leaderNode, topNode)
 	md.leaderNode = topNode
 
-	data, err := zkc.data(path)
+	data, err := zkc.data(fmt.Sprintf("%s/%s", path, topNode))
 	if err != nil {
 		log.Errorf("unable to retrieve leader data: %v", err.Error())
 		return
@@ -116,6 +118,7 @@ func (md *MasterDetector) childrenChanged(zkc *Client, path string, obs detector
 		log.Errorf("unable to unmarshall MasterInfo data from zookeeper: %v", err)
 		return
 	}
+	log.V(2).Infof("detected master info: %+v", masterInfo)
 	obs.Notify(masterInfo)
 }
 
@@ -136,25 +139,45 @@ func (md *MasterDetector) Detect(f detector.MasterChanged) (err error) {
 		f = ignoreChanged
 	}
 
-	// we let the golang runtime manage our listener list for us, in form of goroutines that
-	// callback to the master change notification listen func's
-	if watchEnded, err := md.client.watchChildren(currentPath, ChildWatcher(func(zkc *Client, path string) {
-		md.childrenChanged(zkc, path, f)
-	})); err == nil {
-		log.V(2).Infoln("detector listener installed")
-		go func() {
-			select {
-			case <-watchEnded:
-				f.Notify(nil)
-			case <-md.client.stopped():
-				return
-			}
-		}()
-	}
-	return
+	go md.detect(f)
+	return nil
 }
 
-func selectTopNode(list []string) string {
+func (md *MasterDetector) detect(f detector.MasterChanged) {
+
+	minCyclePeriod := 1 * time.Second
+	for {
+		started := time.Now()
+		select {
+		case <-md.Done():
+			return
+		default:
+			// we let the golang runtime manage our listener list for us, in form of goroutines that
+			// callback to the master change notification listen func's
+			if watchEnded, err := md.client.watchChildren(currentPath, ChildWatcher(func(zkc *Client, path string) {
+				md.childrenChanged(zkc, path, f)
+			})); err == nil {
+				log.V(2).Infoln("detector listener installed")
+				select {
+				case <-watchEnded:
+					f.Notify(nil)
+				case <-md.client.stopped():
+					return
+				}
+			}
+		}
+		if elapsed := time.Now().Sub(started); elapsed > 0 {
+			log.V(2).Infoln("resting before next detection cycle")
+			select {
+			case <-md.Done():
+				return
+			case <-time.After(minCyclePeriod - elapsed): // noop
+			}
+		}
+	}
+}
+
+func selectTopNode(list []string) (node string) {
 	var leaderSeq uint64 = math.MaxUint64
 
 	for _, v := range list {
@@ -166,15 +189,14 @@ func selectTopNode(list []string) string {
 		}
 		if seq < leaderSeq {
 			leaderSeq = seq
+			node = v
 		}
 	}
 
-	if leaderSeq == math.MaxUint64 {
+	if node == "" {
 		log.V(3).Infoln("No top node found.")
-		return ""
+	} else {
+		log.V(3).Infof("Top node selected: '%s'", node)
 	}
-
-	node := fmt.Sprintf("%s%d", nodePrefix, leaderSeq)
-	log.V(3).Infof("Top node selected: '%s'", node)
 	return node
 }

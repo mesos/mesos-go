@@ -272,6 +272,7 @@ func (zkc *Client) watchChildren(path string, watcher ChildWatcher) (<-chan stru
 
 // async continuation of watchChildren
 func (zkc *Client) _watchChildren(watchPath string, zkevents <-chan zk.Event, watcher ChildWatcher) {
+	watcher(zkc, watchPath) // prime the listener
 	var err error
 	for {
 		for {

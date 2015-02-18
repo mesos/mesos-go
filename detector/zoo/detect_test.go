@@ -2,7 +2,9 @@ package zoo
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -103,8 +105,10 @@ func TestMasterDetectMultiple(t *testing.T) {
 	c, err := newClient(test_zk_hosts, test_zk_path)
 	assert.NoError(t, err)
 
+	initialChildren := []string{"info_005", "info_010", "info_022"}
 	connector := NewMockConnector()
 	connector.On("Close").Return(nil)
+	connector.On("Children", test_zk_path).Return(initialChildren, &zk.Stat{}, nil).Once()
 	connector.On("ChildrenW", test_zk_path).Return([]string{test_zk_path}, &zk.Stat{}, (<-chan zk.Event)(ch1), nil)
 
 	first := true
@@ -132,7 +136,6 @@ func TestMasterDetectMultiple(t *testing.T) {
 	// **** Test 4 consecutive ChildrenChangedEvents ******
 	// setup event changes
 	sequences := [][]string{
-		[]string{"info_005", "info_010", "info_022"},
 		[]string{"info_014", "info_010", "info_005"},
 		[]string{"info_005", "info_004", "info_022"},
 		[]string{"info_017", "info_099", "info_200"},
@@ -150,9 +153,12 @@ func TestMasterDetectMultiple(t *testing.T) {
 
 	go func() {
 		for i := range sequences {
-			t.Logf("testing master change sequence %d", i)
+			sorted := make([]string, len(sequences[i]))
+			copy(sorted, sequences[i])
+			sort.Strings(sorted)
+			t.Logf("testing master change sequence %d, path '%v'", i, test_zk_path)
 			connector.On("Children", test_zk_path).Return(sequences[i], &zk.Stat{}, nil).Once()
-			connector.On("Get", test_zk_path).Return(newTestMasterInfo(i), &zk.Stat{}, nil).Once()
+			connector.On("Get", fmt.Sprintf("%s/%s", test_zk_path, sorted[0])).Return(newTestMasterInfo(i), &zk.Stat{}, nil).Once()
 			ch1 <- zk.Event{
 				Type: zk.EventNodeChildrenChanged,
 				Path: test_zk_path,

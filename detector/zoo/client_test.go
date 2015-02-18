@@ -228,7 +228,7 @@ func makeMockConnector(path string, chEvent <-chan zk.Event) *MockConnector {
 	conn.On("Close").Return(nil)
 	conn.On("ChildrenW", path).Return([]string{path}, &zk.Stat{}, chEvent, nil)
 	conn.On("Children", path).Return([]string{"info_0", "info_5", "info_10"}, &zk.Stat{}, nil)
-	conn.On("Get", path).Return(makeTestMasterInfo(), &zk.Stat{}, nil)
+	conn.On("Get", fmt.Sprintf("%s/info_0", path)).Return(makeTestMasterInfo(), &zk.Stat{}, nil)
 
 	return conn
 }

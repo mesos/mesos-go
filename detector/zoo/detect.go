@@ -181,6 +181,9 @@ func selectTopNode(list []string) (node string) {
 	var leaderSeq uint64 = math.MaxUint64
 
 	for _, v := range list {
+		if !strings.HasPrefix(v, nodePrefix) {
+			continue // only care about participants
+		}
 		seqStr := strings.TrimPrefix(v, nodePrefix)
 		seq, err := strconv.ParseUint(seqStr, 10, 64)
 		if err != nil {

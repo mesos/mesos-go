@@ -109,11 +109,15 @@ func ForHostname(hostname string, bindingAddress net.IP, port uint16) (Messenger
 		}
 		upid.Host = ip.String()
 	}
-	return NewHttp(upid, bindingAddress), nil
+	return NewHttpWithBindingAddress(upid, bindingAddress), nil
 }
 
 // NewMesosMessenger creates a new mesos messenger.
-func NewHttp(upid *upid.UPID, address net.IP) *MesosMessenger {
+func NewHttp(upid *upid.UPID) *MesosMessenger {
+	return NewHttpWithBindingAddress(upid, nil)
+}
+
+func NewHttpWithBindingAddress(upid *upid.UPID, address net.IP) *MesosMessenger {
 	return New(upid, NewHTTPTransporter(upid, address))
 }
 

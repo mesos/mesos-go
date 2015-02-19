@@ -854,19 +854,15 @@ func (driver *MesosSchedulerDriver) stop(stopStatus mesos.Status) error {
 	return nil
 }
 
-func (driver *MesosSchedulerDriver) Abort() (mesos.Status, error) {
+func (driver *MesosSchedulerDriver) Abort() (stat mesos.Status, err error) {
 	defer driver.masterDetector.Cancel()
-	log.Infof("Aborting framework [%s]\n", driver.FrameworkInfo.GetId().GetValue())
-	if stat := driver.Status(); stat != mesos.Status_DRIVER_RUNNING {
-		return stat, fmt.Errorf("Unable to Abort, expecting driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
-	} else if !driver.connected {
-		log.Infoln("Ignoring Abort, master is disconnected.")
-		return stat, fmt.Errorf("Unable to Abort, driver not connected.")
+	log.Infof("Aborting framework [%+v]", driver.FrameworkInfo.Id)
+	if driver.connected {
+		_, err = driver.Stop(true)
 	}
-	_, err := driver.Stop(true)
-	stat := mesos.Status_DRIVER_ABORTED
+	stat = mesos.Status_DRIVER_ABORTED
 	driver.setStatus(stat)
-	return stat, err
+	return
 }
 
 func (driver *MesosSchedulerDriver) LaunchTasks(offerIds []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) (mesos.Status, error) {

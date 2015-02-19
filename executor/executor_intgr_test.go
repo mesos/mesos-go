@@ -103,6 +103,13 @@ func setTestEnv(t *testing.T) {
 	assert.NoError(t, os.Setenv("MESOS_EXECUTOR_ID", executorID))
 }
 
+func newIntegrationTestDriver(exec Executor) (*MesosExecutorDriver, error) {
+	dconfig := DriverConfig{
+		Executor: exec,
+	}
+	return NewMesosExecutorDriver(dconfig)
+}
+
 func TestExecutorDriverRegisterExecutorMessage(t *testing.T) {
 	setTestEnv(t)
 	ch := make(chan bool)
@@ -133,7 +140,7 @@ func TestExecutorDriverRegisterExecutorMessage(t *testing.T) {
 	exec := newTestExecutor(t)
 	exec.ch = ch
 
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	assert.True(t, driver.stopped)
 
@@ -167,7 +174,7 @@ func TestExecutorDriverExecutorRegisteredEvent(t *testing.T) {
 	exec.t = t
 
 	// start
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -209,7 +216,7 @@ func TestExecutorDriverExecutorReregisteredEvent(t *testing.T) {
 	exec.t = t
 
 	// start
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -258,7 +265,7 @@ func TestExecutorDriverReconnectEvent(t *testing.T) {
 	exec.t = t
 
 	// start
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -298,7 +305,7 @@ func TestExecutorDriverRunTaskEvent(t *testing.T) {
 	exec.t = t
 
 	// start
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -352,7 +359,7 @@ func TestExecutorDriverKillTaskEvent(t *testing.T) {
 	exec.t = t
 
 	// start
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -393,7 +400,7 @@ func TestExecutorDriverStatusUpdateAcknowledgement(t *testing.T) {
 	exec.t = t
 
 	// start
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -431,7 +438,7 @@ func TestExecutorDriverFrameworkToExecutorMessageEvent(t *testing.T) {
 	exec.t = t
 
 	// start
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -474,7 +481,7 @@ func TestExecutorDriverShutdownEvent(t *testing.T) {
 	exec.t = t
 
 	// start
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -512,7 +519,7 @@ func TestExecutorDriverError(t *testing.T) {
 	exec.ch = ch
 	exec.t = t
 
-	driver, err := NewMesosExecutorDriver(exec)
+	driver, err := newIntegrationTestDriver(exec)
 	assert.NoError(t, err)
 	server.Close() // will cause error
 	// Run() cause async message processing to start

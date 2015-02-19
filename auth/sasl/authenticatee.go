@@ -83,7 +83,7 @@ func init() {
 				ID:   fmt.Sprintf("sasl_authenticatee(%d)", nextPid()),
 				Host: parent.Host,
 			}
-			return messenger.NewHttp(tpid, BindingAddressFrom(ctx))
+			return messenger.NewHttpWithBindingAddress(tpid, BindingAddressFrom(ctx))
 		})
 	}
 	delegate := auth.AuthenticateeFunc(func(ctx context.Context, handler callback.Handler) error {

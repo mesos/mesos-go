@@ -18,7 +18,7 @@ import (
 func TestTransporterNew(t *testing.T) {
 	id, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
 	assert.NoError(t, err)
-	trans := NewHTTPTransporter(id)
+	trans := NewHTTPTransporter(id, nil)
 	assert.NotNil(t, trans)
 	assert.NotNil(t, trans.upid)
 	assert.NotNil(t, trans.messageQueue)
@@ -52,7 +52,7 @@ func TestTransporterSend(t *testing.T) {
 	assert.NoError(t, err)
 
 	// make transport call.
-	transport := NewHTTPTransporter(fromUpid)
+	transport := NewHTTPTransporter(fromUpid, nil)
 	msg.UPID = toUpid
 	err = transport.Send(context.TODO(), msg)
 	assert.NoError(t, err)
@@ -68,7 +68,7 @@ func TestTransporterStartAndSend(t *testing.T) {
 	// setup receiver (server) process
 	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
 	assert.NoError(t, err)
-	receiver := NewHTTPTransporter(rcvPid)
+	receiver := NewHTTPTransporter(rcvPid, nil)
 
 	ctrl := make(chan bool)
 	reqPath := "/testserver/" + msgName
@@ -90,7 +90,7 @@ func TestTransporterStartAndSend(t *testing.T) {
 	sndUpid, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
 	assert.NoError(t, err)
 
-	sender := NewHTTPTransporter(sndUpid)
+	sender := NewHTTPTransporter(sndUpid, nil)
 	msg := &Message{
 		UPID:         rcvPid,
 		Name:         msgName,
@@ -116,7 +116,7 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 	// setup receiver (server) process
 	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
 	assert.NoError(t, err)
-	receiver := NewHTTPTransporter(rcvPid)
+	receiver := NewHTTPTransporter(rcvPid, nil)
 	receiver.Install(msgName)
 	err = receiver.Listen()
 	assert.NoError(t, err)
@@ -137,7 +137,7 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 	sndUpid, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
 	assert.NoError(t, err)
 
-	sender := NewHTTPTransporter(sndUpid)
+	sender := NewHTTPTransporter(sndUpid, nil)
 	msg := &Message{
 		UPID:         rcvPid,
 		Name:         msgName,
@@ -163,7 +163,7 @@ func TestTransporterStartAndInject(t *testing.T) {
 	// setup receiver (server) process
 	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
 	assert.NoError(t, err)
-	receiver := NewHTTPTransporter(rcvPid)
+	receiver := NewHTTPTransporter(rcvPid, nil)
 	receiver.Install(msgName)
 
 	go func() {
@@ -195,7 +195,7 @@ func TestTransporterStartAndStop(t *testing.T) {
 	// setup receiver (server) process
 	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
 	assert.NoError(t, err)
-	receiver := NewHTTPTransporter(rcvPid)
+	receiver := NewHTTPTransporter(rcvPid, nil)
 	err = receiver.Listen()
 	assert.NoError(t, err)
 

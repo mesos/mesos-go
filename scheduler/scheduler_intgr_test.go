@@ -49,7 +49,7 @@ func (sched *testScheduler) T() *testing.T {
 
 func (sched *testScheduler) Registered(dr SchedulerDriver, fw *mesos.FrameworkID, mi *mesos.MasterInfo) {
 	log.Infoln("Sched.Registered() called.")
-	sched.s.Equal(fw.GetValue(), sched.s.framework.Id.GetValue())
+	sched.s.Equal(fw.GetValue(), sched.s.registeredFrameworkId.GetValue(), "driver did not register the expected framework ID")
 	sched.s.Equal(mi.GetIp(), uint32(123456))
 	sched.ch <- true
 }
@@ -135,11 +135,12 @@ type mockServerConfigurator func(frameworkId *mesos.FrameworkID, suite *Schedule
 
 type SchedulerIntegrationTestSuiteCore struct {
 	SchedulerTestSuiteCore
-	server    *testutil.MockMesosHttpServer
-	driver    *MesosSchedulerDriver
-	sched     *testScheduler
-	config    mockServerConfigurator
-	validator http.HandlerFunc
+	server                *testutil.MockMesosHttpServer
+	driver                *MesosSchedulerDriver
+	sched                 *testScheduler
+	config                mockServerConfigurator
+	validator             http.HandlerFunc
+	registeredFrameworkId *mesos.FrameworkID
 }
 
 type SchedulerIntegrationTestSuite struct {
@@ -168,7 +169,7 @@ func (suite *SchedulerIntegrationTestSuite) configure(frameworkId *mesos.Framewo
 	suite.sched.ch = make(chan bool, 10) // big enough that it doesn't block callback processing
 
 	var err error
-	suite.driver, err = NewMesosSchedulerDriver(suite.sched, suite.framework, suite.server.Addr, nil)
+	suite.driver, err = newTestSchedulerDriver(suite.sched, suite.framework, suite.server.Addr, nil)
 	suite.NoError(err)
 
 	suite.config(frameworkId, suite)
@@ -189,6 +190,7 @@ func (suite *SchedulerIntegrationTestSuite) configureServerWithRegisteredFramewo
 	// the driver, so if we clear the Id then we'll expect a registration message
 	id := suite.framework.Id
 	suite.framework.Id = nil
+	suite.registeredFrameworkId = id
 	return suite.configure(id)
 }
 
@@ -313,7 +315,7 @@ func (suite *SchedulerIntegrationTestSuite) TestSchedulerDriverResourceOffersEve
 	// Send a event to this SchedulerDriver (via http) to test handlers.
 	offer := util.NewOffer(
 		util.NewOfferID("test-offer-001"),
-		suite.framework.Id,
+		suite.registeredFrameworkId,
 		util.NewSlaveID("test-slave-001"),
 		"test-localhost",
 	)
@@ -364,7 +366,7 @@ func (suite *SchedulerIntegrationTestSuite) TestSchedulerDriverStatusUpdatedEven
 	// Send a event to this SchedulerDriver (via http) to test handlers.
 	pbMsg := &mesos.StatusUpdateMessage{
 		Update: util.NewStatusUpdate(
-			suite.framework.Id,
+			suite.registeredFrameworkId,
 			util.NewTaskStatus(util.NewTaskID("test-task-001"), mesos.TaskState_TASK_STARTING),
 			float64(time.Now().Unix()),
 			[]byte("test-abcd-ef-3455-454-001"),
@@ -399,7 +401,7 @@ func (suite *SchedulerIntegrationTestSuite) TestSchedulerDriverFrameworkMessageE
 	// Send a event to this SchedulerDriver (via http) to test handlers.	offer := util.NewOffer(
 	pbMsg := &mesos.ExecutorToFrameworkMessage{
 		SlaveId:     util.NewSlaveID("test-slave-001"),
-		FrameworkId: suite.framework.Id,
+		FrameworkId: suite.registeredFrameworkId,
 		ExecutorId:  util.NewExecutorID("test-executor-001"),
 		Data:        []byte("test-data-999"),
 	}

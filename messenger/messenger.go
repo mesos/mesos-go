@@ -198,12 +198,7 @@ func (m *MesosMessenger) Start() error {
 	m.upid = m.tr.UPID()
 
 	m.stop = make(chan struct{})
-	errChan := make(chan error)
-	go func() {
-		if err := m.tr.Start(); err != nil {
-			errChan <- err
-		}
-	}()
+	errChan := m.tr.Start()
 
 	select {
 	case err := <-errChan:
@@ -219,12 +214,25 @@ func (m *MesosMessenger) Start() error {
 	for i := 0; i < decodeRoutines; i++ {
 		go m.decodeLoop()
 	}
+	go func() {
+		select {
+		case err := <-errChan:
+			if err != nil {
+				//TODO(jdef) should the driver abort in this case? probably
+				//since this messenger will never attempt to re-establish the
+				//transport
+				log.Error(err)
+			}
+		case <-m.stop:
+		}
+	}()
 	return nil
 }
 
 // Stop stops the messenger and clean up all the goroutines.
 func (m *MesosMessenger) Stop() error {
-	if err := m.tr.Stop(); err != nil {
+	//TODO(jdef) don't hardcode the graceful flag here
+	if err := m.tr.Stop(true); err != nil {
 		log.Errorf("Failed to stop the transporter: %v\n", err)
 		return err
 	}

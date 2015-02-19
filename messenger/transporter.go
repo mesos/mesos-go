@@ -43,10 +43,10 @@ type Transporter interface {
 	Install(messageName string)
 
 	//Start starts the transporter.
-	Start() error
+	Start() <-chan error
 
 	//Stop kills the transporter.
-	Stop() error
+	Stop(graceful bool) error
 
 	//UPID returns the PID for transporter.
 	UPID() *upid.UPID

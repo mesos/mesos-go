@@ -859,6 +859,8 @@ func (driver *MesosSchedulerDriver) Abort() (stat mesos.Status, err error) {
 	log.Infof("Aborting framework [%+v]", driver.FrameworkInfo.Id)
 	if driver.connected {
 		_, err = driver.Stop(true)
+	} else {
+		driver.messenger.Stop()
 	}
 	stat = mesos.Status_DRIVER_ABORTED
 	driver.setStatus(stat)

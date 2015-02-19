@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/golang/glog"
@@ -44,19 +45,26 @@ type HTTPTransporter struct {
 	client       *http.Client // TODO(yifan): Set read/write deadline.
 	messageQueue chan *Message
 	address      net.IP // optional binding address
+	started      chan struct{}
+	stopped      chan struct{}
+	lifeLock     sync.Mutex // protect lifecycle (start/stop) funcs
 }
 
 // NewHTTPTransporter creates a new http transporter with an optional binding address.
 func NewHTTPTransporter(upid *upid.UPID, address net.IP) *HTTPTransporter {
 	tr := &http.Transport{}
-	return &HTTPTransporter{
+	result := &HTTPTransporter{
 		upid:         upid,
 		messageQueue: make(chan *Message, defaultQueueSize),
 		mux:          http.NewServeMux(),
 		client:       &http.Client{Transport: tr},
 		tr:           tr,
 		address:      address,
+		started:      make(chan struct{}),
+		stopped:      make(chan struct{}),
 	}
+	close(result.stopped)
+	return result
 }
 
 // some network errors are probably recoverable, attempt to determine that here.
@@ -202,19 +210,48 @@ func (t *HTTPTransporter) Listen() error {
 	return nil
 }
 
-// Start starts the http transporter. This will block, should be put
-// in a goroutine.
-func (t *HTTPTransporter) Start() error {
-	// TODO(yifan): Set read/write deadline.
-	if err := http.Serve(t.listener, t.mux); err != nil {
-		return err
+// Start starts the http transporter
+func (t *HTTPTransporter) Start() <-chan error {
+	t.lifeLock.Lock()
+	defer t.lifeLock.Unlock()
+
+	select {
+	case <-t.started:
+		// already started
+		return nil
+	case <-t.stopped:
+		defer close(t.started)
+		t.stopped = make(chan struct{})
+	default:
+		panic("not started, not stopped, what am i? how can i start?")
 	}
-	return nil
+
+	ch := make(chan error, 1)
+	go func() {
+		// TODO(yifan): Set read/write deadline.
+		ch <- http.Serve(t.listener, t.mux)
+	}()
+	return ch
 }
 
 // Stop stops the http transporter by closing the listener.
-func (t *HTTPTransporter) Stop() error {
-	return t.listener.Close()
+func (t *HTTPTransporter) Stop(graceful bool) error {
+	t.lifeLock.Lock()
+	defer t.lifeLock.Unlock()
+
+	select {
+	case <-t.stopped:
+		// already stopped
+		return nil
+	case <-t.started:
+		defer close(t.stopped)
+		t.started = make(chan struct{})
+	default:
+		panic("not started, not stopped, what am i? how can i stop?")
+	}
+	//TODO(jdef) if graceful, wait for pending requests to terminate
+	err := t.listener.Close()
+	return err
 }
 
 // UPID returns the upid of the transporter.

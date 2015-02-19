@@ -80,10 +80,10 @@ func TestTransporterStartAndSend(t *testing.T) {
 	err = receiver.Listen()
 	assert.NoError(t, err)
 
-	go func() {
-		err = receiver.Start()
-		assert.NoError(t, err)
-	}()
+	errch := receiver.Start()
+	defer receiver.Stop(false)
+	assert.NotNil(t, errch)
+
 	time.Sleep(time.Millisecond * 7) // time to catchup
 
 	// setup sender (client) process
@@ -127,10 +127,10 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 		ctrl <- true
 	}()
 
-	go func() {
-		err = receiver.Start()
-		assert.NoError(t, err)
-	}()
+	errch := receiver.Start()
+	defer receiver.Stop(false)
+	assert.NotNil(t, errch)
+
 	time.Sleep(time.Millisecond * 7) // time to catchup
 
 	// setup sender (client) process
@@ -199,12 +199,11 @@ func TestTransporterStartAndStop(t *testing.T) {
 	err = receiver.Listen()
 	assert.NoError(t, err)
 
-	go func() {
-		err = receiver.Start()
-		assert.Error(t, err) // should fail to accept due to closed conn.
-	}()
+	errch := receiver.Start()
+	defer receiver.Stop(false)
+	assert.NotNil(t, errch)
+
 	time.Sleep(time.Millisecond * 7) // time to catchup
-	receiver.Stop()
 }
 
 func makeMockServer(path string, handler func(rsp http.ResponseWriter, req *http.Request)) *httptest.Server {

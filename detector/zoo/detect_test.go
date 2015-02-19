@@ -194,9 +194,36 @@ func TestMasterDetectMultiple(t *testing.T) {
 	}
 }
 
-func TestMasterDetect_none(t *testing.T) {
+func TestMasterDetect_selectTopNode_none(t *testing.T) {
 	assert := assert.New(t)
 	nodeList := []string{}
 	node := selectTopNode(nodeList)
 	assert.Equal("", node)
+}
+
+func TestMasterDetect_selectTopNode_0000x(t *testing.T) {
+	assert := assert.New(t)
+	nodeList := []string{
+		"info_0000000046",
+		"info_0000000032",
+		"info_0000000058",
+		"info_0000000061",
+		"info_0000000008",
+	}
+	node := selectTopNode(nodeList)
+	assert.Equal("info_0000000008", node)
+}
+
+func TestMasterDetect_selectTopNode_mixedEntries(t *testing.T) {
+	assert := assert.New(t)
+	nodeList := []string{
+		"info_0000000046",
+		"info_0000000032",
+		"foo_lskdjfglsdkfsdfgdfg",
+		"info_0000000061",
+		"log_replicas_fdgwsdfgsdf",
+		"bar",
+	}
+	node := selectTopNode(nodeList)
+	assert.Equal("info_0000000032", node)
 }

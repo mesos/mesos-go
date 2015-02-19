@@ -44,36 +44,43 @@ var ignoreChanged = detector.OnMasterChanged(func(*mesos.MasterInfo) {})
 
 // Detector uses ZooKeeper to detect new leading master.
 type MasterDetector struct {
-	zkPath          string
-	zkHosts         []string
 	client          *Client
 	leaderNode      string
-	url             *url.URL
 	bootstrap       sync.Once // for one-time zk client initiation
 	ignoreInstalled int32     // only install, at most, one ignoreChanged listener; see MasterDetector.Detect
 }
 
 // Internal constructor function
 func NewMasterDetector(zkurls string) (*MasterDetector, error) {
-	u, err := url.Parse(zkurls)
+	zkHosts, zkPath, err := parseZk(zkurls)
 	if err != nil {
 		log.Fatalln("Failed to parse url", err)
 		return nil, err
 	}
 
-	detector := &MasterDetector{
-		url:     u,
-		zkHosts: []string{u.Host},
-		zkPath:  u.Path,
-	}
-
-	detector.client, err = newClient(detector.zkHosts, detector.zkPath)
+	client, err := newClient(zkHosts, zkPath)
 	if err != nil {
 		return nil, err
 	}
 
-	log.V(2).Infoln("Created new detector, watching ", detector.zkHosts, detector.zkPath)
+	detector := &MasterDetector{
+		client: client,
+	}
+
+	log.V(2).Infoln("Created new detector, watching ", zkHosts, zkPath)
 	return detector, nil
+}
+
+func parseZk(zkurls string) ([]string, string, error) {
+	u, err := url.Parse(zkurls)
+	if err != nil {
+		log.V(1).Infof("failed to parse url: %v", err)
+		return nil, "", err
+	}
+	if u.Scheme != "zk" {
+		return nil, "", fmt.Errorf("invalid url scheme for zk url: '%v'", u.Scheme)
+	}
+	return strings.Split(u.Host, ","), u.Path, nil
 }
 
 // returns a chan that, when closed, indicates termination of the detector

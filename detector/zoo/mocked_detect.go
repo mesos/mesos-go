@@ -3,6 +3,7 @@ package zoo
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
@@ -12,8 +13,9 @@ import (
 
 type MockMasterDetector struct {
 	*MasterDetector
-	conCh chan zk.Event
-	sesCh chan zk.Event
+	zkPath string
+	conCh  chan zk.Event
+	sesCh  chan zk.Event
 }
 
 func NewMockMasterDetector(zkurls string) (*MockMasterDetector, error) {
@@ -22,8 +24,11 @@ func NewMockMasterDetector(zkurls string) (*MockMasterDetector, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	u, _ := url.Parse(zkurls)
 	m := &MockMasterDetector{
 		MasterDetector: md,
+		zkPath:         u.Path,
 		conCh:          make(chan zk.Event, 5),
 		sesCh:          make(chan zk.Event, 5),
 	}
@@ -33,7 +38,7 @@ func NewMockMasterDetector(zkurls string) (*MockMasterDetector, error) {
 	connector.On("Children", path).Return([]string{"info_0", "info_5", "info_10"}, &zk.Stat{}, nil)
 	connector.On("Get", fmt.Sprintf("%s/info_0", path)).Return(m.makeMasterInfo(), &zk.Stat{}, nil)
 	connector.On("Close").Return(nil)
-	connector.On("ChildrenW", md.zkPath).Return([]string{m.zkPath}, &zk.Stat{}, (<-chan zk.Event)(m.sesCh), nil)
+	connector.On("ChildrenW", m.zkPath).Return([]string{m.zkPath}, &zk.Stat{}, (<-chan zk.Event)(m.sesCh), nil)
 
 	first := true
 	m.client.setFactory(asFactory(func() (Connector, <-chan zk.Event, error) {

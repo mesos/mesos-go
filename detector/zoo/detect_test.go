@@ -3,7 +3,6 @@ package zoo
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"sort"
 	"sync"
 	"testing"
@@ -21,13 +20,18 @@ const (
 	zkurl_bad = "zk://127.0.0.1:2181"
 )
 
-func TestMasterDetectorNew(t *testing.T) {
-	md, err := NewMasterDetector(zkurl)
+func TestParseZk_single(t *testing.T) {
+	hosts, path, err := parseZk(zkurl)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(md.zkHosts))
-	u, _ := url.Parse(zkurl)
-	assert.True(t, u.String() == md.url.String())
-	assert.Equal(t, "/mesos", md.zkPath)
+	assert.Equal(t, 1, len(hosts))
+	assert.Equal(t, "/mesos", path)
+}
+
+func TestParseZk_multi(t *testing.T) {
+	hosts, path, err := parseZk("zk://abc:1,def:2/foo")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"abc:1", "def:2"}, hosts)
+	assert.Equal(t, "/foo", path)
 }
 
 func TestMasterDetectorStart(t *testing.T) {

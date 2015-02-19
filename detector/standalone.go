@@ -72,12 +72,12 @@ func (s *Standalone) Detect(o MasterChanged) error {
 						break pollWaiter
 					}
 					log.V(1).Infof("detected master change: %+v", mi)
-					o.Notify(mi)
+					o.OnMasterChanged(mi)
 				case <-s.done:
 					return
 				}
 			}
-			o.Notify(nil)
+			o.OnMasterChanged(nil)
 		}()
 	} else {
 		log.Warningf("detect called with a nil master change listener")

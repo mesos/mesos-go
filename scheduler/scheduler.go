@@ -637,7 +637,7 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 
 	log.Infof("Mesos scheduler driver started with PID=%v", driver.self)
 
-	listener := detector.AsMasterChanged(func(m *mesos.MasterInfo) {
+	listener := detector.OnMasterChanged(func(m *mesos.MasterInfo) {
 		driver.messenger.Route(context.TODO(), driver.self, &mesos.InternalMasterChangeDetected{
 			Master: m,
 		})

@@ -63,7 +63,7 @@ func (m *MockDetector) Detect(listener detector.MasterChanged) error {
 		if pid, err := upid.Parse("master(2)@" + m.address); err != nil {
 			return err
 		} else {
-			go listener.Notify(detector.CreateMasterInfo(pid))
+			go listener.OnMasterChanged(detector.CreateMasterInfo(pid))
 		}
 	}
 	return nil
@@ -154,7 +154,7 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverNew_WithZkUrl() {
 	md.ScheduleConnEvent(zk.StateConnected)
 
 	done := make(chan struct{})
-	driver.masterDetector.Detect(detector.AsMasterChanged(func(m *mesos.MasterInfo) {
+	driver.masterDetector.Detect(detector.OnMasterChanged(func(m *mesos.MasterInfo) {
 		suite.NotNil(m)
 		suite.NotEqual(m.GetPid, suite.masterUpid)
 		close(done)

@@ -63,7 +63,7 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 	assert.True(t, c.isConnected())
 
 	called := 0
-	md.Detect(detector.AsMasterChanged(func(master *mesos.MasterInfo) {
+	md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
 		//expect 2 calls in sequence: the first setting a master
 		//and the second clearing it
 		switch called++; called {
@@ -143,7 +143,7 @@ func TestMasterDetectMultiple(t *testing.T) {
 
 	var wg sync.WaitGroup
 	startTime := time.Now()
-	md.Detect(detector.AsMasterChanged(func(master *mesos.MasterInfo) {
+	md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
 		t.Logf("Leader change detected at %v: %+v", time.Now().Sub(startTime), master)
 		wg.Done()
 	}))

@@ -24,13 +24,13 @@ import (
 
 type MasterChanged interface {
 	// Invoked when the master changes
-	Notify(*mesos.MasterInfo)
+	OnMasterChanged(*mesos.MasterInfo)
 }
 
 // func/interface adapter
-type AsMasterChanged func(*mesos.MasterInfo)
+type OnMasterChanged func(*mesos.MasterInfo)
 
-func (f AsMasterChanged) Notify(mi *mesos.MasterInfo) {
+func (f OnMasterChanged) OnMasterChanged(mi *mesos.MasterInfo) {
 	f(mi)
 }
 

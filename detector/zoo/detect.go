@@ -40,7 +40,7 @@ const (
 )
 
 // reasonable default for a noop change listener
-var ignoreChanged = detector.AsMasterChanged(func(*mesos.MasterInfo) {})
+var ignoreChanged = detector.OnMasterChanged(func(*mesos.MasterInfo) {})
 
 // Detector uses ZooKeeper to detect new leading master.
 type MasterDetector struct {
@@ -119,7 +119,7 @@ func (md *MasterDetector) childrenChanged(zkc *Client, path string, obs detector
 		return
 	}
 	log.V(2).Infof("detected master info: %+v", masterInfo)
-	obs.Notify(masterInfo)
+	obs.OnMasterChanged(masterInfo)
 }
 
 // the first call to Detect will kickstart a connection to zookeeper. a nil change listener may
@@ -160,7 +160,7 @@ func (md *MasterDetector) detect(f detector.MasterChanged) {
 				log.V(2).Infoln("detector listener installed")
 				select {
 				case <-watchEnded:
-					f.Notify(nil)
+					f.OnMasterChanged(nil)
 				case <-md.client.stopped():
 					return
 				}

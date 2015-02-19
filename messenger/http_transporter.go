@@ -43,10 +43,11 @@ type HTTPTransporter struct {
 	tr           *http.Transport
 	client       *http.Client // TODO(yifan): Set read/write deadline.
 	messageQueue chan *Message
+	address      net.IP // optional binding address
 }
 
-// NewHTTPTransporter creates a new http transporter.
-func NewHTTPTransporter(upid *upid.UPID) *HTTPTransporter {
+// NewHTTPTransporter creates a new http transporter with an optional binding address.
+func NewHTTPTransporter(upid *upid.UPID, address net.IP) *HTTPTransporter {
 	tr := &http.Transport{}
 	return &HTTPTransporter{
 		upid:         upid,
@@ -54,6 +55,7 @@ func NewHTTPTransporter(upid *upid.UPID) *HTTPTransporter {
 		mux:          http.NewServeMux(),
 		client:       &http.Client{Transport: tr},
 		tr:           tr,
+		address:      address,
 	}
 }
 
@@ -179,7 +181,12 @@ func (t *HTTPTransporter) Install(msgName string) {
 // will listen on a random port, and then fill the UPID with the
 // host:port it is listening.
 func (t *HTTPTransporter) Listen() error {
-	host := t.upid.Host
+	var host string
+	if t.address != nil {
+		host = t.address.String()
+	} else {
+		host = t.upid.Host
+	}
 	port := t.upid.Port
 	// NOTE: Explicitly specifies IPv4 because Libprocess
 	// only supports IPv4 for now.

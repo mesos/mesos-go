@@ -20,11 +20,10 @@ package scheduler
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
+	"net"
 	"os/user"
 	"sync"
 	"time"
@@ -33,10 +32,9 @@ import (
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/auth"
-	"github.com/mesos/mesos-go/auth/sasl"
-	"github.com/mesos/mesos-go/auth/sasl/mech"
 	"github.com/mesos/mesos-go/detector"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
@@ -49,12 +47,6 @@ const (
 )
 
 var (
-	authProvider = flag.String("mesos_authentication_provider", sasl.ProviderName,
-		fmt.Sprintf("Authentication provider to use, default is SASL that supports mechanisms: %+v", mech.ListSupported()))
-	schedulerHost = flag.String("mesos_scheduler_ip", "0.0.0.0",
-		fmt.Sprintf("TCP4 Address for the Scheduler to bind"))
-	schedulerPort = flag.String("mesos_scheduler_port", "0",
-		fmt.Sprintf("TCP Port for the Scheduler to bind"))
 	authenticationCanceledError = errors.New("authentication canceled")
 )
 
@@ -82,6 +74,18 @@ func (a *authenticationAttempt) inProgress() bool {
 		}
 	}
 	return false
+}
+
+type DriverConfig struct {
+	Scheduler        Scheduler
+	Framework        *mesos.FrameworkInfo
+	Master           string
+	Credential       *mesos.Credential                     // optional
+	WithAuthContext  func(context.Context) context.Context // required when Credential != nil
+	HostnameOverride string                                // optional
+	BindingAddress   net.IP                                // optional
+	BindingPort      uint16                                // optional
+	NewMessenger     func() (messenger.Messenger, error)   // optional
 }
 
 // Concrete implementation of a SchedulerDriver that connects a
@@ -127,28 +131,27 @@ type MesosSchedulerDriver struct {
 	authenticated   bool
 	authenticating  *authenticationAttempt
 	reauthenticate  bool
+	withAuthContext func(context.Context) context.Context
 }
 
 // Create a new mesos scheduler driver with the given
 // scheduler, framework info,
 // master address, and credential(optional)
-func NewMesosSchedulerDriver(
-	sched Scheduler,
-	framework *mesos.FrameworkInfo,
-	master string,
-	credential *mesos.Credential,
-) (*MesosSchedulerDriver, error) {
-	if sched == nil {
-		return nil, fmt.Errorf("Scheduler callbacks required.")
+func NewMesosSchedulerDriver(config DriverConfig) (initializedDriver *MesosSchedulerDriver, err error) {
+	if config.Scheduler == nil {
+		err = fmt.Errorf("Scheduler callbacks required.")
+	} else if config.Master == "" {
+		err = fmt.Errorf("Missing master location URL.")
+	} else if config.Framework == nil {
+		err = fmt.Errorf("FrameworkInfo must be provided.")
+	} else if config.Credential != nil && config.WithAuthContext == nil {
+		err = fmt.Errorf("WithAuthContext must be provided when Credential != nil")
+	}
+	if err != nil {
+		return
 	}
 
-	if framework == nil {
-		return nil, fmt.Errorf("FrameworkInfo must be provided.")
-	}
-
-	if master == "" {
-		return nil, fmt.Errorf("Missing master location URL.")
-	}
+	framework := cloneFrameworkInfo(config.Framework)
 
 	// set default userid
 	if framework.GetUser() == "" {
@@ -160,24 +163,22 @@ func NewMesosSchedulerDriver(
 		}
 	}
 
-	// set default hostname
+	// default hostname
+	hostname := util.GetHostname(config.HostnameOverride)
 	if framework.GetHostname() == "" {
-		host, err := os.Hostname()
-		if err != nil || host == "" {
-			host = "unknown"
-		}
-		framework.Hostname = proto.String(host)
+		framework.Hostname = proto.String(hostname)
 	}
 
 	driver := &MesosSchedulerDriver{
-		Scheduler:     sched,
-		FrameworkInfo: framework,
-		stopCh:        make(chan struct{}),
-		status:        mesos.Status_DRIVER_NOT_STARTED,
-		stopped:       true,
-		cache:         newSchedCache(),
-		credential:    credential,
-		failover:      framework.Id != nil && len(framework.Id.GetValue()) > 0,
+		Scheduler:       config.Scheduler,
+		FrameworkInfo:   framework,
+		stopCh:          make(chan struct{}),
+		status:          mesos.Status_DRIVER_NOT_STARTED,
+		stopped:         true,
+		cache:           newSchedCache(),
+		credential:      config.Credential,
+		failover:        framework.Id != nil && len(framework.Id.GetValue()) > 0,
+		withAuthContext: config.WithAuthContext,
 	}
 
 	if framework.FailoverTimeout != nil && *framework.FailoverTimeout > 0 {
@@ -185,25 +186,43 @@ func NewMesosSchedulerDriver(
 		log.V(1).Infof("found failover_timeout = %v", time.Duration(driver.failoverTimeout))
 	}
 
+	newMessenger := config.NewMessenger
+	if newMessenger == nil {
+		newMessenger = func() (messenger.Messenger, error) {
+			return messenger.ForHostname(hostname, config.BindingAddress, config.BindingPort)
+		}
+	}
+
 	// initialize new detector.
-	if md, err := detector.New(master); err != nil {
-		return nil, err
+	if driver.masterDetector, err = detector.New(config.Master); err != nil {
+		return
+	} else if driver.messenger, err = newMessenger(); err != nil {
+		return
+	} else if err = driver.init(); err != nil {
+		return
 	} else {
-		driver.masterDetector = md
+		initializedDriver = driver
+	}
+	return
+}
+
+func cloneFrameworkInfo(framework *mesos.FrameworkInfo) *mesos.FrameworkInfo {
+	if framework == nil {
+		return nil
 	}
 
-	//TODO keep scheduler counter to for proper PID.
-	driver.messenger = messenger.NewHttp(&upid.UPID{
-		ID:   "scheduler(1)",
-		Host: *schedulerHost,
-		Port: *schedulerPort,
-	})
-
-	if err := driver.init(); err != nil {
-		log.Errorf("Failed to initialize the scheduler driver: %v\n", err)
-		return nil, err
+	clonedInfo := *framework
+	if clonedInfo.Id != nil {
+		clonedId := *clonedInfo.Id
+		clonedInfo.Id = &clonedId
+		if framework.FailoverTimeout != nil {
+			clonedInfo.FailoverTimeout = proto.Float64(*framework.FailoverTimeout)
+		}
+		if framework.Checkpoint != nil {
+			clonedInfo.Checkpoint = proto.Bool(*framework.Checkpoint)
+		}
 	}
-	return driver, nil
+	return &clonedInfo
 }
 
 // init initializes the driver.
@@ -670,7 +689,9 @@ func (driver *MesosSchedulerDriver) authenticate(pid *upid.UPID, authenticating 
 		client:     driver.self,
 		credential: driver.credential,
 	}
-	ctx = auth.WithLoginProvider(ctx, *authProvider)
+	ctx = driver.withAuthContext(ctx)
+	ctx = auth.WithParentUPID(ctx, *driver.self)
+
 	ch := make(chan error, 1)
 	go func() { ch <- auth.Login(ctx, handler) }()
 	select {

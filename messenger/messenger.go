@@ -21,7 +21,9 @@ package messenger
 import (
 	"flag"
 	"fmt"
+	"net"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
@@ -73,9 +75,46 @@ type MesosMessenger struct {
 	tr                Transporter
 }
 
+// create a new default messenger (HTTP). If a non-nil, non-wildcard bindingAddress is
+// specified then it will be used for both the UPID and Transport binding address. Otherwise
+// hostname is resolved to an IP address and the UPID.Host is set to that address and the
+// bindingAddress is passed through to the Transport.
+func ForHostname(hostname string, bindingAddress net.IP, port uint16) (Messenger, error) {
+	upid := &upid.UPID{
+		ID:   "scheduler(1)",
+		Port: strconv.Itoa(int(port)),
+	}
+	if bindingAddress != nil && "0.0.0.0" != bindingAddress.String() {
+		upid.Host = bindingAddress.String()
+	} else {
+		ips, err := net.LookupIP(hostname)
+		if err != nil {
+			return nil, err
+		}
+		//TODO(jdef) try to find an ipv4 and use that
+		ip := net.IP(nil)
+		for _, addr := range ips {
+			if ip = addr.To4(); ip != nil {
+				break
+			}
+		}
+		if ip == nil {
+			// no ipv4? best guess, just take the first addr
+			if len(ips) > 0 {
+				ip = ips[0]
+				log.Warningf("failed to find an IPv4 address for '%v', best guess is '%v'", hostname, ip)
+			} else {
+				return nil, fmt.Errorf("failed to determine IP address for host '%v'", hostname)
+			}
+		}
+		upid.Host = ip.String()
+	}
+	return NewHttp(upid, bindingAddress), nil
+}
+
 // NewMesosMessenger creates a new mesos messenger.
-func NewHttp(upid *upid.UPID) *MesosMessenger {
-	return New(upid, NewHTTPTransporter(upid))
+func NewHttp(upid *upid.UPID, address net.IP) *MesosMessenger {
+	return New(upid, NewHTTPTransporter(upid, address))
 }
 
 func New(upid *upid.UPID, t Transporter) *MesosMessenger {

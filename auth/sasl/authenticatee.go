@@ -73,12 +73,21 @@ func (f transportFactoryFunc) makeTransport() messenger.Messenger {
 }
 
 func init() {
-	factory := transportFactoryFunc(func() messenger.Messenger {
-		tpid := &upid.UPID{ID: fmt.Sprintf("sasl_authenticatee(%d)", nextPid())}
-		return messenger.NewHttp(tpid)
-	})
+	factory := func(ctx context.Context) transportFactoryFunc {
+		return transportFactoryFunc(func() messenger.Messenger {
+			parent := auth.ParentUPID(ctx)
+			if parent == nil {
+				log.Fatal("expected to have a parent UPID in context")
+			}
+			tpid := &upid.UPID{
+				ID:   fmt.Sprintf("sasl_authenticatee(%d)", nextPid()),
+				Host: parent.Host,
+			}
+			return messenger.NewHttp(tpid, BindingAddressFrom(ctx))
+		})
+	}
 	delegate := auth.AuthenticateeFunc(func(ctx context.Context, handler callback.Handler) error {
-		if impl, err := makeAuthenticatee(handler, factory); err != nil {
+		if impl, err := makeAuthenticatee(handler, factory(ctx)); err != nil {
 			return err
 		} else {
 			return impl.Authenticate(ctx, handler)

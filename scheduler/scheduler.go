@@ -821,17 +821,15 @@ func (driver *MesosSchedulerDriver) Stop(failover bool) (mesos.Status, error) {
 		}
 		if err := driver.send(driver.MasterPid, message); err != nil {
 			log.Errorf("Failed to send UnregisterFramework message while stopping driver: %v\n", err)
-			status := mesos.Status_DRIVER_ABORTED
-			return status, driver.stop(status)
+			return driver.stop(mesos.Status_DRIVER_ABORTED)
 		}
 	}
 
 	// stop messenger
-	status := mesos.Status_DRIVER_STOPPED
-	return status, driver.stop(status)
+	return driver.stop(mesos.Status_DRIVER_STOPPED)
 }
 
-func (driver *MesosSchedulerDriver) stop(stopStatus mesos.Status) error {
+func (driver *MesosSchedulerDriver) stop(stopStatus mesos.Status) (mesos.Status, error) {
 	// stop messenger
 	err := driver.messenger.Stop()
 	defer func() {
@@ -848,10 +846,10 @@ func (driver *MesosSchedulerDriver) stop(stopStatus mesos.Status) error {
 	driver.connected = false
 
 	if err != nil {
-		return err
+		return stopStatus, err
 	}
 
-	return nil
+	return stopStatus, nil
 }
 
 func (driver *MesosSchedulerDriver) Abort() (stat mesos.Status, err error) {

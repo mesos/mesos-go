@@ -133,22 +133,27 @@ func TestMasterDetectMultiple(t *testing.T) {
 		err = e
 	})
 	md.client = c
-	md.client.connect()
-	assert.NoError(t, err)
-	assert.True(t, c.isConnected())
 
 	// **** Test 4 consecutive ChildrenChangedEvents ******
 	// setup event changes
 	sequences := [][]string{
 		[]string{"info_014", "info_010", "info_005"},
 		[]string{"info_005", "info_004", "info_022"},
+		[]string{}, // indicates no master
 		[]string{"info_017", "info_099", "info_200"},
 	}
 
 	var wg sync.WaitGroup
 	startTime := time.Now()
+	detected := 0
 	md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
-		t.Logf("Leader change detected at %v: %+v", time.Now().Sub(startTime), master)
+		if detected == 2 {
+			assert.Nil(t, master, fmt.Sprintf("on-master-changed-%d", detected))
+		} else {
+			assert.NotNil(t, master, fmt.Sprintf("on-master-changed-%d", detected))
+		}
+		t.Logf("Leader change detected at %v: '%+v'", time.Now().Sub(startTime), master)
+		detected++
 		wg.Done()
 	}))
 
@@ -162,7 +167,9 @@ func TestMasterDetectMultiple(t *testing.T) {
 			sort.Strings(sorted)
 			t.Logf("testing master change sequence %d, path '%v'", i, test_zk_path)
 			connector.On("Children", test_zk_path).Return(sequences[i], &zk.Stat{}, nil).Once()
-			connector.On("Get", fmt.Sprintf("%s/%s", test_zk_path, sorted[0])).Return(newTestMasterInfo(i), &zk.Stat{}, nil).Once()
+			if len(sequences[i]) > 0 {
+				connector.On("Get", fmt.Sprintf("%s/%s", test_zk_path, sorted[0])).Return(newTestMasterInfo(i), &zk.Stat{}, nil).Once()
+			}
 			ch1 <- zk.Event{
 				Type: zk.EventNodeChildrenChanged,
 				Path: test_zk_path,

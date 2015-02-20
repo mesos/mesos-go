@@ -113,17 +113,20 @@ func (md *MasterDetector) childrenChanged(zkc *Client, path string, obs detector
 	log.V(2).Infof("changing leader node from %s -> %s", md.leaderNode, topNode)
 	md.leaderNode = topNode
 
-	data, err := zkc.data(fmt.Sprintf("%s/%s", path, topNode))
-	if err != nil {
-		log.Errorf("unable to retrieve leader data: %v", err.Error())
-		return
-	}
+	var masterInfo *mesos.MasterInfo
+	if md.leaderNode != "" {
+		data, err := zkc.data(fmt.Sprintf("%s/%s", path, topNode))
+		if err != nil {
+			log.Errorf("unable to retrieve leader data: %v", err.Error())
+			return
+		}
 
-	masterInfo := new(mesos.MasterInfo)
-	err = proto.Unmarshal(data, masterInfo)
-	if err != nil {
-		log.Errorf("unable to unmarshall MasterInfo data from zookeeper: %v", err)
-		return
+		masterInfo = new(mesos.MasterInfo)
+		err = proto.Unmarshal(data, masterInfo)
+		if err != nil {
+			log.Errorf("unable to unmarshall MasterInfo data from zookeeper: %v", err)
+			return
+		}
 	}
 	log.V(2).Infof("detected master info: %+v", masterInfo)
 	obs.OnMasterChanged(masterInfo)

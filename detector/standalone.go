@@ -119,6 +119,7 @@ func (s *Standalone) poller() {
 	log.V(1).Infof("polling for master leadership at '%v'", addr)
 	var lastpid *upid.UPID
 	for {
+		//TODO(jdef) should probably send nil MasterInfo if we time out trying to fetch latest leader
 		startedAt := time.Now()
 		ctx, cancel := context.WithTimeout(context.Background(), mesosLeaderSyncInterval)
 		if pid, err := s.fetchPid(ctx, addr); err == nil {

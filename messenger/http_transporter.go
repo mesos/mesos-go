@@ -29,6 +29,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	log "github.com/golang/glog"
@@ -84,7 +85,7 @@ func isRecoverableError(err error) bool {
 			return true
 		}
 		//TODO(jdef) this is pretty hackish, there's probably a better way
-		return (netErr.Op == "dial" && netErr.Net == "tcp" && strings.HasSuffix(netErr.Error(), ": connection refused"))
+		return (netErr.Op == "dial" && netErr.Net == "tcp" && netErr.Err == syscall.ECONNREFUSED)
 	}
 	log.V(2).Infof("unrecoverable error: %#v", err)
 	return false

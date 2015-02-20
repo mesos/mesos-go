@@ -191,20 +191,19 @@ func (m *MesosMessenger) Route(ctx context.Context, upid *upid.UPID, msg proto.M
 
 // Start starts the messenger.
 func (m *MesosMessenger) Start() error {
-	if err := m.tr.Listen(); err != nil {
-		log.Errorf("Failed to start messenger: %v\n", err)
-		return err
-	}
-	m.upid = m.tr.UPID()
 
 	m.stop = make(chan struct{})
 	errChan := m.tr.Start()
 
 	select {
 	case err := <-errChan:
+		log.Errorf("failed to start messenger: %v", err)
 		return err
-	case <-time.After(preparePeriod):
+	case <-time.After(preparePeriod): // continue
 	}
+
+	m.upid = m.tr.UPID()
+
 	for i := 0; i < sendRoutines; i++ {
 		go m.sendLoop()
 	}
@@ -331,7 +330,15 @@ func (m *MesosMessenger) decodeLoop() {
 			return
 		default:
 		}
-		msg := m.tr.Recv()
+		msg, err := m.tr.Recv()
+		if err != nil {
+			if err == discardOnStopError {
+				log.V(1).Info("exiting decodeLoop, transport shutting down")
+				return
+			} else {
+				panic(fmt.Sprintf("unexpected transport error: %v", err))
+			}
+		}
 		log.V(2).Infof("Receiving message %v from %v\n", msg.Name, msg.UPID)
 		msg.ProtoMessage = reflect.New(m.installedMessages[msg.Name]).Interface().(proto.Message)
 		if err := proto.Unmarshal(msg.Bytes, msg.ProtoMessage); err != nil {

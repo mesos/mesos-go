@@ -26,7 +26,7 @@ func TestTransporterNew(t *testing.T) {
 }
 
 func TestTransporterSend(t *testing.T) {
-	idreg := regexp.MustCompile(`[A-Za-z0-9_\-]+@[A-Za-z0-9_\-]+:[0-9]+`)
+	idreg := regexp.MustCompile(`[A-Za-z0-9_\-]+@[A-Za-z0-9_\-\.]+:[0-9]+`)
 	serverId := "testserver"
 
 	// setup mesos client-side
@@ -42,10 +42,12 @@ func TestTransporterSend(t *testing.T) {
 	requestURI := fmt.Sprintf("/%s/%s", serverId, msgName)
 
 	// setup server-side
+	msgReceived := make(chan struct{})
 	srv := makeMockServer(requestURI, func(rsp http.ResponseWriter, req *http.Request) {
+		defer close(msgReceived)
 		from := req.Header.Get("Libprocess-From")
 		assert.NotEmpty(t, from)
-		assert.True(t, idreg.MatchString(from))
+		assert.True(t, idreg.MatchString(from), fmt.Sprintf("regexp failed for '%v'", from))
 	})
 	defer srv.Close()
 	toUpid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, srv.Listener.Addr().String()))
@@ -53,55 +55,83 @@ func TestTransporterSend(t *testing.T) {
 
 	// make transport call.
 	transport := NewHTTPTransporter(fromUpid, nil)
+	errch := transport.Start()
+	defer transport.Stop(false)
+
 	msg.UPID = toUpid
 	err = transport.Send(context.TODO(), msg)
 	assert.NoError(t, err)
+
+	select {
+	case <-time.After(2 * time.Second):
+		t.Fatalf("timed out waiting for message receipt")
+	case <-msgReceived:
+	case err := <-errch:
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+	}
 }
 
-func TestTransporterStartAndSend(t *testing.T) {
+func TestTransporter_DiscardedSend(t *testing.T) {
 	serverId := "testserver"
-	serverPort := getNewPort()
-	serverAddr := "127.0.0.1:" + strconv.Itoa(serverPort)
+
+	// setup mesos client-side
+	fromUpid, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
+	assert.NoError(t, err)
+
 	protoMsg := testmessage.GenerateSmallMessage()
 	msgName := getMessageName(protoMsg)
-
-	// setup receiver (server) process
-	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
-	assert.NoError(t, err)
-	receiver := NewHTTPTransporter(rcvPid, nil)
-
-	ctrl := make(chan bool)
-	reqPath := "/testserver/" + msgName
-	receiver.mux.HandleFunc(reqPath, func(rsp http.ResponseWriter, req *http.Request) {
-		go func() {
-			ctrl <- true
-		}()
-	})
-	err = receiver.Listen()
-	assert.NoError(t, err)
-
-	errch := receiver.Start()
-	defer receiver.Stop(false)
-	assert.NotNil(t, errch)
-
-	time.Sleep(time.Millisecond * 7) // time to catchup
-
-	// setup sender (client) process
-	sndUpid, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
-	assert.NoError(t, err)
-
-	sender := NewHTTPTransporter(sndUpid, nil)
 	msg := &Message{
-		UPID:         rcvPid,
 		Name:         msgName,
 		ProtoMessage: protoMsg,
 	}
-	sender.Send(context.TODO(), msg)
+	requestURI := fmt.Sprintf("/%s/%s", serverId, msgName)
 
+	// setup server-side
+	msgReceived := make(chan struct{})
+	srv := makeMockServer(requestURI, func(rsp http.ResponseWriter, req *http.Request) {
+		close(msgReceived)
+		time.Sleep(2 * time.Second) // long enough that we should be able to stop it
+	})
+	defer srv.Close()
+	toUpid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, srv.Listener.Addr().String()))
+	assert.NoError(t, err)
+
+	// make transport call.
+	transport := NewHTTPTransporter(fromUpid, nil)
+	errch := transport.Start()
+	defer transport.Stop(false)
+
+	msg.UPID = toUpid
+	senderr := make(chan struct{})
+	go func() {
+		defer close(senderr)
+		err = transport.Send(context.TODO(), msg)
+		assert.NotNil(t, err)
+		assert.Equal(t, discardOnStopError, err)
+	}()
+
+	// wait for message to be received
 	select {
-	case <-time.After(time.Second * 5):
-		t.Fatalf("Timeout")
-	case <-ctrl:
+	case <-time.After(2 * time.Second):
+		t.Fatalf("timed out waiting for message receipt")
+		return
+	case <-msgReceived:
+		transport.Stop(false)
+	case err := <-errch:
+		if err != nil {
+			t.Fatalf(err.Error())
+			return
+		}
+	}
+
+	// wait for send() to process discarded-error
+	select {
+	case <-time.After(5 * time.Second):
+		t.Fatalf("timed out waiting for aborted send")
+		return
+	case <-senderr: // continue
 	}
 }
 
@@ -111,20 +141,22 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 	serverAddr := "127.0.0.1:" + strconv.Itoa(serverPort)
 	protoMsg := testmessage.GenerateSmallMessage()
 	msgName := getMessageName(protoMsg)
-	ctrl := make(chan bool)
+	ctrl := make(chan struct{})
 
 	// setup receiver (server) process
 	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
 	assert.NoError(t, err)
 	receiver := NewHTTPTransporter(rcvPid, nil)
 	receiver.Install(msgName)
-	err = receiver.Listen()
-	assert.NoError(t, err)
 
 	go func() {
-		msg := receiver.Recv()
-		assert.Equal(t, msgName, msg.Name)
-		ctrl <- true
+		defer close(ctrl)
+		msg, err := receiver.Recv()
+		assert.Nil(t, err)
+		assert.NotNil(t, msg)
+		if msg != nil {
+			assert.Equal(t, msgName, msg.Name)
+		}
 	}()
 
 	errch := receiver.Start()
@@ -143,12 +175,23 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 		Name:         msgName,
 		ProtoMessage: protoMsg,
 	}
+	errch2 := sender.Start()
+	defer sender.Stop(false)
+
 	sender.Send(context.TODO(), msg)
 
 	select {
 	case <-time.After(time.Second * 5):
 		t.Fatalf("Timeout")
 	case <-ctrl:
+	case err := <-errch:
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+	case err := <-errch2:
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
 	}
 }
 
@@ -158,32 +201,42 @@ func TestTransporterStartAndInject(t *testing.T) {
 	serverAddr := "127.0.0.1:" + strconv.Itoa(serverPort)
 	protoMsg := testmessage.GenerateSmallMessage()
 	msgName := getMessageName(protoMsg)
-	ctrl := make(chan bool)
+	ctrl := make(chan struct{})
 
 	// setup receiver (server) process
 	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
 	assert.NoError(t, err)
 	receiver := NewHTTPTransporter(rcvPid, nil)
 	receiver.Install(msgName)
-
-	go func() {
-		msg := receiver.Recv()
-		assert.Equal(t, msgName, msg.Name)
-		ctrl <- true
-	}()
-	time.Sleep(time.Millisecond * 7) // time to catchup
+	errch := receiver.Start()
+	defer receiver.Stop(false)
 
 	msg := &Message{
 		UPID:         rcvPid,
 		Name:         msgName,
 		ProtoMessage: protoMsg,
 	}
+
 	receiver.Inject(context.TODO(), msg)
 
+	go func() {
+		defer close(ctrl)
+		msg, err := receiver.Recv()
+		assert.Nil(t, err)
+		assert.NotNil(t, msg)
+		if msg != nil {
+			assert.Equal(t, msgName, msg.Name)
+		}
+	}()
+
 	select {
-	case <-time.After(time.Millisecond * 5):
+	case <-time.After(time.Second * 1):
 		t.Fatalf("Timeout")
 	case <-ctrl:
+	case err := <-errch:
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
 	}
 }
 
@@ -196,14 +249,21 @@ func TestTransporterStartAndStop(t *testing.T) {
 	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
 	assert.NoError(t, err)
 	receiver := NewHTTPTransporter(rcvPid, nil)
-	err = receiver.Listen()
-	assert.NoError(t, err)
 
 	errch := receiver.Start()
-	defer receiver.Stop(false)
 	assert.NotNil(t, errch)
 
-	time.Sleep(time.Millisecond * 7) // time to catchup
+	time.Sleep(1 * time.Second)
+	receiver.Stop(false)
+
+	select {
+	case <-time.After(2 * time.Second):
+		t.Fatalf("timed out waiting for transport to stop")
+	case err := <-errch:
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+	}
 }
 
 func makeMockServer(path string, handler func(rsp http.ResponseWriter, req *http.Request)) *httptest.Server {

@@ -28,10 +28,15 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	log "github.com/golang/glog"
 	"golang.org/x/net/context"
+)
+
+var (
+	discardOnStopError = fmt.Errorf("discarding message because transport is shutting down")
 )
 
 // HTTPTransporter implements the interfaces of the Transporter.
@@ -47,6 +52,7 @@ type HTTPTransporter struct {
 	address      net.IP // optional binding address
 	started      chan struct{}
 	stopped      chan struct{}
+	stopping     int32
 	lifeLock     sync.Mutex // protect lifecycle (start/stop) funcs
 }
 
@@ -113,6 +119,8 @@ func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) (sendError err
 				return ctx.Err()
 			case <-time.After(duration):
 				// ..retry request, continue
+			case <-t.stopped:
+				return discardOnStopError
 			}
 		}
 		sendError = t.httpDo(ctx, req, func(resp *http.Response, err error) error {
@@ -152,6 +160,14 @@ func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) (sendError err
 }
 
 func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(*http.Response, error) error) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.stopped:
+		return discardOnStopError
+	default: // continue
+	}
+
 	c := make(chan error, 1)
 	go func() { c <- f(t.client.Do(req)) }()
 	select {
@@ -161,12 +177,25 @@ func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(
 		return ctx.Err()
 	case err := <-c:
 		return err
+	case <-t.stopped:
+		t.tr.CancelRequest(req)
+		<-c // Wait for f to return.
+		return discardOnStopError
 	}
 }
 
 // Recv returns the message, one at a time.
-func (t *HTTPTransporter) Recv() *Message {
-	return <-t.messageQueue
+func (t *HTTPTransporter) Recv() (*Message, error) {
+	select {
+	default:
+		select {
+		case msg := <-t.messageQueue:
+			return msg, nil
+		case <-t.stopped:
+		}
+	case <-t.stopped:
+	}
+	return nil, discardOnStopError
 }
 
 //Inject places a message into the incoming message queue.
@@ -174,8 +203,18 @@ func (t *HTTPTransporter) Inject(ctx context.Context, msg *Message) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
+	case <-t.stopped:
+		return discardOnStopError
+	default: // continue
+	}
+
+	select {
 	case t.messageQueue <- msg:
 		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.stopped:
+		return discardOnStopError
 	}
 }
 
@@ -188,7 +227,7 @@ func (t *HTTPTransporter) Install(msgName string) {
 // Listen starts listen on UPID. If UPID is empty, the transporter
 // will listen on a random port, and then fill the UPID with the
 // host:port it is listening.
-func (t *HTTPTransporter) Listen() error {
+func (t *HTTPTransporter) listen() error {
 	var host string
 	if t.address != nil {
 		host = t.address.String()
@@ -222,15 +261,26 @@ func (t *HTTPTransporter) Start() <-chan error {
 	case <-t.stopped:
 		defer close(t.started)
 		t.stopped = make(chan struct{})
+		atomic.StoreInt32(&t.stopping, 0)
 	default:
 		panic("not started, not stopped, what am i? how can i start?")
 	}
 
 	ch := make(chan error, 1)
-	go func() {
+	if err := t.listen(); err != nil {
+		ch <- err
+	} else {
 		// TODO(yifan): Set read/write deadline.
-		ch <- http.Serve(t.listener, t.mux)
-	}()
+		log.Infof("http transport listening on %v", t.listener.Addr())
+		go func() {
+			err := http.Serve(t.listener, t.mux)
+			if atomic.CompareAndSwapInt32(&t.stopping, 1, 0) {
+				ch <- nil
+			} else {
+				ch <- err
+			}
+		}()
+	}
 	return ch
 }
 
@@ -250,6 +300,7 @@ func (t *HTTPTransporter) Stop(graceful bool) error {
 		panic("not started, not stopped, what am i? how can i stop?")
 	}
 	//TODO(jdef) if graceful, wait for pending requests to terminate
+	atomic.StoreInt32(&t.stopping, 1)
 	err := t.listener.Close()
 	return err
 }

@@ -116,6 +116,9 @@ func MatchingPlugin(spec string) (PluginFactory, bool) {
 // TODO(jdef) make this a func of upid.UPID so that callers can invoke somePid.MasterInfo()?
 //
 func CreateMasterInfo(pid *upid.UPID) *mesos.MasterInfo {
+	if pid == nil {
+		return nil
+	}
 	port, err := strconv.Atoi(pid.Port)
 	if err != nil {
 		log.Errorf("failed to parse port: %v", err)

@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,36 +18,44 @@ import (
 )
 
 const (
-	mesosHttpClientTimeout  = 10 * time.Second //TODO(jdef) configurable via fiag?
-	mesosLeaderSyncInterval = 30 * time.Second //TODO(jdef) configurable via fiag?
-	defaultMesosMasterPort  = 5050
+	defaultMesosHttpClientTimeout  = 10 * time.Second //TODO(jdef) configurable via fiag?
+	defaultMesosLeaderSyncInterval = 30 * time.Second //TODO(jdef) configurable via fiag?
+	defaultMesosMasterPort         = 5050
 )
 
+// enables easier unit testing
+type fetcherFunc func(ctx context.Context, address string) (*upid.UPID, error)
+
 type Standalone struct {
-	ch         chan *mesos.MasterInfo
-	client     *http.Client
-	tr         *http.Transport
-	pollOnce   sync.Once
-	initial    *mesos.MasterInfo
-	done       chan struct{}
-	cancelOnce sync.Once
+	ch                 chan *mesos.MasterInfo
+	client             *http.Client
+	tr                 *http.Transport
+	pollOnce           sync.Once
+	initial            *mesos.MasterInfo
+	done               chan struct{}
+	cancelOnce         sync.Once
+	leaderSyncInterval time.Duration
+	httpClientTimeout  time.Duration
+	assumedMasterPort  int
+	poller             func(pf fetcherFunc)
+	fetchPid           fetcherFunc
 }
 
 // Create a new stand alone master detector.
 func NewStandalone(mi *mesos.MasterInfo) *Standalone {
 	log.V(2).Infof("creating new standalone detector for %+v", mi)
-	ch := make(chan *mesos.MasterInfo)
-	tr := &http.Transport{}
-	return &Standalone{
-		ch: ch,
-		client: &http.Client{
-			Transport: tr,
-			Timeout:   mesosHttpClientTimeout,
-		},
-		tr:      tr,
-		initial: mi,
-		done:    make(chan struct{}),
+	stand := &Standalone{
+		ch:                 make(chan *mesos.MasterInfo),
+		tr:                 &http.Transport{},
+		initial:            mi,
+		done:               make(chan struct{}),
+		leaderSyncInterval: defaultMesosLeaderSyncInterval,
+		httpClientTimeout:  defaultMesosHttpClientTimeout,
+		assumedMasterPort:  defaultMesosMasterPort,
 	}
+	stand.poller = stand._poller
+	stand.fetchPid = stand._fetchPid
+	return stand
 }
 
 func (s *Standalone) String() string {
@@ -58,7 +67,12 @@ func (s *Standalone) Detect(o MasterChanged) error {
 	log.V(2).Info("Detect()")
 	s.pollOnce.Do(func() {
 		log.V(1).Info("spinning up asyc master detector poller")
-		go s.poller()
+		// delayed initialization allows unit tests to modify timeouts before detection starts
+		s.client = &http.Client{
+			Transport: s.tr,
+			Timeout:   s.httpClientTimeout,
+		}
+		go s.poller(s.fetchPid)
 	})
 	if o != nil {
 		log.V(1).Info("spawning asyc master detector listener")
@@ -94,24 +108,31 @@ func (s *Standalone) Cancel() {
 }
 
 // poll for changes to master leadership via current leader's /state.json endpoint.
-// we start with the `initial` leader, aborting if none was specified. thereafter,
-// the `leader` property of the state.json is used to identify the next leader that
-// should be polled.
+// we poll the `initial` leader, aborting if none was specified.
 //
+// TODO(jdef) follow the leader: change who we poll based on the prior leader
 // TODO(jdef) somehow determine all masters in cluster from the state.json?
 //
-func (s *Standalone) poller() {
+func (s *Standalone) _poller(pf fetcherFunc) {
+	defer func() {
+		defer s.Cancel()
+		log.Warning("shutting down standalone master detection")
+	}()
 	if s.initial == nil {
-		log.Warningf("aborting master poller since initial master info is nil")
+		log.Errorf("aborting master poller since initial master info is nil")
 		return
 	}
-	//TODO(jdef) we could attempt to unpack IP addres if Host=""
-	if s.initial.Hostname != nil && len(*s.initial.Hostname) == 0 {
-		log.Warningf("aborted mater poller since initial master info has no host")
-		return
+	addr := s.initial.GetHostname()
+	if len(addr) == 0 {
+		if s.initial.GetIp() == 0 {
+			log.Warningf("aborted mater poller since initial master info has no host")
+			return
+		}
+		ip := make([]byte, 4)
+		binary.BigEndian.PutUint32(ip, s.initial.GetIp())
+		addr = net.IP(ip).To4().String()
 	}
-	addr := *s.initial.Hostname
-	port := uint32(defaultMesosMasterPort)
+	port := uint32(s.assumedMasterPort)
 	if s.initial.Port != nil && *s.initial.Port != 0 {
 		port = *s.initial.Port
 	}
@@ -119,22 +140,19 @@ func (s *Standalone) poller() {
 	log.V(1).Infof("polling for master leadership at '%v'", addr)
 	var lastpid *upid.UPID
 	for {
-		//TODO(jdef) should probably send nil MasterInfo if we time out trying to fetch latest leader
 		startedAt := time.Now()
-		ctx, cancel := context.WithTimeout(context.Background(), mesosLeaderSyncInterval)
-		if pid, err := s.fetchPid(ctx, addr); err == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), s.leaderSyncInterval)
+		if pid, err := pf(ctx, addr); err == nil {
 			if !pid.Equal(lastpid) {
 				log.V(2).Infof("detected leadership change from '%v' to '%v'", lastpid, pid)
 				lastpid = pid
 				elapsed := time.Now().Sub(startedAt)
 				mi := CreateMasterInfo(pid)
 				select {
-				case s.ch <- mi:
-					// noop
-				case <-time.After(mesosLeaderSyncInterval - elapsed):
+				case s.ch <- mi: // noop
+				case <-time.After(s.leaderSyncInterval - elapsed):
 					// no one heard the master change, oh well - poll again
-					cancel()
-					continue
+					goto continuePolling
 				case <-s.done:
 					cancel()
 					return
@@ -142,18 +160,38 @@ func (s *Standalone) poller() {
 			} else {
 				log.V(2).Infof("no change to master leadership: '%v'", lastpid)
 			}
+		} else if err == context.DeadlineExceeded && lastpid != nil {
+			if lastpid != nil {
+				lastpid = nil
+				select {
+				case s.ch <- nil: // lost master
+				case <-s.done: // no need to cancel ctx
+					return
+				}
+			}
+			goto continuePolling
 		} else {
-			log.Warning(err)
+			select {
+			case <-s.done:
+				cancel()
+				return
+			default:
+				if err != context.Canceled {
+					log.Error(err)
+				}
+			}
 		}
-		remaining := mesosLeaderSyncInterval - time.Now().Sub(startedAt)
-		log.V(3).Infof("master leader poller sleeping for %v", remaining)
-		time.Sleep(remaining)
+		if remaining := s.leaderSyncInterval - time.Now().Sub(startedAt); remaining > 0 {
+			log.V(3).Infof("master leader poller sleeping for %v", remaining)
+			time.Sleep(remaining)
+		}
+	continuePolling:
 		cancel()
 	}
 }
 
-func (s *Standalone) fetchPid(ctx context.Context, address string) (*upid.UPID, error) {
-	//TODO(jdef) need better address parsing, for now assume host, or host:port format
+// assumes that address is in host:port format
+func (s *Standalone) _fetchPid(ctx context.Context, address string) (*upid.UPID, error) {
 	//TODO(jdef) need SSL support
 	uri := fmt.Sprintf("http://%s/state.json", address)
 	req, err := http.NewRequest("GET", uri, nil)

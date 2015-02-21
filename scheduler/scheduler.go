@@ -313,6 +313,7 @@ func (driver *MesosSchedulerDriver) tryAuthentication() {
 				Completed: proto.Bool(false),
 				Pid:       proto.String(masterPid.String()),
 			}
+			// don't reference driver.authenticating here since it may have changed
 			if err := driver.authenticate(masterPid, authenticating); err != nil {
 				log.Errorf("Scheduler failed to authenticate: %v\n", err)
 				if err == auth.AuthenticationFailed {
@@ -322,7 +323,6 @@ func (driver *MesosSchedulerDriver) tryAuthentication() {
 				result.Completed = proto.Bool(true)
 				result.Success = proto.Bool(true)
 			}
-			// don't reference driver.authenticating here since it may have changed
 			driver.messenger.Route(context.TODO(), driver.messenger.UPID(), result)
 		}()
 		driver.authenticating = authenticating

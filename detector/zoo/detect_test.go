@@ -34,6 +34,13 @@ func TestParseZk_multi(t *testing.T) {
 	assert.Equal(t, "/foo", path)
 }
 
+func TestParseZk_multiIP(t *testing.T) {
+	hosts, path, err := parseZk("zk://10.186.175.156:2181,10.47.50.94:2181,10.0.92.171:2181/mesos")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"10.186.175.156:2181", "10.47.50.94:2181", "10.0.92.171:2181"}, hosts)
+	assert.Equal(t, "/mesos", path)
+}
+
 func TestMasterDetectorStart(t *testing.T) {
 	c, err := makeClient()
 	assert.False(t, c.isConnected())

@@ -27,10 +27,17 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
+	"sync/atomic"
+	"syscall"
 	"time"
 
 	log "github.com/golang/glog"
 	"golang.org/x/net/context"
+)
+
+var (
+	discardOnStopError = fmt.Errorf("discarding message because transport is shutting down")
 )
 
 // HTTPTransporter implements the interfaces of the Transporter.
@@ -43,18 +50,28 @@ type HTTPTransporter struct {
 	tr           *http.Transport
 	client       *http.Client // TODO(yifan): Set read/write deadline.
 	messageQueue chan *Message
+	address      net.IP // optional binding address
+	started      chan struct{}
+	stopped      chan struct{}
+	stopping     int32
+	lifeLock     sync.Mutex // protect lifecycle (start/stop) funcs
 }
 
-// NewHTTPTransporter creates a new http transporter.
-func NewHTTPTransporter(upid *upid.UPID) *HTTPTransporter {
+// NewHTTPTransporter creates a new http transporter with an optional binding address.
+func NewHTTPTransporter(upid *upid.UPID, address net.IP) *HTTPTransporter {
 	tr := &http.Transport{}
-	return &HTTPTransporter{
+	result := &HTTPTransporter{
 		upid:         upid,
 		messageQueue: make(chan *Message, defaultQueueSize),
 		mux:          http.NewServeMux(),
 		client:       &http.Client{Transport: tr},
 		tr:           tr,
+		address:      address,
+		started:      make(chan struct{}),
+		stopped:      make(chan struct{}),
 	}
+	close(result.stopped)
+	return result
 }
 
 // some network errors are probably recoverable, attempt to determine that here.
@@ -68,7 +85,7 @@ func isRecoverableError(err error) bool {
 			return true
 		}
 		//TODO(jdef) this is pretty hackish, there's probably a better way
-		return (netErr.Op == "dial" && netErr.Net == "tcp" && strings.HasSuffix(netErr.Error(), ": connection refused"))
+		return (netErr.Op == "dial" && netErr.Net == "tcp" && netErr.Err == syscall.ECONNREFUSED)
 	}
 	log.V(2).Infof("unrecoverable error: %#v", err)
 	return false
@@ -103,6 +120,8 @@ func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) (sendError err
 				return ctx.Err()
 			case <-time.After(duration):
 				// ..retry request, continue
+			case <-t.stopped:
+				return discardOnStopError
 			}
 		}
 		sendError = t.httpDo(ctx, req, func(resp *http.Response, err error) error {
@@ -142,6 +161,14 @@ func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) (sendError err
 }
 
 func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(*http.Response, error) error) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.stopped:
+		return discardOnStopError
+	default: // continue
+	}
+
 	c := make(chan error, 1)
 	go func() { c <- f(t.client.Do(req)) }()
 	select {
@@ -151,12 +178,25 @@ func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(
 		return ctx.Err()
 	case err := <-c:
 		return err
+	case <-t.stopped:
+		t.tr.CancelRequest(req)
+		<-c // Wait for f to return.
+		return discardOnStopError
 	}
 }
 
 // Recv returns the message, one at a time.
-func (t *HTTPTransporter) Recv() *Message {
-	return <-t.messageQueue
+func (t *HTTPTransporter) Recv() (*Message, error) {
+	select {
+	default:
+		select {
+		case msg := <-t.messageQueue:
+			return msg, nil
+		case <-t.stopped:
+		}
+	case <-t.stopped:
+	}
+	return nil, discardOnStopError
 }
 
 //Inject places a message into the incoming message queue.
@@ -164,8 +204,18 @@ func (t *HTTPTransporter) Inject(ctx context.Context, msg *Message) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
+	case <-t.stopped:
+		return discardOnStopError
+	default: // continue
+	}
+
+	select {
 	case t.messageQueue <- msg:
 		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.stopped:
+		return discardOnStopError
 	}
 }
 
@@ -178,8 +228,13 @@ func (t *HTTPTransporter) Install(msgName string) {
 // Listen starts listen on UPID. If UPID is empty, the transporter
 // will listen on a random port, and then fill the UPID with the
 // host:port it is listening.
-func (t *HTTPTransporter) Listen() error {
-	host := t.upid.Host
+func (t *HTTPTransporter) listen() error {
+	var host string
+	if t.address != nil {
+		host = t.address.String()
+	} else {
+		host = t.upid.Host
+	}
 	port := t.upid.Port
 	// NOTE: Explicitly specifies IPv4 because Libprocess
 	// only supports IPv4 for now.
@@ -195,19 +250,60 @@ func (t *HTTPTransporter) Listen() error {
 	return nil
 }
 
-// Start starts the http transporter. This will block, should be put
-// in a goroutine.
-func (t *HTTPTransporter) Start() error {
-	// TODO(yifan): Set read/write deadline.
-	if err := http.Serve(t.listener, t.mux); err != nil {
-		return err
+// Start starts the http transporter
+func (t *HTTPTransporter) Start() <-chan error {
+	t.lifeLock.Lock()
+	defer t.lifeLock.Unlock()
+
+	select {
+	case <-t.started:
+		// already started
+		return nil
+	case <-t.stopped:
+		defer close(t.started)
+		t.stopped = make(chan struct{})
+		atomic.StoreInt32(&t.stopping, 0)
+	default:
+		panic("not started, not stopped, what am i? how can i start?")
 	}
-	return nil
+
+	ch := make(chan error, 1)
+	if err := t.listen(); err != nil {
+		ch <- err
+	} else {
+		// TODO(yifan): Set read/write deadline.
+		log.Infof("http transport listening on %v", t.listener.Addr())
+		go func() {
+			err := http.Serve(t.listener, t.mux)
+			if atomic.CompareAndSwapInt32(&t.stopping, 1, 0) {
+				ch <- nil
+			} else {
+				ch <- err
+			}
+		}()
+	}
+	return ch
 }
 
 // Stop stops the http transporter by closing the listener.
-func (t *HTTPTransporter) Stop() error {
-	return t.listener.Close()
+func (t *HTTPTransporter) Stop(graceful bool) error {
+	t.lifeLock.Lock()
+	defer t.lifeLock.Unlock()
+
+	select {
+	case <-t.stopped:
+		// already stopped
+		return nil
+	case <-t.started:
+		defer close(t.stopped)
+		t.started = make(chan struct{})
+	default:
+		panic("not started, not stopped, what am i? how can i stop?")
+	}
+	//TODO(jdef) if graceful, wait for pending requests to terminate
+	atomic.StoreInt32(&t.stopping, 1)
+	err := t.listener.Close()
+	return err
 }
 
 // UPID returns the upid of the transporter.
@@ -239,6 +335,9 @@ func (t *HTTPTransporter) messageHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (t *HTTPTransporter) makeLibprocessRequest(msg *Message) (*http.Request, error) {
+	if msg.UPID == nil {
+		panic(fmt.Sprintf("message is missing UPID: %+v", msg))
+	}
 	hostport := net.JoinHostPort(msg.UPID.Host, msg.UPID.Port)
 	targetURL := fmt.Sprintf("http://%s%s", hostport, msg.RequestURI())
 	log.V(2).Infof("libproc target URL %s", targetURL)

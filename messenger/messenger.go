@@ -21,12 +21,15 @@ package messenger
 import (
 	"flag"
 	"fmt"
+	"net"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/mesosutil/process"
 	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
 )
@@ -73,9 +76,50 @@ type MesosMessenger struct {
 	tr                Transporter
 }
 
+// create a new default messenger (HTTP). If a non-nil, non-wildcard bindingAddress is
+// specified then it will be used for both the UPID and Transport binding address. Otherwise
+// hostname is resolved to an IP address and the UPID.Host is set to that address and the
+// bindingAddress is passed through to the Transport.
+func ForHostname(proc *process.Process, hostname string, bindingAddress net.IP, port uint16) (Messenger, error) {
+	upid := &upid.UPID{
+		ID:   proc.Label(),
+		Port: strconv.Itoa(int(port)),
+	}
+	if bindingAddress != nil && "0.0.0.0" != bindingAddress.String() {
+		upid.Host = bindingAddress.String()
+	} else {
+		ips, err := net.LookupIP(hostname)
+		if err != nil {
+			return nil, err
+		}
+		// try to find an ipv4 and use that
+		ip := net.IP(nil)
+		for _, addr := range ips {
+			if ip = addr.To4(); ip != nil {
+				break
+			}
+		}
+		if ip == nil {
+			// no ipv4? best guess, just take the first addr
+			if len(ips) > 0 {
+				ip = ips[0]
+				log.Warningf("failed to find an IPv4 address for '%v', best guess is '%v'", hostname, ip)
+			} else {
+				return nil, fmt.Errorf("failed to determine IP address for host '%v'", hostname)
+			}
+		}
+		upid.Host = ip.String()
+	}
+	return NewHttpWithBindingAddress(upid, bindingAddress), nil
+}
+
 // NewMesosMessenger creates a new mesos messenger.
 func NewHttp(upid *upid.UPID) *MesosMessenger {
-	return New(upid, NewHTTPTransporter(upid))
+	return NewHttpWithBindingAddress(upid, nil)
+}
+
+func NewHttpWithBindingAddress(upid *upid.UPID, address net.IP) *MesosMessenger {
+	return New(upid, NewHTTPTransporter(upid, address))
 }
 
 func New(upid *upid.UPID, t Transporter) *MesosMessenger {
@@ -113,7 +157,9 @@ func (m *MesosMessenger) Install(handler MessageHandler, msg proto.Message) erro
 // When an error is generated, the error can be communicated by placing
 // a message on the incoming queue to be handled upstream.
 func (m *MesosMessenger) Send(ctx context.Context, upid *upid.UPID, msg proto.Message) error {
-	if upid.Equal(m.upid) {
+	if upid == nil {
+		panic("cannot sent a message to a nil pid")
+	} else if upid.Equal(m.upid) {
 		return fmt.Errorf("Send the message to self")
 	}
 	name := getMessageName(msg)
@@ -146,25 +192,19 @@ func (m *MesosMessenger) Route(ctx context.Context, upid *upid.UPID, msg proto.M
 
 // Start starts the messenger.
 func (m *MesosMessenger) Start() error {
-	if err := m.tr.Listen(); err != nil {
-		log.Errorf("Failed to start messenger: %v\n", err)
-		return err
-	}
-	m.upid = m.tr.UPID()
 
 	m.stop = make(chan struct{})
-	errChan := make(chan error)
-	go func() {
-		if err := m.tr.Start(); err != nil {
-			errChan <- err
-		}
-	}()
+	errChan := m.tr.Start()
 
 	select {
 	case err := <-errChan:
+		log.Errorf("failed to start messenger: %v", err)
 		return err
-	case <-time.After(preparePeriod):
+	case <-time.After(preparePeriod): // continue
 	}
+
+	m.upid = m.tr.UPID()
+
 	for i := 0; i < sendRoutines; i++ {
 		go m.sendLoop()
 	}
@@ -174,12 +214,25 @@ func (m *MesosMessenger) Start() error {
 	for i := 0; i < decodeRoutines; i++ {
 		go m.decodeLoop()
 	}
+	go func() {
+		select {
+		case err := <-errChan:
+			if err != nil {
+				//TODO(jdef) should the driver abort in this case? probably
+				//since this messenger will never attempt to re-establish the
+				//transport
+				log.Error(err)
+			}
+		case <-m.stop:
+		}
+	}()
 	return nil
 }
 
 // Stop stops the messenger and clean up all the goroutines.
 func (m *MesosMessenger) Stop() error {
-	if err := m.tr.Stop(); err != nil {
+	//TODO(jdef) don't hardcode the graceful flag here
+	if err := m.tr.Stop(true); err != nil {
 		log.Errorf("Failed to stop the transporter: %v\n", err)
 		return err
 	}
@@ -278,7 +331,15 @@ func (m *MesosMessenger) decodeLoop() {
 			return
 		default:
 		}
-		msg := m.tr.Recv()
+		msg, err := m.tr.Recv()
+		if err != nil {
+			if err == discardOnStopError {
+				log.V(1).Info("exiting decodeLoop, transport shutting down")
+				return
+			} else {
+				panic(fmt.Sprintf("unexpected transport error: %v", err))
+			}
+		}
 		log.V(2).Infof("Receiving message %v from %v\n", msg.Name, msg.UPID)
 		msg.ProtoMessage = reflect.New(m.installedMessages[msg.Name]).Interface().(proto.Message)
 		if err := proto.Unmarshal(msg.Bytes, msg.ProtoMessage); err != nil {

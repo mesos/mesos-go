@@ -102,7 +102,10 @@ func init() {
 func main() {
 	fmt.Println("Starting Example Executor (Go)")
 
-	driver, err := exec.NewMesosExecutorDriver(newExampleExecutor())
+	dconfig := exec.DriverConfig{
+		Executor: newExampleExecutor(),
+	}
+	driver, err := exec.NewMesosExecutorDriver(dconfig)
 
 	if err != nil {
 		fmt.Println("Unable to create a ExecutorDriver ", err.Error())

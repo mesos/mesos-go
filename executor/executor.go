@@ -20,6 +20,7 @@ package executor
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"sync"
 	"time"
@@ -29,10 +30,19 @@ import (
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/mesosutil"
+	"github.com/mesos/mesos-go/mesosutil/process"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
 )
+
+type DriverConfig struct {
+	Executor         Executor
+	HostnameOverride string                              // optional
+	BindingAddress   net.IP                              // optional
+	BindingPort      uint16                              // optional
+	NewMessenger     func() (messenger.Messenger, error) // optional
+}
 
 // MesosExecutorDriver is a implementation of the ExecutorDriver.
 type MesosExecutorDriver struct {
@@ -60,15 +70,24 @@ type MesosExecutorDriver struct {
 }
 
 // NewMesosExecutorDriver creates a new mesos executor driver.
-func NewMesosExecutorDriver(exec Executor) (*MesosExecutorDriver, error) {
-	if exec == nil {
+func NewMesosExecutorDriver(config DriverConfig) (*MesosExecutorDriver, error) {
+	if config.Executor == nil {
 		msg := "Executor callback interface cannot be nil."
 		log.Errorln(msg)
 		return nil, fmt.Errorf(msg)
 	}
 
+	hostname := mesosutil.GetHostname(config.HostnameOverride)
+	newMessenger := config.NewMessenger
+	if newMessenger == nil {
+		newMessenger = func() (messenger.Messenger, error) {
+			process := process.New("executor")
+			return messenger.ForHostname(process, hostname, config.BindingAddress, config.BindingPort)
+		}
+	}
+
 	driver := &MesosExecutorDriver{
-		exec:      exec,
+		exec:      config.Executor,
 		status:    mesosproto.Status_DRIVER_NOT_STARTED,
 		stopCh:    make(chan struct{}),
 		destroyCh: make(chan struct{}),
@@ -77,10 +96,12 @@ func NewMesosExecutorDriver(exec Executor) (*MesosExecutorDriver, error) {
 		tasks:     make(map[string]*mesosproto.TaskInfo),
 		workDir:   ".",
 	}
-	// TODO(yifan): Set executor cnt.
-	driver.messenger = messenger.NewHttp(&upid.UPID{ID: "executor(1)"})
-	if err := driver.init(); err != nil {
-		log.Errorf("Failed to initialize the driver: %v\n", err)
+	var err error
+	if driver.messenger, err = newMessenger(); err != nil {
+		return nil, err
+	}
+	if err = driver.init(); err != nil {
+		log.Errorf("failed to initialize the driver: %v", err)
 		return nil, err
 	}
 	return driver, nil

@@ -2,7 +2,8 @@ package zoo
 
 import (
 	"errors"
-	"net/url"
+	"fmt"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -19,13 +20,25 @@ const (
 	zkurl_bad = "zk://127.0.0.1:2181"
 )
 
-func TestMasterDetectorNew(t *testing.T) {
-	md, err := NewMasterDetector(zkurl)
+func TestParseZk_single(t *testing.T) {
+	hosts, path, err := parseZk(zkurl)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(md.zkHosts))
-	u, _ := url.Parse(zkurl)
-	assert.True(t, u.String() == md.url.String())
-	assert.Equal(t, "/mesos", md.zkPath)
+	assert.Equal(t, 1, len(hosts))
+	assert.Equal(t, "/mesos", path)
+}
+
+func TestParseZk_multi(t *testing.T) {
+	hosts, path, err := parseZk("zk://abc:1,def:2/foo")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"abc:1", "def:2"}, hosts)
+	assert.Equal(t, "/foo", path)
+}
+
+func TestParseZk_multiIP(t *testing.T) {
+	hosts, path, err := parseZk("zk://10.186.175.156:2181,10.47.50.94:2181,10.0.92.171:2181/mesos")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"10.186.175.156:2181", "10.47.50.94:2181", "10.0.92.171:2181"}, hosts)
+	assert.Equal(t, "/mesos", path)
 }
 
 func TestMasterDetectorStart(t *testing.T) {
@@ -37,7 +50,7 @@ func TestMasterDetectorStart(t *testing.T) {
 		err = e
 	})
 	md.client = c // override zk.Conn with our own.
-	md.Start()
+	md.client.connect()
 	assert.NoError(t, err)
 	assert.True(t, c.isConnected())
 }
@@ -56,13 +69,12 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 		err = e
 	})
 	md.client = c
-
-	md.Start()
+	md.client.connect()
 	assert.NoError(t, err)
 	assert.True(t, c.isConnected())
 
 	called := 0
-	md.Detect(detector.AsMasterChanged(func(master *mesos.MasterInfo) {
+	md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
 		//expect 2 calls in sequence: the first setting a master
 		//and the second clearing it
 		switch called++; called {
@@ -104,8 +116,10 @@ func TestMasterDetectMultiple(t *testing.T) {
 	c, err := newClient(test_zk_hosts, test_zk_path)
 	assert.NoError(t, err)
 
+	initialChildren := []string{"info_005", "info_010", "info_022"}
 	connector := NewMockConnector()
 	connector.On("Close").Return(nil)
+	connector.On("Children", test_zk_path).Return(initialChildren, &zk.Stat{}, nil).Once()
 	connector.On("ChildrenW", test_zk_path).Return([]string{test_zk_path}, &zk.Stat{}, (<-chan zk.Event)(ch1), nil)
 
 	first := true
@@ -126,23 +140,27 @@ func TestMasterDetectMultiple(t *testing.T) {
 		err = e
 	})
 	md.client = c
-	md.Start()
-	assert.NoError(t, err)
-	assert.True(t, c.isConnected())
 
 	// **** Test 4 consecutive ChildrenChangedEvents ******
 	// setup event changes
 	sequences := [][]string{
-		[]string{"info_005", "info_010", "info_022"},
 		[]string{"info_014", "info_010", "info_005"},
 		[]string{"info_005", "info_004", "info_022"},
+		[]string{}, // indicates no master
 		[]string{"info_017", "info_099", "info_200"},
 	}
 
 	var wg sync.WaitGroup
 	startTime := time.Now()
-	md.Detect(detector.AsMasterChanged(func(master *mesos.MasterInfo) {
-		t.Logf("Leader change detected at %v: %+v", time.Now().Sub(startTime), master)
+	detected := 0
+	md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
+		if detected == 2 {
+			assert.Nil(t, master, fmt.Sprintf("on-master-changed-%d", detected))
+		} else {
+			assert.NotNil(t, master, fmt.Sprintf("on-master-changed-%d", detected))
+		}
+		t.Logf("Leader change detected at %v: '%+v'", time.Now().Sub(startTime), master)
+		detected++
 		wg.Done()
 	}))
 
@@ -151,9 +169,14 @@ func TestMasterDetectMultiple(t *testing.T) {
 
 	go func() {
 		for i := range sequences {
-			t.Logf("testing master change sequence %d", i)
+			sorted := make([]string, len(sequences[i]))
+			copy(sorted, sequences[i])
+			sort.Strings(sorted)
+			t.Logf("testing master change sequence %d, path '%v'", i, test_zk_path)
 			connector.On("Children", test_zk_path).Return(sequences[i], &zk.Stat{}, nil).Once()
-			connector.On("Get", test_zk_path).Return(newTestMasterInfo(i), &zk.Stat{}, nil).Once()
+			if len(sequences[i]) > 0 {
+				connector.On("Get", fmt.Sprintf("%s/%s", test_zk_path, sorted[0])).Return(newTestMasterInfo(i), &zk.Stat{}, nil).Once()
+			}
 			ch1 <- zk.Event{
 				Type: zk.EventNodeChildrenChanged,
 				Path: test_zk_path,
@@ -189,9 +212,36 @@ func TestMasterDetectMultiple(t *testing.T) {
 	}
 }
 
-func TestMasterDetect_none(t *testing.T) {
+func TestMasterDetect_selectTopNode_none(t *testing.T) {
 	assert := assert.New(t)
 	nodeList := []string{}
 	node := selectTopNode(nodeList)
 	assert.Equal("", node)
+}
+
+func TestMasterDetect_selectTopNode_0000x(t *testing.T) {
+	assert := assert.New(t)
+	nodeList := []string{
+		"info_0000000046",
+		"info_0000000032",
+		"info_0000000058",
+		"info_0000000061",
+		"info_0000000008",
+	}
+	node := selectTopNode(nodeList)
+	assert.Equal("info_0000000008", node)
+}
+
+func TestMasterDetect_selectTopNode_mixedEntries(t *testing.T) {
+	assert := assert.New(t)
+	nodeList := []string{
+		"info_0000000046",
+		"info_0000000032",
+		"foo_lskdjfglsdkfsdfgdfg",
+		"info_0000000061",
+		"log_replicas_fdgwsdfgsdf",
+		"bar",
+	}
+	node := selectTopNode(nodeList)
+	assert.Equal("info_0000000032", node)
 }

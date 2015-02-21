@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mesos/mesos-go/auth/callback"
+	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
 )
 
@@ -38,6 +39,7 @@ type loginKeyType int
 
 const (
 	loginProviderNameKey loginKeyType = iota // name of login provider to use
+	parentUpidKey                            // upid.UPID of some parent process
 )
 
 // Return a context that inherits all values from the parent ctx and specifies
@@ -58,4 +60,21 @@ func LoginProviderFrom(ctx context.Context) (name string, ok bool) {
 func LoginProvider(ctx context.Context) string {
 	name, _ := LoginProviderFrom(ctx)
 	return name
+}
+
+func WithParentUPID(ctx context.Context, pid upid.UPID) context.Context {
+	return context.WithValue(ctx, parentUpidKey, pid)
+}
+
+func ParentUPIDFrom(ctx context.Context) (pid upid.UPID, ok bool) {
+	pid, ok = ctx.Value(parentUpidKey).(upid.UPID)
+	return
+}
+
+func ParentUPID(ctx context.Context) (upid *upid.UPID) {
+	if upid, ok := ParentUPIDFrom(ctx); ok {
+		return &upid
+	} else {
+		return nil
+	}
 }

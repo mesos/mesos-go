@@ -1,6 +1,8 @@
 package sasl
 
 import (
+	"net"
+
 	"golang.org/x/net/context"
 )
 
@@ -11,7 +13,8 @@ type _key int
 // If this package defined other context keys, they would have
 // different integer values.
 const (
-	statusKey _key = iota
+	statusKey         _key = iota
+	bindingAddressKey      // bind address for login-related network ops
 )
 
 func withStatus(ctx context.Context, s statusType) context.Context {
@@ -24,4 +27,17 @@ func statusFrom(ctx context.Context) statusType {
 		panic("missing status in context")
 	}
 	return s
+}
+
+func WithBindingAddress(ctx context.Context, address net.IP) context.Context {
+	return context.WithValue(ctx, bindingAddressKey, address)
+}
+
+func BindingAddressFrom(ctx context.Context) net.IP {
+	obj := ctx.Value(bindingAddressKey)
+	if addr, ok := obj.(net.IP); ok {
+		return addr
+	} else {
+		return nil
+	}
 }

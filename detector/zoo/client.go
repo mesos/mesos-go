@@ -46,7 +46,7 @@ func newClient(hosts []string, path string) (*Client, error) {
 		reconnDelay:  defaultReconnectTimeout,
 		rootPath:     path,
 		shouldStop:   make(chan struct{}),
-		shouldReconn: make(chan struct{}, 2),
+		shouldReconn: make(chan struct{}, 1),
 		errorHandler: ErrorHandler(func(*Client, error) {}),
 		defaultFactory: asFactory(func() (Connector, <-chan zk.Event, error) {
 			return zk.Connect(hosts, defaultSessionTimeout)
@@ -83,6 +83,7 @@ func (zkc *Client) stateChange(from, to stateType) bool {
 	return atomic.CompareAndSwapInt32((*int32)(&zkc.state), int32(from), int32(to))
 }
 
+// connect to zookeeper, blocks on the initial call to doConnect()
 func (zkc *Client) connect() {
 	select {
 	case <-zkc.shouldStop:
@@ -91,6 +92,7 @@ func (zkc *Client) connect() {
 		zkc.connectOnce.Do(func() {
 			if zkc.stateChange(disconnectedState, connectionRequestedState) {
 				if err := zkc.doConnect(); err != nil {
+					log.Error(err)
 					zkc.errorHandler(zkc, err)
 				}
 			}
@@ -106,6 +108,7 @@ func (zkc *Client) connect() {
 						return
 					case <-zkc.shouldReconn:
 						if err := zkc.reconnect(); err != nil {
+							log.Error(err)
 							zkc.errorHandler(zkc, err)
 						}
 					}
@@ -184,11 +187,19 @@ func (zkc *Client) doConnect() error {
 	return nil
 }
 
+// signal for reconnect unless we're shutting down
 func (zkc *Client) requestReconnect() {
-	// signal for reconnect unless we should stop
 	select {
-	case zkc.shouldReconn <- struct{}{}:
 	case <-zkc.shouldStop:
+		// abort reconnect request, client is shutting down
+	default:
+		select {
+		case zkc.shouldReconn <- struct{}{}:
+			// reconnect request successful
+		default:
+			// reconnect chan is full: reconnect has already
+			// been requested. move on.
+		}
 	}
 }
 
@@ -261,6 +272,7 @@ func (zkc *Client) watchChildren(path string, watcher ChildWatcher) (<-chan stru
 
 // async continuation of watchChildren
 func (zkc *Client) _watchChildren(watchPath string, zkevents <-chan zk.Event, watcher ChildWatcher) {
+	watcher(zkc, watchPath) // prime the listener
 	var err error
 	for {
 	eventLoop:
@@ -301,7 +313,7 @@ func (zkc *Client) _watchChildren(watchPath string, zkevents <-chan zk.Event, wa
 func (zkc *Client) onDisconnected() {
 	if st := zkc.getState(); st == connectedState && zkc.stateChange(st, disconnectedState) {
 		log.Infoln("disconnected from the server, reconnecting...")
-		go zkc.requestReconnect()
+		zkc.requestReconnect()
 		return
 	}
 }

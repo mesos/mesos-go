@@ -13,6 +13,7 @@ LIBS :=	\
 	healthchecker \
 	mesosproto \
 	mesosutil \
+	mesosutil/process \
 	messenger \
 	scheduler \
 	upid
@@ -42,4 +43,4 @@ vet:
 	go vet ${LIBS:%=$(PKG_PREFIX)/%}
 
 test test.v:
-	flags=""; test "$@" != "test.v" || flags="-v"; pkg="${TEST}"; test -n "$$pkg" || pkg="${LIBS:%=$(PKG_PREFIX)/%}"; go test $$flags $$pkg
+	flags=""; test "$@" != "test.v" || flags="-test.v"; pkg="${TEST}"; test -n "$$pkg" || pkg="${LIBS:%=$(PKG_PREFIX)/%}"; go test $$pkg $$flags

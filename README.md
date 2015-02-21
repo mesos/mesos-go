@@ -14,18 +14,18 @@ This is a very early version of the project.  Howerver, here is a list of things
 - Plenty of unit and integrative of tests
 - Modular design for easy readability/extensibility
 - Example programs on how to use the API
-
-##### Work in Progress...
 - Leading master detection
-- Authentication/Authorization via SASL
+- Authentication via SASL/CRAM-MD5
 
 ## Pre-Requisites
 - Go 1.3 or higher
 - A standard and working Go workspace setup
-- Install Protocol Buffer tools 2.5 or higher locally - See http://code.google.com/p/protobuf/
 - Apache Mesos 0.19 or newer
-- GNU Make
 - [godep](https://github.com/tools/godep)
+
+### Optional
+- Install Protocol Buffer tools 2.5 locally - See http://code.google.com/p/protobuf/
+- GNU Make
 
 ## Build Instructions
 The following instructions is to build the code from `github`.The project uses the `GoDep` for dependency management.

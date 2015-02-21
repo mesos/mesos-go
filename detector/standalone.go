@@ -160,7 +160,7 @@ func (s *Standalone) _poller(pf fetcherFunc) {
 			} else {
 				log.V(2).Infof("no change to master leadership: '%v'", lastpid)
 			}
-		} else if err == context.DeadlineExceeded && lastpid != nil {
+		} else if err == context.DeadlineExceeded {
 			if lastpid != nil {
 				lastpid = nil
 				select {

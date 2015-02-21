@@ -92,7 +92,7 @@ func ForHostname(proc *process.Process, hostname string, bindingAddress net.IP, 
 		if err != nil {
 			return nil, err
 		}
-		//TODO(jdef) try to find an ipv4 and use that
+		// try to find an ipv4 and use that
 		ip := net.IP(nil)
 		for _, addr := range ips {
 			if ip = addr.To4(); ip != nil {

@@ -30,6 +30,7 @@ import (
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/mesosutil"
+	"github.com/mesos/mesos-go/mesosutil/process"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
@@ -80,7 +81,8 @@ func NewMesosExecutorDriver(config DriverConfig) (*MesosExecutorDriver, error) {
 	newMessenger := config.NewMessenger
 	if newMessenger == nil {
 		newMessenger = func() (messenger.Messenger, error) {
-			return messenger.ForHostname(hostname, config.BindingAddress, config.BindingPort)
+			process := process.New("executor")
+			return messenger.ForHostname(process, hostname, config.BindingAddress, config.BindingPort)
 		}
 	}
 

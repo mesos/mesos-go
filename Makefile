@@ -13,6 +13,7 @@ LIBS :=	\
 	healthchecker \
 	mesosproto \
 	mesosutil \
+	mesosutil/process \
 	messenger \
 	scheduler \
 	upid

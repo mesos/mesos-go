@@ -29,6 +29,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/mesosutil/process"
 	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
 )
@@ -79,9 +80,9 @@ type MesosMessenger struct {
 // specified then it will be used for both the UPID and Transport binding address. Otherwise
 // hostname is resolved to an IP address and the UPID.Host is set to that address and the
 // bindingAddress is passed through to the Transport.
-func ForHostname(hostname string, bindingAddress net.IP, port uint16) (Messenger, error) {
+func ForHostname(proc *process.Process, hostname string, bindingAddress net.IP, port uint16) (Messenger, error) {
 	upid := &upid.UPID{
-		ID:   "scheduler(1)",
+		ID:   proc.Label(),
 		Port: strconv.Itoa(int(port)),
 	}
 	if bindingAddress != nil && "0.0.0.0" != bindingAddress.String() {

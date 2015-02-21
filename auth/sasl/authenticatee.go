@@ -3,7 +3,6 @@ package sasl
 import (
 	"errors"
 	"fmt"
-	"sync"
 	"sync/atomic"
 
 	"github.com/gogo/protobuf/proto"
@@ -12,15 +11,13 @@ import (
 	"github.com/mesos/mesos-go/auth/callback"
 	"github.com/mesos/mesos-go/auth/sasl/mech"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/mesosutil/process"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
 )
 
 var (
-	pidLock sync.Mutex
-	pid     int
-
 	UnexpectedAuthenticationMechanisms = errors.New("Unexpected authentication 'mechanisms' received")
 	UnexpectedAuthenticationStep       = errors.New("Unexpected authentication 'step' received")
 	UnexpectedAuthenticationCompleted  = errors.New("Unexpected authentication 'completed' received")
@@ -79,8 +76,9 @@ func init() {
 			if parent == nil {
 				log.Fatal("expected to have a parent UPID in context")
 			}
+			process := process.New("sasl_authenticatee")
 			tpid := &upid.UPID{
-				ID:   fmt.Sprintf("sasl_authenticatee(%d)", nextPid()),
+				ID:   process.Label(),
 				Host: parent.Host,
 			}
 			return messenger.NewHttpWithBindingAddress(tpid, BindingAddressFrom(ctx))
@@ -96,13 +94,6 @@ func init() {
 	if err := auth.RegisterAuthenticateeProvider(ProviderName, delegate); err != nil {
 		log.Error(err)
 	}
-}
-
-func nextPid() int {
-	pidLock.Lock()
-	defer pidLock.Unlock()
-	pid++
-	return pid
 }
 
 func (s *statusType) get() statusType {

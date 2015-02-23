@@ -260,7 +260,7 @@ func (suite *SchedulerIntegrationTestSuite) TestSchedulerDriverRegisterFramework
 	validated := make(chan struct{})
 	var closeOnce sync.Once
 	suite.validator = http.HandlerFunc(func(rsp http.ResponseWriter, req *http.Request) {
-		t.Logf("RCVD request ", req.URL)
+		t.Logf("RCVD request %s", req.URL)
 
 		data, err := ioutil.ReadAll(req.Body)
 		if err != nil {

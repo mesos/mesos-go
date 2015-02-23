@@ -44,8 +44,7 @@ The previous will build the code base.
 ### Building the Examples
 Use the following steps to build the example scheduler and executor:
 ```
-$ cd <go-workspace>/src/github.com/mesos/mesos-go
-$ cd examples
+$ cd <go-workspace>/src/github.com/mesos/mesos-go/examples
 
 # build test-framework
 $ go build -tags=test-sched -o test-framework test_framework.go
@@ -53,6 +52,21 @@ $ go build -tags=test-sched -o test-framework test_framework.go
 # build test-executor
 $ go build -tags=test-exec -o test-executor test_executor.go
 ```
+
+Or by using the top level Makefile:
+```
+$ cd <go-workspace>/src/github.com/mesos/mesos-go
+
+# build test-framework
+$ make test-framework
+
+# build test-executor
+$ make test-executor
+
+# build test-framework and test-executor at the same time
+$ make examples
+```
+
 ## Running the Example
 ### Start Mesos
 You will need a running Mesos master and slaves to run the examples.   For instance, start a local Mesos: 

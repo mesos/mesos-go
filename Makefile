@@ -28,6 +28,8 @@ go-clean:
 pkg-build-install:
 	go install -v ${LIBS:%=./%}
 
+examples: test-framework test-executor
+
 test-framework:
 	rm -rf ${EXAMPLES}/$@
 	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/test_framework.go 

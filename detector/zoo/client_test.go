@@ -64,60 +64,43 @@ func TestClientConnect(t *testing.T) {
 	assert.False(t, c.isConnecting())
 }
 
-/*TODO(jdef) commented this out because I killed "disconnect()" since no one else was using it
-func TestClientDisconnect(t *testing.T) {
-	c, err := makeClient()
-	assert.False(t, c.isConnected())
-	err = c.connect()
-	assert.NoError(t, err)
-	assert.True(t, c.isConnected())
-	err = c.disconnect()
-	assert.NoError(t, err)
-	assert.False(t, c.isConnected())
-}
-*/
-
-func TestClientDisconnectedEvent(t *testing.T) {
-	ch0 := make(chan zk.Event, 3)
-	ch1 := make(chan zk.Event, 1)
-
+func TestClient_FlappingConnection(t *testing.T) {
 	c, err := newClient(test_zk_hosts, test_zk_path)
+	c.reconnDelay = 10 * time.Millisecond // we don't want this test to take forever
+	defer c.stop()
+
 	assert.NoError(t, err)
 
+	attempts := 0
 	c.setFactory(asFactory(func() (Connector, <-chan zk.Event, error) {
 		log.V(2).Infof("**** Using zk.Conn adapter ****")
+		ch0 := make(chan zk.Event, 3) // session chan
+		ch1 := make(chan zk.Event)    // watch chan
+		go func() {
+			ch0 <- zk.Event{
+				State: zk.StateConnecting,
+				Path:  test_zk_path,
+			}
+			ch0 <- zk.Event{
+				State: zk.StateConnected,
+				Path:  test_zk_path,
+			}
+			if attempts < 3 {
+				attempts++
+				time.Sleep(200 * time.Millisecond)
+				ch0 <- zk.Event{
+					State: zk.StateDisconnected,
+					Path:  test_zk_path,
+				}
+			}
+		}()
 		connector := makeMockConnector(test_zk_path, ch1)
 		return connector, ch0, nil
 	}))
 
-	// put connecting, connected events.
-	ch0 <- zk.Event{
-		State: zk.StateConnecting,
-		Path:  test_zk_path,
-	}
-	ch0 <- zk.Event{
-		State: zk.StateConnected,
-		Path:  test_zk_path,
-	}
-	time.Sleep(time.Millisecond * 7)
-	assert.False(t, c.isConnected())
-	c.connect()
+	go c.connect()
+	time.Sleep(2 * time.Second)
 	assert.True(t, c.isConnected())
-	assert.False(t, c.isConnecting())
-
-	//TODO(vlv) - Need to add discontinuity test.
-
-	// send disconnecting
-	// c.reconnDelay = time.Millisecond * 100
-
-	// ch0 <- zk.Event{
-	// 	State: zk.StateDisconnected,
-	// 	Path:  test_zk_path,
-	// }
-	// time.Sleep(time.Millisecond * 5000)
-	// assert.True(t, c.isConnected())
-	// assert.False(t, c.isConnecting())
-
 }
 
 func TestClientWatchChildren(t *testing.T) {

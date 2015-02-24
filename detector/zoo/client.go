@@ -154,6 +154,11 @@ func (zkc *Client) doConnect() error {
 		zkc.stop()
 		return err
 	}
+
+	zkc.connLock.Lock()
+	zkc.conn = conn
+	zkc.connLock.Unlock()
+
 	log.V(4).Infof("Created connection object of type %T\n", conn)
 	connected := make(chan struct{})
 	sessionExpired := make(chan struct{})
@@ -232,6 +237,7 @@ func (zkc *Client) monitorSession(sessionEvents <-chan zk.Event, connected chan 
 			case zk.StateDisconnected:
 				log.Infoln("zookeeper client disconnected")
 				zkc.onDisconnected()
+				return
 
 			case zk.StateExpired:
 				log.Infoln("zookeeper client session expired")

@@ -20,7 +20,7 @@ LIBS :=	\
 
 .PHONY: format all go-clean pkg-build-install test-framework test-executor test test.v
 
-all: go-clean pkg-build-install test-framework test-executor
+all: go-clean pkg-build-install examples
 
 go-clean:
 	go clean

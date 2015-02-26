@@ -39,6 +39,7 @@ type Client struct {
 	shouldStop     chan struct{} // signal chan
 	shouldReconn   chan struct{} // message chan
 	connLock       sync.Mutex
+	hasConnected   chan struct{} // message chan
 }
 
 func newClient(hosts []string, path string) (*Client, error) {
@@ -47,6 +48,7 @@ func newClient(hosts []string, path string) (*Client, error) {
 		rootPath:     path,
 		shouldStop:   make(chan struct{}),
 		shouldReconn: make(chan struct{}, 1),
+		hasConnected: make(chan struct{}, 1),
 		errorHandler: ErrorHandler(func(*Client, error) {}),
 		defaultFactory: asFactory(func() (Connector, <-chan zk.Event, error) {
 			return zk.Connect(hosts, defaultSessionTimeout)
@@ -177,6 +179,13 @@ func (zkc *Client) doConnect() error {
 			// - connected           ... another goroutine already established a connection
 			// - connectionRequested ... another goroutine is already trying to connect
 			zkc.requestReconnect()
+		} else {
+			// let any listeners know about the change
+			select {
+			case <-zkc.shouldStop: // noop
+			case zkc.hasConnected <- struct{}{}: // noop
+			default: // message buf full, this becomes a non-blocking noop
+			}
 		}
 		log.Infoln("zookeeper client connected")
 	case <-sessionExpired:
@@ -210,7 +219,7 @@ func (zkc *Client) requestReconnect() {
 
 // monitor a zookeeper session event channel, closes the 'connected' channel once
 // a zookeeper connection has been established. errors are forwarded to the client's
-// errorHandler. disconnected events are forwarded to client.onDisconnected.
+// errorHandler. the closing of the sessionEvents chan triggers a call to client.onDisconnected.
 // this func blocks until either the client's shouldStop or sessionEvents chan are closed.
 func (zkc *Client) monitorSession(sessionEvents <-chan zk.Event, connected chan struct{}) {
 	for {
@@ -219,6 +228,9 @@ func (zkc *Client) monitorSession(sessionEvents <-chan zk.Event, connected chan 
 			return
 		case e, ok := <-sessionEvents:
 			if !ok {
+				// once sessionEvents is closed, the embedded ZK client will
+				// no longer attempt to reconnect.
+				zkc.onDisconnected()
 				return
 			} else if e.Err != nil {
 				log.Errorf("received state error: %s", e.Err.Error())
@@ -229,15 +241,13 @@ func (zkc *Client) monitorSession(sessionEvents <-chan zk.Event, connected chan 
 				log.Infoln("connecting to zookeeper..")
 
 			case zk.StateConnected:
-				close(connected)
+				close(connected) // signal listener
 
 			case zk.StateSyncConnected:
 				log.Infoln("syncConnected to zookper server")
 
 			case zk.StateDisconnected:
 				log.Infoln("zookeeper client disconnected")
-				zkc.onDisconnected()
-				return
 
 			case zk.StateExpired:
 				log.Infoln("zookeeper client session expired")
@@ -289,19 +299,27 @@ func (zkc *Client) _watchChildren(watchPath string, zkevents <-chan zk.Event, wa
 			case e, ok := <-zkevents:
 				if !ok {
 					break eventLoop
-				} else if e.Err != nil {
-					log.Errorf("Received error while watching path %s: %s", watchPath, e.Err.Error())
-					zkc.errorHandler(zkc, e.Err)
 				}
 				switch e.Type {
 				case zk.EventNodeChildrenChanged:
 					log.V(2).Infoln("Handling: zk.EventNodeChildrenChanged")
 					watcher(zkc, e.Path)
+				case zk.EventNotWatching:
+					if e.State == zk.StateDisconnected {
+						log.V(1).Infof("watch invalidated: %v", e.Err)
+						return
+					}
+				}
+				if e.Err != nil {
+					log.Warningf("received error while watching path %s: %s", watchPath, e.Err.Error())
+					zkc.errorHandler(zkc, e.Err)
 				}
 			}
 		}
+		//TODO(jdef) this check shouldn't be necessary if we were getting 'disconnected' watch events like we're supposed to
 		if !zkc.isConnected() {
-			log.V(1).Info("no longer connected to server.")
+			// yes, intentionally logged as a warning since we should have picked this up from a watch event
+			log.Warningf("no longer connected to server, exiting child watch")
 			return
 		}
 		_, _, zkevents, err = zkc.conn.ChildrenW(watchPath)
@@ -322,6 +340,11 @@ func (zkc *Client) onDisconnected() {
 		zkc.requestReconnect()
 		return
 	}
+}
+
+// return a channel that gets an empty struct every time a connection happens
+func (zkc *Client) connections() <-chan struct{} {
+	return zkc.hasConnected
 }
 
 func (zkc *Client) getState() stateType {

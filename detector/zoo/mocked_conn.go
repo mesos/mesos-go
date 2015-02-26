@@ -39,10 +39,21 @@ func (conn *MockConnector) Close() {
 
 func (conn *MockConnector) ChildrenW(path string) ([]string, *zk.Stat, <-chan zk.Event, error) {
 	args := conn.Called(path)
-	return args.Get(0).([]string),
-		args.Get(1).(*zk.Stat),
-		args.Get(2).(<-chan zk.Event),
-		args.Error(3)
+	var (
+		arg0 []string
+		arg1 *zk.Stat
+		arg2 <-chan zk.Event
+	)
+	if args.Get(0) != nil {
+		arg0 = args.Get(0).([]string)
+	}
+	if args.Get(1) != nil {
+		arg1 = args.Get(1).(*zk.Stat)
+	}
+	if args.Get(2) != nil {
+		arg2 = args.Get(2).(<-chan zk.Event)
+	}
+	return arg0, arg1, arg2, args.Error(3)
 }
 
 func (conn *MockConnector) Children(path string) ([]string, *zk.Stat, error) {

@@ -74,24 +74,28 @@ func TestClient_FlappingConnection(t *testing.T) {
 	attempts := 0
 	c.setFactory(asFactory(func() (Connector, <-chan zk.Event, error) {
 		log.V(2).Infof("**** Using zk.Conn adapter ****")
-		ch0 := make(chan zk.Event, 3) // session chan
-		ch1 := make(chan zk.Event)    // watch chan
+		ch0 := make(chan zk.Event, 10) // session chan
+		ch1 := make(chan zk.Event)     // watch chan
 		go func() {
+			if attempts > 1 {
+				t.Fatalf("only one connector instance is expected")
+			}
+			attempts++
 			ch0 <- zk.Event{
+				Type:  zk.EventSession,
 				State: zk.StateConnecting,
 				Path:  test_zk_path,
 			}
 			ch0 <- zk.Event{
+				Type:  zk.EventSession,
 				State: zk.StateConnected,
 				Path:  test_zk_path,
 			}
-			if attempts < 3 {
-				attempts++
-				time.Sleep(200 * time.Millisecond)
-				ch0 <- zk.Event{
-					State: zk.StateDisconnected,
-					Path:  test_zk_path,
-				}
+			time.Sleep(200 * time.Millisecond)
+			ch0 <- zk.Event{
+				Type:  zk.EventSession,
+				State: zk.StateDisconnected,
+				Path:  test_zk_path,
 			}
 		}()
 		connector := makeMockConnector(test_zk_path, ch1)
@@ -101,6 +105,7 @@ func TestClient_FlappingConnection(t *testing.T) {
 	go c.connect()
 	time.Sleep(2 * time.Second)
 	assert.True(t, c.isConnected())
+	assert.Equal(t, 1, attempts)
 }
 
 func TestClientWatchChildren(t *testing.T) {

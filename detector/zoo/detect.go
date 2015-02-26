@@ -156,12 +156,13 @@ func (md *MasterDetector) Detect(f detector.MasterChanged) (err error) {
 func (md *MasterDetector) detect(f detector.MasterChanged) {
 
 	minCyclePeriod := 1 * time.Second
+detectLoop:
 	for {
 		started := time.Now()
 		select {
 		case <-md.Done():
 			return
-		default:
+		case <-md.client.connections():
 			// we let the golang runtime manage our listener list for us, in form of goroutines that
 			// callback to the master change notification listen func's
 			if watchEnded, err := md.client.watchChildren(currentPath, ChildWatcher(func(zkc *Client, path string) {
@@ -170,12 +171,20 @@ func (md *MasterDetector) detect(f detector.MasterChanged) {
 				log.V(2).Infoln("detector listener installed")
 				select {
 				case <-watchEnded:
-					f.OnMasterChanged(nil)
+					if md.leaderNode != "" {
+						log.V(1).Infof("child watch ended, signaling master lost")
+						md.leaderNode = ""
+						f.OnMasterChanged(nil)
+					}
 				case <-md.client.stopped():
 					return
 				}
+			} else {
+				log.V(1).Infof("child watch ended with error: %v", err)
+				continue detectLoop
 			}
 		}
+		// rate-limit master changes
 		if elapsed := time.Now().Sub(started); elapsed > 0 {
 			log.V(2).Infoln("resting before next detection cycle")
 			select {

@@ -45,6 +45,7 @@ func TestMasterDetectorStart(t *testing.T) {
 	c, err := makeClient()
 	assert.False(t, c.isConnected())
 	md, err := NewMasterDetector(zkurl)
+	defer md.Cancel()
 	assert.NoError(t, err)
 	c.errorHandler = ErrorHandler(func(c *Client, e error) {
 		err = e
@@ -63,6 +64,7 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 	assert.False(t, c.isConnected())
 
 	md, err := NewMasterDetector(zkurl)
+	defer md.Cancel()
 	assert.NoError(t, err)
 	// override zk.Conn with our own.
 	c.errorHandler = ErrorHandler(func(c *Client, e error) {
@@ -104,6 +106,89 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 	assert.False(t, c.isConnected())
 }
 
+func TestMasterDetectFlappingConnector(t *testing.T) {
+	c, err := newClient(test_zk_hosts, test_zk_path)
+	assert.NoError(t, err)
+
+	initialChildren := []string{"info_005", "info_010", "info_022"}
+	connector := NewMockConnector()
+	connector.On("Close").Return(nil)
+	connector.On("Children", test_zk_path).Return(initialChildren, &zk.Stat{}, nil)
+
+	attempt := 0
+	c.setFactory(asFactory(func() (Connector, <-chan zk.Event, error) {
+		attempt++
+		sessionEvents := make(chan zk.Event, 5)
+		watchEvents := make(chan zk.Event, 5)
+
+		sessionEvents <- zk.Event{
+			State: zk.StateConnected,
+			Path:  test_zk_path,
+		}
+		connector.On("Get", fmt.Sprintf("%s/info_005", test_zk_path)).Return(newTestMasterInfo(attempt), &zk.Stat{}, nil).Once()
+		connector.On("ChildrenW", test_zk_path).Return([]string{test_zk_path}, &zk.Stat{}, (<-chan zk.Event)(watchEvents), nil).Once()
+		go func(attempt int) {
+			defer close(sessionEvents)
+			defer close(watchEvents)
+			time.Sleep(400 * time.Millisecond)
+			// this is the order in which the embedded zk implementation does it
+			sessionEvents <- zk.Event{
+				Type:  zk.EventSession,
+				State: zk.StateDisconnected,
+			}
+			connector.On("ChildrenW", test_zk_path).Return(nil, nil, nil, zk.ErrSessionExpired).Once()
+			watchEvents <- zk.Event{
+				Type:  zk.EventNotWatching,
+				State: zk.StateDisconnected,
+				Path:  test_zk_path,
+				Err:   zk.ErrSessionExpired,
+			}
+		}(attempt)
+		return connector, sessionEvents, nil
+	}))
+	c.reconnDelay = 100 * time.Millisecond
+
+	md, err := NewMasterDetector(zkurl)
+	defer md.Cancel()
+	assert.NoError(t, err)
+
+	c.errorHandler = ErrorHandler(func(c *Client, e error) {
+		t.Logf("zk client error: %v", e)
+	})
+	md.client = c
+
+	var wg sync.WaitGroup
+	wg.Add(4) // 2 x (connected, disconnected)
+	detected := 0
+	startTime := time.Now()
+	md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
+		if detected > 3 {
+			// ignore
+			return
+		}
+		if (detected & 1) == 0 {
+			assert.NotNil(t, master, fmt.Sprintf("on-master-changed-%d", detected))
+		} else {
+			assert.Nil(t, master, fmt.Sprintf("on-master-changed-%d", detected))
+		}
+		t.Logf("Leader change detected at %v: '%+v'", time.Now().Sub(startTime), master)
+		detected++
+		wg.Done()
+	}))
+
+	completed := make(chan struct{})
+	go func() {
+		defer close(completed)
+		wg.Wait()
+	}()
+
+	select {
+	case <-completed: // expected
+	case <-time.After(3 * time.Second):
+		t.Fatalf("failed to detect flapping master changes")
+	}
+}
+
 func TestMasterDetectMultiple(t *testing.T) {
 	ch0 := make(chan zk.Event, 5)
 	ch1 := make(chan zk.Event, 5)
@@ -134,6 +219,7 @@ func TestMasterDetectMultiple(t *testing.T) {
 	}))
 
 	md, err := NewMasterDetector(zkurl)
+	defer md.Cancel()
 	assert.NoError(t, err)
 
 	c.errorHandler = ErrorHandler(func(c *Client, e error) {

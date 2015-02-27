@@ -18,7 +18,7 @@ LIBS :=	\
 	scheduler \
 	upid
 
-.PHONY: format all go-clean pkg-build-install test-framework test-executor test test.v
+.PHONY: format all go-clean pkg-build-install example-scheduler example-executor test test.v
 
 all: go-clean pkg-build-install examples
 
@@ -28,15 +28,15 @@ go-clean:
 pkg-build-install:
 	go install -v ${LIBS:%=./%}
 
-examples: test-framework test-executor
+examples: example-scheduler example-executor
 
-test-framework:
+example-scheduler:
 	rm -rf ${EXAMPLES}/$@
-	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/test_framework.go 
+	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/example_scheduler.go
 
-test-executor:
+example-executor:
 	rm -rf ${EXAMPLES}/$@
-	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/test_executor.go 
+	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/example_executor.go
 
 format:
 	go fmt ${LIBS:%=$(PKG_PREFIX)/%}

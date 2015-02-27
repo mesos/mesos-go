@@ -1,4 +1,4 @@
-// +build test-sched
+// +build example-sched
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -52,7 +52,7 @@ var (
 	authProvider = flag.String("mesos_authentication_provider", sasl.ProviderName,
 		fmt.Sprintf("Authentication provider to use, default is SASL that supports mechanisms: %+v", mech.ListSupported()))
 	master              = flag.String("master", "127.0.0.1:5050", "Master address <ip:port>")
-	executorPath        = flag.String("executor", "./test_executor", "Path to test executor")
+	executorPath        = flag.String("executor", "./example_executor", "Path to test executor")
 	taskCount           = flag.String("task-count", "5", "Total task count to run.")
 	mesosAuthPrincipal  = flag.String("mesos_authentication_principal", "", "Mesos authentication principal.")
 	mesosAuthSecretFile = flag.String("mesos_authentication_secret_file", "", "Mesos authentication secret file.")

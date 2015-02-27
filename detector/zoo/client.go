@@ -14,6 +14,7 @@ const (
 	defaultSessionTimeout   = 60 * time.Second
 	defaultReconnectTimeout = 5 * time.Second
 	currentPath             = "."
+	defaultRewatchDelay     = 200 * time.Millisecond
 )
 
 type stateType int32
@@ -40,11 +41,13 @@ type Client struct {
 	shouldReconn   chan struct{} // message chan
 	connLock       sync.Mutex
 	hasConnected   chan struct{} // message chan
+	rewatchDelay   time.Duration
 }
 
 func newClient(hosts []string, path string) (*Client, error) {
 	zkc := &Client{
 		reconnDelay:  defaultReconnectTimeout,
+		rewatchDelay: defaultRewatchDelay,
 		rootPath:     path,
 		shouldStop:   make(chan struct{}),
 		shouldReconn: make(chan struct{}, 1),
@@ -222,6 +225,7 @@ func (zkc *Client) requestReconnect() {
 // errorHandler. the closing of the sessionEvents chan triggers a call to client.onDisconnected.
 // this func blocks until either the client's shouldStop or sessionEvents chan are closed.
 func (zkc *Client) monitorSession(sessionEvents <-chan zk.Event, connected chan struct{}) {
+	firstConnected := true
 	for {
 		select {
 		case <-zkc.shouldStop:
@@ -241,7 +245,10 @@ func (zkc *Client) monitorSession(sessionEvents <-chan zk.Event, connected chan 
 				log.Infoln("connecting to zookeeper..")
 
 			case zk.StateConnected:
-				close(connected) // signal listener
+				if firstConnected {
+					close(connected) // signal listener
+					firstConnected = false
+				}
 
 			case zk.StateSyncConnected:
 				log.Infoln("syncConnected to zookper server")
@@ -286,51 +293,70 @@ func (zkc *Client) watchChildren(path string, watcher ChildWatcher) (<-chan stru
 	return watchEnded, nil
 }
 
-// async continuation of watchChildren
+// async continuation of watchChildren. enhances traditional zk watcher functionality by continuously
+// renewing child watches as long as the embedded client has not shut down.
 func (zkc *Client) _watchChildren(watchPath string, zkevents <-chan zk.Event, watcher ChildWatcher) {
 	watcher(zkc, watchPath) // prime the listener
 	var err error
+watchLoop:
 	for {
-	eventLoop:
-		for {
-			select {
-			case <-zkc.shouldStop:
-				return
-			case e, ok := <-zkevents:
-				if !ok {
-					break eventLoop
-				}
-				switch e.Type {
-				case zk.EventNodeChildrenChanged:
-					log.V(2).Infoln("Handling: zk.EventNodeChildrenChanged")
-					watcher(zkc, e.Path)
-				case zk.EventNotWatching:
-					if e.State == zk.StateDisconnected {
-						log.V(1).Infof("watch invalidated: %v", e.Err)
-						return
-					}
-				}
+		// zkevents is (at most) a one-trick channel
+		// (a) a child event happens (no error)
+		// (b) the embedded client is shutting down (zk.ErrClosing)
+		// (c) the zk session expires (zk.ErrSessionExpired)
+		select {
+		case <-zkc.shouldStop:
+			return
+		case e, ok := <-zkevents:
+			if !ok {
+				log.Warningf("expected a single zk event before channel close")
+				break // the select
+			}
+			switch e.Type {
+			//TODO(jdef) should we not also watch for EventNode{Created,Deleted,DataChanged}?
+			case zk.EventNodeChildrenChanged:
+				log.V(2).Infoln("Handling: zk.EventNodeChildrenChanged")
+				watcher(zkc, e.Path)
+				continue
+			default:
 				if e.Err != nil {
-					log.Warningf("received error while watching path %s: %s", watchPath, e.Err.Error())
 					zkc.errorHandler(zkc, e.Err)
+					if e.Type == zk.EventNotWatching && e.State == zk.StateDisconnected {
+						if e.Err == zk.ErrClosing {
+							log.V(1).Infof("watch invalidated, embedded client terminating")
+							return
+						}
+						log.V(1).Infof("watch invalidated, attempting to watch again: %v", e.Err)
+					} else {
+						log.Warningf("received error while watching path %s: %s", watchPath, e.Err.Error())
+					}
 				}
 			}
 		}
-		//TODO(jdef) this check shouldn't be necessary if we were getting 'disconnected' watch events like we're supposed to
-		if !zkc.isConnected() {
-			// yes, intentionally logged as a warning since we should have picked this up from a watch event
-			log.Warningf("no longer connected to server, exiting child watch")
-			return
-		}
-		_, _, zkevents, err = zkc.conn.ChildrenW(watchPath)
-		if err != nil {
-			log.Errorf("unable to watch children for path %s: %s", watchPath, err.Error())
+		// we really only expect this to happen when zk session has expired,
+		// give the connection a little time to re-establish itself
+		for {
+			//TODO(jdef) it would be better if we could listen for broadcast Connection/Disconnection events,
+			//emitted whenever the embedded client cycles (read: when the connection state of this client changes).
+			//As it currently stands, if the embedded client cycles fast enough, we may actually not notice it here
+			//and keep on watching like nothing bad happened.
+			if !zkc.isConnected() {
+				log.Warningf("no longer connected to server, exiting child watch")
+				return
+			}
+			select {
+			case <-zkc.shouldStop:
+				return
+			case <-time.After(zkc.rewatchDelay):
+			}
+			_, _, zkevents, err = zkc.conn.ChildrenW(watchPath)
+			if err == nil {
+				log.V(2).Infoln("rewatching children for path", watchPath)
+				continue watchLoop
+			}
+			log.V(1).Infof("unable to watch children for path %s: %s", watchPath, err.Error())
 			zkc.errorHandler(zkc, err)
-			return
 		}
-		//TODO(jdef) any chance of the zkevents chan closing frequently, so as to
-		//make this a 'hot' loop? if so, we could implement a backoff here...
-		log.V(2).Infoln("rewatching children for path", watchPath)
 	}
 }
 

@@ -142,8 +142,7 @@ func TestClientWatchErrors(t *testing.T) {
 	path := "/test"
 	ch := make(chan zk.Event, 1)
 	ch <- zk.Event{
-		Type: zk.EventNodeChildrenChanged,
-		Path: "/test",
+		Type: zk.EventNotWatching,
 		Err:  errors.New("Event Error"),
 	}
 

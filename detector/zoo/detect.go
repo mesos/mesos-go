@@ -112,8 +112,12 @@ func (md *MasterDetector) childrenChanged(zkc *Client, path string, obs detector
 		return
 	}
 
-	topNode := selectTopNode(list)
+	md.notifyMasterChanged(path, list, obs)
+	md.notifyAllMasters(path, list, obs)
+}
 
+func (md *MasterDetector) notifyMasterChanged(path string, list []string, obs detector.MasterChanged) {
+	topNode := selectTopNode(list)
 	if md.leaderNode == topNode {
 		log.V(2).Infof("ignoring children-changed event, leader has not changed: %v", path)
 		return
@@ -124,21 +128,51 @@ func (md *MasterDetector) childrenChanged(zkc *Client, path string, obs detector
 
 	var masterInfo *mesos.MasterInfo
 	if md.leaderNode != "" {
-		data, err := zkc.data(fmt.Sprintf("%s/%s", path, topNode))
-		if err != nil {
-			log.Errorf("unable to retrieve leader data: %v", err.Error())
-			return
-		}
-
-		masterInfo = new(mesos.MasterInfo)
-		err = proto.Unmarshal(data, masterInfo)
-		if err != nil {
-			log.Errorf("unable to unmarshall MasterInfo data from zookeeper: %v", err)
-			return
+		var err error
+		if masterInfo, err = md.pullMasterInfo(path, topNode); err != nil {
+			log.Errorln(err.Error())
 		}
 	}
 	log.V(2).Infof("detected master info: %+v", masterInfo)
+
+	//TODO(jdef) recover from possible client callback panic here, so that it doesn't
+	//crash our main detection loop
 	obs.OnMasterChanged(masterInfo)
+}
+
+func (md *MasterDetector) pullMasterInfo(path, node string) (*mesos.MasterInfo, error) {
+	data, err := md.client.data(fmt.Sprintf("%s/%s", path, node))
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve leader data: %v", err)
+	}
+
+	masterInfo := &mesos.MasterInfo{}
+	err = proto.Unmarshal(data, masterInfo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshall MasterInfo data from zookeeper: %v", err)
+	}
+	return masterInfo, nil
+}
+
+func (md *MasterDetector) notifyAllMasters(path string, list []string, obs detector.MasterChanged) {
+	all, ok := obs.(detector.AllMasters)
+	if !ok {
+		// not interested in entire master list
+		return
+	}
+	masters := []*mesos.MasterInfo{}
+	for _, node := range list {
+		info, err := md.pullMasterInfo(path, node)
+		if err != nil {
+			log.Errorln(err.Error())
+		} else {
+			masters = append(masters, info)
+		}
+	}
+
+	//TODO(jdef) recover from possible client callback panic here, so that it doesn't
+	//crash our main detection loop
+	all.UpdatedMasters(masters)
 }
 
 // the first call to Detect will kickstart a connection to zookeeper. a nil change listener may

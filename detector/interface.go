@@ -27,6 +27,18 @@ type MasterChanged interface {
 	OnMasterChanged(*mesos.MasterInfo)
 }
 
+// optional interface that, if implemented by the same object as implements
+// MasterChanged, will receive an additional callbacks independently of
+// leadership changes. it's possible that, as a result of a leadership change,
+// both the OnMasterChanged and UpdatedMasters callbacks would be invoked.
+// the additional callback, UpdatedMasters, is useful to clients that wish to know
+// the entire set of Mesos masters currently running.
+// **NOTE:** Detector implementations are not required to support this optional
+// interface. Please RTFM of the detector implementation that you want to use.
+type AllMasters interface {
+	UpdatedMasters([]*mesos.MasterInfo)
+}
+
 // func/interface adapter
 type OnMasterChanged func(*mesos.MasterInfo)
 

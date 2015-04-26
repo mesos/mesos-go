@@ -158,6 +158,11 @@ func NewMesosSchedulerDriver(config DriverConfig) (initializedDriver *MesosSched
 	if framework.GetUser() == "" {
 		user, err := user.Current()
 		if err != nil || user == nil {
+			if err != nil {
+				log.Warningln("Failed to obtain username: %v", err)
+			} else {
+				log.Warningln("Failed to obtain username.")
+			}
 			framework.User = proto.String("")
 		} else {
 			framework.User = proto.String(user.Username)

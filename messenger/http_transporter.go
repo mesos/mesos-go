@@ -245,7 +245,15 @@ func (t *HTTPTransporter) listen() error {
 	}
 	// Save the host:port in case they are not specified in upid.
 	host, port, _ = net.SplitHostPort(ln.Addr().String())
-	t.upid.Host, t.upid.Port = host, port
+
+	if len(t.upid.Host) == 0 {
+		t.upid.Host = host
+	}
+
+	if len(t.upid.Port) == 0 || t.upid.Port == "0" {
+		t.upid.Port = port
+	}
+
 	t.listener = ln
 	return nil
 }

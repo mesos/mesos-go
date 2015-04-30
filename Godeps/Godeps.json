@@ -20,7 +20,7 @@
 		},
 		{
 			"ImportPath": "github.com/samuel/go-zookeeper/zk",
-			"Rev": "ad552be7b78b762b4a8040ffc5518bdaf5b7225d"
+			"Rev": "d0e0d8e11f318e000a8cc434616d69e329edc374"
 		},
 		{
 			"ImportPath": "github.com/stretchr/objx",
@@ -35,9 +35,9 @@
 			"Rev": "da775f0337260efbac0fce9764cee5bd3e8c85b8"
 		},
 		{
-                        "ImportPath": "golang.org/x/net/context",
-                        "Comment": "null-214",
-                        "Rev": "cbcac7bb8415db9b6cb4d1ebab1dc9afbd688b97"
-                }
+			"ImportPath": "golang.org/x/net/context",
+			"Comment": "null-214",
+			"Rev": "cbcac7bb8415db9b6cb4d1ebab1dc9afbd688b97"
+		}
 	]
 }

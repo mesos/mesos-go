@@ -1,0 +1,10 @@
+language: go 
+go: 
+- 1.4
+before_install: 
+- go get github.com/tools/godep
+- go get golang.org/x/tools/cmd/vet
+- godep restore
+script: 
+- godep go build ./...
+- make

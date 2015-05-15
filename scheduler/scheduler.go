@@ -822,8 +822,9 @@ func (driver *MesosSchedulerDriver) Stop(failover bool) (mesos.Status, error) {
 		return stat, fmt.Errorf("Unable to Stop, expected driver status %s, but is %s", mesos.Status_DRIVER_RUNNING, stat)
 	}
 
-	if driver.connected && failover {
+	if driver.connected && !failover {
 		// unregister the framework
+		log.Infoln("Unregistering the scheduler driver")
 		message := &mesos.UnregisterFrameworkMessage{
 			FrameworkId: driver.FrameworkInfo.Id,
 		}

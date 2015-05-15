@@ -478,7 +478,7 @@ func (driver *MesosSchedulerDriver) frameworkReregistered(from *upid.UPID, pbMsg
 }
 
 func (driver *MesosSchedulerDriver) resourcesOffered(from *upid.UPID, pbMsg proto.Message) {
-	log.V(1).Infoln("Handling resource offers.")
+	log.V(2).Infoln("Handling resource offers.")
 
 	msg := pbMsg.(*mesos.ResourceOffersMessage)
 	if driver.Status() == mesos.Status_DRIVER_ABORTED {
@@ -500,7 +500,7 @@ func (driver *MesosSchedulerDriver) resourcesOffered(from *upid.UPID, pbMsg prot
 	for i, offer := range msg.Offers {
 		if pid, err := upid.Parse(pidStrings[i]); err == nil {
 			driver.cache.putOffer(offer, pid)
-			log.V(1).Infof("Cached offer %s from SlavePID %s", offer.Id.GetValue(), pid)
+			log.V(2).Infof("Cached offer %s from SlavePID %s", offer.Id.GetValue(), pid)
 		} else {
 			log.Warningf("Failed to parse offer PID '%v': %v", pid, err)
 		}

@@ -9,5 +9,4 @@ before_install:
 - if [[ "$SrcDir" != "$DestDir" ]]; then mv "$SrcDir" "$DestDir"; cd ../../mesos/$RepoName; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$RepoName; fi
 - godep restore
 script: 
-- godep go build ./...
 - make

@@ -490,15 +490,15 @@ func TestNotifyAllMasters(t *testing.T) {
 
 	//-- expect primer
 	var primer sync.WaitGroup
-	ignoreArgs := func(f func(), times int) func(mock.Arguments) {
-		primer.Add(times)
+	ignoreArgs := func(f func()) func(mock.Arguments) {
+		primer.Add(1)
 		return func(_ mock.Arguments) {
 			f()
 		}
 	}
-	connector.On("Children", test_zk_path).Return([]string{}, &zk.Stat{}, nil).Run(ignoreArgs(primer.Done, 1)).Once()
-	listener.On("UpdatedMasters", []*mesos.MasterInfo{}).Return().Run(ignoreArgs(primer.Done, 1)).Once()
-	connector.On("ChildrenW", test_zk_path).Return([]string{test_zk_path}, &zk.Stat{}, (<-chan zk.Event)(childEvents), nil).Run(ignoreArgs(primer.Done, 1)).Once()
+	connector.On("Children", test_zk_path).Return([]string{}, &zk.Stat{}, nil).Run(ignoreArgs(primer.Done)).Once()
+	listener.On("UpdatedMasters", []*mesos.MasterInfo{}).Return().Run(ignoreArgs(primer.Done)).Once()
+	connector.On("ChildrenW", test_zk_path).Return([]string{test_zk_path}, &zk.Stat{}, (<-chan zk.Event)(childEvents), nil).Run(ignoreArgs(primer.Done)).Once()
 	md.Detect(listener)
 	fatalAfter(t, 3*time.Second, primer.Wait, "timed out waiting for detection primer")
 
@@ -522,8 +522,8 @@ func TestNotifyAllMasters(t *testing.T) {
 	for j, tc := range tt {
 		// expectations
 		var tcwait sync.WaitGroup
-		ignoreArgs = func(f func(), times int) func(mock.Arguments) {
-			tcwait.Add(times)
+		ignoreArgs = func(f func()) func(mock.Arguments) {
+			tcwait.Add(1)
 			return func(_ mock.Arguments) {
 				f()
 			}
@@ -531,7 +531,7 @@ func TestNotifyAllMasters(t *testing.T) {
 
 		expectedInfos := []*mesos.MasterInfo{}
 		for i, zke := range tc.zkEntry {
-			connector.On("Get", fmt.Sprintf("%s/%s", test_zk_path, zke)).Return(tc.gets[i].info, &zk.Stat{}, tc.gets[i].err).Run(ignoreArgs(tcwait.Done, 1)).Once()
+			connector.On("Get", fmt.Sprintf("%s/%s", test_zk_path, zke)).Return(tc.gets[i].info, &zk.Stat{}, tc.gets[i].err).Run(ignoreArgs(tcwait.Done)).Once()
 			masterInfo := &mesos.MasterInfo{}
 			err = proto.Unmarshal(tc.gets[i].info, masterInfo)
 			if err != nil {
@@ -541,12 +541,12 @@ func TestNotifyAllMasters(t *testing.T) {
 		}
 		if len(tc.zkEntry) > 0 {
 			connector.On("Get", fmt.Sprintf("%s/%s", test_zk_path, tc.zkEntry[tc.leaderIdx])).Return(
-				tc.gets[tc.leaderIdx].info, &zk.Stat{}, tc.gets[tc.leaderIdx].err).Run(ignoreArgs(tcwait.Done, 1)).Once()
+				tc.gets[tc.leaderIdx].info, &zk.Stat{}, tc.gets[tc.leaderIdx].err).Run(ignoreArgs(tcwait.Done)).Once()
 		}
-		connector.On("Children", test_zk_path).Return(tc.zkEntry, &zk.Stat{}, nil).Run(ignoreArgs(tcwait.Done, 1)).Once()
-		listener.On("OnMasterChanged", mock.AnythingOfType("*mesosproto.MasterInfo")).Return().Run(ignoreArgs(tcwait.Done, 1)).Once()
-		listener.On("UpdatedMasters", expectedInfos).Return().Run(ignoreArgs(tcwait.Done, 1)).Once()
-		connector.On("ChildrenW", test_zk_path).Return([]string{test_zk_path}, &zk.Stat{}, (<-chan zk.Event)(childEvents), nil).Run(ignoreArgs(tcwait.Done, 1)).Once()
+		connector.On("Children", test_zk_path).Return(tc.zkEntry, &zk.Stat{}, nil).Run(ignoreArgs(tcwait.Done)).Once()
+		listener.On("OnMasterChanged", mock.AnythingOfType("*mesosproto.MasterInfo")).Return().Run(ignoreArgs(tcwait.Done)).Once()
+		listener.On("UpdatedMasters", expectedInfos).Return().Run(ignoreArgs(tcwait.Done)).Once()
+		connector.On("ChildrenW", test_zk_path).Return([]string{test_zk_path}, &zk.Stat{}, (<-chan zk.Event)(childEvents), nil).Run(ignoreArgs(tcwait.Done)).Once()
 
 		// fire the event that triggers the test case
 		childEvents <- zk.Event{

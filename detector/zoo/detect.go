@@ -134,10 +134,17 @@ func (md *MasterDetector) notifyMasterChanged(path string, list []string, obs de
 		}
 	}
 	log.V(2).Infof("detected master info: %+v", masterInfo)
+	logPanic(func() { obs.OnMasterChanged(masterInfo) })
+}
 
-	//TODO(jdef) recover from possible client callback panic here, so that it doesn't
-	//crash our main detection loop
-	obs.OnMasterChanged(masterInfo)
+// logPanic safely executes the given func, recovering from and logging a panic if one occurs.
+func logPanic(f func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Errorf("recovered from client panic: %v", r)
+		}
+	}()
+	f()
 }
 
 func (md *MasterDetector) pullMasterInfo(path, node string) (*mesos.MasterInfo, error) {
@@ -170,9 +177,8 @@ func (md *MasterDetector) notifyAllMasters(path string, list []string, obs detec
 		}
 	}
 
-	//TODO(jdef) recover from possible client callback panic here, so that it doesn't
-	//crash our main detection loop
-	all.UpdatedMasters(masters)
+	log.V(2).Infof("notifying of master membership change: %+v", masters)
+	logPanic(func() { all.UpdatedMasters(masters) })
 }
 
 // the first call to Detect will kickstart a connection to zookeeper. a nil change listener may

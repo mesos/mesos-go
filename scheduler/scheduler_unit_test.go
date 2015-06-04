@@ -20,7 +20,6 @@ package scheduler
 
 import (
 	"fmt"
-	"os"
 	"os/user"
 	"sync"
 	"testing"
@@ -137,7 +136,7 @@ func TestSchedulerDriverNew(t *testing.T) {
 	driver := newTestSchedulerDriver(t, NewMockScheduler(), &mesos.FrameworkInfo{}, masterAddr, nil)
 	user, _ := user.Current()
 	assert.Equal(t, user.Username, driver.FrameworkInfo.GetUser())
-	host, _ := os.Hostname()
+	host := util.GetHostname("")
 	assert.Equal(t, host, driver.FrameworkInfo.GetHostname())
 }
 

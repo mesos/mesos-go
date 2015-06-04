@@ -28,11 +28,13 @@
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/assert",
-			"Rev": "da775f0337260efbac0fce9764cee5bd3e8c85b8"
+			"Comment": "v1.0",
+			"Rev": "232e8563676cd15c3a36ba5e675ad4312ac4cb11"
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/mock",
-			"Rev": "da775f0337260efbac0fce9764cee5bd3e8c85b8"
+			"Comment": "v1.0",
+			"Rev": "232e8563676cd15c3a36ba5e675ad4312ac4cb11"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

@@ -185,6 +185,8 @@ func (driver *MesosExecutorDriver) setStatus(stat mesosproto.Status) {
 }
 
 func (driver *MesosExecutorDriver) Stopped() bool {
+	driver.lock.RLock()
+	defer driver.lock.RUnlock()
 	return driver.stopped
 }
 

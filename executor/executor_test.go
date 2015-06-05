@@ -206,7 +206,7 @@ func TestExecutorDriverRun(t *testing.T) {
 		assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, stat)
 	}()
 	time.Sleep(time.Millisecond * 1) // allow for things to settle
-	assert.False(t, driver.stopped)
+	assert.False(t, driver.Stopped())
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, driver.Status())
 
 	// mannually close it all

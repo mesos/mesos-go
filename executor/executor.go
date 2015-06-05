@@ -195,6 +195,8 @@ func (driver *MesosExecutorDriver) setStopped(val bool) {
 }
 
 func (driver *MesosExecutorDriver) Connected() bool {
+	driver.lock.RLock()
+	defer driver.lock.RUnlock()
 	return driver.connected
 }
 

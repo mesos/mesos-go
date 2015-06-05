@@ -98,8 +98,10 @@ func TestExecutorDriverStartFailedToParseEnvironment(t *testing.T) {
 	clearEnvironments(t)
 	exec := NewMockedExecutor()
 	exec.On("Error").Return(nil)
-	driver := newTestExecutorDriver(t, exec)
+	dconfig := DriverConfig{Executor: exec}
+	driver, err := NewMesosExecutorDriver(dconfig)
 	assert.Nil(t, driver)
+	assert.Error(t, err)
 }
 
 func TestExecutorDriverStartFailedToStartMessenger(t *testing.T) {

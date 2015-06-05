@@ -342,6 +342,7 @@ func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(from *upid.UPID, 
 	taskID := msg.GetTaskId()
 	uuid := uuid.UUID(msg.GetUuid())
 
+	driver.lock.Lock()
 	if driver.stopped {
 		log.Infof("Ignoring status update acknowledgement %v for task %v of framework %v because the driver is stopped!\n",
 			uuid, taskID, frameworkID)
@@ -349,6 +350,7 @@ func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(from *upid.UPID, 
 
 	// Remove the corresponding update.
 	delete(driver.updates, uuid.String())
+	driver.lock.Unlock()
 	// Remove the corresponding task.
 	delete(driver.tasks, taskID.String())
 }
@@ -530,7 +532,9 @@ func (driver *MesosExecutorDriver) SendStatusUpdate(taskStatus *mesosproto.TaskS
 	log.Infof("Executor sending status update %v\n", update.String())
 
 	// Capture the status update.
+	driver.lock.Lock()
 	driver.updates[uuid.UUID(update.GetUuid()).String()] = update
+	driver.lock.Unlock()
 
 	// Put the status update in the message.
 	message := &mesosproto.StatusUpdateMessage{

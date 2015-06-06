@@ -208,7 +208,7 @@ func TestExecutorDriverRun(t *testing.T) {
 		assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, stat)
 	}()
 	time.Sleep(time.Millisecond * 1) // allow for things to settle
-	assert.False(t, driver.stopped)
+	assert.False(t, driver.Stopped())
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, driver.Status())
 
 	// mannually close it all
@@ -395,4 +395,20 @@ func TestExecutorDriverSendFrameworkMessage(t *testing.T) {
 	stat, err = driver.SendFrameworkMessage("Testing Mesos")
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
+}
+
+func TestStatusUpdateAckRace_Issue103(t *testing.T) {
+	driver, _, _ := createTestExecutorDriver(t)
+	_, err := driver.Start()
+	assert.NoError(t, err)
+
+	msg := &mesosproto.StatusUpdateAcknowledgementMessage{}
+	go driver.statusUpdateAcknowledgement(nil, msg)
+
+	taskStatus := util.NewTaskStatus(
+		util.NewTaskID("test-task-001"),
+		mesosproto.TaskState_TASK_STAGING,
+	)
+
+	driver.SendStatusUpdate(taskStatus)
 }

@@ -157,7 +157,7 @@ func (s *partitionedServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func TestSlaveHealthCheckerFailedOnBlockedSlave(t *testing.T) {
 	s := newBlockedServer(5)
 	ts := httptest.NewUnstartedServer(s)
-	go ts.Start()
+	ts.Start()
 	defer ts.Close()
 
 	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
@@ -180,7 +180,7 @@ func TestSlaveHealthCheckerFailedOnBlockedSlave(t *testing.T) {
 func TestSlaveHealthCheckerFailedOnEOFSlave(t *testing.T) {
 	s := newEOFServer(5)
 	ts := httptest.NewUnstartedServer(s)
-	go ts.Start()
+	ts.Start()
 	defer ts.Close()
 
 	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
@@ -201,7 +201,7 @@ func TestSlaveHealthCheckerFailedOnEOFSlave(t *testing.T) {
 func TestSlaveHealthCheckerFailedOnErrorStatusSlave(t *testing.T) {
 	s := newErrorStatusServer(5)
 	ts := httptest.NewUnstartedServer(s)
-	go ts.Start()
+	ts.Start()
 	defer ts.Close()
 
 	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
@@ -222,7 +222,7 @@ func TestSlaveHealthCheckerFailedOnErrorStatusSlave(t *testing.T) {
 func TestSlaveHealthCheckerSucceed(t *testing.T) {
 	s := new(goodServer)
 	ts := httptest.NewUnstartedServer(s)
-	go ts.Start()
+	ts.Start()
 	defer ts.Close()
 
 	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
@@ -243,7 +243,7 @@ func TestSlaveHealthCheckerSucceed(t *testing.T) {
 func TestSlaveHealthCheckerPartitonedSlave(t *testing.T) {
 	s := newPartitionedServer(5, 9)
 	ts := httptest.NewUnstartedServer(s)
-	go ts.Start()
+	ts.Start()
 	defer ts.Close()
 
 	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))

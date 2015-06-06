@@ -22,11 +22,11 @@ package testutil
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -65,15 +65,15 @@ func (m *MockMesosHttpServer) On(uri string) When {
 func NewMockMasterHttpServer(t *testing.T, handler func(rsp http.ResponseWriter, req *http.Request)) *MockMesosHttpServer {
 	var server *httptest.Server
 	when := make(map[string]http.HandlerFunc)
-	stateHandler := func(rsp http.ResponseWriter, req *http.Request){
-                if "/state.json" == req.RequestURI {
-                        state := fmt.Sprintf(`{ "leader": "master@%v" }`, server.Listener.Addr())
+	stateHandler := func(rsp http.ResponseWriter, req *http.Request) {
+		if "/state.json" == req.RequestURI {
+			state := fmt.Sprintf(`{ "leader": "master@%v" }`, server.Listener.Addr())
 			log.V(1).Infof("returning JSON %v", state)
-                        io.WriteString(rsp, state)
+			io.WriteString(rsp, state)
 		} else if f, found := when[req.RequestURI]; found {
 			f(rsp, req)
 		} else {
-			handler(rsp,req)
+			handler(rsp, req)
 		}
 	}
 	server = httptest.NewServer(http.HandlerFunc(stateHandler))

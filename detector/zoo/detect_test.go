@@ -326,10 +326,10 @@ func TestMasterDetectMultiple(t *testing.T) {
 	// **** Test 4 consecutive ChildrenChangedEvents ******
 	// setup event changes
 	sequences := [][]string{
-		[]string{"info_014", "info_010", "info_005"},
-		[]string{"info_005", "info_004", "info_022"},
-		[]string{}, // indicates no master
-		[]string{"info_017", "info_099", "info_200"},
+		{"info_014", "info_010", "info_005"},
+		{"info_005", "info_004", "info_022"},
+		{}, // indicates no master
+		{"info_017", "info_099", "info_200"},
 	}
 
 	var wg sync.WaitGroup

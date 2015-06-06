@@ -1,24 +1,6 @@
 EXAMPLES = examples
 
-PKG_PREFIX := github.com/mesos/mesos-go
-LIBS :=	\
-	auth \
-	auth/callback \
-	auth/sasl \
-	auth/sasl/mech \
-	auth/sasl/mech/crammd5 \
-	detector \
-	detector/zoo \
-	executor \
-	healthchecker \
-	mesosproto \
-	mesosutil \
-	mesosutil/process \
-	messenger \
-	scheduler \
-	upid
-
-.PHONY: format all go-clean pkg-build-install example-scheduler example-executor test test.v
+.PHONY: format all go-clean pkg-build-install example-scheduler example-executor test
 
 all: go-clean pkg-build-install examples
 
@@ -26,7 +8,7 @@ go-clean:
 	go clean
 
 pkg-build-install:
-	go install -v ${LIBS:%=./%}
+	go install -v ./...
 
 examples: example-scheduler example-executor
 
@@ -39,10 +21,13 @@ example-executor:
 	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/example_executor.go
 
 format:
-	go fmt ${LIBS:%=$(PKG_PREFIX)/%}
+	gofmt -s -w .
+
+formatted:
+	! gofmt -s -d . 2>&1 | read
 
 vet:
-	go vet ${LIBS:%=$(PKG_PREFIX)/%}
+	go vet ./...
 
-test test.v:
-	flags=""; test "$@" != "test.v" || flags="-test.v"; pkg="${TEST}"; test -n "$$pkg" || pkg="${LIBS:%=$(PKG_PREFIX)/%}"; go test $$pkg $$flags
+test: formatted vet
+	go test -race ./...

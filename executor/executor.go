@@ -343,6 +343,7 @@ func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(from *upid.UPID, 
 	uuid := uuid.UUID(msg.GetUuid())
 
 	driver.lock.Lock()
+	defer driver.lock.Unlock()
 	if driver.stopped {
 		log.Infof("Ignoring status update acknowledgement %v for task %v of framework %v because the driver is stopped!\n",
 			uuid, taskID, frameworkID)
@@ -350,7 +351,6 @@ func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(from *upid.UPID, 
 
 	// Remove the corresponding update.
 	delete(driver.updates, uuid.String())
-	driver.lock.Unlock()
 	// Remove the corresponding task.
 	delete(driver.tasks, taskID.String())
 }

@@ -409,7 +409,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverLunchTasksUnstarted() {
 	suite.True(driver.Stopped())
 
 	stat, err := driver.LaunchTasks(
-		[]*mesos.OfferID{&mesos.OfferID{}},
+		[]*mesos.OfferID{{}},
 		[]*mesos.TaskInfo{},
 		&mesos.Filters{},
 	)
@@ -513,7 +513,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverLaunchTasks() {
 	tasks := []*mesos.TaskInfo{task}
 
 	stat, err := driver.LaunchTasks(
-		[]*mesos.OfferID{&mesos.OfferID{}},
+		[]*mesos.OfferID{{}},
 		tasks,
 		&mesos.Filters{},
 	)
@@ -564,7 +564,7 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverRequestResources() {
 
 	stat, err := driver.RequestResources(
 		[]*mesos.Request{
-			&mesos.Request{
+			{
 				SlaveId: util.NewSlaveID("test-slave-001"),
 				Resources: []*mesos.Resource{
 					util.NewScalarResource("test-res-001", 33.00),

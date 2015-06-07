@@ -25,7 +25,7 @@ format:
 	gofmt -s -w .
 
 formatted:
-	! gofmt -s -d . 2>&1 | read
+	! gofmt -s -d . 2>&1 | read diff
 
 vet:
 	go vet ./...

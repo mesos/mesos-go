@@ -29,5 +29,7 @@ formatted:
 vet:
 	go vet ./...
 
-test: formatted vet
+test:
 	go test -race ./...
+
+check: formatted vet test

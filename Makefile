@@ -1,6 +1,7 @@
 EXAMPLES = examples
 
-.PHONY: format all go-clean pkg-build-install example-scheduler example-executor test
+.PHONY: format formatted all go-clean pkg-build-install test vet check \
+        example-scheduler example-executor
 
 all: go-clean pkg-build-install examples
 

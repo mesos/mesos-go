@@ -22,41 +22,33 @@ import "mesos.proto";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 
-// Describes a state entry, a versioned (via a UUID) key/value pair.
-message Entry {
-  required string name = 1;
-  required bytes uuid = 2;
-  required bytes value = 3;
+message AuthenticateMessage {
+  required string pid = 1; // PID that needs to be authenticated.
 }
 
 
-// Describes an operation used in the log storage implementation.
-message Operation {
-  enum Type {
-    SNAPSHOT = 1;
-    DIFF = 3;
-    EXPUNGE = 2;
-  }
+message AuthenticationMechanismsMessage {
+  repeated string mechanisms = 1; // List of available SASL mechanisms.
+}
 
-  // Describes a "snapshot" operation.
-  message Snapshot {
-    required Entry entry = 1;
-  }
 
-  // Describes a "diff" operation where the 'value' of the entry is
-  // just the diff itself, but the 'uuid' represents the UUID of the
-  // entry after applying this diff.
-  message Diff {
-    required Entry entry = 1;
-  }
+message AuthenticationStartMessage {
+  required string mechanism = 1;
+  optional bytes data = 2;
+}
 
-  // Describes an "expunge" operation.
-  message Expunge {
-    required string name = 1;
-  }
 
-  required Type type = 1;
-  optional Snapshot snapshot = 2;
-  optional Diff diff = 4;
-  optional Expunge expunge = 3;
+message AuthenticationStepMessage {
+  required bytes data = 1;
+}
+
+
+message AuthenticationCompletedMessage {}
+
+
+message AuthenticationFailedMessage {}
+
+
+message AuthenticationErrorMessage {
+  optional string error = 1;
 }

@@ -828,6 +828,9 @@ func (driver *MesosSchedulerDriver) Stop(failover bool) (mesos.Status, error) {
 		message := &mesos.UnregisterFrameworkMessage{
 			FrameworkId: driver.FrameworkInfo.Id,
 		}
+		//TODO(jdef) this is actually a little racy: we send an 'unregister' message but then
+		// immediately afterward the messenger is stopped in driver.stop(). so the unregister message
+		// may not actually end up being sent out.
 		if err := driver.send(driver.MasterPid, message); err != nil {
 			log.Errorf("Failed to send UnregisterFramework message while stopping driver: %v\n", err)
 			return driver.stop(mesos.Status_DRIVER_ABORTED)

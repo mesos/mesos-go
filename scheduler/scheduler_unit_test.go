@@ -376,8 +376,6 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverStop_WithoutFailover() {
 	_, isUnregMsg := msg.(proto.Message)
 	suite.True(isUnregMsg, "expected UnregisterFrameworkMessage instead of %+v", msg)
 
-	time.Sleep(time.Millisecond * 1)
-
 	suite.True(driver.Stopped())
 	suite.Equal(mesos.Status_DRIVER_STOPPED, driver.Status())
 }
@@ -395,24 +393,28 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverStop_WithFailover() {
 	driver.messenger = messenger
 	suite.True(driver.Stopped())
 
+	stat, err := driver.Start()
+	suite.NoError(err)
+	suite.Equal(mesos.Status_DRIVER_RUNNING, stat)
+	suite.False(driver.Stopped())
+	driver.connected = true // pretend that we're already registered
+
 	go func() {
-		stat, err := driver.Run()
+		// Run() blocks until the driver is stopped or aborted
+		stat, err := driver.Join()
 		suite.NoError(err)
 		suite.Equal(mesos.Status_DRIVER_STOPPED, stat)
 	}()
 
-	time.Sleep(time.Millisecond * 1)
+	// wait for Join() to begin blocking (so that it has already validated the driver state)
+	time.Sleep(200 * time.Millisecond)
 
-	suite.False(driver.Stopped())
-	suite.Equal(mesos.Status_DRIVER_RUNNING, driver.Status())
-	driver.connected = true // pretend that we're already registered
-
-	driver.Stop(true)
-
+	driver.Stop(true) // true = scheduler failover
 	msg := messenger.lastMessage
-	suite.Nil(msg)
 
-	time.Sleep(time.Millisecond * 1)
+	// we're expecting that lastMessage is nil because when failing over there's no
+	// 'unregister' message sent by the scheduler.
+	suite.Nil(msg)
 
 	suite.True(driver.Stopped())
 	suite.Equal(mesos.Status_DRIVER_STOPPED, driver.Status())

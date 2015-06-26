@@ -140,3 +140,6 @@ type ExecutorDriver interface {
 	 */
 	SendFrameworkMessage(string) (mesosproto.Status, error)
 }
+
+// Driver is an alias for ExecutorDriver.
+type Driver ExecutorDriver

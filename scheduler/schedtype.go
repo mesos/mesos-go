@@ -109,6 +109,9 @@ type SchedulerDriver interface {
 	ReconcileTasks(statuses []*mesos.TaskStatus) (mesos.Status, error)
 }
 
+// Driver is an alias for SchedulerDriver.
+type Driver SchedulerDriver
+
 // Scheduler a type with callback attributes to be provided by frameworks
 // schedulers.
 //

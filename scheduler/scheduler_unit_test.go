@@ -37,6 +37,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -334,9 +335,19 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverStopUnstarted() {
 	suite.Equal(mesos.Status_DRIVER_NOT_STARTED, stat)
 }
 
-func (suite *SchedulerTestSuite) TestSchdulerDriverStopOK() {
+type msgTracker struct {
+	*messenger.MockedMessenger
+	lastMessage proto.Message
+}
+
+func (m *msgTracker) Send(ctx context.Context, upid *upid.UPID, msg proto.Message) error {
+	m.lastMessage = msg
+	return m.MockedMessenger.Send(ctx, upid, msg)
+}
+
+func (suite *SchedulerTestSuite) TestSchdulerDriverStop_WithoutFailover() {
 	// Set expections and return values.
-	messenger := messenger.NewMockedMessenger()
+	messenger := &msgTracker{MockedMessenger: messenger.NewMockedMessenger()}
 	messenger.On("Start").Return(nil)
 	messenger.On("UPID").Return(&upid.UPID{})
 	messenger.On("Send").Return(nil)
@@ -356,9 +367,54 @@ func (suite *SchedulerTestSuite) TestSchdulerDriverStopOK() {
 
 	suite.False(driver.Stopped())
 	suite.Equal(mesos.Status_DRIVER_RUNNING, driver.Status())
+	driver.connected = true // pretend that we're already registered
 
 	driver.Stop(false)
-	time.Sleep(time.Millisecond * 1)
+
+	msg := messenger.lastMessage
+	suite.NotNil(msg)
+	_, isUnregMsg := msg.(proto.Message)
+	suite.True(isUnregMsg, "expected UnregisterFrameworkMessage instead of %+v", msg)
+
+	suite.True(driver.Stopped())
+	suite.Equal(mesos.Status_DRIVER_STOPPED, driver.Status())
+}
+
+func (suite *SchedulerTestSuite) TestSchdulerDriverStop_WithFailover() {
+	// Set expections and return values.
+	messenger := &msgTracker{MockedMessenger: messenger.NewMockedMessenger()}
+	messenger.On("Start").Return(nil)
+	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("Send").Return(nil)
+	messenger.On("Stop").Return(nil)
+	messenger.On("Route").Return(nil)
+
+	driver := newTestSchedulerDriver(suite.T(), NewMockScheduler(), suite.framework, suite.master, nil)
+	driver.messenger = messenger
+	suite.True(driver.Stopped())
+
+	stat, err := driver.Start()
+	suite.NoError(err)
+	suite.Equal(mesos.Status_DRIVER_RUNNING, stat)
+	suite.False(driver.Stopped())
+	driver.connected = true // pretend that we're already registered
+
+	go func() {
+		// Run() blocks until the driver is stopped or aborted
+		stat, err := driver.Join()
+		suite.NoError(err)
+		suite.Equal(mesos.Status_DRIVER_STOPPED, stat)
+	}()
+
+	// wait for Join() to begin blocking (so that it has already validated the driver state)
+	time.Sleep(200 * time.Millisecond)
+
+	driver.Stop(true) // true = scheduler failover
+	msg := messenger.lastMessage
+
+	// we're expecting that lastMessage is nil because when failing over there's no
+	// 'unregister' message sent by the scheduler.
+	suite.Nil(msg)
 
 	suite.True(driver.Stopped())
 	suite.Equal(mesos.Status_DRIVER_STOPPED, driver.Status())

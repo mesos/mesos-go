@@ -15,11 +15,11 @@ examples: example-scheduler example-executor
 
 example-scheduler:
 	rm -rf ${EXAMPLES}/$@
-	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/example_scheduler.go
+	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/main.go
 
 example-executor:
 	rm -rf ${EXAMPLES}/$@
-	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/example_executor.go
+	go build -o ${EXAMPLES}/$@ ${EXAMPLES}/executor/example_executor.go
 
 format:
 	gofmt -s -w .

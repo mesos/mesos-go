@@ -23,6 +23,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	exec "github.com/mesos/mesos-go/executor"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 )
@@ -48,7 +49,7 @@ func (exec *exampleExecutor) Disconnected(exec.ExecutorDriver) {
 }
 
 func (exec *exampleExecutor) LaunchTask(driver exec.ExecutorDriver, taskInfo *mesos.TaskInfo) {
-	fmt.Println("Launching task", taskInfo.GetName(), "with command", taskInfo.Command.GetValue())
+	fmt.Printf("Launching task %v with data [%#x]\n", taskInfo.GetName(), taskInfo.Data)
 
 	runStatus := &mesos.TaskStatus{
 		TaskId: taskInfo.GetTaskId(),
@@ -94,7 +95,6 @@ func (exec *exampleExecutor) Error(driver exec.ExecutorDriver, err string) {
 	fmt.Println("Got error message:", err)
 }
 
-// -------------------------- func inits () ----------------- //
 func init() {
 	flag.Parse()
 }

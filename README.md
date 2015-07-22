@@ -30,13 +30,15 @@ This is a very early version of the project.  Howerver, here is a list of things
 ## Build Instructions
 The following instructions is to build the code from `github`.The project uses the `GoDep` for dependency management.
 ```
-$ cd <go-workspace>/src/
+$ export GOPATH=<go-workspace>
+$ cd ${GOPATH}/src/
 $ mkdir -p github.com/mesos
 $ cd github.com/mesos
 $ git clone https://github.com/mesos/mesos-go.git
 $ cd mesos-go
 $ go get github.com/tools/godep
-$ godep restore
+$ go build github.com/tools/godep
+$ ../../../../bin/godep restore
 $ go build ./...
 ```
 The previous will build the code base.  

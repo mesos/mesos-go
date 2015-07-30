@@ -21,7 +21,12 @@ package upid
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"strings"
+)
+
+var (
+	validUpid = regexp.MustCompile(`[A-Za-z0-9_\-]+@[A-Za-z0-9_\-\.]+:[1-9][0-9]*`)
 )
 
 // UPID is a equivalent of the UPID in libprocess.
@@ -33,6 +38,10 @@ type UPID struct {
 
 // Parse parses the UPID from the input string.
 func Parse(input string) (*UPID, error) {
+	if !validUpid.MatchString(input) {
+		return nil, fmt.Errorf("Invalid UPID provided. Expected format <id>@<host>:<port>")
+	}
+
 	upid := new(UPID)
 
 	splits := strings.Split(input, "@")

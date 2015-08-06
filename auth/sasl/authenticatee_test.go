@@ -73,7 +73,7 @@ func TestAuthticatee_validLogin(t *testing.T) {
 
 		transport.On("Send", mock.Anything, &server, &mesos.AuthenticationStartMessage{
 			Mechanism: proto.String(crammd5.Name),
-			Data:      proto.String(""), // may be nil, depends on init step
+			Data:      []byte(""), // may be nil, depends on init step
 		}).Return(nil).Run(func(_ mock.Arguments) {
 			transport.Recv(&server, &mesos.AuthenticationStepMessage{
 				Data: []byte(`lsd;lfkgjs;dlfkgjs;dfklg`),

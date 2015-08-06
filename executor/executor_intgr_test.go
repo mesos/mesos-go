@@ -185,7 +185,7 @@ func TestExecutorDriverExecutorRegisteredEvent(t *testing.T) {
 
 	//simulate sending ExecutorRegisteredMessage from server to exec pid.
 	pbMsg := &mesos.ExecutorRegisteredMessage{
-		ExecutorInfo:  util.NewExecutorInfo(util.NewExecutorID(executorID), nil),
+		ExecutorInfo:  util.NewExecutorInfo(util.NewExecutorID(executorID), util.NewCommandInfo("ls -l")),
 		FrameworkId:   util.NewFrameworkID(frameworkID),
 		FrameworkInfo: util.NewFrameworkInfo("test", "test-framework", util.NewFrameworkID(frameworkID)),
 		SlaveId:       util.NewSlaveID(slaveID),

@@ -41,6 +41,7 @@ type DriverConfig struct {
 	HostnameOverride string                              // optional
 	BindingAddress   net.IP                              // optional
 	BindingPort      uint16                              // optional
+	PublishedAddress net.IP                              // optional
 	NewMessenger     func() (messenger.Messenger, error) // optional
 }
 
@@ -82,7 +83,7 @@ func NewMesosExecutorDriver(config DriverConfig) (*MesosExecutorDriver, error) {
 	if newMessenger == nil {
 		newMessenger = func() (messenger.Messenger, error) {
 			process := process.New("executor")
-			return messenger.ForHostname(process, hostname, config.BindingAddress, config.BindingPort)
+			return messenger.ForHostname(process, hostname, config.BindingAddress, config.BindingPort, config.PublishedAddress)
 		}
 	}
 

@@ -217,6 +217,8 @@ func (m *MesosMessenger) Route(ctx context.Context, upid *upid.UPID, msg proto.M
 		return m.Send(ctx, upid, msg)
 	}
 
+	// TODO(jdef) this has an unfortunate performance impact for self-messaging. implement
+	// something more reasonable here.
 	data, err := proto.Marshal(msg)
 	if err != nil {
 		return err

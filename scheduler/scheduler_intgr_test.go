@@ -357,7 +357,7 @@ func (suite *SchedulerIntegrationTestSuite) TestSchedulerDriverStatusUpdatedEven
 			defer req.Body.Close()
 			assert.NotNil(t, data)
 			wg.Done()
-			log.Infof("MockMaster - Done with wait group %v \n", wg)
+			log.Infof("MockMaster - Done with wait group")
 		})
 		suite.sched.wg = &wg
 	})

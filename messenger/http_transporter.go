@@ -20,6 +20,7 @@ package messenger
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -38,7 +39,92 @@ import (
 
 var (
 	discardOnStopError = fmt.Errorf("discarding message because transport is shutting down")
+	errNotStarted      = errors.New("HTTP transport has not been started")
+	errTerminal        = errors.New("HTTP transport is terminated")
+	errAlreadyRunning  = errors.New("HTTP transport is already running")
 )
+
+// httpTransporter is a subset of the Transporter interface
+type httpTransporter interface {
+	Send(ctx context.Context, msg *Message) error
+	Recv() (*Message, error)
+	Inject(ctx context.Context, msg *Message) error
+	Install(messageName string)
+	Start() <-chan error
+	Stop(graceful bool) error
+}
+
+type notStartedState struct {
+	h *HTTPTransporter
+}
+
+type stoppedState struct{}
+
+type runningState struct {
+	*notStartedState
+}
+
+/* -- not-started state */
+
+func (s *notStartedState) Send(ctx context.Context, msg *Message) error   { return errNotStarted }
+func (s *notStartedState) Recv() (*Message, error)                        { return nil, errNotStarted }
+func (s *notStartedState) Inject(ctx context.Context, msg *Message) error { return errNotStarted }
+func (s *notStartedState) Stop(graceful bool) error                       { return errNotStarted }
+func (s *notStartedState) Install(messageName string) {
+	s.h.install(messageName)
+}
+func (s *notStartedState) Start() <-chan error {
+	s.h.stateLock.Lock()
+	defer s.h.stateLock.Unlock()
+	if s.h.state != s {
+		// race: someone else already started the transport
+		ch := make(chan error, 1)
+		ch <- errAlreadyRunning
+		return ch
+	}
+	s.h.state = &runningState{s}
+	return s.h.start()
+}
+
+/* -- stopped state */
+
+func (s *stoppedState) Send(ctx context.Context, msg *Message) error   { return errTerminal }
+func (s *stoppedState) Recv() (*Message, error)                        { return nil, errTerminal }
+func (s *stoppedState) Inject(ctx context.Context, msg *Message) error { return errTerminal }
+func (s *stoppedState) Stop(graceful bool) error                       { return errTerminal }
+func (s *stoppedState) Install(messageName string)                     {}
+func (s *stoppedState) Start() <-chan error {
+	ch := make(chan error, 1)
+	ch <- errTerminal
+	return ch
+}
+
+/* -- running state */
+
+func (s *runningState) Send(ctx context.Context, msg *Message) error {
+	return s.h.send(ctx, msg)
+}
+func (s *runningState) Recv() (*Message, error) {
+	return s.h.recv()
+}
+func (s *runningState) Inject(ctx context.Context, msg *Message) error {
+	return s.h.inject(ctx, msg)
+}
+func (s *runningState) Stop(graceful bool) error {
+	s.h.stateLock.Lock()
+	defer s.h.stateLock.Unlock()
+	if s.h.state != s {
+		// race: someone already stopped the transport
+		return errTerminal
+	}
+	s.h.state = &stoppedState{}
+	return s.h.stop(graceful)
+}
+func (s *runningState) Start() <-chan error {
+	ch := make(chan error, 1)
+	ch <- errAlreadyRunning
+	return ch
+}
 
 // HTTPTransporter implements the interfaces of the Transporter.
 type HTTPTransporter struct {
@@ -51,10 +137,10 @@ type HTTPTransporter struct {
 	client       *http.Client // TODO(yifan): Set read/write deadline.
 	messageQueue chan *Message
 	address      net.IP // optional binding address
-	started      chan struct{}
-	stopped      chan struct{}
-	stopping     int32
-	lifeLock     sync.Mutex // protect lifecycle (start/stop) funcs
+	done         chan struct{}
+	stateLock    sync.RWMutex // protect lifecycle (start/stop) funcs
+	state        httpTransporter
+	stopping     int32 // CAS flag used for graceful termination
 }
 
 // NewHTTPTransporter creates a new http transporter with an optional binding address.
@@ -67,11 +153,16 @@ func NewHTTPTransporter(upid *upid.UPID, address net.IP) *HTTPTransporter {
 		client:       &http.Client{Transport: tr},
 		tr:           tr,
 		address:      address,
-		started:      make(chan struct{}),
-		stopped:      make(chan struct{}),
+		done:         make(chan struct{}),
 	}
-	close(result.stopped)
+	result.state = &notStartedState{result}
 	return result
+}
+
+func (t *HTTPTransporter) getState() httpTransporter {
+	t.stateLock.RLock()
+	defer t.stateLock.RUnlock()
+	return t.state
 }
 
 // some network errors are probably recoverable, attempt to determine that here.
@@ -104,6 +195,10 @@ func (e *recoverableError) Error() string {
 
 // Send sends the message to its specified upid.
 func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) (sendError error) {
+	return t.getState().Send(ctx, msg)
+}
+
+func (t *HTTPTransporter) send(ctx context.Context, msg *Message) (sendError error) {
 	log.V(2).Infof("Sending message to %v via http\n", msg.UPID)
 	req, err := t.makeLibprocessRequest(msg)
 	if err != nil {
@@ -120,7 +215,7 @@ func (t *HTTPTransporter) Send(ctx context.Context, msg *Message) (sendError err
 				return ctx.Err()
 			case <-time.After(duration):
 				// ..retry request, continue
-			case <-t.stopped:
+			case <-t.done:
 				return discardOnStopError
 			}
 		}
@@ -164,7 +259,7 @@ func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-t.stopped:
+	case <-t.done:
 		return discardOnStopError
 	default: // continue
 	}
@@ -178,7 +273,7 @@ func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(
 		return ctx.Err()
 	case err := <-c:
 		return err
-	case <-t.stopped:
+	case <-t.done:
 		t.tr.CancelRequest(req)
 		<-c // Wait for f to return.
 		return discardOnStopError
@@ -187,24 +282,32 @@ func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(
 
 // Recv returns the message, one at a time.
 func (t *HTTPTransporter) Recv() (*Message, error) {
+	return t.getState().Recv()
+}
+
+func (t *HTTPTransporter) recv() (*Message, error) {
 	select {
 	default:
 		select {
 		case msg := <-t.messageQueue:
 			return msg, nil
-		case <-t.stopped:
+		case <-t.done:
 		}
-	case <-t.stopped:
+	case <-t.done:
 	}
 	return nil, discardOnStopError
 }
 
 //Inject places a message into the incoming message queue.
 func (t *HTTPTransporter) Inject(ctx context.Context, msg *Message) error {
+	return t.getState().Inject(ctx, msg)
+}
+
+func (t *HTTPTransporter) inject(ctx context.Context, msg *Message) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-t.stopped:
+	case <-t.done:
 		return discardOnStopError
 	default: // continue
 	}
@@ -214,13 +317,17 @@ func (t *HTTPTransporter) Inject(ctx context.Context, msg *Message) error {
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-t.stopped:
+	case <-t.done:
 		return discardOnStopError
 	}
 }
 
 // Install the request URI according to the message's name.
 func (t *HTTPTransporter) Install(msgName string) {
+	t.getState().Install(msgName)
+}
+
+func (t *HTTPTransporter) install(msgName string) {
 	requestURI := fmt.Sprintf("/%s/%s", t.upid.ID, msgName)
 	t.mux.HandleFunc(requestURI, t.messageHandler)
 }
@@ -267,21 +374,11 @@ func (t *HTTPTransporter) listen() error {
 
 // Start starts the http transporter
 func (t *HTTPTransporter) Start() <-chan error {
-	t.lifeLock.Lock()
-	defer t.lifeLock.Unlock()
+	return t.getState().Start()
+}
 
-	select {
-	case <-t.started:
-		// already started
-		return nil
-	case <-t.stopped:
-		defer close(t.started)
-		t.stopped = make(chan struct{})
-		atomic.StoreInt32(&t.stopping, 0)
-	default:
-		panic("not started, not stopped, what am i? how can i start?")
-	}
-
+// start expects to be guarded by stateLock
+func (t *HTTPTransporter) start() <-chan error {
 	ch := make(chan error, 1)
 	if err := t.listen(); err != nil {
 		ch <- err
@@ -302,19 +399,12 @@ func (t *HTTPTransporter) Start() <-chan error {
 
 // Stop stops the http transporter by closing the listener.
 func (t *HTTPTransporter) Stop(graceful bool) error {
-	t.lifeLock.Lock()
-	defer t.lifeLock.Unlock()
+	return t.getState().Stop(graceful)
+}
 
-	select {
-	case <-t.stopped:
-		// already stopped
-		return nil
-	case <-t.started:
-		defer close(t.stopped)
-		t.started = make(chan struct{})
-	default:
-		panic("not started, not stopped, what am i? how can i stop?")
-	}
+// stop expects to be guarded by stateLock
+func (t *HTTPTransporter) stop(graceful bool) error {
+	defer close(t.done)
 	//TODO(jdef) if graceful, wait for pending requests to terminate
 	atomic.StoreInt32(&t.stopping, 1)
 	err := t.listener.Close()

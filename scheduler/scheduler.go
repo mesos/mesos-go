@@ -559,7 +559,7 @@ func (driver *MesosSchedulerDriver) updateRequiresAck(from *upid.UPID, msg *meso
 	// the master (pid == UPID()).
 	// TODO(vinod): Get rid of this logic in 0.25.0 because master
 	// and slave correctly set task status in 0.24.0.
-	return len(msg.Update.Uuid) > 0 && !from.Equal(driver.self) && msg.GetPid() != from.String()
+	return len(msg.Update.Uuid) > 0 || (!from.Equal(driver.self) && msg.GetPid() != driver.self.String())
 }
 
 func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.Message) {
@@ -971,13 +971,14 @@ func (driver *MesosSchedulerDriver) pushLostTask(taskInfo *mesos.TaskInfo, why s
 			Status: &mesos.TaskStatus{
 				TaskId:  taskInfo.TaskId,
 				State:   mesos.TaskState_TASK_LOST.Enum(),
+				Source:  mesos.TaskStatus_SOURCE_MASTER.Enum(),
 				Message: proto.String(why),
 			},
 			SlaveId:    taskInfo.SlaveId,
 			ExecutorId: taskInfo.Executor.ExecutorId,
 			Timestamp:  proto.Float64(float64(time.Now().Unix())),
-			Uuid:       []byte(uuid.NewUUID()),
 		},
+		Pid: proto.String(driver.self.String()),
 	}
 
 	// put it on internal chanel

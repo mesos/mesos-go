@@ -168,7 +168,7 @@ func (suite *SchedulerIntegrationTestSuite) configure(frameworkId *mesos.Framewo
 	suite.sched = newTestScheduler(suite)
 	suite.sched.ch = make(chan bool, 10) // big enough that it doesn't block callback processing
 
-	suite.driver = newTestSchedulerDriver(suite.T(), suite.sched, suite.framework, suite.server.Addr, nil)
+	suite.driver = newTestSchedulerDriver(suite.T(), driverConfig(suite.sched, suite.framework, suite.server.Addr, nil))
 
 	suite.config(frameworkId, suite)
 

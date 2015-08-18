@@ -134,6 +134,8 @@ type MesosSchedulerDriver struct {
 	authenticating  *authenticationAttempt
 	reauthenticate  bool
 	withAuthContext func(context.Context) context.Context
+	dispatch        func(context.Context, *upid.UPID, proto.Message) error // send a message somewhere
+	started         chan struct{}                                          // signal chan that closes upon a successful call to Start()
 }
 
 // Create a new mesos scheduler driver with the given
@@ -186,6 +188,7 @@ func NewMesosSchedulerDriver(config DriverConfig) (initializedDriver *MesosSched
 		credential:      config.Credential,
 		failover:        framework.Id != nil && len(framework.Id.GetValue()) > 0,
 		withAuthContext: config.WithAuthContext,
+		started:         make(chan struct{}),
 	}
 
 	if framework.FailoverTimeout != nil && *framework.FailoverTimeout > 0 {
@@ -236,6 +239,7 @@ func cloneFrameworkInfo(framework *mesos.FrameworkInfo) *mesos.FrameworkInfo {
 // init initializes the driver.
 func (driver *MesosSchedulerDriver) init() error {
 	log.Infof("Initializing mesos scheduler driver\n")
+	driver.dispatch = driver.messenger.Send
 
 	// Install handlers.
 	driver.messenger.Install(driver.frameworkRegistered, &mesos.FrameworkRegisteredMessage{})
@@ -538,7 +542,7 @@ func (driver *MesosSchedulerDriver) send(upid *upid.UPID, msg proto.Message) err
 	defer cancel()
 
 	c := make(chan error, 1)
-	go func() { c <- driver.messenger.Send(ctx, upid, msg) }()
+	go func() { c <- driver.dispatch(ctx, upid, msg) }()
 
 	select {
 	case <-ctx.Done():
@@ -682,6 +686,7 @@ func (driver *MesosSchedulerDriver) Start() (mesos.Status, error) {
 	driver.self = driver.messenger.UPID()
 	driver.setStatus(mesos.Status_DRIVER_RUNNING)
 	driver.setStopped(false)
+	close(driver.started)
 
 	log.Infof("Mesos scheduler driver started with PID=%v", driver.self)
 
@@ -973,6 +978,7 @@ func (driver *MesosSchedulerDriver) pushLostTask(taskInfo *mesos.TaskInfo, why s
 				State:   mesos.TaskState_TASK_LOST.Enum(),
 				Source:  mesos.TaskStatus_SOURCE_MASTER.Enum(),
 				Message: proto.String(why),
+				Reason:  mesos.TaskStatus_REASON_MASTER_DISCONNECTED.Enum(),
 			},
 			SlaveId:    taskInfo.SlaveId,
 			ExecutorId: taskInfo.Executor.ExecutorId,

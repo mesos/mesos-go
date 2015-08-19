@@ -90,8 +90,7 @@ _testmain.go
 junit_*
 
 # mesos-go specific
-examples/executor/executor
-examples/scheduler/scheduler
+/examples/_output
 
 #webide
 .c9

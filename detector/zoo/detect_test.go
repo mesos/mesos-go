@@ -90,7 +90,7 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 			assert.Nil(t, master)
 			wCh <- struct{}{}
 		default:
-			t.Fatalf("unexpected notification call attempt %d", called)
+			t.Errorf("unexpected notification call attempt %d", called)
 		}
 	}))
 
@@ -124,7 +124,7 @@ func TestMasterDetectFlappingConnectionState(t *testing.T) {
 	first := true
 	c.setFactory(asFactory(func() (Connector, <-chan zk.Event, error) {
 		if !first {
-			t.Fatalf("only one connector instance expected")
+			t.Errorf("only one connector instance expected")
 			return nil, nil, errors.New("ran out of connectors")
 		} else {
 			first = false
@@ -170,7 +170,7 @@ func TestMasterDetectFlappingConnectionState(t *testing.T) {
 	detected := false
 	md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
 		if detected {
-			t.Fatalf("already detected master, was not expecting another change: %v", master)
+			t.Errorf("already detected master, was not expecting another change: %v", master)
 		} else {
 			detected = true
 			assert.NotNil(t, master, fmt.Sprintf("on-master-changed %v", detected))
@@ -482,7 +482,7 @@ func TestNotifyAllMasters(t *testing.T) {
 	assert.NoError(t, err)
 
 	c.errorHandler = ErrorHandler(func(c *Client, e error) {
-		t.Fatalf("unexpected error: %v", e)
+		t.Errorf("unexpected error: %v", e)
 	})
 	md.client = c
 

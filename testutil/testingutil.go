@@ -32,6 +32,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"sync"
 	"testing"
 )
 
@@ -42,6 +43,7 @@ type MockMesosHttpServer struct {
 	server *httptest.Server
 	t      *testing.T
 	when   map[string]http.HandlerFunc
+	lock   *sync.Mutex
 }
 
 type When interface {
@@ -76,18 +78,20 @@ func NewMockMasterHttpServer(t *testing.T, handler func(rsp http.ResponseWriter,
 			handler(rsp, req)
 		}
 	}
-	server = httptest.NewServer(http.HandlerFunc(stateHandler))
+	h, lock := guardedHandler(http.HandlerFunc(stateHandler))
+	server = httptest.NewServer(h)
 	assert.NotNil(t, server)
 	addr := server.Listener.Addr().String()
 	pid, err := upid.Parse("master@" + addr)
 	assert.NoError(t, err)
 	assert.NotNil(t, pid)
 	log.Infoln("Created test Master http server with PID", pid.String())
-	return &MockMesosHttpServer{PID: pid, Addr: addr, server: server, t: t, when: when}
+	return &MockMesosHttpServer{PID: pid, Addr: addr, server: server, t: t, when: when, lock: lock}
 }
 
 func NewMockSlaveHttpServer(t *testing.T, handler func(rsp http.ResponseWriter, req *http.Request)) *MockMesosHttpServer {
-	server := httptest.NewServer(http.HandlerFunc(handler))
+	h, lock := guardedHandler(http.HandlerFunc(handler))
+	server := httptest.NewServer(h)
 	assert.NotNil(t, server)
 	addr := server.Listener.Addr().String()
 	pid, err := upid.Parse("slave(1)@" + addr)
@@ -96,10 +100,22 @@ func NewMockSlaveHttpServer(t *testing.T, handler func(rsp http.ResponseWriter, 
 	assert.NoError(t, os.Setenv("MESOS_SLAVE_PID", pid.String()))
 	assert.NoError(t, os.Setenv("MESOS_SLAVE_ID", "test-slave-001"))
 	log.Infoln("Created test Slave http server with PID", pid.String())
-	return &MockMesosHttpServer{PID: pid, Addr: addr, server: server, t: t}
+	return &MockMesosHttpServer{PID: pid, Addr: addr, server: server, t: t, lock: lock}
+}
+
+// guardedHandler wraps http.Handler invocations with a mutex
+func guardedHandler(h http.Handler) (http.Handler, *sync.Mutex) {
+	var lock sync.Mutex
+	return http.HandlerFunc(func(rsp http.ResponseWriter, req *http.Request) {
+		lock.Lock()
+		defer lock.Unlock()
+		h.ServeHTTP(rsp, req)
+	}), &lock
 }
 
 func (s *MockMesosHttpServer) Close() {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	s.server.Close()
 }
 

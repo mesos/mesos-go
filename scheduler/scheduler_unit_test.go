@@ -28,12 +28,11 @@ import (
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/detector"
-	"github.com/mesos/mesos-go/detector/zoo"
+	_ "github.com/mesos/mesos-go/detector/zoo"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
-	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -181,37 +180,6 @@ func TestSchedulerDriverNew_WithPid(t *testing.T) {
 	driver.handleMasterChanged(driver.self, &mesos.InternalMasterChangeDetected{Master: &mesos.MasterInfo{Pid: proto.String(mUpid.String())}})
 	assert.True(t, driver.masterPid.Equal(mUpid), fmt.Sprintf("expected upid %+v instead of %+v", mUpid, driver.masterPid))
 	assert.NoError(t, err)
-}
-
-func (suite *SchedulerTestSuite) TestSchedulerDriverNew_WithZkUrl() {
-	masterAddr := "zk://127.0.0.1:5050/mesos"
-	driver := newTestSchedulerDriver(suite.T(), driverConfig(NewMockScheduler(), suite.framework, masterAddr, nil))
-	md, err := zoo.NewMockMasterDetector(masterAddr)
-	suite.NoError(err)
-	suite.NotNil(md)
-	driver.masterDetector = md // override internal master detector
-
-	md.ScheduleConnEvent(zk.StateConnected)
-
-	done := make(chan struct{})
-	driver.masterDetector.Detect(detector.OnMasterChanged(func(m *mesos.MasterInfo) {
-		suite.NotNil(m)
-		suite.NotEqual(m.GetPid, suite.masterUpid)
-		close(done)
-	}))
-
-	//TODO(vlad) revisit, detector not responding.
-
-	//NOTE(jdef) this works for me, I wonder if the timeouts are too short, or if
-	//GOMAXPROCS settings are affecting the result?
-
-	// md.ScheduleSessEvent(zk.EventNodeChildrenChanged)
-	// select {
-	// case <-done:
-	// case <-time.After(time.Millisecond * 1000):
-	// 	suite.T().Errorf("Timed out waiting for children event.")
-	// }
-	<-done
 }
 
 func (suite *SchedulerTestSuite) TestSchedulerDriverNew_WithFrameworkInfo_Override() {

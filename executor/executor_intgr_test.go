@@ -117,7 +117,7 @@ func newIntegrationTestDriver(t *testing.T, exec Executor) *MesosExecutorDriver 
 
 func TestExecutorDriverRegisterExecutorMessage(t *testing.T) {
 	setTestEnv(t)
-	ch := make(chan bool)
+	ch := make(chan bool, 2)
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
 		assert.NoError(t, err)
@@ -162,7 +162,7 @@ func TestExecutorDriverRegisterExecutorMessage(t *testing.T) {
 
 func TestExecutorDriverExecutorRegisteredEvent(t *testing.T) {
 	setTestEnv(t)
-	ch := make(chan bool)
+	ch := make(chan bool, 2)
 	// Mock Slave process to respond to registration event.
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
@@ -203,7 +203,7 @@ func TestExecutorDriverExecutorRegisteredEvent(t *testing.T) {
 
 func TestExecutorDriverExecutorReregisteredEvent(t *testing.T) {
 	setTestEnv(t)
-	ch := make(chan bool)
+	ch := make(chan bool, 2)
 	// Mock Slave process to respond to registration event.
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
@@ -241,7 +241,7 @@ func TestExecutorDriverExecutorReregisteredEvent(t *testing.T) {
 
 func TestExecutorDriverReconnectEvent(t *testing.T) {
 	setTestEnv(t)
-	ch := make(chan bool)
+	ch := make(chan bool, 2)
 	// Mock Slave process to respond to registration event.
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
@@ -290,7 +290,7 @@ func TestExecutorDriverReconnectEvent(t *testing.T) {
 
 func TestExecutorDriverRunTaskEvent(t *testing.T) {
 	setTestEnv(t)
-	ch := make(chan bool)
+	ch := make(chan bool, 2)
 	// Mock Slave process to respond to registration event.
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
@@ -343,7 +343,7 @@ func TestExecutorDriverRunTaskEvent(t *testing.T) {
 
 func TestExecutorDriverKillTaskEvent(t *testing.T) {
 	setTestEnv(t)
-	ch := make(chan bool)
+	ch := make(chan bool, 2)
 	// Mock Slave process to respond to registration event.
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
@@ -383,7 +383,7 @@ func TestExecutorDriverKillTaskEvent(t *testing.T) {
 
 func TestExecutorDriverStatusUpdateAcknowledgement(t *testing.T) {
 	setTestEnv(t)
-	ch := make(chan bool)
+	ch := make(chan bool, 2)
 	// Mock Slave process to respond to registration event.
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
@@ -420,7 +420,7 @@ func TestExecutorDriverStatusUpdateAcknowledgement(t *testing.T) {
 
 func TestExecutorDriverFrameworkToExecutorMessageEvent(t *testing.T) {
 	setTestEnv(t)
-	ch := make(chan bool)
+	ch := make(chan bool, 2)
 	// Mock Slave process to respond to registration event.
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
@@ -462,7 +462,7 @@ func TestExecutorDriverFrameworkToExecutorMessageEvent(t *testing.T) {
 
 func TestExecutorDriverShutdownEvent(t *testing.T) {
 	setTestEnv(t)
-	ch := make(chan bool)
+	ch := make(chan bool, 2)
 	// Mock Slave process to respond to registration event.
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
@@ -502,6 +502,7 @@ func TestExecutorDriverShutdownEvent(t *testing.T) {
 
 func TestExecutorDriverError(t *testing.T) {
 	setTestEnv(t)
+	ch := make(chan bool, 2)
 	// Mock Slave process to respond to registration event.
 	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
 		reqPath, err := url.QueryUnescape(req.URL.String())
@@ -510,7 +511,6 @@ func TestExecutorDriverError(t *testing.T) {
 		rsp.WriteHeader(http.StatusAccepted)
 	})
 
-	ch := make(chan bool)
 	exec := newTestExecutor(t)
 	exec.ch = ch
 	exec.t = t

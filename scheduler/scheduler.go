@@ -195,13 +195,12 @@ func NewMesosSchedulerDriver(config DriverConfig) (initializedDriver *MesosSched
 	// while preserving the serialization semantics for each type of callback handling.
 	// note, however, that the order of the messages processed by the messenged callback handlers,
 	// and the order of the callbacks invoked upon the scheduler may be different.
-	pinnedScheduler := config.Scheduler
+	var schedLock sync.Mutex
 	driver.withScheduler = func(f func(s Scheduler)) {
-		var schedLock sync.Mutex
 		go func() {
 			schedLock.Lock()
 			defer schedLock.Unlock()
-			f(pinnedScheduler)
+			f(config.Scheduler)
 		}()
 	}
 

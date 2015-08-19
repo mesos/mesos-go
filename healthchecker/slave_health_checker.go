@@ -19,9 +19,11 @@
 package healthchecker
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	log "github.com/golang/glog"
@@ -34,14 +36,17 @@ const (
 	defaultThreshold     = 5
 )
 
+var errCheckerStopped = errors.New("aborted HTTP request because checker was asked to stop")
+
 // SlaveHealthChecker is for checking the slave's health.
 type SlaveHealthChecker struct {
 	sync.RWMutex
 	slaveUPID                *upid.UPID
+	tr                       *http.Transport
 	client                   *http.Client
-	threshold                int
+	threshold                int32
 	checkDuration            time.Duration
-	continuousUnhealthyCount int
+	continuousUnhealthyCount int32
 	stop                     chan struct{}
 	ch                       chan time.Time
 	paused                   bool
@@ -50,13 +55,15 @@ type SlaveHealthChecker struct {
 // NewSlaveHealthChecker creates a slave health checker and return a notification channel.
 // Each time the checker thinks the slave is unhealthy, it will send a notification through the channel.
 func NewSlaveHealthChecker(slaveUPID *upid.UPID, threshold int, checkDuration time.Duration, timeout time.Duration) *SlaveHealthChecker {
+	tr := &http.Transport{}
 	checker := &SlaveHealthChecker{
 		slaveUPID:     slaveUPID,
-		client:        &http.Client{Timeout: timeout},
-		threshold:     threshold,
+		client:        &http.Client{Timeout: timeout, Transport: tr},
+		threshold:     int32(threshold),
 		checkDuration: checkDuration,
 		stop:          make(chan struct{}),
 		ch:            make(chan time.Time, 1),
+		tr:            tr,
 	}
 	if timeout == 0 {
 		checker.client.Timeout = defaultTimeout
@@ -73,15 +80,28 @@ func NewSlaveHealthChecker(slaveUPID *upid.UPID, threshold int, checkDuration ti
 // Start will start the health checker and returns the notification channel.
 func (s *SlaveHealthChecker) Start() <-chan time.Time {
 	go func() {
-		ticker := time.Tick(s.checkDuration)
+		t := time.NewTicker(s.checkDuration)
+		defer t.Stop()
 		for {
 			select {
-			case <-ticker:
-				s.RLock()
-				if !s.paused {
-					s.doCheck()
+			case <-t.C:
+				select {
+				case <-s.stop:
+					return
+				default:
+					// continue
 				}
-				s.RUnlock()
+				if paused, slavepid := func() (x bool, y upid.UPID) {
+					s.RLock()
+					defer s.RUnlock()
+					x = s.paused
+					if s.slaveUPID != nil {
+						y = *s.slaveUPID
+					}
+					return
+				}(); !paused {
+					s.doCheck(slavepid)
+				}
 			case <-s.stop:
 				return
 			}
@@ -111,28 +131,53 @@ func (s *SlaveHealthChecker) Stop() {
 	close(s.stop)
 }
 
-func (s *SlaveHealthChecker) doCheck() {
-	path := fmt.Sprintf("http://%s:%s/%s/health", s.slaveUPID.Host, s.slaveUPID.Port, s.slaveUPID.ID)
-	resp, err := s.client.Head(path)
+func (s *SlaveHealthChecker) doCheck(pid upid.UPID) {
 	unhealthy := false
+	path := fmt.Sprintf("http://%s:%s/%s/health", pid.Host, pid.Port, pid.ID)
+	req, err := http.NewRequest("HEAD", path, nil)
+	if err != nil {
+		log.Errorf("Failed to request the health path: %v", err)
+		unhealthy = true
+	} else {
+		err = s.httpDo(req, func(resp *http.Response, err error) error {
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				return fmt.Errorf("http status error: %v\n", resp.StatusCode)
+			}
+			return nil
+		})
+	}
 	if err != nil {
 		log.Errorf("Failed to request the health path: %v\n", err)
 		unhealthy = true
-	} else if resp.StatusCode != http.StatusOK {
-		log.Errorf("Failed to request the health path: status: %v\n", resp.StatusCode)
-		unhealthy = true
 	}
 	if unhealthy {
-		s.continuousUnhealthyCount++
-		if s.continuousUnhealthyCount >= s.threshold {
+		x := atomic.AddInt32(&s.continuousUnhealthyCount, 1)
+		if x >= s.threshold {
 			select {
 			case s.ch <- time.Now(): // If no one is receiving the channel, then just skip it.
 			default:
 			}
-			s.continuousUnhealthyCount = 0
+			atomic.StoreInt32(&s.continuousUnhealthyCount, 0)
 		}
 		return
 	}
-	s.continuousUnhealthyCount = 0
-	resp.Body.Close()
+	atomic.StoreInt32(&s.continuousUnhealthyCount, 0)
+}
+
+func (s *SlaveHealthChecker) httpDo(req *http.Request, f func(*http.Response, error) error) error {
+	// Run the HTTP request in a goroutine and pass the response to f.
+	c := make(chan error, 1)
+	go func() { c <- f(s.client.Do(req)) }()
+	select {
+	case <-s.stop:
+		s.tr.CancelRequest(req)
+		<-c // Wait for f to return.
+		return errCheckerStopped
+	case err := <-c:
+		return err
+	}
 }

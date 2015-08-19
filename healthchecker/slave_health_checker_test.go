@@ -234,7 +234,7 @@ func TestSlaveHealthCheckerSucceed(t *testing.T) {
 
 	select {
 	case <-time.After(time.Second):
-		assert.Equal(t, 0, checker.continuousUnhealthyCount)
+		assert.EqualValues(t, 0, atomic.LoadInt32(&checker.continuousUnhealthyCount))
 	case <-ch:
 		t.Fatal("Shouldn't get unhealthy notification")
 	}
@@ -246,16 +246,21 @@ func TestSlaveHealthCheckerPartitonedSlave(t *testing.T) {
 	ts.Start()
 	defer ts.Close()
 
+	t.Log("test server listening on", ts.Listener.Addr())
 	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
 	assert.NoError(t, err)
 
 	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
 	ch := checker.Start()
-	defer checker.Stop()
+	defer func() {
+		checker.Stop()
+		<-checker.stop
+	}()
 
 	select {
-	case <-time.After(time.Second):
-		assert.Equal(t, 0, checker.continuousUnhealthyCount)
+	case <-time.After(2 * time.Second):
+		actual := atomic.LoadInt32(&checker.continuousUnhealthyCount)
+		assert.EqualValues(t, 0, actual, "expected 0 unhealthy counts instead of %d", actual)
 	case <-ch:
 		t.Fatal("Shouldn't get unhealthy notification")
 	}

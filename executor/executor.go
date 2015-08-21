@@ -119,7 +119,7 @@ func NewMesosExecutorDriver(config DriverConfig) (*MesosExecutorDriver, error) {
 // init initializes the driver.
 func (driver *MesosExecutorDriver) init() error {
 	log.Infof("Init mesos executor driver\n")
-	log.Infof("Version: %v\n", mesosutil.MesosVersion)
+	log.Infof("Protocol Version: %v\n", mesosutil.MesosVersion)
 
 	// Parse environments.
 	if err := driver.parseEnviroments(); err != nil {

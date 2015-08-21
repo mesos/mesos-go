@@ -696,6 +696,20 @@ func (driver *MesosSchedulerDriver) start() (mesos.Status, error) {
 	driver.status = mesos.Status_DRIVER_RUNNING
 	close(driver.started)
 
+	// TODO(jdef) hacky but we don't want to miss it if the scheduler shuts down
+	go func() {
+		t := time.NewTicker(2 * time.Second)
+		defer t.Stop()
+		for range t.C {
+			select {
+			case <-driver.stopCh:
+				return
+			default:
+				driver.eventCond.Broadcast()
+			}
+		}
+	}()
+
 	log.Infof("Mesos scheduler driver started with PID=%v", driver.self)
 
 	listener := detector.OnMasterChanged(func(m *mesos.MasterInfo) {
@@ -900,6 +914,7 @@ func (driver *MesosSchedulerDriver) stop(failover bool) (mesos.Status, error) {
 			log.Errorf("Failed to send UnregisterFramework message while stopping driver: %v\n", err)
 			return driver._stop(mesos.Status_DRIVER_ABORTED)
 		}
+		time.Sleep(2 * time.Second)
 	}
 
 	// stop messenger
@@ -909,7 +924,6 @@ func (driver *MesosSchedulerDriver) stop(failover bool) (mesos.Status, error) {
 // stop expects to be guarded by eventLock
 func (driver *MesosSchedulerDriver) _stop(stopStatus mesos.Status) (mesos.Status, error) {
 	// stop messenger
-	err := driver.messenger.Stop()
 	defer func() {
 		select {
 		case <-driver.stopCh:
@@ -919,15 +933,10 @@ func (driver *MesosSchedulerDriver) _stop(stopStatus mesos.Status) (mesos.Status
 		}
 		driver.eventCond.Broadcast()
 	}()
-
 	driver.status = stopStatus
 	driver.connected = false
-
-	if err != nil {
-		return stopStatus, err
-	}
-
-	return stopStatus, nil
+	err := driver.messenger.Stop()
+	return stopStatus, err
 }
 
 func (driver *MesosSchedulerDriver) Abort() (stat mesos.Status, err error) {

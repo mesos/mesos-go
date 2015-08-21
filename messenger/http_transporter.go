@@ -20,12 +20,15 @@ package messenger
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -70,18 +73,8 @@ func (s *notStartedState) Send(ctx context.Context, msg *Message) error   { retu
 func (s *notStartedState) Recv() (*Message, error)                        { return nil, errNotStarted }
 func (s *notStartedState) Inject(ctx context.Context, msg *Message) error { return errNotStarted }
 func (s *notStartedState) Stop(graceful bool) error                       { return errNotStarted }
-func (s *notStartedState) Install(messageName string) {
-	s.h.install(messageName)
-}
+func (s *notStartedState) Install(messageName string)                     { s.h.install(messageName) }
 func (s *notStartedState) Start() <-chan error {
-	s.h.stateLock.Lock()
-	defer s.h.stateLock.Unlock()
-	if s.h.state != s {
-		// race: someone else already started the transport
-		ch := make(chan error, 1)
-		ch <- errAlreadyRunning
-		return ch
-	}
 	s.h.state = &runningState{s}
 	return s.h.start()
 }
@@ -101,22 +94,10 @@ func (s *stoppedState) Start() <-chan error {
 
 /* -- running state */
 
-func (s *runningState) Send(ctx context.Context, msg *Message) error {
-	return s.h.send(ctx, msg)
-}
-func (s *runningState) Recv() (*Message, error) {
-	return s.h.recv()
-}
-func (s *runningState) Inject(ctx context.Context, msg *Message) error {
-	return s.h.inject(ctx, msg)
-}
+func (s *runningState) Send(ctx context.Context, msg *Message) error   { return s.h.send(ctx, msg) }
+func (s *runningState) Recv() (*Message, error)                        { return s.h.recv() }
+func (s *runningState) Inject(ctx context.Context, msg *Message) error { return s.h.inject(ctx, msg) }
 func (s *runningState) Stop(graceful bool) error {
-	s.h.stateLock.Lock()
-	defer s.h.stateLock.Unlock()
-	if s.h.state != s {
-		// race: someone already stopped the transport
-		return errTerminal
-	}
 	s.h.state = &stoppedState{}
 	return s.h.stop(graceful)
 }
@@ -329,7 +310,52 @@ func (t *HTTPTransporter) Install(msgName string) {
 
 func (t *HTTPTransporter) install(msgName string) {
 	requestURI := fmt.Sprintf("/%s/%s", t.upid.ID, msgName)
-	t.mux.HandleFunc(requestURI, t.messageHandler)
+	t.mux.HandleFunc(requestURI, t.messageDecoder)
+}
+
+type loggedListener struct {
+	delegate net.Listener
+}
+
+func (l *loggedListener) Accept() (c net.Conn, err error) {
+	c, err = l.delegate.Accept()
+	if c != nil {
+		log.Infoln("accepted connection from", c.RemoteAddr())
+		c = logConnection(c)
+	} else {
+		log.Errorln("failed to accept connection:", err.Error())
+	}
+	return
+}
+
+func (l *loggedListener) Close() (err error) {
+	err = l.delegate.Close()
+	if err != nil {
+		log.Errorln("error closing listener:", err.Error())
+	} else {
+		log.Infoln("closed listener")
+	}
+	return
+}
+
+func (l *loggedListener) Addr() net.Addr { return l.delegate.Addr() }
+
+func logConnection(c net.Conn) net.Conn {
+	w := hex.Dumper(os.Stdout)
+	r := io.TeeReader(c, w)
+	return &loggedConnection{
+		Conn:   c,
+		reader: r,
+	}
+}
+
+type loggedConnection struct {
+	net.Conn
+	reader io.Reader
+}
+
+func (c *loggedConnection) Read(b []byte) (int, error) {
+	return c.reader.Read(b)
 }
 
 // Listen starts listen on UPID. If UPID is empty, the transporter
@@ -359,6 +385,7 @@ func (t *HTTPTransporter) listen() error {
 	}
 	// Save the host:port in case they are not specified in upid.
 	host, port, _ = net.SplitHostPort(ln.Addr().String())
+	log.Infoln("listening on", host, "port", port)
 
 	if len(t.upid.Host) == 0 {
 		t.upid.Host = host
@@ -368,13 +395,19 @@ func (t *HTTPTransporter) listen() error {
 		t.upid.Port = port
 	}
 
-	t.listener = ln
+	if log.V(3) {
+		t.listener = &loggedListener{ln}
+	} else {
+		t.listener = ln
+	}
 	return nil
 }
 
 // Start starts the http transporter
 func (t *HTTPTransporter) Start() <-chan error {
-	return t.getState().Start()
+	t.stateLock.Lock()
+	defer t.stateLock.Unlock()
+	return t.state.Start()
 }
 
 // start expects to be guarded by stateLock
@@ -384,13 +417,21 @@ func (t *HTTPTransporter) start() <-chan error {
 		ch <- err
 	} else {
 		// TODO(yifan): Set read/write deadline.
-		log.Infof("http transport listening on %v", t.listener.Addr())
 		go func() {
-			err := http.Serve(t.listener, t.mux)
+			s := &http.Server{
+				// ReadTimeout: 5 * time.Second,
+				// WriteTimeout: 5 * time.Second,
+				Handler: t.mux,
+			}
+			err := s.Serve(t.listener)
+			if err != nil && log.V(1) {
+				log.Errorln("HTTP server stopped with error", err.Error())
+			}
 			if atomic.CompareAndSwapInt32(&t.stopping, 1, 0) {
 				ch <- nil
 			} else {
 				ch <- err
+				t.Stop(false)
 			}
 		}()
 	}
@@ -399,13 +440,18 @@ func (t *HTTPTransporter) start() <-chan error {
 
 // Stop stops the http transporter by closing the listener.
 func (t *HTTPTransporter) Stop(graceful bool) error {
-	return t.getState().Stop(graceful)
+	t.stateLock.Lock()
+	defer t.stateLock.Unlock()
+	return t.state.Stop(graceful)
 }
 
 // stop expects to be guarded by stateLock
 func (t *HTTPTransporter) stop(graceful bool) error {
 	defer close(t.done)
+	log.Info("stopping HTTP transport")
+
 	//TODO(jdef) if graceful, wait for pending requests to terminate
+
 	atomic.StoreInt32(&t.stopping, 1)
 	err := t.listener.Close()
 	return err
@@ -416,6 +462,47 @@ func (t *HTTPTransporter) UPID() *upid.UPID {
 	return t.upid
 }
 
+func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request) {
+	// Verify it's a libprocess request.
+	from, err := getLibprocessFrom(r)
+	if err != nil {
+		log.Errorf("Ignoring the request, because it's not a libprocess request: %v\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	decoder := DecodeHTTP(w, r)
+	go func() {
+		// once the transport stops, kill the decoder
+		<-t.done
+		decoder.Cancel()
+	}()
+	for {
+		if r, ok := <-decoder.Requests(); ok {
+			data, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				log.Errorf("failed to read HTTP body: %v\n", err)
+				continue
+			}
+			log.V(2).Infof("Receiving %s %v from %v, length %v\n", r.Method, r.URL, from, len(data))
+			m := &Message{
+				UPID:  from,
+				Name:  extractNameFromRequestURI(r.RequestURI),
+				Bytes: data,
+			}
+			select {
+			case <-t.done:
+			case t.messageQueue <- m:
+			}
+			continue
+		}
+		if err, ok := <-decoder.Err(); ok {
+			log.Errorf("failed to decode HTTP message: %v", err)
+			return
+		}
+	}
+}
+
+/*
 func (t *HTTPTransporter) messageHandler(w http.ResponseWriter, r *http.Request) {
 	// Verify it's a libprocess request.
 	from, err := getLibprocessFrom(r)
@@ -424,20 +511,33 @@ func (t *HTTPTransporter) messageHandler(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	if log.V(3) {
+		dump, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			log.Errorln("failed to dump HTTP request:", err.Error())
+		} else {
+			log.Infof("HTTP dump for %s:\n%s", r.URL, string(dump))
+		}
+	}
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Errorf("Failed to read HTTP body: %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	log.V(2).Infof("Receiving message from %v, length %v\n", from, len(data))
+	log.V(2).Infof("Receiving %s %v from %v, length %v\n", r.Method, r.URL, from, len(data))
 	w.WriteHeader(http.StatusAccepted)
-	t.messageQueue <- &Message{
+	m := &Message{
 		UPID:  from,
 		Name:  extractNameFromRequestURI(r.RequestURI),
 		Bytes: data,
 	}
+	select {
+	case <-t.done:
+	case t.messageQueue <- m:
+	}
 }
+*/
 
 func (t *HTTPTransporter) makeLibprocessRequest(msg *Message) (*http.Request, error) {
 	if msg.UPID == nil {

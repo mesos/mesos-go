@@ -229,7 +229,7 @@ func prepareExecutorInfo() *mesos.ExecutorInfo {
 	uri, executorCmd := serveExecutorArtifact(*executorPath)
 	executorUris = append(executorUris, &mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
 
-	executorCommand := fmt.Sprintf("./%s -logtostderr=true", executorCmd)
+	executorCommand := fmt.Sprintf("./%s -logtostderr=true -v=3", executorCmd)
 
 	go http.ListenAndServe(fmt.Sprintf("%s:%d", *address, *artifactPort), nil)
 	log.V(2).Info("Serving executor artifacts...")

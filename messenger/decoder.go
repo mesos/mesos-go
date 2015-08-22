@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	log "github.com/golang/glog"
@@ -21,8 +22,19 @@ const (
 	DefaultReadTimeout = 5 * time.Second
 )
 
+type decoderID int32
+
+func (did decoderID) String() string {
+	return "[" + strconv.Itoa(int(did)) + "]"
+}
+
+func (did *decoderID) Next() decoderID {
+	return decoderID(atomic.AddInt32((*int32)(did), 1))
+}
+
 var (
 	errHijackFailed = errors.New("failed to hijack http connection")
+	did             decoderID // decoder ID counter
 )
 
 type Decoder interface {
@@ -46,6 +58,7 @@ type httpDecoder struct {
 	shouldQuit  chan struct{} // signal chan
 	quitOnce    sync.Once
 	readTimeout time.Duration
+	idtag       string
 }
 
 // DecodeHTTP hijacks an HTTP server connection and generates mesos libprocess HTTP
@@ -54,6 +67,7 @@ type httpDecoder struct {
 // The caller should immediately *stop* using the ResponseWriter and Request that were
 // passed as parameters; the decoder assumes full control of the HTTP transport.
 func DecodeHTTP(w http.ResponseWriter, r *http.Request) Decoder {
+	id := (&did).Next()
 	d := &httpDecoder{
 		state:       bootstrapState,
 		msg:         make(chan *http.Request),
@@ -62,6 +76,7 @@ func DecodeHTTP(w http.ResponseWriter, r *http.Request) Decoder {
 		res:         w,
 		shouldQuit:  make(chan struct{}),
 		readTimeout: DefaultReadTimeout,
+		idtag:       id.Next().String(),
 	}
 	go d.run()
 	return d
@@ -108,7 +123,7 @@ func (d *httpDecoder) updateForRequest() {
 	// check "Connection" for "Keep-Alive"
 	d.kalive = d.req.Header.Get("Connection") == "Keep-Alive"
 
-	log.V(2).Infof("update-for-request: chunked %v keep-alive %v", d.chunked, d.kalive)
+	log.V(2).Infof(d.idtag+"update-for-request: chunked %v keep-alive %v", d.chunked, d.kalive)
 }
 
 func (d *httpDecoder) readBodyContent() httpState {
@@ -125,7 +140,7 @@ func (d *httpDecoder) readBodyContent() httpState {
 const http202response = "HTTP/1.1 202 OK\r\nContent-Length: 0\r\n\r\n"
 
 func (d *httpDecoder) generateRequest() httpState {
-	log.V(2).Infof("generate-request")
+	log.V(2).Infof(d.idtag + "generate-request")
 	// send a Request to msg
 	b := d.buf.Bytes()
 	r := &http.Request{
@@ -156,13 +171,21 @@ func (d *httpDecoder) generateRequest() httpState {
 	// send a 202 response to mesos so that it knows to continue
 	// TODO(jdef) set a write deadline here
 	_, err := d.rw.WriteString(http202response)
-	if err == nil {
-		err = d.rw.Flush()
-	}
 	if err != nil {
-		d.errCh <- err
-		return terminateState
+		if log.V(2) {
+			log.Errorln(d.idtag+"failed to write response code?!", err.Error())
+		}
+	} else {
+		err = d.rw.Flush()
+		if err != nil {
+			if log.V(2) {
+				log.Errorln(d.idtag+"failed to flush writer?!", err.Error())
+			}
+		}
 	}
+
+	// normally we'd terminate on the above error, but I'm testing something with libprocess: perhaps
+	// it leaves the connection half-open so that we can continue to receive events?
 
 	if d.kalive {
 		d.req = &http.Request{
@@ -213,7 +236,7 @@ func (l *limitReadCloser) Close() error {
 // read the initial request query line + headers from a connection. the request
 // is ready to be hijacked at this point.
 func bootstrapState(d *httpDecoder) httpState {
-	log.V(2).Infoln("bootstrap-state")
+	log.V(2).Infoln(d.idtag + "bootstrap-state")
 	d.updateForRequest()
 
 	// hijack
@@ -270,7 +293,7 @@ func (d *httpDecoder) setReadTimeout() bool {
 }
 
 func readChunkHeaderState(d *httpDecoder) httpState {
-	log.V(2).Infoln("read-chunked-state")
+	log.V(2).Infoln(d.idtag + "read-chunk-header-state")
 	tr := textproto.NewReader(d.rw.Reader)
 	if !d.setReadTimeout() {
 		return terminateState
@@ -287,7 +310,6 @@ func readChunkHeaderState(d *httpDecoder) httpState {
 	}
 
 	if clen == 0 {
-		// TODO(jdef) read end of chunk stream
 		return readEndOfChunkStreamState
 	}
 
@@ -296,6 +318,7 @@ func readChunkHeaderState(d *httpDecoder) httpState {
 }
 
 func readChunkState(d *httpDecoder) httpState {
+	log.V(2).Infoln(d.idtag+"read-chunk-state, bytes remaining:", d.lrc.N)
 	if !d.setReadTimeout() {
 		return terminateState
 	}
@@ -303,29 +326,55 @@ func readChunkState(d *httpDecoder) httpState {
 	if next, ok := d.checkError(err, readChunkState); ok {
 		return next
 	}
-	return readChunkHeaderState
+	return readEndOfChunkState
 }
 
-func readEndOfChunkStreamState(d *httpDecoder) httpState {
+const crlf = "\r\n"
+
+func readEndOfChunkState(d *httpDecoder) httpState {
+	log.V(2).Infoln(d.idtag + "read-end-of-chunk-state")
 	if !d.setReadTimeout() {
 		return terminateState
 	}
-	tr := textproto.NewReader(d.rw.Reader)
-	eos, err := tr.ReadLine()
-	if eos != "" {
-		d.errCh <- errors.New("unexpected data at end-of-stream marker")
+	b, err := d.rw.Reader.Peek(2)
+	if len(b) == 2 {
+		if string(b) == crlf {
+			d.rw.Discard(2)
+			return readChunkHeaderState
+		}
+		d.errCh <- errors.New(d.idtag + "unexpected data at end-of-chunk marker")
 		return terminateState
 	}
-	if err != io.EOF {
-		if next, ok := d.checkError(err, readEndOfChunkStreamState); ok {
-			return next
-		}
+	// less than two bytes avail
+	if next, ok := d.checkError(err, readEndOfChunkState); ok {
+		return next
 	}
-	return d.generateRequest()
+	panic("couldn't peek 2 bytes, but didn't get an error?!")
+}
+
+func readEndOfChunkStreamState(d *httpDecoder) httpState {
+	log.V(2).Infoln(d.idtag + "read-end-of-chunk-stream-state")
+	if !d.setReadTimeout() {
+		return terminateState
+	}
+	b, err := d.rw.Reader.Peek(2)
+	if len(b) == 2 {
+		if string(b) == crlf {
+			d.rw.Discard(2)
+			return d.generateRequest()
+		}
+		d.errCh <- errors.New(d.idtag + "unexpected data at end-of-chunk marker")
+		return terminateState
+	}
+	// less than 2 bytes avail
+	if next, ok := d.checkError(err, readEndOfChunkStreamState); ok {
+		return next
+	}
+	panic("couldn't peek 2 bytes, but didn't get an error?!")
 }
 
 func readBodyState(d *httpDecoder) httpState {
-	log.V(2).Infof("read-body-state: %d bytes remaining", d.lrc.N)
+	log.V(2).Infof(d.idtag+"read-body-state: %d bytes remaining", d.lrc.N)
 	// read remaining bytes into the buffer
 	var err error
 	if d.lrc.N > 0 {
@@ -344,7 +393,7 @@ func readBodyState(d *httpDecoder) httpState {
 }
 
 func awaitRequestState(d *httpDecoder) httpState {
-	log.V(2).Infoln("await-request-state")
+	log.V(2).Infoln(d.idtag + "await-request-state")
 	tr := textproto.NewReader(d.rw.Reader)
 	if !d.setReadTimeout() {
 		return terminateState
@@ -355,7 +404,7 @@ func awaitRequestState(d *httpDecoder) httpState {
 	}
 	ss := strings.SplitN(requestLine, " ", 3)
 	if len(ss) < 3 {
-		d.errCh <- errors.New("illegal request line")
+		d.errCh <- errors.New(d.idtag + "illegal request line")
 		return terminateState
 	}
 	r := d.req
@@ -368,7 +417,7 @@ func awaitRequestState(d *httpDecoder) httpState {
 	}
 	major, minor, ok := http.ParseHTTPVersion(ss[2])
 	if !ok {
-		d.errCh <- errors.New("malformed HTTP version")
+		d.errCh <- errors.New(d.idtag + "malformed HTTP version")
 		return terminateState
 	}
 	r.ProtoMajor = major
@@ -378,7 +427,7 @@ func awaitRequestState(d *httpDecoder) httpState {
 }
 
 func readHeaderState(d *httpDecoder) httpState {
-	log.V(2).Infoln("read-header-state")
+	log.V(2).Infoln(d.idtag + "read-header-state")
 	if !d.setReadTimeout() {
 		return terminateState
 	}
@@ -391,7 +440,7 @@ func readHeaderState(d *httpDecoder) httpState {
 		} else {
 			r.Header[k] = v
 		}
-		log.V(2).Infoln("request header", k, v)
+		log.V(2).Infoln(d.idtag+"request header", k, v)
 	}
 	if next, ok := d.checkError(err, readHeaderState); ok {
 		return next
@@ -408,7 +457,7 @@ func readHeaderState(d *httpDecoder) httpState {
 		}
 		if l > -1 {
 			r.ContentLength = l
-			log.V(2).Infoln("set content length", r.ContentLength)
+			log.V(2).Infoln(d.idtag+"set content length", r.ContentLength)
 		}
 	}
 	d.updateForRequest()

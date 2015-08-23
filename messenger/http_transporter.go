@@ -476,6 +476,14 @@ func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request)
 		<-t.done
 		decoder.Cancel()
 	}()
+
+	//TODO(jdef) see https://github.com/apache/mesos/blob/adecbfa6a216815bd7dc7d26e721c4c87e465c30/3rdparty/libprocess/src/process.cpp#L2192
+	// Only send back an HTTP response if this isn't from libprocess
+	// (which we determine by looking at the User-Agent). This is
+	// necessary because older versions of libprocess would try and
+	// recv the data and parse it as an HTTP request which would
+	// fail thus causing the socket to get closed (but now
+	// libprocess will ignore responses, see ignore_data).
 	for {
 		if r, ok := <-decoder.Requests(); ok {
 			data, err := ioutil.ReadAll(r.Body)

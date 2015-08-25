@@ -31,7 +31,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -118,10 +117,9 @@ type HTTPTransporter struct {
 	client       *http.Client // TODO(yifan): Set read/write deadline.
 	messageQueue chan *Message
 	address      net.IP // optional binding address
-	done         chan struct{}
+	shouldQuit   chan struct{}
 	stateLock    sync.RWMutex // protect lifecycle (start/stop) funcs
 	state        httpTransporter
-	stopping     int32 // CAS flag used for graceful termination
 }
 
 // NewHTTPTransporter creates a new http transporter with an optional binding address.
@@ -134,7 +132,7 @@ func NewHTTPTransporter(upid *upid.UPID, address net.IP) *HTTPTransporter {
 		client:       &http.Client{Transport: tr},
 		tr:           tr,
 		address:      address,
-		done:         make(chan struct{}),
+		shouldQuit:   make(chan struct{}),
 	}
 	result.state = &notStartedState{result}
 	return result
@@ -157,6 +155,7 @@ func isRecoverableError(err error) bool {
 			return true
 		}
 		//TODO(jdef) this is pretty hackish, there's probably a better way
+		//TODO(jdef) should also check for EHOSTDOWN and EHOSTUNREACH
 		return (netErr.Op == "dial" && netErr.Net == "tcp" && netErr.Err == syscall.ECONNREFUSED)
 	}
 	log.V(2).Infof("unrecoverable error: %#v", err)
@@ -196,7 +195,7 @@ func (t *HTTPTransporter) send(ctx context.Context, msg *Message) (sendError err
 				return ctx.Err()
 			case <-time.After(duration):
 				// ..retry request, continue
-			case <-t.done:
+			case <-t.shouldQuit:
 				return discardOnStopError
 			}
 		}
@@ -240,7 +239,7 @@ func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-t.done:
+	case <-t.shouldQuit:
 		return discardOnStopError
 	default: // continue
 	}
@@ -254,7 +253,7 @@ func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(
 		return ctx.Err()
 	case err := <-c:
 		return err
-	case <-t.done:
+	case <-t.shouldQuit:
 		t.tr.CancelRequest(req)
 		<-c // Wait for f to return.
 		return discardOnStopError
@@ -272,9 +271,9 @@ func (t *HTTPTransporter) recv() (*Message, error) {
 		select {
 		case msg := <-t.messageQueue:
 			return msg, nil
-		case <-t.done:
+		case <-t.shouldQuit:
 		}
-	case <-t.done:
+	case <-t.shouldQuit:
 	}
 	return nil, discardOnStopError
 }
@@ -288,7 +287,7 @@ func (t *HTTPTransporter) inject(ctx context.Context, msg *Message) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-t.done:
+	case <-t.shouldQuit:
 		return discardOnStopError
 	default: // continue
 	}
@@ -298,7 +297,7 @@ func (t *HTTPTransporter) inject(ctx context.Context, msg *Message) error {
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-t.done:
+	case <-t.shouldQuit:
 		return discardOnStopError
 	}
 }
@@ -315,6 +314,7 @@ func (t *HTTPTransporter) install(msgName string) {
 
 type loggedListener struct {
 	delegate net.Listener
+	done     <-chan struct{}
 }
 
 func (l *loggedListener) Accept() (c net.Conn, err error) {
@@ -322,8 +322,12 @@ func (l *loggedListener) Accept() (c net.Conn, err error) {
 	if c != nil {
 		log.Infoln("accepted connection from", c.RemoteAddr())
 		c = logConnection(c)
-	} else {
-		log.Errorln("failed to accept connection:", err.Error())
+	} else if err != nil {
+		select {
+		case <-l.done:
+		default:
+			log.Errorln("failed to accept connection:", err.Error())
+		}
 	}
 	return
 }
@@ -331,7 +335,11 @@ func (l *loggedListener) Accept() (c net.Conn, err error) {
 func (l *loggedListener) Close() (err error) {
 	err = l.delegate.Close()
 	if err != nil {
-		log.Errorln("error closing listener:", err.Error())
+		select {
+		case <-l.done:
+		default:
+			log.Errorln("error closing listener:", err.Error())
+		}
 	} else {
 		log.Infoln("closed listener")
 	}
@@ -396,7 +404,7 @@ func (t *HTTPTransporter) listen() error {
 	}
 
 	if log.V(3) {
-		t.listener = &loggedListener{ln}
+		t.listener = &loggedListener{delegate: ln, done: t.shouldQuit}
 	} else {
 		t.listener = ln
 	}
@@ -424,12 +432,13 @@ func (t *HTTPTransporter) start() <-chan error {
 				Handler: t.mux,
 			}
 			err := s.Serve(t.listener)
-			if err != nil && log.V(1) {
-				log.Errorln("HTTP server stopped with error", err.Error())
-			}
-			if atomic.CompareAndSwapInt32(&t.stopping, 1, 0) {
+			select {
+			case <-t.shouldQuit:
 				ch <- nil
-			} else {
+			default:
+				if err != nil && log.V(1) {
+					log.Errorln("HTTP server stopped with error", err.Error())
+				}
 				ch <- err
 				t.Stop(false)
 			}
@@ -447,12 +456,12 @@ func (t *HTTPTransporter) Stop(graceful bool) error {
 
 // stop expects to be guarded by stateLock
 func (t *HTTPTransporter) stop(graceful bool) error {
-	defer close(t.done)
+	close(t.shouldQuit)
+
 	log.Info("stopping HTTP transport")
 
 	//TODO(jdef) if graceful, wait for pending requests to terminate
 
-	atomic.StoreInt32(&t.stopping, 1)
 	err := t.listener.Close()
 	return err
 }
@@ -471,37 +480,52 @@ func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	decoder := DecodeHTTP(w, r)
-	go func() {
-		// once the transport stops, kill the decoder
-		<-t.done
-		decoder.Cancel()
-	}()
+	defer decoder.Cancel(true)
 
-	//TODO(jdef) see https://github.com/apache/mesos/blob/adecbfa6a216815bd7dc7d26e721c4c87e465c30/3rdparty/libprocess/src/process.cpp#L2192
-	// Only send back an HTTP response if this isn't from libprocess
+	//TODO(jdef) Only send back an HTTP response if this isn't from libprocess
 	// (which we determine by looking at the User-Agent). This is
 	// necessary because older versions of libprocess would try and
 	// recv the data and parse it as an HTTP request which would
 	// fail thus causing the socket to get closed (but now
 	// libprocess will ignore responses, see ignore_data).
+	// see https://github.com/apache/mesos/blob/adecbfa6a216815bd7dc7d26e721c4c87e465c30/3rdparty/libprocess/src/process.cpp#L2192
 	for {
 		if r, ok := <-decoder.Requests(); ok {
-			data, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				log.Errorf("failed to read HTTP body: %v\n", err)
+			if func() bool {
+				// regardless of whether we write a Response we must close this chan
+				defer close(r.response)
+
+				//TODO(jdef) this is probably inefficient given the current implementation of the
+				// decoder: no need to make another copy of data that's already competely buffered
+				data, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					// this is unlikely given the current implementation of the decoder:
+					// the body has been completely buffered in memory already
+					log.Errorf("failed to read HTTP body: %v\n", err)
+					return true
+				}
+				log.V(2).Infof("Receiving %s %v from %v, length %v\n", r.Method, r.URL, from, len(data))
+				m := &Message{
+					UPID:  from,
+					Name:  extractNameFromRequestURI(r.RequestURI),
+					Bytes: data,
+				}
+				select {
+				case <-t.shouldQuit:
+				case t.messageQueue <- m:
+				}
+
+				// if user-agent != libprocess then we need to send a response
+				if _, ok := parseLibprocessAgent(r.Header); !ok {
+					r.response <- Response{
+						code:   202,
+						reason: "Accepted",
+					}
+				}
+				return true
+			}() {
 				continue
 			}
-			log.V(2).Infof("Receiving %s %v from %v, length %v\n", r.Method, r.URL, from, len(data))
-			m := &Message{
-				UPID:  from,
-				Name:  extractNameFromRequestURI(r.RequestURI),
-				Bytes: data,
-			}
-			select {
-			case <-t.done:
-			case t.messageQueue <- m:
-			}
-			continue
 		}
 		if err, ok := <-decoder.Err(); ok {
 			log.Errorf("failed to decode HTTP message: %v", err)
@@ -541,7 +565,7 @@ func (t *HTTPTransporter) messageHandler(w http.ResponseWriter, r *http.Request)
 		Bytes: data,
 	}
 	select {
-	case <-t.done:
+	case <-t.shouldQuit:
 	case t.messageQueue <- m:
 	}
 }
@@ -570,10 +594,8 @@ func getLibprocessFrom(r *http.Request) (*upid.UPID, error) {
 	if r.Method != "POST" {
 		return nil, fmt.Errorf("Not a POST request")
 	}
-	ua, ok := r.Header["User-Agent"]
-	if ok && strings.HasPrefix(ua[0], "libprocess/") {
-		// TODO(yifan): Just take the first field for now.
-		return upid.Parse(ua[0][len("libprocess/"):])
+	if agent, ok := parseLibprocessAgent(r.Header); ok {
+		return upid.Parse(agent)
 	}
 	lf, ok := r.Header["Libprocess-From"]
 	if ok {
@@ -581,4 +603,16 @@ func getLibprocessFrom(r *http.Request) (*upid.UPID, error) {
 		return upid.Parse(lf[0])
 	}
 	return nil, fmt.Errorf("Cannot find 'User-Agent' or 'Libprocess-From'")
+}
+
+func parseLibprocessAgent(h http.Header) (string, bool) {
+	const prefix = "libprocess/"
+	if ua, ok := h["User-Agent"]; ok {
+		for _, agent := range ua {
+			if strings.HasPrefix(agent, prefix) {
+				return agent[len(prefix):], true
+			}
+		}
+	}
+	return "", false
 }

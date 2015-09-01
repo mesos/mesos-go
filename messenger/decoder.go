@@ -29,14 +29,19 @@ func (did decoderID) String() string {
 	return "[" + strconv.Itoa(int(did)) + "]"
 }
 
-func (did *decoderID) Next() decoderID {
+func (did *decoderID) next() decoderID {
 	return decoderID(atomic.AddInt32((*int32)(did), 1))
 }
 
 var (
 	errHijackFailed = errors.New("failed to hijack http connection")
 	did             decoderID // decoder ID counter
+	closedChan      = make(chan struct{})
 )
+
+func init() {
+	close(closedChan)
+}
 
 type Decoder interface {
 	Requests() <-chan *Request
@@ -55,26 +60,23 @@ type Response struct {
 }
 
 type httpDecoder struct {
-	req          *http.Request       // original request
-	res          http.ResponseWriter // original response; TODO(jdef) kill this
-	kalive       bool                // keepalive
-	chunked      bool                // chunked
+	req          *http.Request // original request
+	kalive       bool          // keepalive
+	chunked      bool          // chunked
 	msg          chan *Request
-	resCh        chan chan Response // queue of responses that we're waiting for
-	rch          chan Response      // current response that we're attempting to process
 	con          net.Conn
 	rw           *bufio.ReadWriter
 	errCh        chan error
-	state        httpState
 	buf          *bytes.Buffer
 	lrc          *limitReadCloser
 	shouldQuit   chan struct{} // signal chan, closes upon calls to Cancel(...)
 	forceQuit    chan struct{} // signal chan, indicates that quit is NOT graceful; closes upon Cancel(false)
-	quitOnce     sync.Mutex
+	cancelGuard  sync.Mutex
 	readTimeout  time.Duration
 	writeTimeout time.Duration
-	idtag        string
-	out          *bytes.Buffer // buffer used to cache a pending response
+	idtag        string          // useful for debugging
+	sendError    func(err error) // abstraction for error handling
+	outCh        chan *bytes.Buffer
 }
 
 // DecodeHTTP hijacks an HTTP server connection and generates mesos libprocess HTTP
@@ -83,21 +85,20 @@ type httpDecoder struct {
 // The caller should immediately *stop* using the ResponseWriter and Request that were
 // passed as parameters; the decoder assumes full control of the HTTP transport.
 func DecodeHTTP(w http.ResponseWriter, r *http.Request) Decoder {
-	id := (&did).Next()
+	id := did.next()
 	d := &httpDecoder{
-		state:        bootstrapState,
 		msg:          make(chan *Request),
 		errCh:        make(chan error, 1),
 		req:          r,
-		res:          w,
 		shouldQuit:   make(chan struct{}),
 		forceQuit:    make(chan struct{}),
 		readTimeout:  DefaultReadTimeout,
 		writeTimeout: DefaultWriteTimeout,
-		idtag:        id.Next().String(),
-		resCh:        make(chan chan Response, 10),
+		idtag:        id.String(),
+		outCh:        make(chan *bytes.Buffer),
 	}
-	go d.run()
+	d.sendError = d.defaultSendError
+	go d.run(w)
 	return d
 }
 
@@ -111,16 +112,16 @@ func (d *httpDecoder) Err() <-chan error {
 
 // Cancel the decoding process; if graceful then process pending responses before terminating
 func (d *httpDecoder) Cancel(graceful bool) {
-	log.V(2).Infof("%scancel:%b", d.idtag, graceful)
-	d.quitOnce.Lock()
-	defer d.quitOnce.Unlock()
+	log.V(2).Infof("%scancel:%t", d.idtag, graceful)
+	d.cancelGuard.Lock()
+	defer d.cancelGuard.Unlock()
 	select {
 	case <-d.shouldQuit:
 		// already quitting, but perhaps gracefully?
 	default:
 		close(d.shouldQuit)
 	}
-	// check this here allows caller to "upgrade" from a graceful cancel to a forced one
+	// allow caller to "upgrade" from a graceful cancel to a forced one
 	if !graceful {
 		select {
 		case <-d.forceQuit:
@@ -131,25 +132,35 @@ func (d *httpDecoder) Cancel(graceful bool) {
 	}
 }
 
-func (d *httpDecoder) run() {
-	defer log.V(2).Infoln(d.idtag + "run: terminating")
-	for d.state != nil {
-		next := d.state(d)
-		d.state = next
-		d.rch = d.checkResponses(d.rch)
+func (d *httpDecoder) run(res http.ResponseWriter) {
+	defer func() {
+		close(d.outCh)
+		log.V(2).Infoln(d.idtag + "run: terminating")
+	}()
+
+	go func() {
+		for buf := range d.outCh {
+			select {
+			case <-d.forceQuit:
+				return
+			default:
+			}
+			//TODO(jdef) I worry about this busy-looping
+			for buf.Len() > 0 {
+				d.tryFlushResponse(buf)
+			}
+		}
+	}()
+
+	var next httpState
+	for state := d.bootstrapState(res); state != nil; state = next {
+		next = state(d)
 	}
 }
 
-// tryFlushResponse flushes the response buffer (if not empty); returns true if
-func (d *httpDecoder) tryFlushResponse(rch chan Response) (rchOut chan Response, success bool) {
-	rchOut = rch
-	if d.out == nil || d.out.Len() == 0 {
-		// we always succeed when there's no work to do
-		success = true
-		return
-	}
-
-	log.V(2).Infof(d.idtag+"try-flush-responses: %d bytes to flush", d.out.Len())
+// tryFlushResponse flushes the response buffer (if not empty); returns true if flush succeeded
+func (d *httpDecoder) tryFlushResponse(out *bytes.Buffer) {
+	log.V(2).Infof(d.idtag+"try-flush-responses: %d bytes to flush", out.Len())
 	// set a write deadline here so that we don't block for very long.
 	err := d.setWriteTimeout()
 	if err != nil {
@@ -157,9 +168,9 @@ func (d *httpDecoder) tryFlushResponse(rch chan Response) (rchOut chan Response,
 		// how long a write op might block for. Log the error and skip this response.
 		log.Errorln("failed to set write deadline, aborting response:", err.Error())
 	} else {
-		_, err = d.out.WriteTo(d.rw.Writer)
+		_, err = out.WriteTo(d.rw.Writer)
 		if err != nil {
-			if neterr, ok := err.(net.Error); ok && neterr.Timeout() && d.out.Len() > 0 {
+			if neterr, ok := err.(net.Error); ok && neterr.Timeout() && out.Len() > 0 {
 				// we couldn't fully write before timing out, return rch and hope that
 				// we have better luck next time.
 				return
@@ -170,112 +181,37 @@ func (d *httpDecoder) tryFlushResponse(rch chan Response) (rchOut chan Response,
 		}
 		err = d.rw.Flush()
 		if err != nil {
-			if neterr, ok := err.(net.Error); ok && neterr.Timeout() && d.out.Len() > 0 {
+			if neterr, ok := err.(net.Error); ok && neterr.Timeout() && out.Len() > 0 {
 				return
 			}
 			log.Errorln("failed to flush response buffer:", err.Error())
 		}
 	}
-
-	// When we're finished dumping (for whatever reason), set rchOut = nil to indicate the the in-flight response has been flushed
-	rchOut = nil
-	success = true
-	d.out.Reset()
-	return
-}
-
-// check the given response chan (if any); if rch is nil then attempt to dequeue the next response chan
-// from resCh. return the currently active response chan (if any) that we should check upon the next invocation.
-func (d *httpDecoder) checkResponses(rch chan Response) chan Response {
-	log.V(2).Info(d.idtag + "check-responses")
-	defer log.V(2).Info(d.idtag + "check-responses: finished")
-responseLoop:
-	for {
-		var ok bool
-		rch, ok = d.tryFlushResponse(rch)
-		if !ok {
-			return rch
-		}
-
-		if rch == nil {
-			// pop one off resCh
-			select {
-			case <-d.forceQuit:
-				return nil
-
-			case rch = <-d.resCh:
-				// check for tie
-				select {
-				case <-d.forceQuit:
-					return nil
-				default:
-				}
-
-			default:
-				// no one told us to force-stop, and there's no outstanding responses
-				// that we're waiting for; move on!
-				return nil
-			}
-		}
-
-		log.V(2).Infoln(d.idtag + "check-responses: handling response")
-
-		// rch is not nil and will deliver us a response code to send back across the wire.
-		// check for the response code on rch, otherwise defer.
-		select {
-		case <-d.forceQuit:
-			return nil
-
-		case resp, ok := <-rch:
-			// check for tie
-			select {
-			case <-d.forceQuit:
-				return nil
-			default:
-			}
-
-			if !ok {
-				// no response code to send, move on
-				rch = nil
-				continue responseLoop
-			}
-
-			// response required, so build it
-			if d.out == nil {
-				d.out = &bytes.Buffer{}
-			}
-			d.buildResponseEntity(&resp)
-
-		default:
-			// response code isn't ready, and no one has asked us to quit; check back later
-			return rch
-		}
-	}
 }
 
 // TODO(jdef) make this a func on Response, to write its contents to a *bytes.Buffer
-func (d *httpDecoder) buildResponseEntity(resp *Response) {
+func (d *httpDecoder) buildResponseEntity(resp *Response) *bytes.Buffer {
 	log.V(2).Infoln(d.idtag + "build-response-entity")
+
+	out := &bytes.Buffer{}
 
 	// generate new response buffer content and continue; buffer should have
 	// at least a response status-line w/ Content-Length: 0
-	d.out.WriteString("HTTP/1.1 ")
-	d.out.WriteString(strconv.Itoa(resp.code))
-	d.out.WriteString(" ")
-	d.out.WriteString(resp.reason)
-	d.out.WriteString(crlf + "Content-Length: 0" + crlf)
+	out.WriteString("HTTP/1.1 ")
+	out.WriteString(strconv.Itoa(resp.code))
+	out.WriteString(" ")
+	out.WriteString(resp.reason)
+	out.WriteString(crlf + "Content-Length: 0" + crlf)
 
 	select {
 	case <-d.shouldQuit:
-		if len(d.resCh) == 0 {
-			// this is the last request in the pipeline and we've been told to quit, so
-			// indicate that the server will close the connection.
-			// see flushResponsesState()
-			d.out.WriteString("Connection: Close" + crlf)
-		}
+		// this is the last request in the pipeline and we've been told to quit, so
+		// indicate that the server will close the connection.
+		out.WriteString("Connection: Close" + crlf)
 	default:
 	}
-	d.out.WriteString(crlf) // this ends the HTTP response entity
+	out.WriteString(crlf) // this ends the HTTP response entity
+	return out
 }
 
 // updateForRequest updates the chunked and kalive fields of the decoder to align
@@ -340,15 +276,24 @@ func (d *httpDecoder) generateRequest() httpState {
 	}
 
 	select {
-	case d.resCh <- rch:
+	case d.msg <- r:
 	case <-d.forceQuit:
 		return terminateState
 	}
 
 	select {
-	case d.msg <- r:
 	case <-d.forceQuit:
 		return terminateState
+	case resp, ok := <-rch:
+		if ok {
+			// response required, so build it and ship it
+			out := d.buildResponseEntity(&resp)
+			select {
+			case <-d.forceQuit:
+				return terminateState
+			case d.outCh <- out:
+			}
+		}
 	}
 
 	if d.kalive {
@@ -360,6 +305,10 @@ func (d *httpDecoder) generateRequest() httpState {
 	} else {
 		return gracefulTerminateState
 	}
+}
+
+func (d *httpDecoder) defaultSendError(err error) {
+	d.errCh <- err
 }
 
 type httpState func(d *httpDecoder) httpState
@@ -392,31 +341,7 @@ func gracefulTerminateState(d *httpDecoder) httpState {
 	// gracefully terminate the connection; signal that we should flush pending
 	// responses before closing the connection.
 	d.Cancel(true)
-	return flushResponsesState
-}
 
-func flushResponsesState(d *httpDecoder) httpState {
-	log.V(2).Infoln(d.idtag + "flush-responses-state")
-	select {
-	case <-d.forceQuit:
-		return terminateState
-	default:
-	}
-
-	if len(d.resCh) > 0 {
-		// at least 1 outstanding response to be serviced, not counting the one
-		// maintained by the run() machinery.
-		return flushResponsesState
-	}
-
-	// handle rch that may be in-flight in run(); if we return nil here
-	// then an in-flight rch will never be written out.
-	if d.rch != nil {
-		return flushResponsesState
-	}
-
-	// finally done!
-	log.V(2).Infoln(d.idtag + "flush-responses-state:done")
 	return nil
 }
 
@@ -444,21 +369,21 @@ func (l *limitReadCloser) Close() error {
 // bootstrapState expects to be called when the standard net/http lib has already
 // read the initial request query line + headers from a connection. the request
 // is ready to be hijacked at this point.
-func bootstrapState(d *httpDecoder) httpState {
+func (d *httpDecoder) bootstrapState(res http.ResponseWriter) httpState {
 	log.V(2).Infoln(d.idtag + "bootstrap-state")
 	d.updateForRequest()
 
 	// hijack
-	hj, ok := d.res.(http.Hijacker)
+	hj, ok := res.(http.Hijacker)
 	if !ok {
-		http.Error(d.res, "server does not support hijack", http.StatusInternalServerError)
-		d.errCh <- errHijackFailed
+		http.Error(res, "server does not support hijack", http.StatusInternalServerError)
+		d.sendError(errHijackFailed)
 		return terminateState
 	}
 	c, rw, err := hj.Hijack()
 	if err != nil {
-		http.Error(d.res, "failed to hijack the connection", http.StatusInternalServerError)
-		d.errCh <- errHijackFailed
+		http.Error(res, "failed to hijack the connection", http.StatusInternalServerError)
+		d.sendError(errHijackFailed)
 		return terminateState
 	}
 	d.rw = rw
@@ -486,7 +411,7 @@ func (d *httpDecoder) checkTimeoutOrFail(err error, stateContinue httpState) (ht
 				return stateContinue, true
 			}
 		}
-		d.errCh <- err
+		d.sendError(err)
 		return terminateState, true
 	}
 	return nil, false
@@ -496,7 +421,7 @@ func (d *httpDecoder) setReadTimeoutOrFail() bool {
 	if d.readTimeout > 0 {
 		err := d.con.SetReadDeadline(time.Now().Add(d.readTimeout))
 		if err != nil {
-			d.errCh <- err
+			d.sendError(err)
 			return false
 		}
 	}
@@ -523,7 +448,7 @@ func readChunkHeaderState(d *httpDecoder) httpState {
 
 	clen, err := strconv.ParseInt(hexlen, 16, 64)
 	if err != nil {
-		d.errCh <- err
+		d.sendError(err)
 		return terminateState
 	}
 
@@ -560,7 +485,7 @@ func readEndOfChunkState(d *httpDecoder) httpState {
 			d.rw.Discard(2)
 			return readChunkHeaderState
 		}
-		d.errCh <- errors.New(d.idtag + "unexpected data at end-of-chunk marker")
+		d.sendError(errors.New(d.idtag + "unexpected data at end-of-chunk marker"))
 		return terminateState
 	}
 	// less than two bytes avail
@@ -581,7 +506,7 @@ func readEndOfChunkStreamState(d *httpDecoder) httpState {
 			d.rw.Discard(2)
 			return d.generateRequest()
 		}
-		d.errCh <- errors.New(d.idtag + "unexpected data at end-of-chunk marker")
+		d.sendError(errors.New(d.idtag + "unexpected data at end-of-chunk marker"))
 		return terminateState
 	}
 	// less than 2 bytes avail
@@ -617,6 +542,10 @@ func awaitRequestState(d *httpDecoder) httpState {
 		return terminateState
 	}
 	requestLine, err := tr.ReadLine()
+	if requestLine == "" && err == io.EOF {
+		// we're actually expecting this at some point, so don't react poorly
+		return gracefulTerminateState
+	}
 	if next, ok := d.checkTimeoutOrFail(err, awaitRequestState); ok {
 		return next
 	}
@@ -625,7 +554,7 @@ func awaitRequestState(d *httpDecoder) httpState {
 		if err == io.EOF {
 			return gracefulTerminateState
 		}
-		d.errCh <- errors.New(d.idtag + "illegal request line")
+		d.sendError(errors.New(d.idtag + "illegal request line"))
 		return terminateState
 	}
 	r := d.req
@@ -633,12 +562,12 @@ func awaitRequestState(d *httpDecoder) httpState {
 	r.RequestURI = ss[1]
 	r.URL, err = url.ParseRequestURI(ss[1])
 	if err != nil {
-		d.errCh <- err
+		d.sendError(err)
 		return terminateState
 	}
 	major, minor, ok := http.ParseHTTPVersion(ss[2])
 	if !ok {
-		d.errCh <- errors.New(d.idtag + "malformed HTTP version")
+		d.sendError(errors.New(d.idtag + "malformed HTTP version"))
 		return terminateState
 	}
 	r.ProtoMajor = major
@@ -655,6 +584,7 @@ func readHeaderState(d *httpDecoder) httpState {
 	r := d.req
 	tr := textproto.NewReader(d.rw.Reader)
 	h, err := tr.ReadMIMEHeader()
+	// merge any headers that were read successfully (before a possible error)
 	for k, v := range h {
 		if rh, exists := r.Header[k]; exists {
 			r.Header[k] = append(rh, v...)
@@ -673,7 +603,7 @@ func readHeaderState(d *httpDecoder) httpState {
 	if cl := r.Header.Get("Content-Length"); cl != "" {
 		l, err := strconv.ParseInt(cl, 10, 64)
 		if err != nil {
-			d.errCh <- err
+			d.sendError(err)
 			return terminateState
 		}
 		if l > -1 {

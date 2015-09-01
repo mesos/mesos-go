@@ -185,29 +185,31 @@ func (md *MasterDetector) notifyAllMasters(path string, list []string, obs detec
 	logPanic(func() { all.UpdatedMasters(masters) })
 }
 
+func (md *MasterDetector) callBootstrap() (e error) {
+	log.V(2).Infoln("invoking detector boostrap")
+	md.bootstrapLock.Lock()
+	defer md.bootstrapLock.Unlock()
+
+	clientConfigured := md.client != nil
+	if e = md.bootstrapFunc(); e == nil && !clientConfigured && md.client != nil {
+		// chain the lifetime of this detector to that of the newly created client impl
+		client := md.client
+		md.cancel = client.stop
+		go func() {
+			defer close(md.done)
+			<-client.stopped()
+		}()
+	}
+	return
+}
+
 // the first call to Detect will kickstart a connection to zookeeper. a nil change listener may
 // be spec'd, result of which is a detector that will still listen for master changes and record
 // leaderhip changes internally but no listener would be notified. Detect may be called more than
 // once, and each time the spec'd listener will be added to the list of those receiving notifications.
 func (md *MasterDetector) Detect(f detector.MasterChanged) (err error) {
 	// kickstart zk client connectivity
-	if err := func() (e error) {
-		log.V(2).Infoln("invoking detector boostrap")
-		md.bootstrapLock.Lock()
-		defer md.bootstrapLock.Unlock()
-
-		clientConfigured := md.client != nil
-		if e = md.bootstrapFunc(); e == nil && !clientConfigured && md.client != nil {
-			// chain the lifetime of this detector to that of the newly created client impl
-			client := md.client
-			md.cancel = client.stop
-			go func() {
-				defer close(md.done)
-				<-client.stopped()
-			}()
-		}
-		return
-	}(); err != nil {
+	if err := md.callBootstrap(); err != nil {
 		log.V(3).Infoln("failed to execute bootstrap function", err.Error())
 		return err
 	}
@@ -254,10 +256,10 @@ detectLoop:
 				default:
 				}
 				if ok {
-					log.V(1).Infoln("child watch ended with error, signaling master lost; error was:", err.Error())
+					log.V(1).Infoln("child watch ended with error, master lost; error was:", err.Error())
 				} else {
 					// detector shutdown likely...
-					log.V(1).Infoln("child watch ended, signaling master lost")
+					log.V(1).Infoln("child watch ended, master lost")
 				}
 				select {
 				case <-md.Done():

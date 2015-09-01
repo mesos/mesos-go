@@ -427,9 +427,9 @@ func (t *HTTPTransporter) start() <-chan error {
 		// TODO(yifan): Set read/write deadline.
 		go func() {
 			s := &http.Server{
-				// ReadTimeout: 5 * time.Second,
-				// WriteTimeout: 5 * time.Second,
-				Handler: t.mux,
+				ReadTimeout:  DefaultReadTimeout,
+				WriteTimeout: DefaultWriteTimeout,
+				Handler:      t.mux,
 			}
 			err := s.Serve(t.listener)
 			select {
@@ -510,19 +510,24 @@ func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request)
 					Name:  extractNameFromRequestURI(r.RequestURI),
 					Bytes: data,
 				}
+
+				keepGoing := true
 				select {
 				case <-t.shouldQuit:
+					keepGoing = false
 				case t.messageQueue <- m:
 				}
 
 				// if user-agent != libprocess then we need to send a response
 				if _, ok := parseLibprocessAgent(r.Header); !ok {
+					log.V(2).Infof("not libprocess agent, sending a 202")
 					r.response <- Response{
 						code:   202,
 						reason: "Accepted",
 					}
 				}
-				return true
+
+				return keepGoing
 			}() {
 				continue
 			}
@@ -533,43 +538,6 @@ func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request)
 		}
 	}
 }
-
-/*
-func (t *HTTPTransporter) messageHandler(w http.ResponseWriter, r *http.Request) {
-	// Verify it's a libprocess request.
-	from, err := getLibprocessFrom(r)
-	if err != nil {
-		log.Errorf("Ignoring the request, because it's not a libprocess request: %v\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	if log.V(3) {
-		dump, err := httputil.DumpRequest(r, true)
-		if err != nil {
-			log.Errorln("failed to dump HTTP request:", err.Error())
-		} else {
-			log.Infof("HTTP dump for %s:\n%s", r.URL, string(dump))
-		}
-	}
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Errorf("Failed to read HTTP body: %v\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	log.V(2).Infof("Receiving %s %v from %v, length %v\n", r.Method, r.URL, from, len(data))
-	w.WriteHeader(http.StatusAccepted)
-	m := &Message{
-		UPID:  from,
-		Name:  extractNameFromRequestURI(r.RequestURI),
-		Bytes: data,
-	}
-	select {
-	case <-t.shouldQuit:
-	case t.messageQueue <- m:
-	}
-}
-*/
 
 func (t *HTTPTransporter) makeLibprocessRequest(msg *Message) (*http.Request, error) {
 	if msg.UPID == nil {

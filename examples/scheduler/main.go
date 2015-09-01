@@ -229,7 +229,16 @@ func prepareExecutorInfo() *mesos.ExecutorInfo {
 	uri, executorCmd := serveExecutorArtifact(*executorPath)
 	executorUris = append(executorUris, &mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
 
-	executorCommand := fmt.Sprintf("./%s -logtostderr=true -v=3", executorCmd)
+	// forward the value of the scheduler's -v flag to the executor
+	v := 0
+	if f := flag.Lookup("v"); f != nil && f.Value != nil {
+		if vstr := f.Value.String(); vstr != "" {
+			if vi, err := strconv.ParseInt(vstr, 10, 32); err == nil {
+				v = int(vi)
+			}
+		}
+	}
+	executorCommand := fmt.Sprintf("./%s -logtostderr=true -v=%d", executorCmd, v)
 
 	go http.ListenAndServe(fmt.Sprintf("%s:%d", *address, *artifactPort), nil)
 	log.V(2).Info("Serving executor artifacts...")

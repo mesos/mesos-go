@@ -253,6 +253,7 @@ func (driver *MesosSchedulerDriver) init() error {
 	driver.messenger.Install(guarded(driver.slaveLost), &mesos.LostSlaveMessage{})
 	driver.messenger.Install(guarded(driver.frameworkMessageRcvd), &mesos.ExecutorToFrameworkMessage{})
 	driver.messenger.Install(guarded(driver.frameworkErrorRcvd), &mesos.FrameworkErrorMessage{})
+	driver.messenger.Install(guarded(driver.exitedExecutor), &mesos.ExitedExecutorMessage{})
 	driver.messenger.Install(guarded(driver.handleMasterChanged), &mesos.InternalMasterChangeDetected{})
 	driver.messenger.Install(guarded(driver.handleAuthenticationResult), &mesos.InternalAuthenticationResult{})
 	return nil
@@ -616,6 +617,27 @@ func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.M
 	} else {
 		log.V(2).Infoln("Not sending ACK, update is not from slave:", from.String())
 	}
+}
+
+func (driver *MesosSchedulerDriver) exitedExecutor(from *upid.UPID, pbMsg proto.Message) {
+	log.V(1).Infoln("Handling ExitedExceutor event.")
+	msg := pbMsg.(*mesos.ExitedExecutorMessage)
+
+	if driver.status == mesos.Status_DRIVER_ABORTED {
+		log.V(1).Infoln("Ignoring ExitedExecutor message, the driver is aborted!")
+		return
+	}
+	if !driver.connected {
+		log.V(1).Infoln("Ignoring ExitedExecutor message, the driver is not connected!")
+		return
+	}
+	status := msg.GetStatus()
+	log.V(2).Infoln("Lost executor %q from slave %q for framework %q with status %d",
+		msg.GetExecutorId().GetValue(),
+		msg.GetSlaveId().GetValue(),
+		msg.GetFrameworkId().GetValue(),
+		status)
+	driver.withScheduler(func(s Scheduler) { s.ExecutorLost(driver, msg.GetExecutorId(), msg.GetSlaveId(), int(status)) })
 }
 
 func (driver *MesosSchedulerDriver) slaveLost(from *upid.UPID, pbMsg proto.Message) {

@@ -135,20 +135,21 @@ func (s *SlaveHealthChecker) doCheck(pid upid.UPID) {
 	unhealthy := false
 	path := fmt.Sprintf("http://%s:%s/%s/health", pid.Host, pid.Port, pid.ID)
 	req, err := http.NewRequest("HEAD", path, nil)
-	if err != nil {
-		log.Errorf("Failed to request the health path: %v", err)
-		unhealthy = true
-	} else {
-		err = s.httpDo(req, func(resp *http.Response, err error) error {
-			if err != nil {
-				return err
-			}
-			defer resp.Body.Close()
-			if resp.StatusCode != http.StatusOK {
-				return fmt.Errorf("http status error: %v\n", resp.StatusCode)
-			}
-			return nil
-		})
+	req.Close = true
+	err = s.httpDo(req, func(resp *http.Response, err error) error {
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("http status error: %v\n", resp.StatusCode)
+		}
+		return nil
+	})
+	select {
+	case <-s.stop:
+		return
+	default:
 	}
 	if err != nil {
 		log.Errorf("Failed to request the health path: %v\n", err)

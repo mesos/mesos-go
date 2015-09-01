@@ -175,6 +175,10 @@ func TestSlaveHealthCheckerFailedOnBlockedSlave(t *testing.T) {
 		s.stop()
 		assert.True(t, atomic.LoadInt32(&s.th.cnt) > 10)
 	}
+
+	// TODO(jdef) hack: this sucks, but there's a data race in httptest's handler when Close()
+	// and ServeHTTP() are invoked (WaitGroup DATA RACE). Sleeping here to attempt to avoid that.
+	time.Sleep(5 * time.Second)
 }
 
 func TestSlaveHealthCheckerFailedOnEOFSlave(t *testing.T) {

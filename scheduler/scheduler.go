@@ -722,12 +722,13 @@ func (driver *MesosSchedulerDriver) start() (mesos.Status, error) {
 	go func() {
 		t := time.NewTicker(2 * time.Second)
 		defer t.Stop()
-		for range t.C {
+		for {
+			<-t.C
+			driver.eventCond.Broadcast()
 			select {
 			case <-driver.stopCh:
 				return
 			default:
-				driver.eventCond.Broadcast()
 			}
 		}
 	}()

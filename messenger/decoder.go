@@ -68,7 +68,7 @@ type httpDecoder struct {
 	rw           *bufio.ReadWriter
 	errCh        chan error
 	buf          *bytes.Buffer
-	lrc          *limitReadCloser
+	lrc          *io.LimitedReader
 	shouldQuit   chan struct{} // signal chan, closes upon calls to Cancel(...)
 	forceQuit    chan struct{} // signal chan, indicates that quit is NOT graceful; closes upon Cancel(false)
 	cancelGuard  sync.Mutex
@@ -345,25 +345,11 @@ func gracefulTerminateState(d *httpDecoder) httpState {
 	return nil
 }
 
-type limitReadCloser struct {
-	*io.LimitedReader
-	r *bufio.Reader
-}
-
-func limit(r *bufio.Reader, limit int64) *limitReadCloser {
-	return &limitReadCloser{
-		LimitedReader: &io.LimitedReader{
-			R: r,
-			N: limit,
-		},
-		r: r,
+func limit(r *bufio.Reader, limit int64) *io.LimitedReader {
+	return &io.LimitedReader{
+		R: r,
+		N: limit,
 	}
-}
-
-func (l *limitReadCloser) Close() error {
-	// discard remaining
-	_, err := l.r.Discard(int(l.LimitedReader.N)) // TODO(jdef) possible overflow due to type cast
-	return err
 }
 
 // bootstrapState expects to be called when the standard net/http lib has already
@@ -482,7 +468,8 @@ func readEndOfChunkState(d *httpDecoder) httpState {
 	b, err := d.rw.Reader.Peek(2)
 	if len(b) == 2 {
 		if string(b) == crlf {
-			d.rw.Discard(2)
+			d.rw.ReadByte()
+			d.rw.ReadByte()
 			return readChunkHeaderState
 		}
 		d.sendError(errors.New(d.idtag + "unexpected data at end-of-chunk marker"))
@@ -503,7 +490,8 @@ func readEndOfChunkStreamState(d *httpDecoder) httpState {
 	b, err := d.rw.Reader.Peek(2)
 	if len(b) == 2 {
 		if string(b) == crlf {
-			d.rw.Discard(2)
+			d.rw.ReadByte()
+			d.rw.ReadByte()
 			return d.generateRequest()
 		}
 		d.sendError(errors.New(d.idtag + "unexpected data at end-of-chunk marker"))

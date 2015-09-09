@@ -36,28 +36,49 @@ func FilterResources(resources []*mesos.Resource, filter func(*mesos.Resource) b
 	return result
 }
 
-func NewScalarResource(name string, val float64) *mesos.Resource {
-	return &mesos.Resource{
+// A ResourceOpt is a functional option type for mesos.Resources.
+type ResourceOpt func(*mesos.Resource)
+
+// Role returns a ResourceOpt that sets the Role of a
+// *mesos.Resource to the given value.
+func Role(s *string) ResourceOpt {
+	return func(r *mesos.Resource) { r.Role = s }
+}
+
+func NewScalarResource(name string, val float64, resOpt ...ResourceOpt) *mesos.Resource {
+	resource := &mesos.Resource{
 		Name:   proto.String(name),
 		Type:   mesos.Value_SCALAR.Enum(),
 		Scalar: &mesos.Value_Scalar{Value: proto.Float64(val)},
 	}
+	for _, opt := range resOpt {
+		opt(resource)
+	}
+	return resource
 }
 
-func NewRangesResource(name string, ranges []*mesos.Value_Range) *mesos.Resource {
-	return &mesos.Resource{
+func NewRangesResource(name string, ranges []*mesos.Value_Range, resOpt ...ResourceOpt) *mesos.Resource {
+	resource := &mesos.Resource{
 		Name:   proto.String(name),
 		Type:   mesos.Value_RANGES.Enum(),
 		Ranges: &mesos.Value_Ranges{Range: ranges},
 	}
+	for _, opt := range resOpt {
+		opt(resource)
+	}
+	return resource
 }
 
-func NewSetResource(name string, items []string) *mesos.Resource {
-	return &mesos.Resource{
+func NewSetResource(name string, items []string, resOpt ...ResourceOpt) *mesos.Resource {
+	resource := &mesos.Resource{
 		Name: proto.String(name),
 		Type: mesos.Value_SET.Enum(),
 		Set:  &mesos.Value_Set{Item: items},
 	}
+	for _, opt := range resOpt {
+		opt(resource)
+	}
+	return resource
 
 }
 

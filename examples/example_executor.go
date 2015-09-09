@@ -23,6 +23,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	exec "github.com/mesos/mesos-go/executor"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 )

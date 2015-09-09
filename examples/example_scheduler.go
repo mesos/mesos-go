@@ -56,6 +56,7 @@ var (
 	taskCount           = flag.String("task-count", "5", "Total task count to run.")
 	mesosAuthPrincipal  = flag.String("mesos_authentication_principal", "", "Mesos authentication principal.")
 	mesosAuthSecretFile = flag.String("mesos_authentication_secret_file", "", "Mesos authentication secret file.")
+	role                = flag.String("role", "*", "Role to login framework with")
 )
 
 type ExampleScheduler struct {
@@ -129,8 +130,8 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 				SlaveId:  offer.SlaveId,
 				Executor: sched.executor,
 				Resources: []*mesos.Resource{
-					util.NewScalarResource("cpus", CPUS_PER_TASK),
-					util.NewScalarResource("mem", MEM_PER_TASK),
+					util.NewScalarResource("cpus", CPUS_PER_TASK, util.Role(role)),
+					util.NewScalarResource("mem", MEM_PER_TASK, util.Role(role)),
 				},
 			}
 			log.Infof("Prepared task: %s with offer %s for launch\n", task.GetName(), offer.Id.GetValue())

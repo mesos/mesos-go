@@ -550,19 +550,6 @@ func (driver *MesosSchedulerDriver) send(upid *upid.UPID, msg proto.Message) err
 	}
 }
 
-func (driver *MesosSchedulerDriver) updateRequiresAck(from *upid.UPID, msg *mesos.StatusUpdateMessage) bool {
-	// see https://github.com/apache/mesos/blob/master/src/sched/sched.cpp#L887
-	// If the update does not have a 'uuid', it does not need
-	// acknowledging. However, prior to 0.23.0, the update uuid
-	// was required and always set. In 0.24.0, we can rely on the
-	// update uuid check here, until then we must still check for
-	// this being sent from the driver (from == UPID()) or from
-	// the master (pid == UPID()).
-	// TODO(vinod): Get rid of this logic in 0.25.0 because master
-	// and slave correctly set task status in 0.24.0.
-	return len(msg.Update.Uuid) > 0 || (!from.Equal(driver.self) && msg.GetPid() != driver.self.String())
-}
-
 // statusUpdated expects to be guarded by eventLock
 func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.Message) {
 	msg := pbMsg.(*mesos.StatusUpdateMessage)
@@ -585,8 +572,17 @@ func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.M
 	log.V(2).Infoln("Received status update from ", from.String(), " status source:", msg.GetPid())
 
 	status := msg.Update.GetStatus()
-	ackRequired := driver.updateRequiresAck(from, msg)
-	if !ackRequired {
+
+	// see https://github.com/apache/mesos/blob/master/src/sched/sched.cpp#L887
+	// If the update does not have a 'uuid', it does not need
+	// acknowledging. However, prior to 0.23.0, the update uuid
+	// was required and always set. In 0.24.0, we can rely on the
+	// update uuid check here, until then we must still check for
+	// this being sent from the driver (from == UPID()) or from
+	// the master (pid == UPID()).
+	// TODO(vinod): Get rid of this logic in 0.25.0 because master
+	// and slave correctly set task status in 0.24.0.
+	if clearUUID := len(msg.Update.Uuid) == 0 || from.Equal(driver.self) || msg.GetPid() == driver.self.String() || from.Equal(driver.masterPid); clearUUID {
 		status.Uuid = nil
 	} else {
 		status.Uuid = msg.Update.Uuid
@@ -600,7 +596,8 @@ func (driver *MesosSchedulerDriver) statusUpdated(from *upid.UPID, pbMsg proto.M
 	}
 
 	// Send StatusUpdate Acknowledgement
-	// Only send ACK if udpate was not from this driver
+	// Only send ACK if udpate was not from this driver, and not from master
+	ackRequired := len(msg.Update.Uuid) > 0 || (!from.Equal(driver.self) && msg.GetPid() != driver.self.String() && !from.Equal(driver.masterPid))
 	if ackRequired {
 		ackMsg := &mesos.StatusUpdateAcknowledgementMessage{
 			SlaveId:     msg.Update.SlaveId,

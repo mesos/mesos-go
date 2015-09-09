@@ -373,7 +373,8 @@ func (suite *SchedulerIntegrationTestSuite) TestSchedulerDriverStatusUpdatedEven
 			float64(time.Now().Unix()),
 			[]byte("test-abcd-ef-3455-454-001"),
 		),
-		Pid: proto.String(suite.driver.self.String()),
+		// note: cannot use driver's pid here if we want an ACK
+		Pid: proto.String("test-slave-001(1)@foo.bar:1234"),
 	}
 	pbMsg.Update.SlaveId = &mesos.SlaveID{Value: proto.String("test-slave-001")}
 

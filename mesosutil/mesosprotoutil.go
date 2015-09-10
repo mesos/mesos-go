@@ -36,27 +36,30 @@ func FilterResources(resources []*mesos.Resource, filter func(*mesos.Resource) b
 	return result
 }
 
-func NewScalarResource(name string, val float64) *mesos.Resource {
+func NewScalarResource(name string, val float64, role *string) *mesos.Resource {
 	return &mesos.Resource{
 		Name:   proto.String(name),
 		Type:   mesos.Value_SCALAR.Enum(),
 		Scalar: &mesos.Value_Scalar{Value: proto.Float64(val)},
+		Role:   role,
 	}
 }
 
-func NewRangesResource(name string, ranges []*mesos.Value_Range) *mesos.Resource {
+func NewRangesResource(name string, ranges []*mesos.Value_Range, role *string) *mesos.Resource {
 	return &mesos.Resource{
 		Name:   proto.String(name),
 		Type:   mesos.Value_RANGES.Enum(),
 		Ranges: &mesos.Value_Ranges{Range: ranges},
+		Role:   role,
 	}
 }
 
-func NewSetResource(name string, items []string) *mesos.Resource {
+func NewSetResource(name string, items []string, role *string) *mesos.Resource {
 	return &mesos.Resource{
 		Name: proto.String(name),
 		Type: mesos.Value_SET.Enum(),
 		Set:  &mesos.Value_Set{Item: items},
+		Role: role,
 	}
 
 }

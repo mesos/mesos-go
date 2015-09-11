@@ -193,15 +193,31 @@ func NewMesosSchedulerDriver(config DriverConfig) (initializedDriver *MesosSched
 	// such that the callback invocations are serialized. useful because this will decouple the
 	// goroutine executing a messenger callback from the goroutine executing a scheduler callback,
 	// while preserving the serialization semantics for each type of callback handling.
-	// note, however, that the order of the messages processed by the messenged callback handlers,
-	// and the order of the callbacks invoked upon the scheduler may be different.
-	var schedLock sync.Mutex
+	// we use a chan to maintain the order of callback invocations; this is important for maintaining
+	// the order in which status updates are processed.
+	schedQueue := make(chan func(s Scheduler))
+	go func() {
+		for {
+			select {
+			case f := <-schedQueue:
+				f(config.Scheduler)
+			case <-driver.stopCh:
+				// check for a tie: abort() may have sent a message that we need to pass up
+				// to the user.
+				select {
+				case f := <-schedQueue:
+					f(config.Scheduler)
+				default:
+				}
+				return
+			}
+		}
+	}()
 	driver.withScheduler = func(f func(s Scheduler)) {
-		go func() {
-			schedLock.Lock()
-			defer schedLock.Unlock()
-			f(config.Scheduler)
-		}()
+		select {
+		case schedQueue <- f:
+		case <-driver.stopCh:
+		}
 	}
 
 	if framework.FailoverTimeout != nil && *framework.FailoverTimeout > 0 {
@@ -679,7 +695,7 @@ func (driver *MesosSchedulerDriver) frameworkMessageRcvd(from *upid.UPID, pbMsg 
 func (driver *MesosSchedulerDriver) frameworkErrorRcvd(from *upid.UPID, pbMsg proto.Message) {
 	log.V(1).Infoln("Handling framework error event.")
 	msg := pbMsg.(*mesos.FrameworkErrorMessage)
-	driver.error(msg.GetMessage(), true)
+	driver.error(msg.GetMessage())
 }
 
 // ---------------------- Interface Methods ---------------------- //
@@ -963,18 +979,25 @@ func (driver *MesosSchedulerDriver) _stop(stopStatus mesos.Status) (mesos.Status
 func (driver *MesosSchedulerDriver) Abort() (stat mesos.Status, err error) {
 	driver.eventLock.Lock()
 	defer driver.eventLock.Unlock()
-	return driver.abort()
+	return driver.abort("")
 }
 
 // abort expects to be guarded by eventLock
-func (driver *MesosSchedulerDriver) abort() (stat mesos.Status, err error) {
+func (driver *MesosSchedulerDriver) abort(errMessage string) (stat mesos.Status, err error) {
 	defer driver.masterDetector.Cancel()
 	log.Infof("Aborting framework [%+v]", driver.frameworkInfo.Id)
+
+	if errMessage != "" {
+		log.V(3).Infof("Sending error '%v'", errMessage)
+		driver.withScheduler(func(s Scheduler) { s.Error(driver, errMessage) })
+	}
+
 	if driver.connected {
 		_, err = driver.stop(true)
 	} else {
 		driver.messenger.Stop()
 	}
+
 	stat = mesos.Status_DRIVER_ABORTED
 	driver.status = stat
 	return
@@ -1218,18 +1241,12 @@ func (driver *MesosSchedulerDriver) ReconcileTasks(statuses []*mesos.TaskStatus)
 }
 
 // error expects to be guarded by eventLock
-func (driver *MesosSchedulerDriver) error(err string, abortDriver bool) {
-	if abortDriver {
-		if driver.status == mesos.Status_DRIVER_ABORTED {
-			log.V(3).Infoln("Ignoring error message, the driver is aborted!")
-			return
-		}
-
-		log.Infoln("Aborting driver, got error '", err, "'")
-
-		driver.abort()
+func (driver *MesosSchedulerDriver) error(err string) {
+	if driver.status == mesos.Status_DRIVER_ABORTED {
+		log.V(3).Infoln("Ignoring error message, the driver is aborted!")
+		return
 	}
 
-	log.V(3).Infof("Sending error '%v'", err)
-	driver.withScheduler(func(s Scheduler) { s.Error(driver, err) })
+	log.Infoln("Aborting driver, got error '", err, "'")
+	driver.abort(err)
 }

@@ -48,6 +48,10 @@
 		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "cbcac7bb8415db9b6cb4d1ebab1dc9afbd688b97"
+		},
+		{
+			"ImportPath": "golang.org/x/text",
+			"Rev": "3eb7007b740b66a77f3c85f2660a0240b284115a"
 		}
 	]
 }

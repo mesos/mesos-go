@@ -19,6 +19,7 @@
 package zoo
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/url"
@@ -37,6 +38,7 @@ import (
 const (
 	// prefix for nodes listed at the ZK URL path
 	nodePrefix                    = "info_"
+	nodeJsonPrefix                = "json.info_"
 	defaultMinDetectorCyclePeriod = 1 * time.Second
 )
 
@@ -49,6 +51,8 @@ type zkInterface interface {
 	data(string) ([]byte, error)
 	watchChildren(string) (string, <-chan []string, <-chan error)
 }
+
+type infoCodec func(path, node string) (*mesos.MasterInfo, error)
 
 // Detector uses ZooKeeper to detect new leading master.
 type MasterDetector struct {
@@ -121,7 +125,8 @@ func (md *MasterDetector) childrenChanged(path string, list []string, obs detect
 }
 
 func (md *MasterDetector) notifyMasterChanged(path string, list []string, obs detector.MasterChanged) {
-	topNode := selectTopNode(list)
+	// mesos v0.24 writes JSON only, v0.23 writes json and protobuf, v0.22 and prior only write protobuf
+	topNode, codec := md.selectTopNode(list)
 	if md.leaderNode == topNode {
 		log.V(2).Infof("ignoring children-changed event, leader has not changed: %v", path)
 		return
@@ -133,7 +138,7 @@ func (md *MasterDetector) notifyMasterChanged(path string, list []string, obs de
 	var masterInfo *mesos.MasterInfo
 	if md.leaderNode != "" {
 		var err error
-		if masterInfo, err = md.pullMasterInfo(path, topNode); err != nil {
+		if masterInfo, err = codec(path, topNode); err != nil {
 			log.Errorln(err.Error())
 		}
 	}
@@ -160,7 +165,21 @@ func (md *MasterDetector) pullMasterInfo(path, node string) (*mesos.MasterInfo, 
 	masterInfo := &mesos.MasterInfo{}
 	err = proto.Unmarshal(data, masterInfo)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshall MasterInfo data from zookeeper: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal protobuf MasterInfo data from zookeeper: %v", err)
+	}
+	return masterInfo, nil
+}
+
+func (md *MasterDetector) pullMasterJsonInfo(path, node string) (*mesos.MasterInfo, error) {
+	data, err := md.client.data(fmt.Sprintf("%s/%s", path, node))
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve leader data: %v", err)
+	}
+
+	masterInfo := &mesos.MasterInfo{}
+	err = json.Unmarshal(data, masterInfo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal json MasterInfo data from zookeeper: %v", err)
 	}
 	return masterInfo, nil
 }
@@ -171,18 +190,34 @@ func (md *MasterDetector) notifyAllMasters(path string, list []string, obs detec
 		// not interested in entire master list
 		return
 	}
-	masters := []*mesos.MasterInfo{}
-	for _, node := range list {
-		info, err := md.pullMasterInfo(path, node)
+
+	// mesos v0.24 writes JSON only, v0.23 writes json and protobuf, v0.22 and prior only write protobuf
+	masters := map[string]*mesos.MasterInfo{}
+	tryStore := func(node string, codec infoCodec) {
+		info, err := codec(path, node)
 		if err != nil {
 			log.Errorln(err.Error())
 		} else {
-			masters = append(masters, info)
+			masters[info.GetId()] = info
 		}
 	}
+	for _, node := range list {
+		// compare https://github.com/apache/mesos/blob/0.23.0/src/master/detector.cpp#L437
+		if strings.HasPrefix(node, nodePrefix) {
+			tryStore(node, md.pullMasterInfo)
+		} else if strings.HasPrefix(node, nodeJsonPrefix) {
+			tryStore(node, md.pullMasterJsonInfo)
+		} else {
+			continue
+		}
+	}
+	masterList := make([]*mesos.MasterInfo, 0, len(masters))
+	for _, v := range masters {
+		masterList = append(masterList, v)
+	}
 
-	log.V(2).Infof("notifying of master membership change: %+v", masters)
-	logPanic(func() { all.UpdatedMasters(masters) })
+	log.V(2).Infof("notifying of master membership change: %+v", masterList)
+	logPanic(func() { all.UpdatedMasters(masterList) })
 }
 
 func (md *MasterDetector) callBootstrap() (e error) {
@@ -289,14 +324,31 @@ detectLoop:
 	}
 }
 
-func selectTopNode(list []string) (node string) {
+func (md *MasterDetector) selectTopNode(list []string) (topNode string, codec infoCodec) {
+	// mesos v0.24 writes JSON only, v0.23 writes json and protobuf, v0.22 and prior only write protobuf
+	topNode = selectTopNodePrefix(list, nodeJsonPrefix)
+	codec = md.pullMasterJsonInfo
+	if topNode == "" {
+		topNode = selectTopNodePrefix(list, nodePrefix)
+		codec = md.pullMasterInfo
+
+		if topNode != "" {
+			log.Warningf("Leading master is using a Protobuf binary format when registering "+
+				"with Zookeeper (%s): this will be deprecated as of Mesos 0.24 (see MESOS-2340).",
+				topNode)
+		}
+	}
+	return
+}
+
+func selectTopNodePrefix(list []string, pre string) (node string) {
 	var leaderSeq uint64 = math.MaxUint64
 
 	for _, v := range list {
-		if !strings.HasPrefix(v, nodePrefix) {
+		if !strings.HasPrefix(v, pre) {
 			continue // only care about participants
 		}
-		seqStr := strings.TrimPrefix(v, nodePrefix)
+		seqStr := strings.TrimPrefix(v, pre)
 		seq, err := strconv.ParseUint(seqStr, 10, 64)
 		if err != nil {
 			log.Warningf("unexpected zk node format '%s': %v", seqStr, err)

@@ -357,11 +357,11 @@ func TestMasterDetect_selectTopNode_mixJson(t *testing.T) {
 	nodeList := []string{
 		nodePrefix + "0000000046",
 		nodePrefix + "0000000032",
-		nodeJsonPrefix + "0000000046",
-		nodeJsonPrefix + "0000000032",
+		nodeJSONPrefix + "0000000046",
+		nodeJSONPrefix + "0000000032",
 	}
-	node := selectTopNodePrefix(nodeList, nodeJsonPrefix)
-	assert.Equal(nodeJsonPrefix+"0000000032", node)
+	node := selectTopNodePrefix(nodeList, nodeJSONPrefix)
+	assert.Equal(nodeJSONPrefix+"0000000032", node)
 
 	node = selectTopNodePrefix(nodeList, nodePrefix)
 	assert.Equal(nodePrefix+"0000000032", node)

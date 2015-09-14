@@ -38,7 +38,7 @@ import (
 const (
 	// prefix for nodes listed at the ZK URL path
 	nodePrefix                    = "info_"
-	nodeJsonPrefix                = "json.info_"
+	nodeJSONPrefix                = "json.info_"
 	defaultMinDetectorCyclePeriod = 1 * time.Second
 )
 
@@ -205,7 +205,7 @@ func (md *MasterDetector) notifyAllMasters(path string, list []string, obs detec
 		// compare https://github.com/apache/mesos/blob/0.23.0/src/master/detector.cpp#L437
 		if strings.HasPrefix(node, nodePrefix) {
 			tryStore(node, md.pullMasterInfo)
-		} else if strings.HasPrefix(node, nodeJsonPrefix) {
+		} else if strings.HasPrefix(node, nodeJSONPrefix) {
 			tryStore(node, md.pullMasterJsonInfo)
 		} else {
 			continue
@@ -326,7 +326,7 @@ detectLoop:
 
 func (md *MasterDetector) selectTopNode(list []string) (topNode string, codec infoCodec) {
 	// mesos v0.24 writes JSON only, v0.23 writes json and protobuf, v0.22 and prior only write protobuf
-	topNode = selectTopNodePrefix(list, nodeJsonPrefix)
+	topNode = selectTopNodePrefix(list, nodeJSONPrefix)
 	codec = md.pullMasterJsonInfo
 	if topNode == "" {
 		topNode = selectTopNodePrefix(list, nodePrefix)

@@ -335,7 +335,7 @@ func TestMasterDetector_multipleLeadershipChanges(t *testing.T) {
 func TestMasterDetect_selectTopNode_none(t *testing.T) {
 	assert := assert.New(t)
 	nodeList := []string{}
-	node := selectTopNode(nodeList)
+	node := selectTopNodePrefix(nodeList, "foo")
 	assert.Equal("", node)
 }
 
@@ -348,8 +348,23 @@ func TestMasterDetect_selectTopNode_0000x(t *testing.T) {
 		"info_0000000061",
 		"info_0000000008",
 	}
-	node := selectTopNode(nodeList)
+	node := selectTopNodePrefix(nodeList, nodePrefix)
 	assert.Equal("info_0000000008", node)
+}
+
+func TestMasterDetect_selectTopNode_mixJson(t *testing.T) {
+	assert := assert.New(t)
+	nodeList := []string{
+		nodePrefix + "0000000046",
+		nodePrefix + "0000000032",
+		nodeJSONPrefix + "0000000046",
+		nodeJSONPrefix + "0000000032",
+	}
+	node := selectTopNodePrefix(nodeList, nodeJSONPrefix)
+	assert.Equal(nodeJSONPrefix+"0000000032", node)
+
+	node = selectTopNodePrefix(nodeList, nodePrefix)
+	assert.Equal(nodePrefix+"0000000032", node)
 }
 
 func TestMasterDetect_selectTopNode_mixedEntries(t *testing.T) {
@@ -362,7 +377,7 @@ func TestMasterDetect_selectTopNode_mixedEntries(t *testing.T) {
 		"log_replicas_fdgwsdfgsdf",
 		"bar",
 	}
-	node := selectTopNode(nodeList)
+	node := selectTopNodePrefix(nodeList, nodePrefix)
 	assert.Equal("info_0000000032", node)
 }
 

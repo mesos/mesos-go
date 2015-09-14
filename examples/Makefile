@@ -1,6 +1,9 @@
-.PHONY: all
+BIN := scheduler executor zkdetect
+.PHONY:
+.PHONY: all $(BIN)
 
-all:
+all: $(BIN)
+
+$(BIN):
 	mkdir -p _output
-	godep go build -o _output/scheduler ./scheduler
-	godep go build -o _output/executor ./executor
+	godep go build -o _output/$@ ./$@

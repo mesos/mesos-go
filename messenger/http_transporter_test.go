@@ -271,7 +271,7 @@ func TestTransporterStartAndStop(t *testing.T) {
 
 func TestMutatedHostUPid(t *testing.T) {
 	serverId := "testserver"
-	serverPort := getNewPort()
+	serverPort := 12345
 	serverHost := "127.0.0.1"
 	serverAddr := serverHost + ":" + strconv.Itoa(serverPort)
 

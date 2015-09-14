@@ -27,6 +27,9 @@ func noopHandler(*upid.UPID, proto.Message) {
 	globalWG.Done()
 }
 
+// TODO(jdef) this is a test flake waiting to happen. unit tests are better off listening on
+// a random port (port=0) and querying the listener later (need a way to expose the port, perhaps
+// by querying the UPID)
 func getNewPort() int {
 	startPort++
 	return startPort

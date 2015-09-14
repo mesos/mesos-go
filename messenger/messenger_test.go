@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -19,21 +18,14 @@ import (
 )
 
 var (
-	startPort = 10000 + rand.Intn(30000)
-	globalWG  = new(sync.WaitGroup)
+	globalWG = new(sync.WaitGroup)
 )
 
 func noopHandler(*upid.UPID, proto.Message) {
 	globalWG.Done()
 }
 
-// TODO(jdef) this is a test flake waiting to happen. unit tests are better off listening on
-// a random port (port=0) and querying the listener later (need a way to expose the port, perhaps
-// by querying the UPID)
-func getNewPort() int {
-	startPort++
-	return startPort
-}
+func getNewPort() int { return 0 }
 
 func shuffleMessages(queue *[]proto.Message) {
 	for i := range *queue {
@@ -144,14 +136,6 @@ func TestMessengerFailToInstall(t *testing.T) {
 	assert.NotNil(t, m)
 	assert.NoError(t, m.Install(handler, &testmessage.SmallMessage{}))
 	assert.Error(t, m.Install(handler, &testmessage.SmallMessage{}))
-}
-
-func TestMessengerFailToStart(t *testing.T) {
-	port := strconv.Itoa(getNewPort())
-	m1 := NewHttp(&upid.UPID{ID: "mesos", Host: "localhost", Port: port})
-	m2 := NewHttp(&upid.UPID{ID: "mesos", Host: "localhost", Port: port})
-	assert.NoError(t, m1.Start())
-	assert.Error(t, m2.Start())
 }
 
 func TestMessengerFailToSend(t *testing.T) {

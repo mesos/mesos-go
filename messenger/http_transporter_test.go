@@ -289,10 +289,6 @@ func TestMutatedHostUPid(t *testing.T) {
 	if receiver.upid.Host != "127.0.0.1" {
 		t.Fatalf("reciever.upid.Host was expected to return %s, got %s\n", serverHost, receiver.upid.Host)
 	}
-
-	if receiver.upid.Port != strconv.Itoa(serverPort) {
-		t.Fatalf("receiver.upid.Port was expected to return %d, got %s\n", serverPort, receiver.upid.Port)
-	}
 }
 
 func TestEmptyHostPortUPid(t *testing.T) {

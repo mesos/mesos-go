@@ -3,8 +3,7 @@
 ## Building
 ```
 $ go get github.com/tools/godep
-$ godep go build ./scheduler -o scheduler/scheduler
-$ godep go build ./executor -o executor/executor
+$ make
 ```
 
 ## Running
@@ -17,8 +16,8 @@ See http://mesos.apache.org/gettingstarted/ for getting started with Apache Meso
 
 ### Start the Go scheduler/executor examples
 ```
-$ export EXECUTOR_BIN=$(pwd)/executor/executor
-$ ./scheduler/scheduler --master=127.0.0.1:5050 --executor="$EXECUTOR_BIN" --logtostderr=true
+$ export EXECUTOR_BIN=$(pwd)/_output/executor
+$ ./_output/scheduler --master=127.0.0.1:5050 --executor="$EXECUTOR_BIN" --logtostderr=true
 ```
 If all goes well, you should see output about task completion.
 You can also point your browser to the Mesos GUI http://127.0.0.1:5050/ to validate the framework activities.
@@ -26,9 +25,9 @@ You can also point your browser to the Mesos GUI http://127.0.0.1:5050/ to valid
 ### Start the Go scheduler with other executors
 You can also use the Go `example-scheduler` with executors written in other languages such as  `Python` or `Java`  for further validation (note: to use these executors requires a build of the mesos source code with `make check`):
 ```
-$ ./scheduler --master=127.0.0.1:5050 --executor="<mesos-build>/src/examples/python/test-executor" --logtostderr=true
+$ ./_output/scheduler --master=127.0.0.1:5050 --executor="<mesos-build>/src/examples/python/test-executor" --logtostderr=true
 ```
 Similarly for the Java version:
 ```
-$ ./scheduler --master=127.0.0.1:5050 --executor="<mesos-build>/src/examples/java/test-executor" --logtostderr=true
+$ ./_output/scheduler --master=127.0.0.1:5050 --executor="<mesos-build>/src/examples/java/test-executor" --logtostderr=true
 ```

@@ -84,10 +84,21 @@ func (sched *ExampleScheduler) Reregistered(driver sched.SchedulerDriver, master
 	log.Infoln("Framework Re-Registered with Master ", masterInfo)
 }
 
-func (sched *ExampleScheduler) Disconnected(sched.SchedulerDriver) {}
+func (sched *ExampleScheduler) Disconnected(sched.SchedulerDriver) {
+	log.Fatalf("disconnected from master, aborting")
+}
 
 func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offers []*mesos.Offer) {
 
+	if sched.tasksLaunched >= sched.totalTasks {
+		log.Info("decline all of the offers since all of our tasks are already launched")
+		ids := make([]*mesos.OfferID, len(offers))
+		for i, offer := range offers {
+			ids[i] = offer.Id
+		}
+		driver.LaunchTasks(ids, []*mesos.TaskInfo{}, &mesos.Filters{RefuseSeconds: proto.Float64(120)})
+		return
+	}
 	for _, offer := range offers {
 		cpuResources := util.FilterResources(offer.Resources, func(res *mesos.Resource) bool {
 			return res.GetName() == "cpus"
@@ -138,7 +149,7 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 			remainingMems -= MEM_PER_TASK
 		}
 		log.Infoln("Launching ", len(tasks), "tasks for offer", offer.Id.GetValue())
-		driver.LaunchTasks([]*mesos.OfferID{offer.Id}, tasks, &mesos.Filters{RefuseSeconds: proto.Float64(1)})
+		driver.LaunchTasks([]*mesos.OfferID{offer.Id}, tasks, &mesos.Filters{RefuseSeconds: proto.Float64(5)})
 	}
 }
 
@@ -155,7 +166,8 @@ func (sched *ExampleScheduler) StatusUpdate(driver sched.SchedulerDriver, status
 
 	if status.GetState() == mesos.TaskState_TASK_LOST ||
 		status.GetState() == mesos.TaskState_TASK_KILLED ||
-		status.GetState() == mesos.TaskState_TASK_FAILED {
+		status.GetState() == mesos.TaskState_TASK_FAILED ||
+		status.GetState() == mesos.TaskState_TASK_ERROR {
 		log.Infoln(
 			"Aborting because task", status.TaskId.GetValue(),
 			"is in unexpected state", status.State.String(),
@@ -165,16 +177,20 @@ func (sched *ExampleScheduler) StatusUpdate(driver sched.SchedulerDriver, status
 	}
 }
 
-func (sched *ExampleScheduler) OfferRescinded(sched.SchedulerDriver, *mesos.OfferID) {}
-
-func (sched *ExampleScheduler) FrameworkMessage(sched.SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, string) {
+func (sched *ExampleScheduler) OfferRescinded(_ sched.SchedulerDriver, oid *mesos.OfferID) {
+	log.Errorf("offer rescinded: %v", oid)
 }
-func (sched *ExampleScheduler) SlaveLost(sched.SchedulerDriver, *mesos.SlaveID) {}
-func (sched *ExampleScheduler) ExecutorLost(sched.SchedulerDriver, *mesos.ExecutorID, *mesos.SlaveID, int) {
+func (sched *ExampleScheduler) FrameworkMessage(_ sched.SchedulerDriver, eid *mesos.ExecutorID, sid *mesos.SlaveID, msg string) {
+	log.Errorf("framework message from executor %q slave %q: %q", eid, sid, msg)
 }
-
-func (sched *ExampleScheduler) Error(driver sched.SchedulerDriver, err string) {
-	log.Infoln("Scheduler received error:", err)
+func (sched *ExampleScheduler) SlaveLost(_ sched.SchedulerDriver, sid *mesos.SlaveID) {
+	log.Errorf("slave lost: %v", sid)
+}
+func (sched *ExampleScheduler) ExecutorLost(_ sched.SchedulerDriver, eid *mesos.ExecutorID, sid *mesos.SlaveID, code int) {
+	log.Errorf("executor %q lost on slave %q code %d", eid, sid, code)
+}
+func (sched *ExampleScheduler) Error(_ sched.SchedulerDriver, err string) {
+	log.Errorf("Scheduler received error:", err)
 }
 
 // ----------------------- func init() ------------------------- //
@@ -213,7 +229,16 @@ func prepareExecutorInfo() *mesos.ExecutorInfo {
 	uri, executorCmd := serveExecutorArtifact(*executorPath)
 	executorUris = append(executorUris, &mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
 
-	executorCommand := fmt.Sprintf("./%s", executorCmd)
+	// forward the value of the scheduler's -v flag to the executor
+	v := 0
+	if f := flag.Lookup("v"); f != nil && f.Value != nil {
+		if vstr := f.Value.String(); vstr != "" {
+			if vi, err := strconv.ParseInt(vstr, 10, 32); err == nil {
+				v = int(vi)
+			}
+		}
+	}
+	executorCommand := fmt.Sprintf("./%s -logtostderr=true -v=%d", executorCmd, v)
 
 	go http.ListenAndServe(fmt.Sprintf("%s:%d", *address, *artifactPort), nil)
 	log.V(2).Info("Serving executor artifacts...")

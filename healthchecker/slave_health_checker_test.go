@@ -175,6 +175,10 @@ func TestSlaveHealthCheckerFailedOnBlockedSlave(t *testing.T) {
 		s.stop()
 		assert.True(t, atomic.LoadInt32(&s.th.cnt) > 10)
 	}
+
+	// TODO(jdef) hack: this sucks, but there's a data race in httptest's handler when Close()
+	// and ServeHTTP() are invoked (WaitGroup DATA RACE). Sleeping here to attempt to avoid that.
+	time.Sleep(5 * time.Second)
 }
 
 func TestSlaveHealthCheckerFailedOnEOFSlave(t *testing.T) {
@@ -234,7 +238,7 @@ func TestSlaveHealthCheckerSucceed(t *testing.T) {
 
 	select {
 	case <-time.After(time.Second):
-		assert.Equal(t, 0, checker.continuousUnhealthyCount)
+		assert.EqualValues(t, 0, atomic.LoadInt32(&checker.continuousUnhealthyCount))
 	case <-ch:
 		t.Fatal("Shouldn't get unhealthy notification")
 	}
@@ -246,16 +250,21 @@ func TestSlaveHealthCheckerPartitonedSlave(t *testing.T) {
 	ts.Start()
 	defer ts.Close()
 
+	t.Log("test server listening on", ts.Listener.Addr())
 	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
 	assert.NoError(t, err)
 
 	checker := NewSlaveHealthChecker(upid, 10, time.Millisecond*10, time.Millisecond*10)
 	ch := checker.Start()
-	defer checker.Stop()
+	defer func() {
+		checker.Stop()
+		<-checker.stop
+	}()
 
 	select {
-	case <-time.After(time.Second):
-		assert.Equal(t, 0, checker.continuousUnhealthyCount)
+	case <-time.After(2 * time.Second):
+		actual := atomic.LoadInt32(&checker.continuousUnhealthyCount)
+		assert.EqualValues(t, 0, actual, "expected 0 unhealthy counts instead of %d", actual)
 	case <-ch:
 		t.Fatal("Shouldn't get unhealthy notification")
 	}

@@ -152,6 +152,7 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 
 	go func() {
 		defer close(ctrl)
+		t.Logf("received something...")
 		msg, err := receiver.Recv()
 		assert.Nil(t, err)
 		assert.NotNil(t, msg)
@@ -179,6 +180,7 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 	errch2 := sender.Start()
 	defer sender.Stop(false)
 
+	t.Logf("sending test message")
 	sender.Send(context.TODO(), msg)
 
 	select {

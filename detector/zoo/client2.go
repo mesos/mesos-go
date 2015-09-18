@@ -79,7 +79,7 @@ func (c *client2) watchChildren(path string) (string, <-chan []string, <-chan er
 			}
 			e := <-ev // wait for the next watch-related event
 			if e.Err != nil {
-				errCh <- err
+				errCh <- e.Err
 				return
 			}
 		}

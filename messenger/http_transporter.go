@@ -490,52 +490,56 @@ func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request)
 	// libprocess will ignore responses, see ignore_data).
 	// see https://github.com/apache/mesos/blob/adecbfa6a216815bd7dc7d26e721c4c87e465c30/3rdparty/libprocess/src/process.cpp#L2192
 	for {
-		if r, ok := <-decoder.Requests(); ok {
-			if func() bool {
-				// regardless of whether we write a Response we must close this chan
-				defer close(r.response)
+		r, ok := <-decoder.Requests()
+		if !ok {
+			// Channel closed, break out of loop
+			break
+		}
+		if func() bool {
+			// regardless of whether we write a Response we must close this chan
+			defer close(r.response)
 
-				//TODO(jdef) this is probably inefficient given the current implementation of the
-				// decoder: no need to make another copy of data that's already competely buffered
-				data, err := ioutil.ReadAll(r.Body)
-				if err != nil {
-					// this is unlikely given the current implementation of the decoder:
-					// the body has been completely buffered in memory already
-					log.Errorf("failed to read HTTP body: %v\n", err)
-					return true
-				}
-				log.V(2).Infof("Receiving %s %v from %v, length %v\n", r.Method, r.URL, from, len(data))
-				m := &Message{
-					UPID:  from,
-					Name:  extractNameFromRequestURI(r.RequestURI),
-					Bytes: data,
-				}
-
-				keepGoing := true
-				select {
-				case <-t.shouldQuit:
-					keepGoing = false
-				case t.messageQueue <- m:
-				}
-
-				// if user-agent != libprocess then we need to send a response
-				if _, ok := parseLibprocessAgent(r.Header); !ok {
-					log.V(2).Infof("not libprocess agent, sending a 202")
-					r.response <- Response{
-						code:   202,
-						reason: "Accepted",
-					}
-				}
-
-				return keepGoing
-			}() {
-				continue
+			//TODO(jdef) this is probably inefficient given the current implementation of the
+			// decoder: no need to make another copy of data that's already competely buffered
+			data, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				// this is unlikely given the current implementation of the decoder:
+				// the body has been completely buffered in memory already
+				log.Errorf("failed to read HTTP body: %v\n", err)
+				return true
 			}
+			log.V(2).Infof("Receiving %s %v from %v, length %v\n", r.Method, r.URL, from, len(data))
+			m := &Message{
+				UPID:  from,
+				Name:  extractNameFromRequestURI(r.RequestURI),
+				Bytes: data,
+			}
+
+			keepGoing := true
+			select {
+			case <-t.shouldQuit:
+				keepGoing = false
+			case t.messageQueue <- m:
+			}
+
+			// if user-agent != libprocess then we need to send a response
+			if _, ok := parseLibprocessAgent(r.Header); !ok {
+				log.V(2).Infof("not libprocess agent, sending a 202")
+				r.response <- Response{
+					code:   202,
+					reason: "Accepted",
+				}
+			}
+
+			return keepGoing
+		}() {
+			continue
 		}
-		if err, ok := <-decoder.Err(); ok {
-			log.Errorf("failed to decode HTTP message: %v", err)
-			return
-		}
+	}
+
+	if err, ok := <-decoder.Err(); ok {
+		log.Errorf("failed to decode HTTP message: %v", err)
+		return
 	}
 }
 

@@ -1,13 +1,20 @@
-Go bindings for Apache Mesos
-========
+# Go bindings for Apache Mesos
 
 Very early version of a pure Go language bindings for Apache Mesos. As with other pure implementation, mesos-go uses the HTTP wire protocol to communicate directly with  a running Mesos master and its slave instances. One of the objectives of this project is to provide an idiomatic Go API that makes it super easy to create Mesos frameworks using Go. 
 
 [![Build Status](https://travis-ci.org/mesos/mesos-go.svg)](https://travis-ci.org/mesos/mesos-go) [![GoDoc] (https://godoc.org/github.com/mesos/mesos-go?status.png)](https://godoc.org/github.com/mesos/mesos-go)
 
-## Current Status
-This is a very early version of the project.  Howerver, here is a list of things that works so far:
+## Status
+This project is undergoing a *complete* rewrite happening in the
+[next](https://github.com/mesos/mesos-go/tree/next) branch. These bindings will
+integrate exclusively with the new public Mesos HTTP API.
 
+The current version of the bindings are considered **alpha** and won't
+see any major development besides critical compatibility and bug fixes.
+
+We use [semantic versioning](http://semver.org/).
+
+### Features
 - The SchedulerDriver API implemented
 - The ExecutorDriver API implemented
 - Stable API (based on the core Mesos code)
@@ -17,12 +24,22 @@ This is a very early version of the project.  Howerver, here is a list of things
 - Leading master detection
 - Authentication via SASL/CRAM-MD5
 
-## Pre-Requisites
+### Pre-Requisites
 - Go 1.3 or higher
 - A standard and working Go workspace setup
 - Apache Mesos 0.19 or newer
 
-## Install
-```
+## Installing
+Users of this library are encouraged to vendor it. API stability isn't guaranteed
+at this stage.
+```shell
 $ go get github.com/mesos/mesos-go
 ```
+
+## Testing
+```shell
+$ go test -race ./...
+```
+
+## License
+This project is [Apache License 2.0](LICENSE).

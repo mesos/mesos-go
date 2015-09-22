@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	log "github.com/golang/glog"
@@ -523,6 +524,19 @@ func readBodyState(d *httpDecoder) httpState {
 	return readBodyState
 }
 
+func isGracefulTermSignal(err error) bool {
+	if err == io.EOF {
+		return true
+	}
+	if operr, ok := err.(*net.OpError); ok {
+		if operr.Op != "read" {
+			return false
+		}
+		return err == syscall.ECONNRESET
+	}
+	return false
+}
+
 func awaitRequestState(d *httpDecoder) httpState {
 	log.V(2).Infoln(d.idtag + "await-request-state")
 	tr := textproto.NewReader(d.rw.Reader)
@@ -530,7 +544,7 @@ func awaitRequestState(d *httpDecoder) httpState {
 		return terminateState
 	}
 	requestLine, err := tr.ReadLine()
-	if requestLine == "" && err == io.EOF {
+	if requestLine == "" && isGracefulTermSignal(err) {
 		// we're actually expecting this at some point, so don't react poorly
 		return gracefulTerminateState
 	}

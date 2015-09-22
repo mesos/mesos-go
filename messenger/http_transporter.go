@@ -52,7 +52,7 @@ type httpTransporter interface {
 	Recv() (*Message, error)
 	Inject(ctx context.Context, msg *Message) error
 	Install(messageName string)
-	Start() <-chan error
+	Start() (upid.UPID, <-chan error)
 	Stop(graceful bool) error
 }
 
@@ -73,7 +73,7 @@ func (s *notStartedState) Recv() (*Message, error)                        { retu
 func (s *notStartedState) Inject(ctx context.Context, msg *Message) error { return errNotStarted }
 func (s *notStartedState) Stop(graceful bool) error                       { return errNotStarted }
 func (s *notStartedState) Install(messageName string)                     { s.h.install(messageName) }
-func (s *notStartedState) Start() <-chan error {
+func (s *notStartedState) Start() (upid.UPID, <-chan error) {
 	s.h.state = &runningState{s}
 	return s.h.start()
 }
@@ -85,10 +85,10 @@ func (s *stoppedState) Recv() (*Message, error)                        { return 
 func (s *stoppedState) Inject(ctx context.Context, msg *Message) error { return errTerminal }
 func (s *stoppedState) Stop(graceful bool) error                       { return errTerminal }
 func (s *stoppedState) Install(messageName string)                     {}
-func (s *stoppedState) Start() <-chan error {
+func (s *stoppedState) Start() (upid.UPID, <-chan error) {
 	ch := make(chan error, 1)
 	ch <- errTerminal
-	return ch
+	return upid.UPID{}, ch
 }
 
 /* -- running state */
@@ -100,17 +100,17 @@ func (s *runningState) Stop(graceful bool) error {
 	s.h.state = &stoppedState{}
 	return s.h.stop(graceful)
 }
-func (s *runningState) Start() <-chan error {
+func (s *runningState) Start() (upid.UPID, <-chan error) {
 	ch := make(chan error, 1)
 	ch <- errAlreadyRunning
-	return ch
+	return upid.UPID{}, ch
 }
 
 // HTTPTransporter implements the interfaces of the Transporter.
 type HTTPTransporter struct {
 	// If the host is empty("") then it will listen on localhost.
 	// If the port is empty("") then it will listen on random port.
-	upid         *upid.UPID
+	upid         upid.UPID
 	listener     net.Listener // TODO(yifan): Change to TCPListener.
 	mux          *http.ServeMux
 	tr           *http.Transport
@@ -123,7 +123,7 @@ type HTTPTransporter struct {
 }
 
 // NewHTTPTransporter creates a new http transporter with an optional binding address.
-func NewHTTPTransporter(upid *upid.UPID, address net.IP) *HTTPTransporter {
+func NewHTTPTransporter(upid upid.UPID, address net.IP) *HTTPTransporter {
 	tr := &http.Transport{}
 	result := &HTTPTransporter{
 		upid:         upid,
@@ -412,17 +412,18 @@ func (t *HTTPTransporter) listen() error {
 }
 
 // Start starts the http transporter
-func (t *HTTPTransporter) Start() <-chan error {
+func (t *HTTPTransporter) Start() (upid.UPID, <-chan error) {
 	t.stateLock.Lock()
 	defer t.stateLock.Unlock()
 	return t.state.Start()
 }
 
 // start expects to be guarded by stateLock
-func (t *HTTPTransporter) start() <-chan error {
+func (t *HTTPTransporter) start() (upid.UPID, <-chan error) {
 	ch := make(chan error, 1)
 	if err := t.listen(); err != nil {
 		ch <- err
+		return upid.UPID{}, ch
 	} else {
 		// TODO(yifan): Set read/write deadline.
 		go func() {
@@ -434,17 +435,20 @@ func (t *HTTPTransporter) start() <-chan error {
 			err := s.Serve(t.listener)
 			select {
 			case <-t.shouldQuit:
+				log.V(1).Infof("HTTP server stopped because of shutdown")
 				ch <- nil
 			default:
 				if err != nil && log.V(1) {
 					log.Errorln("HTTP server stopped with error", err.Error())
+				} else {
+					log.V(1).Infof("HTTP server stopped")
 				}
 				ch <- err
 				t.Stop(false)
 			}
 		}()
 	}
-	return ch
+	return t.upid, ch
 }
 
 // Stop stops the http transporter by closing the listener.
@@ -467,7 +471,9 @@ func (t *HTTPTransporter) stop(graceful bool) error {
 }
 
 // UPID returns the upid of the transporter.
-func (t *HTTPTransporter) UPID() *upid.UPID {
+func (t *HTTPTransporter) UPID() upid.UPID {
+	t.stateLock.Lock()
+	defer t.stateLock.Unlock()
 	return t.upid
 }
 
@@ -489,29 +495,36 @@ func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request)
 	// fail thus causing the socket to get closed (but now
 	// libprocess will ignore responses, see ignore_data).
 	// see https://github.com/apache/mesos/blob/adecbfa6a216815bd7dc7d26e721c4c87e465c30/3rdparty/libprocess/src/process.cpp#L2192
+rcvLoop:
 	for {
-		r, ok := <-decoder.Requests()
-		if !ok {
-			// Channel closed, break out of loop
-			break
+		var request *Request
+		select {
+		case r, ok := <-decoder.Requests():
+			if !ok {
+				// Channel closed, break out of loop
+				break rcvLoop
+			}
+			request = r
+		case <-t.shouldQuit:
+			break rcvLoop
 		}
 		if func() bool {
 			// regardless of whether we write a Response we must close this chan
-			defer close(r.response)
+			defer close(request.response)
 
 			//TODO(jdef) this is probably inefficient given the current implementation of the
 			// decoder: no need to make another copy of data that's already competely buffered
-			data, err := ioutil.ReadAll(r.Body)
+			data, err := ioutil.ReadAll(request.Body)
 			if err != nil {
 				// this is unlikely given the current implementation of the decoder:
 				// the body has been completely buffered in memory already
 				log.Errorf("failed to read HTTP body: %v\n", err)
 				return true
 			}
-			log.V(2).Infof("Receiving %s %v from %v, length %v\n", r.Method, r.URL, from, len(data))
+			log.V(2).Infof("Receiving %s %v from %v, length %v\n", request.Method, request.URL, from, len(data))
 			m := &Message{
 				UPID:  from,
-				Name:  extractNameFromRequestURI(r.RequestURI),
+				Name:  extractNameFromRequestURI(request.RequestURI),
 				Bytes: data,
 			}
 
@@ -523,9 +536,9 @@ func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request)
 			}
 
 			// if user-agent != libprocess then we need to send a response
-			if _, ok := parseLibprocessAgent(r.Header); !ok {
+			if _, ok := parseLibprocessAgent(request.Header); !ok {
 				log.V(2).Infof("not libprocess agent, sending a 202")
-				r.response <- Response{
+				request.response <- Response{
 					code:   202,
 					reason: "Accepted",
 				}
@@ -537,9 +550,13 @@ func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	if err, ok := <-decoder.Err(); ok {
-		log.Errorf("failed to decode HTTP message: %v", err)
-		return
+	// log an error if there's one waiting, otherwise move on
+	select {
+	case err, ok := <-decoder.Err():
+		if ok {
+			log.Errorf("failed to decode HTTP message: %v", err)
+		}
+	default:
 	}
 }
 

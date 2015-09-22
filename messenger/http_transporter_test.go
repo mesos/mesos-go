@@ -17,11 +17,8 @@ import (
 )
 
 func TestTransporterNew(t *testing.T) {
-	id, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
-	assert.NoError(t, err)
-	trans := NewHTTPTransporter(id, nil)
+	trans := NewHTTPTransporter(upid.UPID{ID: "mesos1", Host: "localhost"}, nil)
 	assert.NotNil(t, trans)
-	assert.NotNil(t, trans.upid)
 	assert.NotNil(t, trans.messageQueue)
 	assert.NotNil(t, trans.client)
 }
@@ -31,9 +28,6 @@ func TestTransporterSend(t *testing.T) {
 	serverId := "testserver"
 
 	// setup mesos client-side
-	fromUpid, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
-	assert.NoError(t, err)
-
 	protoMsg := testmessage.GenerateSmallMessage()
 	msgName := getMessageName(protoMsg)
 	msg := &Message{
@@ -55,8 +49,8 @@ func TestTransporterSend(t *testing.T) {
 	assert.NoError(t, err)
 
 	// make transport call.
-	transport := NewHTTPTransporter(fromUpid, nil)
-	errch := transport.Start()
+	transport := NewHTTPTransporter(upid.UPID{ID: "mesos1", Host: "localhost"}, nil)
+	_, errch := transport.Start()
 	defer transport.Stop(false)
 
 	msg.UPID = toUpid
@@ -78,9 +72,6 @@ func TestTransporter_DiscardedSend(t *testing.T) {
 	serverId := "testserver"
 
 	// setup mesos client-side
-	fromUpid, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
-	assert.NoError(t, err)
-
 	protoMsg := testmessage.GenerateSmallMessage()
 	msgName := getMessageName(protoMsg)
 	msg := &Message{
@@ -100,8 +91,8 @@ func TestTransporter_DiscardedSend(t *testing.T) {
 	assert.NoError(t, err)
 
 	// make transport call.
-	transport := NewHTTPTransporter(fromUpid, nil)
-	errch := transport.Start()
+	transport := NewHTTPTransporter(upid.UPID{ID: "mesos1", Host: "localhost"}, nil)
+	_, errch := transport.Start()
 	defer transport.Stop(false)
 
 	msg.UPID = toUpid
@@ -138,16 +129,13 @@ func TestTransporter_DiscardedSend(t *testing.T) {
 
 func TestTransporterStartAndRcvd(t *testing.T) {
 	serverId := "testserver"
-	serverPort := getNewPort()
-	serverAddr := "127.0.0.1:" + strconv.Itoa(serverPort)
+	serverAddr := "127.0.0.1"
 	protoMsg := testmessage.GenerateSmallMessage()
 	msgName := getMessageName(protoMsg)
 	ctrl := make(chan struct{})
 
 	// setup receiver (server) process
-	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
-	assert.NoError(t, err)
-	receiver := NewHTTPTransporter(rcvPid, nil)
+	receiver := NewHTTPTransporter(upid.UPID{ID: serverId, Host: serverAddr}, nil)
 	receiver.Install(msgName)
 
 	go func() {
@@ -161,23 +149,20 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 		}
 	}()
 
-	errch := receiver.Start()
+	rcvPid, errch := receiver.Start()
 	defer receiver.Stop(false)
 	assert.NotNil(t, errch)
 
 	time.Sleep(time.Millisecond * 7) // time to catchup
 
 	// setup sender (client) process
-	sndUpid, err := upid.Parse(fmt.Sprintf("mesos1@localhost:%d", getNewPort()))
-	assert.NoError(t, err)
-
-	sender := NewHTTPTransporter(sndUpid, nil)
+	sender := NewHTTPTransporter(upid.UPID{ID: "mesos1", Host: "localhost"}, nil)
 	msg := &Message{
-		UPID:         rcvPid,
+		UPID:         &rcvPid,
 		Name:         msgName,
 		ProtoMessage: protoMsg,
 	}
-	errch2 := sender.Start()
+	_, errch2 := sender.Start()
 	defer sender.Stop(false)
 
 	t.Logf("sending test message")
@@ -200,22 +185,18 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 
 func TestTransporterStartAndInject(t *testing.T) {
 	serverId := "testserver"
-	serverPort := getNewPort()
-	serverAddr := "127.0.0.1:" + strconv.Itoa(serverPort)
 	protoMsg := testmessage.GenerateSmallMessage()
 	msgName := getMessageName(protoMsg)
 	ctrl := make(chan struct{})
 
 	// setup receiver (server) process
-	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
-	assert.NoError(t, err)
-	receiver := NewHTTPTransporter(rcvPid, nil)
+	receiver := NewHTTPTransporter(upid.UPID{ID: serverId, Host: "127.0.0.1"}, nil)
 	receiver.Install(msgName)
-	errch := receiver.Start()
+	rcvPid, errch := receiver.Start()
 	defer receiver.Stop(false)
 
 	msg := &Message{
-		UPID:         rcvPid,
+		UPID:         &rcvPid,
 		Name:         msgName,
 		ProtoMessage: protoMsg,
 	}
@@ -245,15 +226,11 @@ func TestTransporterStartAndInject(t *testing.T) {
 
 func TestTransporterStartAndStop(t *testing.T) {
 	serverId := "testserver"
-	serverPort := getNewPort()
-	serverAddr := "127.0.0.1:" + strconv.Itoa(serverPort)
 
 	// setup receiver (server) process
-	rcvPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
-	assert.NoError(t, err)
-	receiver := NewHTTPTransporter(rcvPid, nil)
+	receiver := NewHTTPTransporter(upid.UPID{ID: serverId, Host: "127.0.0.1"}, nil)
 
-	errch := receiver.Start()
+	_, errch := receiver.Start()
 	assert.NotNil(t, errch)
 
 	time.Sleep(1 * time.Second)
@@ -284,7 +261,7 @@ func TestMutatedHostUPid(t *testing.T) {
 	// setup receiver (server) process
 	uPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
 	assert.NoError(t, err)
-	receiver := NewHTTPTransporter(uPid, addr)
+	receiver := NewHTTPTransporter(*uPid, addr)
 
 	err = receiver.listen()
 	assert.NoError(t, err)
@@ -299,36 +276,22 @@ func TestMutatedHostUPid(t *testing.T) {
 }
 
 func TestEmptyHostPortUPid(t *testing.T) {
-	serverId := "testserver"
-	serverPort := getNewPort()
-	serverHost := "127.0.0.1"
-	serverAddr := serverHost + ":" + strconv.Itoa(serverPort)
-
-	// setup receiver (server) process
-	uPid, err := upid.Parse(fmt.Sprintf("%s@%s", serverId, serverAddr))
-	assert.NoError(t, err)
-
-	// Unset upid host and port
-	uPid.Host = ""
-	uPid.Port = ""
+	uPid := upid.UPID{ID: "testserver"}
 
 	// override the upid.Host with this listener IP
 	addr := net.ParseIP("0.0.0.0")
-
 	receiver := NewHTTPTransporter(uPid, addr)
 
-	err = receiver.listen()
+	err := receiver.listen()
 	assert.NoError(t, err)
 
 	// This should be the host that overrides as uPid.Host is empty
 	if receiver.upid.Host != "0.0.0.0" {
-		t.Fatalf("reciever.upid.Host was expected to return %s, got %s\n", serverHost, receiver.upid.Host)
+		t.Fatalf("reciever.upid.Host was expected to return 0.0.0.0, got %q", receiver.upid.Host)
 	}
 
-	// This should end up being a random port, not the server port as uPid
-	// port is empty
-	if receiver.upid.Port == strconv.Itoa(serverPort) {
-		t.Fatalf("receiver.upid.Port was not expected to return %d, got %s\n", serverPort, receiver.upid.Port)
+	if receiver.upid.Port == "0" {
+		t.Fatalf("receiver.upid.Port was not expected to return 0, got %q", receiver.upid.Port)
 	}
 }
 

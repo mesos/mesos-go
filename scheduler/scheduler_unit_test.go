@@ -137,7 +137,7 @@ func driverConfigMessenger(sched Scheduler, framework *mesos.FrameworkInfo, mast
 func mockedMessenger() *messenger.MockedMessenger {
 	m := messenger.NewMockedMessenger()
 	m.On("Start").Return(nil)
-	m.On("UPID").Return(&upid.UPID{})
+	m.On("UPID").Return(upid.UPID{})
 	m.On("Send").Return(nil)
 	m.On("Stop").Return(nil)
 	m.On("Route").Return(nil)
@@ -228,7 +228,7 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverStartWithRegistrationFailure
 	// Set expections and return values.
 	messenger := messenger.NewMockedMessenger()
 	messenger.On("Start").Return(nil)
-	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Stop").Return(nil)
 	messenger.On("Install").Return(nil)
 

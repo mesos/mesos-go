@@ -423,7 +423,8 @@ func (driver *MesosExecutorDriver) start() (mesosproto.Status, error) {
 		return driver.status, err
 	}
 
-	driver.self = driver.messenger.UPID()
+	pid := driver.messenger.UPID()
+	driver.self = &pid
 
 	// Register with slave.
 	log.V(3).Infoln("Sending Executor registration")

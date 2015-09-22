@@ -92,7 +92,7 @@ func createTestExecutorDriver(t *testing.T) (
 
 	messenger := messenger.NewMockedMessenger()
 	messenger.On("Start").Return(nil)
-	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
 
@@ -147,7 +147,7 @@ func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
 
 	// Set expections and return values.
 	messenger.On("Start").Return(nil)
-	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Send").Return(fmt.Errorf("messenger failed to send"))
 	messenger.On("Stop").Return(nil)
 
@@ -172,7 +172,7 @@ func TestExecutorDriverStartSucceed(t *testing.T) {
 	messenger := messenger.NewMockedMessenger()
 	driver.messenger = messenger
 	messenger.On("Start").Return(nil)
-	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
 
@@ -197,7 +197,7 @@ func TestExecutorDriverRun(t *testing.T) {
 	// Set expections and return values.
 	messenger := messenger.NewMockedMessenger()
 	messenger.On("Start").Return(nil)
-	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
 
@@ -231,7 +231,7 @@ func TestExecutorDriverJoin(t *testing.T) {
 	// Set expections and return values.
 	messenger := messenger.NewMockedMessenger()
 	messenger.On("Start").Return(nil)
-	messenger.On("UPID").Return(&upid.UPID{})
+	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
 

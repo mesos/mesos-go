@@ -248,8 +248,12 @@ func (s *SchedulerIntegrationTestSuite) TearDownTest() {
 	if s.server != nil {
 		s.server.Close()
 	}
-	if s.driver != nil && s.driver.Status() == mesos.Status_DRIVER_RUNNING {
+	if s.driver != nil {
 		s.driver.Abort()
+
+		// wait for all events to finish processing, otherwise we can get into a data
+		// race when the suite object is reused for the next test.
+		<-s.driver.done
 	}
 }
 

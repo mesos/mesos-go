@@ -488,67 +488,7 @@ func (t *HTTPTransporter) messageDecoder(w http.ResponseWriter, r *http.Request)
 	decoder := DecodeHTTP(w, r)
 	defer decoder.Cancel(true)
 
-	//TODO(jdef) Only send back an HTTP response if this isn't from libprocess
-	// (which we determine by looking at the User-Agent). This is
-	// necessary because older versions of libprocess would try and
-	// recv the data and parse it as an HTTP request which would
-	// fail thus causing the socket to get closed (but now
-	// libprocess will ignore responses, see ignore_data).
-	// see https://github.com/apache/mesos/blob/adecbfa6a216815bd7dc7d26e721c4c87e465c30/3rdparty/libprocess/src/process.cpp#L2192
-rcvLoop:
-	for {
-		var request *Request
-		select {
-		case r, ok := <-decoder.Requests():
-			if !ok {
-				// Channel closed, break out of loop
-				break rcvLoop
-			}
-			request = r
-		case <-t.shouldQuit:
-			break rcvLoop
-		}
-		if func() bool {
-			// regardless of whether we write a Response we must close this chan
-			defer close(request.response)
-
-			//TODO(jdef) this is probably inefficient given the current implementation of the
-			// decoder: no need to make another copy of data that's already competely buffered
-			data, err := ioutil.ReadAll(request.Body)
-			if err != nil {
-				// this is unlikely given the current implementation of the decoder:
-				// the body has been completely buffered in memory already
-				log.Errorf("failed to read HTTP body: %v\n", err)
-				return true
-			}
-			log.V(2).Infof("Receiving %s %v from %v, length %v\n", request.Method, request.URL, from, len(data))
-			m := &Message{
-				UPID:  from,
-				Name:  extractNameFromRequestURI(request.RequestURI),
-				Bytes: data,
-			}
-
-			keepGoing := true
-			select {
-			case <-t.shouldQuit:
-				keepGoing = false
-			case t.messageQueue <- m:
-			}
-
-			// if user-agent != libprocess then we need to send a response
-			if _, ok := parseLibprocessAgent(request.Header); !ok {
-				log.V(2).Infof("not libprocess agent, sending a 202")
-				request.response <- Response{
-					code:   202,
-					reason: "Accepted",
-				}
-			}
-
-			return keepGoing
-		}() {
-			continue
-		}
-	}
+	t.processRequests(from, decoder.Requests())
 
 	// log an error if there's one waiting, otherwise move on
 	select {
@@ -558,6 +498,77 @@ rcvLoop:
 		}
 	default:
 	}
+}
+
+func (t *HTTPTransporter) processRequests(from *upid.UPID, incoming <-chan *Request) {
+	for {
+		select {
+		case r, ok := <-incoming:
+			if !ok {
+				// Channel closed, break out of loop
+				return
+			}
+			if !t.processOneRequest(from, r) {
+				return
+			}
+		case <-t.shouldQuit:
+			return
+		}
+	}
+}
+
+func (t *HTTPTransporter) processOneRequest(from *upid.UPID, request *Request) (keepGoing bool) {
+	// regardless of whether we write a Response we must close this chan
+	defer close(request.response)
+	keepGoing = true
+
+	//TODO(jdef) this is probably inefficient given the current implementation of the
+	// decoder: no need to make another copy of data that's already competely buffered
+	data, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		// this is unlikely given the current implementation of the decoder:
+		// the body has been completely buffered in memory already
+		log.Errorf("failed to read HTTP body: %v", err)
+		return
+	}
+	log.V(2).Infof("Receiving %q %v from %v, length %v", request.Method, request.URL, from, len(data))
+	m := &Message{
+		UPID:  from,
+		Name:  extractNameFromRequestURI(request.RequestURI),
+		Bytes: data,
+	}
+
+	// deterministic behavior and output..
+	select {
+	case <-t.shouldQuit:
+		keepGoing = false
+		select {
+		case t.messageQueue <- m:
+		default:
+		}
+	case t.messageQueue <- m:
+		select {
+		case <-t.shouldQuit:
+			keepGoing = false
+		default:
+		}
+	}
+
+	// Only send back an HTTP response if this isn't from libprocess
+	// (which we determine by looking at the User-Agent). This is
+	// necessary because older versions of libprocess would try and
+	// recv the data and parse it as an HTTP request which would
+	// fail thus causing the socket to get closed (but now
+	// libprocess will ignore responses, see ignore_data).
+	// see https://github.com/apache/mesos/blob/adecbfa6a216815bd7dc7d26e721c4c87e465c30/3rdparty/libprocess/src/process.cpp#L2192
+	if _, ok := parseLibprocessAgent(request.Header); !ok {
+		log.V(2).Infof("not libprocess agent, sending a 202")
+		request.response <- Response{
+			code:   202,
+			reason: "Accepted",
+		} // should never block
+	}
+	return
 }
 
 func (t *HTTPTransporter) makeLibprocessRequest(msg *Message) (*http.Request, error) {

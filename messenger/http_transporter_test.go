@@ -1,7 +1,9 @@
 package messenger
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -299,4 +301,50 @@ func makeMockServer(path string, handler func(rsp http.ResponseWriter, req *http
 	mux := http.NewServeMux()
 	mux.HandleFunc(path, handler)
 	return httptest.NewServer(mux)
+}
+
+func TestProcessOneRequest(t *testing.T) {
+	ht := &HTTPTransporter{
+		messageQueue: make(chan *Message, 1),
+		shouldQuit:   make(chan struct{}),
+	}
+	testfunc := func(expectProceed bool) {
+		rchan := make(chan Response, 1)
+		proceed := ht.processOneRequest(&upid.UPID{ID: "james"}, &Request{
+			response: rchan,
+			Request: &http.Request{
+				Method:     "foo",
+				RequestURI: "a/z/bar",
+				Body:       ioutil.NopCloser(bytes.NewBuffer([]byte{})),
+			},
+		})
+		// expecting to get a 202 response since the request doesn't have libprocess headers
+		if proceed != expectProceed {
+			t.Fatalf("expected proceed signal %t instead of %t", expectProceed, proceed)
+		}
+		select {
+		case resp := <-rchan:
+			if resp.code != 202 {
+				t.Fatalf("expected a 202 response for all libprocess requests")
+			}
+		default:
+			t.Fatalf("expected a response since we're not a libprocess agent")
+		}
+		select {
+		case m := <-ht.messageQueue:
+			// From, Name, Data
+			assert.Equal(t, "james", m.UPID.ID)
+			assert.Equal(t, "bar", m.Name)
+		default:
+			t.Fatalf("expected a message for the request that was processed")
+		}
+	}
+	t.Log("testing w/o shouldQuit signal")
+	testfunc(true)
+
+	t.Log("testing w/ shouldQuit signal")
+	close(ht.shouldQuit)
+	for i := 0; i < 100; i++ {
+		testfunc(false) // do this in a loop to test determinism
+	}
 }

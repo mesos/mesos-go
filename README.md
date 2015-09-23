@@ -14,6 +14,10 @@ see any major development besides critical compatibility and bug fixes.
 
 We use [semantic versioning](http://semver.org/).
 
+### Compatibility
+`mesos-N` tags mark the start of support for a specific Mesos version while
+maintaining backwards compatibility with the previous major version.
+
 ### Features
 - The SchedulerDriver API implemented
 - The ExecutorDriver API implemented

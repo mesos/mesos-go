@@ -270,8 +270,10 @@ func (driver *MesosSchedulerDriver) makeWithScheduler(cs Scheduler) func(func(Sc
 			// every so often - this avoids indefinitely blocking a call to Abort().
 			driver.eventLock.Unlock()
 			schedLock.Lock()
-			defer driver.eventLock.Lock()
-			defer schedLock.Unlock()
+			defer func() {
+				schedLock.Unlock()
+				driver.eventLock.Lock()
+			}()
 
 			if atomic.LoadInt32(&abort) == 1 {
 				// can't send anymore

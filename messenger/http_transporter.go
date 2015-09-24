@@ -424,30 +424,30 @@ func (t *HTTPTransporter) start() (upid.UPID, <-chan error) {
 	if err := t.listen(); err != nil {
 		ch <- err
 		return upid.UPID{}, ch
-	} else {
-		// TODO(yifan): Set read/write deadline.
-		go func() {
-			s := &http.Server{
-				ReadTimeout:  DefaultReadTimeout,
-				WriteTimeout: DefaultWriteTimeout,
-				Handler:      t.mux,
-			}
-			err := s.Serve(t.listener)
-			select {
-			case <-t.shouldQuit:
-				log.V(1).Infof("HTTP server stopped because of shutdown")
-				ch <- nil
-			default:
-				if err != nil && log.V(1) {
-					log.Errorln("HTTP server stopped with error", err.Error())
-				} else {
-					log.V(1).Infof("HTTP server stopped")
-				}
-				ch <- err
-				t.Stop(false)
-			}
-		}()
 	}
+
+	// TODO(yifan): Set read/write deadline.
+	go func() {
+		s := &http.Server{
+			ReadTimeout:  DefaultReadTimeout,
+			WriteTimeout: DefaultWriteTimeout,
+			Handler:      t.mux,
+		}
+		err := s.Serve(t.listener)
+		select {
+		case <-t.shouldQuit:
+			log.V(1).Infof("HTTP server stopped because of shutdown")
+			ch <- nil
+		default:
+			if err != nil && log.V(1) {
+				log.Errorln("HTTP server stopped with error", err.Error())
+			} else {
+				log.V(1).Infof("HTTP server stopped")
+			}
+			ch <- err
+			t.Stop(false)
+		}
+	}()
 	return t.upid, ch
 }
 
@@ -504,11 +504,7 @@ func (t *HTTPTransporter) processRequests(from *upid.UPID, incoming <-chan *Requ
 	for {
 		select {
 		case r, ok := <-incoming:
-			if !ok {
-				// Channel closed, break out of loop
-				return
-			}
-			if !t.processOneRequest(from, r) {
+			if !ok || !t.processOneRequest(from, r) {
 				return
 			}
 		case <-t.shouldQuit:

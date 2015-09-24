@@ -315,7 +315,7 @@ func TestProcessOneRequest(t *testing.T) {
 			Request: &http.Request{
 				Method:     "foo",
 				RequestURI: "a/z/bar",
-				Body:       ioutil.NopCloser(bytes.NewBuffer([]byte{})),
+				Body:       ioutil.NopCloser(&bytes.Reader{}),
 			},
 		})
 		// expecting to get a 202 response since the request doesn't have libprocess headers

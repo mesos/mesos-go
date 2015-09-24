@@ -529,10 +529,7 @@ func isGracefulTermSignal(err error) bool {
 		return true
 	}
 	if operr, ok := err.(*net.OpError); ok {
-		if operr.Op != "read" {
-			return false
-		}
-		return err == syscall.ECONNRESET
+		return operr.Op == "read" && err == syscall.ECONNRESET
 	}
 	return false
 }

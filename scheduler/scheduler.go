@@ -26,6 +26,7 @@ import (
 	"net"
 	"os/user"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
@@ -50,6 +51,17 @@ const (
 var (
 	authenticationCanceledError = errors.New("authentication canceled")
 )
+
+type ErrDriverAborted struct {
+	Reason string
+}
+
+func (err *ErrDriverAborted) Error() string {
+	if err.Reason != "" {
+		return err.Reason
+	}
+	return "driver-aborted"
+}
 
 // helper to track authentication progress and to prevent multiple close() ops
 // against a signalling chan. it's safe to invoke the func's of this struct
@@ -88,6 +100,7 @@ type DriverConfig struct {
 	BindingPort      uint16                                // optional
 	PublishedAddress net.IP                                // optional
 	NewMessenger     func() (messenger.Messenger, error)   // optional
+	NewDetector      func() (detector.Master, error)       // optional
 }
 
 // Concrete implementation of a SchedulerDriver that connects a
@@ -133,8 +146,8 @@ type MesosSchedulerDriver struct {
 	dispatch        func(context.Context, *upid.UPID, proto.Message) error // send a message somewhere
 	started         chan struct{}                                          // signal chan that closes upon a successful call to Start()
 	eventLock       sync.RWMutex                                           // guard for all driver state
-	eventCond       *sync.Cond                                             // linked to eventLock, used to detect driver stop
 	withScheduler   func(f func(s Scheduler))                              // execute some func with respect to the given scheduler
+	done            chan struct{}                                          // signal chan that closes when no more events will be processed
 }
 
 // Create a new mesos scheduler driver with the given
@@ -186,45 +199,22 @@ func NewMesosSchedulerDriver(config DriverConfig) (initializedDriver *MesosSched
 		failover:        framework.Id != nil && len(framework.Id.GetValue()) > 0,
 		withAuthContext: config.WithAuthContext,
 		started:         make(chan struct{}),
+		done:            make(chan struct{}),
 	}
-	driver.eventCond = sync.NewCond(&driver.eventLock)
 
-	// mechanism that allows us to asynchronously invoke scheduler callbacks, but in a manner
-	// such that the callback invocations are serialized. useful because this will decouple the
-	// goroutine executing a messenger callback from the goroutine executing a scheduler callback,
-	// while preserving the serialization semantics for each type of callback handling.
-	// we use a chan to maintain the order of callback invocations; this is important for maintaining
-	// the order in which status updates are processed.
-	schedQueue := make(chan func(s Scheduler))
-	go func() {
-		for {
-			select {
-			case f := <-schedQueue:
-				f(config.Scheduler)
-			case <-driver.stopCh:
-				// check for a tie: abort() may have sent a message that we need to pass up
-				// to the user.
-				select {
-				case f := <-schedQueue:
-					f(config.Scheduler)
-				default:
-				}
-				return
-			}
-		}
-	}()
-	driver.withScheduler = func(f func(s Scheduler)) {
-		select {
-		case schedQueue <- f:
-		case <-driver.stopCh:
-		}
-	}
+	driver.withScheduler = driver.makeWithScheduler(config.Scheduler)
 
 	if framework.FailoverTimeout != nil && *framework.FailoverTimeout > 0 {
 		driver.failoverTimeout = *framework.FailoverTimeout * float64(time.Second)
 		log.V(1).Infof("found failover_timeout = %v", time.Duration(driver.failoverTimeout))
 	}
 
+	newDetector := config.NewDetector
+	if newDetector == nil {
+		newDetector = func() (detector.Master, error) {
+			return detector.New(config.Master)
+		}
+	}
 	newMessenger := config.NewMessenger
 	if newMessenger == nil {
 		newMessenger = func() (messenger.Messenger, error) {
@@ -234,7 +224,7 @@ func NewMesosSchedulerDriver(config DriverConfig) (initializedDriver *MesosSched
 	}
 
 	// initialize new detector.
-	if driver.masterDetector, err = detector.New(config.Master); err != nil {
+	if driver.masterDetector, err = newDetector(); err != nil {
 		return
 	} else if driver.messenger, err = newMessenger(); err != nil {
 		return
@@ -244,6 +234,88 @@ func NewMesosSchedulerDriver(config DriverConfig) (initializedDriver *MesosSched
 		initializedDriver = driver
 	}
 	return
+}
+
+func (driver *MesosSchedulerDriver) makeWithScheduler(cs Scheduler) func(func(Scheduler)) {
+	// mechanism that allows us to asynchronously invoke scheduler callbacks, but in a manner
+	// such that the callback invocations are serialized. useful because this will decouple the
+	// goroutine executing a messenger callback from the goroutine executing a scheduler callback,
+	// while preserving the serialization semantics for each type of callback handling.
+	// we use a chan to maintain the order of callback invocations; this is important for maintaining
+	// the order in which status updates are processed.
+	schedQueue := make(chan func(s Scheduler))
+	go func() {
+		defer func() {
+			close(driver.done)
+			log.V(1).Infoln("finished processing scheduler events")
+		}()
+		for f := range schedQueue {
+			f(cs)
+		}
+	}()
+
+	var schedLock sync.Mutex // synchronize write access to schedQueue
+	abort := int32(0)
+
+	// assume that when withScheduler is invoked eventLock is locked
+	return func(f func(s Scheduler)) {
+		const timeout = 1 * time.Second
+		t := time.NewTimer(timeout)
+		defer t.Stop()
+
+		trySend := func() (done bool) {
+			// don't block while attempting to enqueue a scheduler op; this could
+			// take a while depending upon the external scheduler implementation.
+			// also, it allows for multiple go-routines to re-compete for the lock
+			// every so often - this avoids indefinitely blocking a call to Abort().
+			driver.eventLock.Unlock()
+			schedLock.Lock()
+			defer func() {
+				schedLock.Unlock()
+				driver.eventLock.Lock()
+			}()
+
+			if atomic.LoadInt32(&abort) == 1 {
+				// can't send anymore
+				return true
+			}
+
+			// try to write to event queue...
+			select {
+			case schedQueue <- f:
+				done = true
+			case <-driver.stopCh:
+				done = true
+			case <-t.C:
+			}
+
+			// if stopping then close out the queue (keeping this check separate from
+			// the above on purpose! otherwise we could miss the close signal)
+			select {
+			case <-driver.stopCh:
+				if atomic.CompareAndSwapInt32(&abort, 0, 1) {
+					defer close(schedQueue)
+					log.V(1).Infoln("stopping scheduler event queue..")
+
+					// one last attempt, before we run out of time
+					select {
+					case schedQueue <- f:
+					case <-t.C:
+					}
+				}
+			default:
+			}
+			return
+		}
+		for !trySend() {
+			t.Reset(timeout) // TODO(jdef) add jitter to this
+		}
+		// have to do this outside trySend because here we're guarded by eventLock; it's ok
+		// if this happens more then once.
+		if atomic.LoadInt32(&abort) == 1 {
+			driver.withScheduler = func(f func(_ Scheduler)) {}
+		}
+	}
 }
 
 // init initializes the driver.
@@ -354,7 +426,8 @@ func (driver *MesosSchedulerDriver) tryAuthentication() {
 				result.Completed = proto.Bool(true)
 				result.Success = proto.Bool(true)
 			}
-			driver.messenger.Route(context.TODO(), driver.messenger.UPID(), result)
+			pid := driver.messenger.UPID()
+			driver.messenger.Route(context.TODO(), &pid, result)
 		}()
 		driver.authenticating = authenticating
 	} else {
@@ -728,24 +801,10 @@ func (driver *MesosSchedulerDriver) start() (mesos.Status, error) {
 		return driver.status, err
 	}
 
-	driver.self = driver.messenger.UPID()
+	pid := driver.messenger.UPID()
+	driver.self = &pid
 	driver.status = mesos.Status_DRIVER_RUNNING
 	close(driver.started)
-
-	// TODO(jdef) hacky but we don't want to miss it if the scheduler shuts down
-	go func() {
-		t := time.NewTicker(2 * time.Second)
-		defer t.Stop()
-		for {
-			<-t.C
-			driver.eventCond.Broadcast()
-			select {
-			case <-driver.stopCh:
-				return
-			default:
-			}
-		}
-	}()
 
 	log.Infof("Mesos scheduler driver started with PID=%v", driver.self)
 
@@ -755,13 +814,14 @@ func (driver *MesosSchedulerDriver) start() (mesos.Status, error) {
 		})
 	})
 
-	// register with Detect() AFTER we have a self pid from the messenger, otherwise things get ugly
-	// because our internal messaging depends on it. detector callbacks are routed over the messenger
-	// bus, maintaining serial (concurrency-safe) callback execution.
-	log.V(1).Infof("starting master detector %T: %+v", driver.masterDetector, driver.masterDetector)
-	driver.masterDetector.Detect(listener)
-
-	log.V(2).Infoln("master detector started")
+	if driver.masterDetector != nil {
+		// register with Detect() AFTER we have a self pid from the messenger, otherwise things get ugly
+		// because our internal messaging depends on it. detector callbacks are routed over the messenger
+		// bus, maintaining serial (concurrency-safe) callback execution.
+		log.V(1).Infof("starting master detector %T: %+v", driver.masterDetector, driver.masterDetector)
+		driver.masterDetector.Detect(listener)
+		log.V(2).Infoln("master detector started")
+	}
 	return driver.status, nil
 }
 
@@ -820,10 +880,13 @@ func (driver *MesosSchedulerDriver) doReliableRegistration(maxBackoff float64) {
 
 		log.V(1).Infof("will retry registration in %v if necessary", delay)
 
+		t := time.NewTimer(delay)
+		defer t.Stop()
+
 		select {
 		case <-driver.stopCh:
 			return
-		case <-time.After(delay):
+		case <-t.C:
 			maxBackoff *= 2
 		}
 	}
@@ -887,18 +950,31 @@ func (driver *MesosSchedulerDriver) Join() (mesos.Status, error) {
 }
 
 // join expects to be guarded by eventLock
-func (driver *MesosSchedulerDriver) join() (mesos.Status, error) {
-	if stat := driver.status; stat != mesos.Status_DRIVER_RUNNING {
-		return stat, fmt.Errorf("Unable to Join, expecting driver status %s, but is %s", mesos.Status_DRIVER_RUNNING, stat)
+func (driver *MesosSchedulerDriver) join() (stat mesos.Status, err error) {
+	if stat = driver.status; stat != mesos.Status_DRIVER_RUNNING {
+		err = fmt.Errorf("Unable to Join, expecting driver status %s, but is %s", mesos.Status_DRIVER_RUNNING, stat)
+		return
 	}
+
+	timeout := 1 * time.Second
+	t := time.NewTimer(timeout)
+	defer t.Stop()
+
+	driver.eventLock.Unlock()
+	defer func() {
+		driver.eventLock.Lock()
+		stat = driver.status
+	}()
+waitForDeath:
 	for {
 		select {
-		case <-driver.stopCh: // wait for stop signal
-			return driver.status, nil
-		default:
-			driver.eventCond.Wait()
+		case <-driver.done:
+			break waitForDeath
+		case <-t.C:
 		}
+		t.Reset(timeout)
 	}
+	return
 }
 
 //Run starts and joins driver process and waits to be stopped or aborted.
@@ -913,7 +989,7 @@ func (driver *MesosSchedulerDriver) run() (mesos.Status, error) {
 	stat, err := driver.start()
 
 	if err != nil {
-		return driver.stop(false)
+		return driver.stop(err, false)
 	}
 
 	if stat != mesos.Status_DRIVER_RUNNING {
@@ -928,11 +1004,11 @@ func (driver *MesosSchedulerDriver) run() (mesos.Status, error) {
 func (driver *MesosSchedulerDriver) Stop(failover bool) (mesos.Status, error) {
 	driver.eventLock.Lock()
 	defer driver.eventLock.Unlock()
-	return driver.stop(failover)
+	return driver.stop(nil, failover)
 }
 
 // stop expects to be guarded by eventLock
-func (driver *MesosSchedulerDriver) stop(failover bool) (mesos.Status, error) {
+func (driver *MesosSchedulerDriver) stop(cause error, failover bool) (mesos.Status, error) {
 	log.Infoln("Stopping the scheduler driver")
 	if stat := driver.status; stat != mesos.Status_DRIVER_RUNNING {
 		return stat, fmt.Errorf("Unable to Stop, expected driver status %s, but is %s", mesos.Status_DRIVER_RUNNING, stat)
@@ -949,51 +1025,63 @@ func (driver *MesosSchedulerDriver) stop(failover bool) (mesos.Status, error) {
 		// may not actually end up being sent out.
 		if err := driver.send(driver.masterPid, message); err != nil {
 			log.Errorf("Failed to send UnregisterFramework message while stopping driver: %v\n", err)
-			return driver._stop(mesos.Status_DRIVER_ABORTED)
+			if cause == nil {
+				cause = &ErrDriverAborted{}
+			}
+			return driver._stop(cause, mesos.Status_DRIVER_ABORTED)
 		}
 		time.Sleep(2 * time.Second)
 	}
 
 	// stop messenger
-	return driver._stop(mesos.Status_DRIVER_STOPPED)
+	return driver._stop(cause, mesos.Status_DRIVER_STOPPED)
 }
 
 // stop expects to be guarded by eventLock
-func (driver *MesosSchedulerDriver) _stop(stopStatus mesos.Status) (mesos.Status, error) {
+func (driver *MesosSchedulerDriver) _stop(cause error, stopStatus mesos.Status) (mesos.Status, error) {
 	// stop messenger
 	defer func() {
 		select {
 		case <-driver.stopCh:
-			// already closed
+			return
 		default:
-			close(driver.stopCh)
 		}
-		driver.eventCond.Broadcast()
+		close(driver.stopCh)
+		if cause != nil {
+			log.V(1).Infof("Sending error via withScheduler: %v", cause)
+			driver.withScheduler(func(s Scheduler) { s.Error(driver, cause.Error()) })
+		} else {
+			// send a noop func, withScheduler needs to see that stopCh is closed
+			log.V(1).Infof("Sending kill signal to withScheduler")
+			driver.withScheduler(func(_ Scheduler) {})
+		}
 	}()
 	driver.status = stopStatus
 	driver.connected = false
+
+	log.Info("stopping messenger")
 	err := driver.messenger.Stop()
+
+	log.Infof("Stop() complete with status %v error %v", stopStatus, err)
 	return stopStatus, err
 }
 
 func (driver *MesosSchedulerDriver) Abort() (stat mesos.Status, err error) {
 	driver.eventLock.Lock()
 	defer driver.eventLock.Unlock()
-	return driver.abort("")
+	return driver.abort(nil)
 }
 
 // abort expects to be guarded by eventLock
-func (driver *MesosSchedulerDriver) abort(errMessage string) (stat mesos.Status, err error) {
-	defer driver.masterDetector.Cancel()
-	log.Infof("Aborting framework [%+v]", driver.frameworkInfo.Id)
-
-	if errMessage != "" {
-		log.V(3).Infof("Sending error '%v'", errMessage)
-		driver.withScheduler(func(s Scheduler) { s.Error(driver, errMessage) })
+func (driver *MesosSchedulerDriver) abort(cause error) (stat mesos.Status, err error) {
+	if driver.masterDetector != nil {
+		defer driver.masterDetector.Cancel()
 	}
 
+	log.Infof("Aborting framework [%+v]", driver.frameworkInfo.Id)
+
 	if driver.connected {
-		_, err = driver.stop(true)
+		_, err = driver.stop(cause, true)
 	} else {
 		driver.messenger.Stop()
 	}
@@ -1246,7 +1334,5 @@ func (driver *MesosSchedulerDriver) error(err string) {
 		log.V(3).Infoln("Ignoring error message, the driver is aborted!")
 		return
 	}
-
-	log.Infoln("Aborting driver, got error '", err, "'")
-	driver.abort(err)
+	driver.abort(&ErrDriverAborted{Reason: err})
 }

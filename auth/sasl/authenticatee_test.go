@@ -60,7 +60,7 @@ func TestAuthticatee_validLogin(t *testing.T) {
 	factory := transportFactoryFunc(func() messenger.Messenger {
 		transport = &MockTransport{messenger.NewMockedMessenger()}
 		transport.On("Install").Return(nil)
-		transport.On("UPID").Return(&tpid)
+		transport.On("UPID").Return(tpid)
 		transport.On("Start").Return(nil)
 		transport.On("Stop").Return(nil)
 

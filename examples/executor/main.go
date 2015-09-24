@@ -116,5 +116,9 @@ func main() {
 		return
 	}
 	fmt.Println("Executor process has started and running.")
-	driver.Join()
+	_, err = driver.Join()
+	if err != nil {
+		fmt.Println("driver failed:", err)
+	}
+	fmt.Println("executor terminating")
 }

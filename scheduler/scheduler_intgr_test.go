@@ -37,9 +37,10 @@ import (
 
 // testScuduler is used for testing Schduler callbacks.
 type testScheduler struct {
-	ch chan bool
-	wg *sync.WaitGroup
-	s  *SchedulerIntegrationTestSuite
+	ch     chan bool
+	wg     *sync.WaitGroup
+	s      *SchedulerIntegrationTestSuite
+	errors chan string // yields errors received by Scheduler.Error
 }
 
 // convenience
@@ -109,7 +110,7 @@ func (sched *testScheduler) ExecutorLost(SchedulerDriver, *mesos.ExecutorID, *me
 
 func (sched *testScheduler) Error(dr SchedulerDriver, err string) {
 	log.Infoln("Sched.Error() called.")
-	sched.s.Equal("test-error-999", err)
+	sched.errors <- err
 	sched.ch <- true
 }
 
@@ -128,7 +129,7 @@ func (sched *testScheduler) waitForCallback(timeout time.Duration) bool {
 }
 
 func newTestScheduler(s *SchedulerIntegrationTestSuite) *testScheduler {
-	return &testScheduler{ch: make(chan bool), s: s}
+	return &testScheduler{ch: make(chan bool), s: s, errors: make(chan string, 2)}
 }
 
 type mockServerConfigurator func(frameworkId *mesos.FrameworkID, suite *SchedulerIntegrationTestSuite)
@@ -168,8 +169,12 @@ func (suite *SchedulerIntegrationTestSuite) configure(frameworkId *mesos.Framewo
 	suite.sched = newTestScheduler(suite)
 	suite.sched.ch = make(chan bool, 10) // big enough that it doesn't block callback processing
 
-	suite.driver = newTestSchedulerDriver(suite.T(), driverConfig(suite.sched, suite.framework, suite.server.Addr, nil)).MesosSchedulerDriver
-
+	cfg := DriverConfig{
+		Scheduler: suite.sched,
+		Framework: suite.framework,
+		Master:    suite.server.Addr,
+	}
+	suite.driver = newTestSchedulerDriver(suite.T(), cfg).MesosSchedulerDriver
 	suite.config(frameworkId, suite)
 
 	stat, err := suite.driver.Start()
@@ -243,8 +248,12 @@ func (s *SchedulerIntegrationTestSuite) TearDownTest() {
 	if s.server != nil {
 		s.server.Close()
 	}
-	if s.driver != nil && s.driver.Status() == mesos.Status_DRIVER_RUNNING {
+	if s.driver != nil {
 		s.driver.Abort()
+
+		// wait for all events to finish processing, otherwise we can get into a data
+		// race when the suite object is reused for the next test.
+		<-s.driver.done
 	}
 }
 
@@ -442,6 +451,8 @@ func (suite *SchedulerIntegrationTestSuite) TestSchedulerDriverFrameworkErrorEve
 
 	c := suite.newMockClient()
 	c.SendMessage(suite.driver.self, pbMsg)
-	suite.sched.waitForCallback(0)
+	message := <-suite.sched.errors
+	suite.Equal("test-error-999", message)
+	suite.sched.waitForCallback(10 * time.Second)
 	suite.Equal(mesos.Status_DRIVER_ABORTED, suite.driver.Status())
 }

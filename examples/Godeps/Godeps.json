@@ -7,7 +7,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Rev": "8edb24c179ed858a38f18920d9005c2dde05ec17"
+			"Comment": "v0.1-55-g2093b57",
+			"Rev": "2093b57e5ca2ccbee4626814100bc1aada691b18"
 		},
 		{
 			"ImportPath": "github.com/golang/glog",

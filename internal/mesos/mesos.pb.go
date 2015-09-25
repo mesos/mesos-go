@@ -90,10 +90,10 @@ var _ = math.Inf
 type Status int32
 
 const (
-	Status_DRIVER_NOT_STARTED Status = 1
-	Status_DRIVER_RUNNING     Status = 2
-	Status_DRIVER_ABORTED     Status = 3
-	Status_DRIVER_STOPPED     Status = 4
+	DRIVER_NOT_STARTED Status = 1
+	DRIVER_RUNNING     Status = 2
+	DRIVER_ABORTED     Status = 3
+	DRIVER_STOPPED     Status = 4
 )
 
 var Status_name = map[int32]string{
@@ -135,14 +135,14 @@ func (x *Status) UnmarshalJSON(data []byte) error {
 type TaskState int32
 
 const (
-	TaskState_TASK_STAGING  TaskState = 6
-	TaskState_TASK_STARTING TaskState = 0
-	TaskState_TASK_RUNNING  TaskState = 1
-	TaskState_TASK_FINISHED TaskState = 2
-	TaskState_TASK_FAILED   TaskState = 3
-	TaskState_TASK_KILLED   TaskState = 4
-	TaskState_TASK_LOST     TaskState = 5
-	TaskState_TASK_ERROR    TaskState = 7
+	TASK_STAGING  TaskState = 6
+	TASK_STARTING TaskState = 0
+	TASK_RUNNING  TaskState = 1
+	TASK_FINISHED TaskState = 2
+	TASK_FAILED   TaskState = 3
+	TASK_KILLED   TaskState = 4
+	TASK_LOST     TaskState = 5
+	TASK_ERROR    TaskState = 7
 )
 
 var TaskState_name = map[int32]string{
@@ -190,17 +190,17 @@ type MachineInfo_Mode int32
 const (
 	// In this mode, a machine is behaving normally;
 	// offering resources, executing tasks, etc.
-	MachineInfo_UP MachineInfo_Mode = 1
+	UP MachineInfo_Mode = 1
 	// In this mode, all agents on the machine are expected to cooperate with
 	// frameworks to drain resources.  In general, draining is done ahead of
 	// a pending `unavailability`.  The resources should be drained so as to
 	// maximize utilization prior to the maintenance but without knowingly
 	// violating the frameworks' requirements.
-	MachineInfo_DRAINING MachineInfo_Mode = 2
+	DRAINING MachineInfo_Mode = 2
 	// In this mode, a machine is not running any tasks and will not offer
 	// any of its resources.  agents on the machine will not be allowed to
 	// register with the master.
-	MachineInfo_DOWN MachineInfo_Mode = 3
+	DOWN MachineInfo_Mode = 3
 )
 
 var MachineInfo_Mode_name = map[int32]string{
@@ -237,7 +237,7 @@ const (
 	// Receive offers with revocable resources. See 'Resource'
 	// message for details.
 	// TODO(vinod): This is currently a no-op.
-	FrameworkInfo_Capability_REVOCABLE_RESOURCES FrameworkInfo_Capability_Type = 1
+	REVOCABLE_RESOURCES FrameworkInfo_Capability_Type = 1
 )
 
 var FrameworkInfo_Capability_Type_name = map[int32]string{
@@ -267,10 +267,10 @@ func (x *FrameworkInfo_Capability_Type) UnmarshalJSON(data []byte) error {
 type Value_Type int32
 
 const (
-	Value_SCALAR Value_Type = 0
-	Value_RANGES Value_Type = 1
-	Value_SET    Value_Type = 2
-	Value_TEXT   Value_Type = 3
+	SCALAR Value_Type = 0
+	RANGES Value_Type = 1
+	SET    Value_Type = 2
+	TEXT   Value_Type = 3
 )
 
 var Value_Type_name = map[int32]string{
@@ -306,11 +306,11 @@ func (x *Value_Type) UnmarshalJSON(data []byte) error {
 type Offer_Operation_Type int32
 
 const (
-	Offer_Operation_LAUNCH    Offer_Operation_Type = 1
-	Offer_Operation_RESERVE   Offer_Operation_Type = 2
-	Offer_Operation_UNRESERVE Offer_Operation_Type = 3
-	Offer_Operation_CREATE    Offer_Operation_Type = 4
-	Offer_Operation_DESTROY   Offer_Operation_Type = 5
+	LAUNCH    Offer_Operation_Type = 1
+	RESERVE   Offer_Operation_Type = 2
+	UNRESERVE Offer_Operation_Type = 3
+	CREATE    Offer_Operation_Type = 4
+	DESTROY   Offer_Operation_Type = 5
 )
 
 var Offer_Operation_Type_name = map[int32]string{
@@ -349,9 +349,9 @@ func (x *Offer_Operation_Type) UnmarshalJSON(data []byte) error {
 type TaskStatus_Source int32
 
 const (
-	TaskStatus_SOURCE_MASTER   TaskStatus_Source = 0
-	TaskStatus_SOURCE_AGENT    TaskStatus_Source = 1
-	TaskStatus_SOURCE_EXECUTOR TaskStatus_Source = 2
+	SOURCE_MASTER   TaskStatus_Source = 0
+	SOURCE_AGENT    TaskStatus_Source = 1
+	SOURCE_EXECUTOR TaskStatus_Source = 2
 )
 
 var TaskStatus_Source_name = map[int32]string{
@@ -389,25 +389,25 @@ func (x *TaskStatus_Source) UnmarshalJSON(data []byte) error {
 type TaskStatus_Reason int32
 
 const (
-	TaskStatus_REASON_COMMAND_EXECUTOR_FAILED TaskStatus_Reason = 0
-	TaskStatus_REASON_EXECUTOR_PREEMPTED      TaskStatus_Reason = 17
-	TaskStatus_REASON_EXECUTOR_TERMINATED     TaskStatus_Reason = 1
-	TaskStatus_REASON_EXECUTOR_UNREGISTERED   TaskStatus_Reason = 2
-	TaskStatus_REASON_FRAMEWORK_REMOVED       TaskStatus_Reason = 3
-	TaskStatus_REASON_GC_ERROR                TaskStatus_Reason = 4
-	TaskStatus_REASON_INVALID_FRAMEWORKID     TaskStatus_Reason = 5
-	TaskStatus_REASON_INVALID_OFFERS          TaskStatus_Reason = 6
-	TaskStatus_REASON_MASTER_DISCONNECTED     TaskStatus_Reason = 7
-	TaskStatus_REASON_MEMORY_LIMIT            TaskStatus_Reason = 8
-	TaskStatus_REASON_RECONCILIATION          TaskStatus_Reason = 9
-	TaskStatus_REASON_RESOURCES_UNKNOWN       TaskStatus_Reason = 18
-	TaskStatus_REASON_AGENT_DISCONNECTED      TaskStatus_Reason = 10
-	TaskStatus_REASON_AGENT_REMOVED           TaskStatus_Reason = 11
-	TaskStatus_REASON_AGENT_RESTARTED         TaskStatus_Reason = 12
-	TaskStatus_REASON_AGENT_UNKNOWN           TaskStatus_Reason = 13
-	TaskStatus_REASON_TASK_INVALID            TaskStatus_Reason = 14
-	TaskStatus_REASON_TASK_UNAUTHORIZED       TaskStatus_Reason = 15
-	TaskStatus_REASON_TASK_UNKNOWN            TaskStatus_Reason = 16
+	REASON_COMMAND_EXECUTOR_FAILED TaskStatus_Reason = 0
+	REASON_EXECUTOR_PREEMPTED      TaskStatus_Reason = 17
+	REASON_EXECUTOR_TERMINATED     TaskStatus_Reason = 1
+	REASON_EXECUTOR_UNREGISTERED   TaskStatus_Reason = 2
+	REASON_FRAMEWORK_REMOVED       TaskStatus_Reason = 3
+	REASON_GC_ERROR                TaskStatus_Reason = 4
+	REASON_INVALID_FRAMEWORKID     TaskStatus_Reason = 5
+	REASON_INVALID_OFFERS          TaskStatus_Reason = 6
+	REASON_MASTER_DISCONNECTED     TaskStatus_Reason = 7
+	REASON_MEMORY_LIMIT            TaskStatus_Reason = 8
+	REASON_RECONCILIATION          TaskStatus_Reason = 9
+	REASON_RESOURCES_UNKNOWN       TaskStatus_Reason = 18
+	REASON_AGENT_DISCONNECTED      TaskStatus_Reason = 10
+	REASON_AGENT_REMOVED           TaskStatus_Reason = 11
+	REASON_AGENT_RESTARTED         TaskStatus_Reason = 12
+	REASON_AGENT_UNKNOWN           TaskStatus_Reason = 13
+	REASON_TASK_INVALID            TaskStatus_Reason = 14
+	REASON_TASK_UNAUTHORIZED       TaskStatus_Reason = 15
+	REASON_TASK_UNKNOWN            TaskStatus_Reason = 16
 )
 
 var TaskStatus_Reason_name = map[int32]string{
@@ -473,7 +473,7 @@ func (x *TaskStatus_Reason) UnmarshalJSON(data []byte) error {
 type Image_Type int32
 
 const (
-	Image_APPC Image_Type = 1
+	APPC Image_Type = 1
 )
 
 var Image_Type_name = map[int32]string{
@@ -503,8 +503,8 @@ func (x *Image_Type) UnmarshalJSON(data []byte) error {
 type Volume_Mode int32
 
 const (
-	Volume_RW Volume_Mode = 1
-	Volume_RO Volume_Mode = 2
+	RW Volume_Mode = 1
+	RO Volume_Mode = 2
 )
 
 var Volume_Mode_name = map[int32]string{
@@ -537,8 +537,8 @@ func (x *Volume_Mode) UnmarshalJSON(data []byte) error {
 type ContainerInfo_Type int32
 
 const (
-	ContainerInfo_DOCKER ContainerInfo_Type = 1
-	ContainerInfo_MESOS  ContainerInfo_Type = 2
+	DOCKER ContainerInfo_Type = 1
+	MESOS  ContainerInfo_Type = 2
 )
 
 var ContainerInfo_Type_name = map[int32]string{
@@ -571,9 +571,9 @@ func (x *ContainerInfo_Type) UnmarshalJSON(data []byte) error {
 type ContainerInfo_DockerInfo_Network int32
 
 const (
-	ContainerInfo_DockerInfo_HOST   ContainerInfo_DockerInfo_Network = 1
-	ContainerInfo_DockerInfo_BRIDGE ContainerInfo_DockerInfo_Network = 2
-	ContainerInfo_DockerInfo_NONE   ContainerInfo_DockerInfo_Network = 3
+	HOST   ContainerInfo_DockerInfo_Network = 1
+	BRIDGE ContainerInfo_DockerInfo_Network = 2
+	NONE   ContainerInfo_DockerInfo_Network = 3
 )
 
 var ContainerInfo_DockerInfo_Network_name = map[int32]string{
@@ -607,9 +607,9 @@ func (x *ContainerInfo_DockerInfo_Network) UnmarshalJSON(data []byte) error {
 type DiscoveryInfo_Visibility int32
 
 const (
-	DiscoveryInfo_FRAMEWORK DiscoveryInfo_Visibility = 0
-	DiscoveryInfo_CLUSTER   DiscoveryInfo_Visibility = 1
-	DiscoveryInfo_EXTERNAL  DiscoveryInfo_Visibility = 2
+	FRAMEWORK DiscoveryInfo_Visibility = 0
+	CLUSTER   DiscoveryInfo_Visibility = 1
+	EXTERNAL  DiscoveryInfo_Visibility = 2
 )
 
 var DiscoveryInfo_Visibility_name = map[int32]string{
@@ -957,7 +957,7 @@ func (m *MachineInfo) GetMode() MachineInfo_Mode {
 	if m != nil && m.Mode != nil {
 		return *m.Mode
 	}
-	return MachineInfo_UP
+	return UP
 }
 
 func (m *MachineInfo) GetUnavailability() *Unavailability {
@@ -1116,7 +1116,7 @@ func (m *FrameworkInfo_Capability) GetType() FrameworkInfo_Capability_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return FrameworkInfo_Capability_REVOCABLE_RESOURCES
+	return REVOCABLE_RESOURCES
 }
 
 // *
@@ -1676,7 +1676,7 @@ func (m *Value) GetType() Value_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return Value_SCALAR
+	return SCALAR
 }
 
 func (m *Value) GetScalar() *Value_Scalar {
@@ -1818,7 +1818,7 @@ func (m *Attribute) GetType() Value_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return Value_SCALAR
+	return SCALAR
 }
 
 func (m *Attribute) GetScalar() *Value_Scalar {
@@ -1895,7 +1895,7 @@ func (m *Resource) GetType() Value_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return Value_SCALAR
+	return SCALAR
 }
 
 func (m *Resource) GetScalar() *Value_Scalar {
@@ -3153,7 +3153,7 @@ func (m *Offer_Operation) GetType() Offer_Operation_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return Offer_Operation_LAUNCH
+	return LAUNCH
 }
 
 func (m *Offer_Operation) GetLaunch() *Offer_Operation_Launch {
@@ -3517,7 +3517,7 @@ func (m *TaskStatus) GetState() TaskState {
 	if m != nil && m.State != nil {
 		return *m.State
 	}
-	return TaskState_TASK_STAGING
+	return TASK_STAGING
 }
 
 func (m *TaskStatus) GetMessage() string {
@@ -3531,14 +3531,14 @@ func (m *TaskStatus) GetSource() TaskStatus_Source {
 	if m != nil && m.Source != nil {
 		return *m.Source
 	}
-	return TaskStatus_SOURCE_MASTER
+	return SOURCE_MASTER
 }
 
 func (m *TaskStatus) GetReason() TaskStatus_Reason {
 	if m != nil && m.Reason != nil {
 		return *m.Reason
 	}
-	return TaskStatus_REASON_COMMAND_EXECUTOR_FAILED
+	return REASON_COMMAND_EXECUTOR_FAILED
 }
 
 func (m *TaskStatus) GetData() []byte {
@@ -3854,7 +3854,7 @@ func (m *Image) GetType() Image_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return Image_APPC
+	return APPC
 }
 
 func (m *Image) GetAppc() *Image_AppC {
@@ -3926,7 +3926,7 @@ func (m *Volume) GetMode() Volume_Mode {
 	if m != nil && m.Mode != nil {
 		return *m.Mode
 	}
-	return Volume_RW
+	return RW
 }
 
 func (m *Volume) GetContainerPath() string {
@@ -3971,7 +3971,7 @@ func (m *ContainerInfo) GetType() ContainerInfo_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return ContainerInfo_DOCKER
+	return DOCKER
 }
 
 func (m *ContainerInfo) GetVolumes() []*Volume {
@@ -4023,7 +4023,7 @@ type ContainerInfo_DockerInfo struct {
 func (m *ContainerInfo_DockerInfo) Reset()      { *m = ContainerInfo_DockerInfo{} }
 func (*ContainerInfo_DockerInfo) ProtoMessage() {}
 
-const Default_ContainerInfo_DockerInfo_Network ContainerInfo_DockerInfo_Network = ContainerInfo_DockerInfo_HOST
+const Default_ContainerInfo_DockerInfo_Network ContainerInfo_DockerInfo_Network = HOST
 const Default_ContainerInfo_DockerInfo_Privileged bool = false
 
 func (m *ContainerInfo_DockerInfo) GetImage() string {
@@ -4237,7 +4237,7 @@ func (m *DiscoveryInfo) GetVisibility() DiscoveryInfo_Visibility {
 	if m != nil && m.Visibility != nil {
 		return *m.Visibility
 	}
-	return DiscoveryInfo_FRAMEWORK
+	return FRAMEWORK
 }
 
 func (m *DiscoveryInfo) GetName() string {

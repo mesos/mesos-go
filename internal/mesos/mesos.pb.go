@@ -644,8 +644,7 @@ func (x *DiscoveryInfo_Visibility) UnmarshalJSON(data []byte) error {
 // A unique ID assigned to a framework. A framework can reuse this ID
 // in order to do failover (see MesosSchedulerDriver).
 type FrameworkID struct {
-	Value            *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *FrameworkID) Reset()      { *m = FrameworkID{} }
@@ -661,8 +660,7 @@ func (m *FrameworkID) GetValue() string {
 // *
 // A unique ID assigned to an offer.
 type OfferID struct {
-	Value            *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *OfferID) Reset()      { *m = OfferID{} }
@@ -680,8 +678,7 @@ func (m *OfferID) GetValue() string {
 // whenever it (re)registers with Mesos. Framework writers shouldn't
 // assume any binding between an agent ID and and a hostname.
 type AgentID struct {
-	Value            *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *AgentID) Reset()      { *m = AgentID{} }
@@ -700,8 +697,7 @@ func (m *AgentID) GetValue() string {
 // ID _only_ if a previous task with the same ID has reached a
 // terminal state (e.g., TASK_FINISHED, TASK_LOST, TASK_KILLED, etc.).
 type TaskID struct {
-	Value            *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *TaskID) Reset()      { *m = TaskID{} }
@@ -719,8 +715,7 @@ func (m *TaskID) GetValue() string {
 // executor with the same ID can be active on the same agent at a
 // time.
 type ExecutorID struct {
-	Value            *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *ExecutorID) Reset()      { *m = ExecutorID{} }
@@ -739,8 +734,7 @@ func (m *ExecutorID) GetValue() string {
 // particular, containers for different runs of the same (framework,
 // executor) pair must be unique.
 type ContainerID struct {
-	Value            *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *ContainerID) Reset()      { *m = ContainerID{} }
@@ -756,8 +750,7 @@ func (m *ContainerID) GetValue() string {
 // *
 // Represents time since the epoch, in nanoseconds.
 type TimeInfo struct {
-	Nanoseconds      *int64 `protobuf:"varint,1,req,name=nanoseconds" json:"nanoseconds,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	Nanoseconds *int64 `protobuf:"varint,1,req,name=nanoseconds" json:"nanoseconds,omitempty"`
 }
 
 func (m *TimeInfo) Reset()      { *m = TimeInfo{} }
@@ -773,8 +766,7 @@ func (m *TimeInfo) GetNanoseconds() int64 {
 // *
 // Represents duration in nanoseconds.
 type DurationInfo struct {
-	Nanoseconds      *int64 `protobuf:"varint,1,req,name=nanoseconds" json:"nanoseconds,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	Nanoseconds *int64 `protobuf:"varint,1,req,name=nanoseconds" json:"nanoseconds,omitempty"`
 }
 
 func (m *DurationInfo) Reset()      { *m = DurationInfo{} }
@@ -793,10 +785,9 @@ func (m *DurationInfo) GetNanoseconds() int64 {
 // TODO(bmahler): Use this more widely.
 type Address struct {
 	// May contain a hostname, IP address, or both.
-	Hostname         *string `protobuf:"bytes,1,opt,name=hostname" json:"hostname,omitempty"`
-	Ip               *string `protobuf:"bytes,2,opt,name=ip" json:"ip,omitempty"`
-	Port             *int32  `protobuf:"varint,3,req,name=port" json:"port,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Hostname *string `protobuf:"bytes,1,opt,name=hostname" json:"hostname,omitempty"`
+	Ip       *string `protobuf:"bytes,2,opt,name=ip" json:"ip,omitempty"`
+	Port     *int32  `protobuf:"varint,3,req,name=port" json:"port,omitempty"`
 }
 
 func (m *Address) Reset()      { *m = Address{} }
@@ -826,12 +817,11 @@ func (m *Address) GetPort() int32 {
 // *
 // Represents a URL.
 type URL struct {
-	Scheme           *string      `protobuf:"bytes,1,req,name=scheme" json:"scheme,omitempty"`
-	Address          *Address     `protobuf:"bytes,2,req,name=address" json:"address,omitempty"`
-	Path             *string      `protobuf:"bytes,3,opt,name=path" json:"path,omitempty"`
-	Query            []*Parameter `protobuf:"bytes,4,rep,name=query" json:"query,omitempty"`
-	Fragment         *string      `protobuf:"bytes,5,opt,name=fragment" json:"fragment,omitempty"`
-	XXX_unrecognized []byte       `json:"-"`
+	Scheme   *string      `protobuf:"bytes,1,req,name=scheme" json:"scheme,omitempty"`
+	Address  *Address     `protobuf:"bytes,2,req,name=address" json:"address,omitempty"`
+	Path     *string      `protobuf:"bytes,3,opt,name=path" json:"path,omitempty"`
+	Query    []*Parameter `protobuf:"bytes,4,rep,name=query" json:"query,omitempty"`
+	Fragment *string      `protobuf:"bytes,5,opt,name=fragment" json:"fragment,omitempty"`
 }
 
 func (m *URL) Reset()      { *m = URL{} }
@@ -880,8 +870,7 @@ type Unavailability struct {
 	Start *TimeInfo `protobuf:"bytes,1,req,name=start" json:"start,omitempty"`
 	// When added to `start`, this represents the end of the interval.
 	// If unspecified, the duration is assumed to be infinite.
-	Duration         *DurationInfo `protobuf:"bytes,2,opt,name=duration" json:"duration,omitempty"`
-	XXX_unrecognized []byte        `json:"-"`
+	Duration *DurationInfo `protobuf:"bytes,2,opt,name=duration" json:"duration,omitempty"`
 }
 
 func (m *Unavailability) Reset()      { *m = Unavailability{} }
@@ -908,9 +897,8 @@ func (m *Unavailability) GetDuration() *DurationInfo {
 // `ip` must match the values advertised by the agent to the master.
 // Hostname is not case-sensitive.
 type MachineID struct {
-	Hostname         *string `protobuf:"bytes,1,opt,name=hostname" json:"hostname,omitempty"`
-	Ip               *string `protobuf:"bytes,2,opt,name=ip" json:"ip,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Hostname *string `protobuf:"bytes,1,opt,name=hostname" json:"hostname,omitempty"`
+	Ip       *string `protobuf:"bytes,2,opt,name=ip" json:"ip,omitempty"`
 }
 
 func (m *MachineID) Reset()      { *m = MachineID{} }
@@ -939,8 +927,7 @@ type MachineInfo struct {
 	// Signifies that the machine may be unavailable during the given interval.
 	// See comments in `Unavailability` and for the `unavailability` fields
 	// in `Offer` and `InverseOffer` for more information.
-	Unavailability   *Unavailability `protobuf:"bytes,3,opt,name=unavailability" json:"unavailability,omitempty"`
-	XXX_unrecognized []byte          `json:"-"`
+	Unavailability *Unavailability `protobuf:"bytes,3,opt,name=unavailability" json:"unavailability,omitempty"`
 }
 
 func (m *MachineInfo) Reset()      { *m = MachineInfo{} }
@@ -1016,8 +1003,7 @@ type FrameworkInfo struct {
 	// Labels are free-form key value pairs supplied by the framework
 	// scheduler (e.g., to describe additional functionality offered by
 	// the framework). These labels are not interpreted by Mesos itself.
-	Labels           *Labels `protobuf:"bytes,11,opt,name=labels" json:"labels,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Labels *Labels `protobuf:"bytes,11,opt,name=labels" json:"labels,omitempty"`
 }
 
 func (m *FrameworkInfo) Reset()      { *m = FrameworkInfo{} }
@@ -1105,8 +1091,7 @@ func (m *FrameworkInfo) GetLabels() *Labels {
 }
 
 type FrameworkInfo_Capability struct {
-	Type             *FrameworkInfo_Capability_Type `protobuf:"varint,1,req,name=type,enum=mesos.FrameworkInfo_Capability_Type" json:"type,omitempty"`
-	XXX_unrecognized []byte                         `json:"-"`
+	Type *FrameworkInfo_Capability_Type `protobuf:"varint,1,req,name=type,enum=mesos.FrameworkInfo_Capability_Type" json:"type,omitempty"`
 }
 
 func (m *FrameworkInfo_Capability) Reset()      { *m = FrameworkInfo_Capability{} }
@@ -1138,8 +1123,7 @@ type HealthCheck struct {
 	// Amount of time to allow failed health checks since launch.
 	GracePeriodSeconds *float64 `protobuf:"fixed64,6,opt,name=grace_period_seconds,def=10" json:"grace_period_seconds,omitempty"`
 	// Command health check.
-	Command          *CommandInfo `protobuf:"bytes,7,opt,name=command" json:"command,omitempty"`
-	XXX_unrecognized []byte       `json:"-"`
+	Command *CommandInfo `protobuf:"bytes,7,opt,name=command" json:"command,omitempty"`
 }
 
 func (m *HealthCheck) Reset()      { *m = HealthCheck{} }
@@ -1209,8 +1193,7 @@ type HealthCheck_HTTP struct {
 	Path *string `protobuf:"bytes,2,opt,name=path,def=/" json:"path,omitempty"`
 	// Expected response statuses. Not specifying any statuses implies
 	// that any returned status is acceptable.
-	Statuses         []uint32 `protobuf:"varint,4,rep,name=statuses" json:"statuses,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	Statuses []uint32 `protobuf:"varint,4,rep,name=statuses" json:"statuses,omitempty"`
 }
 
 func (m *HealthCheck_HTTP) Reset()      { *m = HealthCheck_HTTP{} }
@@ -1273,8 +1256,7 @@ type CommandInfo struct {
 	// Enables executor and tasks to run as a specific user. If the user
 	// field is present both in FrameworkInfo and here, the CommandInfo
 	// user value takes precedence.
-	User             *string `protobuf:"bytes,5,opt,name=user" json:"user,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	User *string `protobuf:"bytes,5,opt,name=user" json:"user,omitempty"`
 }
 
 func (m *CommandInfo) Reset()      { *m = CommandInfo{} }
@@ -1349,8 +1331,7 @@ type CommandInfo_URI struct {
 	// may get evicted at any time, which then leads to renewed
 	// downloading. See also "docs/fetcher.md" and
 	// "docs/fetcher-cache-internals.md".
-	Cache            *bool  `protobuf:"varint,4,opt,name=cache" json:"cache,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	Cache *bool `protobuf:"varint,4,opt,name=cache" json:"cache,omitempty"`
 }
 
 func (m *CommandInfo_URI) Reset()      { *m = CommandInfo_URI{} }
@@ -1399,8 +1380,7 @@ type CommandInfo_ContainerInfo struct {
 	// URI describing the container image name.
 	Image *string `protobuf:"bytes,1,req,name=image" json:"image,omitempty"`
 	// Describes additional options passed to the containerizer.
-	Options          []string `protobuf:"bytes,2,rep,name=options" json:"options,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	Options []string `protobuf:"bytes,2,rep,name=options" json:"options,omitempty"`
 }
 
 func (m *CommandInfo_ContainerInfo) Reset()      { *m = CommandInfo_ContainerInfo{} }
@@ -1446,8 +1426,7 @@ type ExecutorInfo struct {
 	// interpreted or acted upon by Mesos. It is up to a service
 	// discovery system to use this information as needed and to handle
 	// executors without service discovery information.
-	Discovery        *DiscoveryInfo `protobuf:"bytes,12,opt,name=discovery" json:"discovery,omitempty"`
-	XXX_unrecognized []byte         `json:"-"`
+	Discovery *DiscoveryInfo `protobuf:"bytes,12,opt,name=discovery" json:"discovery,omitempty"`
 }
 
 func (m *ExecutorInfo) Reset()      { *m = ExecutorInfo{} }
@@ -1544,8 +1523,7 @@ type MasterInfo struct {
 	// The full IP address (supports both IPv4 and IPv6 formats)
 	// and supersedes the use of `ip`, `port` and `hostname`.
 	// Since Mesos 0.24.
-	Address          *Address `protobuf:"bytes,7,opt,name=address" json:"address,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	Address *Address `protobuf:"bytes,7,opt,name=address" json:"address,omitempty"`
 }
 
 func (m *MasterInfo) Reset()      { *m = MasterInfo{} }
@@ -1609,12 +1587,11 @@ func (m *MasterInfo) GetAddress() *Address {
 // agent is checkpointing its own information and potentially
 // frameworks' information (if a framework has checkpointing enabled).
 type AgentInfo struct {
-	Hostname         *string      `protobuf:"bytes,1,req,name=hostname" json:"hostname,omitempty"`
-	Port             *int32       `protobuf:"varint,8,opt,name=port,def=5051" json:"port,omitempty"`
-	Resources        []*Resource  `protobuf:"bytes,3,rep,name=resources" json:"resources,omitempty"`
-	Attributes       []*Attribute `protobuf:"bytes,5,rep,name=attributes" json:"attributes,omitempty"`
-	Id               *AgentID     `protobuf:"bytes,6,opt,name=id" json:"id,omitempty"`
-	XXX_unrecognized []byte       `json:"-"`
+	Hostname   *string      `protobuf:"bytes,1,req,name=hostname" json:"hostname,omitempty"`
+	Port       *int32       `protobuf:"varint,8,opt,name=port,def=5051" json:"port,omitempty"`
+	Resources  []*Resource  `protobuf:"bytes,3,rep,name=resources" json:"resources,omitempty"`
+	Attributes []*Attribute `protobuf:"bytes,5,rep,name=attributes" json:"attributes,omitempty"`
+	Id         *AgentID     `protobuf:"bytes,6,opt,name=id" json:"id,omitempty"`
 }
 
 func (m *AgentInfo) Reset()      { *m = AgentInfo{} }
@@ -1661,12 +1638,11 @@ func (m *AgentInfo) GetId() *AgentID {
 // Describes an Attribute or Resource "value". A value is described
 // using the standard protocol buffer "union" trick.
 type Value struct {
-	Type             *Value_Type   `protobuf:"varint,1,req,name=type,enum=mesos.Value_Type" json:"type,omitempty"`
-	Scalar           *Value_Scalar `protobuf:"bytes,2,opt,name=scalar" json:"scalar,omitempty"`
-	Ranges           *Value_Ranges `protobuf:"bytes,3,opt,name=ranges" json:"ranges,omitempty"`
-	Set              *Value_Set    `protobuf:"bytes,4,opt,name=set" json:"set,omitempty"`
-	Text             *Value_Text   `protobuf:"bytes,5,opt,name=text" json:"text,omitempty"`
-	XXX_unrecognized []byte        `json:"-"`
+	Type   *Value_Type   `protobuf:"varint,1,req,name=type,enum=mesos.Value_Type" json:"type,omitempty"`
+	Scalar *Value_Scalar `protobuf:"bytes,2,opt,name=scalar" json:"scalar,omitempty"`
+	Ranges *Value_Ranges `protobuf:"bytes,3,opt,name=ranges" json:"ranges,omitempty"`
+	Set    *Value_Set    `protobuf:"bytes,4,opt,name=set" json:"set,omitempty"`
+	Text   *Value_Text   `protobuf:"bytes,5,opt,name=text" json:"text,omitempty"`
 }
 
 func (m *Value) Reset()      { *m = Value{} }
@@ -1708,8 +1684,7 @@ func (m *Value) GetText() *Value_Text {
 }
 
 type Value_Scalar struct {
-	Value            *float64 `protobuf:"fixed64,1,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	Value *float64 `protobuf:"fixed64,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *Value_Scalar) Reset()      { *m = Value_Scalar{} }
@@ -1723,9 +1698,8 @@ func (m *Value_Scalar) GetValue() float64 {
 }
 
 type Value_Range struct {
-	Begin            *uint64 `protobuf:"varint,1,req,name=begin" json:"begin,omitempty"`
-	End              *uint64 `protobuf:"varint,2,req,name=end" json:"end,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Begin *uint64 `protobuf:"varint,1,req,name=begin" json:"begin,omitempty"`
+	End   *uint64 `protobuf:"varint,2,req,name=end" json:"end,omitempty"`
 }
 
 func (m *Value_Range) Reset()      { *m = Value_Range{} }
@@ -1746,8 +1720,7 @@ func (m *Value_Range) GetEnd() uint64 {
 }
 
 type Value_Ranges struct {
-	Range            []*Value_Range `protobuf:"bytes,1,rep,name=range" json:"range,omitempty"`
-	XXX_unrecognized []byte         `json:"-"`
+	Range []*Value_Range `protobuf:"bytes,1,rep,name=range" json:"range,omitempty"`
 }
 
 func (m *Value_Ranges) Reset()      { *m = Value_Ranges{} }
@@ -1761,8 +1734,7 @@ func (m *Value_Ranges) GetRange() []*Value_Range {
 }
 
 type Value_Set struct {
-	Item             []string `protobuf:"bytes,1,rep,name=item" json:"item,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	Item []string `protobuf:"bytes,1,rep,name=item" json:"item,omitempty"`
 }
 
 func (m *Value_Set) Reset()      { *m = Value_Set{} }
@@ -1776,8 +1748,7 @@ func (m *Value_Set) GetItem() []string {
 }
 
 type Value_Text struct {
-	Value            *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *Value_Text) Reset()      { *m = Value_Text{} }
@@ -1795,13 +1766,12 @@ func (m *Value_Text) GetValue() string {
 // attributes and resources share the same "value" type, but this may
 // change in the future and attributes may only be string based.
 type Attribute struct {
-	Name             *string       `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
-	Type             *Value_Type   `protobuf:"varint,2,req,name=type,enum=mesos.Value_Type" json:"type,omitempty"`
-	Scalar           *Value_Scalar `protobuf:"bytes,3,opt,name=scalar" json:"scalar,omitempty"`
-	Ranges           *Value_Ranges `protobuf:"bytes,4,opt,name=ranges" json:"ranges,omitempty"`
-	Set              *Value_Set    `protobuf:"bytes,6,opt,name=set" json:"set,omitempty"`
-	Text             *Value_Text   `protobuf:"bytes,5,opt,name=text" json:"text,omitempty"`
-	XXX_unrecognized []byte        `json:"-"`
+	Name   *string       `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
+	Type   *Value_Type   `protobuf:"varint,2,req,name=type,enum=mesos.Value_Type" json:"type,omitempty"`
+	Scalar *Value_Scalar `protobuf:"bytes,3,opt,name=scalar" json:"scalar,omitempty"`
+	Ranges *Value_Ranges `protobuf:"bytes,4,opt,name=ranges" json:"ranges,omitempty"`
+	Set    *Value_Set    `protobuf:"bytes,6,opt,name=set" json:"set,omitempty"`
+	Text   *Value_Text   `protobuf:"bytes,5,opt,name=text" json:"text,omitempty"`
 }
 
 func (m *Attribute) Reset()      { *m = Attribute{} }
@@ -1875,8 +1845,7 @@ type Resource struct {
 	// best effort tasks that do not need strict uptime or performance
 	// guarantees. Note that if this is set, 'disk' or 'reservation'
 	// cannot be set.
-	Revocable        *Resource_RevocableInfo `protobuf:"bytes,9,opt,name=revocable" json:"revocable,omitempty"`
-	XXX_unrecognized []byte                  `json:"-"`
+	Revocable *Resource_RevocableInfo `protobuf:"bytes,9,opt,name=revocable" json:"revocable,omitempty"`
 }
 
 func (m *Resource) Reset()      { *m = Resource{} }
@@ -1954,8 +1923,7 @@ type Resource_ReservationInfo struct {
 	// unreserve this resource is permitted to do so.
 	// NOTE: This field should match the FrameworkInfo.principal of
 	// the framework that reserved this resource.
-	Principal        *string `protobuf:"bytes,1,req,name=principal" json:"principal,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Principal *string `protobuf:"bytes,1,req,name=principal" json:"principal,omitempty"`
 }
 
 func (m *Resource_ReservationInfo) Reset()      { *m = Resource_ReservationInfo{} }
@@ -1979,8 +1947,7 @@ type Resource_DiskInfo struct {
 	// volume will be automatically garbage collected after
 	// task/executor terminates. Currently, if 'persistence' is set,
 	// 'volume' must be set.
-	Volume           *Volume `protobuf:"bytes,2,opt,name=volume" json:"volume,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Volume *Volume `protobuf:"bytes,2,opt,name=volume" json:"volume,omitempty"`
 }
 
 func (m *Resource_DiskInfo) Reset()      { *m = Resource_DiskInfo{} }
@@ -2014,8 +1981,7 @@ func (m *Resource_DiskInfo) GetVolume() *Volume {
 type Resource_DiskInfo_Persistence struct {
 	// A unique ID for the persistent disk volume.
 	// NOTE: The ID needs to be unique per role on each agent.
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Id *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
 }
 
 func (m *Resource_DiskInfo_Persistence) Reset()      { *m = Resource_DiskInfo_Persistence{} }
@@ -2029,7 +1995,6 @@ func (m *Resource_DiskInfo_Persistence) GetId() string {
 }
 
 type Resource_RevocableInfo struct {
-	XXX_unrecognized []byte `json:"-"`
 }
 
 func (m *Resource_RevocableInfo) Reset()      { *m = Resource_RevocableInfo{} }
@@ -2060,17 +2025,16 @@ func (*Resource_RevocableInfo) ProtoMessage() {}
 // More information on the operation of Linux Traffic Control can be
 // found at http://www.lartc.org/lartc.html.
 type TrafficControlStatistics struct {
-	Id               *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	Backlog          *uint64 `protobuf:"varint,2,opt,name=backlog" json:"backlog,omitempty"`
-	Bytes            *uint64 `protobuf:"varint,3,opt,name=bytes" json:"bytes,omitempty"`
-	Drops            *uint64 `protobuf:"varint,4,opt,name=drops" json:"drops,omitempty"`
-	Overlimits       *uint64 `protobuf:"varint,5,opt,name=overlimits" json:"overlimits,omitempty"`
-	Packets          *uint64 `protobuf:"varint,6,opt,name=packets" json:"packets,omitempty"`
-	Qlen             *uint64 `protobuf:"varint,7,opt,name=qlen" json:"qlen,omitempty"`
-	Ratebps          *uint64 `protobuf:"varint,8,opt,name=ratebps" json:"ratebps,omitempty"`
-	Ratepps          *uint64 `protobuf:"varint,9,opt,name=ratepps" json:"ratepps,omitempty"`
-	Requeues         *uint64 `protobuf:"varint,10,opt,name=requeues" json:"requeues,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Id         *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	Backlog    *uint64 `protobuf:"varint,2,opt,name=backlog" json:"backlog,omitempty"`
+	Bytes      *uint64 `protobuf:"varint,3,opt,name=bytes" json:"bytes,omitempty"`
+	Drops      *uint64 `protobuf:"varint,4,opt,name=drops" json:"drops,omitempty"`
+	Overlimits *uint64 `protobuf:"varint,5,opt,name=overlimits" json:"overlimits,omitempty"`
+	Packets    *uint64 `protobuf:"varint,6,opt,name=packets" json:"packets,omitempty"`
+	Qlen       *uint64 `protobuf:"varint,7,opt,name=qlen" json:"qlen,omitempty"`
+	Ratebps    *uint64 `protobuf:"varint,8,opt,name=ratebps" json:"ratebps,omitempty"`
+	Ratepps    *uint64 `protobuf:"varint,9,opt,name=ratepps" json:"ratepps,omitempty"`
+	Requeues   *uint64 `protobuf:"varint,10,opt,name=requeues" json:"requeues,omitempty"`
 }
 
 func (m *TrafficControlStatistics) Reset()      { *m = TrafficControlStatistics{} }
@@ -2221,7 +2185,6 @@ type ResourceStatistics struct {
 	// or dropped due to congestion or policy inside and outside the
 	// container.
 	NetTrafficControlStatistics []*TrafficControlStatistics `protobuf:"bytes,35,rep,name=net_traffic_control_statistics" json:"net_traffic_control_statistics,omitempty"`
-	XXX_unrecognized            []byte                      `json:"-"`
 }
 
 func (m *ResourceStatistics) Reset()      { *m = ResourceStatistics{} }
@@ -2513,8 +2476,7 @@ type ResourceUsage struct {
 	Executors []*ResourceUsage_Executor `protobuf:"bytes,1,rep,name=executors" json:"executors,omitempty"`
 	// Agent's total resources including checkpointed dynamic
 	// reservations and persistent volumes.
-	Total            []*Resource `protobuf:"bytes,2,rep,name=total" json:"total,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	Total []*Resource `protobuf:"bytes,2,rep,name=total" json:"total,omitempty"`
 }
 
 func (m *ResourceUsage) Reset()      { *m = ResourceUsage{} }
@@ -2541,8 +2503,7 @@ type ResourceUsage_Executor struct {
 	Allocated []*Resource `protobuf:"bytes,2,rep,name=allocated" json:"allocated,omitempty"`
 	// Current resource usage. If absent, the containerizer
 	// cannot provide resource usage.
-	Statistics       *ResourceStatistics `protobuf:"bytes,3,opt,name=statistics" json:"statistics,omitempty"`
-	XXX_unrecognized []byte              `json:"-"`
+	Statistics *ResourceStatistics `protobuf:"bytes,3,opt,name=statistics" json:"statistics,omitempty"`
 }
 
 func (m *ResourceUsage_Executor) Reset()      { *m = ResourceUsage_Executor{} }
@@ -2637,7 +2598,6 @@ type PerfStatistics struct {
 	NodeStoreMisses        *uint64 `protobuf:"varint,51,opt,name=node_store_misses" json:"node_store_misses,omitempty"`
 	NodePrefetches         *uint64 `protobuf:"varint,52,opt,name=node_prefetches" json:"node_prefetches,omitempty"`
 	NodePrefetchMisses     *uint64 `protobuf:"varint,53,opt,name=node_prefetch_misses" json:"node_prefetch_misses,omitempty"`
-	XXX_unrecognized       []byte  `json:"-"`
 }
 
 func (m *PerfStatistics) Reset()      { *m = PerfStatistics{} }
@@ -3020,9 +2980,8 @@ func (m *PerfStatistics) GetNodePrefetchMisses() uint64 {
 // then this request is assumed to only apply to resources on that
 // agent.
 type Request struct {
-	AgentId          *AgentID    `protobuf:"bytes,1,opt,name=agent_id" json:"agent_id,omitempty"`
-	Resources        []*Resource `protobuf:"bytes,2,rep,name=resources" json:"resources,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	AgentId   *AgentID    `protobuf:"bytes,1,opt,name=agent_id" json:"agent_id,omitempty"`
+	Resources []*Resource `protobuf:"bytes,2,rep,name=resources" json:"resources,omitempty"`
 }
 
 func (m *Request) Reset()      { *m = Request{} }
@@ -3065,8 +3024,7 @@ type Offer struct {
 	// interval, nor last for exactly the duration of this interval.
 	// The unavailability may also be forever!  See comments in
 	// `Unavailability` for more details.
-	Unavailability   *Unavailability `protobuf:"bytes,9,opt,name=unavailability" json:"unavailability,omitempty"`
-	XXX_unrecognized []byte          `json:"-"`
+	Unavailability *Unavailability `protobuf:"bytes,9,opt,name=unavailability" json:"unavailability,omitempty"`
 }
 
 func (m *Offer) Reset()      { *m = Offer{} }
@@ -3137,13 +3095,12 @@ func (m *Offer) GetUnavailability() *Unavailability {
 
 // Defines an operation that can be performed against offers.
 type Offer_Operation struct {
-	Type             *Offer_Operation_Type      `protobuf:"varint,1,req,name=type,enum=mesos.Offer_Operation_Type" json:"type,omitempty"`
-	Launch           *Offer_Operation_Launch    `protobuf:"bytes,2,opt,name=launch" json:"launch,omitempty"`
-	Reserve          *Offer_Operation_Reserve   `protobuf:"bytes,3,opt,name=reserve" json:"reserve,omitempty"`
-	Unreserve        *Offer_Operation_Unreserve `protobuf:"bytes,4,opt,name=unreserve" json:"unreserve,omitempty"`
-	Create           *Offer_Operation_Create    `protobuf:"bytes,5,opt,name=create" json:"create,omitempty"`
-	Destroy          *Offer_Operation_Destroy   `protobuf:"bytes,6,opt,name=destroy" json:"destroy,omitempty"`
-	XXX_unrecognized []byte                     `json:"-"`
+	Type      *Offer_Operation_Type      `protobuf:"varint,1,req,name=type,enum=mesos.Offer_Operation_Type" json:"type,omitempty"`
+	Launch    *Offer_Operation_Launch    `protobuf:"bytes,2,opt,name=launch" json:"launch,omitempty"`
+	Reserve   *Offer_Operation_Reserve   `protobuf:"bytes,3,opt,name=reserve" json:"reserve,omitempty"`
+	Unreserve *Offer_Operation_Unreserve `protobuf:"bytes,4,opt,name=unreserve" json:"unreserve,omitempty"`
+	Create    *Offer_Operation_Create    `protobuf:"bytes,5,opt,name=create" json:"create,omitempty"`
+	Destroy   *Offer_Operation_Destroy   `protobuf:"bytes,6,opt,name=destroy" json:"destroy,omitempty"`
 }
 
 func (m *Offer_Operation) Reset()      { *m = Offer_Operation{} }
@@ -3192,8 +3149,7 @@ func (m *Offer_Operation) GetDestroy() *Offer_Operation_Destroy {
 }
 
 type Offer_Operation_Launch struct {
-	TaskInfos        []*TaskInfo `protobuf:"bytes,1,rep,name=task_infos" json:"task_infos,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	TaskInfos []*TaskInfo `protobuf:"bytes,1,rep,name=task_infos" json:"task_infos,omitempty"`
 }
 
 func (m *Offer_Operation_Launch) Reset()      { *m = Offer_Operation_Launch{} }
@@ -3207,8 +3163,7 @@ func (m *Offer_Operation_Launch) GetTaskInfos() []*TaskInfo {
 }
 
 type Offer_Operation_Reserve struct {
-	Resources        []*Resource `protobuf:"bytes,1,rep,name=resources" json:"resources,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	Resources []*Resource `protobuf:"bytes,1,rep,name=resources" json:"resources,omitempty"`
 }
 
 func (m *Offer_Operation_Reserve) Reset()      { *m = Offer_Operation_Reserve{} }
@@ -3222,8 +3177,7 @@ func (m *Offer_Operation_Reserve) GetResources() []*Resource {
 }
 
 type Offer_Operation_Unreserve struct {
-	Resources        []*Resource `protobuf:"bytes,1,rep,name=resources" json:"resources,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	Resources []*Resource `protobuf:"bytes,1,rep,name=resources" json:"resources,omitempty"`
 }
 
 func (m *Offer_Operation_Unreserve) Reset()      { *m = Offer_Operation_Unreserve{} }
@@ -3237,8 +3191,7 @@ func (m *Offer_Operation_Unreserve) GetResources() []*Resource {
 }
 
 type Offer_Operation_Create struct {
-	Volumes          []*Resource `protobuf:"bytes,1,rep,name=volumes" json:"volumes,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	Volumes []*Resource `protobuf:"bytes,1,rep,name=volumes" json:"volumes,omitempty"`
 }
 
 func (m *Offer_Operation_Create) Reset()      { *m = Offer_Operation_Create{} }
@@ -3252,8 +3205,7 @@ func (m *Offer_Operation_Create) GetVolumes() []*Resource {
 }
 
 type Offer_Operation_Destroy struct {
-	Volumes          []*Resource `protobuf:"bytes,1,rep,name=volumes" json:"volumes,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	Volumes []*Resource `protobuf:"bytes,1,rep,name=volumes" json:"volumes,omitempty"`
 }
 
 func (m *Offer_Operation_Destroy) Reset()      { *m = Offer_Operation_Destroy{} }
@@ -3304,8 +3256,7 @@ type InverseOffer struct {
 	// then all resources are being requested back.  For the purpose of
 	// maintenance, this field is always empty (maintenance always requests
 	// all resources back).
-	Resources        []*Resource `protobuf:"bytes,6,rep,name=resources" json:"resources,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	Resources []*Resource `protobuf:"bytes,6,rep,name=resources" json:"resources,omitempty"`
 }
 
 func (m *InverseOffer) Reset()      { *m = InverseOffer{} }
@@ -3383,8 +3334,7 @@ type TaskInfo struct {
 	// or acted upon by Mesos. It is up to a service discovery system
 	// to use this information as needed and to handle tasks without
 	// service discovery information.
-	Discovery        *DiscoveryInfo `protobuf:"bytes,11,opt,name=discovery" json:"discovery,omitempty"`
-	XXX_unrecognized []byte         `json:"-"`
+	Discovery *DiscoveryInfo `protobuf:"bytes,11,opt,name=discovery" json:"discovery,omitempty"`
 }
 
 func (m *TaskInfo) Reset()      { *m = TaskInfo{} }
@@ -3499,8 +3449,7 @@ type TaskStatus struct {
 	// will be kept in memory on master and agent processes. Therefore,
 	// labels should be used to tag TaskStatus message with light-weight
 	// meta-data.
-	Labels           *Labels `protobuf:"bytes,12,opt,name=labels" json:"labels,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Labels *Labels `protobuf:"bytes,12,opt,name=labels" json:"labels,omitempty"`
 }
 
 func (m *TaskStatus) Reset()      { *m = TaskStatus{} }
@@ -3600,8 +3549,7 @@ type Filters struct {
 	// SchedulerDriver::launchTasks. You MUST pass Filters with this
 	// field set to change this behavior (i.e., get another offer which
 	// includes unused resources sooner or later than the default).
-	RefuseSeconds    *float64 `protobuf:"fixed64,1,opt,name=refuse_seconds,def=5" json:"refuse_seconds,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	RefuseSeconds *float64 `protobuf:"fixed64,1,opt,name=refuse_seconds,def=5" json:"refuse_seconds,omitempty"`
 }
 
 func (m *Filters) Reset()      { *m = Filters{} }
@@ -3621,8 +3569,7 @@ func (m *Filters) GetRefuseSeconds() float64 {
 // CommandInfo in order to set environment variables before running a
 // command.
 type Environment struct {
-	Variables        []*Environment_Variable `protobuf:"bytes,1,rep,name=variables" json:"variables,omitempty"`
-	XXX_unrecognized []byte                  `json:"-"`
+	Variables []*Environment_Variable `protobuf:"bytes,1,rep,name=variables" json:"variables,omitempty"`
 }
 
 func (m *Environment) Reset()      { *m = Environment{} }
@@ -3636,9 +3583,8 @@ func (m *Environment) GetVariables() []*Environment_Variable {
 }
 
 type Environment_Variable struct {
-	Name             *string `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
-	Value            *string `protobuf:"bytes,2,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Name  *string `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
+	Value *string `protobuf:"bytes,2,req,name=value" json:"value,omitempty"`
 }
 
 func (m *Environment_Variable) Reset()      { *m = Environment_Variable{} }
@@ -3661,9 +3607,8 @@ func (m *Environment_Variable) GetValue() string {
 // *
 // A generic (key, value) pair used in various places for parameters.
 type Parameter struct {
-	Key              *string `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
-	Value            *string `protobuf:"bytes,2,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Key   *string `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
+	Value *string `protobuf:"bytes,2,req,name=value" json:"value,omitempty"`
 }
 
 func (m *Parameter) Reset()      { *m = Parameter{} }
@@ -3686,8 +3631,7 @@ func (m *Parameter) GetValue() string {
 // *
 // Collection of Parameter.
 type Parameters struct {
-	Parameter        []*Parameter `protobuf:"bytes,1,rep,name=parameter" json:"parameter,omitempty"`
-	XXX_unrecognized []byte       `json:"-"`
+	Parameter []*Parameter `protobuf:"bytes,1,rep,name=parameter" json:"parameter,omitempty"`
 }
 
 func (m *Parameters) Reset()      { *m = Parameters{} }
@@ -3709,9 +3653,8 @@ func (m *Parameters) GetParameter() []*Parameter {
 // latter is used to determine the default user under which the
 // framework's executors/tasks are run.
 type Credential struct {
-	Principal        *string `protobuf:"bytes,1,req,name=principal" json:"principal,omitempty"`
-	Secret           []byte  `protobuf:"bytes,2,opt,name=secret" json:"secret,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Principal *string `protobuf:"bytes,1,req,name=principal" json:"principal,omitempty"`
+	Secret    []byte  `protobuf:"bytes,2,opt,name=secret" json:"secret,omitempty"`
 }
 
 func (m *Credential) Reset()      { *m = Credential{} }
@@ -3736,8 +3679,7 @@ func (m *Credential) GetSecret() []byte {
 // (where the common 'username' and 'password' are captured as
 // 'principal' and 'secret' respectively), etc.
 type Credentials struct {
-	Credentials      []*Credential `protobuf:"bytes,1,rep,name=credentials" json:"credentials,omitempty"`
-	XXX_unrecognized []byte        `json:"-"`
+	Credentials []*Credential `protobuf:"bytes,1,rep,name=credentials" json:"credentials,omitempty"`
 }
 
 func (m *Credentials) Reset()      { *m = Credentials{} }
@@ -3767,8 +3709,7 @@ type RateLimit struct {
 	// still going to be processed after the error is sent.
 	// If unspecified, this principal is assigned unlimited capacity.
 	// NOTE: This value is ignored if 'qps' is not set.
-	Capacity         *uint64 `protobuf:"varint,3,opt,name=capacity" json:"capacity,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Capacity *uint64 `protobuf:"varint,3,opt,name=capacity" json:"capacity,omitempty"`
 }
 
 func (m *RateLimit) Reset()      { *m = RateLimit{} }
@@ -3809,7 +3750,6 @@ type RateLimits struct {
 	// All the frameworks not specified in 'limits' get this default capacity.
 	// This is an aggregate value similar to 'aggregate_default_qps'.
 	AggregateDefaultCapacity *uint64 `protobuf:"varint,3,opt,name=aggregate_default_capacity" json:"aggregate_default_capacity,omitempty"`
-	XXX_unrecognized         []byte  `json:"-"`
 }
 
 func (m *RateLimits) Reset()      { *m = RateLimits{} }
@@ -3843,8 +3783,7 @@ type Image struct {
 	Type *Image_Type `protobuf:"varint,1,req,name=type,enum=mesos.Image_Type" json:"type,omitempty"`
 	// Only one of the following image messages should be set to match
 	// the type.
-	Appc             *Image_AppC `protobuf:"bytes,2,opt,name=appc" json:"appc,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	Appc *Image_AppC `protobuf:"bytes,2,opt,name=appc" json:"appc,omitempty"`
 }
 
 func (m *Image) Reset()      { *m = Image{} }
@@ -3875,8 +3814,7 @@ type Image_AppC struct {
 	// hash algorithm is sha512.
 	Id *string `protobuf:"bytes,2,req,name=id" json:"id,omitempty"`
 	// Optional labels. Suggested labels: "version", "os", and "arch".
-	Labels           *Labels `protobuf:"bytes,3,opt,name=labels" json:"labels,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Labels *Labels `protobuf:"bytes,3,opt,name=labels" json:"labels,omitempty"`
 }
 
 func (m *Image_AppC) Reset()      { *m = Image_AppC{} }
@@ -3915,8 +3853,7 @@ type Volume struct {
 	HostPath *string `protobuf:"bytes,2,opt,name=host_path" json:"host_path,omitempty"`
 	// The source of the volume is an Image which describes a root
 	// filesystem which will be provisioned by Mesos.
-	Image            *Image `protobuf:"bytes,4,opt,name=image" json:"image,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	Image *Image `protobuf:"bytes,4,opt,name=image" json:"image,omitempty"`
 }
 
 func (m *Volume) Reset()      { *m = Volume{} }
@@ -3959,9 +3896,8 @@ type ContainerInfo struct {
 	Hostname *string             `protobuf:"bytes,4,opt,name=hostname" json:"hostname,omitempty"`
 	// Only one of the following *Info messages should be set to match
 	// the type.
-	Docker           *ContainerInfo_DockerInfo `protobuf:"bytes,3,opt,name=docker" json:"docker,omitempty"`
-	Mesos            *ContainerInfo_MesosInfo  `protobuf:"bytes,5,opt,name=mesos" json:"mesos,omitempty"`
-	XXX_unrecognized []byte                    `json:"-"`
+	Docker *ContainerInfo_DockerInfo `protobuf:"bytes,3,opt,name=docker" json:"docker,omitempty"`
+	Mesos  *ContainerInfo_MesosInfo  `protobuf:"bytes,5,opt,name=mesos" json:"mesos,omitempty"`
 }
 
 func (m *ContainerInfo) Reset()      { *m = ContainerInfo{} }
@@ -4016,8 +3952,7 @@ type ContainerInfo_DockerInfo struct {
 	// With this flag set to true, the docker containerizer will
 	// pull the docker image from the registry even if the image
 	// is already downloaded on the agent.
-	ForcePullImage   *bool  `protobuf:"varint,6,opt,name=force_pull_image" json:"force_pull_image,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	ForcePullImage *bool `protobuf:"varint,6,opt,name=force_pull_image" json:"force_pull_image,omitempty"`
 }
 
 func (m *ContainerInfo_DockerInfo) Reset()      { *m = ContainerInfo_DockerInfo{} }
@@ -4072,8 +4007,7 @@ type ContainerInfo_DockerInfo_PortMapping struct {
 	HostPort      *uint32 `protobuf:"varint,1,req,name=host_port" json:"host_port,omitempty"`
 	ContainerPort *uint32 `protobuf:"varint,2,req,name=container_port" json:"container_port,omitempty"`
 	// Protocol to expose as (ie: tcp, udp).
-	Protocol         *string `protobuf:"bytes,3,opt,name=protocol" json:"protocol,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Protocol *string `protobuf:"bytes,3,opt,name=protocol" json:"protocol,omitempty"`
 }
 
 func (m *ContainerInfo_DockerInfo_PortMapping) Reset()      { *m = ContainerInfo_DockerInfo_PortMapping{} }
@@ -4101,8 +4035,7 @@ func (m *ContainerInfo_DockerInfo_PortMapping) GetProtocol() string {
 }
 
 type ContainerInfo_MesosInfo struct {
-	Image            *Image `protobuf:"bytes,1,opt,name=image" json:"image,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	Image *Image `protobuf:"bytes,1,opt,name=image" json:"image,omitempty"`
 }
 
 func (m *ContainerInfo_MesosInfo) Reset()      { *m = ContainerInfo_MesosInfo{} }
@@ -4118,8 +4051,7 @@ func (m *ContainerInfo_MesosInfo) GetImage() *Image {
 // *
 // Collection of labels.
 type Labels struct {
-	Labels           []*Label `protobuf:"bytes,1,rep,name=labels" json:"labels,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	Labels []*Label `protobuf:"bytes,1,rep,name=labels" json:"labels,omitempty"`
 }
 
 func (m *Labels) Reset()      { *m = Labels{} }
@@ -4135,9 +4067,8 @@ func (m *Labels) GetLabels() []*Label {
 // *
 // Key, value pair used to store free form user-data.
 type Label struct {
-	Key              *string `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
-	Value            *string `protobuf:"bytes,2,opt,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Key   *string `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
+	Value *string `protobuf:"bytes,2,opt,name=value" json:"value,omitempty"`
 }
 
 func (m *Label) Reset()      { *m = Label{} }
@@ -4160,10 +4091,9 @@ func (m *Label) GetValue() string {
 // *
 // Named port used for service discovery.
 type Port struct {
-	Number           *uint32 `protobuf:"varint,1,req,name=number" json:"number,omitempty"`
-	Name             *string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Protocol         *string `protobuf:"bytes,3,opt,name=protocol" json:"protocol,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Number   *uint32 `protobuf:"varint,1,req,name=number" json:"number,omitempty"`
+	Name     *string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Protocol *string `protobuf:"bytes,3,opt,name=protocol" json:"protocol,omitempty"`
 }
 
 func (m *Port) Reset()      { *m = Port{} }
@@ -4193,8 +4123,7 @@ func (m *Port) GetProtocol() string {
 // *
 // Collection of ports.
 type Ports struct {
-	Ports            []*Port `protobuf:"bytes,1,rep,name=ports" json:"ports,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Ports []*Port `protobuf:"bytes,1,rep,name=ports" json:"ports,omitempty"`
 }
 
 func (m *Ports) Reset()      { *m = Ports{} }
@@ -4220,14 +4149,13 @@ func (m *Ports) GetPorts() []*Port {
 // values like v2.0/v0.9. The exact use of these fields is up to each
 // service discovery system.
 type DiscoveryInfo struct {
-	Visibility       *DiscoveryInfo_Visibility `protobuf:"varint,1,req,name=visibility,enum=mesos.DiscoveryInfo_Visibility" json:"visibility,omitempty"`
-	Name             *string                   `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Environment      *string                   `protobuf:"bytes,3,opt,name=environment" json:"environment,omitempty"`
-	Location         *string                   `protobuf:"bytes,4,opt,name=location" json:"location,omitempty"`
-	Version          *string                   `protobuf:"bytes,5,opt,name=version" json:"version,omitempty"`
-	Ports            *Ports                    `protobuf:"bytes,6,opt,name=ports" json:"ports,omitempty"`
-	Labels           *Labels                   `protobuf:"bytes,7,opt,name=labels" json:"labels,omitempty"`
-	XXX_unrecognized []byte                    `json:"-"`
+	Visibility  *DiscoveryInfo_Visibility `protobuf:"varint,1,req,name=visibility,enum=mesos.DiscoveryInfo_Visibility" json:"visibility,omitempty"`
+	Name        *string                   `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Environment *string                   `protobuf:"bytes,3,opt,name=environment" json:"environment,omitempty"`
+	Location    *string                   `protobuf:"bytes,4,opt,name=location" json:"location,omitempty"`
+	Version     *string                   `protobuf:"bytes,5,opt,name=version" json:"version,omitempty"`
+	Ports       *Ports                    `protobuf:"bytes,6,opt,name=ports" json:"ports,omitempty"`
+	Labels      *Labels                   `protobuf:"bytes,7,opt,name=labels" json:"labels,omitempty"`
 }
 
 func (m *DiscoveryInfo) Reset()      { *m = DiscoveryInfo{} }
@@ -4417,9 +4345,6 @@ func (this *FrameworkID) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *FrameworkID) Equal(that interface{}) bool {
@@ -4449,9 +4374,6 @@ func (this *FrameworkID) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -4485,9 +4407,6 @@ func (this *OfferID) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *OfferID) Equal(that interface{}) bool {
@@ -4517,9 +4436,6 @@ func (this *OfferID) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -4553,9 +4469,6 @@ func (this *AgentID) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *AgentID) Equal(that interface{}) bool {
@@ -4585,9 +4498,6 @@ func (this *AgentID) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -4621,9 +4531,6 @@ func (this *TaskID) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *TaskID) Equal(that interface{}) bool {
@@ -4653,9 +4560,6 @@ func (this *TaskID) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -4689,9 +4593,6 @@ func (this *ExecutorID) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *ExecutorID) Equal(that interface{}) bool {
@@ -4721,9 +4622,6 @@ func (this *ExecutorID) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -4757,9 +4655,6 @@ func (this *ContainerID) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *ContainerID) Equal(that interface{}) bool {
@@ -4789,9 +4684,6 @@ func (this *ContainerID) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -4825,9 +4717,6 @@ func (this *TimeInfo) VerboseEqual(that interface{}) error {
 	} else if that1.Nanoseconds != nil {
 		return fmt.Errorf("Nanoseconds this(%v) Not Equal that(%v)", this.Nanoseconds, that1.Nanoseconds)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *TimeInfo) Equal(that interface{}) bool {
@@ -4857,9 +4746,6 @@ func (this *TimeInfo) Equal(that interface{}) bool {
 	} else if this.Nanoseconds != nil {
 		return false
 	} else if that1.Nanoseconds != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -4893,9 +4779,6 @@ func (this *DurationInfo) VerboseEqual(that interface{}) error {
 	} else if that1.Nanoseconds != nil {
 		return fmt.Errorf("Nanoseconds this(%v) Not Equal that(%v)", this.Nanoseconds, that1.Nanoseconds)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *DurationInfo) Equal(that interface{}) bool {
@@ -4925,9 +4808,6 @@ func (this *DurationInfo) Equal(that interface{}) bool {
 	} else if this.Nanoseconds != nil {
 		return false
 	} else if that1.Nanoseconds != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -4979,9 +4859,6 @@ func (this *Address) VerboseEqual(that interface{}) error {
 	} else if that1.Port != nil {
 		return fmt.Errorf("Port this(%v) Not Equal that(%v)", this.Port, that1.Port)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Address) Equal(that interface{}) bool {
@@ -5029,9 +4906,6 @@ func (this *Address) Equal(that interface{}) bool {
 	} else if this.Port != nil {
 		return false
 	} else if that1.Port != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -5094,9 +4968,6 @@ func (this *URL) VerboseEqual(that interface{}) error {
 	} else if that1.Fragment != nil {
 		return fmt.Errorf("Fragment this(%v) Not Equal that(%v)", this.Fragment, that1.Fragment)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *URL) Equal(that interface{}) bool {
@@ -5157,9 +5028,6 @@ func (this *URL) Equal(that interface{}) bool {
 	} else if that1.Fragment != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Unavailability) VerboseEqual(that interface{}) error {
@@ -5188,9 +5056,6 @@ func (this *Unavailability) VerboseEqual(that interface{}) error {
 	if !this.Duration.Equal(that1.Duration) {
 		return fmt.Errorf("Duration this(%v) Not Equal that(%v)", this.Duration, that1.Duration)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Unavailability) Equal(that interface{}) bool {
@@ -5217,9 +5082,6 @@ func (this *Unavailability) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Duration.Equal(that1.Duration) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -5262,9 +5124,6 @@ func (this *MachineID) VerboseEqual(that interface{}) error {
 	} else if that1.Ip != nil {
 		return fmt.Errorf("Ip this(%v) Not Equal that(%v)", this.Ip, that1.Ip)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *MachineID) Equal(that interface{}) bool {
@@ -5305,9 +5164,6 @@ func (this *MachineID) Equal(that interface{}) bool {
 	} else if that1.Ip != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *MachineInfo) VerboseEqual(that interface{}) error {
@@ -5345,9 +5201,6 @@ func (this *MachineInfo) VerboseEqual(that interface{}) error {
 	if !this.Unavailability.Equal(that1.Unavailability) {
 		return fmt.Errorf("Unavailability this(%v) Not Equal that(%v)", this.Unavailability, that1.Unavailability)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *MachineInfo) Equal(that interface{}) bool {
@@ -5383,9 +5236,6 @@ func (this *MachineInfo) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Unavailability.Equal(that1.Unavailability) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -5496,9 +5346,6 @@ func (this *FrameworkInfo) VerboseEqual(that interface{}) error {
 	if !this.Labels.Equal(that1.Labels) {
 		return fmt.Errorf("Labels this(%v) Not Equal that(%v)", this.Labels, that1.Labels)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *FrameworkInfo) Equal(that interface{}) bool {
@@ -5607,9 +5454,6 @@ func (this *FrameworkInfo) Equal(that interface{}) bool {
 	if !this.Labels.Equal(that1.Labels) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *FrameworkInfo_Capability) VerboseEqual(that interface{}) error {
@@ -5641,9 +5485,6 @@ func (this *FrameworkInfo_Capability) VerboseEqual(that interface{}) error {
 	} else if that1.Type != nil {
 		return fmt.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *FrameworkInfo_Capability) Equal(that interface{}) bool {
@@ -5673,9 +5514,6 @@ func (this *FrameworkInfo_Capability) Equal(that interface{}) bool {
 	} else if this.Type != nil {
 		return false
 	} else if that1.Type != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -5751,9 +5589,6 @@ func (this *HealthCheck) VerboseEqual(that interface{}) error {
 	if !this.Command.Equal(that1.Command) {
 		return fmt.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *HealthCheck) Equal(that interface{}) bool {
@@ -5827,9 +5662,6 @@ func (this *HealthCheck) Equal(that interface{}) bool {
 	if !this.Command.Equal(that1.Command) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *HealthCheck_HTTP) VerboseEqual(that interface{}) error {
@@ -5878,9 +5710,6 @@ func (this *HealthCheck_HTTP) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Statuses this[%v](%v) Not Equal that[%v](%v)", i, this.Statuses[i], i, that1.Statuses[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *HealthCheck_HTTP) Equal(that interface{}) bool {
@@ -5928,9 +5757,6 @@ func (this *HealthCheck_HTTP) Equal(that interface{}) bool {
 		if this.Statuses[i] != that1.Statuses[i] {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -6003,9 +5829,6 @@ func (this *CommandInfo) VerboseEqual(that interface{}) error {
 	} else if that1.User != nil {
 		return fmt.Errorf("User this(%v) Not Equal that(%v)", this.User, that1.User)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *CommandInfo) Equal(that interface{}) bool {
@@ -6077,9 +5900,6 @@ func (this *CommandInfo) Equal(that interface{}) bool {
 	} else if that1.User != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *CommandInfo_URI) VerboseEqual(that interface{}) error {
@@ -6137,9 +5957,6 @@ func (this *CommandInfo_URI) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("this.Cache == nil && that.Cache != nil")
 	} else if that1.Cache != nil {
 		return fmt.Errorf("Cache this(%v) Not Equal that(%v)", this.Cache, that1.Cache)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -6199,9 +6016,6 @@ func (this *CommandInfo_URI) Equal(that interface{}) bool {
 	} else if that1.Cache != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *CommandInfo_ContainerInfo) VerboseEqual(that interface{}) error {
@@ -6241,9 +6055,6 @@ func (this *CommandInfo_ContainerInfo) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Options this[%v](%v) Not Equal that[%v](%v)", i, this.Options[i], i, that1.Options[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *CommandInfo_ContainerInfo) Equal(that interface{}) bool {
@@ -6282,9 +6093,6 @@ func (this *CommandInfo_ContainerInfo) Equal(that interface{}) bool {
 		if this.Options[i] != that1.Options[i] {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -6352,9 +6160,6 @@ func (this *ExecutorInfo) VerboseEqual(that interface{}) error {
 	if !this.Discovery.Equal(that1.Discovery) {
 		return fmt.Errorf("Discovery this(%v) Not Equal that(%v)", this.Discovery, that1.Discovery)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *ExecutorInfo) Equal(that interface{}) bool {
@@ -6419,9 +6224,6 @@ func (this *ExecutorInfo) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Discovery.Equal(that1.Discovery) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -6503,9 +6305,6 @@ func (this *MasterInfo) VerboseEqual(that interface{}) error {
 	if !this.Address.Equal(that1.Address) {
 		return fmt.Errorf("Address this(%v) Not Equal that(%v)", this.Address, that1.Address)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *MasterInfo) Equal(that interface{}) bool {
@@ -6585,9 +6384,6 @@ func (this *MasterInfo) Equal(that interface{}) bool {
 	if !this.Address.Equal(that1.Address) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *AgentInfo) VerboseEqual(that interface{}) error {
@@ -6646,9 +6442,6 @@ func (this *AgentInfo) VerboseEqual(that interface{}) error {
 	}
 	if !this.Id.Equal(that1.Id) {
 		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -6709,9 +6502,6 @@ func (this *AgentInfo) Equal(that interface{}) bool {
 	if !this.Id.Equal(that1.Id) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Value) VerboseEqual(that interface{}) error {
@@ -6754,9 +6544,6 @@ func (this *Value) VerboseEqual(that interface{}) error {
 	}
 	if !this.Text.Equal(that1.Text) {
 		return fmt.Errorf("Text this(%v) Not Equal that(%v)", this.Text, that1.Text)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -6801,9 +6588,6 @@ func (this *Value) Equal(that interface{}) bool {
 	if !this.Text.Equal(that1.Text) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Value_Scalar) VerboseEqual(that interface{}) error {
@@ -6835,9 +6619,6 @@ func (this *Value_Scalar) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Value_Scalar) Equal(that interface{}) bool {
@@ -6867,9 +6648,6 @@ func (this *Value_Scalar) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -6912,9 +6690,6 @@ func (this *Value_Range) VerboseEqual(that interface{}) error {
 	} else if that1.End != nil {
 		return fmt.Errorf("End this(%v) Not Equal that(%v)", this.End, that1.End)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Value_Range) Equal(that interface{}) bool {
@@ -6955,9 +6730,6 @@ func (this *Value_Range) Equal(that interface{}) bool {
 	} else if that1.End != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Value_Ranges) VerboseEqual(that interface{}) error {
@@ -6987,9 +6759,6 @@ func (this *Value_Ranges) VerboseEqual(that interface{}) error {
 		if !this.Range[i].Equal(that1.Range[i]) {
 			return fmt.Errorf("Range this[%v](%v) Not Equal that[%v](%v)", i, this.Range[i], i, that1.Range[i])
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -7021,9 +6790,6 @@ func (this *Value_Ranges) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Value_Set) VerboseEqual(that interface{}) error {
@@ -7054,9 +6820,6 @@ func (this *Value_Set) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Item this[%v](%v) Not Equal that[%v](%v)", i, this.Item[i], i, that1.Item[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Value_Set) Equal(that interface{}) bool {
@@ -7086,9 +6849,6 @@ func (this *Value_Set) Equal(that interface{}) bool {
 		if this.Item[i] != that1.Item[i] {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -7121,9 +6881,6 @@ func (this *Value_Text) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Value_Text) Equal(that interface{}) bool {
@@ -7153,9 +6910,6 @@ func (this *Value_Text) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -7210,9 +6964,6 @@ func (this *Attribute) VerboseEqual(that interface{}) error {
 	if !this.Text.Equal(that1.Text) {
 		return fmt.Errorf("Text this(%v) Not Equal that(%v)", this.Text, that1.Text)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Attribute) Equal(that interface{}) bool {
@@ -7263,9 +7014,6 @@ func (this *Attribute) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Text.Equal(that1.Text) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -7335,9 +7083,6 @@ func (this *Resource) VerboseEqual(that interface{}) error {
 	if !this.Revocable.Equal(that1.Revocable) {
 		return fmt.Errorf("Revocable this(%v) Not Equal that(%v)", this.Revocable, that1.Revocable)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Resource) Equal(that interface{}) bool {
@@ -7405,9 +7150,6 @@ func (this *Resource) Equal(that interface{}) bool {
 	if !this.Revocable.Equal(that1.Revocable) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Resource_ReservationInfo) VerboseEqual(that interface{}) error {
@@ -7438,9 +7180,6 @@ func (this *Resource_ReservationInfo) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("this.Principal == nil && that.Principal != nil")
 	} else if that1.Principal != nil {
 		return fmt.Errorf("Principal this(%v) Not Equal that(%v)", this.Principal, that1.Principal)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -7473,9 +7212,6 @@ func (this *Resource_ReservationInfo) Equal(that interface{}) bool {
 	} else if that1.Principal != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Resource_DiskInfo) VerboseEqual(that interface{}) error {
@@ -7504,9 +7240,6 @@ func (this *Resource_DiskInfo) VerboseEqual(that interface{}) error {
 	if !this.Volume.Equal(that1.Volume) {
 		return fmt.Errorf("Volume this(%v) Not Equal that(%v)", this.Volume, that1.Volume)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Resource_DiskInfo) Equal(that interface{}) bool {
@@ -7533,9 +7266,6 @@ func (this *Resource_DiskInfo) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Volume.Equal(that1.Volume) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -7569,9 +7299,6 @@ func (this *Resource_DiskInfo_Persistence) VerboseEqual(that interface{}) error 
 	} else if that1.Id != nil {
 		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Resource_DiskInfo_Persistence) Equal(that interface{}) bool {
@@ -7603,9 +7330,6 @@ func (this *Resource_DiskInfo_Persistence) Equal(that interface{}) bool {
 	} else if that1.Id != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Resource_RevocableInfo) VerboseEqual(that interface{}) error {
@@ -7628,9 +7352,6 @@ func (this *Resource_RevocableInfo) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Resource_RevocableInfobut is not nil && this == nil")
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Resource_RevocableInfo) Equal(that interface{}) bool {
@@ -7651,9 +7372,6 @@ func (this *Resource_RevocableInfo) Equal(that interface{}) bool {
 		}
 		return false
 	} else if this == nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -7768,9 +7486,6 @@ func (this *TrafficControlStatistics) VerboseEqual(that interface{}) error {
 	} else if that1.Requeues != nil {
 		return fmt.Errorf("Requeues this(%v) Not Equal that(%v)", this.Requeues, that1.Requeues)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *TrafficControlStatistics) Equal(that interface{}) bool {
@@ -7881,9 +7596,6 @@ func (this *TrafficControlStatistics) Equal(that interface{}) bool {
 	} else if this.Requeues != nil {
 		return false
 	} else if that1.Requeues != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -8261,9 +7973,6 @@ func (this *ResourceStatistics) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("NetTrafficControlStatistics this[%v](%v) Not Equal that[%v](%v)", i, this.NetTrafficControlStatistics[i], i, that1.NetTrafficControlStatistics[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *ResourceStatistics) Equal(that interface{}) bool {
@@ -8639,9 +8348,6 @@ func (this *ResourceStatistics) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *ResourceUsage) VerboseEqual(that interface{}) error {
@@ -8679,9 +8385,6 @@ func (this *ResourceUsage) VerboseEqual(that interface{}) error {
 		if !this.Total[i].Equal(that1.Total[i]) {
 			return fmt.Errorf("Total this[%v](%v) Not Equal that[%v](%v)", i, this.Total[i], i, that1.Total[i])
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -8721,9 +8424,6 @@ func (this *ResourceUsage) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *ResourceUsage_Executor) VerboseEqual(that interface{}) error {
@@ -8760,9 +8460,6 @@ func (this *ResourceUsage_Executor) VerboseEqual(that interface{}) error {
 	if !this.Statistics.Equal(that1.Statistics) {
 		return fmt.Errorf("Statistics this(%v) Not Equal that(%v)", this.Statistics, that1.Statistics)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *ResourceUsage_Executor) Equal(that interface{}) bool {
@@ -8797,9 +8494,6 @@ func (this *ResourceUsage_Executor) Equal(that interface{}) bool {
 		}
 	}
 	if !this.Statistics.Equal(that1.Statistics) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -9301,9 +8995,6 @@ func (this *PerfStatistics) VerboseEqual(that interface{}) error {
 	} else if that1.NodePrefetchMisses != nil {
 		return fmt.Errorf("NodePrefetchMisses this(%v) Not Equal that(%v)", this.NodePrefetchMisses, that1.NodePrefetchMisses)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *PerfStatistics) Equal(that interface{}) bool {
@@ -9803,9 +9494,6 @@ func (this *PerfStatistics) Equal(that interface{}) bool {
 	} else if that1.NodePrefetchMisses != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Request) VerboseEqual(that interface{}) error {
@@ -9839,9 +9527,6 @@ func (this *Request) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Request) Equal(that interface{}) bool {
@@ -9874,9 +9559,6 @@ func (this *Request) Equal(that interface{}) bool {
 		if !this.Resources[i].Equal(that1.Resources[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -9948,9 +9630,6 @@ func (this *Offer) VerboseEqual(that interface{}) error {
 	if !this.Unavailability.Equal(that1.Unavailability) {
 		return fmt.Errorf("Unavailability this(%v) Not Equal that(%v)", this.Unavailability, that1.Unavailability)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Offer) Equal(that interface{}) bool {
@@ -10021,9 +9700,6 @@ func (this *Offer) Equal(that interface{}) bool {
 	if !this.Unavailability.Equal(that1.Unavailability) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Offer_Operation) VerboseEqual(that interface{}) error {
@@ -10069,9 +9745,6 @@ func (this *Offer_Operation) VerboseEqual(that interface{}) error {
 	}
 	if !this.Destroy.Equal(that1.Destroy) {
 		return fmt.Errorf("Destroy this(%v) Not Equal that(%v)", this.Destroy, that1.Destroy)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -10119,9 +9792,6 @@ func (this *Offer_Operation) Equal(that interface{}) bool {
 	if !this.Destroy.Equal(that1.Destroy) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Offer_Operation_Launch) VerboseEqual(that interface{}) error {
@@ -10151,9 +9821,6 @@ func (this *Offer_Operation_Launch) VerboseEqual(that interface{}) error {
 		if !this.TaskInfos[i].Equal(that1.TaskInfos[i]) {
 			return fmt.Errorf("TaskInfos this[%v](%v) Not Equal that[%v](%v)", i, this.TaskInfos[i], i, that1.TaskInfos[i])
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -10185,9 +9852,6 @@ func (this *Offer_Operation_Launch) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Offer_Operation_Reserve) VerboseEqual(that interface{}) error {
@@ -10217,9 +9881,6 @@ func (this *Offer_Operation_Reserve) VerboseEqual(that interface{}) error {
 		if !this.Resources[i].Equal(that1.Resources[i]) {
 			return fmt.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -10251,9 +9912,6 @@ func (this *Offer_Operation_Reserve) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Offer_Operation_Unreserve) VerboseEqual(that interface{}) error {
@@ -10283,9 +9941,6 @@ func (this *Offer_Operation_Unreserve) VerboseEqual(that interface{}) error {
 		if !this.Resources[i].Equal(that1.Resources[i]) {
 			return fmt.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -10317,9 +9972,6 @@ func (this *Offer_Operation_Unreserve) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Offer_Operation_Create) VerboseEqual(that interface{}) error {
@@ -10349,9 +10001,6 @@ func (this *Offer_Operation_Create) VerboseEqual(that interface{}) error {
 		if !this.Volumes[i].Equal(that1.Volumes[i]) {
 			return fmt.Errorf("Volumes this[%v](%v) Not Equal that[%v](%v)", i, this.Volumes[i], i, that1.Volumes[i])
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -10383,9 +10032,6 @@ func (this *Offer_Operation_Create) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Offer_Operation_Destroy) VerboseEqual(that interface{}) error {
@@ -10416,9 +10062,6 @@ func (this *Offer_Operation_Destroy) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Volumes this[%v](%v) Not Equal that[%v](%v)", i, this.Volumes[i], i, that1.Volumes[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Offer_Operation_Destroy) Equal(that interface{}) bool {
@@ -10448,9 +10091,6 @@ func (this *Offer_Operation_Destroy) Equal(that interface{}) bool {
 		if !this.Volumes[i].Equal(that1.Volumes[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -10497,9 +10137,6 @@ func (this *InverseOffer) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *InverseOffer) Equal(that interface{}) bool {
@@ -10544,9 +10181,6 @@ func (this *InverseOffer) Equal(that interface{}) bool {
 		if !this.Resources[i].Equal(that1.Resources[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -10614,9 +10248,6 @@ func (this *TaskInfo) VerboseEqual(that interface{}) error {
 	if !this.Discovery.Equal(that1.Discovery) {
 		return fmt.Errorf("Discovery this(%v) Not Equal that(%v)", this.Discovery, that1.Discovery)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *TaskInfo) Equal(that interface{}) bool {
@@ -10681,9 +10312,6 @@ func (this *TaskInfo) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Discovery.Equal(that1.Discovery) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -10780,9 +10408,6 @@ func (this *TaskStatus) VerboseEqual(that interface{}) error {
 	if !this.Labels.Equal(that1.Labels) {
 		return fmt.Errorf("Labels this(%v) Not Equal that(%v)", this.Labels, that1.Labels)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *TaskStatus) Equal(that interface{}) bool {
@@ -10877,9 +10502,6 @@ func (this *TaskStatus) Equal(that interface{}) bool {
 	if !this.Labels.Equal(that1.Labels) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Filters) VerboseEqual(that interface{}) error {
@@ -10910,9 +10532,6 @@ func (this *Filters) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("this.RefuseSeconds == nil && that.RefuseSeconds != nil")
 	} else if that1.RefuseSeconds != nil {
 		return fmt.Errorf("RefuseSeconds this(%v) Not Equal that(%v)", this.RefuseSeconds, that1.RefuseSeconds)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -10945,9 +10564,6 @@ func (this *Filters) Equal(that interface{}) bool {
 	} else if that1.RefuseSeconds != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Environment) VerboseEqual(that interface{}) error {
@@ -10978,9 +10594,6 @@ func (this *Environment) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Variables this[%v](%v) Not Equal that[%v](%v)", i, this.Variables[i], i, that1.Variables[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Environment) Equal(that interface{}) bool {
@@ -11010,9 +10623,6 @@ func (this *Environment) Equal(that interface{}) bool {
 		if !this.Variables[i].Equal(that1.Variables[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -11054,9 +10664,6 @@ func (this *Environment_Variable) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Environment_Variable) Equal(that interface{}) bool {
@@ -11095,9 +10702,6 @@ func (this *Environment_Variable) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -11140,9 +10744,6 @@ func (this *Parameter) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Parameter) Equal(that interface{}) bool {
@@ -11183,9 +10784,6 @@ func (this *Parameter) Equal(that interface{}) bool {
 	} else if that1.Value != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Parameters) VerboseEqual(that interface{}) error {
@@ -11216,9 +10814,6 @@ func (this *Parameters) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Parameter this[%v](%v) Not Equal that[%v](%v)", i, this.Parameter[i], i, that1.Parameter[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Parameters) Equal(that interface{}) bool {
@@ -11248,9 +10843,6 @@ func (this *Parameters) Equal(that interface{}) bool {
 		if !this.Parameter[i].Equal(that1.Parameter[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -11286,9 +10878,6 @@ func (this *Credential) VerboseEqual(that interface{}) error {
 	if !bytes.Equal(this.Secret, that1.Secret) {
 		return fmt.Errorf("Secret this(%v) Not Equal that(%v)", this.Secret, that1.Secret)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Credential) Equal(that interface{}) bool {
@@ -11323,9 +10912,6 @@ func (this *Credential) Equal(that interface{}) bool {
 	if !bytes.Equal(this.Secret, that1.Secret) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Credentials) VerboseEqual(that interface{}) error {
@@ -11356,9 +10942,6 @@ func (this *Credentials) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Credentials this[%v](%v) Not Equal that[%v](%v)", i, this.Credentials[i], i, that1.Credentials[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Credentials) Equal(that interface{}) bool {
@@ -11388,9 +10971,6 @@ func (this *Credentials) Equal(that interface{}) bool {
 		if !this.Credentials[i].Equal(that1.Credentials[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -11441,9 +11021,6 @@ func (this *RateLimit) VerboseEqual(that interface{}) error {
 	} else if that1.Capacity != nil {
 		return fmt.Errorf("Capacity this(%v) Not Equal that(%v)", this.Capacity, that1.Capacity)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *RateLimit) Equal(that interface{}) bool {
@@ -11491,9 +11068,6 @@ func (this *RateLimit) Equal(that interface{}) bool {
 	} else if this.Capacity != nil {
 		return false
 	} else if that1.Capacity != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -11544,9 +11118,6 @@ func (this *RateLimits) VerboseEqual(that interface{}) error {
 	} else if that1.AggregateDefaultCapacity != nil {
 		return fmt.Errorf("AggregateDefaultCapacity this(%v) Not Equal that(%v)", this.AggregateDefaultCapacity, that1.AggregateDefaultCapacity)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *RateLimits) Equal(that interface{}) bool {
@@ -11595,9 +11166,6 @@ func (this *RateLimits) Equal(that interface{}) bool {
 	} else if that1.AggregateDefaultCapacity != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Image) VerboseEqual(that interface{}) error {
@@ -11632,9 +11200,6 @@ func (this *Image) VerboseEqual(that interface{}) error {
 	if !this.Appc.Equal(that1.Appc) {
 		return fmt.Errorf("Appc this(%v) Not Equal that(%v)", this.Appc, that1.Appc)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Image) Equal(that interface{}) bool {
@@ -11667,9 +11232,6 @@ func (this *Image) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Appc.Equal(that1.Appc) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -11715,9 +11277,6 @@ func (this *Image_AppC) VerboseEqual(that interface{}) error {
 	if !this.Labels.Equal(that1.Labels) {
 		return fmt.Errorf("Labels this(%v) Not Equal that(%v)", this.Labels, that1.Labels)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Image_AppC) Equal(that interface{}) bool {
@@ -11759,9 +11318,6 @@ func (this *Image_AppC) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Labels.Equal(that1.Labels) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -11816,9 +11372,6 @@ func (this *Volume) VerboseEqual(that interface{}) error {
 	if !this.Image.Equal(that1.Image) {
 		return fmt.Errorf("Image this(%v) Not Equal that(%v)", this.Image, that1.Image)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Volume) Equal(that interface{}) bool {
@@ -11869,9 +11422,6 @@ func (this *Volume) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Image.Equal(that1.Image) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -11928,9 +11478,6 @@ func (this *ContainerInfo) VerboseEqual(that interface{}) error {
 	if !this.Mesos.Equal(that1.Mesos) {
 		return fmt.Errorf("Mesos this(%v) Not Equal that(%v)", this.Mesos, that1.Mesos)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *ContainerInfo) Equal(that interface{}) bool {
@@ -11983,9 +11530,6 @@ func (this *ContainerInfo) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Mesos.Equal(that1.Mesos) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -12062,9 +11606,6 @@ func (this *ContainerInfo_DockerInfo) VerboseEqual(that interface{}) error {
 	} else if that1.ForcePullImage != nil {
 		return fmt.Errorf("ForcePullImage this(%v) Not Equal that(%v)", this.ForcePullImage, that1.ForcePullImage)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *ContainerInfo_DockerInfo) Equal(that interface{}) bool {
@@ -12139,9 +11680,6 @@ func (this *ContainerInfo_DockerInfo) Equal(that interface{}) bool {
 	} else if that1.ForcePullImage != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *ContainerInfo_DockerInfo_PortMapping) VerboseEqual(that interface{}) error {
@@ -12190,9 +11728,6 @@ func (this *ContainerInfo_DockerInfo_PortMapping) VerboseEqual(that interface{})
 		return fmt.Errorf("this.Protocol == nil && that.Protocol != nil")
 	} else if that1.Protocol != nil {
 		return fmt.Errorf("Protocol this(%v) Not Equal that(%v)", this.Protocol, that1.Protocol)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -12243,9 +11778,6 @@ func (this *ContainerInfo_DockerInfo_PortMapping) Equal(that interface{}) bool {
 	} else if that1.Protocol != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *ContainerInfo_MesosInfo) VerboseEqual(that interface{}) error {
@@ -12271,9 +11803,6 @@ func (this *ContainerInfo_MesosInfo) VerboseEqual(that interface{}) error {
 	if !this.Image.Equal(that1.Image) {
 		return fmt.Errorf("Image this(%v) Not Equal that(%v)", this.Image, that1.Image)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *ContainerInfo_MesosInfo) Equal(that interface{}) bool {
@@ -12297,9 +11826,6 @@ func (this *ContainerInfo_MesosInfo) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Image.Equal(that1.Image) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -12332,9 +11858,6 @@ func (this *Labels) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Labels this[%v](%v) Not Equal that[%v](%v)", i, this.Labels[i], i, that1.Labels[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Labels) Equal(that interface{}) bool {
@@ -12364,9 +11887,6 @@ func (this *Labels) Equal(that interface{}) bool {
 		if !this.Labels[i].Equal(that1.Labels[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -12408,9 +11928,6 @@ func (this *Label) VerboseEqual(that interface{}) error {
 	} else if that1.Value != nil {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Label) Equal(that interface{}) bool {
@@ -12449,9 +11966,6 @@ func (this *Label) Equal(that interface{}) bool {
 	} else if this.Value != nil {
 		return false
 	} else if that1.Value != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -12503,9 +12017,6 @@ func (this *Port) VerboseEqual(that interface{}) error {
 	} else if that1.Protocol != nil {
 		return fmt.Errorf("Protocol this(%v) Not Equal that(%v)", this.Protocol, that1.Protocol)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Port) Equal(that interface{}) bool {
@@ -12555,9 +12066,6 @@ func (this *Port) Equal(that interface{}) bool {
 	} else if that1.Protocol != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Ports) VerboseEqual(that interface{}) error {
@@ -12588,9 +12096,6 @@ func (this *Ports) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Ports this[%v](%v) Not Equal that[%v](%v)", i, this.Ports[i], i, that1.Ports[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Ports) Equal(that interface{}) bool {
@@ -12620,9 +12125,6 @@ func (this *Ports) Equal(that interface{}) bool {
 		if !this.Ports[i].Equal(that1.Ports[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -12697,9 +12199,6 @@ func (this *DiscoveryInfo) VerboseEqual(that interface{}) error {
 	if !this.Labels.Equal(that1.Labels) {
 		return fmt.Errorf("Labels this(%v) Not Equal that(%v)", this.Labels, that1.Labels)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *DiscoveryInfo) Equal(that interface{}) bool {
@@ -12773,9 +12272,6 @@ func (this *DiscoveryInfo) Equal(that interface{}) bool {
 	if !this.Labels.Equal(that1.Labels) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *FrameworkID) GoString() string {
@@ -12786,9 +12282,6 @@ func (this *FrameworkID) GoString() string {
 	s = append(s, "&mesos.FrameworkID{")
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -12802,9 +12295,6 @@ func (this *OfferID) GoString() string {
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -12816,9 +12306,6 @@ func (this *AgentID) GoString() string {
 	s = append(s, "&mesos.AgentID{")
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -12832,9 +12319,6 @@ func (this *TaskID) GoString() string {
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -12846,9 +12330,6 @@ func (this *ExecutorID) GoString() string {
 	s = append(s, "&mesos.ExecutorID{")
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -12862,9 +12343,6 @@ func (this *ContainerID) GoString() string {
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -12877,9 +12355,6 @@ func (this *TimeInfo) GoString() string {
 	if this.Nanoseconds != nil {
 		s = append(s, "Nanoseconds: "+valueToGoStringMesos(this.Nanoseconds, "int64")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -12891,9 +12366,6 @@ func (this *DurationInfo) GoString() string {
 	s = append(s, "&mesos.DurationInfo{")
 	if this.Nanoseconds != nil {
 		s = append(s, "Nanoseconds: "+valueToGoStringMesos(this.Nanoseconds, "int64")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -12912,9 +12384,6 @@ func (this *Address) GoString() string {
 	}
 	if this.Port != nil {
 		s = append(s, "Port: "+valueToGoStringMesos(this.Port, "int32")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -12940,9 +12409,6 @@ func (this *URL) GoString() string {
 	if this.Fragment != nil {
 		s = append(s, "Fragment: "+valueToGoStringMesos(this.Fragment, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -12958,9 +12424,6 @@ func (this *Unavailability) GoString() string {
 	if this.Duration != nil {
 		s = append(s, "Duration: "+fmt.Sprintf("%#v", this.Duration)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -12975,9 +12438,6 @@ func (this *MachineID) GoString() string {
 	}
 	if this.Ip != nil {
 		s = append(s, "Ip: "+valueToGoStringMesos(this.Ip, "string")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -12996,9 +12456,6 @@ func (this *MachineInfo) GoString() string {
 	}
 	if this.Unavailability != nil {
 		s = append(s, "Unavailability: "+fmt.Sprintf("%#v", this.Unavailability)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13042,9 +12499,6 @@ func (this *FrameworkInfo) GoString() string {
 	if this.Labels != nil {
 		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13056,9 +12510,6 @@ func (this *FrameworkInfo_Capability) GoString() string {
 	s = append(s, "&mesos.FrameworkInfo_Capability{")
 	if this.Type != nil {
 		s = append(s, "Type: "+valueToGoStringMesos(this.Type, "mesos.FrameworkInfo_Capability_Type")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13090,9 +12541,6 @@ func (this *HealthCheck) GoString() string {
 	if this.Command != nil {
 		s = append(s, "Command: "+fmt.Sprintf("%#v", this.Command)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13110,9 +12558,6 @@ func (this *HealthCheck_HTTP) GoString() string {
 	}
 	if this.Statuses != nil {
 		s = append(s, "Statuses: "+fmt.Sprintf("%#v", this.Statuses)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13144,9 +12589,6 @@ func (this *CommandInfo) GoString() string {
 	if this.User != nil {
 		s = append(s, "User: "+valueToGoStringMesos(this.User, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13168,9 +12610,6 @@ func (this *CommandInfo_URI) GoString() string {
 	if this.Cache != nil {
 		s = append(s, "Cache: "+valueToGoStringMesos(this.Cache, "bool")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13185,9 +12624,6 @@ func (this *CommandInfo_ContainerInfo) GoString() string {
 	}
 	if this.Options != nil {
 		s = append(s, "Options: "+fmt.Sprintf("%#v", this.Options)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13225,9 +12661,6 @@ func (this *ExecutorInfo) GoString() string {
 	if this.Discovery != nil {
 		s = append(s, "Discovery: "+fmt.Sprintf("%#v", this.Discovery)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13258,9 +12691,6 @@ func (this *MasterInfo) GoString() string {
 	if this.Address != nil {
 		s = append(s, "Address: "+fmt.Sprintf("%#v", this.Address)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13284,9 +12714,6 @@ func (this *AgentInfo) GoString() string {
 	}
 	if this.Id != nil {
 		s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13312,9 +12739,6 @@ func (this *Value) GoString() string {
 	if this.Text != nil {
 		s = append(s, "Text: "+fmt.Sprintf("%#v", this.Text)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13326,9 +12750,6 @@ func (this *Value_Scalar) GoString() string {
 	s = append(s, "&mesos.Value_Scalar{")
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "float64")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13345,9 +12766,6 @@ func (this *Value_Range) GoString() string {
 	if this.End != nil {
 		s = append(s, "End: "+valueToGoStringMesos(this.End, "uint64")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13359,9 +12777,6 @@ func (this *Value_Ranges) GoString() string {
 	s = append(s, "&mesos.Value_Ranges{")
 	if this.Range != nil {
 		s = append(s, "Range: "+fmt.Sprintf("%#v", this.Range)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13375,9 +12790,6 @@ func (this *Value_Set) GoString() string {
 	if this.Item != nil {
 		s = append(s, "Item: "+fmt.Sprintf("%#v", this.Item)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13389,9 +12801,6 @@ func (this *Value_Text) GoString() string {
 	s = append(s, "&mesos.Value_Text{")
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13419,9 +12828,6 @@ func (this *Attribute) GoString() string {
 	}
 	if this.Text != nil {
 		s = append(s, "Text: "+fmt.Sprintf("%#v", this.Text)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13459,9 +12865,6 @@ func (this *Resource) GoString() string {
 	if this.Revocable != nil {
 		s = append(s, "Revocable: "+fmt.Sprintf("%#v", this.Revocable)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13473,9 +12876,6 @@ func (this *Resource_ReservationInfo) GoString() string {
 	s = append(s, "&mesos.Resource_ReservationInfo{")
 	if this.Principal != nil {
 		s = append(s, "Principal: "+valueToGoStringMesos(this.Principal, "string")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13492,9 +12892,6 @@ func (this *Resource_DiskInfo) GoString() string {
 	if this.Volume != nil {
 		s = append(s, "Volume: "+fmt.Sprintf("%#v", this.Volume)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13507,9 +12904,6 @@ func (this *Resource_DiskInfo_Persistence) GoString() string {
 	if this.Id != nil {
 		s = append(s, "Id: "+valueToGoStringMesos(this.Id, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13519,9 +12913,6 @@ func (this *Resource_RevocableInfo) GoString() string {
 	}
 	s := make([]string, 0, 4)
 	s = append(s, "&mesos.Resource_RevocableInfo{")
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13560,9 +12951,6 @@ func (this *TrafficControlStatistics) GoString() string {
 	}
 	if this.Requeues != nil {
 		s = append(s, "Requeues: "+valueToGoStringMesos(this.Requeues, "uint64")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13693,9 +13081,6 @@ func (this *ResourceStatistics) GoString() string {
 	if this.NetTrafficControlStatistics != nil {
 		s = append(s, "NetTrafficControlStatistics: "+fmt.Sprintf("%#v", this.NetTrafficControlStatistics)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13710,9 +13095,6 @@ func (this *ResourceUsage) GoString() string {
 	}
 	if this.Total != nil {
 		s = append(s, "Total: "+fmt.Sprintf("%#v", this.Total)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13731,9 +13113,6 @@ func (this *ResourceUsage_Executor) GoString() string {
 	}
 	if this.Statistics != nil {
 		s = append(s, "Statistics: "+fmt.Sprintf("%#v", this.Statistics)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13903,9 +13282,6 @@ func (this *PerfStatistics) GoString() string {
 	if this.NodePrefetchMisses != nil {
 		s = append(s, "NodePrefetchMisses: "+valueToGoStringMesos(this.NodePrefetchMisses, "uint64")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13920,9 +13296,6 @@ func (this *Request) GoString() string {
 	}
 	if this.Resources != nil {
 		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13960,9 +13333,6 @@ func (this *Offer) GoString() string {
 	if this.Unavailability != nil {
 		s = append(s, "Unavailability: "+fmt.Sprintf("%#v", this.Unavailability)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -13990,9 +13360,6 @@ func (this *Offer_Operation) GoString() string {
 	if this.Destroy != nil {
 		s = append(s, "Destroy: "+fmt.Sprintf("%#v", this.Destroy)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14004,9 +13371,6 @@ func (this *Offer_Operation_Launch) GoString() string {
 	s = append(s, "&mesos.Offer_Operation_Launch{")
 	if this.TaskInfos != nil {
 		s = append(s, "TaskInfos: "+fmt.Sprintf("%#v", this.TaskInfos)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14020,9 +13384,6 @@ func (this *Offer_Operation_Reserve) GoString() string {
 	if this.Resources != nil {
 		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14034,9 +13395,6 @@ func (this *Offer_Operation_Unreserve) GoString() string {
 	s = append(s, "&mesos.Offer_Operation_Unreserve{")
 	if this.Resources != nil {
 		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14050,9 +13408,6 @@ func (this *Offer_Operation_Create) GoString() string {
 	if this.Volumes != nil {
 		s = append(s, "Volumes: "+fmt.Sprintf("%#v", this.Volumes)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14064,9 +13419,6 @@ func (this *Offer_Operation_Destroy) GoString() string {
 	s = append(s, "&mesos.Offer_Operation_Destroy{")
 	if this.Volumes != nil {
 		s = append(s, "Volumes: "+fmt.Sprintf("%#v", this.Volumes)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14094,9 +13446,6 @@ func (this *InverseOffer) GoString() string {
 	}
 	if this.Resources != nil {
 		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14139,9 +13488,6 @@ func (this *TaskInfo) GoString() string {
 	}
 	if this.Discovery != nil {
 		s = append(s, "Discovery: "+fmt.Sprintf("%#v", this.Discovery)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14188,9 +13534,6 @@ func (this *TaskStatus) GoString() string {
 	if this.Labels != nil {
 		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14203,9 +13546,6 @@ func (this *Filters) GoString() string {
 	if this.RefuseSeconds != nil {
 		s = append(s, "RefuseSeconds: "+valueToGoStringMesos(this.RefuseSeconds, "float64")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14217,9 +13557,6 @@ func (this *Environment) GoString() string {
 	s = append(s, "&mesos.Environment{")
 	if this.Variables != nil {
 		s = append(s, "Variables: "+fmt.Sprintf("%#v", this.Variables)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14236,9 +13573,6 @@ func (this *Environment_Variable) GoString() string {
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14254,9 +13588,6 @@ func (this *Parameter) GoString() string {
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14268,9 +13599,6 @@ func (this *Parameters) GoString() string {
 	s = append(s, "&mesos.Parameters{")
 	if this.Parameter != nil {
 		s = append(s, "Parameter: "+fmt.Sprintf("%#v", this.Parameter)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14287,9 +13615,6 @@ func (this *Credential) GoString() string {
 	if this.Secret != nil {
 		s = append(s, "Secret: "+valueToGoStringMesos(this.Secret, "byte")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14301,9 +13626,6 @@ func (this *Credentials) GoString() string {
 	s = append(s, "&mesos.Credentials{")
 	if this.Credentials != nil {
 		s = append(s, "Credentials: "+fmt.Sprintf("%#v", this.Credentials)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14323,9 +13645,6 @@ func (this *RateLimit) GoString() string {
 	if this.Capacity != nil {
 		s = append(s, "Capacity: "+valueToGoStringMesos(this.Capacity, "uint64")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14344,9 +13663,6 @@ func (this *RateLimits) GoString() string {
 	if this.AggregateDefaultCapacity != nil {
 		s = append(s, "AggregateDefaultCapacity: "+valueToGoStringMesos(this.AggregateDefaultCapacity, "uint64")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14361,9 +13677,6 @@ func (this *Image) GoString() string {
 	}
 	if this.Appc != nil {
 		s = append(s, "Appc: "+fmt.Sprintf("%#v", this.Appc)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14382,9 +13695,6 @@ func (this *Image_AppC) GoString() string {
 	}
 	if this.Labels != nil {
 		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14406,9 +13716,6 @@ func (this *Volume) GoString() string {
 	}
 	if this.Image != nil {
 		s = append(s, "Image: "+fmt.Sprintf("%#v", this.Image)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14433,9 +13740,6 @@ func (this *ContainerInfo) GoString() string {
 	}
 	if this.Mesos != nil {
 		s = append(s, "Mesos: "+fmt.Sprintf("%#v", this.Mesos)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14464,9 +13768,6 @@ func (this *ContainerInfo_DockerInfo) GoString() string {
 	if this.ForcePullImage != nil {
 		s = append(s, "ForcePullImage: "+valueToGoStringMesos(this.ForcePullImage, "bool")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14485,9 +13786,6 @@ func (this *ContainerInfo_DockerInfo_PortMapping) GoString() string {
 	if this.Protocol != nil {
 		s = append(s, "Protocol: "+valueToGoStringMesos(this.Protocol, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14500,9 +13798,6 @@ func (this *ContainerInfo_MesosInfo) GoString() string {
 	if this.Image != nil {
 		s = append(s, "Image: "+fmt.Sprintf("%#v", this.Image)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14514,9 +13809,6 @@ func (this *Labels) GoString() string {
 	s = append(s, "&mesos.Labels{")
 	if this.Labels != nil {
 		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14532,9 +13824,6 @@ func (this *Label) GoString() string {
 	}
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14554,9 +13843,6 @@ func (this *Port) GoString() string {
 	if this.Protocol != nil {
 		s = append(s, "Protocol: "+valueToGoStringMesos(this.Protocol, "string")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -14568,9 +13854,6 @@ func (this *Ports) GoString() string {
 	s = append(s, "&mesos.Ports{")
 	if this.Ports != nil {
 		s = append(s, "Ports: "+fmt.Sprintf("%#v", this.Ports)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14601,9 +13884,6 @@ func (this *DiscoveryInfo) GoString() string {
 	}
 	if this.Labels != nil {
 		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -14656,9 +13936,6 @@ func (m *FrameworkID) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -14684,9 +13961,6 @@ func (m *OfferID) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -14714,9 +13988,6 @@ func (m *AgentID) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -14742,9 +14013,6 @@ func (m *TaskID) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -14772,9 +14040,6 @@ func (m *ExecutorID) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -14801,9 +14066,6 @@ func (m *ContainerID) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -14829,9 +14091,6 @@ func (m *TimeInfo) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.Nanoseconds))
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -14856,9 +14115,6 @@ func (m *DurationInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x8
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.Nanoseconds))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -14896,9 +14152,6 @@ func (m *Address) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x18
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.Port))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -14962,9 +14215,6 @@ func (m *URL) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Fragment)))
 		i += copy(data[i:], *m.Fragment)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15005,9 +14255,6 @@ func (m *Unavailability) MarshalTo(data []byte) (int, error) {
 		}
 		i += n3
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15037,9 +14284,6 @@ func (m *MachineID) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(len(*m.Ip)))
 		i += copy(data[i:], *m.Ip)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -15085,9 +14329,6 @@ func (m *MachineInfo) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n5
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -15194,9 +14435,6 @@ func (m *FrameworkInfo) MarshalTo(data []byte) (int, error) {
 		}
 		i += n7
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15221,9 +14459,6 @@ func (m *FrameworkInfo_Capability) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x8
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.Type))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -15288,9 +14523,6 @@ func (m *HealthCheck) MarshalTo(data []byte) (int, error) {
 		}
 		i += n9
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15328,9 +14560,6 @@ func (m *HealthCheck_HTTP) MarshalTo(data []byte) (int, error) {
 			i++
 			i = encodeVarintMesos(data, i, uint64(num))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -15419,9 +14648,6 @@ func (m *CommandInfo) MarshalTo(data []byte) (int, error) {
 			i += copy(data[i:], s)
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15478,9 +14704,6 @@ func (m *CommandInfo_URI) MarshalTo(data []byte) (int, error) {
 		}
 		i++
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15521,9 +14744,6 @@ func (m *CommandInfo_ContainerInfo) MarshalTo(data []byte) (int, error) {
 			i++
 			i += copy(data[i:], s)
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -15627,9 +14847,6 @@ func (m *ExecutorInfo) MarshalTo(data []byte) (int, error) {
 		}
 		i += n16
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15698,9 +14915,6 @@ func (m *MasterInfo) MarshalTo(data []byte) (int, error) {
 		}
 		i += n17
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15765,9 +14979,6 @@ func (m *AgentInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x40
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.Port))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -15834,9 +15045,6 @@ func (m *Value) MarshalTo(data []byte) (int, error) {
 		}
 		i += n22
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15861,9 +15069,6 @@ func (m *Value_Scalar) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x9
 		i++
 		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.Value)))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -15897,9 +15102,6 @@ func (m *Value_Range) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.End))
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15929,9 +15131,6 @@ func (m *Value_Ranges) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -15966,9 +15165,6 @@ func (m *Value_Set) MarshalTo(data []byte) (int, error) {
 			i += copy(data[i:], s)
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -15994,9 +15190,6 @@ func (m *Value_Text) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -16070,9 +15263,6 @@ func (m *Attribute) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n26
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -16173,9 +15363,6 @@ func (m *Resource) MarshalTo(data []byte) (int, error) {
 		}
 		i += n32
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -16201,9 +15388,6 @@ func (m *Resource_ReservationInfo) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(len(*m.Principal)))
 		i += copy(data[i:], *m.Principal)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -16243,9 +15427,6 @@ func (m *Resource_DiskInfo) MarshalTo(data []byte) (int, error) {
 		}
 		i += n34
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -16272,9 +15453,6 @@ func (m *Resource_DiskInfo_Persistence) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Id)))
 		i += copy(data[i:], *m.Id)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -16293,9 +15471,6 @@ func (m *Resource_RevocableInfo) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -16366,9 +15541,6 @@ func (m *TrafficControlStatistics) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x50
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.Requeues))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -16652,9 +15824,6 @@ func (m *ResourceStatistics) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.MemSwapBytes))
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -16696,9 +15865,6 @@ func (m *ResourceUsage) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -16751,9 +15917,6 @@ func (m *ResourceUsage_Executor) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n37
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -17118,9 +16281,6 @@ func (m *PerfStatistics) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.NodePrefetchMisses))
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -17160,9 +16320,6 @@ func (m *Request) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -17282,9 +16439,6 @@ func (m *Offer) MarshalTo(data []byte) (int, error) {
 		}
 		i += n43
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -17360,9 +16514,6 @@ func (m *Offer_Operation) MarshalTo(data []byte) (int, error) {
 		}
 		i += n48
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -17392,9 +16543,6 @@ func (m *Offer_Operation_Launch) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -17426,9 +16574,6 @@ func (m *Offer_Operation_Reserve) MarshalTo(data []byte) (int, error) {
 			i += n
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -17458,9 +16603,6 @@ func (m *Offer_Operation_Unreserve) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -17492,9 +16634,6 @@ func (m *Offer_Operation_Create) MarshalTo(data []byte) (int, error) {
 			i += n
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -17524,9 +16663,6 @@ func (m *Offer_Operation_Destroy) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -17613,9 +16749,6 @@ func (m *InverseOffer) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -17745,9 +16878,6 @@ func (m *TaskInfo) MarshalTo(data []byte) (int, error) {
 		}
 		i += n61
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -17858,9 +16988,6 @@ func (m *TaskStatus) MarshalTo(data []byte) (int, error) {
 		}
 		i += n65
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -17883,9 +17010,6 @@ func (m *Filters) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x9
 		i++
 		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.RefuseSeconds)))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -17916,9 +17040,6 @@ func (m *Environment) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -17954,9 +17075,6 @@ func (m *Environment_Variable) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -17991,9 +17109,6 @@ func (m *Parameter) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -18023,9 +17138,6 @@ func (m *Parameters) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18059,9 +17171,6 @@ func (m *Credential) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(m.Secret)))
 		i += copy(data[i:], m.Secret)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -18091,9 +17200,6 @@ func (m *Credentials) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18130,9 +17236,6 @@ func (m *RateLimit) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x18
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.Capacity))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18174,9 +17277,6 @@ func (m *RateLimits) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(*m.AggregateDefaultCapacity))
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -18211,9 +17311,6 @@ func (m *Image) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n66
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18258,9 +17355,6 @@ func (m *Image_AppC) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n67
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18310,9 +17404,6 @@ func (m *Volume) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n68
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18376,9 +17467,6 @@ func (m *ContainerInfo) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n70
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18455,9 +17543,6 @@ func (m *ContainerInfo_DockerInfo) MarshalTo(data []byte) (int, error) {
 		}
 		i++
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -18496,9 +17581,6 @@ func (m *ContainerInfo_DockerInfo_PortMapping) MarshalTo(data []byte) (int, erro
 		i = encodeVarintMesos(data, i, uint64(len(*m.Protocol)))
 		i += copy(data[i:], *m.Protocol)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -18526,9 +17608,6 @@ func (m *ContainerInfo_MesosInfo) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n71
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18559,9 +17638,6 @@ func (m *Labels) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18594,9 +17670,6 @@ func (m *Label) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18635,9 +17708,6 @@ func (m *Port) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Protocol)))
 		i += copy(data[i:], *m.Protocol)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -18667,9 +17737,6 @@ func (m *Ports) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -18740,9 +17807,6 @@ func (m *DiscoveryInfo) MarshalTo(data []byte) (int, error) {
 		}
 		i += n73
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -18778,7 +17842,6 @@ func NewPopulatedFrameworkID(r randyMesos, easy bool) *FrameworkID {
 	v1 := randStringMesos(r)
 	this.Value = &v1
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -18788,7 +17851,6 @@ func NewPopulatedOfferID(r randyMesos, easy bool) *OfferID {
 	v2 := randStringMesos(r)
 	this.Value = &v2
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -18798,7 +17860,6 @@ func NewPopulatedAgentID(r randyMesos, easy bool) *AgentID {
 	v3 := randStringMesos(r)
 	this.Value = &v3
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -18808,7 +17869,6 @@ func NewPopulatedTaskID(r randyMesos, easy bool) *TaskID {
 	v4 := randStringMesos(r)
 	this.Value = &v4
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -18818,7 +17878,6 @@ func NewPopulatedExecutorID(r randyMesos, easy bool) *ExecutorID {
 	v5 := randStringMesos(r)
 	this.Value = &v5
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -18828,7 +17887,6 @@ func NewPopulatedContainerID(r randyMesos, easy bool) *ContainerID {
 	v6 := randStringMesos(r)
 	this.Value = &v6
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -18841,7 +17899,6 @@ func NewPopulatedTimeInfo(r randyMesos, easy bool) *TimeInfo {
 	}
 	this.Nanoseconds = &v7
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -18854,7 +17911,6 @@ func NewPopulatedDurationInfo(r randyMesos, easy bool) *DurationInfo {
 	}
 	this.Nanoseconds = &v8
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -18875,7 +17931,6 @@ func NewPopulatedAddress(r randyMesos, easy bool) *Address {
 	}
 	this.Port = &v11
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
 	}
 	return this
 }
@@ -18901,7 +17956,6 @@ func NewPopulatedURL(r randyMesos, easy bool) *URL {
 		this.Fragment = &v15
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 6)
 	}
 	return this
 }
@@ -18913,7 +17967,6 @@ func NewPopulatedUnavailability(r randyMesos, easy bool) *Unavailability {
 		this.Duration = NewPopulatedDurationInfo(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -18929,7 +17982,6 @@ func NewPopulatedMachineID(r randyMesos, easy bool) *MachineID {
 		this.Ip = &v17
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -18945,7 +17997,6 @@ func NewPopulatedMachineInfo(r randyMesos, easy bool) *MachineInfo {
 		this.Unavailability = NewPopulatedUnavailability(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
 	}
 	return this
 }
@@ -18997,7 +18048,6 @@ func NewPopulatedFrameworkInfo(r randyMesos, easy bool) *FrameworkInfo {
 		this.Labels = NewPopulatedLabels(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 12)
 	}
 	return this
 }
@@ -19007,7 +18057,6 @@ func NewPopulatedFrameworkInfo_Capability(r randyMesos, easy bool) *FrameworkInf
 	v28 := FrameworkInfo_Capability_Type([]int32{1}[r.Intn(1)])
 	this.Type = &v28
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -19053,7 +18102,6 @@ func NewPopulatedHealthCheck(r randyMesos, easy bool) *HealthCheck {
 		this.Command = NewPopulatedCommandInfo(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 8)
 	}
 	return this
 }
@@ -19074,7 +18122,6 @@ func NewPopulatedHealthCheck_HTTP(r randyMesos, easy bool) *HealthCheck_HTTP {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 5)
 	}
 	return this
 }
@@ -19114,7 +18161,6 @@ func NewPopulatedCommandInfo(r randyMesos, easy bool) *CommandInfo {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 8)
 	}
 	return this
 }
@@ -19136,7 +18182,6 @@ func NewPopulatedCommandInfo_URI(r randyMesos, easy bool) *CommandInfo_URI {
 		this.Cache = &v45
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 5)
 	}
 	return this
 }
@@ -19153,7 +18198,6 @@ func NewPopulatedCommandInfo_ContainerInfo(r randyMesos, easy bool) *CommandInfo
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -19194,7 +18238,6 @@ func NewPopulatedExecutorInfo(r randyMesos, easy bool) *ExecutorInfo {
 		this.Discovery = NewPopulatedDiscoveryInfo(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 13)
 	}
 	return this
 }
@@ -19223,7 +18266,6 @@ func NewPopulatedMasterInfo(r randyMesos, easy bool) *MasterInfo {
 		this.Address = NewPopulatedAddress(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 8)
 	}
 	return this
 }
@@ -19257,7 +18299,6 @@ func NewPopulatedAgentInfo(r randyMesos, easy bool) *AgentInfo {
 		this.Port = &v61
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 9)
 	}
 	return this
 }
@@ -19279,7 +18320,6 @@ func NewPopulatedValue(r randyMesos, easy bool) *Value {
 		this.Text = NewPopulatedValue_Text(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 6)
 	}
 	return this
 }
@@ -19292,7 +18332,6 @@ func NewPopulatedValue_Scalar(r randyMesos, easy bool) *Value_Scalar {
 	}
 	this.Value = &v63
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -19304,7 +18343,6 @@ func NewPopulatedValue_Range(r randyMesos, easy bool) *Value_Range {
 	v65 := uint64(uint64(r.Uint32()))
 	this.End = &v65
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -19319,7 +18357,6 @@ func NewPopulatedValue_Ranges(r randyMesos, easy bool) *Value_Ranges {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -19334,7 +18371,6 @@ func NewPopulatedValue_Set(r randyMesos, easy bool) *Value_Set {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -19344,7 +18380,6 @@ func NewPopulatedValue_Text(r randyMesos, easy bool) *Value_Text {
 	v68 := randStringMesos(r)
 	this.Value = &v68
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -19368,7 +18403,6 @@ func NewPopulatedAttribute(r randyMesos, easy bool) *Attribute {
 		this.Set = NewPopulatedValue_Set(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 7)
 	}
 	return this
 }
@@ -19402,7 +18436,6 @@ func NewPopulatedResource(r randyMesos, easy bool) *Resource {
 		this.Revocable = NewPopulatedResource_RevocableInfo(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 10)
 	}
 	return this
 }
@@ -19412,7 +18445,6 @@ func NewPopulatedResource_ReservationInfo(r randyMesos, easy bool) *Resource_Res
 	v74 := randStringMesos(r)
 	this.Principal = &v74
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -19426,7 +18458,6 @@ func NewPopulatedResource_DiskInfo(r randyMesos, easy bool) *Resource_DiskInfo {
 		this.Volume = NewPopulatedVolume(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -19436,7 +18467,6 @@ func NewPopulatedResource_DiskInfo_Persistence(r randyMesos, easy bool) *Resourc
 	v75 := randStringMesos(r)
 	this.Id = &v75
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -19444,7 +18474,6 @@ func NewPopulatedResource_DiskInfo_Persistence(r randyMesos, easy bool) *Resourc
 func NewPopulatedResource_RevocableInfo(r randyMesos, easy bool) *Resource_RevocableInfo {
 	this := &Resource_RevocableInfo{}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 1)
 	}
 	return this
 }
@@ -19490,7 +18519,6 @@ func NewPopulatedTrafficControlStatistics(r randyMesos, easy bool) *TrafficContr
 		this.Requeues = &v85
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 11)
 	}
 	return this
 }
@@ -19691,7 +18719,6 @@ func NewPopulatedResourceStatistics(r randyMesos, easy bool) *ResourceStatistics
 		this.MemSwapBytes = &v124
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 41)
 	}
 	return this
 }
@@ -19713,7 +18740,6 @@ func NewPopulatedResourceUsage(r randyMesos, easy bool) *ResourceUsage {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -19732,7 +18758,6 @@ func NewPopulatedResourceUsage_Executor(r randyMesos, easy bool) *ResourceUsage_
 		this.Statistics = NewPopulatedResourceStatistics(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
 	}
 	return this
 }
@@ -19960,7 +18985,6 @@ func NewPopulatedPerfStatistics(r randyMesos, easy bool) *PerfStatistics {
 		this.NodePrefetchMisses = &v180
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 54)
 	}
 	return this
 }
@@ -19978,7 +19002,6 @@ func NewPopulatedRequest(r randyMesos, easy bool) *Request {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -20018,7 +19041,6 @@ func NewPopulatedOffer(r randyMesos, easy bool) *Offer {
 		this.Unavailability = NewPopulatedUnavailability(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 10)
 	}
 	return this
 }
@@ -20043,7 +19065,6 @@ func NewPopulatedOffer_Operation(r randyMesos, easy bool) *Offer_Operation {
 		this.Destroy = NewPopulatedOffer_Operation_Destroy(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 7)
 	}
 	return this
 }
@@ -20058,7 +19079,6 @@ func NewPopulatedOffer_Operation_Launch(r randyMesos, easy bool) *Offer_Operatio
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20073,7 +19093,6 @@ func NewPopulatedOffer_Operation_Reserve(r randyMesos, easy bool) *Offer_Operati
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20088,7 +19107,6 @@ func NewPopulatedOffer_Operation_Unreserve(r randyMesos, easy bool) *Offer_Opera
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20103,7 +19121,6 @@ func NewPopulatedOffer_Operation_Create(r randyMesos, easy bool) *Offer_Operatio
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20118,7 +19135,6 @@ func NewPopulatedOffer_Operation_Destroy(r randyMesos, easy bool) *Offer_Operati
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20142,7 +19158,6 @@ func NewPopulatedInverseOffer(r randyMesos, easy bool) *InverseOffer {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 7)
 	}
 	return this
 }
@@ -20186,7 +19201,6 @@ func NewPopulatedTaskInfo(r randyMesos, easy bool) *TaskInfo {
 		this.Discovery = NewPopulatedDiscoveryInfo(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 12)
 	}
 	return this
 }
@@ -20243,7 +19257,6 @@ func NewPopulatedTaskStatus(r randyMesos, easy bool) *TaskStatus {
 		this.Labels = NewPopulatedLabels(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 13)
 	}
 	return this
 }
@@ -20258,7 +19271,6 @@ func NewPopulatedFilters(r randyMesos, easy bool) *Filters {
 		this.RefuseSeconds = &v204
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20273,7 +19285,6 @@ func NewPopulatedEnvironment(r randyMesos, easy bool) *Environment {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20285,7 +19296,6 @@ func NewPopulatedEnvironment_Variable(r randyMesos, easy bool) *Environment_Vari
 	v207 := randStringMesos(r)
 	this.Value = &v207
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -20297,7 +19307,6 @@ func NewPopulatedParameter(r randyMesos, easy bool) *Parameter {
 	v209 := randStringMesos(r)
 	this.Value = &v209
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -20312,7 +19321,6 @@ func NewPopulatedParameters(r randyMesos, easy bool) *Parameters {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20329,7 +19337,6 @@ func NewPopulatedCredential(r randyMesos, easy bool) *Credential {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -20344,7 +19351,6 @@ func NewPopulatedCredentials(r randyMesos, easy bool) *Credentials {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20365,7 +19371,6 @@ func NewPopulatedRateLimit(r randyMesos, easy bool) *RateLimit {
 		this.Capacity = &v216
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
 	}
 	return this
 }
@@ -20391,7 +19396,6 @@ func NewPopulatedRateLimits(r randyMesos, easy bool) *RateLimits {
 		this.AggregateDefaultCapacity = &v219
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
 	}
 	return this
 }
@@ -20404,7 +19408,6 @@ func NewPopulatedImage(r randyMesos, easy bool) *Image {
 		this.Appc = NewPopulatedImage_AppC(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -20419,7 +19422,6 @@ func NewPopulatedImage_AppC(r randyMesos, easy bool) *Image_AppC {
 		this.Labels = NewPopulatedLabels(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
 	}
 	return this
 }
@@ -20438,7 +19440,6 @@ func NewPopulatedVolume(r randyMesos, easy bool) *Volume {
 		this.Image = NewPopulatedImage(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 5)
 	}
 	return this
 }
@@ -20465,7 +19466,6 @@ func NewPopulatedContainerInfo(r randyMesos, easy bool) *ContainerInfo {
 		this.Mesos = NewPopulatedContainerInfo_MesosInfo(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 6)
 	}
 	return this
 }
@@ -20501,7 +19501,6 @@ func NewPopulatedContainerInfo_DockerInfo(r randyMesos, easy bool) *ContainerInf
 		this.ForcePullImage = &v234
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 7)
 	}
 	return this
 }
@@ -20517,7 +19516,6 @@ func NewPopulatedContainerInfo_DockerInfo_PortMapping(r randyMesos, easy bool) *
 		this.Protocol = &v237
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
 	}
 	return this
 }
@@ -20528,7 +19526,6 @@ func NewPopulatedContainerInfo_MesosInfo(r randyMesos, easy bool) *ContainerInfo
 		this.Image = NewPopulatedImage(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20543,7 +19540,6 @@ func NewPopulatedLabels(r randyMesos, easy bool) *Labels {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20557,7 +19553,6 @@ func NewPopulatedLabel(r randyMesos, easy bool) *Label {
 		this.Value = &v240
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
 	return this
 }
@@ -20575,7 +19570,6 @@ func NewPopulatedPort(r randyMesos, easy bool) *Port {
 		this.Protocol = &v243
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
 	}
 	return this
 }
@@ -20590,7 +19584,6 @@ func NewPopulatedPorts(r randyMesos, easy bool) *Ports {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
 	return this
 }
@@ -20622,7 +19615,6 @@ func NewPopulatedDiscoveryInfo(r randyMesos, easy bool) *DiscoveryInfo {
 		this.Labels = NewPopulatedLabels(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 8)
 	}
 	return this
 }
@@ -20706,9 +19698,6 @@ func (m *FrameworkID) Size() (n int) {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -20718,9 +19707,6 @@ func (m *OfferID) Size() (n int) {
 	if m.Value != nil {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -20732,9 +19718,6 @@ func (m *AgentID) Size() (n int) {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -20744,9 +19727,6 @@ func (m *TaskID) Size() (n int) {
 	if m.Value != nil {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -20758,9 +19738,6 @@ func (m *ExecutorID) Size() (n int) {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -20771,9 +19748,6 @@ func (m *ContainerID) Size() (n int) {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -20783,9 +19757,6 @@ func (m *TimeInfo) Size() (n int) {
 	if m.Nanoseconds != nil {
 		n += 1 + sovMesos(uint64(*m.Nanoseconds))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -20794,9 +19765,6 @@ func (m *DurationInfo) Size() (n int) {
 	_ = l
 	if m.Nanoseconds != nil {
 		n += 1 + sovMesos(uint64(*m.Nanoseconds))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -20814,9 +19782,6 @@ func (m *Address) Size() (n int) {
 	}
 	if m.Port != nil {
 		n += 1 + sovMesos(uint64(*m.Port))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -20846,9 +19811,6 @@ func (m *URL) Size() (n int) {
 		l = len(*m.Fragment)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -20863,9 +19825,6 @@ func (m *Unavailability) Size() (n int) {
 		l = m.Duration.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -20879,9 +19838,6 @@ func (m *MachineID) Size() (n int) {
 	if m.Ip != nil {
 		l = len(*m.Ip)
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -20899,9 +19855,6 @@ func (m *MachineInfo) Size() (n int) {
 	if m.Unavailability != nil {
 		l = m.Unavailability.Size()
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -20953,9 +19906,6 @@ func (m *FrameworkInfo) Size() (n int) {
 		l = m.Labels.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -20964,9 +19914,6 @@ func (m *FrameworkInfo_Capability) Size() (n int) {
 	_ = l
 	if m.Type != nil {
 		n += 1 + sovMesos(uint64(*m.Type))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -20997,9 +19944,6 @@ func (m *HealthCheck) Size() (n int) {
 		l = m.Command.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21017,9 +19961,6 @@ func (m *HealthCheck_HTTP) Size() (n int) {
 		for _, e := range m.Statuses {
 			n += 1 + sovMesos(uint64(e))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21058,9 +19999,6 @@ func (m *CommandInfo) Size() (n int) {
 			n += 1 + l + sovMesos(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21080,9 +20018,6 @@ func (m *CommandInfo_URI) Size() (n int) {
 	if m.Cache != nil {
 		n += 2
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21098,9 +20033,6 @@ func (m *CommandInfo_ContainerInfo) Size() (n int) {
 			l = len(s)
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21146,9 +20078,6 @@ func (m *ExecutorInfo) Size() (n int) {
 		l = m.Discovery.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21181,9 +20110,6 @@ func (m *MasterInfo) Size() (n int) {
 		l = m.Address.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21213,9 +20139,6 @@ func (m *AgentInfo) Size() (n int) {
 	if m.Port != nil {
 		n += 1 + sovMesos(uint64(*m.Port))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21241,9 +20164,6 @@ func (m *Value) Size() (n int) {
 		l = m.Text.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21252,9 +20172,6 @@ func (m *Value_Scalar) Size() (n int) {
 	_ = l
 	if m.Value != nil {
 		n += 9
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21268,9 +20185,6 @@ func (m *Value_Range) Size() (n int) {
 	if m.End != nil {
 		n += 1 + sovMesos(uint64(*m.End))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21282,9 +20196,6 @@ func (m *Value_Ranges) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21298,9 +20209,6 @@ func (m *Value_Set) Size() (n int) {
 			n += 1 + l + sovMesos(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21310,9 +20218,6 @@ func (m *Value_Text) Size() (n int) {
 	if m.Value != nil {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21342,9 +20247,6 @@ func (m *Attribute) Size() (n int) {
 	if m.Set != nil {
 		l = m.Set.Size()
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21387,9 +20289,6 @@ func (m *Resource) Size() (n int) {
 		l = m.Revocable.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21399,9 +20298,6 @@ func (m *Resource_ReservationInfo) Size() (n int) {
 	if m.Principal != nil {
 		l = len(*m.Principal)
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21417,9 +20313,6 @@ func (m *Resource_DiskInfo) Size() (n int) {
 		l = m.Volume.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21430,18 +20323,12 @@ func (m *Resource_DiskInfo_Persistence) Size() (n int) {
 		l = len(*m.Id)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
 func (m *Resource_RevocableInfo) Size() (n int) {
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21478,9 +20365,6 @@ func (m *TrafficControlStatistics) Size() (n int) {
 	}
 	if m.Requeues != nil {
 		n += 1 + sovMesos(uint64(*m.Requeues))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21612,9 +20496,6 @@ func (m *ResourceStatistics) Size() (n int) {
 	if m.MemSwapBytes != nil {
 		n += 2 + sovMesos(uint64(*m.MemSwapBytes))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21632,9 +20513,6 @@ func (m *ResourceUsage) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21655,9 +20533,6 @@ func (m *ResourceUsage_Executor) Size() (n int) {
 	if m.Statistics != nil {
 		l = m.Statistics.Size()
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21824,9 +20699,6 @@ func (m *PerfStatistics) Size() (n int) {
 	if m.NodePrefetchMisses != nil {
 		n += 2 + sovMesos(uint64(*m.NodePrefetchMisses))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21842,9 +20714,6 @@ func (m *Request) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21894,9 +20763,6 @@ func (m *Offer) Size() (n int) {
 		l = m.Unavailability.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21926,9 +20792,6 @@ func (m *Offer_Operation) Size() (n int) {
 		l = m.Destroy.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21940,9 +20803,6 @@ func (m *Offer_Operation_Launch) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21956,9 +20816,6 @@ func (m *Offer_Operation_Reserve) Size() (n int) {
 			n += 1 + l + sovMesos(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -21970,9 +20827,6 @@ func (m *Offer_Operation_Unreserve) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -21986,9 +20840,6 @@ func (m *Offer_Operation_Create) Size() (n int) {
 			n += 1 + l + sovMesos(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22000,9 +20851,6 @@ func (m *Offer_Operation_Destroy) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22035,9 +20883,6 @@ func (m *InverseOffer) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22091,9 +20936,6 @@ func (m *TaskInfo) Size() (n int) {
 		l = m.Discovery.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22143,9 +20985,6 @@ func (m *TaskStatus) Size() (n int) {
 		l = m.Labels.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22154,9 +20993,6 @@ func (m *Filters) Size() (n int) {
 	_ = l
 	if m.RefuseSeconds != nil {
 		n += 9
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22169,9 +21005,6 @@ func (m *Environment) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22187,9 +21020,6 @@ func (m *Environment_Variable) Size() (n int) {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22204,9 +21034,6 @@ func (m *Parameter) Size() (n int) {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22218,9 +21045,6 @@ func (m *Parameters) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22236,9 +21060,6 @@ func (m *Credential) Size() (n int) {
 		l = len(m.Secret)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22250,9 +21071,6 @@ func (m *Credentials) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22269,9 +21087,6 @@ func (m *RateLimit) Size() (n int) {
 	}
 	if m.Capacity != nil {
 		n += 1 + sovMesos(uint64(*m.Capacity))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22291,9 +21106,6 @@ func (m *RateLimits) Size() (n int) {
 	if m.AggregateDefaultCapacity != nil {
 		n += 1 + sovMesos(uint64(*m.AggregateDefaultCapacity))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22306,9 +21118,6 @@ func (m *Image) Size() (n int) {
 	if m.Appc != nil {
 		l = m.Appc.Size()
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22327,9 +21136,6 @@ func (m *Image_AppC) Size() (n int) {
 	if m.Labels != nil {
 		l = m.Labels.Size()
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22351,9 +21157,6 @@ func (m *Volume) Size() (n int) {
 	if m.Image != nil {
 		l = m.Image.Size()
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22381,9 +21184,6 @@ func (m *ContainerInfo) Size() (n int) {
 	if m.Mesos != nil {
 		l = m.Mesos.Size()
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22416,9 +21216,6 @@ func (m *ContainerInfo_DockerInfo) Size() (n int) {
 	if m.ForcePullImage != nil {
 		n += 2
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22435,9 +21232,6 @@ func (m *ContainerInfo_DockerInfo_PortMapping) Size() (n int) {
 		l = len(*m.Protocol)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22447,9 +21241,6 @@ func (m *ContainerInfo_MesosInfo) Size() (n int) {
 	if m.Image != nil {
 		l = m.Image.Size()
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22462,9 +21253,6 @@ func (m *Labels) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22479,9 +21267,6 @@ func (m *Label) Size() (n int) {
 	if m.Value != nil {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22500,9 +21285,6 @@ func (m *Port) Size() (n int) {
 		l = len(*m.Protocol)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22514,9 +21296,6 @@ func (m *Ports) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -22551,9 +21330,6 @@ func (m *DiscoveryInfo) Size() (n int) {
 		l = m.Labels.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -22576,7 +21352,6 @@ func (this *FrameworkID) String() string {
 	}
 	s := strings.Join([]string{`&FrameworkID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22587,7 +21362,6 @@ func (this *OfferID) String() string {
 	}
 	s := strings.Join([]string{`&OfferID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22598,7 +21372,6 @@ func (this *AgentID) String() string {
 	}
 	s := strings.Join([]string{`&AgentID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22609,7 +21382,6 @@ func (this *TaskID) String() string {
 	}
 	s := strings.Join([]string{`&TaskID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22620,7 +21392,6 @@ func (this *ExecutorID) String() string {
 	}
 	s := strings.Join([]string{`&ExecutorID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22631,7 +21402,6 @@ func (this *ContainerID) String() string {
 	}
 	s := strings.Join([]string{`&ContainerID{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22642,7 +21412,6 @@ func (this *TimeInfo) String() string {
 	}
 	s := strings.Join([]string{`&TimeInfo{`,
 		`Nanoseconds:` + valueToStringMesos(this.Nanoseconds) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22653,7 +21422,6 @@ func (this *DurationInfo) String() string {
 	}
 	s := strings.Join([]string{`&DurationInfo{`,
 		`Nanoseconds:` + valueToStringMesos(this.Nanoseconds) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22666,7 +21434,6 @@ func (this *Address) String() string {
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
 		`Ip:` + valueToStringMesos(this.Ip) + `,`,
 		`Port:` + valueToStringMesos(this.Port) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22681,7 +21448,6 @@ func (this *URL) String() string {
 		`Path:` + valueToStringMesos(this.Path) + `,`,
 		`Query:` + strings.Replace(fmt.Sprintf("%v", this.Query), "Parameter", "Parameter", 1) + `,`,
 		`Fragment:` + valueToStringMesos(this.Fragment) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22693,7 +21459,6 @@ func (this *Unavailability) String() string {
 	s := strings.Join([]string{`&Unavailability{`,
 		`Start:` + strings.Replace(fmt.Sprintf("%v", this.Start), "TimeInfo", "TimeInfo", 1) + `,`,
 		`Duration:` + strings.Replace(fmt.Sprintf("%v", this.Duration), "DurationInfo", "DurationInfo", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22705,7 +21470,6 @@ func (this *MachineID) String() string {
 	s := strings.Join([]string{`&MachineID{`,
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
 		`Ip:` + valueToStringMesos(this.Ip) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22718,7 +21482,6 @@ func (this *MachineInfo) String() string {
 		`Id:` + strings.Replace(fmt.Sprintf("%v", this.Id), "MachineID", "MachineID", 1) + `,`,
 		`Mode:` + valueToStringMesos(this.Mode) + `,`,
 		`Unavailability:` + strings.Replace(fmt.Sprintf("%v", this.Unavailability), "Unavailability", "Unavailability", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22739,7 +21502,6 @@ func (this *FrameworkInfo) String() string {
 		`WebuiUrl:` + valueToStringMesos(this.WebuiUrl) + `,`,
 		`Capabilities:` + strings.Replace(fmt.Sprintf("%v", this.Capabilities), "FrameworkInfo_Capability", "FrameworkInfo_Capability", 1) + `,`,
 		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Labels", "Labels", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22750,7 +21512,6 @@ func (this *FrameworkInfo_Capability) String() string {
 	}
 	s := strings.Join([]string{`&FrameworkInfo_Capability{`,
 		`Type:` + valueToStringMesos(this.Type) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22767,7 +21528,6 @@ func (this *HealthCheck) String() string {
 		`ConsecutiveFailures:` + valueToStringMesos(this.ConsecutiveFailures) + `,`,
 		`GracePeriodSeconds:` + valueToStringMesos(this.GracePeriodSeconds) + `,`,
 		`Command:` + strings.Replace(fmt.Sprintf("%v", this.Command), "CommandInfo", "CommandInfo", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22780,7 +21540,6 @@ func (this *HealthCheck_HTTP) String() string {
 		`Port:` + valueToStringMesos(this.Port) + `,`,
 		`Path:` + valueToStringMesos(this.Path) + `,`,
 		`Statuses:` + fmt.Sprintf("%v", this.Statuses) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22797,7 +21556,6 @@ func (this *CommandInfo) String() string {
 		`User:` + valueToStringMesos(this.User) + `,`,
 		`Shell:` + valueToStringMesos(this.Shell) + `,`,
 		`Arguments:` + fmt.Sprintf("%v", this.Arguments) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22811,7 +21569,6 @@ func (this *CommandInfo_URI) String() string {
 		`Executable:` + valueToStringMesos(this.Executable) + `,`,
 		`Extract:` + valueToStringMesos(this.Extract) + `,`,
 		`Cache:` + valueToStringMesos(this.Cache) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22823,7 +21580,6 @@ func (this *CommandInfo_ContainerInfo) String() string {
 	s := strings.Join([]string{`&CommandInfo_ContainerInfo{`,
 		`Image:` + valueToStringMesos(this.Image) + `,`,
 		`Options:` + fmt.Sprintf("%v", this.Options) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22842,7 +21598,6 @@ func (this *ExecutorInfo) String() string {
 		`Source:` + valueToStringMesos(this.Source) + `,`,
 		`Container:` + strings.Replace(fmt.Sprintf("%v", this.Container), "ContainerInfo", "ContainerInfo", 1) + `,`,
 		`Discovery:` + strings.Replace(fmt.Sprintf("%v", this.Discovery), "DiscoveryInfo", "DiscoveryInfo", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22859,7 +21614,6 @@ func (this *MasterInfo) String() string {
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
 		`Version:` + valueToStringMesos(this.Version) + `,`,
 		`Address:` + strings.Replace(fmt.Sprintf("%v", this.Address), "Address", "Address", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22874,7 +21628,6 @@ func (this *AgentInfo) String() string {
 		`Attributes:` + strings.Replace(fmt.Sprintf("%v", this.Attributes), "Attribute", "Attribute", 1) + `,`,
 		`Id:` + strings.Replace(fmt.Sprintf("%v", this.Id), "AgentID", "AgentID", 1) + `,`,
 		`Port:` + valueToStringMesos(this.Port) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22889,7 +21642,6 @@ func (this *Value) String() string {
 		`Ranges:` + strings.Replace(fmt.Sprintf("%v", this.Ranges), "Value_Ranges", "Value_Ranges", 1) + `,`,
 		`Set:` + strings.Replace(fmt.Sprintf("%v", this.Set), "Value_Set", "Value_Set", 1) + `,`,
 		`Text:` + strings.Replace(fmt.Sprintf("%v", this.Text), "Value_Text", "Value_Text", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22900,7 +21652,6 @@ func (this *Value_Scalar) String() string {
 	}
 	s := strings.Join([]string{`&Value_Scalar{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22912,7 +21663,6 @@ func (this *Value_Range) String() string {
 	s := strings.Join([]string{`&Value_Range{`,
 		`Begin:` + valueToStringMesos(this.Begin) + `,`,
 		`End:` + valueToStringMesos(this.End) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22923,7 +21673,6 @@ func (this *Value_Ranges) String() string {
 	}
 	s := strings.Join([]string{`&Value_Ranges{`,
 		`Range:` + strings.Replace(fmt.Sprintf("%v", this.Range), "Value_Range", "Value_Range", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22934,7 +21683,6 @@ func (this *Value_Set) String() string {
 	}
 	s := strings.Join([]string{`&Value_Set{`,
 		`Item:` + fmt.Sprintf("%v", this.Item) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22945,7 +21693,6 @@ func (this *Value_Text) String() string {
 	}
 	s := strings.Join([]string{`&Value_Text{`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22961,7 +21708,6 @@ func (this *Attribute) String() string {
 		`Ranges:` + strings.Replace(fmt.Sprintf("%v", this.Ranges), "Value_Ranges", "Value_Ranges", 1) + `,`,
 		`Text:` + strings.Replace(fmt.Sprintf("%v", this.Text), "Value_Text", "Value_Text", 1) + `,`,
 		`Set:` + strings.Replace(fmt.Sprintf("%v", this.Set), "Value_Set", "Value_Set", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22980,7 +21726,6 @@ func (this *Resource) String() string {
 		`Disk:` + strings.Replace(fmt.Sprintf("%v", this.Disk), "Resource_DiskInfo", "Resource_DiskInfo", 1) + `,`,
 		`Reservation:` + strings.Replace(fmt.Sprintf("%v", this.Reservation), "Resource_ReservationInfo", "Resource_ReservationInfo", 1) + `,`,
 		`Revocable:` + strings.Replace(fmt.Sprintf("%v", this.Revocable), "Resource_RevocableInfo", "Resource_RevocableInfo", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22991,7 +21736,6 @@ func (this *Resource_ReservationInfo) String() string {
 	}
 	s := strings.Join([]string{`&Resource_ReservationInfo{`,
 		`Principal:` + valueToStringMesos(this.Principal) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23003,7 +21747,6 @@ func (this *Resource_DiskInfo) String() string {
 	s := strings.Join([]string{`&Resource_DiskInfo{`,
 		`Persistence:` + strings.Replace(fmt.Sprintf("%v", this.Persistence), "Resource_DiskInfo_Persistence", "Resource_DiskInfo_Persistence", 1) + `,`,
 		`Volume:` + strings.Replace(fmt.Sprintf("%v", this.Volume), "Volume", "Volume", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23014,7 +21757,6 @@ func (this *Resource_DiskInfo_Persistence) String() string {
 	}
 	s := strings.Join([]string{`&Resource_DiskInfo_Persistence{`,
 		`Id:` + valueToStringMesos(this.Id) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23024,7 +21766,6 @@ func (this *Resource_RevocableInfo) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Resource_RevocableInfo{`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23044,7 +21785,6 @@ func (this *TrafficControlStatistics) String() string {
 		`Ratebps:` + valueToStringMesos(this.Ratebps) + `,`,
 		`Ratepps:` + valueToStringMesos(this.Ratepps) + `,`,
 		`Requeues:` + valueToStringMesos(this.Requeues) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23094,7 +21834,6 @@ func (this *ResourceStatistics) String() string {
 		`MemSoftLimitBytes:` + valueToStringMesos(this.MemSoftLimitBytes) + `,`,
 		`MemCacheBytes:` + valueToStringMesos(this.MemCacheBytes) + `,`,
 		`MemSwapBytes:` + valueToStringMesos(this.MemSwapBytes) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23106,7 +21845,6 @@ func (this *ResourceUsage) String() string {
 	s := strings.Join([]string{`&ResourceUsage{`,
 		`Executors:` + strings.Replace(fmt.Sprintf("%v", this.Executors), "ResourceUsage_Executor", "ResourceUsage_Executor", 1) + `,`,
 		`Total:` + strings.Replace(fmt.Sprintf("%v", this.Total), "Resource", "Resource", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23119,7 +21857,6 @@ func (this *ResourceUsage_Executor) String() string {
 		`ExecutorInfo:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorInfo), "ExecutorInfo", "ExecutorInfo", 1) + `,`,
 		`Allocated:` + strings.Replace(fmt.Sprintf("%v", this.Allocated), "Resource", "Resource", 1) + `,`,
 		`Statistics:` + strings.Replace(fmt.Sprintf("%v", this.Statistics), "ResourceStatistics", "ResourceStatistics", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23182,7 +21919,6 @@ func (this *PerfStatistics) String() string {
 		`NodeStoreMisses:` + valueToStringMesos(this.NodeStoreMisses) + `,`,
 		`NodePrefetches:` + valueToStringMesos(this.NodePrefetches) + `,`,
 		`NodePrefetchMisses:` + valueToStringMesos(this.NodePrefetchMisses) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23194,7 +21930,6 @@ func (this *Request) String() string {
 	s := strings.Join([]string{`&Request{`,
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23213,7 +21948,6 @@ func (this *Offer) String() string {
 		`Attributes:` + strings.Replace(fmt.Sprintf("%v", this.Attributes), "Attribute", "Attribute", 1) + `,`,
 		`Url:` + strings.Replace(fmt.Sprintf("%v", this.Url), "URL", "URL", 1) + `,`,
 		`Unavailability:` + strings.Replace(fmt.Sprintf("%v", this.Unavailability), "Unavailability", "Unavailability", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23229,7 +21963,6 @@ func (this *Offer_Operation) String() string {
 		`Unreserve:` + strings.Replace(fmt.Sprintf("%v", this.Unreserve), "Offer_Operation_Unreserve", "Offer_Operation_Unreserve", 1) + `,`,
 		`Create:` + strings.Replace(fmt.Sprintf("%v", this.Create), "Offer_Operation_Create", "Offer_Operation_Create", 1) + `,`,
 		`Destroy:` + strings.Replace(fmt.Sprintf("%v", this.Destroy), "Offer_Operation_Destroy", "Offer_Operation_Destroy", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23240,7 +21973,6 @@ func (this *Offer_Operation_Launch) String() string {
 	}
 	s := strings.Join([]string{`&Offer_Operation_Launch{`,
 		`TaskInfos:` + strings.Replace(fmt.Sprintf("%v", this.TaskInfos), "TaskInfo", "TaskInfo", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23251,7 +21983,6 @@ func (this *Offer_Operation_Reserve) String() string {
 	}
 	s := strings.Join([]string{`&Offer_Operation_Reserve{`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23262,7 +21993,6 @@ func (this *Offer_Operation_Unreserve) String() string {
 	}
 	s := strings.Join([]string{`&Offer_Operation_Unreserve{`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23273,7 +22003,6 @@ func (this *Offer_Operation_Create) String() string {
 	}
 	s := strings.Join([]string{`&Offer_Operation_Create{`,
 		`Volumes:` + strings.Replace(fmt.Sprintf("%v", this.Volumes), "Resource", "Resource", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23284,7 +22013,6 @@ func (this *Offer_Operation_Destroy) String() string {
 	}
 	s := strings.Join([]string{`&Offer_Operation_Destroy{`,
 		`Volumes:` + strings.Replace(fmt.Sprintf("%v", this.Volumes), "Resource", "Resource", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23300,7 +22028,6 @@ func (this *InverseOffer) String() string {
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
 		`Unavailability:` + strings.Replace(fmt.Sprintf("%v", this.Unavailability), "Unavailability", "Unavailability", 1) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23321,7 +22048,6 @@ func (this *TaskInfo) String() string {
 		`Container:` + strings.Replace(fmt.Sprintf("%v", this.Container), "ContainerInfo", "ContainerInfo", 1) + `,`,
 		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Labels", "Labels", 1) + `,`,
 		`Discovery:` + strings.Replace(fmt.Sprintf("%v", this.Discovery), "DiscoveryInfo", "DiscoveryInfo", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23343,7 +22069,6 @@ func (this *TaskStatus) String() string {
 		`Reason:` + valueToStringMesos(this.Reason) + `,`,
 		`Uuid:` + valueToStringMesos(this.Uuid) + `,`,
 		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Labels", "Labels", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23354,7 +22079,6 @@ func (this *Filters) String() string {
 	}
 	s := strings.Join([]string{`&Filters{`,
 		`RefuseSeconds:` + valueToStringMesos(this.RefuseSeconds) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23365,7 +22089,6 @@ func (this *Environment) String() string {
 	}
 	s := strings.Join([]string{`&Environment{`,
 		`Variables:` + strings.Replace(fmt.Sprintf("%v", this.Variables), "Environment_Variable", "Environment_Variable", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23377,7 +22100,6 @@ func (this *Environment_Variable) String() string {
 	s := strings.Join([]string{`&Environment_Variable{`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23389,7 +22111,6 @@ func (this *Parameter) String() string {
 	s := strings.Join([]string{`&Parameter{`,
 		`Key:` + valueToStringMesos(this.Key) + `,`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23400,7 +22121,6 @@ func (this *Parameters) String() string {
 	}
 	s := strings.Join([]string{`&Parameters{`,
 		`Parameter:` + strings.Replace(fmt.Sprintf("%v", this.Parameter), "Parameter", "Parameter", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23412,7 +22132,6 @@ func (this *Credential) String() string {
 	s := strings.Join([]string{`&Credential{`,
 		`Principal:` + valueToStringMesos(this.Principal) + `,`,
 		`Secret:` + valueToStringMesos(this.Secret) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23423,7 +22142,6 @@ func (this *Credentials) String() string {
 	}
 	s := strings.Join([]string{`&Credentials{`,
 		`Credentials:` + strings.Replace(fmt.Sprintf("%v", this.Credentials), "Credential", "Credential", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23436,7 +22154,6 @@ func (this *RateLimit) String() string {
 		`Qps:` + valueToStringMesos(this.Qps) + `,`,
 		`Principal:` + valueToStringMesos(this.Principal) + `,`,
 		`Capacity:` + valueToStringMesos(this.Capacity) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23449,7 +22166,6 @@ func (this *RateLimits) String() string {
 		`Limits:` + strings.Replace(fmt.Sprintf("%v", this.Limits), "RateLimit", "RateLimit", 1) + `,`,
 		`AggregateDefaultQps:` + valueToStringMesos(this.AggregateDefaultQps) + `,`,
 		`AggregateDefaultCapacity:` + valueToStringMesos(this.AggregateDefaultCapacity) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23461,7 +22177,6 @@ func (this *Image) String() string {
 	s := strings.Join([]string{`&Image{`,
 		`Type:` + valueToStringMesos(this.Type) + `,`,
 		`Appc:` + strings.Replace(fmt.Sprintf("%v", this.Appc), "Image_AppC", "Image_AppC", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23474,7 +22189,6 @@ func (this *Image_AppC) String() string {
 		`Name:` + valueToStringMesos(this.Name) + `,`,
 		`Id:` + valueToStringMesos(this.Id) + `,`,
 		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Labels", "Labels", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23488,7 +22202,6 @@ func (this *Volume) String() string {
 		`HostPath:` + valueToStringMesos(this.HostPath) + `,`,
 		`Mode:` + valueToStringMesos(this.Mode) + `,`,
 		`Image:` + strings.Replace(fmt.Sprintf("%v", this.Image), "Image", "Image", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23503,7 +22216,6 @@ func (this *ContainerInfo) String() string {
 		`Docker:` + strings.Replace(fmt.Sprintf("%v", this.Docker), "ContainerInfo_DockerInfo", "ContainerInfo_DockerInfo", 1) + `,`,
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
 		`Mesos:` + strings.Replace(fmt.Sprintf("%v", this.Mesos), "ContainerInfo_MesosInfo", "ContainerInfo_MesosInfo", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23519,7 +22231,6 @@ func (this *ContainerInfo_DockerInfo) String() string {
 		`Privileged:` + valueToStringMesos(this.Privileged) + `,`,
 		`Parameters:` + strings.Replace(fmt.Sprintf("%v", this.Parameters), "Parameter", "Parameter", 1) + `,`,
 		`ForcePullImage:` + valueToStringMesos(this.ForcePullImage) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23532,7 +22243,6 @@ func (this *ContainerInfo_DockerInfo_PortMapping) String() string {
 		`HostPort:` + valueToStringMesos(this.HostPort) + `,`,
 		`ContainerPort:` + valueToStringMesos(this.ContainerPort) + `,`,
 		`Protocol:` + valueToStringMesos(this.Protocol) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23543,7 +22253,6 @@ func (this *ContainerInfo_MesosInfo) String() string {
 	}
 	s := strings.Join([]string{`&ContainerInfo_MesosInfo{`,
 		`Image:` + strings.Replace(fmt.Sprintf("%v", this.Image), "Image", "Image", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23554,7 +22263,6 @@ func (this *Labels) String() string {
 	}
 	s := strings.Join([]string{`&Labels{`,
 		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Label", "Label", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23566,7 +22274,6 @@ func (this *Label) String() string {
 	s := strings.Join([]string{`&Label{`,
 		`Key:` + valueToStringMesos(this.Key) + `,`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23579,7 +22286,6 @@ func (this *Port) String() string {
 		`Number:` + valueToStringMesos(this.Number) + `,`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
 		`Protocol:` + valueToStringMesos(this.Protocol) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23590,7 +22296,6 @@ func (this *Ports) String() string {
 	}
 	s := strings.Join([]string{`&Ports{`,
 		`Ports:` + strings.Replace(fmt.Sprintf("%v", this.Ports), "Port", "Port", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23607,7 +22312,6 @@ func (this *DiscoveryInfo) String() string {
 		`Version:` + valueToStringMesos(this.Version) + `,`,
 		`Ports:` + strings.Replace(fmt.Sprintf("%v", this.Ports), "Ports", "Ports", 1) + `,`,
 		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Labels", "Labels", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -23688,7 +22392,6 @@ func (m *FrameworkID) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -23766,7 +22469,6 @@ func (m *OfferID) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -23844,7 +22546,6 @@ func (m *AgentID) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -23922,7 +22623,6 @@ func (m *TaskID) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -24000,7 +22700,6 @@ func (m *ExecutorID) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -24078,7 +22777,6 @@ func (m *ContainerID) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -24146,7 +22844,6 @@ func (m *TimeInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -24214,7 +22911,6 @@ func (m *DurationInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -24336,7 +23032,6 @@ func (m *Address) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -24527,7 +23222,6 @@ func (m *URL) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -24641,7 +23335,6 @@ func (m *Unavailability) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -24744,7 +23437,6 @@ func (m *MachineID) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -24869,7 +23561,6 @@ func (m *MachineInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -25208,7 +23899,6 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -25279,7 +23969,6 @@ func (m *FrameworkInfo_Capability) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -25481,7 +24170,6 @@ func (m *HealthCheck) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -25590,7 +24278,6 @@ func (m *HealthCheck_HTTP) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -25825,7 +24512,6 @@ func (m *CommandInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -25954,7 +24640,6 @@ func (m *CommandInfo_URI) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -26058,7 +24743,6 @@ func (m *CommandInfo_ContainerInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -26367,7 +25051,6 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -26595,7 +25278,6 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -26782,7 +25464,6 @@ func (m *AgentInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -26970,7 +25651,6 @@ func (m *Value) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -27040,7 +25720,6 @@ func (m *Value_Scalar) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -27126,7 +25805,6 @@ func (m *Value_Range) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -27206,7 +25884,6 @@ func (m *Value_Ranges) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -27278,7 +25955,6 @@ func (m *Value_Set) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -27353,7 +26029,6 @@ func (m *Value_Text) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -27569,7 +26244,6 @@ func (m *Attribute) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -27875,7 +26549,6 @@ func (m *Resource) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -27956,7 +26629,6 @@ func (m *Resource_ReservationInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -28065,7 +26737,6 @@ func (m *Resource_DiskInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -28140,7 +26811,6 @@ func (m *Resource_DiskInfo_Persistence) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -28188,7 +26858,6 @@ func (m *Resource_RevocableInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -28416,7 +27085,6 @@ func (m *TrafficControlStatistics) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -29193,7 +27861,6 @@ func (m *ResourceStatistics) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -29298,7 +27965,6 @@ func (m *ResourceUsage) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -29434,7 +28100,6 @@ func (m *ResourceUsage_Executor) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -30395,7 +29060,6 @@ func (m *PerfStatistics) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -30505,7 +29169,6 @@ func (m *Request) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -30817,7 +29480,6 @@ func (m *Offer) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -31044,7 +29706,6 @@ func (m *Offer_Operation) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -31121,7 +29782,6 @@ func (m *Offer_Operation_Launch) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -31195,7 +29855,6 @@ func (m *Offer_Operation_Reserve) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -31269,7 +29928,6 @@ func (m *Offer_Operation_Unreserve) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -31343,7 +30001,6 @@ func (m *Offer_Operation_Create) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -31417,7 +30074,6 @@ func (m *Offer_Operation_Destroy) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -31645,7 +30301,6 @@ func (m *InverseOffer) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -32024,7 +30679,6 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -32367,7 +31021,6 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -32438,7 +31091,6 @@ func (m *Filters) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -32512,7 +31164,6 @@ func (m *Environment) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -32615,7 +31266,6 @@ func (m *Environment_Variable) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -32724,7 +31374,6 @@ func (m *Parameter) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -32804,7 +31453,6 @@ func (m *Parameters) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -32904,7 +31552,6 @@ func (m *Credential) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -32981,7 +31628,6 @@ func (m *Credentials) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -33092,7 +31738,6 @@ func (m *RateLimit) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -33205,7 +31850,6 @@ func (m *RateLimits) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -33300,7 +31944,6 @@ func (m *Image) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -33436,7 +32079,6 @@ func (m *Image_AppC) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -33592,7 +32234,6 @@ func (m *Volume) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -33778,7 +32419,6 @@ func (m *ContainerInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -33965,7 +32605,6 @@ func (m *ContainerInfo_DockerInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -34078,7 +32717,6 @@ func (m *ContainerInfo_DockerInfo_PortMapping) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -34160,7 +32798,6 @@ func (m *ContainerInfo_MesosInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -34234,7 +32871,6 @@ func (m *Labels) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -34336,7 +32972,6 @@ func (m *Label) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -34458,7 +33093,6 @@ func (m *Port) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -34535,7 +33169,6 @@ func (m *Ports) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -34768,7 +33401,6 @@ func (m *DiscoveryInfo) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}

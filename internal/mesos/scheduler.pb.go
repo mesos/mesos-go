@@ -160,15 +160,14 @@ func (x *Call_Type) UnmarshalJSON(data []byte) error {
 type Event struct {
 	// Type of the event, indicates which optional field below should be
 	// present if that type has a nested message definition.
-	Type             *Event_Type       `protobuf:"varint,1,req,name=type,enum=mesos.Event_Type" json:"type,omitempty"`
-	Subscribed       *Event_Subscribed `protobuf:"bytes,2,opt,name=subscribed" json:"subscribed,omitempty"`
-	Offers           *Event_Offers     `protobuf:"bytes,3,opt,name=offers" json:"offers,omitempty"`
-	Rescind          *Event_Rescind    `protobuf:"bytes,4,opt,name=rescind" json:"rescind,omitempty"`
-	Update           *Event_Update     `protobuf:"bytes,5,opt,name=update" json:"update,omitempty"`
-	Message          *Event_Message    `protobuf:"bytes,6,opt,name=message" json:"message,omitempty"`
-	Failure          *Event_Failure    `protobuf:"bytes,7,opt,name=failure" json:"failure,omitempty"`
-	Error            *Event_Error      `protobuf:"bytes,8,opt,name=error" json:"error,omitempty"`
-	XXX_unrecognized []byte            `json:"-"`
+	Type       *Event_Type       `protobuf:"varint,1,req,name=type,enum=mesos.Event_Type" json:"type,omitempty"`
+	Subscribed *Event_Subscribed `protobuf:"bytes,2,opt,name=subscribed" json:"subscribed,omitempty"`
+	Offers     *Event_Offers     `protobuf:"bytes,3,opt,name=offers" json:"offers,omitempty"`
+	Rescind    *Event_Rescind    `protobuf:"bytes,4,opt,name=rescind" json:"rescind,omitempty"`
+	Update     *Event_Update     `protobuf:"bytes,5,opt,name=update" json:"update,omitempty"`
+	Message    *Event_Message    `protobuf:"bytes,6,opt,name=message" json:"message,omitempty"`
+	Failure    *Event_Failure    `protobuf:"bytes,7,opt,name=failure" json:"failure,omitempty"`
+	Error      *Event_Error      `protobuf:"bytes,8,opt,name=error" json:"error,omitempty"`
 }
 
 func (m *Event) Reset()      { *m = Event{} }
@@ -238,7 +237,6 @@ type Event_Subscribed struct {
 	// TODO(vinod): Implement heartbeats in the master once the master
 	// can send HTTP events.
 	HeartbeatIntervalSeconds *float64 `protobuf:"fixed64,2,opt,name=heartbeat_interval_seconds" json:"heartbeat_interval_seconds,omitempty"`
-	XXX_unrecognized         []byte   `json:"-"`
 }
 
 func (m *Event_Subscribed) Reset()      { *m = Event_Subscribed{} }
@@ -266,9 +264,8 @@ func (m *Event_Subscribed) GetHeartbeatIntervalSeconds() float64 {
 // inverse offer informs the allocator of the scheduler's ability to
 // release the resources without violating an SLA.
 type Event_Offers struct {
-	Offers           []*Offer        `protobuf:"bytes,1,rep,name=offers" json:"offers,omitempty"`
-	InverseOffers    []*InverseOffer `protobuf:"bytes,2,rep,name=inverse_offers" json:"inverse_offers,omitempty"`
-	XXX_unrecognized []byte          `json:"-"`
+	Offers        []*Offer        `protobuf:"bytes,1,rep,name=offers" json:"offers,omitempty"`
+	InverseOffers []*InverseOffer `protobuf:"bytes,2,rep,name=inverse_offers" json:"inverse_offers,omitempty"`
 }
 
 func (m *Event_Offers) Reset()      { *m = Event_Offers{} }
@@ -293,8 +290,7 @@ func (m *Event_Offers) GetInverseOffers() []*InverseOffer {
 // needs to be rescinded. Any future calls ('Accept' / 'Decline') made
 // by the scheduler regarding this offer will be invalid.
 type Event_Rescind struct {
-	OfferId          *OfferID `protobuf:"bytes,1,req,name=offer_id" json:"offer_id,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	OfferId *OfferID `protobuf:"bytes,1,req,name=offer_id" json:"offer_id,omitempty"`
 }
 
 func (m *Event_Rescind) Reset()      { *m = Event_Rescind{} }
@@ -317,8 +313,7 @@ func (m *Event_Rescind) GetOfferId() *OfferID {
 // explicitly acknowledge the receipt of a status update. See
 // 'Acknowledge' in the 'Call' section below for the semantics.
 type Event_Update struct {
-	Status           *TaskStatus `protobuf:"bytes,1,req,name=status" json:"status,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	Status *TaskStatus `protobuf:"bytes,1,req,name=status" json:"status,omitempty"`
 }
 
 func (m *Event_Update) Reset()      { *m = Event_Update{} }
@@ -337,10 +332,9 @@ func (m *Event_Update) GetStatus() *TaskStatus {
 // guarantees) to the scheduler. It is up to the executor to retry
 // if the message is dropped for any reason.
 type Event_Message struct {
-	AgentId          *AgentID    `protobuf:"bytes,1,req,name=agent_id" json:"agent_id,omitempty"`
-	ExecutorId       *ExecutorID `protobuf:"bytes,2,req,name=executor_id" json:"executor_id,omitempty"`
-	Data             []byte      `protobuf:"bytes,3,req,name=data" json:"data,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	AgentId    *AgentID    `protobuf:"bytes,1,req,name=agent_id" json:"agent_id,omitempty"`
+	ExecutorId *ExecutorID `protobuf:"bytes,2,req,name=executor_id" json:"executor_id,omitempty"`
+	Data       []byte      `protobuf:"bytes,3,req,name=data" json:"data,omitempty"`
 }
 
 func (m *Event_Message) Reset()      { *m = Event_Message{} }
@@ -382,9 +376,8 @@ type Event_Failure struct {
 	// If this was just a failure of an executor on an agent then
 	// 'executor_id' will be set and possibly 'status' (if we were
 	// able to determine the exit status).
-	ExecutorId       *ExecutorID `protobuf:"bytes,2,opt,name=executor_id" json:"executor_id,omitempty"`
-	Status           *int32      `protobuf:"varint,3,opt,name=status" json:"status,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	ExecutorId *ExecutorID `protobuf:"bytes,2,opt,name=executor_id" json:"executor_id,omitempty"`
+	Status     *int32      `protobuf:"varint,3,opt,name=status" json:"status,omitempty"`
 }
 
 func (m *Event_Failure) Reset()      { *m = Event_Failure{} }
@@ -419,8 +412,7 @@ func (m *Event_Failure) GetStatus() int32 {
 // longer supported. With HTTP API all errors will be signaled via
 // HTTP response codes.
 type Event_Error struct {
-	Message          *string `protobuf:"bytes,1,req,name=message" json:"message,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Message *string `protobuf:"bytes,1,req,name=message" json:"message,omitempty"`
 }
 
 func (m *Event_Error) Reset()      { *m = Event_Error{} }
@@ -448,17 +440,16 @@ type Call struct {
 	FrameworkId *FrameworkID `protobuf:"bytes,1,opt,name=framework_id" json:"framework_id,omitempty"`
 	// Type of the call, indicates which optional field below should be
 	// present if that type has a nested message definition.
-	Type             *Call_Type        `protobuf:"varint,2,req,name=type,enum=mesos.Call_Type" json:"type,omitempty"`
-	Subscribe        *Call_Subscribe   `protobuf:"bytes,3,opt,name=subscribe" json:"subscribe,omitempty"`
-	Accept           *Call_Accept      `protobuf:"bytes,4,opt,name=accept" json:"accept,omitempty"`
-	Decline          *Call_Decline     `protobuf:"bytes,5,opt,name=decline" json:"decline,omitempty"`
-	Kill             *Call_Kill        `protobuf:"bytes,6,opt,name=kill" json:"kill,omitempty"`
-	Shutdown         *Call_Shutdown    `protobuf:"bytes,7,opt,name=shutdown" json:"shutdown,omitempty"`
-	Acknowledge      *Call_Acknowledge `protobuf:"bytes,8,opt,name=acknowledge" json:"acknowledge,omitempty"`
-	Reconcile        *Call_Reconcile   `protobuf:"bytes,9,opt,name=reconcile" json:"reconcile,omitempty"`
-	Message          *Call_Message     `protobuf:"bytes,10,opt,name=message" json:"message,omitempty"`
-	Request          *Call_Request     `protobuf:"bytes,11,opt,name=request" json:"request,omitempty"`
-	XXX_unrecognized []byte            `json:"-"`
+	Type        *Call_Type        `protobuf:"varint,2,req,name=type,enum=mesos.Call_Type" json:"type,omitempty"`
+	Subscribe   *Call_Subscribe   `protobuf:"bytes,3,opt,name=subscribe" json:"subscribe,omitempty"`
+	Accept      *Call_Accept      `protobuf:"bytes,4,opt,name=accept" json:"accept,omitempty"`
+	Decline     *Call_Decline     `protobuf:"bytes,5,opt,name=decline" json:"decline,omitempty"`
+	Kill        *Call_Kill        `protobuf:"bytes,6,opt,name=kill" json:"kill,omitempty"`
+	Shutdown    *Call_Shutdown    `protobuf:"bytes,7,opt,name=shutdown" json:"shutdown,omitempty"`
+	Acknowledge *Call_Acknowledge `protobuf:"bytes,8,opt,name=acknowledge" json:"acknowledge,omitempty"`
+	Reconcile   *Call_Reconcile   `protobuf:"bytes,9,opt,name=reconcile" json:"reconcile,omitempty"`
+	Message     *Call_Message     `protobuf:"bytes,10,opt,name=message" json:"message,omitempty"`
+	Request     *Call_Request     `protobuf:"bytes,11,opt,name=request" json:"request,omitempty"`
 }
 
 func (m *Call) Reset()      { *m = Call{} }
@@ -561,8 +552,7 @@ type Call_Subscribe struct {
 	// scheduler instance is attempting to subscribe but not when a
 	// scheduler is retrying subscription (e.g., disconnection or
 	// master failover; see sched/sched.cpp for an example).
-	Force            *bool  `protobuf:"varint,2,opt,name=force" json:"force,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	Force *bool `protobuf:"varint,2,opt,name=force" json:"force,omitempty"`
 }
 
 func (m *Call_Subscribe) Reset()      { *m = Call_Subscribe{} }
@@ -604,10 +594,9 @@ func (m *Call_Subscribe) GetForce() bool {
 // reoffered to other frameworks. In other words, the same OfferID
 // cannot be used in more than one 'Accept' call.
 type Call_Accept struct {
-	OfferIds         []*OfferID         `protobuf:"bytes,1,rep,name=offer_ids" json:"offer_ids,omitempty"`
-	Operations       []*Offer_Operation `protobuf:"bytes,2,rep,name=operations" json:"operations,omitempty"`
-	Filters          *Filters           `protobuf:"bytes,3,opt,name=filters" json:"filters,omitempty"`
-	XXX_unrecognized []byte             `json:"-"`
+	OfferIds   []*OfferID         `protobuf:"bytes,1,rep,name=offer_ids" json:"offer_ids,omitempty"`
+	Operations []*Offer_Operation `protobuf:"bytes,2,rep,name=operations" json:"operations,omitempty"`
+	Filters    *Filters           `protobuf:"bytes,3,opt,name=filters" json:"filters,omitempty"`
 }
 
 func (m *Call_Accept) Reset()      { *m = Call_Accept{} }
@@ -639,9 +628,8 @@ func (m *Call_Accept) GetFilters() *Filters {
 // as sending an Accept call with no operations. See comments on
 // top of 'Accept' for semantics.
 type Call_Decline struct {
-	OfferIds         []*OfferID `protobuf:"bytes,1,rep,name=offer_ids" json:"offer_ids,omitempty"`
-	Filters          *Filters   `protobuf:"bytes,2,opt,name=filters" json:"filters,omitempty"`
-	XXX_unrecognized []byte     `json:"-"`
+	OfferIds []*OfferID `protobuf:"bytes,1,rep,name=offer_ids" json:"offer_ids,omitempty"`
+	Filters  *Filters   `protobuf:"bytes,2,opt,name=filters" json:"filters,omitempty"`
 }
 
 func (m *Call_Decline) Reset()      { *m = Call_Decline{} }
@@ -669,9 +657,8 @@ func (m *Call_Decline) GetFilters() *Filters {
 // it. If the task is unknown to the master, a TASK_LOST update is
 // generated.
 type Call_Kill struct {
-	TaskId           *TaskID  `protobuf:"bytes,1,req,name=task_id" json:"task_id,omitempty"`
-	AgentId          *AgentID `protobuf:"bytes,2,opt,name=agent_id" json:"agent_id,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	TaskId  *TaskID  `protobuf:"bytes,1,req,name=task_id" json:"task_id,omitempty"`
+	AgentId *AgentID `protobuf:"bytes,2,opt,name=agent_id" json:"agent_id,omitempty"`
 }
 
 func (m *Call_Kill) Reset()      { *m = Call_Kill{} }
@@ -699,9 +686,8 @@ func (m *Call_Kill) GetAgentId() *AgentID {
 // forcefully destroy the container (executor and its tasks) and
 // transition its active tasks to TASK_LOST.
 type Call_Shutdown struct {
-	ExecutorId       *ExecutorID `protobuf:"bytes,1,req,name=executor_id" json:"executor_id,omitempty"`
-	AgentId          *AgentID    `protobuf:"bytes,2,req,name=agent_id" json:"agent_id,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	ExecutorId *ExecutorID `protobuf:"bytes,1,req,name=executor_id" json:"executor_id,omitempty"`
+	AgentId    *AgentID    `protobuf:"bytes,2,req,name=agent_id" json:"agent_id,omitempty"`
 }
 
 func (m *Call_Shutdown) Reset()      { *m = Call_Shutdown{} }
@@ -727,10 +713,9 @@ func (m *Call_Shutdown) GetAgentId() *AgentID {
 // updates are retried by the agent until they are acknowledged by
 // the scheduler.
 type Call_Acknowledge struct {
-	AgentId          *AgentID `protobuf:"bytes,1,req,name=agent_id" json:"agent_id,omitempty"`
-	TaskId           *TaskID  `protobuf:"bytes,2,req,name=task_id" json:"task_id,omitempty"`
-	Uuid             []byte   `protobuf:"bytes,3,req,name=uuid" json:"uuid,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	AgentId *AgentID `protobuf:"bytes,1,req,name=agent_id" json:"agent_id,omitempty"`
+	TaskId  *TaskID  `protobuf:"bytes,2,req,name=task_id" json:"task_id,omitempty"`
+	Uuid    []byte   `protobuf:"bytes,3,req,name=uuid" json:"uuid,omitempty"`
 }
 
 func (m *Call_Acknowledge) Reset()      { *m = Call_Acknowledge{} }
@@ -764,8 +749,7 @@ func (m *Call_Acknowledge) GetUuid() []byte {
 // the master will send the latest status for each task currently
 // known.
 type Call_Reconcile struct {
-	Tasks            []*Call_Reconcile_Task `protobuf:"bytes,1,rep,name=tasks" json:"tasks,omitempty"`
-	XXX_unrecognized []byte                 `json:"-"`
+	Tasks []*Call_Reconcile_Task `protobuf:"bytes,1,rep,name=tasks" json:"tasks,omitempty"`
 }
 
 func (m *Call_Reconcile) Reset()      { *m = Call_Reconcile{} }
@@ -780,9 +764,8 @@ func (m *Call_Reconcile) GetTasks() []*Call_Reconcile_Task {
 
 // TODO(vinod): Support arbitrary queries than just state of tasks.
 type Call_Reconcile_Task struct {
-	TaskId           *TaskID  `protobuf:"bytes,1,req,name=task_id" json:"task_id,omitempty"`
-	AgentId          *AgentID `protobuf:"bytes,2,opt,name=agent_id" json:"agent_id,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
+	TaskId  *TaskID  `protobuf:"bytes,1,req,name=task_id" json:"task_id,omitempty"`
+	AgentId *AgentID `protobuf:"bytes,2,opt,name=agent_id" json:"agent_id,omitempty"`
 }
 
 func (m *Call_Reconcile_Task) Reset()      { *m = Call_Reconcile_Task{} }
@@ -806,10 +789,9 @@ func (m *Call_Reconcile_Task) GetAgentId() *AgentID {
 // neither interprets this data nor makes any guarantees about the
 // delivery of this message to the executor.
 type Call_Message struct {
-	AgentId          *AgentID    `protobuf:"bytes,1,req,name=agent_id" json:"agent_id,omitempty"`
-	ExecutorId       *ExecutorID `protobuf:"bytes,2,req,name=executor_id" json:"executor_id,omitempty"`
-	Data             []byte      `protobuf:"bytes,3,req,name=data" json:"data,omitempty"`
-	XXX_unrecognized []byte      `json:"-"`
+	AgentId    *AgentID    `protobuf:"bytes,1,req,name=agent_id" json:"agent_id,omitempty"`
+	ExecutorId *ExecutorID `protobuf:"bytes,2,req,name=executor_id" json:"executor_id,omitempty"`
+	Data       []byte      `protobuf:"bytes,3,req,name=data" json:"data,omitempty"`
 }
 
 func (m *Call_Message) Reset()      { *m = Call_Message{} }
@@ -843,8 +825,7 @@ func (m *Call_Message) GetData() []byte {
 // NOTE: The built-in hierarchical allocator doesn't have support
 // for this call and hence simply ignores it.
 type Call_Request struct {
-	Requests         []*Request `protobuf:"bytes,1,rep,name=requests" json:"requests,omitempty"`
-	XXX_unrecognized []byte     `json:"-"`
+	Requests []*Request `protobuf:"bytes,1,rep,name=requests" json:"requests,omitempty"`
 }
 
 func (m *Call_Request) Reset()      { *m = Call_Request{} }
@@ -925,9 +906,6 @@ func (this *Event) VerboseEqual(that interface{}) error {
 	if !this.Error.Equal(that1.Error) {
 		return fmt.Errorf("Error this(%v) Not Equal that(%v)", this.Error, that1.Error)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Event) Equal(that interface{}) bool {
@@ -980,9 +958,6 @@ func (this *Event) Equal(that interface{}) bool {
 	if !this.Error.Equal(that1.Error) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Event_Subscribed) VerboseEqual(that interface{}) error {
@@ -1017,9 +992,6 @@ func (this *Event_Subscribed) VerboseEqual(that interface{}) error {
 	} else if that1.HeartbeatIntervalSeconds != nil {
 		return fmt.Errorf("HeartbeatIntervalSeconds this(%v) Not Equal that(%v)", this.HeartbeatIntervalSeconds, that1.HeartbeatIntervalSeconds)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Event_Subscribed) Equal(that interface{}) bool {
@@ -1052,9 +1024,6 @@ func (this *Event_Subscribed) Equal(that interface{}) bool {
 	} else if this.HeartbeatIntervalSeconds != nil {
 		return false
 	} else if that1.HeartbeatIntervalSeconds != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -1095,9 +1064,6 @@ func (this *Event_Offers) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("InverseOffers this[%v](%v) Not Equal that[%v](%v)", i, this.InverseOffers[i], i, that1.InverseOffers[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Event_Offers) Equal(that interface{}) bool {
@@ -1136,9 +1102,6 @@ func (this *Event_Offers) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Event_Rescind) VerboseEqual(that interface{}) error {
@@ -1164,9 +1127,6 @@ func (this *Event_Rescind) VerboseEqual(that interface{}) error {
 	if !this.OfferId.Equal(that1.OfferId) {
 		return fmt.Errorf("OfferId this(%v) Not Equal that(%v)", this.OfferId, that1.OfferId)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Event_Rescind) Equal(that interface{}) bool {
@@ -1190,9 +1150,6 @@ func (this *Event_Rescind) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.OfferId.Equal(that1.OfferId) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -1220,9 +1177,6 @@ func (this *Event_Update) VerboseEqual(that interface{}) error {
 	if !this.Status.Equal(that1.Status) {
 		return fmt.Errorf("Status this(%v) Not Equal that(%v)", this.Status, that1.Status)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Event_Update) Equal(that interface{}) bool {
@@ -1246,9 +1200,6 @@ func (this *Event_Update) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Status.Equal(that1.Status) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -1282,9 +1233,6 @@ func (this *Event_Message) VerboseEqual(that interface{}) error {
 	if !bytes.Equal(this.Data, that1.Data) {
 		return fmt.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Event_Message) Equal(that interface{}) bool {
@@ -1314,9 +1262,6 @@ func (this *Event_Message) Equal(that interface{}) bool {
 		return false
 	}
 	if !bytes.Equal(this.Data, that1.Data) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -1356,9 +1301,6 @@ func (this *Event_Failure) VerboseEqual(that interface{}) error {
 	} else if that1.Status != nil {
 		return fmt.Errorf("Status this(%v) Not Equal that(%v)", this.Status, that1.Status)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Event_Failure) Equal(that interface{}) bool {
@@ -1396,9 +1338,6 @@ func (this *Event_Failure) Equal(that interface{}) bool {
 	} else if that1.Status != nil {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Event_Error) VerboseEqual(that interface{}) error {
@@ -1430,9 +1369,6 @@ func (this *Event_Error) VerboseEqual(that interface{}) error {
 	} else if that1.Message != nil {
 		return fmt.Errorf("Message this(%v) Not Equal that(%v)", this.Message, that1.Message)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Event_Error) Equal(that interface{}) bool {
@@ -1462,9 +1398,6 @@ func (this *Event_Error) Equal(that interface{}) bool {
 	} else if this.Message != nil {
 		return false
 	} else if that1.Message != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -1528,9 +1461,6 @@ func (this *Call) VerboseEqual(that interface{}) error {
 	if !this.Request.Equal(that1.Request) {
 		return fmt.Errorf("Request this(%v) Not Equal that(%v)", this.Request, that1.Request)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call) Equal(that interface{}) bool {
@@ -1592,9 +1522,6 @@ func (this *Call) Equal(that interface{}) bool {
 	if !this.Request.Equal(that1.Request) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Call_Subscribe) VerboseEqual(that interface{}) error {
@@ -1629,9 +1556,6 @@ func (this *Call_Subscribe) VerboseEqual(that interface{}) error {
 	} else if that1.Force != nil {
 		return fmt.Errorf("Force this(%v) Not Equal that(%v)", this.Force, that1.Force)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call_Subscribe) Equal(that interface{}) bool {
@@ -1664,9 +1588,6 @@ func (this *Call_Subscribe) Equal(that interface{}) bool {
 	} else if this.Force != nil {
 		return false
 	} else if that1.Force != nil {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -1710,9 +1631,6 @@ func (this *Call_Accept) VerboseEqual(that interface{}) error {
 	if !this.Filters.Equal(that1.Filters) {
 		return fmt.Errorf("Filters this(%v) Not Equal that(%v)", this.Filters, that1.Filters)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call_Accept) Equal(that interface{}) bool {
@@ -1754,9 +1672,6 @@ func (this *Call_Accept) Equal(that interface{}) bool {
 	if !this.Filters.Equal(that1.Filters) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Call_Decline) VerboseEqual(that interface{}) error {
@@ -1789,9 +1704,6 @@ func (this *Call_Decline) VerboseEqual(that interface{}) error {
 	}
 	if !this.Filters.Equal(that1.Filters) {
 		return fmt.Errorf("Filters this(%v) Not Equal that(%v)", this.Filters, that1.Filters)
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
 	return nil
 }
@@ -1826,9 +1738,6 @@ func (this *Call_Decline) Equal(that interface{}) bool {
 	if !this.Filters.Equal(that1.Filters) {
 		return false
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Call_Kill) VerboseEqual(that interface{}) error {
@@ -1857,9 +1766,6 @@ func (this *Call_Kill) VerboseEqual(that interface{}) error {
 	if !this.AgentId.Equal(that1.AgentId) {
 		return fmt.Errorf("AgentId this(%v) Not Equal that(%v)", this.AgentId, that1.AgentId)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call_Kill) Equal(that interface{}) bool {
@@ -1886,9 +1792,6 @@ func (this *Call_Kill) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.AgentId.Equal(that1.AgentId) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -1919,9 +1822,6 @@ func (this *Call_Shutdown) VerboseEqual(that interface{}) error {
 	if !this.AgentId.Equal(that1.AgentId) {
 		return fmt.Errorf("AgentId this(%v) Not Equal that(%v)", this.AgentId, that1.AgentId)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call_Shutdown) Equal(that interface{}) bool {
@@ -1948,9 +1848,6 @@ func (this *Call_Shutdown) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.AgentId.Equal(that1.AgentId) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -1984,9 +1881,6 @@ func (this *Call_Acknowledge) VerboseEqual(that interface{}) error {
 	if !bytes.Equal(this.Uuid, that1.Uuid) {
 		return fmt.Errorf("Uuid this(%v) Not Equal that(%v)", this.Uuid, that1.Uuid)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call_Acknowledge) Equal(that interface{}) bool {
@@ -2016,9 +1910,6 @@ func (this *Call_Acknowledge) Equal(that interface{}) bool {
 		return false
 	}
 	if !bytes.Equal(this.Uuid, that1.Uuid) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -2051,9 +1942,6 @@ func (this *Call_Reconcile) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Tasks this[%v](%v) Not Equal that[%v](%v)", i, this.Tasks[i], i, that1.Tasks[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call_Reconcile) Equal(that interface{}) bool {
@@ -2084,9 +1972,6 @@ func (this *Call_Reconcile) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
 	return true
 }
 func (this *Call_Reconcile_Task) VerboseEqual(that interface{}) error {
@@ -2115,9 +2000,6 @@ func (this *Call_Reconcile_Task) VerboseEqual(that interface{}) error {
 	if !this.AgentId.Equal(that1.AgentId) {
 		return fmt.Errorf("AgentId this(%v) Not Equal that(%v)", this.AgentId, that1.AgentId)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call_Reconcile_Task) Equal(that interface{}) bool {
@@ -2144,9 +2026,6 @@ func (this *Call_Reconcile_Task) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.AgentId.Equal(that1.AgentId) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -2180,9 +2059,6 @@ func (this *Call_Message) VerboseEqual(that interface{}) error {
 	if !bytes.Equal(this.Data, that1.Data) {
 		return fmt.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call_Message) Equal(that interface{}) bool {
@@ -2212,9 +2088,6 @@ func (this *Call_Message) Equal(that interface{}) bool {
 		return false
 	}
 	if !bytes.Equal(this.Data, that1.Data) {
-		return false
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
@@ -2247,9 +2120,6 @@ func (this *Call_Request) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Requests this[%v](%v) Not Equal that[%v](%v)", i, this.Requests[i], i, that1.Requests[i])
 		}
 	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
 	return nil
 }
 func (this *Call_Request) Equal(that interface{}) bool {
@@ -2279,9 +2149,6 @@ func (this *Call_Request) Equal(that interface{}) bool {
 		if !this.Requests[i].Equal(that1.Requests[i]) {
 			return false
 		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
 	}
 	return true
 }
@@ -2315,9 +2182,6 @@ func (this *Event) GoString() string {
 	if this.Error != nil {
 		s = append(s, "Error: "+fmt.Sprintf("%#v", this.Error)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2332,9 +2196,6 @@ func (this *Event_Subscribed) GoString() string {
 	}
 	if this.HeartbeatIntervalSeconds != nil {
 		s = append(s, "HeartbeatIntervalSeconds: "+valueToGoStringScheduler(this.HeartbeatIntervalSeconds, "float64")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -2351,9 +2212,6 @@ func (this *Event_Offers) GoString() string {
 	if this.InverseOffers != nil {
 		s = append(s, "InverseOffers: "+fmt.Sprintf("%#v", this.InverseOffers)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2366,9 +2224,6 @@ func (this *Event_Rescind) GoString() string {
 	if this.OfferId != nil {
 		s = append(s, "OfferId: "+fmt.Sprintf("%#v", this.OfferId)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2380,9 +2235,6 @@ func (this *Event_Update) GoString() string {
 	s = append(s, "&mesos.Event_Update{")
 	if this.Status != nil {
 		s = append(s, "Status: "+fmt.Sprintf("%#v", this.Status)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -2402,9 +2254,6 @@ func (this *Event_Message) GoString() string {
 	if this.Data != nil {
 		s = append(s, "Data: "+valueToGoStringScheduler(this.Data, "byte")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2423,9 +2272,6 @@ func (this *Event_Failure) GoString() string {
 	if this.Status != nil {
 		s = append(s, "Status: "+valueToGoStringScheduler(this.Status, "int32")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2437,9 +2283,6 @@ func (this *Event_Error) GoString() string {
 	s = append(s, "&mesos.Event_Error{")
 	if this.Message != nil {
 		s = append(s, "Message: "+valueToGoStringScheduler(this.Message, "string")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -2483,9 +2326,6 @@ func (this *Call) GoString() string {
 	if this.Request != nil {
 		s = append(s, "Request: "+fmt.Sprintf("%#v", this.Request)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2500,9 +2340,6 @@ func (this *Call_Subscribe) GoString() string {
 	}
 	if this.Force != nil {
 		s = append(s, "Force: "+valueToGoStringScheduler(this.Force, "bool")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -2522,9 +2359,6 @@ func (this *Call_Accept) GoString() string {
 	if this.Filters != nil {
 		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2539,9 +2373,6 @@ func (this *Call_Decline) GoString() string {
 	}
 	if this.Filters != nil {
 		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -2558,9 +2389,6 @@ func (this *Call_Kill) GoString() string {
 	if this.AgentId != nil {
 		s = append(s, "AgentId: "+fmt.Sprintf("%#v", this.AgentId)+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2575,9 +2403,6 @@ func (this *Call_Shutdown) GoString() string {
 	}
 	if this.AgentId != nil {
 		s = append(s, "AgentId: "+fmt.Sprintf("%#v", this.AgentId)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -2597,9 +2422,6 @@ func (this *Call_Acknowledge) GoString() string {
 	if this.Uuid != nil {
 		s = append(s, "Uuid: "+valueToGoStringScheduler(this.Uuid, "byte")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2611,9 +2433,6 @@ func (this *Call_Reconcile) GoString() string {
 	s = append(s, "&mesos.Call_Reconcile{")
 	if this.Tasks != nil {
 		s = append(s, "Tasks: "+fmt.Sprintf("%#v", this.Tasks)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -2629,9 +2448,6 @@ func (this *Call_Reconcile_Task) GoString() string {
 	}
 	if this.AgentId != nil {
 		s = append(s, "AgentId: "+fmt.Sprintf("%#v", this.AgentId)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -2651,9 +2467,6 @@ func (this *Call_Message) GoString() string {
 	if this.Data != nil {
 		s = append(s, "Data: "+valueToGoStringScheduler(this.Data, "byte")+",\n")
 	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -2665,9 +2478,6 @@ func (this *Call_Request) GoString() string {
 	s = append(s, "&mesos.Call_Request{")
 	if this.Requests != nil {
 		s = append(s, "Requests: "+fmt.Sprintf("%#v", this.Requests)+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -2789,9 +2599,6 @@ func (m *Event) MarshalTo(data []byte) (int, error) {
 		}
 		i += n7
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -2826,9 +2633,6 @@ func (m *Event_Subscribed) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x11
 		i++
 		i = encodeFixed64Scheduler(data, i, uint64(math.Float64bits(*m.HeartbeatIntervalSeconds)))
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -2872,9 +2676,6 @@ func (m *Event_Offers) MarshalTo(data []byte) (int, error) {
 			i += n
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -2905,9 +2706,6 @@ func (m *Event_Rescind) MarshalTo(data []byte) (int, error) {
 		}
 		i += n9
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -2937,9 +2735,6 @@ func (m *Event_Update) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n10
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -2991,9 +2786,6 @@ func (m *Event_Message) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintScheduler(data, i, uint64(len(m.Data)))
 		i += copy(data[i:], m.Data)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -3037,9 +2829,6 @@ func (m *Event_Failure) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintScheduler(data, i, uint64(*m.Status))
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -3065,9 +2854,6 @@ func (m *Event_Error) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintScheduler(data, i, uint64(len(*m.Message)))
 		i += copy(data[i:], *m.Message)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -3194,9 +2980,6 @@ func (m *Call) MarshalTo(data []byte) (int, error) {
 		}
 		i += n24
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -3236,9 +3019,6 @@ func (m *Call_Subscribe) MarshalTo(data []byte) (int, error) {
 			data[i] = 0
 		}
 		i++
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -3292,9 +3072,6 @@ func (m *Call_Accept) MarshalTo(data []byte) (int, error) {
 		}
 		i += n26
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -3335,9 +3112,6 @@ func (m *Call_Decline) MarshalTo(data []byte) (int, error) {
 		}
 		i += n27
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -3377,9 +3151,6 @@ func (m *Call_Kill) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n29
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -3422,9 +3193,6 @@ func (m *Call_Shutdown) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n31
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -3476,9 +3244,6 @@ func (m *Call_Acknowledge) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintScheduler(data, i, uint64(len(m.Uuid)))
 		i += copy(data[i:], m.Uuid)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -3508,9 +3273,6 @@ func (m *Call_Reconcile) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -3551,9 +3313,6 @@ func (m *Call_Reconcile_Task) MarshalTo(data []byte) (int, error) {
 			return 0, err
 		}
 		i += n35
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -3605,9 +3364,6 @@ func (m *Call_Message) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintScheduler(data, i, uint64(len(m.Data)))
 		i += copy(data[i:], m.Data)
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
 	return i, nil
 }
 
@@ -3637,9 +3393,6 @@ func (m *Call_Request) MarshalTo(data []byte) (int, error) {
 			}
 			i += n
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
@@ -3697,7 +3450,6 @@ func NewPopulatedEvent(r randyScheduler, easy bool) *Event {
 		this.Error = NewPopulatedEvent_Error(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 9)
 	}
 	return this
 }
@@ -3713,7 +3465,6 @@ func NewPopulatedEvent_Subscribed(r randyScheduler, easy bool) *Event_Subscribed
 		this.HeartbeatIntervalSeconds = &v2
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 3)
 	}
 	return this
 }
@@ -3735,7 +3486,6 @@ func NewPopulatedEvent_Offers(r randyScheduler, easy bool) *Event_Offers {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 3)
 	}
 	return this
 }
@@ -3744,7 +3494,6 @@ func NewPopulatedEvent_Rescind(r randyScheduler, easy bool) *Event_Rescind {
 	this := &Event_Rescind{}
 	this.OfferId = NewPopulatedOfferID(r, easy)
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 2)
 	}
 	return this
 }
@@ -3753,7 +3502,6 @@ func NewPopulatedEvent_Update(r randyScheduler, easy bool) *Event_Update {
 	this := &Event_Update{}
 	this.Status = NewPopulatedTaskStatus(r, easy)
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 2)
 	}
 	return this
 }
@@ -3768,7 +3516,6 @@ func NewPopulatedEvent_Message(r randyScheduler, easy bool) *Event_Message {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 4)
 	}
 	return this
 }
@@ -3789,7 +3536,6 @@ func NewPopulatedEvent_Failure(r randyScheduler, easy bool) *Event_Failure {
 		this.Status = &v6
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 4)
 	}
 	return this
 }
@@ -3799,7 +3545,6 @@ func NewPopulatedEvent_Error(r randyScheduler, easy bool) *Event_Error {
 	v7 := randStringScheduler(r)
 	this.Message = &v7
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 2)
 	}
 	return this
 }
@@ -3839,7 +3584,6 @@ func NewPopulatedCall(r randyScheduler, easy bool) *Call {
 		this.Request = NewPopulatedCall_Request(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 12)
 	}
 	return this
 }
@@ -3852,7 +3596,6 @@ func NewPopulatedCall_Subscribe(r randyScheduler, easy bool) *Call_Subscribe {
 		this.Force = &v9
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 3)
 	}
 	return this
 }
@@ -3877,7 +3620,6 @@ func NewPopulatedCall_Accept(r randyScheduler, easy bool) *Call_Accept {
 		this.Filters = NewPopulatedFilters(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 4)
 	}
 	return this
 }
@@ -3895,7 +3637,6 @@ func NewPopulatedCall_Decline(r randyScheduler, easy bool) *Call_Decline {
 		this.Filters = NewPopulatedFilters(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 3)
 	}
 	return this
 }
@@ -3907,7 +3648,6 @@ func NewPopulatedCall_Kill(r randyScheduler, easy bool) *Call_Kill {
 		this.AgentId = NewPopulatedAgentID(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 3)
 	}
 	return this
 }
@@ -3917,7 +3657,6 @@ func NewPopulatedCall_Shutdown(r randyScheduler, easy bool) *Call_Shutdown {
 	this.ExecutorId = NewPopulatedExecutorID(r, easy)
 	this.AgentId = NewPopulatedAgentID(r, easy)
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 3)
 	}
 	return this
 }
@@ -3932,7 +3671,6 @@ func NewPopulatedCall_Acknowledge(r randyScheduler, easy bool) *Call_Acknowledge
 		this.Uuid[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 4)
 	}
 	return this
 }
@@ -3947,7 +3685,6 @@ func NewPopulatedCall_Reconcile(r randyScheduler, easy bool) *Call_Reconcile {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 2)
 	}
 	return this
 }
@@ -3959,7 +3696,6 @@ func NewPopulatedCall_Reconcile_Task(r randyScheduler, easy bool) *Call_Reconcil
 		this.AgentId = NewPopulatedAgentID(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 3)
 	}
 	return this
 }
@@ -3974,7 +3710,6 @@ func NewPopulatedCall_Message(r randyScheduler, easy bool) *Call_Message {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 4)
 	}
 	return this
 }
@@ -3989,7 +3724,6 @@ func NewPopulatedCall_Request(r randyScheduler, easy bool) *Call_Request {
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedScheduler(r, 2)
 	}
 	return this
 }
@@ -4100,9 +3834,6 @@ func (m *Event) Size() (n int) {
 		l = m.Error.Size()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4115,9 +3846,6 @@ func (m *Event_Subscribed) Size() (n int) {
 	}
 	if m.HeartbeatIntervalSeconds != nil {
 		n += 9
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -4137,9 +3865,6 @@ func (m *Event_Offers) Size() (n int) {
 			n += 1 + l + sovScheduler(uint64(l))
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4150,9 +3875,6 @@ func (m *Event_Rescind) Size() (n int) {
 		l = m.OfferId.Size()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4162,9 +3884,6 @@ func (m *Event_Update) Size() (n int) {
 	if m.Status != nil {
 		l = m.Status.Size()
 		n += 1 + l + sovScheduler(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -4184,9 +3903,6 @@ func (m *Event_Message) Size() (n int) {
 		l = len(m.Data)
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4204,9 +3920,6 @@ func (m *Event_Failure) Size() (n int) {
 	if m.Status != nil {
 		n += 1 + sovScheduler(uint64(*m.Status))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4216,9 +3929,6 @@ func (m *Event_Error) Size() (n int) {
 	if m.Message != nil {
 		l = len(*m.Message)
 		n += 1 + l + sovScheduler(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -4269,9 +3979,6 @@ func (m *Call) Size() (n int) {
 		l = m.Request.Size()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4284,9 +3991,6 @@ func (m *Call_Subscribe) Size() (n int) {
 	}
 	if m.Force != nil {
 		n += 2
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -4310,9 +4014,6 @@ func (m *Call_Accept) Size() (n int) {
 		l = m.Filters.Size()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4329,9 +4030,6 @@ func (m *Call_Decline) Size() (n int) {
 		l = m.Filters.Size()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4346,9 +4044,6 @@ func (m *Call_Kill) Size() (n int) {
 		l = m.AgentId.Size()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4362,9 +4057,6 @@ func (m *Call_Shutdown) Size() (n int) {
 	if m.AgentId != nil {
 		l = m.AgentId.Size()
 		n += 1 + l + sovScheduler(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -4384,9 +4076,6 @@ func (m *Call_Acknowledge) Size() (n int) {
 		l = len(m.Uuid)
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4398,9 +4087,6 @@ func (m *Call_Reconcile) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovScheduler(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -4415,9 +4101,6 @@ func (m *Call_Reconcile_Task) Size() (n int) {
 	if m.AgentId != nil {
 		l = m.AgentId.Size()
 		n += 1 + l + sovScheduler(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -4437,9 +4120,6 @@ func (m *Call_Message) Size() (n int) {
 		l = len(m.Data)
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
 	return n
 }
 
@@ -4451,9 +4131,6 @@ func (m *Call_Request) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovScheduler(uint64(l))
 		}
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
 	}
 	return n
 }
@@ -4484,7 +4161,6 @@ func (this *Event) String() string {
 		`Message:` + strings.Replace(fmt.Sprintf("%v", this.Message), "Event_Message", "Event_Message", 1) + `,`,
 		`Failure:` + strings.Replace(fmt.Sprintf("%v", this.Failure), "Event_Failure", "Event_Failure", 1) + `,`,
 		`Error:` + strings.Replace(fmt.Sprintf("%v", this.Error), "Event_Error", "Event_Error", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4496,7 +4172,6 @@ func (this *Event_Subscribed) String() string {
 	s := strings.Join([]string{`&Event_Subscribed{`,
 		`FrameworkId:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
 		`HeartbeatIntervalSeconds:` + valueToStringScheduler(this.HeartbeatIntervalSeconds) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4508,7 +4183,6 @@ func (this *Event_Offers) String() string {
 	s := strings.Join([]string{`&Event_Offers{`,
 		`Offers:` + strings.Replace(fmt.Sprintf("%v", this.Offers), "Offer", "Offer", 1) + `,`,
 		`InverseOffers:` + strings.Replace(fmt.Sprintf("%v", this.InverseOffers), "InverseOffer", "InverseOffer", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4519,7 +4193,6 @@ func (this *Event_Rescind) String() string {
 	}
 	s := strings.Join([]string{`&Event_Rescind{`,
 		`OfferId:` + strings.Replace(fmt.Sprintf("%v", this.OfferId), "OfferID", "OfferID", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4530,7 +4203,6 @@ func (this *Event_Update) String() string {
 	}
 	s := strings.Join([]string{`&Event_Update{`,
 		`Status:` + strings.Replace(fmt.Sprintf("%v", this.Status), "TaskStatus", "TaskStatus", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4543,7 +4215,6 @@ func (this *Event_Message) String() string {
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
 		`ExecutorId:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
 		`Data:` + valueToStringScheduler(this.Data) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4556,7 +4227,6 @@ func (this *Event_Failure) String() string {
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
 		`ExecutorId:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
 		`Status:` + valueToStringScheduler(this.Status) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4567,7 +4237,6 @@ func (this *Event_Error) String() string {
 	}
 	s := strings.Join([]string{`&Event_Error{`,
 		`Message:` + valueToStringScheduler(this.Message) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4588,7 +4257,6 @@ func (this *Call) String() string {
 		`Reconcile:` + strings.Replace(fmt.Sprintf("%v", this.Reconcile), "Call_Reconcile", "Call_Reconcile", 1) + `,`,
 		`Message:` + strings.Replace(fmt.Sprintf("%v", this.Message), "Call_Message", "Call_Message", 1) + `,`,
 		`Request:` + strings.Replace(fmt.Sprintf("%v", this.Request), "Call_Request", "Call_Request", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4600,7 +4268,6 @@ func (this *Call_Subscribe) String() string {
 	s := strings.Join([]string{`&Call_Subscribe{`,
 		`FrameworkInfo:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkInfo), "FrameworkInfo", "FrameworkInfo", 1) + `,`,
 		`Force:` + valueToStringScheduler(this.Force) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4613,7 +4280,6 @@ func (this *Call_Accept) String() string {
 		`OfferIds:` + strings.Replace(fmt.Sprintf("%v", this.OfferIds), "OfferID", "OfferID", 1) + `,`,
 		`Operations:` + strings.Replace(fmt.Sprintf("%v", this.Operations), "Offer_Operation", "Offer_Operation", 1) + `,`,
 		`Filters:` + strings.Replace(fmt.Sprintf("%v", this.Filters), "Filters", "Filters", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4625,7 +4291,6 @@ func (this *Call_Decline) String() string {
 	s := strings.Join([]string{`&Call_Decline{`,
 		`OfferIds:` + strings.Replace(fmt.Sprintf("%v", this.OfferIds), "OfferID", "OfferID", 1) + `,`,
 		`Filters:` + strings.Replace(fmt.Sprintf("%v", this.Filters), "Filters", "Filters", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4637,7 +4302,6 @@ func (this *Call_Kill) String() string {
 	s := strings.Join([]string{`&Call_Kill{`,
 		`TaskId:` + strings.Replace(fmt.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4649,7 +4313,6 @@ func (this *Call_Shutdown) String() string {
 	s := strings.Join([]string{`&Call_Shutdown{`,
 		`ExecutorId:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4662,7 +4325,6 @@ func (this *Call_Acknowledge) String() string {
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
 		`TaskId:` + strings.Replace(fmt.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
 		`Uuid:` + valueToStringScheduler(this.Uuid) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4673,7 +4335,6 @@ func (this *Call_Reconcile) String() string {
 	}
 	s := strings.Join([]string{`&Call_Reconcile{`,
 		`Tasks:` + strings.Replace(fmt.Sprintf("%v", this.Tasks), "Call_Reconcile_Task", "Call_Reconcile_Task", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4685,7 +4346,6 @@ func (this *Call_Reconcile_Task) String() string {
 	s := strings.Join([]string{`&Call_Reconcile_Task{`,
 		`TaskId:` + strings.Replace(fmt.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4698,7 +4358,6 @@ func (this *Call_Message) String() string {
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
 		`ExecutorId:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
 		`Data:` + valueToStringScheduler(this.Data) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4709,7 +4368,6 @@ func (this *Call_Request) String() string {
 	}
 	s := strings.Join([]string{`&Call_Request{`,
 		`Requests:` + strings.Replace(fmt.Sprintf("%v", this.Requests), "Request", "Request", 1) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4990,7 +4648,6 @@ func (m *Event) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -5090,7 +4747,6 @@ func (m *Event_Subscribed) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -5195,7 +4851,6 @@ func (m *Event_Offers) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -5273,7 +4928,6 @@ func (m *Event_Rescind) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -5354,7 +5008,6 @@ func (m *Event_Update) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -5492,7 +5145,6 @@ func (m *Event_Message) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -5624,7 +5276,6 @@ func (m *Event_Failure) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -5699,7 +5350,6 @@ func (m *Event_Error) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -6067,7 +5717,6 @@ func (m *Call) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -6166,7 +5815,6 @@ func (m *Call_Subscribe) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -6301,7 +5949,6 @@ func (m *Call_Accept) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -6405,7 +6052,6 @@ func (m *Call_Decline) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -6513,7 +6159,6 @@ func (m *Call_Kill) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -6625,7 +6270,6 @@ func (m *Call_Shutdown) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -6766,7 +6410,6 @@ func (m *Call_Acknowledge) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -6849,7 +6492,6 @@ func (m *Call_Reconcile) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -6957,7 +6599,6 @@ func (m *Call_Reconcile_Task) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -7095,7 +6736,6 @@ func (m *Call_Message) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -7178,7 +6818,6 @@ func (m *Call_Request) Unmarshal(data []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}

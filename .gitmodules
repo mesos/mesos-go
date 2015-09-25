@@ -1,0 +1,3 @@
+[submodule "internal/mesos/vendor/src/github.com/gogo/protobuf"]
+	path = internal/mesos/vendor/src/github.com/gogo/protobuf
+	url = git@github.com:gogo/protobuf.git

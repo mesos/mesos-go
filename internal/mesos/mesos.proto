@@ -53,7 +53,7 @@ enum Status {
  * in order to do failover (see MesosSchedulerDriver).
  */
 message FrameworkID {
-  required string value = 1 [(gogoproto.nullable) = false];
+  required string value = 1;
 }
 
 
@@ -61,7 +61,7 @@ message FrameworkID {
  * A unique ID assigned to an offer.
  */
 message OfferID {
-  required string value = 1 [(gogoproto.nullable) = false];
+  required string value = 1;
 }
 
 
@@ -71,7 +71,7 @@ message OfferID {
  * assume any binding between an agent ID and and a hostname.
  */
 message AgentID {
-  required string value = 1 [(gogoproto.nullable) = false];
+  required string value = 1;
 }
 
 
@@ -82,7 +82,7 @@ message AgentID {
  * terminal state (e.g., TASK_FINISHED, TASK_LOST, TASK_KILLED, etc.).
  */
 message TaskID {
-  required string value = 1 [(gogoproto.nullable) = false];
+  required string value = 1;
 }
 
 
@@ -92,7 +92,7 @@ message TaskID {
  * time.
  */
 message ExecutorID {
-  required string value = 1 [(gogoproto.nullable) = false];
+  required string value = 1;
 }
 
 
@@ -103,7 +103,7 @@ message ExecutorID {
  * executor) pair must be unique.
  */
 message ContainerID {
-  required string value = 1 [(gogoproto.nullable) = false];
+  required string value = 1;
 }
 
 
@@ -111,7 +111,7 @@ message ContainerID {
  * Represents time since the epoch, in nanoseconds.
  */
 message TimeInfo {
-  required int64 nanoseconds = 1 [(gogoproto.nullable) = false];
+  required int64 nanoseconds = 1;
 
   // TODO(josephw): Add time zone information, if necessary.
 }
@@ -121,7 +121,7 @@ message TimeInfo {
  * Represents duration in nanoseconds.
  */
 message DurationInfo {
-  required int64 nanoseconds = 1 [(gogoproto.nullable) = false];
+  required int64 nanoseconds = 1;
 }
 
 
@@ -132,13 +132,10 @@ message DurationInfo {
  */
 message Address {
   // May contain a hostname, IP address, or both.
-  optional string hostname = 1 [(gogoproto.nullable) = false];
-  optional string ip = 2 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customname) = "IP"
-  ];
+  optional string hostname = 1;
+  optional string ip = 2;
 
-  required int32 port = 3 [(gogoproto.nullable) = false];
+  required int32 port = 3;
 }
 
 
@@ -146,11 +143,11 @@ message Address {
  * Represents a URL.
  */
 message URL {
-  required string scheme = 1 [(gogoproto.nullable) = false];
-  required Address address = 2 [(gogoproto.nullable) = false];
-  optional string path = 3 [(gogoproto.nullable) = false];
-  repeated Parameter query = 4 [(gogoproto.nullable) = false];
-  optional string fragment = 5 [(gogoproto.nullable) = false];
+  required string scheme = 1;
+  required Address address = 2;
+  optional string path = 3;
+  repeated Parameter query = 4;
+  optional string fragment = 5;
 }
 
 
@@ -160,11 +157,11 @@ message URL {
  * and is not a generic interval.
  */
 message Unavailability {
-  required TimeInfo start = 1 [(gogoproto.nullable) = false];
+  required TimeInfo start = 1;
 
   // When added to `start`, this represents the end of the interval.
   // If unspecified, the duration is assumed to be infinite.
-  optional DurationInfo duration = 2 [(gogoproto.nullable) = false];
+  optional DurationInfo duration = 2;
 
   // TODO(josephw): Add additional fields for expressing the purpose and
   // urgency of the unavailability event.
@@ -179,8 +176,8 @@ message Unavailability {
  * Hostname is not case-sensitive.
  */
 message MachineID {
-  optional string hostname = 1 [(gogoproto.nullable) = false];
-  optional string ip = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "IP"];
+  optional string hostname = 1;
+  optional string ip = 2;
 }
 
 
@@ -209,7 +206,7 @@ message MachineInfo {
     DOWN = 3;
   }
 
-  required MachineID id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
+  required MachineID id = 1;
   optional Mode mode = 2;
 
   // Signifies that the machine may be unavailable during the given interval.
@@ -226,32 +223,29 @@ message FrameworkInfo {
   // Used to determine the Unix user that an executor or task should
   // be launched as. If the user field is set to an empty string Mesos
   // will automagically set it to the current user.
-  required string user = 1 [(gogoproto.nullable) = false];
+  required string user = 1;
 
   // Name of the framework that shows up in the Mesos Web UI.
-  required string name = 2 [(gogoproto.nullable) = false];
+  required string name = 2;
 
   // Note that 'id' is only available after a framework has
   // registered, however, it is included here in order to facilitate
   // scheduler failover (i.e., if it is set then the
   // MesosSchedulerDriver expects the scheduler is performing
   // failover).
-  optional FrameworkID id = 3 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customname) = "ID"
-  ];
+  optional FrameworkID id = 3;
 
   // The amount of time that the master will wait for the scheduler to
   // failover before it tears down the framework by killing all its
   // tasks/executors. This should be non-zero if a framework expects
   // to reconnect after a failover and not lose its tasks/executors.
-  optional double failover_timeout = 4 [(gogoproto.nullable) = false];
+  optional double failover_timeout = 4 [default = 0.0];
 
   // If set, framework pid, executor pids and status updates are
   // checkpointed to disk by the agents. Checkpointing allows a
   // restarted agent to reconnect with old executors and recover
   // status updates, at the cost of disk I/O.
-  optional bool checkpoint = 5 [(gogoproto.nullable) = false];
+  optional bool checkpoint = 5 [default = false];
 
   // Used to group frameworks for allocation decisions, depending on
   // the allocation policy being used.
@@ -261,21 +255,18 @@ message FrameworkInfo {
   // registered in the Mesos Web UI. If set to an empty string Mesos
   // will automagically set it to the current hostname if one is
   // available.
-  optional string hostname = 7 [(gogoproto.nullable) = false];
+  optional string hostname = 7;
 
   // This field should match the credential's principal the framework
   // uses for authentication. This field is used for framework API
   // rate limiting and dynamic reservations. It should be set even
   // if authentication is not enabled if these features are desired.
-  optional string principal = 8 [(gogoproto.nullable) = false];
+  optional string principal = 8;
 
   // This field allows a framework to advertise its web UI, so that
   // the Mesos web UI can link to it. It is expected to be a full URL,
   // for example http://my-scheduler.example.com:8080/.
-  optional string webui_url = 9 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customname) = "WebUIURL"
-  ];
+  optional string webui_url = 9;
 
   message Capability {
     enum Type {
@@ -291,12 +282,12 @@ message FrameworkInfo {
   // This field allows a framework to advertise its set of
   // capabilities (e.g., ability to receive offers for revocable
   // resources).
-  repeated Capability capabilities = 10 [(gogoproto.nullable) = false];
+  repeated Capability capabilities = 10;
 
   // Labels are free-form key value pairs supplied by the framework
   // scheduler (e.g., to describe additional functionality offered by
   // the framework). These labels are not interpreted by Mesos itself.
-  optional Labels labels = 11 [(gogoproto.nullable) = false];
+  optional Labels labels = 11;
 }
 
 
@@ -311,7 +302,7 @@ message HealthCheck {
   // recommended for use - see MESOS-2533.
   message HTTP {
     // Port to send the HTTP request.
-    required uint32 port = 1 [(gogoproto.nullable) = false];
+    required uint32 port = 1;
 
     // HTTP request path.
     optional string path = 2 [default = "/"];
@@ -322,7 +313,7 @@ message HealthCheck {
 
     // Expected response statuses. Not specifying any statuses implies
     // that any returned status is acceptable.
-    repeated uint32 statuses = 4 [(gogoproto.nullable) = false];
+    repeated uint32 statuses = 4;
 
     // TODO(benh): Include an 'optional bytes data' field for checking
     // for specific data in the response.
@@ -370,8 +361,8 @@ message HealthCheck {
  */
 message CommandInfo {
   message URI {
-    required string value = 1 [(gogoproto.nullable) = false];
-    optional bool executable = 2 [(gogoproto.nullable) = false];
+    required string value = 1;
+    optional bool executable = 2;
 
     // In case the fetched file is recognized as an archive, extract
     // its contents into the sandbox. Note that a cached archive is
@@ -389,7 +380,7 @@ message CommandInfo {
     // may get evicted at any time, which then leads to renewed
     // downloading. See also "docs/fetcher.md" and
     // "docs/fetcher-cache-internals.md".
-    optional bool cache = 4 [(gogoproto.nullable) = false];
+    optional bool cache = 4;
   }
 
   // Describes a container.
@@ -403,19 +394,19 @@ message CommandInfo {
   // and "options".
   message ContainerInfo {
     // URI describing the container image name.
-    required string image = 1 [(gogoproto.nullable) = false];
+    required string image = 1;
 
     // Describes additional options passed to the containerizer.
-    repeated string options = 2 [(gogoproto.nullable) = false];
+    repeated string options = 2;
   }
 
   // NOTE: MesosContainerizer does currently not support this
   // attribute and tasks supplying a 'container' will fail.
   optional ContainerInfo container = 4;
 
-  repeated URI uris = 1 [(gogoproto.nullable) = false];
+  repeated URI uris = 1;
 
-  optional Environment environment = 2; [(gogoproto.nullable) = false];
+  optional Environment environment = 2;
 
   // There are two ways to specify the command:
   // 1) If 'shell == true', the command will be launched via shell
@@ -431,13 +422,13 @@ message CommandInfo {
   // in 0.20.0. It will only cause issues if a new framework is
   // connecting to an old master.
   optional bool shell = 6 [default = true];
-  optional string value = 3 [(gogoproto.nullable) = false];
-  repeated string arguments = 7 [(gogoproto.nullable) = false];
+  optional string value = 3;
+  repeated string arguments = 7;
 
   // Enables executor and tasks to run as a specific user. If the user
   // field is present both in FrameworkInfo and here, the CommandInfo
   // user value takes precedence.
-  optional string user = 5 [(gogoproto.nullable) = false];
+  optional string user = 5;
 }
 
 

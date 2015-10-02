@@ -1,3 +1,3 @@
-[submodule "pb/vendor/src/github.com/gogo/protobuf"]
-	path = pb/vendor/src/github.com/gogo/protobuf
+[submodule "vendor/src/github.com/gogo/protobuf"]
+	path = vendor/src/github.com/gogo/protobuf
 	url = git@github.com:gogo/protobuf.git

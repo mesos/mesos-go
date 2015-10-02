@@ -7,7 +7,6 @@ Package mesos is a generated protocol buffer package.
 
 It is generated from these files:
 	mesos.proto
-	scheduler.proto
 
 It has these top-level messages:
 	FrameworkID
@@ -57,8 +56,6 @@ It has these top-level messages:
 	Port
 	Ports
 	DiscoveryInfo
-	Event
-	Call
 */
 package mesos
 

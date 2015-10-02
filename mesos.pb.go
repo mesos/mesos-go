@@ -7,7 +7,6 @@
 
 	It is generated from these files:
 		mesos.proto
-		scheduler.proto
 
 	It has these top-level messages:
 		FrameworkID
@@ -57,8 +56,6 @@
 		Port
 		Ports
 		DiscoveryInfo
-		Event
-		Call
 */
 package mesos
 

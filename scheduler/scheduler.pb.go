@@ -42,13 +42,13 @@ var _ = math.Inf
 type Event_Type int32
 
 const (
-	SUBSCRIBED Event_Type = 1
-	OFFERS     Event_Type = 2
-	RESCIND    Event_Type = 3
-	UPDATE     Event_Type = 4
-	MESSAGE    Event_Type = 5
-	FAILURE    Event_Type = 6
-	ERROR      Event_Type = 7
+	Event_SUBSCRIBED Event_Type = 1
+	Event_OFFERS     Event_Type = 2
+	Event_RESCIND    Event_Type = 3
+	Event_UPDATE     Event_Type = 4
+	Event_MESSAGE    Event_Type = 5
+	Event_FAILURE    Event_Type = 6
+	Event_ERROR      Event_Type = 7
 	// Periodic message sent by the Mesos master according to
 	// 'Subscribed.heartbeat_interval_seconds'. If the scheduler does
 	// not receive any events (including heartbeats) for an extended
@@ -56,7 +56,7 @@ const (
 	// likely a network partition. In such a case the scheduler should
 	// close the existing subscription connection and resubscribe
 	// using a backoff strategy.
-	HEARTBEAT Event_Type = 8
+	Event_HEARTBEAT Event_Type = 8
 )
 
 var Event_Type_name = map[int32]string{
@@ -102,18 +102,18 @@ func (x *Event_Type) UnmarshalJSON(data []byte) error {
 type Call_Type int32
 
 const (
-	SUBSCRIBE   Call_Type = 1
-	TEARDOWN    Call_Type = 2
-	ACCEPT      Call_Type = 3
-	DECLINE     Call_Type = 4
-	REVIVE      Call_Type = 5
-	KILL        Call_Type = 6
-	SHUTDOWN    Call_Type = 7
-	ACKNOWLEDGE Call_Type = 8
-	RECONCILE   Call_Type = 9
-	MESSAGE     Call_Type = 10
-	REQUEST     Call_Type = 11
-	SUPPRESS    Call_Type = 12
+	Call_SUBSCRIBE   Call_Type = 1
+	Call_TEARDOWN    Call_Type = 2
+	Call_ACCEPT      Call_Type = 3
+	Call_DECLINE     Call_Type = 4
+	Call_REVIVE      Call_Type = 5
+	Call_KILL        Call_Type = 6
+	Call_SHUTDOWN    Call_Type = 7
+	Call_ACKNOWLEDGE Call_Type = 8
+	Call_RECONCILE   Call_Type = 9
+	Call_MESSAGE     Call_Type = 10
+	Call_REQUEST     Call_Type = 11
+	Call_SUPPRESS    Call_Type = 12
 )
 
 var Call_Type_name = map[int32]string{
@@ -188,7 +188,7 @@ func (m *Event) GetType() Event_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return SUBSCRIBED
+	return Event_SUBSCRIBED
 }
 
 func (m *Event) GetSubscribed() *Event_Subscribed {
@@ -477,7 +477,7 @@ func (m *Call) GetType() Call_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return SUBSCRIBE
+	return Call_SUBSCRIBE
 }
 
 func (m *Call) GetSubscribe() *Call_Subscribe {

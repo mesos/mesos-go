@@ -65,8 +65,6 @@ message Event {
     // close the existing subscription connection and resubscribe
     // using a backoff strategy.
     HEARTBEAT = 8;
-
-    option (gogoproto.goproto_enum_prefix) = true;
   }
 
   // First event received when the scheduler subscribes.
@@ -199,7 +197,6 @@ message Call {
     // SchedulerDriver::abort which was only necessary to handle
     // exceptions getting thrown from within Scheduler callbacks,
     // something that is not an issue with the Event/Call API.
-    option (gogoproto.goproto_enum_prefix) = true;
   }
 
   // Subscribes the scheduler with the master to receive events. A

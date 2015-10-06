@@ -45,5 +45,9 @@ $ go get github.com/mesos/mesos-go
 $ go test -race ./...
 ```
 
+## Contributing
+Contributions are welcome. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for
+guidelines.
+
 ## License
 This project is [Apache License 2.0](LICENSE).

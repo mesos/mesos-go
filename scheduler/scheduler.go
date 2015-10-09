@@ -3,22 +3,13 @@ package scheduler
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
-	"time"
 
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/encoding"
 )
-
-// DefaultOpts holds the default Scheduler configuration.
-var DefaultOpts = []Opt{
-	URL("https://127.0.0.1:5050/api/v1/scheduler"),
-	Client(&http.Client{Timeout: 5 * time.Second}),
-}
 
 // Scheduler is the Mesos HTTP scheduler API client.
 type Scheduler struct {
@@ -29,55 +20,63 @@ type Scheduler struct {
 }
 
 // Opt defines a functional option for the Scheduler type.
-type Opt func(*Scheduler) error
+type Opt func(*Scheduler)
 
-// New returns a new Scheduler with the given options applied.
-func New(opts ...Opt) (*Scheduler, error) {
-	var s Scheduler
-	return &s, s.Apply(opts...)
-}
-
-// Apply applies the given Opts to a Scheduler and returns an aggregate of
-// all non-nill errors returned.
-func (s *Scheduler) Apply(opts ...Opt) (err error) {
-	errs := make([]string, 0, len(opts))
+// With applies the given Opts to a Scheduler and returns an aggregate of
+// all non-nill errors returned and itself.
+func (s *Scheduler) With(opts ...Opt) *Scheduler {
 	for _, opt := range opts {
-		if err = opt(s); err != nil {
-			errs = append(errs, err.Error())
-		}
+		opt(s)
 	}
-	return errors.New(strings.Join(errs, "; "))
+	return s
 }
 
 // URL returns an Opt that sets a Scheduler's URL.
-func URL(rawurl string) Opt {
-	return func(s *Scheduler) error {
-		u, err := url.Parse(rawurl)
-		if err != nil {
-			return err
-		}
-		s.url = u
-		return nil
-	}
+func URL(u *url.URL) Opt {
+	return func(s *Scheduler) { s.url = u }
 }
 
 // Client returns an Opt that sets a Scheduler's http.Client.
 func Client(c *http.Client) Opt {
-	return func(s *Scheduler) error {
-		s.cli = c
-		return nil
-	}
+	return func(s *Scheduler) { s.cli = c }
 }
 
 // Codec returns an Opt that sets a Scheduler' Codec.
 func Codec(c encoding.Codec) Opt {
-	return func(s *Scheduler) (err error) {
-		s.codec = c
-		return nil
-	}
+	return func(s *Scheduler) { s.codec = c }
 }
 
-// Do sends a Call and returns a streaming encoding.Decoder where Events will be
+var (
+	// ErrNotLeader is returned by Do calls that are sent to a non leading Mesos master.
+	ErrNotLeader = errors.New("scheduler: call sent to a non-leading master")
+	// ErrAuth is returned by Do calls that are not successfully authenticated.
+	ErrAuth = errors.New("scheduler: call not authenticated")
+	// ErrUnsubscribed is returned by Do calls that are sent before a subscription is established.
+	ErrUnsubscribed = errors.New("scheduler: no subscription established")
+	// ErrVersion is returned by Do calls that are sent to an	incompatible API version.
+	ErrVersion = errors.New("scheduler: incompatible API version")
+	// ErrMalformed is returned by Do calls that are malformed.
+	ErrMalformed = errors.New("scheduler: malformed request")
+	// ErrMediaType is returned by Do calls that are sent with an unsupported media type.
+	ErrMediaType = errors.New("scheduler: unsupported media type")
+	// ErrRateLimit is returned by Do calls that are rate limited.
+	ErrRateLimit = errors.New("scheduler: rate limited")
+
+	// codeErrors maps HTTP response codes to their respective errors.
+	codeErrors = map[int]error{
+		http.StatusOK:                nil,
+		http.StatusAccepted:          nil,
+		http.StatusTemporaryRedirect: ErrNotLeader,
+		http.StatusBadRequest:        ErrMalformed,
+		http.StatusConflict:          ErrVersion,
+		http.StatusForbidden:         ErrUnsubscribed,
+		http.StatusUnauthorized:      ErrAuth,
+		http.StatusNotAcceptable:     ErrMediaType,
+		429: ErrRateLimit,
+	}
+)
+
+// Call calls the scheduler and returns a streaming encoding.Decoder where Events will be
 // read from, an io.Closer to close the input stream and an error in case of failure.
 func (s *Scheduler) Do(c *Call) (encoding.Decoder, io.Closer, error) {
 	var body bytes.Buffer
@@ -98,18 +97,14 @@ func (s *Scheduler) Do(c *Call) (encoding.Decoder, io.Closer, error) {
 		return nil, nil, err
 	}
 
-	if res.StatusCode != http.StatusAccepted {
-		err = fmt.Errorf("scheduler: bad status code: %d", res.StatusCode)
-	}
-
-	return s.codec.NewDecoder(res.Body), res.Body, err
+	return s.codec.NewDecoder(res.Body), res.Body, codeErrors[res.StatusCode]
 }
 
 // A CallOpt is a functional option type for Calls.
 type CallOpt func(*Call)
 
-// Apply applies the given CallOpts to the receiving Call, returning it.
-func (c *Call) Apply(opts ...CallOpt) *Call {
+// With applies the given CallOpts to the receiving Call, returning it.
+func (c *Call) With(opts ...CallOpt) *Call {
 	for _, opt := range opts {
 		opt(c)
 	}

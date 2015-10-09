@@ -2,51 +2,37 @@ package scheduler_test
 
 import (
 	"bytes"
-	"errors"
 	"io/ioutil"
 	"net/http"
-	"reflect"
+	"net/url"
 	"testing"
 
+	"github.com/mesos/mesos-go/encoding"
 	. "github.com/mesos/mesos-go/scheduler"
 )
 
 func TestScheduler_Do(t *testing.T) {
-	t.Fatal("TODO")
-
-	for i, tt := range []struct {
-		res *http.Response
-		in  *Call
-		out *Event
-		err error
-	}{
-		{response(400), &Call{}, nil, errors.New("scheduler: bad status code: 400")},
-	} {
-		s, err := New(Client(client(tt.res)))
-		if err != nil {
-			t.Errorf("test #%d: got err: %v", i, err)
-		}
-
-		dec, err := s.Do(tt.in)
-		if got, want := err, tt.err; !reflect.DeepEqual(got, want) {
-			t.Errorf("test #%d: got: %v, want: %v", i, got, want)
-		}
-
-		var e Event
-		if err := dec.Decode(&e); err != nil {
-			t.Errorf("test #%d: got err: %v", i, err)
-		} else if got, want := e, tt.out; !reflect.DeepEqual(got, want) {
-			t.Errorf("test #%d: got: %v, want: %v", i, got, want)
-		}
-	}
-}
-
-func client(res *http.Response) *http.Client {
-	return &http.Client{
-		Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
-			return res, nil
+	s := new(Scheduler).With(
+		URL(&url.URL{}),
+		Codec(encoding.JSONCodec),
+		Client(&http.Client{
+			Transport: roundTripper(func(r *http.Request) (*http.Response, error) {
+				for i, tt := range []struct{ got, want string }{
+					{r.Method, "POST"},
+					{r.Header.Get("Content-Type"), encoding.JSONCodec.MediaTypes[0]},
+					{r.Header.Get("Accept"), encoding.JSONCodec.MediaTypes[1]},
+				} {
+					if tt.got != tt.want {
+						t.Errorf("test #%d: got %v, want %v", i, tt.got, tt.want)
+					}
+				}
+				return response(200), nil
+			}),
 		}),
-	}
+	)
+	_, _, _ = s.Do(&Call{})
+
+	// TODO(tsenart): Implement mock Mesos scheduler API, verify response codes.
 }
 
 func response(code int, body ...byte) *http.Response {
@@ -56,8 +42,8 @@ func response(code int, body ...byte) *http.Response {
 	}
 }
 
-type roundTripFunc func(*http.Request) (*http.Response, error)
+type roundTripper func(*http.Request) (*http.Response, error)
 
-func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+func (f roundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	return f(r)
 }

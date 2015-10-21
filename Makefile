@@ -13,3 +13,5 @@ protobufs:
 	protoc --proto_path="${PROTO_PATH}" --gogo_out=. *.proto
 	protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./scheduler/*.proto
 
+ffjson:
+	ffjson ./**/*.pb.go

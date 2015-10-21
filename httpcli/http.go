@@ -49,6 +49,9 @@ type Client struct {
 	codec encoding.Codec
 }
 
+// New returns a new Client with the given Opts applied.
+func New(opts ...Opt) *Client { return new(Client).With(opts...) }
+
 // Opt defines a functional option for the HTTP client type.
 type Opt func(*Client)
 

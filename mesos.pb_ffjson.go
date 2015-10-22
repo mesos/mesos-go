@@ -8106,13 +8106,13 @@ func (mj *FrameworkInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	buf.WriteString(`,"name":`)
 	fflib.WriteJsonString(buf, string(mj.Name))
 	buf.WriteByte(',')
-	if mj.Id != nil {
+	if mj.ID != nil {
 		if true {
 			buf.WriteString(`"id":`)
 
 			{
 
-				err = mj.Id.MarshalJSONBuf(buf)
+				err = mj.ID.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -8223,7 +8223,7 @@ const (
 
 	ffj_t_FrameworkInfo_Name
 
-	ffj_t_FrameworkInfo_Id
+	ffj_t_FrameworkInfo_ID
 
 	ffj_t_FrameworkInfo_FailoverTimeout
 
@@ -8246,7 +8246,7 @@ var ffj_key_FrameworkInfo_User = []byte("user")
 
 var ffj_key_FrameworkInfo_Name = []byte("name")
 
-var ffj_key_FrameworkInfo_Id = []byte("id")
+var ffj_key_FrameworkInfo_ID = []byte("id")
 
 var ffj_key_FrameworkInfo_FailoverTimeout = []byte("failover_timeout")
 
@@ -8354,8 +8354,8 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_FrameworkInfo_Id, kn) {
-						currentKey = ffj_t_FrameworkInfo_Id
+					if bytes.Equal(ffj_key_FrameworkInfo_ID, kn) {
+						currentKey = ffj_t_FrameworkInfo_ID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -8458,8 +8458,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_FrameworkInfo_Id, kn) {
-					currentKey = ffj_t_FrameworkInfo_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_FrameworkInfo_ID, kn) {
+					currentKey = ffj_t_FrameworkInfo_ID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -8499,8 +8499,8 @@ mainparse:
 				case ffj_t_FrameworkInfo_Name:
 					goto handle_Name
 
-				case ffj_t_FrameworkInfo_Id:
-					goto handle_Id
+				case ffj_t_FrameworkInfo_ID:
+					goto handle_ID
 
 				case ffj_t_FrameworkInfo_FailoverTimeout:
 					goto handle_FailoverTimeout
@@ -8592,24 +8592,24 @@ handle_Name:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Id:
+handle_ID:
 
-	/* handler: uj.Id type=mesos.FrameworkID kind=struct quoted=false*/
+	/* handler: uj.ID type=mesos.FrameworkID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Id = nil
+			uj.ID = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.Id == nil {
-			uj.Id = new(FrameworkID)
+		if uj.ID == nil {
+			uj.ID = new(FrameworkID)
 		}
 
-		err = uj.Id.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.ID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

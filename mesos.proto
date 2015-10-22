@@ -234,7 +234,7 @@ message FrameworkInfo {
   // scheduler failover (i.e., if it is set then the
   // MesosSchedulerDriver expects the scheduler is performing
   // failover).
-  optional FrameworkID id = 3;
+  optional FrameworkID id = 3 [(gogoproto.customname) = "ID"];
 
   // The amount of time that the master will wait for the scheduler to
   // failover before it tears down the framework by killing all its

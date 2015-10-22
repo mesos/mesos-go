@@ -965,7 +965,7 @@ type FrameworkInfo struct {
 	// scheduler failover (i.e., if it is set then the
 	// MesosSchedulerDriver expects the scheduler is performing
 	// failover).
-	Id *FrameworkID `protobuf:"bytes,3,opt,name=id" json:"id,omitempty"`
+	ID *FrameworkID `protobuf:"bytes,3,opt,name=id" json:"id,omitempty"`
 	// The amount of time that the master will wait for the scheduler to
 	// failover before it tears down the framework by killing all its
 	// tasks/executors. This should be non-zero if a framework expects
@@ -1024,9 +1024,9 @@ func (m *FrameworkInfo) GetName() string {
 	return ""
 }
 
-func (m *FrameworkInfo) GetId() *FrameworkID {
+func (m *FrameworkInfo) GetID() *FrameworkID {
 	if m != nil {
-		return m.Id
+		return m.ID
 	}
 	return nil
 }
@@ -5251,8 +5251,8 @@ func (this *FrameworkInfo) VerboseEqual(that interface{}) error {
 	if this.Name != that1.Name {
 		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
-	if !this.Id.Equal(that1.Id) {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	if !this.ID.Equal(that1.ID) {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
 	if this.FailoverTimeout != nil && that1.FailoverTimeout != nil {
 		if *this.FailoverTimeout != *that1.FailoverTimeout {
@@ -5347,7 +5347,7 @@ func (this *FrameworkInfo) Equal(that interface{}) bool {
 	if this.Name != that1.Name {
 		return false
 	}
-	if !this.Id.Equal(that1.Id) {
+	if !this.ID.Equal(that1.ID) {
 		return false
 	}
 	if this.FailoverTimeout != nil && that1.FailoverTimeout != nil {
@@ -12427,8 +12427,8 @@ func (this *FrameworkInfo) GoString() string {
 	s = append(s, "&mesos.FrameworkInfo{")
 	s = append(s, "User: "+fmt.Sprintf("%#v", this.User)+",\n")
 	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
-	if this.Id != nil {
-		s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	if this.ID != nil {
+		s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
 	}
 	if this.FailoverTimeout != nil {
 		s = append(s, "FailoverTimeout: "+valueToGoStringMesos(this.FailoverTimeout, "float64")+",\n")
@@ -14307,11 +14307,11 @@ func (m *FrameworkInfo) MarshalTo(data []byte) (int, error) {
 	i++
 	i = encodeVarintMesos(data, i, uint64(len(m.Name)))
 	i += copy(data[i:], m.Name)
-	if m.Id != nil {
+	if m.ID != nil {
 		data[i] = 0x1a
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n6, err := m.Id.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.ID.Size()))
+		n6, err := m.ID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -17948,7 +17948,7 @@ func NewPopulatedFrameworkInfo(r randyMesos, easy bool) *FrameworkInfo {
 	this.User = randStringMesos(r)
 	this.Name = randStringMesos(r)
 	if r.Intn(10) != 0 {
-		this.Id = NewPopulatedFrameworkID(r, easy)
+		this.ID = NewPopulatedFrameworkID(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		v18 := float64(r.Float64())
@@ -19804,8 +19804,8 @@ func (m *FrameworkInfo) Size() (n int) {
 	n += 1 + l + sovMesos(uint64(l))
 	l = len(m.Name)
 	n += 1 + l + sovMesos(uint64(l))
-	if m.Id != nil {
-		l = m.Id.Size()
+	if m.ID != nil {
+		l = m.ID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.FailoverTimeout != nil {
@@ -21427,7 +21427,7 @@ func (this *FrameworkInfo) String() string {
 	s := strings.Join([]string{`&FrameworkInfo{`,
 		`User:` + fmt.Sprintf("%v", this.User) + `,`,
 		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
-		`Id:` + strings.Replace(fmt.Sprintf("%v", this.Id), "FrameworkID", "FrameworkID", 1) + `,`,
+		`ID:` + strings.Replace(fmt.Sprintf("%v", this.ID), "FrameworkID", "FrameworkID", 1) + `,`,
 		`FailoverTimeout:` + valueToStringMesos(this.FailoverTimeout) + `,`,
 		`Checkpoint:` + valueToStringMesos(this.Checkpoint) + `,`,
 		`Role:` + valueToStringMesos(this.Role) + `,`,
@@ -23579,7 +23579,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			hasFields[0] |= uint64(0x00000002)
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -23600,10 +23600,10 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Id == nil {
-				m.Id = &FrameworkID{}
+			if m.ID == nil {
+				m.ID = &FrameworkID{}
 			}
-			if err := m.Id.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

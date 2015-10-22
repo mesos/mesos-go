@@ -563,7 +563,7 @@ type Call_Subscribe struct {
 	// scheduler instance is attempting to subscribe but not when a
 	// scheduler is retrying subscription (e.g., disconnection or
 	// master failover; see sched/sched.cpp for an example).
-	Force *bool `protobuf:"varint,2,opt,name=force" json:"force,omitempty"`
+	Force bool `protobuf:"varint,2,opt,name=force" json:"force"`
 }
 
 func (m *Call_Subscribe) Reset()      { *m = Call_Subscribe{} }
@@ -577,8 +577,8 @@ func (m *Call_Subscribe) GetFrameworkInfo() *mesos.FrameworkInfo {
 }
 
 func (m *Call_Subscribe) GetForce() bool {
-	if m != nil && m.Force != nil {
-		return *m.Force
+	if m != nil {
+		return m.Force
 	}
 	return false
 }
@@ -1558,13 +1558,7 @@ func (this *Call_Subscribe) VerboseEqual(that interface{}) error {
 	if !this.FrameworkInfo.Equal(that1.FrameworkInfo) {
 		return fmt.Errorf("FrameworkInfo this(%v) Not Equal that(%v)", this.FrameworkInfo, that1.FrameworkInfo)
 	}
-	if this.Force != nil && that1.Force != nil {
-		if *this.Force != *that1.Force {
-			return fmt.Errorf("Force this(%v) Not Equal that(%v)", *this.Force, *that1.Force)
-		}
-	} else if this.Force != nil {
-		return fmt.Errorf("this.Force == nil && that.Force != nil")
-	} else if that1.Force != nil {
+	if this.Force != that1.Force {
 		return fmt.Errorf("Force this(%v) Not Equal that(%v)", this.Force, that1.Force)
 	}
 	return nil
@@ -1592,13 +1586,7 @@ func (this *Call_Subscribe) Equal(that interface{}) bool {
 	if !this.FrameworkInfo.Equal(that1.FrameworkInfo) {
 		return false
 	}
-	if this.Force != nil && that1.Force != nil {
-		if *this.Force != *that1.Force {
-			return false
-		}
-	} else if this.Force != nil {
-		return false
-	} else if that1.Force != nil {
+	if this.Force != that1.Force {
 		return false
 	}
 	return true
@@ -2349,9 +2337,7 @@ func (this *Call_Subscribe) GoString() string {
 	if this.FrameworkInfo != nil {
 		s = append(s, "FrameworkInfo: "+fmt.Sprintf("%#v", this.FrameworkInfo)+",\n")
 	}
-	if this.Force != nil {
-		s = append(s, "Force: "+valueToGoStringScheduler(this.Force, "bool")+",\n")
-	}
+	s = append(s, "Force: "+fmt.Sprintf("%#v", this.Force)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -3021,16 +3007,14 @@ func (m *Call_Subscribe) MarshalTo(data []byte) (int, error) {
 		}
 		i += n25
 	}
-	if m.Force != nil {
-		data[i] = 0x10
-		i++
-		if *m.Force {
-			data[i] = 1
-		} else {
-			data[i] = 0
-		}
-		i++
+	data[i] = 0x10
+	i++
+	if m.Force {
+		data[i] = 1
+	} else {
+		data[i] = 0
 	}
+	i++
 	return i, nil
 }
 
@@ -3602,10 +3586,7 @@ func NewPopulatedCall(r randyScheduler, easy bool) *Call {
 func NewPopulatedCall_Subscribe(r randyScheduler, easy bool) *Call_Subscribe {
 	this := &Call_Subscribe{}
 	this.FrameworkInfo = mesos.NewPopulatedFrameworkInfo(r, easy)
-	if r.Intn(10) != 0 {
-		v9 := bool(bool(r.Intn(2) == 0))
-		this.Force = &v9
-	}
+	this.Force = bool(bool(r.Intn(2) == 0))
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -3614,16 +3595,16 @@ func NewPopulatedCall_Subscribe(r randyScheduler, easy bool) *Call_Subscribe {
 func NewPopulatedCall_Accept(r randyScheduler, easy bool) *Call_Accept {
 	this := &Call_Accept{}
 	if r.Intn(10) != 0 {
-		v10 := r.Intn(10)
-		this.OfferIds = make([]*mesos.OfferID, v10)
-		for i := 0; i < v10; i++ {
+		v9 := r.Intn(10)
+		this.OfferIds = make([]*mesos.OfferID, v9)
+		for i := 0; i < v9; i++ {
 			this.OfferIds[i] = mesos.NewPopulatedOfferID(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v11 := r.Intn(10)
-		this.Operations = make([]*mesos.Offer_Operation, v11)
-		for i := 0; i < v11; i++ {
+		v10 := r.Intn(10)
+		this.Operations = make([]*mesos.Offer_Operation, v10)
+		for i := 0; i < v10; i++ {
 			this.Operations[i] = mesos.NewPopulatedOffer_Operation(r, easy)
 		}
 	}
@@ -3638,9 +3619,9 @@ func NewPopulatedCall_Accept(r randyScheduler, easy bool) *Call_Accept {
 func NewPopulatedCall_Decline(r randyScheduler, easy bool) *Call_Decline {
 	this := &Call_Decline{}
 	if r.Intn(10) != 0 {
-		v12 := r.Intn(10)
-		this.OfferIds = make([]*mesos.OfferID, v12)
-		for i := 0; i < v12; i++ {
+		v11 := r.Intn(10)
+		this.OfferIds = make([]*mesos.OfferID, v11)
+		for i := 0; i < v11; i++ {
 			this.OfferIds[i] = mesos.NewPopulatedOfferID(r, easy)
 		}
 	}
@@ -3676,9 +3657,9 @@ func NewPopulatedCall_Acknowledge(r randyScheduler, easy bool) *Call_Acknowledge
 	this := &Call_Acknowledge{}
 	this.AgentId = mesos.NewPopulatedAgentID(r, easy)
 	this.TaskId = mesos.NewPopulatedTaskID(r, easy)
-	v13 := r.Intn(100)
-	this.Uuid = make([]byte, v13)
-	for i := 0; i < v13; i++ {
+	v12 := r.Intn(100)
+	this.Uuid = make([]byte, v12)
+	for i := 0; i < v12; i++ {
 		this.Uuid[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -3689,9 +3670,9 @@ func NewPopulatedCall_Acknowledge(r randyScheduler, easy bool) *Call_Acknowledge
 func NewPopulatedCall_Reconcile(r randyScheduler, easy bool) *Call_Reconcile {
 	this := &Call_Reconcile{}
 	if r.Intn(10) != 0 {
-		v14 := r.Intn(10)
-		this.Tasks = make([]*Call_Reconcile_Task, v14)
-		for i := 0; i < v14; i++ {
+		v13 := r.Intn(10)
+		this.Tasks = make([]*Call_Reconcile_Task, v13)
+		for i := 0; i < v13; i++ {
 			this.Tasks[i] = NewPopulatedCall_Reconcile_Task(r, easy)
 		}
 	}
@@ -3715,9 +3696,9 @@ func NewPopulatedCall_Message(r randyScheduler, easy bool) *Call_Message {
 	this := &Call_Message{}
 	this.AgentId = mesos.NewPopulatedAgentID(r, easy)
 	this.ExecutorId = mesos.NewPopulatedExecutorID(r, easy)
-	v15 := r.Intn(100)
-	this.Data = make([]byte, v15)
-	for i := 0; i < v15; i++ {
+	v14 := r.Intn(100)
+	this.Data = make([]byte, v14)
+	for i := 0; i < v14; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -3728,9 +3709,9 @@ func NewPopulatedCall_Message(r randyScheduler, easy bool) *Call_Message {
 func NewPopulatedCall_Request(r randyScheduler, easy bool) *Call_Request {
 	this := &Call_Request{}
 	if r.Intn(10) != 0 {
-		v16 := r.Intn(10)
-		this.Requests = make([]*mesos.Request, v16)
-		for i := 0; i < v16; i++ {
+		v15 := r.Intn(10)
+		this.Requests = make([]*mesos.Request, v15)
+		for i := 0; i < v15; i++ {
 			this.Requests[i] = mesos.NewPopulatedRequest(r, easy)
 		}
 	}
@@ -3758,9 +3739,9 @@ func randUTF8RuneScheduler(r randyScheduler) rune {
 	return rune(ru + 61)
 }
 func randStringScheduler(r randyScheduler) string {
-	v17 := r.Intn(100)
-	tmps := make([]rune, v17)
-	for i := 0; i < v17; i++ {
+	v16 := r.Intn(100)
+	tmps := make([]rune, v16)
+	for i := 0; i < v16; i++ {
 		tmps[i] = randUTF8RuneScheduler(r)
 	}
 	return string(tmps)
@@ -3782,11 +3763,11 @@ func randFieldScheduler(data []byte, r randyScheduler, fieldNumber int, wire int
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateScheduler(data, uint64(key))
-		v18 := r.Int63()
+		v17 := r.Int63()
 		if r.Intn(2) == 0 {
-			v18 *= -1
+			v17 *= -1
 		}
-		data = encodeVarintPopulateScheduler(data, uint64(v18))
+		data = encodeVarintPopulateScheduler(data, uint64(v17))
 	case 1:
 		data = encodeVarintPopulateScheduler(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -4000,9 +3981,7 @@ func (m *Call_Subscribe) Size() (n int) {
 		l = m.FrameworkInfo.Size()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
-	if m.Force != nil {
-		n += 2
-	}
+	n += 2
 	return n
 }
 
@@ -4278,7 +4257,7 @@ func (this *Call_Subscribe) String() string {
 	}
 	s := strings.Join([]string{`&Call_Subscribe{`,
 		`FrameworkInfo:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkInfo), "FrameworkInfo", "mesos.FrameworkInfo", 1) + `,`,
-		`Force:` + valueToStringScheduler(this.Force) + `,`,
+		`Force:` + fmt.Sprintf("%v", this.Force) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -5804,8 +5783,7 @@ func (m *Call_Subscribe) Unmarshal(data []byte) error {
 					break
 				}
 			}
-			b := bool(v != 0)
-			m.Force = &b
+			m.Force = bool(v != 0)
 		default:
 			var sizeOfWire int
 			for {

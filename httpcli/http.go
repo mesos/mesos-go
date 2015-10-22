@@ -45,7 +45,7 @@ type Client struct {
 	url   string
 	cli   *http.Client
 	hdr   http.Header
-	codec encoding.Codec
+	codec *encoding.Codec
 }
 
 // New returns a new Client with the given Opts applied.
@@ -99,7 +99,7 @@ func RoundTripper(rt http.RoundTripper) Opt {
 func Timeout(d time.Duration) Opt { return func(c *Client) { c.cli.Timeout = d } }
 
 // Codec returns an Opt that sets a Client's Codec.
-func Codec(codec encoding.Codec) Opt { return func(c *Client) { c.codec = codec } }
+func Codec(codec *encoding.Codec) Opt { return func(c *Client) { c.codec = codec } }
 
 // Header returns an Opt that adds a header to an Client's headers.
 func Header(k, v string) Opt { return func(c *Client) { c.hdr.Add(k, v) } }

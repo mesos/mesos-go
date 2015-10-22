@@ -338,7 +338,7 @@ message Call {
   // FrameworkInfo (in any further 'Subscribe' calls). This allows the
   // master to identify a scheduler correctly across disconnections,
   // failovers, etc.
-  optional FrameworkID framework_id = 1;
+  optional FrameworkID framework_id = 1 [(gogoproto.customname) = "FrameworkID"];
 
   // Type of the call, indicates which optional field below should be
   // present if that type has a nested message definition.

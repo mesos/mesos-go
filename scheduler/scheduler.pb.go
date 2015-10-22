@@ -448,7 +448,7 @@ type Call struct {
 	// FrameworkInfo (in any further 'Subscribe' calls). This allows the
 	// master to identify a scheduler correctly across disconnections,
 	// failovers, etc.
-	FrameworkId *mesos.FrameworkID `protobuf:"bytes,1,opt,name=framework_id" json:"framework_id,omitempty"`
+	FrameworkID *mesos.FrameworkID `protobuf:"bytes,1,opt,name=framework_id" json:"framework_id,omitempty"`
 	// Type of the call, indicates which optional field below should be
 	// present if that type has a nested message definition.
 	Type        *Call_Type        `protobuf:"varint,2,req,name=type,enum=mesos.scheduler.Call_Type" json:"type,omitempty"`
@@ -466,9 +466,9 @@ type Call struct {
 func (m *Call) Reset()      { *m = Call{} }
 func (*Call) ProtoMessage() {}
 
-func (m *Call) GetFrameworkId() *mesos.FrameworkID {
+func (m *Call) GetFrameworkID() *mesos.FrameworkID {
 	if m != nil {
-		return m.FrameworkId
+		return m.FrameworkID
 	}
 	return nil
 }
@@ -1433,8 +1433,8 @@ func (this *Call) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Callbut is not nil && this == nil")
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
-		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
+		return fmt.Errorf("FrameworkID this(%v) Not Equal that(%v)", this.FrameworkID, that1.FrameworkID)
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
@@ -1494,7 +1494,7 @@ func (this *Call) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
 		return false
 	}
 	if this.Type != nil && that1.Type != nil {
@@ -2292,8 +2292,8 @@ func (this *Call) GoString() string {
 	}
 	s := make([]string, 0, 15)
 	s = append(s, "&scheduler.Call{")
-	if this.FrameworkId != nil {
-		s = append(s, "FrameworkId: "+fmt.Sprintf("%#v", this.FrameworkId)+",\n")
+	if this.FrameworkID != nil {
+		s = append(s, "FrameworkID: "+fmt.Sprintf("%#v", this.FrameworkID)+",\n")
 	}
 	if this.Type != nil {
 		s = append(s, "Type: "+valueToGoStringScheduler(this.Type, "scheduler.Call_Type")+",\n")
@@ -2870,11 +2870,11 @@ func (m *Call) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.FrameworkId != nil {
+	if m.FrameworkID != nil {
 		data[i] = 0xa
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.FrameworkId.Size()))
-		n15, err := m.FrameworkId.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.FrameworkID.Size()))
+		n15, err := m.FrameworkID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -3547,7 +3547,7 @@ func NewPopulatedEvent_Error(r randyScheduler, easy bool) *Event_Error {
 func NewPopulatedCall(r randyScheduler, easy bool) *Call {
 	this := &Call{}
 	if r.Intn(10) != 0 {
-		this.FrameworkId = mesos.NewPopulatedFrameworkID(r, easy)
+		this.FrameworkID = mesos.NewPopulatedFrameworkID(r, easy)
 	}
 	v8 := Call_Type([]int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}[r.Intn(12)])
 	this.Type = &v8
@@ -3928,8 +3928,8 @@ func (m *Event_Error) Size() (n int) {
 func (m *Call) Size() (n int) {
 	var l int
 	_ = l
-	if m.FrameworkId != nil {
-		l = m.FrameworkId.Size()
+	if m.FrameworkID != nil {
+		l = m.FrameworkID.Size()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
 	if m.Type != nil {
@@ -4236,7 +4236,7 @@ func (this *Call) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Call{`,
-		`FrameworkId:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkId), "FrameworkID", "mesos.FrameworkID", 1) + `,`,
+		`FrameworkID:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkID), "FrameworkID", "mesos.FrameworkID", 1) + `,`,
 		`Type:` + valueToStringScheduler(this.Type) + `,`,
 		`Subscribe:` + strings.Replace(fmt.Sprintf("%v", this.Subscribe), "Call_Subscribe", "Call_Subscribe", 1) + `,`,
 		`Accept:` + strings.Replace(fmt.Sprintf("%v", this.Accept), "Call_Accept", "Call_Accept", 1) + `,`,
@@ -5371,7 +5371,7 @@ func (m *Call) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -5392,10 +5392,10 @@ func (m *Call) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.FrameworkId == nil {
-				m.FrameworkId = &mesos.FrameworkID{}
+			if m.FrameworkID == nil {
+				m.FrameworkID = &mesos.FrameworkID{}
 			}
-			if err := m.FrameworkId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.FrameworkID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

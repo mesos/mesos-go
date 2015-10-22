@@ -37,13 +37,13 @@ func (mj *Call) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.FrameworkId != nil {
+	if mj.FrameworkID != nil {
 		if true {
 			buf.WriteString(`"framework_id":`)
 
 			{
 
-				err = mj.FrameworkId.MarshalJSONBuf(buf)
+				err = mj.FrameworkID.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -212,7 +212,7 @@ const (
 	ffj_t_Callbase = iota
 	ffj_t_Callno_such_key
 
-	ffj_t_Call_FrameworkId
+	ffj_t_Call_FrameworkID
 
 	ffj_t_Call_Type
 
@@ -235,7 +235,7 @@ const (
 	ffj_t_Call_Request
 )
 
-var ffj_key_Call_FrameworkId = []byte("framework_id")
+var ffj_key_Call_FrameworkID = []byte("framework_id")
 
 var ffj_key_Call_Type = []byte("type")
 
@@ -339,8 +339,8 @@ mainparse:
 
 				case 'f':
 
-					if bytes.Equal(ffj_key_Call_FrameworkId, kn) {
-						currentKey = ffj_t_Call_FrameworkId
+					if bytes.Equal(ffj_key_Call_FrameworkID, kn) {
+						currentKey = ffj_t_Call_FrameworkID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -457,8 +457,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Call_FrameworkId, kn) {
-					currentKey = ffj_t_Call_FrameworkId
+				if fflib.EqualFoldRight(ffj_key_Call_FrameworkID, kn) {
+					currentKey = ffj_t_Call_FrameworkID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -480,8 +480,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Call_FrameworkId:
-					goto handle_FrameworkId
+				case ffj_t_Call_FrameworkID:
+					goto handle_FrameworkID
 
 				case ffj_t_Call_Type:
 					goto handle_Type
@@ -527,24 +527,24 @@ mainparse:
 		}
 	}
 
-handle_FrameworkId:
+handle_FrameworkID:
 
-	/* handler: uj.FrameworkId type=mesos.FrameworkID kind=struct quoted=false*/
+	/* handler: uj.FrameworkID type=mesos.FrameworkID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.FrameworkId = nil
+			uj.FrameworkID = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.FrameworkId == nil {
-			uj.FrameworkId = new(mesos.FrameworkID)
+		if uj.FrameworkID == nil {
+			uj.FrameworkID = new(mesos.FrameworkID)
 		}
 
-		err = uj.FrameworkId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.FrameworkID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -3641,7 +3641,7 @@ func (mj *Call_Subscribe) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
+	buf.WriteByte('{')
 	if mj.FrameworkInfo != nil {
 		if true {
 			buf.WriteString(`"framework_info":`)
@@ -3657,17 +3657,11 @@ func (mj *Call_Subscribe) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Force != nil {
-		if true {
-			if *mj.Force {
-				buf.WriteString(`"force":true`)
-			} else {
-				buf.WriteString(`"force":false`)
-			}
-			buf.WriteByte(',')
-		}
+	if mj.Force {
+		buf.WriteString(`"force":true`)
+	} else {
+		buf.WriteString(`"force":false`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -3848,27 +3842,21 @@ handle_Force:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Force = nil
-
 		} else {
 			tmpb := fs.Output.Bytes()
 
-			var tval bool
-
 			if bytes.Compare([]byte{'t', 'r', 'u', 'e'}, tmpb) == 0 {
 
-				tval = true
+				uj.Force = true
 
 			} else if bytes.Compare([]byte{'f', 'a', 'l', 's', 'e'}, tmpb) == 0 {
 
-				tval = false
+				uj.Force = false
 
 			} else {
 				err = errors.New("unexpected bytes for true/false value")
 				return fs.WrapErr(err)
 			}
-
-			uj.Force = &tval
 
 		}
 	}

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/mesos/mesos-go/encoding"
@@ -43,7 +42,7 @@ var (
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
-	url   *url.URL
+	url   string
 	cli   *http.Client
 	hdr   http.Header
 	codec encoding.Codec
@@ -72,7 +71,7 @@ func (c *Client) Do(m encoding.Marshaler) (encoding.Decoder, io.Closer, error) {
 		return nil, nil, err
 	}
 
-	req, err := http.NewRequest("POST", c.url.String(), &body)
+	req, err := http.NewRequest("POST", c.url, &body)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -89,7 +88,7 @@ func (c *Client) Do(m encoding.Marshaler) (encoding.Decoder, io.Closer, error) {
 }
 
 // URL returns an Opt that sets a Client's URL.
-func URL(u *url.URL) Opt { return func(c *Client) { c.url = u } }
+func URL(rawurl string) Opt { return func(c *Client) { c.url = rawurl } }
 
 // RoundTripper returns an Opt that sets a Client's http.RoundTripper.
 func RoundTripper(rt http.RoundTripper) Opt {

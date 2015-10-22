@@ -54,7 +54,7 @@ enum Status {
  * in order to do failover (see MesosSchedulerDriver).
  */
 message FrameworkID {
-  required string value = 1;
+  required string value = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -224,10 +224,10 @@ message FrameworkInfo {
   // Used to determine the Unix user that an executor or task should
   // be launched as. If the user field is set to an empty string Mesos
   // will automagically set it to the current user.
-  required string user = 1;
+  required string user = 1 [(gogoproto.nullable) = false];
 
   // Name of the framework that shows up in the Mesos Web UI.
-  required string name = 2;
+  required string name = 2 [(gogoproto.nullable) = false];
 
   // Note that 'id' is only available after a framework has
   // registered, however, it is included here in order to facilitate

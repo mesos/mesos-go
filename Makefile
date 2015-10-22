@@ -9,9 +9,13 @@ all: test
 test:
 	go test ./...
 
+codecs: protobufs ffjson
+
 protobufs:
+	- rm ./**/*.pb.go
 	protoc --proto_path="${PROTO_PATH}" --gogo_out=. *.proto
 	protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./scheduler/*.proto
 
 ffjson:
+	- rm ./**/*ffjson.go
 	ffjson ./**/*.pb.go

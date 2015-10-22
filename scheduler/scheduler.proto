@@ -223,7 +223,7 @@ message Call {
     // scheduler instance is attempting to subscribe but not when a
     // scheduler is retrying subscription (e.g., disconnection or
     // master failover; see sched/sched.cpp for an example).
-    optional bool force = 2;
+    optional bool force = 2 [(gogoproto.nullable) = false];
   }
 
   // Accepts an offer, performing the specified operations

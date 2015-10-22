@@ -19,29 +19,37 @@ const (
 var (
 	// ProtobufCodec is the Mesos scheduler API Protobufs codec.
 	ProtobufCodec = Codec{
+		Name:       "protobuf",
 		MediaTypes: [2]string{ProtobufMediaType, ProtobufMediaType},
 		NewEncoder: NewProtobufEncoder,
 		NewDecoder: NewProtobufDecoder,
 	}
 	// JSONCodec is the Mesos scheduler API JSON codec.
 	JSONCodec = Codec{
+		Name:       "json",
 		MediaTypes: [2]string{JSONMediaType, JSONMediaType},
 		NewEncoder: NewJSONEncoder,
 		NewDecoder: NewJSONDecoder,
 	}
 )
 
+// A Codec composes encoding and decoding of a serialization format.
+type Codec struct {
+	// Name holds the codec name.
+	Name string
+	// MediaTypes holds the media types of the codec encoding and decoding
+	// formats, respectively.
+	MediaTypes [2]string
+	// NewEncoder returns a new encoder for the defined media type.
+	NewEncoder func(io.Writer) Encoder
+	// NewDecoder returns a new decoder for the defined media type.
+	NewDecoder func(io.Reader) Decoder
+}
+
+// String implements the fmt.Stringer interface.
+func (c *Codec) String() string { return c.Name }
+
 type (
-	// A Codec composes encoding and decoding of a serialization format.
-	Codec struct {
-		// MediaTypes holds the media types of the codec encoding and decoding
-		// formats, respectively.
-		MediaTypes [2]string
-		// NewEncoder returns a new encoder for the defined media type.
-		NewEncoder func(io.Writer) Encoder
-		// NewDecoder returns a new decoder for the defined media type.
-		NewDecoder func(io.Reader) Decoder
-	}
 	// Marshaler composes the supported marshaling formats.
 	Marshaler interface {
 		pb.Marshaler

@@ -1091,6 +1091,16 @@ func (driver *MesosSchedulerDriver) abort(cause error) (stat mesos.Status, err e
 	return
 }
 
+// Gets called when offers are accepted outside of the mesos-go binding, meaning that they need to be cleaned up internally here
+func (driver *MesosSchedulerDriver) CleanOffers(offerIDs []*mesos.OfferID) {
+	driver.eventLock.Lock()
+	defer driver.eventLock.Unlock()
+
+	for _, offerID := range offerIDs {
+		driver.cache.removeOffer(offerID)
+	}
+}
+
 func (driver *MesosSchedulerDriver) LaunchTasks(offerIds []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) (mesos.Status, error) {
 	driver.eventLock.Lock()
 	defer driver.eventLock.Unlock()

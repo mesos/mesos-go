@@ -66,6 +66,9 @@ type SchedulerDriver interface {
 	// framework via Scheduler.ResourceOffers callback, asynchronously.
 	RequestResources(requests []*mesos.Request) (mesos.Status, error)
 
+	//Removes offers from cache, useful when interacting with mesos master from ouside
+	CleanOffers(offerIDs []*mesos.OfferID)
+
 	// Launches the given set of tasks. Any resources remaining (i.e.,
 	// not used by the tasks or their executors) will be considered
 	// declined. The specified filters are applied on all unused

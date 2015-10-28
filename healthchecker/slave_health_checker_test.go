@@ -27,7 +27,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mesos/mesos-go/upid"
+	"github.com/basho-labs/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -19,7 +19,7 @@
 package executor
 
 import (
-	"github.com/mesos/mesos-go/mesosproto"
+	"github.com/basho-labs/mesos-go/mesosproto"
 	"github.com/stretchr/testify/mock"
 )
 

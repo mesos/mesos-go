@@ -20,7 +20,7 @@ package mesosutil
 
 import (
 	"github.com/gogo/protobuf/proto"
-	mesos "github.com/mesos/mesos-go/mesosproto"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
 )
 
 func NewValueRange(begin, end uint64) *mesos.Value_Range {

@@ -12,9 +12,9 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
-	mesos "github.com/mesos/mesos-go/mesosproto"
-	util "github.com/mesos/mesos-go/mesosutil"
-	"github.com/mesos/mesos-go/upid"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
+	util "github.com/basho-labs/mesos-go/mesosutil"
+	"github.com/basho-labs/mesos-go/upid"
 )
 
 var (
@@ -129,7 +129,7 @@ func CreateMasterInfo(pid *upid.UPID) *mesos.MasterInfo {
 	if ipv4 = net.ParseIP(pid.Host); ipv4 != nil {
 		// This is needed for the people cross-compiling from macos to linux.
 		// The cross-compiled version of net.LookupIP() fails to handle plain IPs.
-		// See https://github.com/mesos/mesos-go/pull/117
+		// See https://github.com/basho-labs/mesos-go/pull/117
 	} else if addrs, err := net.LookupIP(pid.Host); err == nil {
 		for _, ip := range addrs {
 			if ip = ip.To4(); ip != nil {

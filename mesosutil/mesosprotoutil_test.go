@@ -20,7 +20,7 @@ package mesosutil
 
 import (
 	"github.com/gogo/protobuf/proto"
-	mesos "github.com/mesos/mesos-go/mesosproto"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	log "github.com/golang/glog"
-	"github.com/mesos/mesos-go/auth/callback"
+	"github.com/basho-labs/mesos-go/auth/callback"
 	"golang.org/x/net/context"
 )
 

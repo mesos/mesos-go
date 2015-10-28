@@ -23,11 +23,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mesos/mesos-go/healthchecker"
-	"github.com/mesos/mesos-go/mesosproto"
-	util "github.com/mesos/mesos-go/mesosutil"
-	"github.com/mesos/mesos-go/messenger"
-	"github.com/mesos/mesos-go/upid"
+	"github.com/basho-labs/mesos-go/healthchecker"
+	"github.com/basho-labs/mesos-go/mesosproto"
+	util "github.com/basho-labs/mesos-go/mesosutil"
+	"github.com/basho-labs/mesos-go/messenger"
+	"github.com/basho-labs/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
 )
 

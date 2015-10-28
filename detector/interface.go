@@ -19,7 +19,7 @@
 package detector
 
 import (
-	mesos "github.com/mesos/mesos-go/mesosproto"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
 )
 
 type MasterChanged interface {

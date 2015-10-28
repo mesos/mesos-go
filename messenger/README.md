@@ -13,7 +13,7 @@ BenchmarkMessengerSendRecvMediumMessage	   20000	     80471 ns/op
 BenchmarkMessengerSendRecvBigMessage	   20000	     82629 ns/op
 BenchmarkMessengerSendRecvLargeMessage	   20000	     85987 ns/op
 BenchmarkMessengerSendRecvMixedMessage	   20000	     83678 ns/op
-ok  	github.com/mesos/mesos-go/messenger	115.135s
+ok  	github.com/basho-labs/mesos-go/messenger	115.135s
 
 $ go test -v -run=Benckmark* -bench=. -cpu=4 -send-routines=4 2>/dev/null
 PASS
@@ -27,7 +27,7 @@ BenchmarkMessengerSendRecvMediumMessage-4	   50000	     41990 ns/op
 BenchmarkMessengerSendRecvBigMessage-4	   50000	     42157 ns/op
 BenchmarkMessengerSendRecvLargeMessage-4	   50000	     45472 ns/op
 BenchmarkMessengerSendRecvMixedMessage-4	   50000	     47393 ns/op
-ok  	github.com/mesos/mesos-go/messenger	105.173s
+ok  	github.com/basho-labs/mesos-go/messenger	105.173s
 ```
  
 ####environment:

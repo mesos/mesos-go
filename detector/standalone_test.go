@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	mesos "github.com/mesos/mesos-go/mesosproto"
-	"github.com/mesos/mesos-go/upid"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
+	"github.com/basho-labs/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )

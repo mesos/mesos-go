@@ -1,7 +1,7 @@
 package zoo
 
 import (
-	"github.com/mesos/mesos-go/detector"
+	"github.com/basho-labs/mesos-go/detector"
 )
 
 func init() {

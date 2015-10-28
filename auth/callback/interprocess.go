@@ -1,7 +1,7 @@
 package callback
 
 import (
-	"github.com/mesos/mesos-go/upid"
+	"github.com/basho-labs/mesos-go/upid"
 )
 
 type Interprocess struct {

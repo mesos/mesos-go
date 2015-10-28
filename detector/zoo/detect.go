@@ -31,8 +31,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
-	"github.com/mesos/mesos-go/detector"
-	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/basho-labs/mesos-go/detector"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
 )
 
 const (

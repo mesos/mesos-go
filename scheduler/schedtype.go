@@ -19,7 +19,7 @@
 package scheduler
 
 import (
-	mesos "github.com/mesos/mesos-go/mesosproto"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
 )
 
 // Interface for connecting a scheduler to Mesos. This

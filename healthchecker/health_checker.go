@@ -21,7 +21,7 @@ package healthchecker
 import (
 	"time"
 
-	"github.com/mesos/mesos-go/upid"
+	"github.com/basho-labs/mesos-go/upid"
 )
 
 // HealthChecker defines the interface of a health checker.

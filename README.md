@@ -2,11 +2,11 @@
 
 Very early version of a pure Go language bindings for Apache Mesos. As with other pure implementation, mesos-go uses the HTTP wire protocol to communicate directly with  a running Mesos master and its slave instances. One of the objectives of this project is to provide an idiomatic Go API that makes it super easy to create Mesos frameworks using Go. 
 
-[![Build Status](https://travis-ci.org/mesos/mesos-go.svg)](https://travis-ci.org/mesos/mesos-go) [![GoDoc] (https://godoc.org/github.com/mesos/mesos-go?status.png)](https://godoc.org/github.com/mesos/mesos-go)
+[![Build Status](https://travis-ci.org/mesos/mesos-go.svg)](https://travis-ci.org/mesos/mesos-go) [![GoDoc] (https://godoc.org/github.com/basho-labs/mesos-go?status.png)](https://godoc.org/github.com/basho-labs/mesos-go)
 
 ## Status
 This project is undergoing a *complete* rewrite happening in the
-[next](https://github.com/mesos/mesos-go/tree/next) branch. These bindings will
+[next](https://github.com/basho-labs/mesos-go/tree/next) branch. These bindings will
 integrate exclusively with the new public Mesos HTTP API.
 
 The current version of the bindings are considered **alpha** and won't
@@ -37,7 +37,7 @@ maintaining backwards compatibility with the previous major version.
 Users of this library are encouraged to vendor it. API stability isn't guaranteed
 at this stage.
 ```shell
-$ go get github.com/mesos/mesos-go
+$ go get github.com/basho-labs/mesos-go
 ```
 
 ## Testing

@@ -12,8 +12,8 @@ import (
 	"time"
 
 	log "github.com/golang/glog"
-	mesos "github.com/mesos/mesos-go/mesosproto"
-	"github.com/mesos/mesos-go/upid"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
+	"github.com/basho-labs/mesos-go/upid"
 	"golang.org/x/net/context"
 )
 

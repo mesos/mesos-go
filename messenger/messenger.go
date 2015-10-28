@@ -27,9 +27,9 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
-	mesos "github.com/mesos/mesos-go/mesosproto"
-	"github.com/mesos/mesos-go/mesosutil/process"
-	"github.com/mesos/mesos-go/upid"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
+	"github.com/basho-labs/mesos-go/mesosutil/process"
+	"github.com/basho-labs/mesos-go/upid"
 	"golang.org/x/net/context"
 )
 

@@ -19,12 +19,12 @@
 package scheduler
 
 import (
-	mesos "github.com/mesos/mesos-go/mesosproto"
-	util "github.com/mesos/mesos-go/mesosutil"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
+	util "github.com/basho-labs/mesos-go/mesosutil"
 	"github.com/stretchr/testify/assert"
 	"testing"
 
-	"github.com/mesos/mesos-go/upid"
+	"github.com/basho-labs/mesos-go/upid"
 )
 
 func TestSchedCacheNew(t *testing.T) {

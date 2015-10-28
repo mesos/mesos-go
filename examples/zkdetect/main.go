@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	log "github.com/golang/glog"
-	"github.com/mesos/mesos-go/detector"
-	_ "github.com/mesos/mesos-go/detector/zoo"
-	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/basho-labs/mesos-go/detector"
+	_ "github.com/basho-labs/mesos-go/detector/zoo"
+	mesos "github.com/basho-labs/mesos-go/mesosproto"
 )
 
 type zkListener struct{}

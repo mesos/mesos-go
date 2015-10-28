@@ -247,6 +247,7 @@ func (t *HTTPTransporter) send(ctx context.Context, msg *Message) (sendError err
 }
 
 func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(*http.Response, error) error) error {
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -590,9 +591,11 @@ func (t *HTTPTransporter) makeLibprocessRequest(msg *Message) (*http.Request, er
 		log.Errorf("Failed to create request: %v\n", err)
 		return nil, err
 	}
-	req.Header.Add("Libprocess-From", t.upid.String())
+	if msg.Name != "scheduler" {
+		req.Header.Add("Libprocess-From", t.upid.String())
+		req.Header.Add("Connection", "Keep-Alive")
+	}
 	req.Header.Add("Content-Type", "application/x-protobuf")
-	req.Header.Add("Connection", "Keep-Alive")
 
 	return req, nil
 }

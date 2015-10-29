@@ -29,8 +29,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
-	log "github.com/golang/glog"
 	"github.com/basho-labs/mesos-go/auth"
 	"github.com/basho-labs/mesos-go/detector"
 	mesos "github.com/basho-labs/mesos-go/mesosproto"
@@ -38,6 +36,8 @@ import (
 	"github.com/basho-labs/mesos-go/mesosutil/process"
 	"github.com/basho-labs/mesos-go/messenger"
 	"github.com/basho-labs/mesos-go/upid"
+	"github.com/gogo/protobuf/proto"
+	log "github.com/golang/glog"
 	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
 )
@@ -1115,7 +1115,7 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIDs []*mesos.OfferID, oper
 				// Validate
 				switch *operation.Type {
 				case mesos.Offer_Operation_LAUNCH:
-					tasks := make([]*mesos.TaskInfo, 0, len(operation.Launch.TaskInfos))
+					tasks := []*mesos.TaskInfo{}
 					// Set TaskInfo.executor.framework_id, if it's missing.
 					for _, task := range operation.Launch.TaskInfos {
 						newTask := *task
@@ -1136,46 +1136,24 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIDs []*mesos.OfferID, oper
 					operation.Launch.TaskInfos = tasks
 					okOperations = append(okOperations, operation)
 				case mesos.Offer_Operation_RESERVE:
-					reservations := make([]*mesos.Resource, 0, len(operation.Reserve.Resources))
-					// Make sure we're only sending what can be reserved
-					for _, resource := range util.FilterResources(operation.Reserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil }) {
-						newResource := *resource
-						if newResource.GetName() == "disk" {
-							newResource.Disk = nil
-						}
-						reservations = append(reservations, &newResource)
-					}
-					operation.Reserve.Resources = reservations
+					filtered := util.FilterResources(operation.Reserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil })
+					operation.Reserve.Resources = filtered
 					okOperations = append(okOperations, operation)
 				case mesos.Offer_Operation_UNRESERVE:
-					unreservations := make([]*mesos.Resource, 0, len(operation.Unreserve.Resources))
-					// Make sure we're only sending what can be unreserved
-					for _, resource := range util.FilterResources(operation.Unreserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil }) {
-						newResource := *resource
-						if newResource.GetName() == "disk" {
-							newResource.Disk = nil
-						}
-						unreservations = append(unreservations, &newResource)
-					}
-					operation.Unreserve.Resources = unreservations
+					filtered := util.FilterResources(operation.Unreserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil })
+					operation.Unreserve.Resources = filtered
 					okOperations = append(okOperations, operation)
 				case mesos.Offer_Operation_CREATE:
-					volumes := make([]*mesos.Resource, 0, len(operation.Create.Volumes))
-					// Make sure we're only sending the reserved disk portion
-					for _, resource := range util.FilterResources(operation.Create.Volumes, func(res *mesos.Resource) bool { return res.Reservation != nil && res.GetName() == "disk" }) {
-						newResource := *resource
-						volumes = append(volumes, &newResource)
-					}
-					operation.Create.Volumes = volumes
+					filtered := util.FilterResources(operation.Create.Volumes, func(res *mesos.Resource) bool {
+						return res.Reservation != nil && res.Disk != nil && res.GetName() == "disk"
+					})
+					operation.Create.Volumes = filtered
 					okOperations = append(okOperations, operation)
 				case mesos.Offer_Operation_DESTROY:
-					volumes := make([]*mesos.Resource, 0, len(operation.Destroy.Volumes))
-					// Make sure we're only sending the disk portion
-					for _, resource := range util.FilterResources(operation.Destroy.Volumes, func(res *mesos.Resource) bool { return res.Reservation != nil && res.GetName() == "disk" }) {
-						newResource := *resource
-						volumes = append(volumes, &newResource)
-					}
-					operation.Destroy.Volumes = volumes
+					filtered := util.FilterResources(operation.Destroy.Volumes, func(res *mesos.Resource) bool {
+						return res.Reservation != nil && res.Disk != nil && res.GetName() == "disk"
+					})
+					operation.Destroy.Volumes = filtered
 					okOperations = append(okOperations, operation)
 				}
 			} else {

@@ -1083,7 +1083,7 @@ func (driver *MesosSchedulerDriver) abort(cause error) (stat mesos.Status, err e
 	if driver.connected {
 		_, err = driver.stop(cause, true)
 	} else {
-		driver.messenger.Stop()
+		driver._stop(cause, mesos.Status_DRIVER_ABORTED)
 	}
 
 	stat = mesos.Status_DRIVER_ABORTED

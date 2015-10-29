@@ -367,6 +367,36 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverAbort() {
 	<-ch
 }
 
+type fakeErrorScheduler struct {
+	Scheduler
+	msg string
+}
+
+func (f *fakeErrorScheduler) Error(d SchedulerDriver, msg string) {
+	f.msg = msg
+}
+
+func (suite *SchedulerTestSuite) TestSchedulerDriverErrorBeforeConnected() {
+	sched := NewMockScheduler()
+	errorTracker := &fakeErrorScheduler{Scheduler: sched}
+	driver := newTestSchedulerDriver(suite.T(), driverConfigMessenger(errorTracker, suite.framework, suite.master, nil, mockedMessenger()))
+
+	const msg = "some random error message"
+	suite.False(driver.Running())
+
+	func() {
+		driver.eventLock.Lock()
+		defer driver.eventLock.Unlock()
+		driver.error(msg) // this is the callback that's eventually invoked when receiving an error from the master
+	}()
+
+	suite.Equal(msg, errorTracker.msg)
+
+	<-driver.stopCh
+	suite.False(driver.Running())
+	suite.Equal(mesos.Status_DRIVER_ABORTED, driver.Status())
+}
+
 func (suite *SchedulerTestSuite) TestSchdulerDriverLunchTasksUnstarted() {
 	sched := NewMockScheduler()
 	sched.On("Error").Return()

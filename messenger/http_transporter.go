@@ -590,7 +590,7 @@ func (t *HTTPTransporter) makeLibprocessRequest(msg *Message) (*http.Request, er
 		log.Errorf("Failed to create request: %v\n", err)
 		return nil, err
 	}
-	if msg.Name != "scheduler" {
+	if msg.GetType() == "internal" {
 		req.Header.Add("Libprocess-From", t.upid.String())
 		req.Header.Add("Connection", "Keep-Alive")
 	}

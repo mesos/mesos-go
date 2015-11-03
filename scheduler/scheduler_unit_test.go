@@ -369,16 +369,18 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverAbort() {
 
 type fakeErrorScheduler struct {
 	Scheduler
-	msg string
+	msg    string
+	called chan struct{}
 }
 
 func (f *fakeErrorScheduler) Error(d SchedulerDriver, msg string) {
+	defer close(f.called)
 	f.msg = msg
 }
 
 func (suite *SchedulerTestSuite) TestSchedulerDriverErrorBeforeConnected() {
 	sched := NewMockScheduler()
-	errorTracker := &fakeErrorScheduler{Scheduler: sched}
+	errorTracker := &fakeErrorScheduler{Scheduler: sched, called: make(chan struct{})}
 	driver := newTestSchedulerDriver(suite.T(), driverConfigMessenger(errorTracker, suite.framework, suite.master, nil, mockedMessenger()))
 
 	const msg = "some random error message"
@@ -390,6 +392,7 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverErrorBeforeConnected() {
 		driver.error(msg) // this is the callback that's eventually invoked when receiving an error from the master
 	}()
 
+	<-errorTracker.called
 	suite.Equal(msg, errorTracker.msg)
 
 	<-driver.stopCh

@@ -1099,7 +1099,6 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, oper
 		return stat, fmt.Errorf("Unable to AcceptOffers, expected driver status %s, but got %s", mesos.Status_DRIVER_RUNNING, stat)
 	}
 
-	// Launch tasks
 	if !driver.connected {
 		log.Infoln("Ignoring AcceptOffers message, disconnected from master.")
 		return driver.status, fmt.Errorf("Not connected to master.")

@@ -2,8 +2,8 @@ package scheduler
 
 import (
 	log "github.com/golang/glog"
-	mesos "github.com/basho-labs/mesos-go/mesosproto"
-	"github.com/basho-labs/mesos-go/upid"
+	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/upid"
 	"sync"
 )
 

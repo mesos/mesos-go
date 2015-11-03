@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/basho-labs/mesos-go/upid"
+	"github.com/mesos/mesos-go/upid"
 )
 
 // Message defines the type that passes in the Messenger.

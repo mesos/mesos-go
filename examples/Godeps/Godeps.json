@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/basho-labs/mesos-go",
+	"ImportPath": "github.com/mesos/mesos-go",
 	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./..."

@@ -22,7 +22,7 @@ import (
 	"reflect"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/basho-labs/mesos-go/upid"
+	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/net/context"
 )

@@ -1,7 +1,7 @@
 package executor
 
 import (
-	"github.com/basho-labs/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/mesosproto"
 )
 
 /**

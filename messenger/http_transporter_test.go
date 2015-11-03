@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/basho-labs/mesos-go/messenger/testmessage"
-	"github.com/basho-labs/mesos-go/upid"
+	"github.com/mesos/mesos-go/messenger/testmessage"
+	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )

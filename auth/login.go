@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/basho-labs/mesos-go/auth/callback"
-	"github.com/basho-labs/mesos-go/upid"
+	"github.com/mesos/mesos-go/auth/callback"
+	"github.com/mesos/mesos-go/upid"
 	"golang.org/x/net/context"
 )
 

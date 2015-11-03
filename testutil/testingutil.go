@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
-	"github.com/basho-labs/mesos-go/upid"
+	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net"

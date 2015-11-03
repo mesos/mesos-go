@@ -27,7 +27,7 @@ import (
 	"time"
 
 	log "github.com/golang/glog"
-	"github.com/basho-labs/mesos-go/upid"
+	"github.com/mesos/mesos-go/upid"
 )
 
 const (

@@ -27,11 +27,11 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
-	"github.com/basho-labs/mesos-go/mesosproto"
-	"github.com/basho-labs/mesos-go/mesosutil"
-	"github.com/basho-labs/mesos-go/mesosutil/process"
-	"github.com/basho-labs/mesos-go/messenger"
-	"github.com/basho-labs/mesos-go/upid"
+	"github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/mesosutil"
+	"github.com/mesos/mesos-go/mesosutil/process"
+	"github.com/mesos/mesos-go/messenger"
+	"github.com/mesos/mesos-go/upid"
 	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
 )

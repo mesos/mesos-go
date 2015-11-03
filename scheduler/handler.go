@@ -1,9 +1,9 @@
 package scheduler
 
 import (
-	"github.com/basho-labs/mesos-go/auth/callback"
-	mesos "github.com/basho-labs/mesos-go/mesosproto"
-	"github.com/basho-labs/mesos-go/upid"
+	"github.com/mesos/mesos-go/auth/callback"
+	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/upid"
 )
 
 type CredentialHandler struct {

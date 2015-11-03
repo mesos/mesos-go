@@ -8,8 +8,8 @@ import (
 	"io"
 
 	log "github.com/golang/glog"
-	"github.com/basho-labs/mesos-go/auth/callback"
-	"github.com/basho-labs/mesos-go/auth/sasl/mech"
+	"github.com/mesos/mesos-go/auth/callback"
+	"github.com/mesos/mesos-go/auth/sasl/mech"
 )
 
 var (

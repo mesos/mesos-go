@@ -2,7 +2,7 @@ package scheduler
 
 import (
 	log "github.com/golang/glog"
-	mesos "github.com/basho-labs/mesos-go/mesosproto"
+	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/stretchr/testify/mock"
 )
 

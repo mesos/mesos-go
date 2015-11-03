@@ -28,9 +28,9 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
-	mesos "github.com/basho-labs/mesos-go/mesosproto"
-	util "github.com/basho-labs/mesos-go/mesosutil"
-	"github.com/basho-labs/mesos-go/testutil"
+	mesos "github.com/mesos/mesos-go/mesosproto"
+	util "github.com/mesos/mesos-go/mesosutil"
+	"github.com/mesos/mesos-go/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )

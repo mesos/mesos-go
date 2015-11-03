@@ -247,7 +247,6 @@ func (t *HTTPTransporter) send(ctx context.Context, msg *Message) (sendError err
 }
 
 func (t *HTTPTransporter) httpDo(ctx context.Context, req *http.Request, f func(*http.Response, error) error) error {
-
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

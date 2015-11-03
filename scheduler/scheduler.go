@@ -29,6 +29,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
+	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/auth"
 	"github.com/mesos/mesos-go/detector"
 	mesos "github.com/mesos/mesos-go/mesosproto"
@@ -36,8 +38,6 @@ import (
 	"github.com/mesos/mesos-go/mesosutil/process"
 	"github.com/mesos/mesos-go/messenger"
 	"github.com/mesos/mesos-go/upid"
-	"github.com/gogo/protobuf/proto"
-	log "github.com/golang/glog"
 	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
 )
@@ -1091,7 +1091,7 @@ func (driver *MesosSchedulerDriver) abort(cause error) (stat mesos.Status, err e
 	return
 }
 
-func (driver *MesosSchedulerDriver) AcceptOffers(offerIDs []*mesos.OfferID, operations []*mesos.Offer_Operation, filters *mesos.Filters) (mesos.Status, error) {
+func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, operations []*mesos.Offer_Operation, filters *mesos.Filters) (mesos.Status, error) {
 	driver.eventLock.Lock()
 	defer driver.eventLock.Unlock()
 
@@ -1107,11 +1107,11 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIDs []*mesos.OfferID, oper
 
 	okOperations := make([]*mesos.Offer_Operation, 0, len(operations))
 
-	for _, offerID := range offerIDs {
+	for _, offerId := range offerIds {
 		for _, operation := range operations {
 			// Keep only the slave PIDs where we run tasks so we can send
 			// framework messages directly.
-			if driver.cache.containsOffer(offerID) {
+			if driver.cache.containsOffer(offerId) {
 				// Validate
 				switch *operation.Type {
 				case mesos.Offer_Operation_LAUNCH:
@@ -1125,9 +1125,9 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIDs []*mesos.OfferID, oper
 						tasks = append(tasks, &newTask)
 					}
 					for _, task := range tasks {
-						if driver.cache.getOffer(offerID).offer.SlaveId.Equal(task.SlaveId) {
+						if driver.cache.getOffer(offerId).offer.SlaveId.Equal(task.SlaveId) {
 							// cache the tasked slave, for future communication
-							pid := driver.cache.getOffer(offerID).slavePid
+							pid := driver.cache.getOffer(offerId).slavePid
 							driver.cache.putSlavePid(task.SlaveId, pid)
 						} else {
 							log.Warningf("Attempting to launch task %s with the wrong slaveId offer %s\n", task.TaskId.GetValue(), task.SlaveId.GetValue())
@@ -1136,20 +1136,24 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIDs []*mesos.OfferID, oper
 					operation.Launch.TaskInfos = tasks
 					okOperations = append(okOperations, operation)
 				case mesos.Offer_Operation_RESERVE:
+					// Only send reserved resources
 					filtered := util.FilterResources(operation.Reserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil })
 					operation.Reserve.Resources = filtered
 					okOperations = append(okOperations, operation)
 				case mesos.Offer_Operation_UNRESERVE:
+					// Only send reserved resources
 					filtered := util.FilterResources(operation.Unreserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil })
 					operation.Unreserve.Resources = filtered
 					okOperations = append(okOperations, operation)
 				case mesos.Offer_Operation_CREATE:
+					// Only send reserved resources disks with volumes
 					filtered := util.FilterResources(operation.Create.Volumes, func(res *mesos.Resource) bool {
 						return res.Reservation != nil && res.Disk != nil && res.GetName() == "disk"
 					})
 					operation.Create.Volumes = filtered
 					okOperations = append(okOperations, operation)
 				case mesos.Offer_Operation_DESTROY:
+					// Only send reserved resources disks with volumes
 					filtered := util.FilterResources(operation.Destroy.Volumes, func(res *mesos.Resource) bool {
 						return res.Reservation != nil && res.Disk != nil && res.GetName() == "disk"
 					})
@@ -1157,16 +1161,16 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIDs []*mesos.OfferID, oper
 					okOperations = append(okOperations, operation)
 				}
 			} else {
-				log.Warningf("Attempting to accept offers with unknown offer %s\n", offerID.GetValue())
+				log.Warningf("Attempting to accept offers with unknown offer %s\n", offerId.GetValue())
 			}
 		}
 
-		driver.cache.removeOffer(offerID) // if offer
+		driver.cache.removeOffer(offerId) // if offer
 	}
 
 	// Accept Offers
 	accept := &mesos.Call_Accept{
-		OfferIds:   offerIDs,
+		OfferIds:   offerIds,
 		Operations: okOperations,
 		Filters:    filters,
 	}
@@ -1192,7 +1196,7 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIDs []*mesos.OfferID, oper
 	return driver.status, nil
 }
 
-func (driver *MesosSchedulerDriver) LaunchTasks(offerIDs []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) (mesos.Status, error) {
+func (driver *MesosSchedulerDriver) LaunchTasks(offerIds []*mesos.OfferID, tasks []*mesos.TaskInfo, filters *mesos.Filters) (mesos.Status, error) {
 	driver.eventLock.Lock()
 	defer driver.eventLock.Unlock()
 
@@ -1221,30 +1225,30 @@ func (driver *MesosSchedulerDriver) LaunchTasks(offerIDs []*mesos.OfferID, tasks
 		okTasks = append(okTasks, task)
 	}
 
-	for _, offerID := range offerIDs {
+	for _, offerId := range offerIds {
 		for _, task := range okTasks {
 			// Keep only the slave PIDs where we run tasks so we can send
 			// framework messages directly.
-			if driver.cache.containsOffer(offerID) {
-				if driver.cache.getOffer(offerID).offer.SlaveId.Equal(task.SlaveId) {
+			if driver.cache.containsOffer(offerId) {
+				if driver.cache.getOffer(offerId).offer.SlaveId.Equal(task.SlaveId) {
 					// cache the tasked slave, for future communication
-					pid := driver.cache.getOffer(offerID).slavePid
+					pid := driver.cache.getOffer(offerId).slavePid
 					driver.cache.putSlavePid(task.SlaveId, pid)
 				} else {
 					log.Warningf("Attempting to launch task %s with the wrong slaveId offer %s\n", task.TaskId.GetValue(), task.SlaveId.GetValue())
 				}
 			} else {
-				log.Warningf("Attempting to launch task %s with unknown offer %s\n", task.TaskId.GetValue(), offerID.GetValue())
+				log.Warningf("Attempting to launch task %s with unknown offer %s\n", task.TaskId.GetValue(), offerId.GetValue())
 			}
 		}
 
-		driver.cache.removeOffer(offerID) // if offer
+		driver.cache.removeOffer(offerId) // if offer
 	}
 
 	// launch tasks
 	message := &mesos.LaunchTasksMessage{
 		FrameworkId: driver.frameworkInfo.Id,
-		OfferIds:    offerIDs,
+		OfferIds:    offerIds,
 		Tasks:       okTasks,
 		Filters:     filters,
 	}

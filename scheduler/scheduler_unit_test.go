@@ -374,6 +374,11 @@ type fakeErrorScheduler struct {
 }
 
 func (f *fakeErrorScheduler) Error(d SchedulerDriver, msg string) {
+	select {
+	case <-f.called:
+		return
+	default:
+	}
 	defer close(f.called)
 	f.msg = msg
 }

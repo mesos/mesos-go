@@ -1100,7 +1100,15 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, oper
 	}
 
 	if !driver.connected {
-		log.Infoln("Ignoring AcceptOffers message, disconnected from master.")
+		err := fmt.Errorf("Not connected to master.")
+		for _, operation := range operations {
+			if *operation.Type == mesos.Offer_Operation_LAUNCH {
+				for _, task := range operation.Launch.TaskInfos {
+					driver.pushLostTask(task, "Unable to launch tasks: "+err.Error())
+				}
+			}
+		}
+		log.Errorf("Failed to send LaunchTask message: %v\n", err)
 		return driver.status, fmt.Errorf("Not connected to master.")
 	}
 

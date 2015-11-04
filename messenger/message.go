@@ -36,29 +36,15 @@ type Message struct {
 
 // RequestURI returns the request URI of the message.
 func (m *Message) RequestURI() string {
-	var requestURI string
-
-	switch m.GetType() {
-	case "external":
-		requestURI = fmt.Sprintf("/api/v1/%s", m.Name)
-	default:
-		requestURI = fmt.Sprintf("/%s/%s", m.UPID.ID, m.Name)
+	if m.isV1API() {
+		return fmt.Sprintf("/api/v1/%s", m.Name)
 	}
 
-	return requestURI
+	return fmt.Sprintf("/%s/%s", m.UPID.ID, m.Name)
 }
 
-func (m *Message) GetType() string {
-	var messageType string
-
-	switch m.Name {
-	case "scheduler":
-		messageType = "external"
-	default:
-		messageType = "internal"
-	}
-
-	return messageType
+func (m *Message) isV1API() bool {
+	return !strings.HasPrefix(m.Name, "mesos.internal")
 }
 
 // NOTE: This should not fail or panic.

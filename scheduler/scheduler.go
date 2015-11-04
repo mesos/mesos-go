@@ -1110,57 +1110,58 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, oper
 		for _, operation := range operations {
 			// Keep only the slave PIDs where we run tasks so we can send
 			// framework messages directly.
-			if driver.cache.containsOffer(offerId) {
-				// Validate
-				switch *operation.Type {
-				case mesos.Offer_Operation_LAUNCH:
-					tasks := []*mesos.TaskInfo{}
-					// Set TaskInfo.executor.framework_id, if it's missing.
-					for _, task := range operation.Launch.TaskInfos {
-						newTask := *task
-						if newTask.Executor != nil && newTask.Executor.FrameworkId == nil {
-							newTask.Executor.FrameworkId = driver.frameworkInfo.Id
-						}
-						tasks = append(tasks, &newTask)
-					}
-					for _, task := range tasks {
-						if driver.cache.getOffer(offerId).offer.SlaveId.Equal(task.SlaveId) {
-							// cache the tasked slave, for future communication
-							pid := driver.cache.getOffer(offerId).slavePid
-							driver.cache.putSlavePid(task.SlaveId, pid)
-						} else {
-							log.Warningf("Attempting to launch task %s with the wrong slaveId offer %s\n", task.TaskId.GetValue(), task.SlaveId.GetValue())
-						}
-					}
-					operation.Launch.TaskInfos = tasks
-					okOperations = append(okOperations, operation)
-				case mesos.Offer_Operation_RESERVE:
-					// Only send reserved resources
-					filtered := util.FilterResources(operation.Reserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil })
-					operation.Reserve.Resources = filtered
-					okOperations = append(okOperations, operation)
-				case mesos.Offer_Operation_UNRESERVE:
-					// Only send reserved resources
-					filtered := util.FilterResources(operation.Unreserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil })
-					operation.Unreserve.Resources = filtered
-					okOperations = append(okOperations, operation)
-				case mesos.Offer_Operation_CREATE:
-					// Only send reserved resources disks with volumes
-					filtered := util.FilterResources(operation.Create.Volumes, func(res *mesos.Resource) bool {
-						return res.Reservation != nil && res.Disk != nil && res.GetName() == "disk"
-					})
-					operation.Create.Volumes = filtered
-					okOperations = append(okOperations, operation)
-				case mesos.Offer_Operation_DESTROY:
-					// Only send reserved resources disks with volumes
-					filtered := util.FilterResources(operation.Destroy.Volumes, func(res *mesos.Resource) bool {
-						return res.Reservation != nil && res.Disk != nil && res.GetName() == "disk"
-					})
-					operation.Destroy.Volumes = filtered
-					okOperations = append(okOperations, operation)
-				}
-			} else {
+			if !driver.cache.containsOffer(offerId) {
 				log.Warningf("Attempting to accept offers with unknown offer %s\n", offerId.GetValue())
+				continue
+			}
+
+			// Validate
+			switch *operation.Type {
+			case mesos.Offer_Operation_LAUNCH:
+				tasks := []*mesos.TaskInfo{}
+				// Set TaskInfo.executor.framework_id, if it's missing.
+				for _, task := range operation.Launch.TaskInfos {
+					newTask := *task
+					if newTask.Executor != nil && newTask.Executor.FrameworkId == nil {
+						newTask.Executor.FrameworkId = driver.frameworkInfo.Id
+					}
+					tasks = append(tasks, &newTask)
+				}
+				for _, task := range tasks {
+					if driver.cache.getOffer(offerId).offer.SlaveId.Equal(task.SlaveId) {
+						// cache the tasked slave, for future communication
+						pid := driver.cache.getOffer(offerId).slavePid
+						driver.cache.putSlavePid(task.SlaveId, pid)
+					} else {
+						log.Warningf("Attempting to launch task %s with the wrong slaveId offer %s\n", task.TaskId.GetValue(), task.SlaveId.GetValue())
+					}
+				}
+				operation.Launch.TaskInfos = tasks
+				okOperations = append(okOperations, operation)
+			case mesos.Offer_Operation_RESERVE:
+				// Only send reserved resources
+				filtered := util.FilterResources(operation.Reserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil })
+				operation.Reserve.Resources = filtered
+				okOperations = append(okOperations, operation)
+			case mesos.Offer_Operation_UNRESERVE:
+				// Only send reserved resources
+				filtered := util.FilterResources(operation.Unreserve.Resources, func(res *mesos.Resource) bool { return res.Reservation != nil })
+				operation.Unreserve.Resources = filtered
+				okOperations = append(okOperations, operation)
+			case mesos.Offer_Operation_CREATE:
+				// Only send reserved resources disks with volumes
+				filtered := util.FilterResources(operation.Create.Volumes, func(res *mesos.Resource) bool {
+					return res.Reservation != nil && res.Disk != nil && res.GetName() == "disk"
+				})
+				operation.Create.Volumes = filtered
+				okOperations = append(okOperations, operation)
+			case mesos.Offer_Operation_DESTROY:
+				// Only send reserved resources disks with volumes
+				filtered := util.FilterResources(operation.Destroy.Volumes, func(res *mesos.Resource) bool {
+					return res.Reservation != nil && res.Disk != nil && res.GetName() == "disk"
+				})
+				operation.Destroy.Volumes = filtered
+				okOperations = append(okOperations, operation)
 			}
 		}
 
@@ -1168,16 +1169,14 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, oper
 	}
 
 	// Accept Offers
-	accept := &mesos.Call_Accept{
-		OfferIds:   offerIds,
-		Operations: okOperations,
-		Filters:    filters,
-	}
-	callType := mesos.Call_ACCEPT
 	message := &mesos.Call{
 		FrameworkId: driver.frameworkInfo.Id,
-		Type:        &callType,
-		Accept:      accept,
+		Type:        mesos.Call_ACCEPT.Enum(),
+		Accept: &mesos.Call_Accept{
+			OfferIds:   offerIds,
+			Operations: okOperations,
+			Filters:    filters,
+		},
 	}
 
 	if err := driver.send(driver.masterPid, message); err != nil {

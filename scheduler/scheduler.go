@@ -1109,7 +1109,7 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, oper
 			}
 		}
 		log.Errorf("Failed to send LaunchTask message: %v\n", err)
-		return driver.status, fmt.Errorf("Not connected to master.")
+		return driver.status, err
 	}
 
 	okOperations := make([]*mesos.Offer_Operation, 0, len(operations))

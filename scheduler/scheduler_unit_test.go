@@ -405,7 +405,102 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverErrorBeforeConnected() {
 	suite.Equal(mesos.Status_DRIVER_ABORTED, driver.Status())
 }
 
-func (suite *SchedulerTestSuite) TestSchdulerDriverLunchTasksUnstarted() {
+func (suite *SchedulerTestSuite) TestSchdulerDriverAcceptOffersUnstarted() {
+	sched := NewMockScheduler()
+	sched.On("Error").Return()
+
+	// Set expections and return values.
+	messenger := messenger.NewMockedMessenger()
+	messenger.On("Route").Return(nil)
+	messenger.On("Install").Return(nil)
+
+	driver := newTestSchedulerDriver(suite.T(), driverConfigMessenger(sched, suite.framework, suite.master, nil, messenger))
+
+	stat, err := driver.AcceptOffers(
+		[]*mesos.OfferID{{}},
+		[]*mesos.Offer_Operation{},
+		&mesos.Filters{},
+	)
+	suite.Error(err)
+	suite.Equal(mesos.Status_DRIVER_NOT_STARTED, stat)
+}
+
+func (suite *SchedulerTestSuite) TestSchdulerDriverAcceptOffersWithError() {
+	sched := NewMockScheduler()
+	sched.On("StatusUpdate").Return(nil)
+	sched.On("Error").Return()
+
+	msgr := mockedMessenger()
+	driver := newTestSchedulerDriver(suite.T(), driverConfigMessenger(sched, suite.framework, suite.master, nil, msgr))
+	driver.dispatch = func(_ context.Context, _ *upid.UPID, _ proto.Message) error {
+		return fmt.Errorf("Unable to send message")
+	}
+
+	go func() {
+		driver.Run()
+	}()
+	<-driver.started
+	driver.setConnected(true) // simulated
+	suite.True(driver.Running())
+
+	// setup an offer
+	offer := util.NewOffer(
+		util.NewOfferID("test-offer-001"),
+		suite.framework.Id,
+		util.NewSlaveID("test-slave-001"),
+		"test-slave(1)@localhost:5050",
+	)
+
+	pid, err := upid.Parse("test-slave(1)@localhost:5050")
+	suite.NoError(err)
+	driver.cache.putOffer(offer, pid)
+
+	// launch task
+	task := util.NewTaskInfo(
+		"simple-task",
+		util.NewTaskID("simpe-task-1"),
+		util.NewSlaveID("test-slave-001"),
+		[]*mesos.Resource{util.NewScalarResourceWithReservation("mem", 400, "principal", "role")},
+	)
+	task.Command = util.NewCommandInfo("pwd")
+	task.Executor = util.NewExecutorInfo(util.NewExecutorID("test-exec"), task.Command)
+	tasks := []*mesos.TaskInfo{task}
+
+	operations := []*mesos.Offer_Operation{util.NewLaunchOperation(tasks)}
+
+	stat, err := driver.AcceptOffers(
+		[]*mesos.OfferID{offer.Id},
+		operations,
+		&mesos.Filters{},
+	)
+	suite.Equal(mesos.Status_DRIVER_RUNNING, stat)
+	suite.Error(err)
+}
+
+func (suite *SchedulerTestSuite) TestSchdulerDriverAcceptOffers() {
+	driver := newTestSchedulerDriver(suite.T(), driverConfigMessenger(NewMockScheduler(), suite.framework, suite.master, nil, mockedMessenger()))
+
+	go func() {
+		driver.Run()
+	}()
+	<-driver.started
+	driver.setConnected(true) // simulated
+	suite.True(driver.Running())
+
+	volumes := []*mesos.Resource{util.NewVolumeResourceWithReservation(400, "containerPath", "persistenceId", mesos.Volume_RW.Enum(), "principal", "role")}
+
+	operations := []*mesos.Offer_Operation{util.NewCreateOperation(volumes)}
+
+	stat, err := driver.AcceptOffers(
+		[]*mesos.OfferID{{}},
+		operations,
+		&mesos.Filters{},
+	)
+	suite.NoError(err)
+	suite.Equal(mesos.Status_DRIVER_RUNNING, stat)
+}
+
+func (suite *SchedulerTestSuite) TestSchdulerDriverLaunchTasksUnstarted() {
 	sched := NewMockScheduler()
 	sched.On("Error").Return()
 

@@ -391,5 +391,14 @@ func (m *MesosMessenger) decodeLoop() {
 
 // getMessageName returns the name of the message in the mesos manner.
 func getMessageName(msg proto.Message) string {
-	return fmt.Sprintf("%v.%v", "mesos.internal", reflect.TypeOf(msg).Elem().Name())
+	var msgName string
+
+	switch msg := msg.(type) {
+	case *mesos.Call:
+		msgName = "scheduler"
+	default:
+		msgName = fmt.Sprintf("%v.%v", "mesos.internal", reflect.TypeOf(msg).Elem().Name())
+	}
+
+	return msgName
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/mesos/mesos-go/encoding"
 )
@@ -40,15 +39,34 @@ var (
 	}
 )
 
+// DoFunc sends an HTTP request and returns an HTTP response.
+//
+// An error is returned if caused by client policy (such as
+// http.Client.CheckRedirect), or if there was an HTTP protocol error. A
+// non-2xx response doesn't cause an error.
+//
+// When err is nil, resp always contains a non-nil resp.Body.
+//
+// Callers should close resp.Body when done reading from it. If resp.Body is
+// not closed, an underlying RoundTripper (typically Transport) may not be able
+// to re-use a persistent TCP connection to the server for a subsequent
+// "keep-alive" request.
+//
+// The request Body, if non-nil, will be closed by an underlying Transport,
+// even on errors.
+type DoFunc func(*http.Request) (*http.Response, error)
+
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
 	url   string
-	cli   *http.Client
+	do    DoFunc
 	hdr   http.Header
 	codec *encoding.Codec
 }
 
 // New returns a new Client with the given Opts applied.
+// Callers are expected to configure the URL, Doer, and Codec options prior to
+// invoking Do.
 func New(opts ...Opt) *Client { return new(Client).With(opts...) }
 
 // Opt defines a functional option for the HTTP client type.
@@ -64,7 +82,8 @@ func (c *Client) With(opts ...Opt) *Client {
 
 // Do sends a Call and returns a streaming Decoder from which callers can read
 // Events from, an io.Closer to close the event stream on graceful termination
-// and an error in case of failure.
+// and an error in case of failure. Callers are expected to *always* close a
+// non-nil io.Closer if one is returned.
 func (c *Client) Do(m encoding.Marshaler) (encoding.Decoder, io.Closer, error) {
 	var body bytes.Buffer
 	if err := c.codec.NewEncoder(&body).Encode(m); err != nil {
@@ -79,8 +98,11 @@ func (c *Client) Do(m encoding.Marshaler) (encoding.Decoder, io.Closer, error) {
 	req.Header.Set("Content-Type", c.codec.MediaTypes[0])
 	req.Header.Set("Accept", c.codec.MediaTypes[1])
 
-	res, err := c.cli.Do(req)
+	res, err := c.do(req)
 	if err != nil {
+		if res != nil && res.Body != nil {
+			res.Body.Close()
+		}
 		return nil, nil, err
 	}
 
@@ -90,13 +112,8 @@ func (c *Client) Do(m encoding.Marshaler) (encoding.Decoder, io.Closer, error) {
 // URL returns an Opt that sets a Client's URL.
 func URL(rawurl string) Opt { return func(c *Client) { c.url = rawurl } }
 
-// RoundTripper returns an Opt that sets a Client's http.RoundTripper.
-func RoundTripper(rt http.RoundTripper) Opt {
-	return func(c *Client) { c.cli.Transport = rt }
-}
-
-// Timeout returns an Opt that sets a Client's timeout.
-func Timeout(d time.Duration) Opt { return func(c *Client) { c.cli.Timeout = d } }
+// Doer returns an Opt that sets a Client's DoFunc
+func Doer(do DoFunc) Opt { return func(c *Client) { c.do = do } }
 
 // Codec returns an Opt that sets a Client's Codec.
 func Codec(codec *encoding.Codec) Opt { return func(c *Client) { c.codec = codec } }

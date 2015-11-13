@@ -13,7 +13,7 @@ const (
 	// ProtobufMediaType is the Protobuf serialization format media type.
 	ProtobufMediaType = "application/x-protobuf"
 	// JSONMediaType is the JSON serialiation format media type.
-	JSONMediaType = "application/json; charset=utf-8"
+	JSONMediaType = "application/json"
 )
 
 var (

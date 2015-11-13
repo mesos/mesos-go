@@ -2,11 +2,15 @@ package httpcli
 
 import (
 	"bytes"
+	"crypto/tls"
 	"errors"
 	"io"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/mesos/mesos-go/encoding"
+	"github.com/mesos/mesos-go/recordio"
 )
 
 var (
@@ -58,16 +62,23 @@ type DoFunc func(*http.Request) (*http.Response, error)
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
-	url   string
-	do    DoFunc
-	hdr   http.Header
-	codec *encoding.Codec
+	url    string
+	do     DoFunc
+	header http.Header
+	codec  *encoding.Codec
 }
 
 // New returns a new Client with the given Opts applied.
-// Callers are expected to configure the URL, Doer, and Codec options prior to
+// Callers are expected to configure the URL, Do, and Codec options prior to
 // invoking Do.
-func New(opts ...Opt) *Client { return new(Client).With(opts...) }
+func New(opts ...Opt) *Client {
+	c := &Client{
+		codec:  &encoding.ProtobufCodec,
+		do:     With(),
+		header: http.Header{},
+	}
+	return c.With(opts...)
+}
 
 // Opt defines a functional option for the HTTP client type.
 type Opt func(*Client)
@@ -99,7 +110,7 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 	}
 
 	// default headers, applied to all requests
-	for k, v := range c.hdr {
+	for k, v := range c.header {
 		req.Header[k] = v
 	}
 
@@ -120,23 +131,77 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 		return nil, nil, err
 	}
 
-	return c.codec.NewDecoder(res.Body), res.Body, codeErrors[res.StatusCode]
+	events := c.codec.NewDecoder(recordio.NewReader(res.Body))
+	return events, res.Body, codeErrors[res.StatusCode]
 }
 
 // URL returns an Opt that sets a Client's URL.
 func URL(rawurl string) Opt { return func(c *Client) { c.url = rawurl } }
 
-// Doer returns an Opt that sets a Client's DoFunc
-func Doer(do DoFunc) Opt { return func(c *Client) { c.do = do } }
+// Do returns an Opt that sets a Client's DoFunc
+func Do(do DoFunc) Opt { return func(c *Client) { c.do = do } }
 
 // Codec returns an Opt that sets a Client's Codec.
 func Codec(codec *encoding.Codec) Opt { return func(c *Client) { c.codec = codec } }
 
 // DefaultHeader returns an Opt that adds a header to an Client's headers.
-func DefaultHeader(k, v string) Opt { return func(c *Client) { c.hdr.Add(k, v) } }
+func DefaultHeader(k, v string) Opt { return func(c *Client) { c.header.Add(k, v) } }
 
 // Header returns an RequestOpt that adds a header value to an HTTP requests's header.
 func Header(k, v string) RequestOpt { return func(r *http.Request) { r.Header.Add(k, v) } }
 
 // Close returns a RequestOpt that determines whether to close the underlying connection after sending the request.
 func Close(b bool) RequestOpt { return func(r *http.Request) { r.Close = b } }
+
+type Config struct {
+	client    *http.Client
+	dialer    *net.Dialer
+	transport *http.Transport
+	timeout   time.Duration
+}
+
+type ConfigOpt func(*Config)
+
+// With returns a DoFunc that executes HTTP round-trips.
+// The default implementation provides reasonable defaults for timeouts:
+// keep-alive, connection, request/response read/write, and TLS handshake.
+// Callers can customize configuration by specifying one or more ConfigOpt's.
+func With(opt ...ConfigOpt) DoFunc {
+	dialer := &net.Dialer{
+		LocalAddr: &net.TCPAddr{IP: net.IPv4zero},
+		KeepAlive: 30 * time.Second,
+		Timeout:   5 * time.Second,
+	}
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		Dial:  dialer.Dial,
+		ResponseHeaderTimeout: 5 * time.Second,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: false},
+		TLSHandshakeTimeout:   5 * time.Second,
+	}
+	config := &Config{
+		dialer:    dialer,
+		timeout:   5 * time.Second,
+		transport: transport,
+		client:    &http.Client{Transport: transport},
+	}
+	for _, o := range opt {
+		o(config)
+	}
+	return config.client.Do
+}
+
+// Timeout returns an ConfigOpt that sets a Config's timeout and keep-alive timeout.
+func Timeout(d time.Duration) ConfigOpt {
+	return func(c *Config) {
+		c.transport.ResponseHeaderTimeout = d
+		c.dialer.Timeout = d
+	}
+}
+
+// RoundTripper returns a ConfigOpt that sets a Config's round-tripper.
+func RoundTripper(rt http.RoundTripper) ConfigOpt {
+	return func(c *Config) {
+		c.client.Transport = rt
+	}
+}

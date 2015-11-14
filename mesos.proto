@@ -1407,7 +1407,7 @@ message ContainerInfo {
  * Collection of labels.
  */
 message Labels {
-    repeated Label labels = 1;
+    repeated Label labels = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -1415,7 +1415,7 @@ message Labels {
  * Key, value pair used to store free form user-data.
  */
 message Label {
-  required string key = 1;
+  required string key = 1 [(gogoproto.nullable) = false];
   optional string value = 2;
 }
 

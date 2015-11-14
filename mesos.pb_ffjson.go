@@ -11272,14 +11272,9 @@ func (mj *Label) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Key != nil {
-		if true {
-			buf.WriteString(`"key":`)
-			fflib.WriteJsonString(buf, string(*mj.Key))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "key":`)
+	fflib.WriteJsonString(buf, string(mj.Key))
+	buf.WriteByte(',')
 	if mj.Value != nil {
 		if true {
 			buf.WriteString(`"value":`)
@@ -11445,15 +11440,11 @@ handle_Key:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Key = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Key = &tval
+			uj.Key = string(string(outBuf))
 
 		}
 	}
@@ -11529,37 +11520,27 @@ func (mj *Labels) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Labels) != 0 {
-		buf.WriteString(`"labels":`)
-		if mj.Labels != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Labels {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"labels":`)
+	if mj.Labels != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Labels {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -11684,7 +11665,7 @@ mainparse:
 
 handle_Labels:
 
-	/* handler: uj.Labels type=[]*mesos.Label kind=slice quoted=false*/
+	/* handler: uj.Labels type=[]mesos.Label kind=slice quoted=false*/
 
 	{
 
@@ -11698,13 +11679,13 @@ handle_Labels:
 			uj.Labels = nil
 		} else {
 
-			uj.Labels = make([]*Label, 0)
+			uj.Labels = make([]Label, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Label
+				var v Label
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -11725,19 +11706,13 @@ handle_Labels:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Label kind=ptr quoted=false*/
+				/* handler: v type=mesos.Label kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Label)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)

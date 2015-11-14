@@ -157,7 +157,6 @@ type Config struct {
 	client    *http.Client
 	dialer    *net.Dialer
 	transport *http.Transport
-	timeout   time.Duration
 }
 
 type ConfigOpt func(*Config)
@@ -181,7 +180,6 @@ func With(opt ...ConfigOpt) DoFunc {
 	}
 	config := &Config{
 		dialer:    dialer,
-		timeout:   5 * time.Second,
 		transport: transport,
 		client:    &http.Client{Transport: transport},
 	}
@@ -195,6 +193,7 @@ func With(opt ...ConfigOpt) DoFunc {
 func Timeout(d time.Duration) ConfigOpt {
 	return func(c *Config) {
 		c.transport.ResponseHeaderTimeout = d
+		c.transport.TLSHandshakeTimeout = d
 		c.dialer.Timeout = d
 	}
 }
@@ -203,5 +202,12 @@ func Timeout(d time.Duration) ConfigOpt {
 func RoundTripper(rt http.RoundTripper) ConfigOpt {
 	return func(c *Config) {
 		c.client.Transport = rt
+	}
+}
+
+// TLSConfig returns a ConfigOpt that sets a Config's TLS configuration.
+func TLSConfig(tc tls.Config) ConfigOpt {
+	return func(c *Config) {
+		c.transport.TLSClientConfig = &tc
 	}
 }

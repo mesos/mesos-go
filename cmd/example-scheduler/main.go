@@ -15,7 +15,6 @@ import (
 
 func main() {
 	cfg := config{
-		id:      "example-scheduler",
 		user:    "foobar",
 		name:    "example",
 		url:     "http://:5050/api/v1/scheduler",
@@ -24,7 +23,6 @@ func main() {
 	}
 
 	fs := flag.NewFlagSet("example-scheduler", flag.ExitOnError)
-	fs.StringVar(&cfg.id, "id", cfg.id, "Framework ID to register with the Mesos master")
 	fs.StringVar(&cfg.user, "user", cfg.user, "Framework user to register with the Mesos master")
 	fs.StringVar(&cfg.name, "name", cfg.name, "Framework name to register with the Mesos master")
 	fs.Var(&cfg.codec, "codec", "Codec to encode/decode scheduler API communications [protobuf, json]")
@@ -44,20 +42,18 @@ func run(cfg *config) error {
 		httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
 	)
 
-	call := &scheduler.Call{
-		Type:        scheduler.Call_SUBSCRIBE.Enum(),
-		FrameworkID: &mesos.FrameworkID{Value: cfg.id},
+	subscribe := &scheduler.Call{
+		Type: scheduler.Call_SUBSCRIBE.Enum(),
 		Subscribe: &scheduler.Call_Subscribe{
 			FrameworkInfo: &mesos.FrameworkInfo{
 				User: cfg.user,
 				Name: cfg.name,
-				ID:   &mesos.FrameworkID{Value: cfg.id},
 			},
 		},
 	}
 
 	for {
-		events, conn, err := cli.Do(call)
+		events, conn, err := cli.Do(subscribe)
 		for err != nil {
 			var e scheduler.Event
 			if err := events.Decode(&e); err != nil {
@@ -69,8 +65,15 @@ func run(cfg *config) error {
 
 			switch e.GetType().Enum() {
 			case scheduler.Event_OFFERS.Enum():
+			// ...
 			case scheduler.Event_ERROR.Enum():
 			// ...
+			case scheduler.Event_SUBSCRIBED.Enum():
+				//TODO(jdef) we didn't specify anything for checkpoint or failover,
+				//so this might not be very effective
+				frameworkID := e.GetSubscribed().GetFrameworkId()
+				subscribe.FrameworkID = frameworkID
+				subscribe.Subscribe.FrameworkInfo.ID = frameworkID
 			default:
 				// handle unknown event
 			}

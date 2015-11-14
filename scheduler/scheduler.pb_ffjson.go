@@ -6007,13 +6007,13 @@ func (mj *Event_Subscribed) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.FrameworkId != nil {
+	if mj.FrameworkID != nil {
 		if true {
 			buf.WriteString(`"framework_id":`)
 
 			{
 
-				err = mj.FrameworkId.MarshalJSONBuf(buf)
+				err = mj.FrameworkID.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -6038,12 +6038,12 @@ const (
 	ffj_t_Event_Subscribedbase = iota
 	ffj_t_Event_Subscribedno_such_key
 
-	ffj_t_Event_Subscribed_FrameworkId
+	ffj_t_Event_Subscribed_FrameworkID
 
 	ffj_t_Event_Subscribed_HeartbeatIntervalSeconds
 )
 
-var ffj_key_Event_Subscribed_FrameworkId = []byte("framework_id")
+var ffj_key_Event_Subscribed_FrameworkID = []byte("framework_id")
 
 var ffj_key_Event_Subscribed_HeartbeatIntervalSeconds = []byte("heartbeat_interval_seconds")
 
@@ -6108,8 +6108,8 @@ mainparse:
 
 				case 'f':
 
-					if bytes.Equal(ffj_key_Event_Subscribed_FrameworkId, kn) {
-						currentKey = ffj_t_Event_Subscribed_FrameworkId
+					if bytes.Equal(ffj_key_Event_Subscribed_FrameworkID, kn) {
+						currentKey = ffj_t_Event_Subscribed_FrameworkID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -6130,8 +6130,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Event_Subscribed_FrameworkId, kn) {
-					currentKey = ffj_t_Event_Subscribed_FrameworkId
+				if fflib.EqualFoldRight(ffj_key_Event_Subscribed_FrameworkID, kn) {
+					currentKey = ffj_t_Event_Subscribed_FrameworkID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -6153,8 +6153,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Event_Subscribed_FrameworkId:
-					goto handle_FrameworkId
+				case ffj_t_Event_Subscribed_FrameworkID:
+					goto handle_FrameworkID
 
 				case ffj_t_Event_Subscribed_HeartbeatIntervalSeconds:
 					goto handle_HeartbeatIntervalSeconds
@@ -6173,24 +6173,24 @@ mainparse:
 		}
 	}
 
-handle_FrameworkId:
+handle_FrameworkID:
 
-	/* handler: uj.FrameworkId type=mesos.FrameworkID kind=struct quoted=false*/
+	/* handler: uj.FrameworkID type=mesos.FrameworkID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.FrameworkId = nil
+			uj.FrameworkID = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.FrameworkId == nil {
-			uj.FrameworkId = new(mesos.FrameworkID)
+		if uj.FrameworkID == nil {
+			uj.FrameworkID = new(mesos.FrameworkID)
 		}
 
-		err = uj.FrameworkId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.FrameworkID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

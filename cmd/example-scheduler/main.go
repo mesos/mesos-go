@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -53,35 +54,41 @@ func run(cfg *config) error {
 	}
 
 	for {
-		events, conn, err := cli.Do(subscribe)
-		for err != nil {
-			var e scheduler.Event
-			if err := events.Decode(&e); err != nil {
-				if err == io.EOF {
-					err = nil
+		events, conn, err := cli.Do(subscribe, httpcli.Close(true))
+		func() {
+			defer conn.Close()
+			for err != nil {
+				var e scheduler.Event
+				if err = events.Decode(&e); err != nil {
+					if err == io.EOF {
+						err = nil
+					}
+					continue
 				}
-				continue
+
+				switch e.GetType().Enum() {
+				case scheduler.Event_OFFERS.Enum():
+				// ...
+
+				case scheduler.Event_ERROR.Enum():
+					// it's recommended that we abort and re-try subscribing; setting
+					// err here will cause the event loop to terminate and the connection
+					// will be reset.
+					err = fmt.Errorf("ERROR: " + e.GetError().GetMessage())
+
+				case scheduler.Event_SUBSCRIBED.Enum():
+					//TODO(jdef) we didn't specify anything for checkpoint or failover,
+					//so this might not be very effective
+					frameworkID := e.GetSubscribed().GetFrameworkID()
+					subscribe.FrameworkID = frameworkID
+					subscribe.Subscribe.FrameworkInfo.ID = frameworkID
+				default:
+					// handle unknown event
+				}
+
+				log.Printf("%+v\n", e)
 			}
-
-			switch e.GetType().Enum() {
-			case scheduler.Event_OFFERS.Enum():
-			// ...
-			case scheduler.Event_ERROR.Enum():
-			// ...
-			case scheduler.Event_SUBSCRIBED.Enum():
-				//TODO(jdef) we didn't specify anything for checkpoint or failover,
-				//so this might not be very effective
-				frameworkID := e.GetSubscribed().GetFrameworkId()
-				subscribe.FrameworkID = frameworkID
-				subscribe.Subscribe.FrameworkInfo.ID = frameworkID
-			default:
-				// handle unknown event
-			}
-
-			log.Printf("%+v\n", e)
-		}
-		conn.Close()
-
+		}()
 		if err != nil {
 			log.Println(err)
 		}

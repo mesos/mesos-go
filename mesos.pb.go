@@ -4048,13 +4048,13 @@ func (m *ContainerInfo_MesosInfo) GetImage() *Image {
 // *
 // Collection of labels.
 type Labels struct {
-	Labels []*Label `protobuf:"bytes,1,rep,name=labels" json:"labels,omitempty"`
+	Labels []Label `protobuf:"bytes,1,rep,name=labels" json:"labels"`
 }
 
 func (m *Labels) Reset()      { *m = Labels{} }
 func (*Labels) ProtoMessage() {}
 
-func (m *Labels) GetLabels() []*Label {
+func (m *Labels) GetLabels() []Label {
 	if m != nil {
 		return m.Labels
 	}
@@ -4064,7 +4064,7 @@ func (m *Labels) GetLabels() []*Label {
 // *
 // Key, value pair used to store free form user-data.
 type Label struct {
-	Key   *string `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
+	Key   string  `protobuf:"bytes,1,req,name=key" json:"key"`
 	Value *string `protobuf:"bytes,2,opt,name=value" json:"value,omitempty"`
 }
 
@@ -4072,8 +4072,8 @@ func (m *Label) Reset()      { *m = Label{} }
 func (*Label) ProtoMessage() {}
 
 func (m *Label) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
+	if m != nil {
+		return m.Key
 	}
 	return ""
 }
@@ -11815,7 +11815,7 @@ func (this *Labels) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("Labels this(%v) Not Equal that(%v)", len(this.Labels), len(that1.Labels))
 	}
 	for i := range this.Labels {
-		if !this.Labels[i].Equal(that1.Labels[i]) {
+		if !this.Labels[i].Equal(&that1.Labels[i]) {
 			return fmt.Errorf("Labels this[%v](%v) Not Equal that[%v](%v)", i, this.Labels[i], i, that1.Labels[i])
 		}
 	}
@@ -11845,7 +11845,7 @@ func (this *Labels) Equal(that interface{}) bool {
 		return false
 	}
 	for i := range this.Labels {
-		if !this.Labels[i].Equal(that1.Labels[i]) {
+		if !this.Labels[i].Equal(&that1.Labels[i]) {
 			return false
 		}
 	}
@@ -11871,13 +11871,7 @@ func (this *Label) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Labelbut is not nil && this == nil")
 	}
-	if this.Key != nil && that1.Key != nil {
-		if *this.Key != *that1.Key {
-			return fmt.Errorf("Key this(%v) Not Equal that(%v)", *this.Key, *that1.Key)
-		}
-	} else if this.Key != nil {
-		return fmt.Errorf("this.Key == nil && that.Key != nil")
-	} else if that1.Key != nil {
+	if this.Key != that1.Key {
 		return fmt.Errorf("Key this(%v) Not Equal that(%v)", this.Key, that1.Key)
 	}
 	if this.Value != nil && that1.Value != nil {
@@ -11911,13 +11905,7 @@ func (this *Label) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Key != nil && that1.Key != nil {
-		if *this.Key != *that1.Key {
-			return false
-		}
-	} else if this.Key != nil {
-		return false
-	} else if that1.Key != nil {
+	if this.Key != that1.Key {
 		return false
 	}
 	if this.Value != nil && that1.Value != nil {
@@ -13763,7 +13751,7 @@ func (this *Labels) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Labels{")
 	if this.Labels != nil {
-		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
+		s = append(s, "Labels: "+strings.Replace(fmt.Sprintf("%#v", this.Labels), `&`, ``, 1)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -13774,9 +13762,7 @@ func (this *Label) GoString() string {
 	}
 	s := make([]string, 0, 6)
 	s = append(s, "&mesos.Label{")
-	if this.Key != nil {
-		s = append(s, "Key: "+valueToGoStringMesos(this.Key, "string")+",\n")
-	}
+	s = append(s, "Key: "+fmt.Sprintf("%#v", this.Key)+",\n")
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
 	}
@@ -17600,14 +17586,10 @@ func (m *Label) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Key == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("key")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Key)))
-		i += copy(data[i:], *m.Key)
-	}
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Key)))
+	i += copy(data[i:], m.Key)
 	if m.Value != nil {
 		data[i] = 0x12
 		i++
@@ -19474,9 +19456,10 @@ func NewPopulatedLabels(r randyMesos, easy bool) *Labels {
 	this := &Labels{}
 	if r.Intn(10) != 0 {
 		v235 := r.Intn(10)
-		this.Labels = make([]*Label, v235)
+		this.Labels = make([]Label, v235)
 		for i := 0; i < v235; i++ {
-			this.Labels[i] = NewPopulatedLabel(r, easy)
+			v236 := NewPopulatedLabel(r, easy)
+			this.Labels[i] = *v236
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -19486,8 +19469,7 @@ func NewPopulatedLabels(r randyMesos, easy bool) *Labels {
 
 func NewPopulatedLabel(r randyMesos, easy bool) *Label {
 	this := &Label{}
-	v236 := randStringMesos(r)
-	this.Key = &v236
+	this.Key = randStringMesos(r)
 	if r.Intn(10) != 0 {
 		v237 := randStringMesos(r)
 		this.Value = &v237
@@ -21194,10 +21176,8 @@ func (m *Labels) Size() (n int) {
 func (m *Label) Size() (n int) {
 	var l int
 	_ = l
-	if m.Key != nil {
-		l = len(*m.Key)
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = len(m.Key)
+	n += 1 + l + sovMesos(uint64(l))
 	if m.Value != nil {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
@@ -22196,7 +22176,7 @@ func (this *Labels) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Labels{`,
-		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Label", "Label", 1) + `,`,
+		`Labels:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Labels), "Label", "Label", 1), `&`, ``, 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -22206,7 +22186,7 @@ func (this *Label) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Label{`,
-		`Key:` + valueToStringMesos(this.Key) + `,`,
+		`Key:` + fmt.Sprintf("%v", this.Key) + `,`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
 		`}`,
 	}, "")
@@ -33975,7 +33955,7 @@ func (m *Labels) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Labels = append(m.Labels, &Label{})
+			m.Labels = append(m.Labels, Label{})
 			if err := m.Labels[len(m.Labels)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -34058,8 +34038,7 @@ func (m *Label) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(data[iNdEx:postIndex])
-			m.Key = &s
+			m.Key = string(data[iNdEx:postIndex])
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		case 2:

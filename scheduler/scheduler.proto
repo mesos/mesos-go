@@ -71,7 +71,7 @@ message Event {
 
   // First event received when the scheduler subscribes.
   message Subscribed {
-    required FrameworkID framework_id = 1;
+    required FrameworkID framework_id = 1 [(gogoproto.customname) = "FrameworkID"];
 
     // This value will be set if the master is sending heartbeats. See
     // the comment above on 'HEARTBEAT' for more details.

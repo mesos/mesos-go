@@ -122,6 +122,43 @@ func (rs Ranges) Partition(n uint64) (Ranges, bool) {
 	return append(pn, rs[i+1:]...), true
 }
 
+// Remove removes a range from already coalesced ranges.
+// The algorithms constructs a new vector of ranges which is then
+// Squash'ed into a Ranges instance.
+func (rs Ranges) Remove(removal Value_Range) Ranges {
+	ranges := make([]Value_Range, 0, len(rs))
+	for _, r := range rs {
+		// skip if the entire range is subsumed by removal
+		if r.Begin >= removal.Begin && r.End <= removal.End {
+			continue
+		}
+		// divide if the range subsumes the removal
+		if r.Begin < removal.Begin && r.End > removal.End {
+			ranges = append(ranges,
+				Value_Range{r.Begin, removal.Begin - 1},
+				Value_Range{removal.End + 1, r.End},
+			)
+			continue
+		}
+		// add the full range if there's no intersection
+		if r.End < removal.Begin || r.Begin > removal.End {
+			ranges = append(ranges, r)
+			continue
+		}
+		// trim if the range does intersect
+		if r.End > removal.End {
+			ranges = append(ranges, Value_Range{removal.End + 1, r.End})
+		} else {
+			if r.Begin >= removal.Begin {
+				// should never happen
+				panic("r.Begin >= removal.Begin")
+			}
+			ranges = append(ranges, Value_Range{r.Begin, removal.Begin - 1})
+		}
+	}
+	return Ranges(ranges).Squash()
+}
+
 // Min returns the minimum number in Ranges. It will panic on empty Ranges.
 func (rs Ranges) Min() uint64 { return rs[0].Begin }
 

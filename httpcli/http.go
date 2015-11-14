@@ -72,6 +72,9 @@ func New(opts ...Opt) *Client { return new(Client).With(opts...) }
 // Opt defines a functional option for the HTTP client type.
 type Opt func(*Client)
 
+// RequestOpt defines a functional option for an http.Request.
+type RequestOpt func(*http.Request)
+
 // With applies the given Opts to a Client and returns itself.
 func (c *Client) With(opts ...Opt) *Client {
 	for _, opt := range opts {
@@ -84,7 +87,7 @@ func (c *Client) With(opts ...Opt) *Client {
 // Events from, an io.Closer to close the event stream on graceful termination
 // and an error in case of failure. Callers are expected to *always* close a
 // non-nil io.Closer if one is returned.
-func (c *Client) Do(m encoding.Marshaler) (encoding.Decoder, io.Closer, error) {
+func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, io.Closer, error) {
 	var body bytes.Buffer
 	if err := c.codec.NewEncoder(&body).Encode(m); err != nil {
 		return nil, nil, err
@@ -95,6 +98,17 @@ func (c *Client) Do(m encoding.Marshaler) (encoding.Decoder, io.Closer, error) {
 		return nil, nil, err
 	}
 
+	// default headers, applied to all requests
+	for k, v := range c.hdr {
+		req.Header[k] = v
+	}
+
+	// apply per-request options
+	for _, o := range opt {
+		o(req)
+	}
+
+	// these headers override anything that a caller may have tried to set
 	req.Header.Set("Content-Type", c.codec.MediaTypes[0])
 	req.Header.Set("Accept", c.codec.MediaTypes[1])
 
@@ -118,5 +132,11 @@ func Doer(do DoFunc) Opt { return func(c *Client) { c.do = do } }
 // Codec returns an Opt that sets a Client's Codec.
 func Codec(codec *encoding.Codec) Opt { return func(c *Client) { c.codec = codec } }
 
-// Header returns an Opt that adds a header to an Client's headers.
-func Header(k, v string) Opt { return func(c *Client) { c.hdr.Add(k, v) } }
+// DefaultHeader returns an Opt that adds a header to an Client's headers.
+func DefaultHeader(k, v string) Opt { return func(c *Client) { c.hdr.Add(k, v) } }
+
+// Header returns an RequestOpt that adds a header value to an HTTP requests's header.
+func Header(k, v string) RequestOpt { return func(r *http.Request) { r.Header.Add(k, v) } }
+
+// Close returns a RequestOpt that determines whether to close the underlying connection after sending the request.
+func Close(b bool) RequestOpt { return func(r *http.Request) { r.Close = b } }

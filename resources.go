@@ -17,6 +17,28 @@ type (
 	ResourceFilters []ResourceFilter
 )
 
+var (
+	AnyResources = ResourceFilter(func(r *Resource) bool {
+		return r != nil
+	})
+
+	UnreservedResources = ResourceFilter(func(r *Resource) bool {
+		return r.IsUnreserved()
+	})
+
+	PersistentVolumes = ResourceFilter(func(r *Resource) bool {
+		return r.IsPersistentVolume()
+	})
+
+	RevocableResources = ResourceFilter(func(r *Resource) bool {
+		return r.IsRevocable()
+	})
+
+	ScalarResources = ResourceFilter(func(r *Resource) bool {
+		return r.GetType() == SCALAR
+	})
+)
+
 func (rf ResourceFilter) Or(f ResourceFilter) ResourceFilter {
 	return ResourceFilter(func(r *Resource) bool {
 		return rf(r) || f(r)
@@ -26,7 +48,7 @@ func (rf ResourceFilter) Or(f ResourceFilter) ResourceFilter {
 func (rf ResourceFilter) Apply(resources Resources) (result Resources) {
 	for _, r := range resources {
 		if rf(r) {
-			result = append(result, r)
+			result.Add(r)
 		}
 	}
 	return
@@ -43,33 +65,9 @@ func (rf ResourceFilters) Predicate() ResourceFilter {
 	})
 }
 
-func AnyResource() ResourceFilter {
-	return ResourceFilter(func(r *Resource) bool {
-		return r != nil
-	})
-}
-
-func UnreservedResources() ResourceFilter {
-	return ResourceFilter(func(r *Resource) bool {
-		return r.IsUnreserved()
-	})
-}
-
 func ReservedResources(role string) ResourceFilter {
 	return ResourceFilter(func(r *Resource) bool {
 		return r.IsReserved(role)
-	})
-}
-
-func PersistentVolumes() ResourceFilter {
-	return ResourceFilter(func(r *Resource) bool {
-		return r.IsPersistentVolume()
-	})
-}
-
-func RevocableResources() ResourceFilter {
-	return ResourceFilter(func(r *Resource) bool {
-		return r.IsRevocable()
 	})
 }
 
@@ -79,10 +77,148 @@ func NamedResources(name string) ResourceFilter {
 	})
 }
 
-func ScalarResources() ResourceFilter {
-	return ResourceFilter(func(r *Resource) bool {
-		return r.GetType() == SCALAR
-	})
+func (resources Resources) Apply(operation *Offer_Operation) (Resources, error) {
+	result := resources.Clone()
+	switch operation.GetType() {
+	case LAUNCH:
+		// launch op doens't alter offer resources
+	case RESERVE:
+		opRes := Resources(operation.GetReserve().GetResources())
+		err := opRes.Validate()
+		if err != nil {
+			return nil, fmt.Errorf("invalid RESERVE operation: %+v", err)
+		}
+		for _, r := range opRes {
+			if !r.IsReserved("") {
+				return nil, errors.New("invalid RESERVE operation: Resource must be reserved")
+			}
+			if r.GetReservation() == nil {
+				return nil, errors.New("invalid RESERVE operation: missing 'reservation'")
+			}
+			unreserved := Resources{r}.Flatten("", nil)
+			if !result.ContainsAll(unreserved) {
+				return nil, fmt.Errorf("invalid RESERVE operation: %+v does not contain %+v", result, unreserved)
+			}
+			result.SubtractAll(unreserved)
+			result.Add(r)
+		}
+	case UNRESERVE:
+		opRes := Resources(operation.GetUnreserve().GetResources())
+		err := opRes.Validate()
+		if err != nil {
+			return nil, fmt.Errorf("invalid UNRESERVE operation: %+v", err)
+		}
+		for _, r := range opRes {
+			if !r.IsReserved("") {
+				return nil, errors.New("invalid UNRESERVE operation: Resource is not reserved")
+			}
+			if r.GetReservation() == nil {
+				return nil, errors.New("invalid UNRESERVE operation: missing 'reservation'")
+			}
+			unreserved := Resources{r}.Flatten("", nil)
+			result.Subtract(r)
+			result.AddAll(unreserved)
+		}
+	case CREATE:
+		volumes := Resources(operation.GetCreate().GetVolumes())
+		err := volumes.Validate()
+		if err != nil {
+			return nil, fmt.Errorf("invalid CREATE operation: %+v", err)
+		}
+		for _, v := range volumes {
+			if v.GetDisk() == nil {
+				return nil, errors.New("invalid CREATE operation: missing 'disk'")
+			}
+			if v.GetDisk().GetPersistence() == nil {
+				return nil, errors.New("invalid CREATE operation: missing 'persistence'")
+			}
+			// from: https://github.com/apache/mesos/blob/master/src/common/resources.cpp
+			// Strip the disk info so that we can subtract it from the
+			// original resources.
+			// TODO(jieyu): Non-persistent volumes are not supported for
+			// now. Persistent volumes can only be be created from regular
+			// disk resources. Revisit this once we start to support
+			// non-persistent volumes.
+			stripped := proto.Clone(v).(*Resource)
+			stripped.Disk = nil
+			if !result.Contains(stripped) {
+				return nil, errors.New("invalid CREATE operation: insufficient disk resources")
+			}
+
+			result.Subtract(stripped)
+			result.Add(v)
+		}
+	case DESTROY:
+		volumes := Resources(operation.GetDestroy().GetVolumes())
+		err := volumes.Validate()
+		if err != nil {
+			return nil, fmt.Errorf("invalid DESTROY operation: %+v", err)
+		}
+		for _, v := range volumes {
+			if v.GetDisk() == nil {
+				return nil, errors.New("invalid DESTROY operation: missing 'disk'")
+			}
+			if v.GetDisk().GetPersistence() == nil {
+				return nil, errors.New("invalid DESTROY operation: missing 'persistence'")
+			}
+			if !result.Contains(v) {
+				return nil, errors.New("invalid DESTROY operation: persistent volume does not exist")
+			}
+			stripped := proto.Clone(v).(*Resource)
+			stripped.Disk = nil
+			result.Subtract(v)
+			result.Add(stripped)
+		}
+	default:
+		return nil, errors.New("unknown offer operation: " + operation.GetType().String())
+	}
+	//TODO(jdef) add equiv of sanity CHECK here
+	return result, nil
+}
+
+func (resources Resources) Find(targets Resources) (total Resources) {
+	for _, target := range targets {
+		found := resources.find(target)
+
+		// each target *must* be found
+		if len(found) == 0 {
+			return nil
+		}
+
+		total.AddAll(found)
+	}
+	return total
+}
+
+func (resources Resources) find(target *Resource) Resources {
+	var (
+		total      = resources.Clone()
+		remaining  = Resources{target}.Flatten("", nil)
+		found      Resources
+		predicates = ResourceFilters{
+			ReservedResources(target.GetRole()),
+			UnreservedResources,
+			AnyResources,
+		}
+	)
+	for _, predicate := range predicates {
+		for _, r := range predicate.Apply(total) {
+			// need to flatten to ignore the roles in ContainsAll()
+			flattened := Resources{r}.Flatten("", nil)
+			if flattened.ContainsAll(remaining) {
+				// target has been found, return the result
+				found.AddAll(remaining.Flatten(r.GetRole(), r.GetReservation()))
+				return found
+			}
+			if remaining.ContainsAll(flattened) {
+				found.Add(r)
+				total.Subtract(r)
+				remaining.SubtractAll(flattened)
+				break
+			}
+		}
+	}
+	return nil
 }
 
 func (resources Resources) Flatten(role string, ri *Resource_ReservationInfo) (flattened Resources) {
@@ -99,7 +235,7 @@ func (resources Resources) Flatten(role string, ri *Resource_ReservationInfo) (f
 		} else {
 			r.Reservation = ri
 		}
-		flattened = append(flattened, r)
+		flattened.Add(r)
 	}
 	return
 }
@@ -152,11 +288,37 @@ func (resources Resources) ContainsAll(that Resources) bool {
 	return true
 }
 
-func (resources Resources) Subtract(that *Resource) {
+func (resources *Resources) SubtractAll(other Resources) {
+	for _, r := range other {
+		resources.Subtract(r)
+	}
+}
+
+func (resources *Resources) AddAll(that Resources) {
+	for _, r := range that {
+		resources.Add(r)
+	}
+}
+
+func (resources *Resources) Add(that *Resource) {
 	if that.Validate() != nil || that.IsEmpty() {
 		return
 	}
-	for i, r := range resources {
+	for _, r := range *resources {
+		if r.Addable(that) {
+			r.Add(that)
+			return
+		}
+	}
+	// cannot be combined with an existing resource
+	*resources = append(*resources, proto.Clone(that).(*Resource))
+}
+
+func (resources *Resources) Subtract(that *Resource) {
+	if that.Validate() != nil || that.IsEmpty() {
+		return
+	}
+	for i, r := range *resources {
 		if r.Subtractable(that) {
 			r.Subtract(that)
 			// remove the resource if it becomes invalid or zero.
@@ -165,9 +327,9 @@ func (resources Resources) Subtract(that *Resource) {
 			if r.Validate() != nil || r.IsEmpty() {
 				// delete resource at i, without leaking an uncollectable *Resource
 				// a, a[len(a)-1] = append(a[:i], a[i+1:]...), nil
-				resources, resources[len(resources)-1] = append(resources[:i], resources[i+1:]...), nil
+				*resources, (*resources)[len(*resources)-1] = append((*resources)[:i], (*resources)[i+1:]...), nil
 			}
-			break
+			return
 		}
 	}
 }
@@ -392,18 +554,27 @@ func (left *Value_Set) Compare(right *Value_Set) int {
 func (left *Resource) Subtract(right *Resource) {
 	switch left.GetType() {
 	case SCALAR:
+		if right != nil && right.GetType() != SCALAR {
+			panic("right resource is not SCALAR")
+		}
 		x := left.GetScalar().GetValue() - right.GetScalar().GetValue()
 		left.Scalar = &Value_Scalar{Value: x}
 	case RANGES:
+		if right != nil && right.GetType() != RANGES {
+			panic("right resource is not RANGES")
+		}
 		x := Ranges(left.GetRanges().GetRange()).Squash()
 		for _, r := range right.GetRanges().GetRange() {
 			x = x.Remove(r)
 		}
 		left.Ranges = &Value_Ranges{Range: x}
 	case SET:
+		if right != nil && right.GetType() != SET {
+			panic("right resource is not SET")
+		}
 		// for each item in right, remove it from left
 		lefty := left.GetSet().GetItem()
-		if lefty == nil {
+		if len(lefty) == 0 {
 			return
 		}
 		a := make(map[string]struct{}, len(lefty))
@@ -419,6 +590,41 @@ func (left *Resource) Subtract(right *Resource) {
 			i++
 		}
 		left.Set = &Value_Set{Item: lefty[:len(a)]}
+	}
+}
+
+func (left *Resource) Add(right *Resource) {
+	switch left.GetType() {
+	case SCALAR:
+		if right != nil && right.GetType() != SCALAR {
+			panic("right resource is not SCALAR")
+		}
+		x := left.GetScalar().GetValue() + right.GetScalar().GetValue()
+		left.Scalar = &Value_Scalar{Value: x}
+	case RANGES:
+		if right != nil && right.GetType() != RANGES {
+			panic("right resource is not RANGES")
+		}
+		x := Ranges(append(left.GetRanges().GetRange(), right.GetRanges().GetRange()...)).Squash()
+		left.Ranges = &Value_Ranges{Range: x}
+	case SET:
+		if right != nil && right.GetType() != SET {
+			panic("right resource is not SET")
+		}
+		lefty := left.GetSet().GetItem()
+		righty := right.GetSet().GetItem()
+		m := make(map[string]struct{}, len(lefty)+len(righty))
+		for _, v := range lefty {
+			m[v] = struct{}{}
+		}
+		for _, v := range righty {
+			m[v] = struct{}{}
+		}
+		x := make([]string, 0, len(m))
+		for v := range m {
+			x = append(x, v)
+		}
+		left.Set = &Value_Set{Item: x}
 	}
 }
 

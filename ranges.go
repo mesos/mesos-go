@@ -160,15 +160,17 @@ func (rs Ranges) Remove(removal Value_Range) Ranges {
 }
 
 // Compare assumes that both Ranges are already in sort-order.
-func (_left Ranges) Compare(_right Ranges) int {
+func (left Ranges) Compare(right Ranges) int {
 	// we need to squash left and right but don't want to change the originals
-	left := _left
 	if len(left) > 1 {
-		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...)).Squash()
+		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...))
+		sort.Sort(left)
+		left = left.Squash()
 	}
-	right := _right
 	if len(right) > 1 {
-		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...)).Squash()
+		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...))
+		sort.Sort(right)
+		right = right.Squash()
 	}
 	if (&Value_Ranges{Range: left}).Equal(&Value_Ranges{Range: right}) {
 		return 0
@@ -190,17 +192,28 @@ func (_left Ranges) Compare(_right Ranges) int {
 }
 
 // Equal assumes that both Ranges are already in sort-order.
-func (_left Ranges) Equal(_right Ranges) bool {
+func (left Ranges) Equal(right Ranges) bool {
 	// we need to squash left and right but don't want to change the originals
-	left := _left
 	if len(left) > 1 {
-		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...)).Squash()
+		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...))
+		sort.Sort(left)
+		left = left.Squash()
 	}
-	right := _right
 	if len(right) > 1 {
-		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...)).Squash()
+		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...))
+		sort.Sort(right)
+		right = right.Squash()
 	}
 	return (&Value_Ranges{Range: left}).Equal(&Value_Ranges{Range: right})
+}
+
+func (rs Ranges) Clone() Ranges {
+	if len(rs) == 0 {
+		return nil
+	}
+	x := make(Ranges, len(rs))
+	copy(x, rs)
+	return x
 }
 
 // Min returns the minimum number in Ranges. It will panic on empty Ranges.

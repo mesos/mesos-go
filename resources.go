@@ -21,21 +21,23 @@ var (
 	AnyResources = ResourceFilter(func(r *Resource) bool {
 		return r != nil
 	})
-
 	UnreservedResources = ResourceFilter(func(r *Resource) bool {
 		return r.IsUnreserved()
 	})
-
 	PersistentVolumes = ResourceFilter(func(r *Resource) bool {
 		return r.IsPersistentVolume()
 	})
-
 	RevocableResources = ResourceFilter(func(r *Resource) bool {
 		return r.IsRevocable()
 	})
-
 	ScalarResources = ResourceFilter(func(r *Resource) bool {
 		return r.GetType() == SCALAR
+	})
+	RangeResources = ResourceFilter(func(r *Resource) bool {
+		return r.GetType() == RANGES
+	})
+	SetResources = ResourceFilter(func(r *Resource) bool {
+		return r.GetType() == SET
 	})
 )
 
@@ -75,6 +77,74 @@ func NamedResources(name string) ResourceFilter {
 	return ResourceFilter(func(r *Resource) bool {
 		return r.GetName() == name
 	})
+}
+
+func (resources Resources) CPUs() (float64, bool) {
+	v := resources.SumScalars(NamedResources("cpus"))
+	if v != nil {
+		return v.Value, true
+	}
+	return 0, false
+}
+
+func (resources Resources) Memory() (uint64, bool) {
+	v := resources.SumScalars(NamedResources("mem"))
+	if v != nil {
+		return uint64(v.Value), true
+	}
+	return 0, false
+}
+
+func (resources Resources) Disk() (uint64, bool) {
+	v := resources.SumScalars(NamedResources("disk"))
+	if v != nil {
+		return uint64(v.Value), true
+	}
+	return 0, false
+}
+
+func (resources Resources) Ports() (Ranges, bool) {
+	v := resources.SumRanges(NamedResources("ports"))
+	if v != nil {
+		return Ranges(v.Range), true
+	}
+	return nil, false
+}
+
+func (resources Resources) SumScalars(rf ResourceFilter) *Value_Scalar {
+	predicate := ResourceFilters{rf, ScalarResources}.Predicate()
+	var x *Value_Scalar
+	for _, r := range resources {
+		if !predicate(r) {
+			continue
+		}
+		x = x.Add(r.GetScalar())
+	}
+	return x
+}
+
+func (resources Resources) SumRanges(rf ResourceFilter) *Value_Ranges {
+	predicate := ResourceFilters{rf, RangeResources}.Predicate()
+	var x *Value_Ranges
+	for _, r := range resources {
+		if !predicate(r) {
+			continue
+		}
+		x = x.Add(r.GetRanges())
+	}
+	return x
+}
+
+func (resources Resources) SumSets(rf ResourceFilter) *Value_Set {
+	predicate := ResourceFilters{rf, SetResources}.Predicate()
+	var x *Value_Set
+	for _, r := range resources {
+		if !predicate(r) {
+			continue
+		}
+		x = x.Add(r.GetSet())
+	}
+	return x
 }
 
 func (resources Resources) Apply(operation *Offer_Operation) (Resources, error) {
@@ -172,8 +242,36 @@ func (resources Resources) Apply(operation *Offer_Operation) (Resources, error) 
 	default:
 		return nil, errors.New("unknown offer operation: " + operation.GetType().String())
 	}
-	//TODO(jdef) add equiv of sanity CHECK here
+
+	// sanity CHECK, same as apache/mesos does
+	if !resources.sameTotals(result) {
+		panic("result != resources")
+	}
+
 	return result, nil
+}
+
+func (resources Resources) sameTotals(result Resources) bool {
+	// from: https://github.com/apache/mesos/blob/master/src/common/resources.cpp
+	// This is a sanity check to ensure the amount of each type of
+	// resource does not change.
+	// TODO(jieyu): Currently, we only check known resource types like
+	// cpus, mem, disk, ports, etc. We should generalize this.
+	var (
+		c1, c2 = result.CPUs()
+		m1, m2 = result.Memory()
+		d1, d2 = result.Disk()
+		p1, p2 = result.Ports()
+
+		c3, c4 = resources.CPUs()
+		m3, m4 = resources.Memory()
+		d3, d4 = resources.Disk()
+		p3, p4 = resources.Ports()
+	)
+	return c1 == c3 && c2 == c4 &&
+		m1 == m3 && m2 == m4 &&
+		d1 == d3 && d2 == d4 &&
+		p1.Equal(p3) && p2 == p4
 }
 
 func (resources Resources) Find(targets Resources) (total Resources) {
@@ -557,39 +655,17 @@ func (left *Resource) Subtract(right *Resource) {
 		if right != nil && right.GetType() != SCALAR {
 			panic("right resource is not SCALAR")
 		}
-		x := left.GetScalar().GetValue() - right.GetScalar().GetValue()
-		left.Scalar = &Value_Scalar{Value: x}
+		left.Scalar = left.GetScalar().Subtract(right.GetScalar())
 	case RANGES:
 		if right != nil && right.GetType() != RANGES {
 			panic("right resource is not RANGES")
 		}
-		x := Ranges(left.GetRanges().GetRange()).Squash()
-		for _, r := range right.GetRanges().GetRange() {
-			x = x.Remove(r)
-		}
-		left.Ranges = &Value_Ranges{Range: x}
+		left.Ranges = left.GetRanges().Subtract(right.GetRanges())
 	case SET:
 		if right != nil && right.GetType() != SET {
 			panic("right resource is not SET")
 		}
-		// for each item in right, remove it from left
-		lefty := left.GetSet().GetItem()
-		if len(lefty) == 0 {
-			return
-		}
-		a := make(map[string]struct{}, len(lefty))
-		for _, x := range lefty {
-			a[x] = struct{}{}
-		}
-		for _, x := range right.GetSet().GetItem() {
-			delete(a, x)
-		}
-		i := 0
-		for k := range a {
-			lefty[i] = k
-			i++
-		}
-		left.Set = &Value_Set{Item: lefty[:len(a)]}
+		left.Set = left.GetSet().Subtract(right.GetSet())
 	}
 }
 
@@ -599,33 +675,78 @@ func (left *Resource) Add(right *Resource) {
 		if right != nil && right.GetType() != SCALAR {
 			panic("right resource is not SCALAR")
 		}
-		x := left.GetScalar().GetValue() + right.GetScalar().GetValue()
-		left.Scalar = &Value_Scalar{Value: x}
+		left.Scalar = left.GetScalar().Add(right.GetScalar())
 	case RANGES:
 		if right != nil && right.GetType() != RANGES {
 			panic("right resource is not RANGES")
 		}
-		x := Ranges(append(left.GetRanges().GetRange(), right.GetRanges().GetRange()...)).Squash()
-		left.Ranges = &Value_Ranges{Range: x}
+		left.Ranges = left.GetRanges().Add(right.GetRanges())
 	case SET:
 		if right != nil && right.GetType() != SET {
 			panic("right resource is not SET")
 		}
-		lefty := left.GetSet().GetItem()
-		righty := right.GetSet().GetItem()
-		m := make(map[string]struct{}, len(lefty)+len(righty))
-		for _, v := range lefty {
-			m[v] = struct{}{}
-		}
-		for _, v := range righty {
-			m[v] = struct{}{}
-		}
-		x := make([]string, 0, len(m))
-		for v := range m {
-			x = append(x, v)
-		}
-		left.Set = &Value_Set{Item: x}
+		left.Set = left.GetSet().Add(right.GetSet())
 	}
+}
+
+func (left *Value_Set) Add(right *Value_Set) *Value_Set {
+	lefty := left.GetItem()
+	righty := right.GetItem()
+	m := make(map[string]struct{}, len(lefty)+len(righty))
+	for _, v := range lefty {
+		m[v] = struct{}{}
+	}
+	for _, v := range righty {
+		m[v] = struct{}{}
+	}
+	x := make([]string, 0, len(m))
+	for v := range m {
+		x = append(x, v)
+	}
+	return &Value_Set{Item: x}
+}
+
+func (left *Value_Set) Subtract(right *Value_Set) *Value_Set {
+	// for each item in right, remove it from left
+	lefty := left.GetItem()
+	if len(lefty) == 0 {
+		return &Value_Set{}
+	}
+	a := make(map[string]struct{}, len(lefty))
+	for _, x := range lefty {
+		a[x] = struct{}{}
+	}
+	for _, x := range right.GetItem() {
+		delete(a, x)
+	}
+	i := 0
+	for k := range a {
+		lefty[i] = k
+		i++
+	}
+	return &Value_Set{Item: lefty[:len(a)]}
+}
+
+func (left *Value_Ranges) Add(right *Value_Ranges) *Value_Ranges {
+	return &Value_Ranges{
+		Range: Ranges(append(left.GetRange(), right.GetRange()...)).Squash(),
+	}
+}
+
+func (left *Value_Ranges) Subtract(right *Value_Ranges) *Value_Ranges {
+	x := Ranges(left.GetRange()).Squash()
+	for _, r := range right.GetRange() {
+		x = x.Remove(r)
+	}
+	return &Value_Ranges{Range: x}
+}
+
+func (left *Value_Scalar) Add(right *Value_Scalar) *Value_Scalar {
+	return &Value_Scalar{Value: left.GetValue() + right.GetValue()}
+}
+
+func (left *Value_Scalar) Subtract(right *Value_Scalar) *Value_Scalar {
+	return &Value_Scalar{Value: left.GetValue() - right.GetValue()}
 }
 
 func (left *Resource) IsEmpty() bool {

@@ -159,6 +159,50 @@ func (rs Ranges) Remove(removal Value_Range) Ranges {
 	return Ranges(ranges).Squash()
 }
 
+// Compare assumes that both Ranges are already in sort-order.
+func (_left Ranges) Compare(_right Ranges) int {
+	// we need to squash left and right but don't want to change the originals
+	left := _left
+	if len(left) > 1 {
+		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...)).Squash()
+	}
+	right := _right
+	if len(right) > 1 {
+		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...)).Squash()
+	}
+	if (&Value_Ranges{Range: left}).Equal(&Value_Ranges{Range: right}) {
+		return 0
+	}
+	for _, a := range left {
+		// make sure that this range is a subset of a range in right
+		matched := false
+		for _, b := range right {
+			if a.Begin >= b.Begin && a.End <= b.End {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return 1
+		}
+	}
+	return -1
+}
+
+// Equal assumes that both Ranges are already in sort-order.
+func (_left Ranges) Equal(_right Ranges) bool {
+	// we need to squash left and right but don't want to change the originals
+	left := _left
+	if len(left) > 1 {
+		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...)).Squash()
+	}
+	right := _right
+	if len(right) > 1 {
+		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...)).Squash()
+	}
+	return (&Value_Ranges{Range: left}).Equal(&Value_Ranges{Range: right})
+}
+
 // Min returns the minimum number in Ranges. It will panic on empty Ranges.
 func (rs Ranges) Min() uint64 { return rs[0].Begin }
 

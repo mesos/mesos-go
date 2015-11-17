@@ -2,15 +2,13 @@ package mesos
 
 func (left *Value_Scalar) Compare(right *Value_Scalar) int {
 	if left == nil {
-		if right == nil {
+		if right.GetValue() == 0 {
 			return 0
 		}
 		return -1
-	} else if right == nil {
-		return 1
-	} else if left.Value < right.Value {
+	} else if v := right.GetValue(); left.Value < v {
 		return -1
-	} else if left.Value > right.Value {
+	} else if left.Value > v {
 		return 1
 	}
 	return 0

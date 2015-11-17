@@ -1,5 +1,9 @@
 package mesos
 
+import (
+	"sort"
+)
+
 func (left *Value_Scalar) Compare(right *Value_Scalar) int {
 	if left == nil {
 		if right.GetValue() == 0 {
@@ -85,17 +89,39 @@ func (left *Value_Set) Subtract(right *Value_Set) *Value_Set {
 }
 
 func (left *Value_Ranges) Add(right *Value_Ranges) *Value_Ranges {
+	a, b := Ranges(left.GetRange()), Ranges(right.GetRange())
+	c := len(a) + len(b)
+	if c == 0 {
+		return nil
+	}
+	x := make(Ranges, c)
+	if len(a) > 0 {
+		copy(x, a)
+	}
+	if len(b) > 0 {
+		copy(x[len(a):], b)
+	}
+	sort.Sort(x)
 	return &Value_Ranges{
-		Range: Ranges(append(left.GetRange(), right.GetRange()...)).Squash(),
+		Range: x.Squash(),
 	}
 }
 
 func (left *Value_Ranges) Subtract(right *Value_Ranges) *Value_Ranges {
-	x := Ranges(left.GetRange()).Squash()
-	for _, r := range right.GetRange() {
-		x = x.Remove(r)
+	a, b := Ranges(left.GetRange()), Ranges(right.GetRange())
+	if len(a) > 1 {
+		x := make(Ranges, len(a))
+		copy(x, a)
+		sort.Sort(x)
+		a = x.Squash()
 	}
-	return &Value_Ranges{Range: x}
+	for _, r := range b {
+		a = a.Remove(r)
+	}
+	if len(a) == 0 {
+		return nil
+	}
+	return &Value_Ranges{Range: a}
 }
 
 func (left *Value_Scalar) Add(right *Value_Scalar) *Value_Scalar {

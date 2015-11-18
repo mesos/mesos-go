@@ -53,7 +53,11 @@ func (left *Value_Set) Compare(right *Value_Set) int {
 func (left *Value_Set) Add(right *Value_Set) *Value_Set {
 	lefty := left.GetItem()
 	righty := right.GetItem()
-	m := make(map[string]struct{}, len(lefty)+len(righty))
+	c := len(lefty) + len(righty)
+	if c == 0 {
+		return nil
+	}
+	m := make(map[string]struct{}, c)
 	for _, v := range lefty {
 		m[v] = struct{}{}
 	}
@@ -70,15 +74,24 @@ func (left *Value_Set) Add(right *Value_Set) *Value_Set {
 func (left *Value_Set) Subtract(right *Value_Set) *Value_Set {
 	// for each item in right, remove it from left
 	lefty := left.GetItem()
-	if len(lefty) == 0 {
-		return &Value_Set{}
+	righty := right.GetItem()
+	if c := len(lefty); c == 0 {
+		return nil
+	} else if len(righty) == 0 {
+		x := make([]string, c)
+		copy(x, lefty)
+		return &Value_Set{Item: x}
 	}
+
 	a := make(map[string]struct{}, len(lefty))
 	for _, x := range lefty {
 		a[x] = struct{}{}
 	}
-	for _, x := range right.GetItem() {
+	for _, x := range righty {
 		delete(a, x)
+	}
+	if len(a) == 0 {
+		return nil
 	}
 	i := 0
 	for k := range a {

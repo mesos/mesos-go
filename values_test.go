@@ -28,6 +28,37 @@ func ranges(x ...mesos.Value_Range) *mesos.Value_Ranges {
 	return &mesos.Value_Ranges{Range: x}
 }
 
+func TestValue_Ranges_Compare(t *testing.T) {
+	for i, tc := range []struct {
+		left, right *mesos.Value_Ranges
+		want        int
+	}{
+		{nil, nil, 0},
+		{nil, ranges(r(0, 0)), -1},
+		{ranges(r(0, 0)), nil, 1},
+		{ranges(r(0, 0)), ranges(r(0, 0)), 0},
+		{ranges(r(0, 1)), ranges(r(0, 0)), 1},
+		{ranges(r(0, 0)), ranges(r(0, 1)), -1},
+		{ranges(r(0, 1)), ranges(r(1, 1)), 1},
+		{ranges(r(0, 1)), ranges(r(1, 2)), 1},
+		{ranges(r(3, 4), r(0, 1)), ranges(r(1, 2)), 1},
+		{ranges(r(1, 2)), ranges(r(2, 6), r(3, 4), r(0, 1)), -1},
+	} {
+		preleft := proto.Clone(tc.left).(*mesos.Value_Ranges)
+		preright := proto.Clone(tc.right).(*mesos.Value_Ranges)
+		x := tc.left.Compare(tc.right)
+		if !reflect.DeepEqual(x, tc.want) {
+			t.Errorf("test case %d failed: expected %#+v instead of %#+v", i, tc.want, x)
+		}
+		if !preleft.Equal(tc.left) {
+			t.Errorf("test case %d failed: before(left) != after(left): %#+v != %#+v", i, preleft, tc.left)
+		}
+		if !preright.Equal(tc.right) {
+			t.Errorf("test case %d failed: before(right) != after(right): %#+v != %#+v", i, preright, tc.right)
+		}
+	}
+}
+
 func TestValue_Ranges_Add(t *testing.T) {
 	for i, tc := range []struct {
 		left, right, want *mesos.Value_Ranges

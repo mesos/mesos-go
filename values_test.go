@@ -2,6 +2,8 @@ package mesos_test
 
 import (
 	"reflect"
+	"sort"
+	"strconv"
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
@@ -28,6 +30,125 @@ func ranges(x ...mesos.Value_Range) *mesos.Value_Ranges {
 	return &mesos.Value_Ranges{Range: x}
 }
 
+func set(x ...int) *mesos.Value_Set {
+	// we accept ints because it allows us to write test cases that
+	// are easier on the eyes
+	if x == nil {
+		return nil
+	}
+	y := make([]string, len(x))
+	for i, xx := range x {
+		y[i] = strconv.Itoa(xx)
+	}
+	return &mesos.Value_Set{Item: y}
+}
+
+func TestValue_Set_Compare(t *testing.T) {
+	for i, tc := range []struct {
+		left, right *mesos.Value_Set
+		want        int
+	}{
+		{nil, nil, 0},
+		{nil, set(0), -1},
+		{set(0), nil, 1},
+		{set(0), set(0), 0},
+		{set(1), set(0), 1},
+		{set(0), set(1), 1},
+		{set(-1), set(0), 1},
+		{set(1), set(-1), 1},
+		{set(1), set(1), 0},
+		{set(-1), set(-1), 0},
+		{set(-1), set(-1, 1), -1},
+		{set(1), set(-1, 1), -1},
+		{set(0), set(1, -1), 1},
+	} {
+		preleft := proto.Clone(tc.left).(*mesos.Value_Set)
+		preright := proto.Clone(tc.right).(*mesos.Value_Set)
+		x := tc.left.Compare(tc.right)
+
+		if x != tc.want {
+			t.Errorf("test case %d failed: expected %v instead of %v", i, tc.want, x)
+		}
+		if !preleft.Equal(tc.left) {
+			t.Errorf("test case %d failed: before(left) != after(left): %#+v != %#+v", i, preleft, tc.left)
+		}
+		if !preright.Equal(tc.right) {
+			t.Errorf("test case %d failed: before(right) != after(right): %#+v != %#+v", i, preright, tc.right)
+		}
+	}
+}
+
+func TestValue_Set_Subtract(t *testing.T) {
+	for i, tc := range []struct {
+		left, right, want *mesos.Value_Set
+	}{
+		{nil, nil, set()},
+		{nil, set(0), set()},
+		{set(0), nil, set(0)},
+		{set(0), set(0), set()},
+		{set(1), set(0), set(1)},
+		{set(0), set(1), set(0)},
+		{set(-1), set(0), set(-1)},
+		{set(1), set(-1), set(1)},
+		{set(1), set(1), set()},
+		{set(-1), set(-1), set()},
+		{set(1, -1), nil, set(-1, 1)},
+	} {
+		preleft := proto.Clone(tc.left).(*mesos.Value_Set)
+		preright := proto.Clone(tc.right).(*mesos.Value_Set)
+		x := tc.left.Subtract(tc.right)
+
+		// Add doesn't return a sorted result, so we sort ourselves for
+		// predictable test case results
+		sort.Strings(x.GetItem())
+
+		if !x.Equal(tc.want) {
+			t.Errorf("test case %d failed: expected %v instead of %v", i, tc.want, x)
+		}
+		if !preleft.Equal(tc.left) {
+			t.Errorf("test case %d failed: before(left) != after(left): %#+v != %#+v", i, preleft, tc.left)
+		}
+		if !preright.Equal(tc.right) {
+			t.Errorf("test case %d failed: before(right) != after(right): %#+v != %#+v", i, preright, tc.right)
+		}
+	}
+}
+
+func TestValue_Set_Add(t *testing.T) {
+	for i, tc := range []struct {
+		left, right, want *mesos.Value_Set
+	}{
+		{nil, nil, set()},
+		{nil, set(0), set(0)},
+		{set(0), nil, set(0)},
+		{set(0), set(0), set(0)},
+		{set(1), set(0), set(0, 1)},
+		{set(0), set(1), set(0, 1)},
+		{set(-1), set(0), set(-1, 0)},
+		{set(1), set(-1), set(-1, 1)},
+		{set(1), set(1), set(1)},
+		{set(-1), set(-1), set(-1)},
+	} {
+		preleft := proto.Clone(tc.left).(*mesos.Value_Set)
+		preright := proto.Clone(tc.right).(*mesos.Value_Set)
+		x := tc.left.Add(tc.right)
+
+		// Add doesn't return a sorted result, so we sort ourselves for
+		// predictable test case results
+		sort.Strings(x.GetItem())
+
+		if !x.Equal(tc.want) {
+			t.Errorf("test case %d failed: expected %v instead of %v", i, tc.want, x)
+		}
+		if !preleft.Equal(tc.left) {
+			t.Errorf("test case %d failed: before(left) != after(left): %#+v != %#+v", i, preleft, tc.left)
+		}
+		if !preright.Equal(tc.right) {
+			t.Errorf("test case %d failed: before(right) != after(right): %#+v != %#+v", i, preright, tc.right)
+		}
+	}
+}
+
 func TestValue_Ranges_Compare(t *testing.T) {
 	for i, tc := range []struct {
 		left, right *mesos.Value_Ranges
@@ -47,7 +168,7 @@ func TestValue_Ranges_Compare(t *testing.T) {
 		preleft := proto.Clone(tc.left).(*mesos.Value_Ranges)
 		preright := proto.Clone(tc.right).(*mesos.Value_Ranges)
 		x := tc.left.Compare(tc.right)
-		if !reflect.DeepEqual(x, tc.want) {
+		if x != tc.want {
 			t.Errorf("test case %d failed: expected %#+v instead of %#+v", i, tc.want, x)
 		}
 		if !preleft.Equal(tc.left) {

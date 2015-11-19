@@ -584,47 +584,42 @@ func (left *Resource) Contains(right *Resource) bool {
 	}
 }
 
-// Subtract removes right from left
+// Subtract removes right from left.
+// This func panics if the resource types don't match.
 func (left *Resource) Subtract(right *Resource) {
-	switch left.GetType() {
+	switch right.checkType(left.GetType()) {
 	case SCALAR:
-		if right != nil && right.GetType() != SCALAR {
-			panic("right resource is not SCALAR")
-		}
 		left.Scalar = left.GetScalar().Subtract(right.GetScalar())
 	case RANGES:
-		if right != nil && right.GetType() != RANGES {
-			panic("right resource is not RANGES")
-		}
 		left.Ranges = left.GetRanges().Subtract(right.GetRanges())
 	case SET:
-		if right != nil && right.GetType() != SET {
-			panic("right resource is not SET")
-		}
 		left.Set = left.GetSet().Subtract(right.GetSet())
 	}
 }
 
+// Add adds right to left.
+// This func panics if the resource types don't match.
 func (left *Resource) Add(right *Resource) {
-	switch left.GetType() {
+	switch right.checkType(left.GetType()) {
 	case SCALAR:
-		if right != nil && right.GetType() != SCALAR {
-			panic("right resource is not SCALAR")
-		}
 		left.Scalar = left.GetScalar().Add(right.GetScalar())
 	case RANGES:
-		if right != nil && right.GetType() != RANGES {
-			panic("right resource is not RANGES")
-		}
 		left.Ranges = left.GetRanges().Add(right.GetRanges())
 	case SET:
-		if right != nil && right.GetType() != SET {
-			panic("right resource is not SET")
-		}
 		left.Set = left.GetSet().Add(right.GetSet())
 	}
 }
 
+// checkType panics if the type of this resources != t
+func (left *Resource) checkType(t Value_Type) Value_Type {
+	if left != nil && left.GetType() != t {
+		panic(fmt.Sprintf("expected type %v instead of %v", t, left.GetType()))
+	}
+	return t
+}
+
+// IsEmpty returns true if the value of this resource is equivalent to the zero-value,
+// where a zero-length slice or map is equivalent to a nil reference to such.
 func (left *Resource) IsEmpty() bool {
 	if left == nil {
 		return true
@@ -640,10 +635,18 @@ func (left *Resource) IsEmpty() bool {
 	return false
 }
 
+// IsUnreserved returns true if this resource neither statically or dynamically reserved.
+// A resource is considered statically reserved if it has a non-default role.
 func (left *Resource) IsUnreserved() bool {
+	// role != RoleDefault     -> static reservation
+	// GetReservation() != nil -> dynamic reservation
+	// return {no-static-reservation} && {no-dynamic-reservation}
 	return left.GetRole() == RoleDefault && left.GetReservation() == nil
 }
 
+// IsReserved returns true if this resource has been reserved for the given role.
+// If role=="" then return true if there are no static or dynamic reservations for this resource.
+// It's expected that this Resource has already been validated (see Validate).
 func (left *Resource) IsReserved(role string) bool {
 	if role != "" {
 		return !left.IsUnreserved() && role == left.GetRole()
@@ -652,14 +655,17 @@ func (left *Resource) IsReserved(role string) bool {
 	}
 }
 
+// IsDynamicallyReserved returns true if this resource has a non-nil reservation descriptor
 func (left *Resource) IsDynamicallyReserved() bool {
 	return left.GetReservation() != nil
 }
 
+// IsRevocable returns true if this resource has a non-nil revocable descriptor
 func (left *Resource) IsRevocable() bool {
 	return left.GetRevocable() != nil
 }
 
+// IsPersistentVolume returns true if this is a disk resource with a non-nil Persistence descriptor
 func (left *Resource) IsPersistentVolume() bool {
 	return left.GetDisk().GetPersistence() != nil
 }

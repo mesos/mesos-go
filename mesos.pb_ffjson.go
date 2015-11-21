@@ -10499,7 +10499,7 @@ func (mj *InverseOffer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 
 	{
 
-		err = mj.Id.MarshalJSONBuf(buf)
+		err = mj.OfferID.MarshalJSONBuf(buf)
 		if err != nil {
 			return err
 		}
@@ -10596,7 +10596,7 @@ const (
 	ffj_t_InverseOfferbase = iota
 	ffj_t_InverseOfferno_such_key
 
-	ffj_t_InverseOffer_Id
+	ffj_t_InverseOffer_OfferID
 
 	ffj_t_InverseOffer_Url
 
@@ -10609,7 +10609,7 @@ const (
 	ffj_t_InverseOffer_Resources
 )
 
-var ffj_key_InverseOffer_Id = []byte("id")
+var ffj_key_InverseOffer_OfferID = []byte("id")
 
 var ffj_key_InverseOffer_Url = []byte("url")
 
@@ -10698,8 +10698,8 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_InverseOffer_Id, kn) {
-						currentKey = ffj_t_InverseOffer_Id
+					if bytes.Equal(ffj_key_InverseOffer_OfferID, kn) {
+						currentKey = ffj_t_InverseOffer_OfferID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -10757,8 +10757,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_InverseOffer_Id, kn) {
-					currentKey = ffj_t_InverseOffer_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_InverseOffer_OfferID, kn) {
+					currentKey = ffj_t_InverseOffer_OfferID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -10780,8 +10780,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_InverseOffer_Id:
-					goto handle_Id
+				case ffj_t_InverseOffer_OfferID:
+					goto handle_OfferID
 
 				case ffj_t_InverseOffer_Url:
 					goto handle_Url
@@ -10812,9 +10812,9 @@ mainparse:
 		}
 	}
 
-handle_Id:
+handle_OfferID:
 
-	/* handler: uj.Id type=mesos.OfferID kind=struct quoted=false*/
+	/* handler: uj.OfferID type=mesos.OfferID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -10823,7 +10823,7 @@ handle_Id:
 			goto mainparse
 		}
 
-		err = uj.Id.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.OfferID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

@@ -3220,7 +3220,7 @@ func (m *Offer_Operation_Destroy) GetVolumes() []*Resource {
 type InverseOffer struct {
 	// This is the same OfferID as found in normal offers, which allows
 	// re-use of some of the OfferID-only messages.
-	Id OfferID `protobuf:"bytes,1,req,name=id" json:"id"`
+	OfferID OfferID `protobuf:"bytes,1,req,name=id" json:"id"`
 	// URL for reaching the agent running on the host.  This enables some
 	// optimizations as described in MESOS-3012, such as allowing the
 	// scheduler driver to bypass the master and talk directly with a agent.
@@ -3259,9 +3259,9 @@ type InverseOffer struct {
 func (m *InverseOffer) Reset()      { *m = InverseOffer{} }
 func (*InverseOffer) ProtoMessage() {}
 
-func (m *InverseOffer) GetId() OfferID {
+func (m *InverseOffer) GetOfferID() OfferID {
 	if m != nil {
-		return m.Id
+		return m.OfferID
 	}
 	return OfferID{}
 }
@@ -9739,8 +9739,8 @@ func (this *InverseOffer) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *InverseOfferbut is not nil && this == nil")
 	}
-	if !this.Id.Equal(&that1.Id) {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	if !this.OfferID.Equal(&that1.OfferID) {
+		return fmt.Errorf("OfferID this(%v) Not Equal that(%v)", this.OfferID, that1.OfferID)
 	}
 	if !this.Url.Equal(that1.Url) {
 		return fmt.Errorf("Url this(%v) Not Equal that(%v)", this.Url, that1.Url)
@@ -9784,7 +9784,7 @@ func (this *InverseOffer) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.Id.Equal(&that1.Id) {
+	if !this.OfferID.Equal(&that1.OfferID) {
 		return false
 	}
 	if !this.Url.Equal(that1.Url) {
@@ -12782,7 +12782,7 @@ func (this *InverseOffer) GoString() string {
 	}
 	s := make([]string, 0, 10)
 	s = append(s, "&mesos.InverseOffer{")
-	s = append(s, "Id: "+strings.Replace(this.Id.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "OfferID: "+strings.Replace(this.OfferID.GoString(), `&`, ``, 1)+",\n")
 	if this.Url != nil {
 		s = append(s, "Url: "+fmt.Sprintf("%#v", this.Url)+",\n")
 	}
@@ -15833,8 +15833,8 @@ func (m *InverseOffer) MarshalTo(data []byte) (int, error) {
 	_ = l
 	data[i] = 0xa
 	i++
-	i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-	n49, err := m.Id.MarshalTo(data[i:])
+	i = encodeVarintMesos(data, i, uint64(m.OfferID.Size()))
+	n49, err := m.OfferID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
@@ -18182,7 +18182,7 @@ func NewPopulatedOffer_Operation_Destroy(r randyMesos, easy bool) *Offer_Operati
 func NewPopulatedInverseOffer(r randyMesos, easy bool) *InverseOffer {
 	this := &InverseOffer{}
 	v171 := NewPopulatedOfferID(r, easy)
-	this.Id = *v171
+	this.OfferID = *v171
 	if r.Intn(10) != 0 {
 		this.Url = NewPopulatedURL(r, easy)
 	}
@@ -19809,7 +19809,7 @@ func (m *Offer_Operation_Destroy) Size() (n int) {
 func (m *InverseOffer) Size() (n int) {
 	var l int
 	_ = l
-	l = m.Id.Size()
+	l = m.OfferID.Size()
 	n += 1 + l + sovMesos(uint64(l))
 	if m.Url != nil {
 		l = m.Url.Size()
@@ -20929,7 +20929,7 @@ func (this *InverseOffer) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&InverseOffer{`,
-		`Id:` + strings.Replace(strings.Replace(this.Id.String(), "OfferID", "OfferID", 1), `&`, ``, 1) + `,`,
+		`OfferID:` + strings.Replace(strings.Replace(this.OfferID.String(), "OfferID", "OfferID", 1), `&`, ``, 1) + `,`,
 		`Url:` + strings.Replace(fmt.Sprintf("%v", this.Url), "URL", "URL", 1) + `,`,
 		`FrameworkId:` + strings.Replace(strings.Replace(this.FrameworkId.String(), "FrameworkID", "FrameworkID", 1), `&`, ``, 1) + `,`,
 		`AgentId:` + strings.Replace(fmt.Sprintf("%v", this.AgentId), "AgentID", "AgentID", 1) + `,`,
@@ -29856,7 +29856,7 @@ func (m *InverseOffer) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field OfferID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -29880,7 +29880,7 @@ func (m *InverseOffer) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Id.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.OfferID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

@@ -63,32 +63,33 @@ func run(cfg *config) error {
 		log.Println("using labels:", cfg.labels)
 		frameworkInfo.Labels = &mesos.Labels{Labels: cfg.labels}
 	}
-	subscribe := &scheduler.Call{
-		Type: scheduler.Call_SUBSCRIBE.Enum(),
-		Subscribe: &scheduler.Call_Subscribe{
-			FrameworkInfo: frameworkInfo,
-		},
-	}
-
+	subscribe := scheduler.SubscribeCall(true, frameworkInfo)
 	registrationTokens := backoffBucket(1*time.Second, 15*time.Second, nil)
 	for {
-		err := eventLoop(cli.Do(subscribe, httpcli.Close(true)))
+		frameworkID, err := eventLoop(cli.Do(subscribe, httpcli.Close(true)))
 		if err != nil {
 			log.Println(err)
 		} else {
 			log.Println("disconnected")
+		}
+		if frameworkID != "" {
+			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: frameworkID}
 		}
 		<-registrationTokens
 		log.Println("reconnecting..")
 	}
 }
 
-func eventLoop(events encoding.Decoder, conn io.Closer, err error) error {
+// returns the framework ID received by mesos (if any); callers should check for a
+// framework ID regardless of whether error != nil.
+func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, error) {
 	defer func() {
 		if conn != nil {
 			conn.Close()
 		}
 	}()
+	frameworkID := ""
+	callOptions := []scheduler.CallOpt{} // should be applied to every outgoing call
 	for err == nil {
 		var e scheduler.Event
 		if err = events.Decode(&e); err != nil {
@@ -109,14 +110,18 @@ func eventLoop(events encoding.Decoder, conn io.Closer, err error) error {
 			err = fmt.Errorf("ERROR: " + e.GetError().GetMessage())
 
 		case scheduler.Event_SUBSCRIBED.Enum():
-			// noop
+			if frameworkID == "" {
+				frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
+				callOptions = append(callOptions, scheduler.Framework(frameworkID))
+			}
+			// else, ignore subsequently received events like this on the same connection
 		default:
 			// handle unknown event
 		}
 
 		log.Printf("%+v\n", e)
 	}
-	return err
+	return frameworkID, err
 }
 
 type config struct {

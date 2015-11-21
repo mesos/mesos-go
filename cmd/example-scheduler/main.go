@@ -112,6 +112,10 @@ func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, erro
 		case scheduler.Event_SUBSCRIBED.Enum():
 			if frameworkID == "" {
 				frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
+				if frameworkID == "" {
+					// sanity check
+					panic("mesos gave us an empty frameworkID")
+				}
 				callOptions = append(callOptions, scheduler.Framework(frameworkID))
 			}
 			// else, ignore subsequently received events like this on the same connection

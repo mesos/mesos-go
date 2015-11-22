@@ -4,44 +4,52 @@
 
 ### Developer A: high-level framework writer
 
-This is a longer-term goal. The more immediate need is for a low-level API (see the Developer B section).
+**This is a longer-term goal.**
+The more immediate need is for a low-level API (see the Developer B section).
 
-Goals:
-  - wants to provide barebones initial configuration
-  - wants to consume a simple event stream, or write a simple polling loop
-  - wants to inject events into a managed event loop (easy state machine semantics)
+Framework-writer goals:
+  - wants to provide minimal initial configuration
+  - wants to consume a simple event stream
+  - wants to inject events into a managed event queue (easy state machine semantics)
 
-One approach is an event-stream based API, where `*client.Event` objects flow through channels:
+One approach is a polling based API, where `Event` objects are produced by some client:
 
 ```go
 func main() {
 ...
 	c := client.New(scheduler-client-options..) // package scheduler/client
-	eventCh, errCh := c.ListenWithReconnect()
-eventLoop:
+	eventSource := c.ListenWithReconnect()
+	ctx := context.TODO()
 	for {
-		select {
-		case err := <-errCh:
-			log.Fatalf("FATAL: unrecoverable driver error: %v", err)
-
-		case event, ok := <-eventCh:
-			if !ok {
+		event, err := eventSource.Yield(ctx)
+		if err != nil {
+			if err == io.EOF {
 				// graceful driver termination
-				break eventLoop
+				break
 			}
-			processEvent(event)
+			log.Fatalf("FATAL: unrecoverable driver error: %v", err)
 		}
+		processEvent(event)
 	}
 	log.Println("scheduler terminating")
 }
 
-func processEvent(c *client.Client, e *client.Event) {
+func processEvent(c *client.Client, ctx context.Context, e events.Event) {
+...
+	switch e := e.(type) {
+	case *mesos.Event:
+		... // standard v1 HTTP API Mesos event
+	case *client.Event:
+		... // high-level driver API event (connected, disconnected, reconnected, ...)
+	case *customFramework.Event:
+		... // custom framework-generated event, previously annouced via Announcer
+	}
 ...
 	if ... {
 		go func() {
 			// do some time-intensive task and process the result
 			// on the driver event queue (easy serialization)
-			c.doLater(&customEvent{...})
+			c.Announce(ctx, &customEvent{...})
 		}()
 	}
 ...
@@ -49,20 +57,57 @@ func processEvent(c *client.Client, e *client.Event) {
 }
 ```
 
-Alternate approaches:
+#### API
+
+##### package events
+
+```go
+type (
+	// Event objects implement this "marker" interface, which has no meaningful
+	// functionality other than to declare that some object is, in fact, an Event.
+	// Framework writers may implement their own event objects and for dispatching
+	// via some common EventBus.
+	Event interface {
+		IsEventObject()
+	}
+
+	Source interface {
+		// Event returns the next available event, blocking until an event becomes available
+		// or until the specified context is cancelled. Guaranteed to return a non-nil event
+		// if error is nil. Returns an io.EOF error upon graceful termination of the source.
+		Yield(Context) (Event, error)
+	}
+
+	Announcer interface {
+		// Announce communicates the occurrence of the event, blocking until the event is
+		// successfully announced or until the specified context is cancelled.
+		Announce(Context, Event) error
+	}
+)
+```
+
+Some possible approaches:
+- polling-style API (documented above)
+  - framework-writer periodically invokes `client.Event()` to pull the next incoming event from a driver-managed queue
+  - pro: more minimal interface than callbacks; API will be more stable over time
+  - pro: non-channel API allows scheduler the freedom to re-order the event queue until the last possible moment
+  - pro: scheduler can still implement a high-level event-based state machine (just like the chan-based API)
+  - con: framework writer is not "forced" to be made aware of new event types (vs. callback-style API)
+
+- channel-based API
+  - pro: more minimal interface than callbacks; API will be more stable over time
+  - pro: integrates well with select-based event loops
+  - pro: scheduler can still implement a high-level event-based state machine (just like the polling-based API)
+  - con: chan-based APIs are often not consumed correctly by callers, even when properly documented
+  - con: lack of Context on a per-read basis from a Source (less flexible API)
+  - con: framework writer is not "forced" to be made aware of new event types (vs. callback-style API)
+
 - callback-style API
   - similar to old mesos-bindings, framework writer submits an `EventHandler`
   - scheduler driver invokes `EventHandler.Handle()` for incoming events
   - pro: a rich interface for EventHandler forces the user to consider all possible event types
   - con: the driver yields total program control to the framework-writer
   - con: new events require EventHandler API changes
-
-- polling-style API
-  - framework-writer periodically invokes `client.Event()` to pull the next incoming event from a driver-managed queue
-  - pro: more minimal interface than callbacks; API will be more stable over time
-  - pro: non-channel API allows scheduler the freedom to re-order the event queue until the last possible moment
-  - pro: scheduler can still implement a high-level event-based state machine (just like the chan-based API)
-  - con: framework writer is not "forced" to be made aware of new event types (vs. callback-style API)
 
 ### Developer B: low-level framework writer
 

@@ -11,7 +11,7 @@ Some guideposts:
 - prefer code generators to compile-time dependencies
 - when adding a code generator, add a Makefile target so that it is easily runnable
 
-### Target Audience: Framework Writers
+## Target Audience: Framework Writers
 
 ### Developer A: high-level framework writer
 

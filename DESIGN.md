@@ -1,6 +1,17 @@
 ## Overview
 
-### Target Audience
+### Dependencies
+
+Ideals:
+- keep it easy for framework writers to integrate w/ mesos-go
+- keep it easy for the maintainers of mesos-go
+
+Some guideposts:
+- severely limit dependencies on 3rd party libraries
+- prefer code generators to compile-time dependencies
+- when adding a code generator, add a Makefile target so that it is easily runnable
+
+### Target Audience: Framework Writers
 
 ### Developer A: high-level framework writer
 

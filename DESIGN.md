@@ -89,11 +89,15 @@ type (
 		Yield(Context) (Event, error)
 	}
 
+	SourceFunc func(Context) (Event, error) // implements Source interface
+
 	Announcer interface {
 		// Announce communicates the occurrence of the event, blocking until the event is
 		// successfully announced or until the specified context is cancelled.
 		Announce(Context, Event) error
 	}
+
+	AnnouncerFunc func(Context, Event) error // implements Announcer interface
 )
 ```
 

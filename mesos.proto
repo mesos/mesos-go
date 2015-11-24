@@ -207,7 +207,7 @@ message MachineInfo {
     DOWN = 3;
   }
 
-  required MachineID id = 1 [(gogoproto.nullable) = false];
+  required MachineID id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
   optional Mode mode = 2;
 
   // Signifies that the machine may be unavailable during the given interval.
@@ -405,7 +405,7 @@ message CommandInfo {
   // attribute and tasks supplying a 'container' will fail.
   optional ContainerInfo container = 4;
 
-  repeated URI uris = 1;
+  repeated URI uris = 1 [(gogoproto.customname) = "URIs"];
 
   optional Environment environment = 2;
 
@@ -438,8 +438,8 @@ message CommandInfo {
  * used to pass arbitrary bytes to an executor.
  */
 message ExecutorInfo {
-  required ExecutorID executor_id = 1 [(gogoproto.nullable) = false];
-  optional FrameworkID framework_id = 8; // TODO(benh): Make this required.
+  required ExecutorID executor_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ExecutorID"];
+  optional FrameworkID framework_id = 8 [(gogoproto.customname) = "FrameworkID"]; // TODO(benh): Make this required.
   required CommandInfo command = 7 [(gogoproto.nullable) = false];
   // Executor provided with a container will launch the container
   // with the executor's CommandInfo and we expect the container to
@@ -473,11 +473,11 @@ message ExecutorInfo {
  * to a master webui.
  */
 message MasterInfo {
-  required string id = 1 [(gogoproto.nullable) = false];
+  required string id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
 
   // The IP address (only IPv4) as a packed 4-bytes integer,
   // stored in network order.  Deprecated, use `address.ip` instead.
-  required uint32 ip = 2 [(gogoproto.nullable) = false];
+  required uint32 ip = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "IP"];
 
   // The TCP port the Master is listening on for incoming
   // HTTP requests; deprecated, use `address.port` instead.
@@ -487,7 +487,7 @@ message MasterInfo {
   // about both the IP address, port and Master name; it should really
   // not be relied upon by external tooling/frameworks and be
   // considered an "internal" implementation field.
-  optional string pid = 4;
+  optional string pid = 4 [(gogoproto.customname) = "PID"];
 
   // The server's hostname, if available; it may be unreliable
   // in environments where the DNS configuration does not resolve
@@ -518,7 +518,7 @@ message AgentInfo {
   optional int32 port = 8 [default = 5051];
   repeated Resource resources = 3;
   repeated Attribute attributes = 5;
-  optional AgentID id = 6;
+  optional AgentID id = 6 [(gogoproto.customname) = "ID"];
 }
 
 
@@ -632,7 +632,7 @@ message Resource {
     message Persistence {
       // A unique ID for the persistent disk volume.
       // NOTE: The ID needs to be unique per role on each agent.
-      required string id = 1 [(gogoproto.nullable) = false];
+      required string id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
     }
 
     optional Persistence persistence = 1;
@@ -688,7 +688,7 @@ message Resource {
  * found at http://www.lartc.org/lartc.html.
  */
 message TrafficControlStatistics {
-  required string id = 1 [(gogoproto.nullable) = false];
+  required string id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
   optional uint64 backlog = 2;
   optional uint64 bytes = 3;
   optional uint64 drops = 4;
@@ -910,7 +910,7 @@ message PerfStatistics {
  * agent.
  */
 message Request {
-  optional AgentID agent_id = 1;
+  optional AgentID agent_id = 1 [(gogoproto.customname) = "AgentID"];
   repeated Resource resources = 2;
 }
 
@@ -920,9 +920,9 @@ message Request {
  * contains resources from a single agent.
  */
 message Offer {
-  required OfferID id = 1 [(gogoproto.nullable) = false];
-  required FrameworkID framework_id = 2 [(gogoproto.nullable) = false];
-  required AgentID agent_id = 3 [(gogoproto.nullable) = false];
+  required OfferID id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
+  required FrameworkID framework_id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "FrameworkID"];
+  required AgentID agent_id = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
   required string hostname = 4 [(gogoproto.nullable) = false];
 
   // URL for reaching the agent running on the host.
@@ -930,7 +930,7 @@ message Offer {
 
   repeated Resource resources = 5;
   repeated Attribute attributes = 7;
-  repeated ExecutorID executor_ids = 6;
+  repeated ExecutorID executor_ids = 6 [(gogoproto.customname) = "ExecutorIDs"];
 
   // Signifies that the resources in this Offer may be unavailable during
   // the given interval.  Any tasks launched using these resources may be
@@ -1000,12 +1000,12 @@ message InverseOffer {
   // The framework that should release its resources.
   // If no specifics are provided (i.e. which agent), all the framework's
   // resources are requested back.
-  required FrameworkID framework_id = 3 [(gogoproto.nullable) = false];
+  required FrameworkID framework_id = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "FrameworkID"];
 
   // Specified if the resources need to be released from a particular agent.
   // All the framework's resources on this agent are requested back,
   // unless further qualified by the `resources` field.
-  optional AgentID agent_id = 4;
+  optional AgentID agent_id = 4 [(gogoproto.customname) = "AgentID"];
 
   // This InverseOffer represents a planned unavailability event in the
   // specified interval.  Any tasks running on the given framework or agent
@@ -1044,8 +1044,8 @@ message InverseOffer {
  */
 message TaskInfo {
   required string name = 1 [(gogoproto.nullable) = false];
-  required TaskID task_id = 2 [(gogoproto.nullable) = false];
-  required AgentID agent_id = 3 [(gogoproto.nullable) = false];
+  required TaskID task_id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "TaskID"];
+  required AgentID agent_id = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
   repeated Resource resources = 4;
   optional ExecutorInfo executor = 5;
   optional CommandInfo command = 7;
@@ -1128,14 +1128,14 @@ message TaskStatus {
     REASON_TASK_UNKNOWN = 16;
   }
 
-  required TaskID task_id = 1 [(gogoproto.nullable) = false];
+  required TaskID task_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "TaskID"];
   required TaskState state = 2;
   optional string message = 4; // Possible message explaining state.
   optional Source source = 9;
   optional Reason reason = 10;
   optional bytes data = 3;
-  optional AgentID agent_id = 5;
-  optional ExecutorID executor_id = 7; // TODO(benh): Use in master/agent.
+  optional AgentID agent_id = 5 [(gogoproto.customname) = "AgentID"];
+  optional ExecutorID executor_id = 7 [(gogoproto.customname) = "ExecutorID"]; // TODO(benh): Use in master/agent.
   optional double timestamp = 6;
 
   // Statuses that are delivered reliably to the scheduler will
@@ -1147,7 +1147,7 @@ message TaskStatus {
   // TODO(bmahler): This is currently overwritten in the scheduler
   // driver and executor driver, but executors will need to set this
   // to a valid RFC-4122 UUID if using the HTTP API.
-  optional bytes uuid = 11;
+  optional bytes uuid = 11 [(gogoproto.customname) = "UUID"];
 
   // Describes whether the task has been determined to be healthy
   // (true) or unhealthy (false) according to the HealthCheck field in
@@ -1299,7 +1299,7 @@ message Image {
     // "hash" is the hash algorithm used and "value" is the hex
     // encoded string of the digest. Currently the only permitted
     // hash algorithm is sha512.
-    required string id = 2 [(gogoproto.nullable) = false];
+    required string id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
 
     // Optional labels. Suggested labels: "version", "os", and "arch".
     optional Labels labels = 3;

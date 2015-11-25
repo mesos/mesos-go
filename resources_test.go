@@ -28,6 +28,87 @@ func TestResource_IsEmpty(t *testing.T) {
 	}
 }
 
+func TestResources_MinusAll(t *testing.T) {
+	for i, tc := range []struct {
+		r1, r2      mesos.Resources
+		wants       mesos.Resources
+		wantsCPU    float64
+		wantsMemory uint64
+	}{
+		{r1: nil, r2: nil, wants: nil},
+		{r1: resources(), r2: resources(), wants: resources()},
+		// simple scalars, same roles for everything
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(50), role("*")),
+				resource(name("mem"), valueScalar(4096), role("*")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(0.5), role("*")),
+				resource(name("mem"), valueScalar(1024), role("*")),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(49.5), role("*")),
+				resource(name("mem"), valueScalar(3072), role("*")),
+			),
+			wantsCPU:    49.5,
+			wantsMemory: 3072,
+		},
+		// multi-role subtraction
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(5), role("role1")),
+				resource(name("cpus"), valueScalar(3), role("role2")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(1), role("role1")),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(4), role("role1")),
+				resource(name("cpus"), valueScalar(3), role("role2")),
+			),
+			wantsCPU: 7,
+		},
+	} {
+		backup := tc.r1.Clone()
+
+		// MinusAll preserves the left operand
+		actual := tc.r1.MinusAll(tc.r2)
+		if !tc.wants.Equivalent(actual) {
+			t.Errorf("test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
+		}
+		if !backup.Equivalent(tc.r1) {
+			t.Errorf("test case %d failed: backup (%v) != r1 (%v)", i, backup, tc.r1)
+		}
+
+		// SubtractAll mutates the left operand
+		tc.r1.SubtractAll(tc.r2)
+		if !tc.wants.Equivalent(tc.r1) {
+			t.Errorf("test case %d failed: wants (%v) != r1 (%v)", i, tc.wants, tc.r1)
+		}
+
+		cpus, ok := tc.r1.CPUs()
+		if !ok && tc.wantsCPU > 0 {
+			t.Errorf("test case %d failed: failed to obtain total CPU resources", i)
+		} else if cpus != tc.wantsCPU {
+			t.Errorf("test case %d failed: wants cpu (%v) != r1 cpu (%v)", i, tc.wantsCPU, cpus)
+		}
+
+		mem, ok := tc.r1.Memory()
+		if !ok && tc.wantsMemory > 0 {
+			t.Errorf("test case %d failed: failed to obtain total memory resources", i)
+		} else if mem != tc.wantsMemory {
+			t.Errorf("test case %d failed: wants mem (%v) != r1 mem (%v)", i, tc.wantsMemory, mem)
+		}
+
+		t.Logf("substracting tc.r1 from itself\n")
+		tc.r1.SubtractAll(tc.r1)
+		if len(tc.r1) > 0 {
+			t.Errorf("test case %d failed: r1 is not empty (%v)", i, tc.r1)
+		}
+	}
+}
+
 func TestResources_PlusAll(t *testing.T) {
 	for i, tc := range []struct {
 		r1, r2      mesos.Resources

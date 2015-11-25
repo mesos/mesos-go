@@ -117,6 +117,18 @@ func TestResources_PlusAll(t *testing.T) {
 				resource(name("ports"), valueRange(span(1, 10), span(20, 30)), role("*")),
 			),
 		},
+		// set addition
+		{
+			r1: resources(
+				resource(name("disks"), valueSet("sda1", "sda2", "sda3"), role("*")),
+			),
+			r2: resources(
+				resource(name("disks"), valueSet("sda1", "sda2", "sda3", "sda4"), role("*")),
+			),
+			wants: resources(
+				resource(name("disks"), valueSet("sda4", "sda2", "sda1", "sda3"), role("*")),
+			),
+		},
 	} {
 		backup := tc.r1.Clone()
 

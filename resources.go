@@ -275,7 +275,7 @@ func (resources Resources) sameTotals(result Resources) bool {
 	return c1 == c3 && c2 == c4 &&
 		m1 == m3 && m2 == m4 &&
 		d1 == d3 && d2 == d4 &&
-		p1.Equal(p3) && p2 == p4
+		p1.Equivalent(p3) && p2 == p4
 }
 
 func (resources Resources) Find(targets Resources) (total Resources) {
@@ -361,6 +361,10 @@ func (resources Resources) contains(that *Resource) bool {
 	return false
 }
 
+func (resources Resources) Equivalent(that Resources) bool {
+	return resources.ContainsAll(that) && that.ContainsAll(resources)
+}
+
 func (resources Resources) Contains(that *Resource) bool {
 	// NOTE: We must validate 'that' because invalid resources can lead
 	// to false positives here (e.g., "cpus:-1" will return true). This
@@ -390,37 +394,71 @@ func (resources Resources) ContainsAll(that Resources) bool {
 	return true
 }
 
-func (resources *Resources) SubtractAll(other Resources) {
+func (resources *Resources) SubtractAll(other Resources) (rs Resources) {
+	if resources == nil {
+		// cannot subtract from nothing
+		return
+	}
 	for _, r := range other {
 		resources.Subtract(r)
 	}
+	return
 }
 
-func (resources *Resources) AddAll(that Resources) {
-	for _, r := range that {
-		resources.Add(r)
+func (resources Resources) PlusAll(that Resources) Resources {
+	x := resources.Clone()
+	return x.AddAll(that)
+}
+
+func (resources *Resources) AddAll(that Resources) (rs Resources) {
+	if resources != nil {
+		rs = *resources
 	}
+	for _, r := range that {
+		rs = rs.Add(r)
+	}
+	if resources != nil {
+		*resources = rs
+	}
+	return
 }
 
-func (resources *Resources) Add(that *Resource) {
+func (resources Resources) Plus(that *Resource) Resources {
+	x := resources.Clone()
+	return x.Add(that)
+}
+
+func (resources *Resources) Add(that *Resource) (rs Resources) {
+	if resources != nil {
+		rs = *resources
+	}
 	if that.Validate() != nil || that.IsEmpty() {
 		return
 	}
-	for _, r := range *resources {
+	for _, r := range rs {
 		if r.Addable(that) {
 			r.Add(that)
 			return
 		}
 	}
 	// cannot be combined with an existing resource
-	*resources = append(*resources, proto.Clone(that).(*Resource))
+	rs = append(rs, proto.Clone(that).(*Resource))
+	if resources != nil {
+		*resources = rs
+	}
+	return
 }
 
-func (resources *Resources) Subtract(that *Resource) {
+// TODO(jdef) add Minus(), the counterpart to Plus()
+
+func (resources *Resources) Subtract(that *Resource) (rs Resources) {
+	if resources != nil {
+		rs = *resources
+	}
 	if that.Validate() != nil || that.IsEmpty() {
 		return
 	}
-	for i, r := range *resources {
+	for i, r := range rs {
 		if r.Subtractable(that) {
 			r.Subtract(that)
 			// remove the resource if it becomes invalid or zero.
@@ -429,11 +467,15 @@ func (resources *Resources) Subtract(that *Resource) {
 			if r.Validate() != nil || r.IsEmpty() {
 				// delete resource at i, without leaking an uncollectable *Resource
 				// a, a[len(a)-1] = append(a[:i], a[i+1:]...), nil
-				*resources, (*resources)[len(*resources)-1] = append((*resources)[:i], (*resources)[i+1:]...), nil
+				rs, rs[len(rs)-1] = append(rs[:i], rs[i+1:]...), nil
 			}
-			return
+			break
 		}
 	}
+	if resources != nil {
+		*resources = rs
+	}
+	return
 }
 
 func (left *Resource) Validate() error {
@@ -497,6 +539,60 @@ func (left *Resource) Validate() error {
 	return nil
 }
 
+func (left *Resource_ReservationInfo) Equivalent(right *Resource_ReservationInfo) bool {
+	if (left == nil) != (right == nil) {
+		return false
+	}
+	return left.GetPrincipal() == right.GetPrincipal()
+}
+
+func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
+	// NOTE: We ignore 'volume' inside DiskInfo when doing comparison
+	// because it describes how this resource will be used which has
+	// nothing to do with the Resource object itself. A framework can
+	// use this resource and specify different 'volume' every time it
+	// uses it.
+	// see https://github.com/apache/mesos/blob/0.25.0/src/common/resources.cpp#L67
+	if (left == nil) != (right == nil) {
+		return false
+	}
+	if a, b := left.GetPersistence(), right.GetPersistence(); (a == nil) != (b == nil) {
+		return false
+	} else {
+		return a.GetID() == b.GetID()
+	}
+}
+
+// Equivalent returns true if right is equivalent to left (differs from Equal in that
+// deeply nested values are test for equivalence, not equality).
+func (left *Resource) Equivalent(right *Resource) bool {
+	if left.GetName() != right.GetName() ||
+		left.GetType() != right.GetType() ||
+		left.GetRole() != right.GetRole() {
+		return false
+	}
+	if !left.GetReservation().Equivalent(right.GetReservation()) {
+		return false
+	}
+	if !left.GetDisk().Equivalent(right.GetDisk()) {
+		return false
+	}
+	if (left.Revocable == nil) != (right.Revocable == nil) {
+		return false
+	}
+
+	switch left.GetType() {
+	case SCALAR:
+		return left.GetScalar().Compare(right.GetScalar()) == 0
+	case RANGES:
+		return Ranges(left.GetRanges().GetRange()).Equivalent(right.GetRanges().GetRange())
+	case SET:
+		return left.GetSet().Compare(right.GetSet()) == 0
+	default:
+		return false
+	}
+}
+
 // Addable tests if we can add two Resource objects together resulting in one
 // valid Resource object. For example, two Resource objects with
 // different name, type or role are not addable.
@@ -506,12 +602,10 @@ func (left *Resource) Addable(right *Resource) bool {
 		left.GetRole() != right.GetRole() {
 		return false
 	}
-
-	if !left.GetReservation().Equal(right.GetReservation()) {
+	if !left.GetReservation().Equivalent(right.GetReservation()) {
 		return false
 	}
-
-	if !left.GetDisk().Equal(right.GetDisk()) {
+	if !left.GetDisk().Equivalent(right.GetDisk()) {
 		return false
 	}
 
@@ -523,11 +617,9 @@ func (left *Resource) Addable(right *Resource) bool {
 	if left.GetDisk().GetPersistence() != nil {
 		return false
 	}
-
-	if !left.GetRevocable().Equal(right.GetRevocable()) {
+	if (left.Revocable == nil) != (right.Revocable == nil) {
 		return false
 	}
-
 	return true
 }
 
@@ -545,25 +637,21 @@ func (left *Resource) Subtractable(right *Resource) bool {
 		left.GetRole() != right.GetRole() {
 		return false
 	}
-
-	if !left.GetReservation().Equal(right.GetReservation()) {
+	if !left.GetReservation().Equivalent(right.GetReservation()) {
 		return false
 	}
-
-	if !left.GetDisk().Equal(right.GetDisk()) {
+	if !left.GetDisk().Equivalent(right.GetDisk()) {
 		return false
 	}
 
 	// NOTE: For Resource objects that have DiskInfo, we can only do
-	// subtraction if they are equal.
+	// subtraction if they are **equal**.
 	if left.GetDisk().GetPersistence() != nil && !left.Equal(right) {
 		return false
 	}
-
-	if !left.GetRevocable().Equal(right.GetRevocable()) {
+	if (left.Revocable == nil) != (right.Revocable == nil) {
 		return false
 	}
-
 	return true
 }
 

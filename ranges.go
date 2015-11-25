@@ -191,8 +191,8 @@ func (left Ranges) Compare(right Ranges) int {
 	return -1
 }
 
-// Equal assumes that both Ranges are already in sort-order.
-func (left Ranges) Equal(right Ranges) bool {
+// Equivalent assumes that both Ranges are already in sort-order.
+func (left Ranges) Equivalent(right Ranges) bool {
 	// we need to squash left and right but don't want to change the originals
 	if len(left) > 1 {
 		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...))

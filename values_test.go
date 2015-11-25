@@ -194,6 +194,7 @@ func TestValue_Ranges_Add(t *testing.T) {
 		{ranges(r(0, 1)), ranges(r(1, 2)), ranges(r(0, 2))},
 		{ranges(r(3, 4), r(0, 1)), ranges(r(1, 2)), ranges(r(0, 4))},
 		{ranges(r(2, 6), r(3, 4), r(0, 1)), ranges(r(1, 2)), ranges(r(0, 6))},
+		{ranges(r(1, 10), r(5, 30), r(50, 60)), ranges(r(1, 65), r(70, 80)), ranges(r(1, 65), r(70, 80))},
 	} {
 		preleft := proto.Clone(tc.left).(*mesos.Value_Ranges)
 		preright := proto.Clone(tc.right).(*mesos.Value_Ranges)

@@ -309,8 +309,7 @@ func (resources Resources) find(target *Resource) Resources {
 			flattened := Resources{r}.Flatten("", nil)
 			if flattened.ContainsAll(remaining) {
 				// target has been found, return the result
-				found.AddAll(remaining.Flatten(r.GetRole(), r.GetReservation()))
-				return found
+				return found.AddAll(remaining.Flatten(r.GetRole(), r.GetReservation()))
 			}
 			if remaining.ContainsAll(flattened) {
 				found.Add(r)
@@ -394,28 +393,46 @@ func (resources Resources) ContainsAll(that Resources) bool {
 	return true
 }
 
-func (resources *Resources) SubtractAll(other Resources) (rs Resources) {
-	if resources == nil {
-		// cannot subtract from nothing
-		return
-	}
-	for _, r := range other {
-		resources.Subtract(r)
+// MinusAll calculates and returns the result of `resources - that` without modifying either
+// the receiving `resources` or `that`.
+func (resources Resources) MinusAll(that Resources) Resources {
+	x := resources.Clone()
+	return x.SubtractAll(that)
+}
+
+// SubtractAll subtracts `that` from the receiving `resources` and returns the result (the modified
+// `resources` receiver).
+func (resources *Resources) SubtractAll(that Resources) (rs Resources) {
+	if resources != nil && len(that) > 0 {
+		// if *resources and that refer to the same slice we're in trouble;
+		// good thing that copies are cheap for pointer types (*Resource)
+		x := make(Resources, len(that))
+		copy(x, that)
+		that = x
+
+		for _, r := range that {
+			resources.Subtract(r)
+		}
+		rs = *resources
 	}
 	return
 }
 
+// PlusAll calculates and returns the result of `resources + that` without modifying either
+// the receiving `resources` or `that`.
 func (resources Resources) PlusAll(that Resources) Resources {
 	x := resources.Clone()
 	return x.AddAll(that)
 }
 
+// AddAll adds `that` to the receiving `resources` and returns the result (the modified
+// `resources` receiver).
 func (resources *Resources) AddAll(that Resources) (rs Resources) {
 	if resources != nil {
 		rs = *resources
 	}
 	for _, r := range that {
-		rs = rs.Add(r)
+		rs.Add(r)
 	}
 	if resources != nil {
 		*resources = rs
@@ -423,11 +440,15 @@ func (resources *Resources) AddAll(that Resources) (rs Resources) {
 	return
 }
 
+// Plus calculates and returns the result of `resources + that` without modifying either
+// the receiving `resources` or `that`.
 func (resources Resources) Plus(that *Resource) Resources {
 	x := resources.Clone()
 	return x.Add(that)
 }
 
+// Add adds `that` to the receiving `resources` and returns the result (the modified
+// `resources` receiver).
 func (resources *Resources) Add(that *Resource) (rs Resources) {
 	if resources != nil {
 		rs = *resources
@@ -449,33 +470,36 @@ func (resources *Resources) Add(that *Resource) (rs Resources) {
 	return
 }
 
-// TODO(jdef) add Minus(), the counterpart to Plus()
+// Minus calculates and returns the result of `resources - that` without modifying either
+// the receiving `resources` or `that`.
+func (resources *Resources) Minus(that *Resource) Resources {
+	x := resources.Clone()
+	return x.Subtract(that)
+}
 
-func (resources *Resources) Subtract(that *Resource) (rs Resources) {
-	if resources != nil {
-		rs = *resources
+// Subtract subtracts `that` from the receiving `resources` and returns the result (the modified
+// `resources` receiver).
+func (resources *Resources) Subtract(that *Resource) Resources {
+	if resources == nil {
+		return nil
 	}
-	if that.Validate() != nil || that.IsEmpty() {
-		return
-	}
-	for i, r := range rs {
-		if r.Subtractable(that) {
-			r.Subtract(that)
-			// remove the resource if it becomes invalid or zero.
-			// need to do validation in order to strip negative scalar
-			// resource objects.
-			if r.Validate() != nil || r.IsEmpty() {
-				// delete resource at i, without leaking an uncollectable *Resource
-				// a, a[len(a)-1] = append(a[:i], a[i+1:]...), nil
-				rs, rs[len(rs)-1] = append(rs[:i], rs[i+1:]...), nil
+	if that.Validate() == nil && !that.IsEmpty() {
+		for i, r := range *resources {
+			if r.Subtractable(that) {
+				r.Subtract(that)
+				// remove the resource if it becomes invalid or zero.
+				// need to do validation in order to strip negative scalar
+				// resource objects.
+				if r.Validate() != nil || r.IsEmpty() {
+					// delete resource at i, without leaking an uncollectable *Resource
+					// a, a[len(a)-1] = append(a[:i], a[i+1:]...), nil
+					(*resources), (*resources)[len((*resources))-1] = append((*resources)[:i], (*resources)[i+1:]...), nil
+				}
+				break
 			}
-			break
 		}
 	}
-	if resources != nil {
-		*resources = rs
-	}
-	return
+	return *resources
 }
 
 func (left *Resource) Validate() error {

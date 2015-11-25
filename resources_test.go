@@ -19,7 +19,7 @@ func TestResource_IsEmpty(t *testing.T) {
 		{resource(valueSet()), true},
 		{resource(valueSet("")), false},
 		{resource(valueRange()), true},
-		{resource(valueRange(pair(0, 0))), false},
+		{resource(valueRange(span(0, 0))), false},
 	} {
 		actual := tc.r.IsEmpty()
 		if tc.wants != actual {
@@ -35,29 +35,88 @@ func TestResources_PlusAll(t *testing.T) {
 		wantsCPU    float64
 		wantsMemory uint64
 	}{
-		{nil, nil, nil, 0, 0},
-		{resources(), resources(), resources(), 0, 0},
+		{r1: nil, r2: nil, wants: nil},
+		{r1: resources(), r2: resources(), wants: resources()},
 		// simple scalars, same roles for everything
-		{resources(
-			resource(name("cpus"), valueScalar(1), role("*")),
-			resource(name("mem"), valueScalar(5), role("*")),
-		), resources(
-			resource(name("cpus"), valueScalar(2), role("*")),
-			resource(name("mem"), valueScalar(10), role("*")),
-		), resources(
-			resource(name("cpus"), valueScalar(3), role("*")),
-			resource(name("mem"), valueScalar(15), role("*")),
-		), 3, 15},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(1), role("*")),
+				resource(name("mem"), valueScalar(5), role("*")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(2), role("*")),
+				resource(name("mem"), valueScalar(10), role("*")),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(3), role("*")),
+				resource(name("mem"), valueScalar(15), role("*")),
+			),
+			wantsCPU:    3,
+			wantsMemory: 15,
+		},
 		// simple scalars, differing roles
-		{resources(
-			resource(name("cpus"), valueScalar(1), role("role1")),
-			resource(name("cpus"), valueScalar(3), role("role2")),
-		), resources(
-			resource(name("cpus"), valueScalar(5), role("role1")),
-		), resources(
-			resource(name("cpus"), valueScalar(6), role("role1")),
-			resource(name("cpus"), valueScalar(3), role("role2")),
-		), 9, 0},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(1), role("role1")),
+				resource(name("cpus"), valueScalar(3), role("role2")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(5), role("role1")),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(6), role("role1")),
+				resource(name("cpus"), valueScalar(3), role("role2")),
+			),
+			wantsCPU: 9,
+		},
+		// ranges addition yields continuous range
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(20000, 40000)), role("*")),
+			),
+			r2: resources(
+				resource(name("ports"), valueRange(span(30000, 50000), span(10000, 20000)), role("*")),
+			),
+			wants: resources(
+				resource(name("ports"), valueRange(span(10000, 50000)), role("*")),
+			),
+		},
+		// ranges addition yields a split set of ranges
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(1, 10), span(5, 30), span(50, 60)), role("*")),
+				resource(name("ports"), valueRange(span(1, 65), span(70, 80)), role("*")),
+			),
+			wants: resources(
+				resource(name("ports"), valueRange(span(1, 65), span(70, 80)), role("*")),
+			),
+		},
+		// ranges addition (composite) yields a continuous range
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(1, 2)), role("*")),
+				resource(name("ports"), valueRange(span(3, 4)), role("*")),
+			),
+			r2: resources(
+				resource(name("ports"), valueRange(span(7, 8)), role("*")),
+				resource(name("ports"), valueRange(span(5, 6)), role("*")),
+			),
+			wants: resources(
+				resource(name("ports"), valueRange(span(1, 8)), role("*")),
+			),
+		},
+		// ranges addition yields a split set of ranges
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(1, 4), span(9, 10), span(20, 22), span(26, 30)), role("*")),
+			),
+			r2: resources(
+				resource(name("ports"), valueRange(span(5, 8), span(23, 25)), role("*")),
+			),
+			wants: resources(
+				resource(name("ports"), valueRange(span(1, 10), span(20, 30)), role("*")),
+			),
+		},
 	} {
 		backup := tc.r1.Clone()
 
@@ -125,9 +184,10 @@ func valueSet(x ...string) resourceOpt {
 
 type rangeOpt func(*mesos.Ranges)
 
-func pair(bp, ep uint64) rangeOpt {
+// "range" is a keyword, so I called this func "span": it naively appends a range to a Ranges collection
+func span(bp, ep uint64) rangeOpt {
 	return func(rs *mesos.Ranges) {
-		*rs = append(*rs, mesos.Value_Range{Begin: bp, End: ep}).Squash()
+		*rs = append(*rs, mesos.Value_Range{Begin: bp, End: ep})
 	}
 }
 
@@ -138,10 +198,13 @@ func valueRange(p ...rangeOpt) resourceOpt {
 			f(&rs)
 		}
 		r.Type = mesos.RANGES.Enum()
-		r.Ranges = &mesos.Value_Ranges{Range: rs}
+		r.Ranges = r.Ranges.Add(&mesos.Value_Ranges{Range: rs})
 	}
 }
 
-func resources(r ...*mesos.Resource) mesos.Resources {
-	return mesos.Resources(r)
+func resources(r ...*mesos.Resource) (result mesos.Resources) {
+	for _, x := range r {
+		result.Add(x)
+	}
+	return result
 }

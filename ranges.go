@@ -49,15 +49,15 @@ func NewPortRanges(o *Offer) Ranges {
 			rs[i].Begin, rs[i].End = hi, lo
 		}
 	}
-	sort.Sort(rs)
-
-	return rs.Squash()
+	return rs.Sort().Squash()
 }
 
 // These three methods implement sort.Interface
-func (rs Ranges) Len() int           { return len(rs) }
-func (rs Ranges) Less(i, j int) bool { return rs[i].Begin < rs[j].Begin && rs[i].End < rs[j].End }
-func (rs Ranges) Swap(i, j int)      { rs[i], rs[j] = rs[j], rs[i] }
+func (rs Ranges) Len() int      { return len(rs) }
+func (rs Ranges) Swap(i, j int) { rs[i], rs[j] = rs[j], rs[i] }
+func (rs Ranges) Less(i, j int) bool {
+	return rs[i].Begin < rs[j].Begin || (rs[i].Begin == rs[j].Begin && rs[i].End < rs[j].End)
+}
 
 // Size returns the sum of the Size of all Ranges.
 func (rs Ranges) Size() uint64 {
@@ -66,6 +66,12 @@ func (rs Ranges) Size() uint64 {
 		sz += 1 + (rs[i].End - rs[i].Begin)
 	}
 	return sz
+}
+
+// Sort sorts the receiving Ranges and returns the result; convenience
+func (rs Ranges) Sort() Ranges {
+	sort.Sort(rs)
+	return rs
 }
 
 // Squash merges overlapping and continuous Ranges. It assumes they're pre-sorted.
@@ -163,14 +169,10 @@ func (rs Ranges) Remove(removal Value_Range) Ranges {
 func (left Ranges) Compare(right Ranges) int {
 	// we need to squash left and right but don't want to change the originals
 	if len(left) > 1 {
-		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...))
-		sort.Sort(left)
-		left = left.Squash()
+		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...)).Sort().Squash()
 	}
 	if len(right) > 1 {
-		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...))
-		sort.Sort(right)
-		right = right.Squash()
+		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...)).Sort().Squash()
 	}
 	if (&Value_Ranges{Range: left}).Equal(&Value_Ranges{Range: right}) {
 		return 0
@@ -195,14 +197,10 @@ func (left Ranges) Compare(right Ranges) int {
 func (left Ranges) Equivalent(right Ranges) bool {
 	// we need to squash left and right but don't want to change the originals
 	if len(left) > 1 {
-		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...))
-		sort.Sort(left)
-		left = left.Squash()
+		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...)).Sort().Squash()
 	}
 	if len(right) > 1 {
-		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...))
-		sort.Sort(right)
-		right = right.Squash()
+		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...)).Sort().Squash()
 	}
 	return (&Value_Ranges{Range: left}).Equal(&Value_Ranges{Range: right})
 }

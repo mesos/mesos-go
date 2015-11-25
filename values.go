@@ -1,9 +1,5 @@
 package mesos
 
-import (
-	"sort"
-)
-
 func (left *Value_Scalar) Compare(right *Value_Scalar) int {
 	if left == nil {
 		if right.GetValue() == 0 {
@@ -114,9 +110,8 @@ func (left *Value_Ranges) Add(right *Value_Ranges) *Value_Ranges {
 	if len(b) > 0 {
 		copy(x[len(a):], b)
 	}
-	sort.Sort(x)
 	return &Value_Ranges{
-		Range: x.Squash(),
+		Range: x.Sort().Squash(),
 	}
 }
 
@@ -125,8 +120,7 @@ func (left *Value_Ranges) Subtract(right *Value_Ranges) *Value_Ranges {
 	if len(a) > 1 {
 		x := make(Ranges, len(a))
 		copy(x, a)
-		sort.Sort(x)
-		a = x.Squash()
+		a = x.Sort().Squash()
 	}
 	for _, r := range b {
 		a = a.Remove(r)

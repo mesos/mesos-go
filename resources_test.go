@@ -139,6 +139,18 @@ func TestResources_MinusAll(t *testing.T) {
 				resource(name("ports"), valueRange(span(1, 10)), role("*")),
 			),
 		},
+		// simple set, same roles
+		{
+			r1: resources(
+				resource(name("disks"), valueSet("sda1", "sda2", "sda3", "sda4"), role("*")),
+			),
+			r2: resources(
+				resource(name("disks"), valueSet("sda2", "sda3", "sda4"), role("*")),
+			),
+			wants: resources(
+				resource(name("disks"), valueSet("sda1"), role("*")),
+			),
+		},
 	} {
 		backup := tc.r1.Clone()
 

@@ -54,7 +54,7 @@ func TestResources_MinusAll(t *testing.T) {
 			wantsCPU:    49.5,
 			wantsMemory: 3072,
 		},
-		// multi-role subtraction
+		// multi-role, scalar subtraction
 		{
 			r1: resources(
 				resource(name("cpus"), valueScalar(5), role("role1")),
@@ -68,6 +68,76 @@ func TestResources_MinusAll(t *testing.T) {
 				resource(name("cpus"), valueScalar(3), role("role2")),
 			),
 			wantsCPU: 7,
+		},
+		// simple ranges, same roles, lower-edge overlap
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(20000, 40000)), role("*")),
+			),
+			r2: resources(
+				resource(name("ports"), valueRange(span(10000, 20000), span(30000, 50000)), role("*")),
+			),
+			wants: resources(
+				resource(name("ports"), valueRange(span(20001, 29999)), role("*")),
+			),
+		},
+		// simple ranges, same roles, single port/lower-edge
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(50000, 60000)), role("*")),
+			),
+			r2: resources(
+				resource(name("ports"), valueRange(span(50000, 50000)), role("*")),
+			),
+			wants: resources(
+				resource(name("ports"), valueRange(span(50001, 60000)), role("*")),
+			),
+		},
+		// simple ranges, same roles, multi port/lower-edge
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(50000, 60000)), role("*")),
+			),
+			r2: resources(
+				resource(name("ports"), valueRange(span(50000, 50001)), role("*")),
+			),
+			wants: resources(
+				resource(name("ports"), valueRange(span(50002, 60000)), role("*")),
+			),
+		},
+		// simple ranges, same roles, identical overlap
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(50000, 60000)), role("*")),
+			),
+			r2: resources(
+				resource(name("ports"), valueRange(span(50000, 60000)), role("*")),
+			),
+			wants: resources(),
+		},
+		// multiple ranges, same roles, swiss cheese
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(1, 10), span(20, 30), span(40, 50)), role("*")),
+			),
+			r2: resources(
+				resource(name("ports"), valueRange(span(2, 9), span(15, 45), span(48, 50)), role("*")),
+			),
+			wants: resources(
+				resource(name("ports"), valueRange(span(1, 1), span(10, 10), span(46, 47)), role("*")),
+			),
+		},
+		// multiple ranges, same roles, no overlap
+		{
+			r1: resources(
+				resource(name("ports"), valueRange(span(1, 10)), role("*")),
+			),
+			r2: resources(
+				resource(name("ports"), valueRange(span(11, 20)), role("*")),
+			),
+			wants: resources(
+				resource(name("ports"), valueRange(span(1, 10)), role("*")),
+			),
 		},
 	} {
 		backup := tc.r1.Clone()

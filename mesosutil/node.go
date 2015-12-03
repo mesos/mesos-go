@@ -1,6 +1,7 @@
 package mesosutil
 
 import (
+	"os"
 	"os/exec"
 	"strings"
 

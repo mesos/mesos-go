@@ -17,7 +17,7 @@ func GetHostname(hostnameOverride string) string {
 		fqdn, err := exec.Command("hostname", "-f").Output()
 		if err != nil {
 			log.Errorf("Couldn't determine hostname fqdn, failing back to hostname: %v", err)
-			hostname, err := os.Hostname()
+			hostname, err = os.Hostname()
 			if err != nil {
 				log.Fatalf("Error getting hostname: %v", err)
 			}

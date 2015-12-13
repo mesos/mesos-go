@@ -8,11 +8,10 @@ import (
 
 func TestResource_IsEmpty(t *testing.T) {
 	for i, tc := range []struct {
-		r     *mesos.Resource
+		r     mesos.Resource
 		wants bool
 	}{
-		{nil, true},
-		{new(mesos.Resource), true},
+		{resource(), true},
 		{resource(valueScalar(0)), true},
 		{resource(valueSet()), true},
 		{resource(valueSet([]string{}...)), true},
@@ -329,15 +328,14 @@ func TestResources_PlusAll(t *testing.T) {
 // functional resource modifier
 type resourceOpt func(*mesos.Resource)
 
-func resource(opt ...resourceOpt) *mesos.Resource {
+func resource(opt ...resourceOpt) (r mesos.Resource) {
 	if len(opt) == 0 {
-		return nil
+		return
 	}
-	r := &mesos.Resource{}
 	for _, f := range opt {
-		f(r)
+		f(&r)
 	}
-	return r
+	return
 }
 
 func name(x string) resourceOpt { return func(r *mesos.Resource) { r.Name = x } }
@@ -377,7 +375,7 @@ func valueRange(p ...rangeOpt) resourceOpt {
 	}
 }
 
-func resources(r ...*mesos.Resource) (result mesos.Resources) {
+func resources(r ...mesos.Resource) (result mesos.Resources) {
 	for _, x := range r {
 		result.Add(x)
 	}

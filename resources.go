@@ -12,7 +12,7 @@ const (
 )
 
 type (
-	Resources       []*Resource
+	Resources       []Resource
 	ResourceFilter  func(*Resource) bool
 	ResourceFilters []ResourceFilter
 )
@@ -52,9 +52,9 @@ func (rf ResourceFilter) And(f ResourceFilter) ResourceFilter {
 }
 
 func (rf ResourceFilter) Apply(resources Resources) (result Resources) {
-	for _, r := range resources {
-		if rf(r) {
-			result.Add(r)
+	for i := range resources {
+		if rf(&resources[i]) {
+			result.Add(resources[i])
 		}
 	}
 	return
@@ -118,11 +118,11 @@ func (resources Resources) Ports() (Ranges, bool) {
 func (resources Resources) SumScalars(rf ResourceFilter) *Value_Scalar {
 	predicate := ResourceFilters{rf, ScalarResources}.Predicate()
 	var x *Value_Scalar
-	for _, r := range resources {
-		if !predicate(r) {
+	for i := range resources {
+		if !predicate(&resources[i]) {
 			continue
 		}
-		x = x.Add(r.GetScalar())
+		x = x.Add(resources[i].GetScalar())
 	}
 	return x
 }
@@ -130,11 +130,11 @@ func (resources Resources) SumScalars(rf ResourceFilter) *Value_Scalar {
 func (resources Resources) SumRanges(rf ResourceFilter) *Value_Ranges {
 	predicate := ResourceFilters{rf, RangeResources}.Predicate()
 	var x *Value_Ranges
-	for _, r := range resources {
-		if !predicate(r) {
+	for i := range resources {
+		if !predicate(&resources[i]) {
 			continue
 		}
-		x = x.Add(r.GetRanges())
+		x = x.Add(resources[i].GetRanges())
 	}
 	return x
 }
@@ -142,117 +142,13 @@ func (resources Resources) SumRanges(rf ResourceFilter) *Value_Ranges {
 func (resources Resources) SumSets(rf ResourceFilter) *Value_Set {
 	predicate := ResourceFilters{rf, SetResources}.Predicate()
 	var x *Value_Set
-	for _, r := range resources {
-		if !predicate(r) {
+	for i := range resources {
+		if !predicate(&resources[i]) {
 			continue
 		}
-		x = x.Add(r.GetSet())
+		x = x.Add(resources[i].GetSet())
 	}
 	return x
-}
-
-func (resources Resources) Apply(operation *Offer_Operation) (Resources, error) {
-	result := resources.Clone()
-	switch operation.GetType() {
-	case LAUNCH:
-		// launch op doens't alter offer resources
-	case RESERVE:
-		opRes := Resources(operation.GetReserve().GetResources())
-		err := opRes.Validate()
-		if err != nil {
-			return nil, fmt.Errorf("invalid RESERVE operation: %+v", err)
-		}
-		for _, r := range opRes {
-			if !r.IsReserved("") {
-				return nil, errors.New("invalid RESERVE operation: Resource must be reserved")
-			}
-			if r.GetReservation() == nil {
-				return nil, errors.New("invalid RESERVE operation: missing 'reservation'")
-			}
-			unreserved := Resources{r}.Flatten("", nil)
-			if !result.ContainsAll(unreserved) {
-				return nil, fmt.Errorf("invalid RESERVE operation: %+v does not contain %+v", result, unreserved)
-			}
-			result.SubtractAll(unreserved)
-			result.Add(r)
-		}
-	case UNRESERVE:
-		opRes := Resources(operation.GetUnreserve().GetResources())
-		err := opRes.Validate()
-		if err != nil {
-			return nil, fmt.Errorf("invalid UNRESERVE operation: %+v", err)
-		}
-		for _, r := range opRes {
-			if !r.IsReserved("") {
-				return nil, errors.New("invalid UNRESERVE operation: Resource is not reserved")
-			}
-			if r.GetReservation() == nil {
-				return nil, errors.New("invalid UNRESERVE operation: missing 'reservation'")
-			}
-			unreserved := Resources{r}.Flatten("", nil)
-			result.Subtract(r)
-			result.AddAll(unreserved)
-		}
-	case CREATE:
-		volumes := Resources(operation.GetCreate().GetVolumes())
-		err := volumes.Validate()
-		if err != nil {
-			return nil, fmt.Errorf("invalid CREATE operation: %+v", err)
-		}
-		for _, v := range volumes {
-			if v.GetDisk() == nil {
-				return nil, errors.New("invalid CREATE operation: missing 'disk'")
-			}
-			if v.GetDisk().GetPersistence() == nil {
-				return nil, errors.New("invalid CREATE operation: missing 'persistence'")
-			}
-			// from: https://github.com/apache/mesos/blob/master/src/common/resources.cpp
-			// Strip the disk info so that we can subtract it from the
-			// original resources.
-			// TODO(jieyu): Non-persistent volumes are not supported for
-			// now. Persistent volumes can only be be created from regular
-			// disk resources. Revisit this once we start to support
-			// non-persistent volumes.
-			stripped := proto.Clone(v).(*Resource)
-			stripped.Disk = nil
-			if !result.Contains(stripped) {
-				return nil, errors.New("invalid CREATE operation: insufficient disk resources")
-			}
-
-			result.Subtract(stripped)
-			result.Add(v)
-		}
-	case DESTROY:
-		volumes := Resources(operation.GetDestroy().GetVolumes())
-		err := volumes.Validate()
-		if err != nil {
-			return nil, fmt.Errorf("invalid DESTROY operation: %+v", err)
-		}
-		for _, v := range volumes {
-			if v.GetDisk() == nil {
-				return nil, errors.New("invalid DESTROY operation: missing 'disk'")
-			}
-			if v.GetDisk().GetPersistence() == nil {
-				return nil, errors.New("invalid DESTROY operation: missing 'persistence'")
-			}
-			if !result.Contains(v) {
-				return nil, errors.New("invalid DESTROY operation: persistent volume does not exist")
-			}
-			stripped := proto.Clone(v).(*Resource)
-			stripped.Disk = nil
-			result.Subtract(v)
-			result.Add(stripped)
-		}
-	default:
-		return nil, errors.New("unknown offer operation: " + operation.GetType().String())
-	}
-
-	// sanity CHECK, same as apache/mesos does
-	if !resources.sameTotals(result) {
-		panic("result != resources")
-	}
-
-	return result, nil
 }
 
 func (resources Resources) sameTotals(result Resources) bool {
@@ -279,8 +175,8 @@ func (resources Resources) sameTotals(result Resources) bool {
 }
 
 func (resources Resources) Find(targets Resources) (total Resources) {
-	for _, target := range targets {
-		found := resources.find(target)
+	for i := range targets {
+		found := resources.find(&resources[i])
 
 		// each target *must* be found
 		if len(found) == 0 {
@@ -295,7 +191,7 @@ func (resources Resources) Find(targets Resources) (total Resources) {
 func (resources Resources) find(target *Resource) Resources {
 	var (
 		total      = resources.Clone()
-		remaining  = Resources{target}.Flatten("", nil)
+		remaining  = Resources{*target}.Flatten("", nil)
 		found      Resources
 		predicates = ResourceFilters{
 			ReservedResources(target.GetRole()),
@@ -304,16 +200,17 @@ func (resources Resources) find(target *Resource) Resources {
 		}
 	)
 	for _, predicate := range predicates {
-		for _, r := range predicate.Apply(total) {
+		filtered := predicate.Apply(total)
+		for i := range filtered {
 			// need to flatten to ignore the roles in ContainsAll()
-			flattened := Resources{r}.Flatten("", nil)
+			flattened := Resources{filtered[i]}.Flatten("", nil)
 			if flattened.ContainsAll(remaining) {
 				// target has been found, return the result
-				return found.AddAll(remaining.Flatten(r.GetRole(), r.GetReservation()))
+				return found.AddAll(remaining.Flatten(filtered[i].GetRole(), filtered[i].Reservation))
 			}
 			if remaining.ContainsAll(flattened) {
-				found.Add(r)
-				total.Subtract(r)
+				found.Add(filtered[i])
+				total.Subtract(filtered[i])
 				remaining.SubtractAll(flattened)
 				break
 			}
@@ -326,10 +223,8 @@ func (resources Resources) Flatten(role string, ri *Resource_ReservationInfo) (f
 	if role == "" {
 		role = RoleDefault
 	}
+	// we intentionally manipulate a copy 'r' of the item in resources
 	for _, r := range resources {
-		if r == nil {
-			continue
-		}
 		r.Role = &role
 		if ri == nil {
 			r.Reservation = nil
@@ -342,18 +237,18 @@ func (resources Resources) Flatten(role string, ri *Resource_ReservationInfo) (f
 }
 
 func (resources Resources) Validate() error {
-	for _, r := range resources {
-		err := r.Validate()
+	for i := range resources {
+		err := resources[i].Validate()
 		if err != nil {
-			return fmt.Errorf("resource %v is invalid: %v", r, err)
+			return fmt.Errorf("resource %v is invalid: %v", resources[i], err)
 		}
 	}
 	return nil
 }
 
-func (resources Resources) contains(that *Resource) bool {
-	for _, r := range resources {
-		if r.Contains(that) {
+func (resources Resources) contains(that Resource) bool {
+	for i := range resources {
+		if resources[i].Contains(that) {
 			return true
 		}
 	}
@@ -364,7 +259,7 @@ func (resources Resources) Equivalent(that Resources) bool {
 	return resources.ContainsAll(that) && that.ContainsAll(resources)
 }
 
-func (resources Resources) Contains(that *Resource) bool {
+func (resources Resources) Contains(that Resource) bool {
 	// NOTE: We must validate 'that' because invalid resources can lead
 	// to false positives here (e.g., "cpus:-1" will return true). This
 	// is because 'contains' assumes resources are valid.
@@ -376,19 +271,20 @@ func (resources Resources) Clone() Resources {
 		return nil
 	}
 	clone := make(Resources, 0, len(resources))
-	for _, r := range resources {
-		clone = append(clone, proto.Clone(r).(*Resource))
+	for i := range resources {
+		rr := proto.Clone(&resources[i]).(*Resource)
+		clone = append(clone, *rr)
 	}
 	return clone
 }
 
 func (resources Resources) ContainsAll(that Resources) bool {
 	remaining := resources.Clone()
-	for _, r := range that {
-		if !remaining.contains(r) {
+	for i := range that {
+		if !remaining.contains(that[i]) {
 			return false
 		}
-		remaining.Subtract(r)
+		remaining.Subtract(that[i])
 	}
 	return true
 }
@@ -404,14 +300,12 @@ func (resources Resources) MinusAll(that Resources) Resources {
 // `resources` receiver).
 func (resources *Resources) SubtractAll(that Resources) (rs Resources) {
 	if resources != nil && len(that) > 0 {
-		// if *resources and that refer to the same slice we're in trouble;
-		// good thing that copies are cheap for pointer types (*Resource)
 		x := make(Resources, len(that))
 		copy(x, that)
 		that = x
 
-		for _, r := range that {
-			resources.Subtract(r)
+		for i := range that {
+			resources.Subtract(that[i])
 		}
 		rs = *resources
 	}
@@ -431,8 +325,8 @@ func (resources *Resources) AddAll(that Resources) (rs Resources) {
 	if resources != nil {
 		rs = *resources
 	}
-	for _, r := range that {
-		rs.Add(r)
+	for i := range that {
+		rs.Add(that[i])
 	}
 	if resources != nil {
 		*resources = rs
@@ -442,28 +336,30 @@ func (resources *Resources) AddAll(that Resources) (rs Resources) {
 
 // Plus calculates and returns the result of `resources + that` without modifying either
 // the receiving `resources` or `that`.
-func (resources Resources) Plus(that *Resource) Resources {
+func (resources Resources) Plus(that Resource) Resources {
 	x := resources.Clone()
 	return x.Add(that)
 }
 
 // Add adds `that` to the receiving `resources` and returns the result (the modified
 // `resources` receiver).
-func (resources *Resources) Add(that *Resource) (rs Resources) {
+func (resources *Resources) Add(that Resource) (rs Resources) {
 	if resources != nil {
 		rs = *resources
 	}
 	if that.Validate() != nil || that.IsEmpty() {
 		return
 	}
-	for _, r := range rs {
+	for i := range rs {
+		r := &rs[i]
 		if r.Addable(that) {
 			r.Add(that)
 			return
 		}
 	}
 	// cannot be combined with an existing resource
-	rs = append(rs, proto.Clone(that).(*Resource))
+	r := proto.Clone(&that).(*Resource)
+	rs = append(rs, *r)
 	if resources != nil {
 		*resources = rs
 	}
@@ -472,19 +368,20 @@ func (resources *Resources) Add(that *Resource) (rs Resources) {
 
 // Minus calculates and returns the result of `resources - that` without modifying either
 // the receiving `resources` or `that`.
-func (resources *Resources) Minus(that *Resource) Resources {
+func (resources *Resources) Minus(that Resource) Resources {
 	x := resources.Clone()
 	return x.Subtract(that)
 }
 
 // Subtract subtracts `that` from the receiving `resources` and returns the result (the modified
 // `resources` receiver).
-func (resources *Resources) Subtract(that *Resource) Resources {
+func (resources *Resources) Subtract(that Resource) Resources {
 	if resources == nil {
 		return nil
 	}
 	if that.Validate() == nil && !that.IsEmpty() {
-		for i, r := range *resources {
+		for i := range *resources {
+			r := &(*resources)[i]
 			if r.Subtractable(that) {
 				r.Subtract(that)
 				// remove the resource if it becomes invalid or zero.
@@ -493,7 +390,7 @@ func (resources *Resources) Subtract(that *Resource) Resources {
 				if r.Validate() != nil || r.IsEmpty() {
 					// delete resource at i, without leaking an uncollectable *Resource
 					// a, a[len(a)-1] = append(a[:i], a[i+1:]...), nil
-					(*resources), (*resources)[len((*resources))-1] = append((*resources)[:i], (*resources)[i+1:]...), nil
+					(*resources), (*resources)[len((*resources))-1] = append((*resources)[:i], (*resources)[i+1:]...), Resource{}
 				}
 				break
 			}
@@ -589,7 +486,7 @@ func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
 
 // Equivalent returns true if right is equivalent to left (differs from Equal in that
 // deeply nested values are test for equivalence, not equality).
-func (left *Resource) Equivalent(right *Resource) bool {
+func (left *Resource) Equivalent(right Resource) bool {
 	if left.GetName() != right.GetName() ||
 		left.GetType() != right.GetType() ||
 		left.GetRole() != right.GetRole() {
@@ -620,7 +517,7 @@ func (left *Resource) Equivalent(right *Resource) bool {
 // Addable tests if we can add two Resource objects together resulting in one
 // valid Resource object. For example, two Resource objects with
 // different name, type or role are not addable.
-func (left *Resource) Addable(right *Resource) bool {
+func (left *Resource) Addable(right Resource) bool {
 	if left.GetName() != right.GetName() ||
 		left.GetType() != right.GetType() ||
 		left.GetRole() != right.GetRole() {
@@ -655,7 +552,7 @@ func (left *Resource) Addable(right *Resource) bool {
 // "left = {1, 2}" and "right = {2, 3}", "left" and "right" are
 // subtractable because "left - right = {1}". However, "left" does not
 // contain "right".
-func (left *Resource) Subtractable(right *Resource) bool {
+func (left *Resource) Subtractable(right Resource) bool {
 	if left.GetName() != right.GetName() ||
 		left.GetType() != right.GetType() ||
 		left.GetRole() != right.GetRole() {
@@ -680,7 +577,7 @@ func (left *Resource) Subtractable(right *Resource) bool {
 }
 
 // Contains tests if "right" is contained in "left".
-func (left *Resource) Contains(right *Resource) bool {
+func (left *Resource) Contains(right Resource) bool {
 	if !left.Subtractable(right) {
 		return false
 	}
@@ -698,7 +595,7 @@ func (left *Resource) Contains(right *Resource) bool {
 
 // Subtract removes right from left.
 // This func panics if the resource types don't match.
-func (left *Resource) Subtract(right *Resource) {
+func (left *Resource) Subtract(right Resource) {
 	switch right.checkType(left.GetType()) {
 	case SCALAR:
 		left.Scalar = left.GetScalar().Subtract(right.GetScalar())
@@ -711,7 +608,7 @@ func (left *Resource) Subtract(right *Resource) {
 
 // Add adds right to left.
 // This func panics if the resource types don't match.
-func (left *Resource) Add(right *Resource) {
+func (left *Resource) Add(right Resource) {
 	switch right.checkType(left.GetType()) {
 	case SCALAR:
 		left.Scalar = left.GetScalar().Add(right.GetScalar())

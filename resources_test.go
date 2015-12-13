@@ -6,6 +6,146 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
+func TestResources_Equivalent(t *testing.T) {
+	for i, tc := range []struct {
+		r1, r2 mesos.Resources
+		wants  bool
+	}{
+		{r1: nil, r2: nil, wants: true},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(50), role("*")),
+				resource(name("mem"), valueScalar(4096), role("*")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(50), role("*")),
+				resource(name("mem"), valueScalar(4096), role("*")),
+			),
+			wants: true,
+		},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(50), role("role1")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(50), role("role2")),
+			),
+			wants: false,
+		},
+		{
+			r1:    resources(resource(name("ports"), valueRange(span(20, 40)), role("*"))),
+			r2:    resources(resource(name("ports"), valueRange(span(20, 30), span(31, 39), span(40, 40)), role("*"))),
+			wants: true,
+		},
+		{
+			r1:    resources(resource(name("disks"), valueSet("sda1"), role("*"))),
+			r2:    resources(resource(name("disks"), valueSet("sda1"), role("*"))),
+			wants: true,
+		},
+		{
+			r1:    resources(resource(name("disks"), valueSet("sda1"), role("*"))),
+			r2:    resources(resource(name("disks"), valueSet("sda2"), role("*"))),
+			wants: false,
+		},
+	} {
+		actual := tc.r1.Equivalent(tc.r2)
+		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
+	}
+}
+
+func TestResources_ContainsAll(t *testing.T) {
+	var (
+		ports1 = resources(resource(name("ports"), valueRange(span(2, 2), span(4, 5)), role("*")))
+		ports2 = resources(resource(name("ports"), valueRange(span(1, 10)), role("*")))
+		ports3 = resources(resource(name("ports"), valueRange(span(2, 3)), role("*")))
+		ports4 = resources(resource(name("ports"), valueRange(span(1, 2), span(4, 6)), role("*")))
+		ports5 = resources(resource(name("ports"), valueRange(span(1, 4), span(5, 5)), role("*")))
+
+		disks1 = resources(resource(name("disks"), valueSet("sda1", "sda2"), role("*")))
+		disks2 = resources(resource(name("disks"), valueSet("sda1", "sda3", "sda4", "sda2"), role("*")))
+	)
+	for i, tc := range []struct {
+		r1, r2 mesos.Resources
+		wants  bool
+	}{
+		// test case 0
+		{r1: nil, r2: nil, wants: true},
+		// test case 1
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(50), role("*")),
+				resource(name("mem"), valueScalar(4096), role("*")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(50), role("*")),
+				resource(name("mem"), valueScalar(4096), role("*")),
+			),
+			wants: true,
+		},
+		// test case 2
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(50), role("role1")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(50), role("role2")),
+			),
+			wants: false,
+		},
+		// test case 3
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(50), role("*")),
+				resource(name("mem"), valueScalar(3072), role("*")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(50), role("*")),
+				resource(name("mem"), valueScalar(4096), role("*")),
+			),
+			wants: false,
+		},
+		// test case 4
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(50), role("*")),
+				resource(name("mem"), valueScalar(4096), role("*")),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(50), role("*")),
+				resource(name("mem"), valueScalar(3072), role("*")),
+			),
+			wants: true,
+		},
+		// test case 5
+		{ports2, ports1, true},
+		// test case 6
+		{ports1, ports2, false},
+		// test case 7
+		{ports3, ports1, false},
+		// test case 8
+		{ports1, ports3, false},
+		// test case 9
+		{ports2, ports3, true},
+		// test case 10
+		{ports3, ports2, false},
+		// test case 11
+		{ports4, ports1, true},
+		// test case 12
+		{ports2, ports4, true},
+		// test case 13
+		{ports5, ports1, true},
+		// test case 14
+		{ports1, ports5, false},
+		// test case 15
+		{disks1, disks2, false},
+		// test case 16
+		{disks2, disks1, true},
+	} {
+		actual := tc.r1.ContainsAll(tc.r2)
+		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
+	}
+}
+
 func TestResource_IsEmpty(t *testing.T) {
 	for i, tc := range []struct {
 		r     mesos.Resource
@@ -21,9 +161,7 @@ func TestResource_IsEmpty(t *testing.T) {
 		{resource(valueRange(span(0, 0))), false},
 	} {
 		actual := tc.r.IsEmpty()
-		if tc.wants != actual {
-			t.Errorf("test case %d failed: wants (%t) != actual (%t)", i, tc.wants, actual)
-		}
+		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 	}
 }
 
@@ -376,8 +514,12 @@ func valueRange(p ...rangeOpt) resourceOpt {
 }
 
 func resources(r ...mesos.Resource) (result mesos.Resources) {
-	for _, x := range r {
-		result.Add(x)
+	return result.AddAll(r)
+}
+
+func expect(t *testing.T, cond bool, msgformat string, args ...interface{}) bool {
+	if !cond {
+		t.Errorf(msgformat, args...)
 	}
-	return result
+	return cond
 }

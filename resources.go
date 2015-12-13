@@ -577,17 +577,17 @@ func (left *Resource) Subtractable(right Resource) bool {
 }
 
 // Contains tests if "right" is contained in "left".
-func (left *Resource) Contains(right Resource) bool {
+func (left Resource) Contains(right Resource) bool {
 	if !left.Subtractable(right) {
 		return false
 	}
 	switch left.GetType() {
 	case SCALAR:
-		return left.GetScalar().Compare(right.GetScalar()) < 1
+		return right.GetScalar().Compare(left.GetScalar()) <= 0
 	case RANGES:
-		return left.GetRanges().Compare(right.GetRanges()) < 1
+		return right.GetRanges().Compare(left.GetRanges()) <= 0
 	case SET:
-		return left.GetSet().Compare(right.GetSet()) < 1
+		return right.GetSet().Compare(left.GetSet()) <= 0
 	default:
 		return false
 	}

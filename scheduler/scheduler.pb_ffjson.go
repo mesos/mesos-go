@@ -5249,66 +5249,48 @@ func (mj *Event_Offers) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Offers) != 0 {
-		buf.WriteString(`"offers":`)
-		if mj.Offers != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Offers {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"offers":`)
+	if mj.Offers != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Offers {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
-		}
-		buf.WriteByte(',')
-	}
-	if len(mj.InverseOffers) != 0 {
-		buf.WriteString(`"inverse_offers":`)
-		if mj.InverseOffers != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.InverseOffers {
-				if i != 0 {
-					buf.WriteString(`,`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
 				}
 
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
+	buf.WriteString(`,"inverse_offers":`)
+	if mj.InverseOffers != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.InverseOffers {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
 	buf.WriteByte('}')
 	return nil
 }
@@ -5454,7 +5436,7 @@ mainparse:
 
 handle_Offers:
 
-	/* handler: uj.Offers type=[]*mesos.Offer kind=slice quoted=false*/
+	/* handler: uj.Offers type=[]mesos.Offer kind=slice quoted=false*/
 
 	{
 
@@ -5468,13 +5450,13 @@ handle_Offers:
 			uj.Offers = nil
 		} else {
 
-			uj.Offers = make([]*mesos.Offer, 0)
+			uj.Offers = make([]mesos.Offer, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *mesos.Offer
+				var v mesos.Offer
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -5495,19 +5477,13 @@ handle_Offers:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Offer kind=ptr quoted=false*/
+				/* handler: v type=mesos.Offer kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(mesos.Offer)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -5528,7 +5504,7 @@ handle_Offers:
 
 handle_InverseOffers:
 
-	/* handler: uj.InverseOffers type=[]*mesos.InverseOffer kind=slice quoted=false*/
+	/* handler: uj.InverseOffers type=[]mesos.InverseOffer kind=slice quoted=false*/
 
 	{
 
@@ -5542,13 +5518,13 @@ handle_InverseOffers:
 			uj.InverseOffers = nil
 		} else {
 
-			uj.InverseOffers = make([]*mesos.InverseOffer, 0)
+			uj.InverseOffers = make([]mesos.InverseOffer, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *mesos.InverseOffer
+				var v mesos.InverseOffer
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -5569,19 +5545,13 @@ handle_InverseOffers:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.InverseOffer kind=ptr quoted=false*/
+				/* handler: v type=mesos.InverseOffer kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(mesos.InverseOffer)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)

@@ -147,7 +147,7 @@ message URL {
   required string scheme = 1 [(gogoproto.nullable) = false];
   required Address address = 2 [(gogoproto.nullable) = false];
   optional string path = 3;
-  repeated Parameter query = 4;
+  repeated Parameter query = 4 [(gogoproto.nullable) = false];
   optional string fragment = 5;
 }
 
@@ -283,7 +283,7 @@ message FrameworkInfo {
   // This field allows a framework to advertise its set of
   // capabilities (e.g., ability to receive offers for revocable
   // resources).
-  repeated Capability capabilities = 10;
+  repeated Capability capabilities = 10 [(gogoproto.nullable) = false];
 
   // Labels are free-form key value pairs supplied by the framework
   // scheduler (e.g., to describe additional functionality offered by
@@ -405,7 +405,7 @@ message CommandInfo {
   // attribute and tasks supplying a 'container' will fail.
   optional ContainerInfo container = 4;
 
-  repeated URI uris = 1 [(gogoproto.customname) = "URIs"];
+  repeated URI uris = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "URIs"];
 
   optional Environment environment = 2;
 
@@ -445,7 +445,7 @@ message ExecutorInfo {
   // with the executor's CommandInfo and we expect the container to
   // act as a Mesos executor.
   optional ContainerInfo container = 11;
-  repeated Resource resources = 5;
+  repeated Resource resources = 5 [(gogoproto.nullable) = false];
   optional string name = 9;
 
   // 'source' is an identifier style string used by frameworks to
@@ -516,8 +516,8 @@ message MasterInfo {
 message AgentInfo {
   required string hostname = 1 [(gogoproto.nullable) = false];
   optional int32 port = 8 [default = 5051];
-  repeated Resource resources = 3;
-  repeated Attribute attributes = 5;
+  repeated Resource resources = 3 [(gogoproto.nullable) = false];
+  repeated Attribute attributes = 5 [(gogoproto.nullable) = false];
   optional AgentID id = 6 [(gogoproto.customname) = "ID"];
 }
 
@@ -800,7 +800,7 @@ message ResourceStatistics {
   // Network traffic flowing into or out of a container can be delayed
   // or dropped due to congestion or policy inside and outside the
   // container.
-  repeated TrafficControlStatistics net_traffic_control_statistics = 35;
+  repeated TrafficControlStatistics net_traffic_control_statistics = 35 [(gogoproto.nullable) = false];
 }
 
 
@@ -813,18 +813,18 @@ message ResourceUsage {
 
     // This includes resources used by the executor itself
     // as well as its active tasks.
-    repeated Resource allocated = 2;
+    repeated Resource allocated = 2 [(gogoproto.nullable) = false];
 
     // Current resource usage. If absent, the containerizer
     // cannot provide resource usage.
     optional ResourceStatistics statistics = 3;
   }
 
-  repeated Executor executors = 1;
+  repeated Executor executors = 1 [(gogoproto.nullable) = false];
 
   // Agent's total resources including checkpointed dynamic
   // reservations and persistent volumes.
-  repeated Resource total = 2;
+  repeated Resource total = 2 [(gogoproto.nullable) = false];
 }
 
 
@@ -911,7 +911,7 @@ message PerfStatistics {
  */
 message Request {
   optional AgentID agent_id = 1 [(gogoproto.customname) = "AgentID"];
-  repeated Resource resources = 2;
+  repeated Resource resources = 2 [(gogoproto.nullable) = false];
 }
 
 
@@ -928,9 +928,9 @@ message Offer {
   // URL for reaching the agent running on the host.
   optional URL url = 8;
 
-  repeated Resource resources = 5;
-  repeated Attribute attributes = 7;
-  repeated ExecutorID executor_ids = 6 [(gogoproto.customname) = "ExecutorIDs"];
+  repeated Resource resources = 5 [(gogoproto.nullable) = false];
+  repeated Attribute attributes = 7 [(gogoproto.nullable) = false];
+  repeated ExecutorID executor_ids = 6 [(gogoproto.nullable) = false, (gogoproto.customname) = "ExecutorIDs"];
 
   // Signifies that the resources in this Offer may be unavailable during
   // the given interval.  Any tasks launched using these resources may be
@@ -955,23 +955,23 @@ message Offer {
     }
 
     message Launch {
-      repeated TaskInfo task_infos = 1;
+      repeated TaskInfo task_infos = 1 [(gogoproto.nullable) = false];
     }
 
     message Reserve {
-      repeated Resource resources = 1;
+      repeated Resource resources = 1 [(gogoproto.nullable) = false];
     }
 
     message Unreserve {
-      repeated Resource resources = 1;
+      repeated Resource resources = 1 [(gogoproto.nullable) = false];
     }
 
     message Create {
-      repeated Resource volumes = 1;
+      repeated Resource volumes = 1 [(gogoproto.nullable) = false];
     }
 
     message Destroy {
-      repeated Resource volumes = 1;
+      repeated Resource volumes = 1 [(gogoproto.nullable) = false];
     }
 
     required Type type = 1;
@@ -1028,7 +1028,7 @@ message InverseOffer {
   // then all resources are being requested back.  For the purpose of
   // maintenance, this field is always empty (maintenance always requests
   // all resources back).
-  repeated Resource resources = 6;
+  repeated Resource resources = 6 [(gogoproto.nullable) = false];
 
   // TODO(josephw): Add additional options for narrowing down the resources
   // being requested back.  Such as specific executors, tasks, etc.
@@ -1046,7 +1046,7 @@ message TaskInfo {
   required string name = 1 [(gogoproto.nullable) = false];
   required TaskID task_id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "TaskID"];
   required AgentID agent_id = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
-  repeated Resource resources = 4;
+  repeated Resource resources = 4 [(gogoproto.nullable) = false];
   optional ExecutorInfo executor = 5;
   optional CommandInfo command = 7;
   // Task provided with a container will launch the container as part
@@ -1190,7 +1190,7 @@ message Environment {
     required string value = 2 [(gogoproto.nullable) = false];
   }
 
-  repeated Variable variables = 1;
+  repeated Variable variables = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -1207,7 +1207,7 @@ message Parameter {
  * Collection of Parameter.
  */
 message Parameters {
-  repeated Parameter parameter = 1;
+  repeated Parameter parameter = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -1232,7 +1232,7 @@ message Credential {
  * 'principal' and 'secret' respectively), etc.
  */
 message Credentials {
-  repeated Credential credentials = 1;
+  repeated Credential credentials = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -1267,7 +1267,7 @@ message RateLimit {
  */
 message RateLimits {
   // Items should have unique principals.
-  repeated RateLimit limits = 1;
+  repeated RateLimit limits = 1 [(gogoproto.nullable) = false];
 
   // All the frameworks not specified in 'limits' get this default rate.
   // This rate is an aggregate rate for all of them, i.e., their combined
@@ -1372,7 +1372,7 @@ message ContainerInfo {
       optional string protocol = 3;
     }
 
-    repeated PortMapping port_mappings = 3;
+    repeated PortMapping port_mappings = 3 [(gogoproto.nullable) = false];
 
     optional bool privileged = 4 [default = false];
 
@@ -1380,7 +1380,7 @@ message ContainerInfo {
     // Note that anything passed to this field is not guaranteed
     // to be supported moving forward, as we might move away from
     // the docker CLI.
-    repeated Parameter parameters = 5;
+    repeated Parameter parameters = 5 [(gogoproto.nullable) = false];
 
     // With this flag set to true, the docker containerizer will
     // pull the docker image from the registry even if the image
@@ -1393,7 +1393,7 @@ message ContainerInfo {
   }
 
   required Type type = 1;
-  repeated Volume volumes = 2;
+  repeated Volume volumes = 2 [(gogoproto.nullable) = false];
   optional string hostname = 4;
 
   // Only one of the following *Info messages should be set to match
@@ -1434,7 +1434,7 @@ message Port {
  * Collection of ports.
  */
 message Ports {
-  repeated Port ports = 1;
+  repeated Port ports = 1 [(gogoproto.nullable) = false];
 }
 
 

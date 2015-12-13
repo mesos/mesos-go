@@ -28,15 +28,19 @@ func NewPortRanges(o *Offer) Ranges {
 		return Ranges{}
 	}
 
-	var r *Resource
+	var (
+		r     Resource
+		found bool
+	)
 	for i := range o.Resources {
 		if o.Resources[i].GetName() == "ports" {
 			r = o.Resources[i]
+			found = true
 			break
 		}
 	}
 
-	if r == nil {
+	if !found {
 		return Ranges{}
 	}
 
@@ -221,10 +225,10 @@ func (rs Ranges) Min() uint64 { return rs[0].Begin }
 func (rs Ranges) Max() uint64 { return rs[len(rs)-1].End }
 
 // resource returns a *Resource with the given name and Ranges.
-func (rs Ranges) resource(name string) *Resource {
+func (rs Ranges) resource(name string) Resource {
 	vr := make([]Value_Range, len(rs))
 	copy(vr, rs)
-	return &Resource{
+	return Resource{
 		Name:   name,
 		Type:   RANGES.Enum(),
 		Ranges: &Value_Ranges{Range: vr},

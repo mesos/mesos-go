@@ -88,8 +88,8 @@ message Event {
   // inverse offer informs the allocator of the scheduler's ability to
   // release the resources without violating an SLA.
   message Offers {
-    repeated Offer offers = 1;
-    repeated InverseOffer inverse_offers = 2;
+    repeated Offer offers = 1 [(gogoproto.nullable) = false];
+    repeated InverseOffer inverse_offers = 2 [(gogoproto.nullable) = false];
   }
 
   // Received when a particular offer is no longer valid (e.g., the

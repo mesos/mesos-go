@@ -170,6 +170,7 @@ func (rs Ranges) Remove(removal Value_Range) Ranges {
 }
 
 // Compare assumes that both Ranges are already in sort-order.
+// Returns 0 if left and right are equivalent, -1 if left is a subset of right, or else 1
 func (left Ranges) Compare(right Ranges) int {
 	x, y, result := left.equiv(right)
 	if result {
@@ -200,10 +201,18 @@ func (left Ranges) Equivalent(right Ranges) (result bool) {
 // Equivalent assumes that both Ranges are already in sort-order.
 func (left Ranges) equiv(right Ranges) (_, _ Ranges, _ bool) {
 	// we need to squash left and right but don't want to change the originals
-	if len(left) > 1 {
+	switch len(left) {
+	case 0:
+	case 1:
+		left = Ranges{left[0]}
+	default:
 		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...)).Sort().Squash()
 	}
-	if len(right) > 1 {
+	switch len(right) {
+	case 0:
+	case 1:
+		right = Ranges{right[0]}
+	default:
 		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...)).Sort().Squash()
 	}
 	return left, right, (&Value_Ranges{Range: left}).Equal(&Value_Ranges{Range: right})

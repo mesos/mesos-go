@@ -275,21 +275,21 @@ func (m *Event_Subscribed) GetHeartbeatIntervalSeconds() float64 {
 // inverse offer informs the allocator of the scheduler's ability to
 // release the resources without violating an SLA.
 type Event_Offers struct {
-	Offers        []*mesos.Offer        `protobuf:"bytes,1,rep,name=offers" json:"offers,omitempty"`
-	InverseOffers []*mesos.InverseOffer `protobuf:"bytes,2,rep,name=inverse_offers" json:"inverse_offers,omitempty"`
+	Offers        []mesos.Offer        `protobuf:"bytes,1,rep,name=offers" json:"offers"`
+	InverseOffers []mesos.InverseOffer `protobuf:"bytes,2,rep,name=inverse_offers" json:"inverse_offers"`
 }
 
 func (m *Event_Offers) Reset()      { *m = Event_Offers{} }
 func (*Event_Offers) ProtoMessage() {}
 
-func (m *Event_Offers) GetOffers() []*mesos.Offer {
+func (m *Event_Offers) GetOffers() []mesos.Offer {
 	if m != nil {
 		return m.Offers
 	}
 	return nil
 }
 
-func (m *Event_Offers) GetInverseOffers() []*mesos.InverseOffer {
+func (m *Event_Offers) GetInverseOffers() []mesos.InverseOffer {
 	if m != nil {
 		return m.InverseOffers
 	}
@@ -1063,7 +1063,7 @@ func (this *Event_Offers) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("Offers this(%v) Not Equal that(%v)", len(this.Offers), len(that1.Offers))
 	}
 	for i := range this.Offers {
-		if !this.Offers[i].Equal(that1.Offers[i]) {
+		if !this.Offers[i].Equal(&that1.Offers[i]) {
 			return fmt.Errorf("Offers this[%v](%v) Not Equal that[%v](%v)", i, this.Offers[i], i, that1.Offers[i])
 		}
 	}
@@ -1071,7 +1071,7 @@ func (this *Event_Offers) VerboseEqual(that interface{}) error {
 		return fmt.Errorf("InverseOffers this(%v) Not Equal that(%v)", len(this.InverseOffers), len(that1.InverseOffers))
 	}
 	for i := range this.InverseOffers {
-		if !this.InverseOffers[i].Equal(that1.InverseOffers[i]) {
+		if !this.InverseOffers[i].Equal(&that1.InverseOffers[i]) {
 			return fmt.Errorf("InverseOffers this[%v](%v) Not Equal that[%v](%v)", i, this.InverseOffers[i], i, that1.InverseOffers[i])
 		}
 	}
@@ -1101,7 +1101,7 @@ func (this *Event_Offers) Equal(that interface{}) bool {
 		return false
 	}
 	for i := range this.Offers {
-		if !this.Offers[i].Equal(that1.Offers[i]) {
+		if !this.Offers[i].Equal(&that1.Offers[i]) {
 			return false
 		}
 	}
@@ -1109,7 +1109,7 @@ func (this *Event_Offers) Equal(that interface{}) bool {
 		return false
 	}
 	for i := range this.InverseOffers {
-		if !this.InverseOffers[i].Equal(that1.InverseOffers[i]) {
+		if !this.InverseOffers[i].Equal(&that1.InverseOffers[i]) {
 			return false
 		}
 	}
@@ -2206,10 +2206,10 @@ func (this *Event_Offers) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&scheduler.Event_Offers{")
 	if this.Offers != nil {
-		s = append(s, "Offers: "+fmt.Sprintf("%#v", this.Offers)+",\n")
+		s = append(s, "Offers: "+strings.Replace(fmt.Sprintf("%#v", this.Offers), `&`, ``, 1)+",\n")
 	}
 	if this.InverseOffers != nil {
-		s = append(s, "InverseOffers: "+fmt.Sprintf("%#v", this.InverseOffers)+",\n")
+		s = append(s, "InverseOffers: "+strings.Replace(fmt.Sprintf("%#v", this.InverseOffers), `&`, ``, 1)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -3414,16 +3414,18 @@ func NewPopulatedEvent_Offers(r randyScheduler, easy bool) *Event_Offers {
 	this := &Event_Offers{}
 	if r.Intn(10) != 0 {
 		v3 := r.Intn(10)
-		this.Offers = make([]*mesos.Offer, v3)
+		this.Offers = make([]mesos.Offer, v3)
 		for i := 0; i < v3; i++ {
-			this.Offers[i] = mesos.NewPopulatedOffer(r, easy)
+			v4 := mesos.NewPopulatedOffer(r, easy)
+			this.Offers[i] = *v4
 		}
 	}
 	if r.Intn(10) != 0 {
-		v4 := r.Intn(10)
-		this.InverseOffers = make([]*mesos.InverseOffer, v4)
-		for i := 0; i < v4; i++ {
-			this.InverseOffers[i] = mesos.NewPopulatedInverseOffer(r, easy)
+		v5 := r.Intn(10)
+		this.InverseOffers = make([]mesos.InverseOffer, v5)
+		for i := 0; i < v5; i++ {
+			v6 := mesos.NewPopulatedInverseOffer(r, easy)
+			this.InverseOffers[i] = *v6
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -3433,8 +3435,8 @@ func NewPopulatedEvent_Offers(r randyScheduler, easy bool) *Event_Offers {
 
 func NewPopulatedEvent_Rescind(r randyScheduler, easy bool) *Event_Rescind {
 	this := &Event_Rescind{}
-	v5 := mesos.NewPopulatedOfferID(r, easy)
-	this.OfferID = *v5
+	v7 := mesos.NewPopulatedOfferID(r, easy)
+	this.OfferID = *v7
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -3452,9 +3454,9 @@ func NewPopulatedEvent_Message(r randyScheduler, easy bool) *Event_Message {
 	this := &Event_Message{}
 	this.AgentId = mesos.NewPopulatedAgentID(r, easy)
 	this.ExecutorId = mesos.NewPopulatedExecutorID(r, easy)
-	v6 := r.Intn(100)
-	this.Data = make([]byte, v6)
-	for i := 0; i < v6; i++ {
+	v8 := r.Intn(100)
+	this.Data = make([]byte, v8)
+	for i := 0; i < v8; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -3471,11 +3473,11 @@ func NewPopulatedEvent_Failure(r randyScheduler, easy bool) *Event_Failure {
 		this.ExecutorId = mesos.NewPopulatedExecutorID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v7 := int32(r.Int31())
+		v9 := int32(r.Int31())
 		if r.Intn(2) == 0 {
-			v7 *= -1
+			v9 *= -1
 		}
-		this.Status = &v7
+		this.Status = &v9
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -3484,8 +3486,8 @@ func NewPopulatedEvent_Failure(r randyScheduler, easy bool) *Event_Failure {
 
 func NewPopulatedEvent_Error(r randyScheduler, easy bool) *Event_Error {
 	this := &Event_Error{}
-	v8 := randStringScheduler(r)
-	this.Message = &v8
+	v10 := randStringScheduler(r)
+	this.Message = &v10
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -3496,8 +3498,8 @@ func NewPopulatedCall(r randyScheduler, easy bool) *Call {
 	if r.Intn(10) != 0 {
 		this.FrameworkID = mesos.NewPopulatedFrameworkID(r, easy)
 	}
-	v9 := Call_Type([]int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}[r.Intn(12)])
-	this.Type = &v9
+	v11 := Call_Type([]int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}[r.Intn(12)])
+	this.Type = &v11
 	if r.Intn(10) != 0 {
 		this.Subscribe = NewPopulatedCall_Subscribe(r, easy)
 	}
@@ -3542,19 +3544,19 @@ func NewPopulatedCall_Subscribe(r randyScheduler, easy bool) *Call_Subscribe {
 func NewPopulatedCall_Accept(r randyScheduler, easy bool) *Call_Accept {
 	this := &Call_Accept{}
 	if r.Intn(10) != 0 {
-		v10 := r.Intn(10)
-		this.OfferIDs = make([]mesos.OfferID, v10)
-		for i := 0; i < v10; i++ {
-			v11 := mesos.NewPopulatedOfferID(r, easy)
-			this.OfferIDs[i] = *v11
+		v12 := r.Intn(10)
+		this.OfferIDs = make([]mesos.OfferID, v12)
+		for i := 0; i < v12; i++ {
+			v13 := mesos.NewPopulatedOfferID(r, easy)
+			this.OfferIDs[i] = *v13
 		}
 	}
 	if r.Intn(10) != 0 {
-		v12 := r.Intn(10)
-		this.Operations = make([]mesos.Offer_Operation, v12)
-		for i := 0; i < v12; i++ {
-			v13 := mesos.NewPopulatedOffer_Operation(r, easy)
-			this.Operations[i] = *v13
+		v14 := r.Intn(10)
+		this.Operations = make([]mesos.Offer_Operation, v14)
+		for i := 0; i < v14; i++ {
+			v15 := mesos.NewPopulatedOffer_Operation(r, easy)
+			this.Operations[i] = *v15
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -3568,11 +3570,11 @@ func NewPopulatedCall_Accept(r randyScheduler, easy bool) *Call_Accept {
 func NewPopulatedCall_Decline(r randyScheduler, easy bool) *Call_Decline {
 	this := &Call_Decline{}
 	if r.Intn(10) != 0 {
-		v14 := r.Intn(10)
-		this.OfferIDs = make([]mesos.OfferID, v14)
-		for i := 0; i < v14; i++ {
-			v15 := mesos.NewPopulatedOfferID(r, easy)
-			this.OfferIDs[i] = *v15
+		v16 := r.Intn(10)
+		this.OfferIDs = make([]mesos.OfferID, v16)
+		for i := 0; i < v16; i++ {
+			v17 := mesos.NewPopulatedOfferID(r, easy)
+			this.OfferIDs[i] = *v17
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -3585,8 +3587,8 @@ func NewPopulatedCall_Decline(r randyScheduler, easy bool) *Call_Decline {
 
 func NewPopulatedCall_Kill(r randyScheduler, easy bool) *Call_Kill {
 	this := &Call_Kill{}
-	v16 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v16
+	v18 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v18
 	if r.Intn(10) != 0 {
 		this.AgentID = mesos.NewPopulatedAgentID(r, easy)
 	}
@@ -3597,10 +3599,10 @@ func NewPopulatedCall_Kill(r randyScheduler, easy bool) *Call_Kill {
 
 func NewPopulatedCall_Shutdown(r randyScheduler, easy bool) *Call_Shutdown {
 	this := &Call_Shutdown{}
-	v17 := mesos.NewPopulatedExecutorID(r, easy)
-	this.ExecutorID = *v17
-	v18 := mesos.NewPopulatedAgentID(r, easy)
-	this.AgentID = *v18
+	v19 := mesos.NewPopulatedExecutorID(r, easy)
+	this.ExecutorID = *v19
+	v20 := mesos.NewPopulatedAgentID(r, easy)
+	this.AgentID = *v20
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -3608,13 +3610,13 @@ func NewPopulatedCall_Shutdown(r randyScheduler, easy bool) *Call_Shutdown {
 
 func NewPopulatedCall_Acknowledge(r randyScheduler, easy bool) *Call_Acknowledge {
 	this := &Call_Acknowledge{}
-	v19 := mesos.NewPopulatedAgentID(r, easy)
-	this.AgentID = *v19
-	v20 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v20
-	v21 := r.Intn(100)
-	this.UUID = make([]byte, v21)
-	for i := 0; i < v21; i++ {
+	v21 := mesos.NewPopulatedAgentID(r, easy)
+	this.AgentID = *v21
+	v22 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v22
+	v23 := r.Intn(100)
+	this.UUID = make([]byte, v23)
+	for i := 0; i < v23; i++ {
 		this.UUID[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -3625,11 +3627,11 @@ func NewPopulatedCall_Acknowledge(r randyScheduler, easy bool) *Call_Acknowledge
 func NewPopulatedCall_Reconcile(r randyScheduler, easy bool) *Call_Reconcile {
 	this := &Call_Reconcile{}
 	if r.Intn(10) != 0 {
-		v22 := r.Intn(10)
-		this.Tasks = make([]Call_Reconcile_Task, v22)
-		for i := 0; i < v22; i++ {
-			v23 := NewPopulatedCall_Reconcile_Task(r, easy)
-			this.Tasks[i] = *v23
+		v24 := r.Intn(10)
+		this.Tasks = make([]Call_Reconcile_Task, v24)
+		for i := 0; i < v24; i++ {
+			v25 := NewPopulatedCall_Reconcile_Task(r, easy)
+			this.Tasks[i] = *v25
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -3639,8 +3641,8 @@ func NewPopulatedCall_Reconcile(r randyScheduler, easy bool) *Call_Reconcile {
 
 func NewPopulatedCall_Reconcile_Task(r randyScheduler, easy bool) *Call_Reconcile_Task {
 	this := &Call_Reconcile_Task{}
-	v24 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v24
+	v26 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v26
 	if r.Intn(10) != 0 {
 		this.AgentID = mesos.NewPopulatedAgentID(r, easy)
 	}
@@ -3651,13 +3653,13 @@ func NewPopulatedCall_Reconcile_Task(r randyScheduler, easy bool) *Call_Reconcil
 
 func NewPopulatedCall_Message(r randyScheduler, easy bool) *Call_Message {
 	this := &Call_Message{}
-	v25 := mesos.NewPopulatedAgentID(r, easy)
-	this.AgentID = *v25
-	v26 := mesos.NewPopulatedExecutorID(r, easy)
-	this.ExecutorID = *v26
-	v27 := r.Intn(100)
-	this.Data = make([]byte, v27)
-	for i := 0; i < v27; i++ {
+	v27 := mesos.NewPopulatedAgentID(r, easy)
+	this.AgentID = *v27
+	v28 := mesos.NewPopulatedExecutorID(r, easy)
+	this.ExecutorID = *v28
+	v29 := r.Intn(100)
+	this.Data = make([]byte, v29)
+	for i := 0; i < v29; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -3668,11 +3670,11 @@ func NewPopulatedCall_Message(r randyScheduler, easy bool) *Call_Message {
 func NewPopulatedCall_Request(r randyScheduler, easy bool) *Call_Request {
 	this := &Call_Request{}
 	if r.Intn(10) != 0 {
-		v28 := r.Intn(10)
-		this.Requests = make([]mesos.Request, v28)
-		for i := 0; i < v28; i++ {
-			v29 := mesos.NewPopulatedRequest(r, easy)
-			this.Requests[i] = *v29
+		v30 := r.Intn(10)
+		this.Requests = make([]mesos.Request, v30)
+		for i := 0; i < v30; i++ {
+			v31 := mesos.NewPopulatedRequest(r, easy)
+			this.Requests[i] = *v31
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -3699,9 +3701,9 @@ func randUTF8RuneScheduler(r randyScheduler) rune {
 	return rune(ru + 61)
 }
 func randStringScheduler(r randyScheduler) string {
-	v30 := r.Intn(100)
-	tmps := make([]rune, v30)
-	for i := 0; i < v30; i++ {
+	v32 := r.Intn(100)
+	tmps := make([]rune, v32)
+	for i := 0; i < v32; i++ {
 		tmps[i] = randUTF8RuneScheduler(r)
 	}
 	return string(tmps)
@@ -3723,11 +3725,11 @@ func randFieldScheduler(data []byte, r randyScheduler, fieldNumber int, wire int
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateScheduler(data, uint64(key))
-		v31 := r.Int63()
+		v33 := r.Int63()
 		if r.Intn(2) == 0 {
-			v31 *= -1
+			v33 *= -1
 		}
-		data = encodeVarintPopulateScheduler(data, uint64(v31))
+		data = encodeVarintPopulateScheduler(data, uint64(v33))
 	case 1:
 		data = encodeVarintPopulateScheduler(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -4113,8 +4115,8 @@ func (this *Event_Offers) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Event_Offers{`,
-		`Offers:` + strings.Replace(fmt.Sprintf("%v", this.Offers), "Offer", "mesos.Offer", 1) + `,`,
-		`InverseOffers:` + strings.Replace(fmt.Sprintf("%v", this.InverseOffers), "InverseOffer", "mesos.InverseOffer", 1) + `,`,
+		`Offers:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Offers), "Offer", "mesos.Offer", 1), `&`, ``, 1) + `,`,
+		`InverseOffers:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.InverseOffers), "InverseOffer", "mesos.InverseOffer", 1), `&`, ``, 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -4780,7 +4782,7 @@ func (m *Event_Offers) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Offers = append(m.Offers, &mesos.Offer{})
+			m.Offers = append(m.Offers, mesos.Offer{})
 			if err := m.Offers[len(m.Offers)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -4811,7 +4813,7 @@ func (m *Event_Offers) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.InverseOffers = append(m.InverseOffers, &mesos.InverseOffer{})
+			m.InverseOffers = append(m.InverseOffers, mesos.InverseOffer{})
 			if err := m.InverseOffers[len(m.InverseOffers)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}

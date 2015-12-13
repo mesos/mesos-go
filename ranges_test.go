@@ -40,7 +40,7 @@ func TestNewPortRanges(t *testing.T) {
 		{Ranges{}, Ranges{}},
 		{nil, Ranges{}},
 	} {
-		offer := &Offer{Resources: []*Resource{tt.resource("ports")}}
+		offer := &Offer{Resources: []Resource{tt.resource("ports")}}
 		if got := NewPortRanges(offer); !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("test #%d, NewPortRanges(%v): got: %v, want: %v", i, tt.Ranges, got, tt.want)
 		}

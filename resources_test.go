@@ -277,7 +277,7 @@ func TestResource_IsEmpty(t *testing.T) {
 	}
 }
 
-func TestResources_MinusAll(t *testing.T) {
+func TestResources_Minus(t *testing.T) {
 	for i, tc := range []struct {
 		r1, r2      mesos.Resources
 		wants       mesos.Resources
@@ -403,8 +403,8 @@ func TestResources_MinusAll(t *testing.T) {
 	} {
 		backup := tc.r1.Clone()
 
-		// MinusAll preserves the left operand
-		actual := tc.r1.MinusAll(tc.r2)
+		// Minus preserves the left operand
+		actual := tc.r1.Minus(tc.r2...)
 		if !tc.wants.Equivalent(actual) {
 			t.Errorf("test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 		}
@@ -413,7 +413,7 @@ func TestResources_MinusAll(t *testing.T) {
 		}
 
 		// SubtractAll mutates the left operand
-		tc.r1.SubtractAll(tc.r2)
+		tc.r1.Subtract(tc.r2...)
 		if !tc.wants.Equivalent(tc.r1) {
 			t.Errorf("test case %d failed: wants (%v) != r1 (%v)", i, tc.wants, tc.r1)
 		}
@@ -433,14 +433,14 @@ func TestResources_MinusAll(t *testing.T) {
 		}
 
 		t.Logf("substracting tc.r1 from itself\n")
-		tc.r1.SubtractAll(tc.r1)
+		tc.r1.Subtract(tc.r1...)
 		if len(tc.r1) > 0 {
 			t.Errorf("test case %d failed: r1 is not empty (%v)", i, tc.r1)
 		}
 	}
 }
 
-func TestResources_PlusAll(t *testing.T) {
+func TestResources_Plus(t *testing.T) {
 	for i, tc := range []struct {
 		r1, r2      mesos.Resources
 		wants       mesos.Resources
@@ -544,8 +544,8 @@ func TestResources_PlusAll(t *testing.T) {
 	} {
 		backup := tc.r1.Clone()
 
-		// PlusAll preserves the left operand
-		actual := tc.r1.PlusAll(tc.r2)
+		// Plus preserves the left operand
+		actual := tc.r1.Plus(tc.r2...)
 		if !tc.wants.Equivalent(actual) {
 			t.Errorf("test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 		}
@@ -553,8 +553,8 @@ func TestResources_PlusAll(t *testing.T) {
 			t.Errorf("test case %d failed: backup (%v) != r1 (%v)", i, backup, tc.r1)
 		}
 
-		// AddAll mutates the left operand
-		tc.r1.AddAll(tc.r2)
+		// Add mutates the left operand
+		tc.r1.Add(tc.r2...)
 		if !tc.wants.Equivalent(tc.r1) {
 			t.Errorf("test case %d failed: wants (%v) != r1 (%v)", i, tc.wants, tc.r1)
 		}
@@ -626,7 +626,7 @@ func valueRange(p ...rangeOpt) resourceOpt {
 }
 
 func resources(r ...mesos.Resource) (result mesos.Resources) {
-	return result.AddAll(r)
+	return result.Add(r...)
 }
 
 func expect(t *testing.T, cond bool, msgformat string, args ...interface{}) bool {

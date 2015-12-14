@@ -98,8 +98,8 @@ func opReserve(operation Offer_Operation, resources Resources) (Resources, error
 		if !result.ContainsAll(unreserved) {
 			return nil, fmt.Errorf("%+v does not contain %+v", result, unreserved)
 		}
-		result.SubtractAll(unreserved)
-		result.Add(opRes[i])
+		result.Subtract(unreserved...)
+		result.add(opRes[i])
 	}
 	return result, nil
 }
@@ -119,8 +119,8 @@ func opUnreserve(operation Offer_Operation, resources Resources) (Resources, err
 			return nil, errors.New("missing 'reservation'")
 		}
 		unreserved := Resources{opRes[i]}.Flatten("", nil)
-		result.Subtract(opRes[i])
-		result.AddAll(unreserved)
+		result.subtract(opRes[i])
+		result.Add(unreserved...)
 	}
 	return result, nil
 }
@@ -151,8 +151,8 @@ func opCreate(operation Offer_Operation, resources Resources) (Resources, error)
 		if !result.Contains(*stripped) {
 			return nil, errors.New("invalid CREATE operation: insufficient disk resources")
 		}
-		result.Subtract(*stripped)
-		result.Add(volumes[i])
+		result.subtract(*stripped)
+		result.add(volumes[i])
 	}
 	return result, nil
 }
@@ -176,8 +176,8 @@ func opDestroy(operation Offer_Operation, resources Resources) (Resources, error
 		}
 		stripped := proto.Clone(&volumes[i]).(*Resource)
 		stripped.Disk = nil
-		result.Subtract(volumes[i])
-		result.Add(*stripped)
+		result.subtract(volumes[i])
+		result.add(*stripped)
 	}
 	return result, nil
 }

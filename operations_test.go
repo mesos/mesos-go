@@ -11,12 +11,12 @@ func TestOpReserve(t *testing.T) {
 	var (
 		unreservedCPU = resources(resource(name("cpus"), valueScalar(1)))
 		unreservedMem = resources(resource(name("mem"), valueScalar(512)))
-		unreserved    = unreservedCPU.PlusAll(unreservedMem)
+		unreserved    = unreservedCPU.Plus(unreservedMem...)
 		reservedCPU1  = unreservedCPU.Flatten("role", reservedBy("principal"))
 	)
 
 	// test case 1: reserve an amount of CPU that's available
-	wantsReserved := unreservedMem.PlusAll(reservedCPU1)
+	wantsReserved := unreservedMem.Plus(reservedCPU1...)
 	actualReserved, err := reserve(reservedCPU1).Apply(unreserved)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

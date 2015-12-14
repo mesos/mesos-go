@@ -36,7 +36,7 @@ const (
 
 var (
 	AnyResources = ResourceFilter(func(r *Resource) bool {
-		return r != nil
+		return r != nil && !r.IsEmpty()
 	})
 	UnreservedResources = ResourceFilter(func(r *Resource) bool {
 		return r.IsUnreserved()
@@ -227,7 +227,7 @@ func (resources Resources) sameTotals(result Resources) bool {
 
 func (resources Resources) Find(targets Resources) (total Resources) {
 	for i := range targets {
-		found := resources.find(&resources[i])
+		found := resources.find(targets[i])
 
 		// each target *must* be found
 		if len(found) == 0 {
@@ -239,10 +239,10 @@ func (resources Resources) Find(targets Resources) (total Resources) {
 	return total
 }
 
-func (resources Resources) find(target *Resource) Resources {
+func (resources Resources) find(target Resource) Resources {
 	var (
 		total      = resources.Clone()
-		remaining  = Resources{*target}.Flatten("", nil)
+		remaining  = Resources{target}.Flatten("", nil)
 		found      Resources
 		predicates = ResourceFilters{
 			ReservedResources(target.GetRole()),

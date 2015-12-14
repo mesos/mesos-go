@@ -99,8 +99,26 @@ func unreserve(r mesos.Resources) *mesos.Offer_Operation {
 	}
 }
 
+func create(r mesos.Resources) *mesos.Offer_Operation {
+	return &mesos.Offer_Operation{
+		Type: mesos.CREATE.Enum(),
+		Create: &mesos.Offer_Operation_Create{
+			Volumes: r,
+		},
+	}
+}
+
 func reservation(ri *mesos.Resource_ReservationInfo) resourceOpt {
 	return func(r *mesos.Resource) {
 		r.Reservation = ri
+	}
+}
+
+func disk(persistenceID, containerPath string) resourceOpt {
+	return func(r *mesos.Resource) {
+		r.Disk = &mesos.Resource_DiskInfo{
+			Persistence: &mesos.Resource_DiskInfo_Persistence{ID: persistenceID},
+			Volume:      &mesos.Volume{ContainerPath: containerPath},
+		}
 	}
 }

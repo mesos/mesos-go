@@ -202,6 +202,26 @@ func (resources Resources) SumSets(rf ResourceFilter) *Value_Set {
 	return x
 }
 
+func (resources Resources) Types() map[string]Value_Type {
+	m := map[string]Value_Type{}
+	for i := range resources {
+		m[resources[i].GetName()] = resources[i].GetType()
+	}
+	return m
+}
+
+func (resources Resources) Names() (names []string) {
+	m := map[string]struct{}{}
+	for i := range resources {
+		n := resources[i].GetName()
+		if _, ok := m[n]; !ok {
+			m[n] = struct{}{}
+			names = append(names, n)
+		}
+	}
+	return
+}
+
 func (resources Resources) sameTotals(result Resources) bool {
 	// from: https://github.com/apache/mesos/blob/master/src/common/resources.cpp
 	// This is a sanity check to ensure the amount of each type of

@@ -6,6 +6,118 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
+func TestResources_Find(t *testing.T) {
+	for i, tc := range []struct {
+		r1, targets, wants mesos.Resources
+	}{
+		{nil, nil, nil},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(2), role("role1")),
+				resource(name("mem"), valueScalar(10), role("role1")),
+				resource(name("cpus"), valueScalar(4), role("*")),
+				resource(name("mem"), valueScalar(20), role("*")),
+			),
+			targets: resources(
+				resource(name("cpus"), valueScalar(3), role("role1")),
+				resource(name("mem"), valueScalar(15), role("role1")),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(2), role("role1")),
+				resource(name("mem"), valueScalar(10), role("role1")),
+				resource(name("cpus"), valueScalar(1), role("*")),
+				resource(name("mem"), valueScalar(5), role("*")),
+			),
+		},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(1), role("role1")),
+				resource(name("mem"), valueScalar(5), role("role1")),
+				resource(name("cpus"), valueScalar(2), role("role2")),
+				resource(name("mem"), valueScalar(8), role("role2")),
+				resource(name("cpus"), valueScalar(1), role("*")),
+				resource(name("mem"), valueScalar(7), role("*")),
+			),
+			targets: resources(
+				resource(name("cpus"), valueScalar(3), role("role1")),
+				resource(name("mem"), valueScalar(15), role("role1")),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(1), role("role1")),
+				resource(name("mem"), valueScalar(5), role("role1")),
+				resource(name("cpus"), valueScalar(1), role("*")),
+				resource(name("mem"), valueScalar(7), role("*")),
+				resource(name("cpus"), valueScalar(1), role("role2")),
+				resource(name("mem"), valueScalar(3), role("role2")),
+			),
+		},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(5), role("role1")),
+				resource(name("mem"), valueScalar(5), role("role1")),
+				resource(name("cpus"), valueScalar(5), role("*")),
+				resource(name("mem"), valueScalar(5), role("*")),
+			),
+			targets: resources(
+				resource(name("cpus"), valueScalar(6)),
+				resource(name("mem"), valueScalar(6)),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(5), role("*")),
+				resource(name("mem"), valueScalar(5), role("*")),
+				resource(name("cpus"), valueScalar(1), role("role1")),
+				resource(name("mem"), valueScalar(1), role("role1")),
+			),
+		},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(1), role("role1")),
+				resource(name("mem"), valueScalar(1), role("role1")),
+			),
+			targets: resources(
+				resource(name("cpus"), valueScalar(2), role("role1")),
+				resource(name("mem"), valueScalar(2), role("role1")),
+			),
+			wants: nil,
+		},
+	} {
+		r := tc.r1.Find(tc.targets)
+		expect(t, r.Equivalent(tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
+	}
+}
+
+func TestResources_Flatten(t *testing.T) {
+	for i, tc := range []struct {
+		r1, wants mesos.Resources
+	}{
+		{nil, nil},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(1), role("role1")),
+				resource(name("cpus"), valueScalar(2), role("role2")),
+				resource(name("mem"), valueScalar(5), role("role1")),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(3)),
+				resource(name("mem"), valueScalar(5)),
+			),
+		},
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(3), role("role1")),
+				resource(name("mem"), valueScalar(15), role("role1")),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(3), role("*")),
+				resource(name("mem"), valueScalar(15), role("*")),
+			),
+		},
+	} {
+		r := tc.r1.Flatten("", nil)
+		expect(t, r.Equivalent(tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
+	}
+}
+
 func TestResources_Equivalent(t *testing.T) {
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources

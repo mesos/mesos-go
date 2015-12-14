@@ -73,7 +73,7 @@ func validateOpTotals(f offerResourceOp) offerResourceOp {
 		if err == nil {
 			// sanity CHECK, same as apache/mesos does
 			if !resources.sameTotals(result) {
-				panic("result != resources")
+				panic(fmt.Sprintf("result %+v != resources %+v", result, resources))
 			}
 		}
 		return result, err
@@ -117,6 +117,9 @@ func opUnreserve(operation Offer_Operation, resources Resources) (Resources, err
 		}
 		if opRes[i].GetReservation() == nil {
 			return nil, errors.New("missing 'reservation'")
+		}
+		if !result.Contains(opRes[i]) {
+			return nil, errors.New("resources do not contain unreserve amount") //TODO(jdef) should output nicely formatted resource quantities here
 		}
 		unreserved := Resources{opRes[i]}.Flatten("", nil)
 		result.subtract(opRes[i])

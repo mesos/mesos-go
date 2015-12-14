@@ -1,20 +1,37 @@
 package mesos
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/gogo/protobuf/proto"
 )
 
-const (
-	RoleDefault = "*"
+type (
+	Resources         []Resource
+	ResourceFilter    func(*Resource) bool
+	ResourceFilters   []ResourceFilter
+	ResourceErrorType int
+
+	ResourceError struct {
+		errorType ResourceErrorType
+		reason    string
+		spec      Resource
+	}
 )
 
-type (
-	Resources       []Resource
-	ResourceFilter  func(*Resource) bool
-	ResourceFilters []ResourceFilter
+const (
+	RoleDefault = "*"
+
+	ResourceErrorTypeIllegalName ResourceErrorType = iota
+	ResourceErrorTypeIllegalType
+	ResourceErrorTypeUnsupportedType
+	ResourceErrorTypeIllegalScalar
+	ResourceErrorTypeIllegalRanges
+	ResourceErrorTypeIllegalSet
+	ResourceErrorTypeIllegalDisk
+	ResourceErrorTypeIllegalReservation
+
+	noReason = "" // make error generation code more readable
 )
 
 var (
@@ -39,7 +56,41 @@ var (
 	SetResources = ResourceFilter(func(r *Resource) bool {
 		return r.GetType() == SET
 	})
+
+	resourceErrorMessages = map[ResourceErrorType]string{
+		ResourceErrorTypeIllegalName:        "missing or illegal resource name",
+		ResourceErrorTypeIllegalType:        "missing or illegal resource type",
+		ResourceErrorTypeUnsupportedType:    "unsupported resource type",
+		ResourceErrorTypeIllegalScalar:      "illegal scalar resource",
+		ResourceErrorTypeIllegalRanges:      "illegal ranges resource",
+		ResourceErrorTypeIllegalSet:         "illegal set resource",
+		ResourceErrorTypeIllegalDisk:        "illegal disk resource",
+		ResourceErrorTypeIllegalReservation: "illegal resource reservation",
+	}
 )
+
+func (t ResourceErrorType) Generate(reason string) error {
+	msg := resourceErrorMessages[t]
+	if reason != noReason {
+		if msg != "" {
+			msg += ": " + reason
+		} else {
+			msg = reason
+		}
+	}
+	return &ResourceError{errorType: t, reason: msg}
+}
+
+func (err *ResourceError) Type() ResourceErrorType { return err.errorType }
+func (err *ResourceError) Reason() string          { return err.reason }
+func (err *ResourceError) Resource() Resource      { return err.spec }
+
+func (err *ResourceError) Error() string {
+	if err.reason != "" {
+		return "resource error: " + err.reason
+	}
+	return "resource error"
+}
 
 func (rf ResourceFilter) Or(f ResourceFilter) ResourceFilter {
 	return ResourceFilter(func(r *Resource) bool {
@@ -240,7 +291,12 @@ func (resources Resources) Validate() error {
 	for i := range resources {
 		err := resources[i].Validate()
 		if err != nil {
-			return fmt.Errorf("resource %v is invalid: %v", resources[i], err)
+			// augment ResourceError's with the resource that failed to validate
+			if resourceError, ok := err.(*ResourceError); ok {
+				r := proto.Clone(&resources[i]).(*Resource)
+				resourceError.spec = *r
+			}
+			return err
 		}
 	}
 	return nil
@@ -401,60 +457,60 @@ func (resources *Resources) Subtract(that Resource) Resources {
 
 func (left *Resource) Validate() error {
 	if left.GetName() == "" {
-		return errors.New("empty resource name")
+		return ResourceErrorTypeIllegalName.Generate(noReason)
 	}
 	if _, ok := Value_Type_name[int32(left.GetType())]; !ok {
-		return errors.New("invalid resource type")
+		return ResourceErrorTypeIllegalType.Generate(noReason)
 	}
 	switch left.GetType() {
 	case SCALAR:
 		if s := left.GetScalar(); s == nil || left.GetRanges() != nil || left.GetSet() != nil {
-			return errors.New("invalid scalar resource")
+			return ResourceErrorTypeIllegalScalar.Generate(noReason)
 		} else if s.GetValue() < 0 {
-			return errors.New("invalid scalar resource: value < 0")
+			return ResourceErrorTypeIllegalScalar.Generate("value < 0")
 		}
 	case RANGES:
 		if r := left.GetRanges(); left.GetScalar() != nil || r == nil || left.GetSet() != nil {
-			return errors.New("invalid ranges resource")
+			return ResourceErrorTypeIllegalRanges.Generate(noReason)
 		} else {
 			for i, rr := range r.GetRange() {
 				// ensure that ranges are not inverted
 				if rr.Begin > rr.End {
-					return errors.New("invalid ranges resource: begin > end")
+					return ResourceErrorTypeIllegalRanges.Generate("begin > end")
 				}
 				// ensure that ranges don't overlap (but not necessarily squashed)
 				for j := i + 1; j < len(r.GetRange()); j++ {
 					r2 := r.GetRange()[j]
 					if rr.Begin <= r2.Begin && r2.Begin <= rr.End {
-						return errors.New("invalid ranges resource: overlapping ranges")
+						return ResourceErrorTypeIllegalRanges.Generate("overlapping ranges")
 					}
 				}
 			}
 		}
 	case SET:
 		if s := left.GetSet(); left.GetScalar() != nil || left.GetRanges() != nil || s == nil {
-			return errors.New("invalid set resource")
+			return ResourceErrorTypeIllegalSet.Generate(noReason)
 		} else {
 			unique := make(map[string]struct{}, len(s.GetItem()))
 			for _, x := range s.GetItem() {
 				if _, found := unique[x]; found {
-					return errors.New("invalid set resource: duplicated elements")
+					return ResourceErrorTypeIllegalSet.Generate("duplicated elements")
 				}
 				unique[x] = struct{}{}
 			}
 		}
 	default:
-		return errors.New("unsupported resource type")
+		return ResourceErrorTypeUnsupportedType.Generate(noReason)
 	}
 
 	// check for disk resource
 	if left.GetDisk() != nil && left.GetName() != "disk" {
-		return errors.New("DiskInfo should not be set for \"" + left.GetName() + "\" resource")
+		return ResourceErrorTypeIllegalDisk.Generate("DiskInfo should not be set for \"" + left.GetName() + "\" resource")
 	}
 
 	// check for invalid state of (role,reservation) pair
 	if left.GetRole() == RoleDefault && left.GetReservation() != nil {
-		return errors.New("invalid reservation: role \"" + RoleDefault + "\" cannot be dynamically assigned")
+		return ResourceErrorTypeIllegalReservation.Generate("role \"" + RoleDefault + "\" cannot be dynamically assigned")
 	}
 
 	return nil

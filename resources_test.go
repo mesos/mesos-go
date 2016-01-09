@@ -6,6 +6,27 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
+func TestResources_Validation(t *testing.T) {
+	// don't use resources(...) because that implicitly validates and skips invalid resources
+	rs := mesos.Resources{
+		resource(name("cpus"), valueScalar(2), role("*"), disk("1", "path")),
+	}
+	err := rs.Validate()
+	if resourceErr, ok := err.(*mesos.ResourceError); !ok || resourceErr.Type() != mesos.ResourceErrorTypeIllegalDisk {
+		t.Fatalf("expected error because cpu resources can't contain disk info")
+	}
+
+	err = mesos.Resources{resource(name("disk"), valueScalar(10), role("role"), disk("1", "path"))}.Validate()
+	if err != nil {
+		t.Fatalf("unexpected error: %+v", err)
+	}
+
+	err = mesos.Resources{resource(name("disk"), valueScalar(10), role("role"), disk("", "path"))}.Validate()
+	if err != nil {
+		t.Fatalf("unexpected error: %+v", err)
+	}
+}
+
 func TestResources_Find(t *testing.T) {
 	for i, tc := range []struct {
 		r1, targets, wants mesos.Resources
@@ -119,12 +140,21 @@ func TestResources_Flatten(t *testing.T) {
 }
 
 func TestResources_Equivalent(t *testing.T) {
+	disks := mesos.Resources{
+		resource(name("disk"), valueScalar(10), role("*"), disk("", "")),
+		resource(name("disk"), valueScalar(10), role("*"), disk("", "path1")),
+		resource(name("disk"), valueScalar(10), role("*"), disk("", "path2")),
+		resource(name("disk"), valueScalar(10), role("role"), disk("", "path2")),
+		resource(name("disk"), valueScalar(10), role("role"), disk("1", "path1")),
+		resource(name("disk"), valueScalar(10), role("role"), disk("1", "path2")),
+		resource(name("disk"), valueScalar(10), role("role"), disk("2", "path2")),
+	}
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources
 		wants  bool
 	}{
 		{r1: nil, r2: nil, wants: true},
-		{
+		{ // 1
 			r1: resources(
 				resource(name("cpus"), valueScalar(50), role("*")),
 				resource(name("mem"), valueScalar(4096), role("*")),
@@ -135,7 +165,7 @@ func TestResources_Equivalent(t *testing.T) {
 			),
 			wants: true,
 		},
-		{
+		{ // 2
 			r1: resources(
 				resource(name("cpus"), valueScalar(50), role("role1")),
 			),
@@ -144,21 +174,26 @@ func TestResources_Equivalent(t *testing.T) {
 			),
 			wants: false,
 		},
-		{
+		{ // 3
 			r1:    resources(resource(name("ports"), valueRange(span(20, 40)), role("*"))),
 			r2:    resources(resource(name("ports"), valueRange(span(20, 30), span(31, 39), span(40, 40)), role("*"))),
 			wants: true,
 		},
-		{
+		{ // 4
 			r1:    resources(resource(name("disks"), valueSet("sda1"), role("*"))),
 			r2:    resources(resource(name("disks"), valueSet("sda1"), role("*"))),
 			wants: true,
 		},
-		{
+		{ // 5
 			r1:    resources(resource(name("disks"), valueSet("sda1"), role("*"))),
 			r2:    resources(resource(name("disks"), valueSet("sda2"), role("*"))),
 			wants: false,
 		},
+		{resources(disks[0]), resources(disks[1]), true},  // 6
+		{resources(disks[1]), resources(disks[2]), true},  // 7
+		{resources(disks[4]), resources(disks[5]), true},  // 8
+		{resources(disks[5]), resources(disks[6]), false}, // 9
+		{resources(disks[3]), resources(disks[6]), false}, // 10
 	} {
 		actual := tc.r1.Equivalent(tc.r2)
 		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)

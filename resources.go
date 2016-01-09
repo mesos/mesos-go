@@ -102,7 +102,7 @@ func (rf ResourceFilter) And(f ResourceFilter) ResourceFilter {
 	return ResourceFilters{rf, f}.Predicate()
 }
 
-func (rf ResourceFilter) Apply(resources Resources) (result Resources) {
+func (rf ResourceFilter) Select(resources Resources) (result Resources) {
 	for i := range resources {
 		if rf(&resources[i]) {
 			result.add(resources[i])
@@ -271,7 +271,7 @@ func (resources Resources) find(target Resource) Resources {
 		}
 	)
 	for _, predicate := range predicates {
-		filtered := predicate.Apply(total)
+		filtered := predicate.Select(total)
 		for i := range filtered {
 			// need to flatten to ignore the roles in ContainsAll()
 			flattened := Resources{filtered[i]}.Flatten("", nil)

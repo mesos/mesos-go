@@ -6,6 +6,25 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
+func TestResource_RevocableResources(t *testing.T) {
+	rs := mesos.Resources{
+		resource(name("cpus"), valueScalar(1), role("*"), revocable()),
+		resource(name("cpus"), valueScalar(1), role("*")),
+	}
+	for i, tc := range []struct {
+		r1, wants mesos.Resources
+	}{
+		{resources(rs[0]), resources(rs[0])},
+		{resources(rs[1]), resources()},
+		{resources(rs[0], rs[1]), resources(rs[0])},
+	} {
+		x := mesos.RevocableResources.Select(tc.r1)
+		if !tc.wants.Equivalent(x) {
+			t.Errorf("test case %d failed: expected %v instead of %v", i, tc.wants, x)
+		}
+	}
+}
+
 func TestResources_PersistentVolumes(t *testing.T) {
 	var (
 		rs = resources(
@@ -213,6 +232,16 @@ func TestResources_Equivalent(t *testing.T) {
 		{resources(disks[4]), resources(disks[5]), true},  // 8
 		{resources(disks[5]), resources(disks[6]), false}, // 9
 		{resources(disks[3]), resources(disks[6]), false}, // 10
+		{ // 11
+			r1:    resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
+			r2:    resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
+			wants: true,
+		},
+		{ // 12
+			r1:    resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
+			r2:    resources(resource(name("cpus"), valueScalar(1), role("*"))),
+			wants: false,
+		},
 	} {
 		actual := tc.r1.Equivalent(tc.r2)
 		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
@@ -239,6 +268,15 @@ func TestResources_ContainsAll(t *testing.T) {
 		}
 		summedDisks  = resources(disks[0]).Plus(disks[1])
 		summedDisks2 = resources(disks[0]).Plus(disks[4])
+
+		revocables = mesos.Resources{
+			resource(name("cpus"), valueScalar(1), role("*"), revocable()),
+			resource(name("cpus"), valueScalar(1), role("*")),
+			resource(name("cpus"), valueScalar(2), role("*")),
+			resource(name("cpus"), valueScalar(2), role("*"), revocable()),
+		}
+		summedRevocables  = resources(revocables[0]).Plus(revocables[1])
+		summedRevocables2 = resources(revocables[0]).Plus(revocables[0])
 	)
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources
@@ -324,6 +362,13 @@ func TestResources_ContainsAll(t *testing.T) {
 		{r1: resources(disks[1]), r2: summedDisks, wants: false},
 		{r1: summedDisks2, r2: resources(disks[0]), wants: true},
 		{r1: summedDisks2, r2: resources(disks[4]), wants: true},
+		{r1: summedRevocables, r2: resources(revocables[0]), wants: true},
+		{r1: summedRevocables, r2: resources(revocables[1]), wants: true},
+		{r1: summedRevocables, r2: resources(revocables[2]), wants: false},
+		{r1: summedRevocables, r2: resources(revocables[3]), wants: false},
+		{r1: resources(revocables[0]), r2: summedRevocables2, wants: false},
+		{r1: summedRevocables2, r2: resources(revocables[0]), wants: true},
+		{r1: summedRevocables2, r2: summedRevocables2, wants: true},
 	} {
 		actual := tc.r1.ContainsAll(tc.r2)
 		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
@@ -483,6 +528,18 @@ func TestResources_Minus(t *testing.T) {
 		{r1: resources(disks[2]), r2: resources(disks[3]), wants: resources(disks[2])},
 		{r1: resources(disks[2]), r2: resources(disks[2]), wants: resources()},
 		{r1: resources(disks[3]), r2: resources(disks[4]), wants: resources()},
+		// revocables
+		{
+			r1:    resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
+			r2:    resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
+			wants: resources(),
+		},
+		{ // revocable - non-revocable is a noop
+			r1:       resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
+			r2:       resources(resource(name("cpus"), valueScalar(1), role("*"))),
+			wants:    resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
+			wantsCPU: 1,
+		},
 	} {
 		backup := tc.r1.Clone()
 
@@ -630,6 +687,13 @@ func TestResources_Plus(t *testing.T) {
 				resource(name("disks"), valueSet("sda4", "sda2", "sda1", "sda3"), role("*")),
 			),
 		},
+		// revocables
+		{
+			r1:       resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
+			r2:       resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
+			wants:    resources(resource(name("cpus"), valueScalar(2), role("*"), revocable())),
+			wantsCPU: 2,
+		},
 	} {
 		backup := tc.r1.Clone()
 
@@ -679,6 +743,10 @@ func resource(opt ...resourceOpt) (r mesos.Resource) {
 
 func name(x string) resourceOpt { return func(r *mesos.Resource) { r.Name = x } }
 func role(x string) resourceOpt { return func(r *mesos.Resource) { r.Role = &x } }
+
+func revocable() resourceOpt {
+	return func(r *mesos.Resource) { r.Revocable = &mesos.Resource_RevocableInfo{} }
+}
 
 func valueScalar(x float64) resourceOpt {
 	return func(r *mesos.Resource) {

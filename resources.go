@@ -556,9 +556,10 @@ func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
 	}
 	if a, b := left.GetPersistence(), right.GetPersistence(); (a == nil) != (b == nil) {
 		return false
-	} else {
+	} else if a != nil {
 		return a.GetID() == b.GetID()
 	}
+	return true
 }
 
 // Equivalent returns true if right is equivalent to left (differs from Equal in that
@@ -644,7 +645,7 @@ func (left *Resource) Subtractable(right Resource) bool {
 
 	// NOTE: For Resource objects that have DiskInfo, we can only do
 	// subtraction if they are **equal**.
-	if left.GetDisk().GetPersistence() != nil && !left.Equal(right) {
+	if left.GetDisk().GetPersistence() != nil && !left.Equivalent(right) {
 		return false
 	}
 	if (left.Revocable == nil) != (right.Revocable == nil) {

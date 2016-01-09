@@ -6,6 +6,25 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
+func TestResources_PersistentVolumes(t *testing.T) {
+	var (
+		rs = resources(
+			resource(name("cpus"), valueScalar(1)),
+			resource(name("mem"), valueScalar(512)),
+			resource(name("disk"), valueScalar(1000)),
+		)
+		disk = mesos.Resources{
+			resource(name("disk"), valueScalar(10), role("role1"), disk("1", "path")),
+			resource(name("disk"), valueScalar(20), role("role2"), disk("", "")),
+		}
+	)
+	rs.Add(disk...)
+	pv := mesos.PersistentVolumes.Select(rs)
+	if !resources(disk[0]).Equivalent(pv) {
+		t.Fatalf("expected %v instead of %v", resources(disk[0]), pv)
+	}
+}
+
 func TestResources_Validation(t *testing.T) {
 	// don't use resources(...) because that implicitly validates and skips invalid resources
 	rs := mesos.Resources{
@@ -216,8 +235,10 @@ func TestResources_ContainsAll(t *testing.T) {
 			resource(name("disk"), valueScalar(10), role("role"), disk("2", "path")),
 			resource(name("disk"), valueScalar(20), role("role"), disk("1", "path")),
 			resource(name("disk"), valueScalar(20), role("role"), disk("", "path")),
+			resource(name("disk"), valueScalar(20), role("role"), disk("2", "path")),
 		}
-		summedDisks = resources(disks[0]).Plus(disks[1])
+		summedDisks  = resources(disks[0]).Plus(disks[1])
+		summedDisks2 = resources(disks[0]).Plus(disks[4])
 	)
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources
@@ -299,6 +320,10 @@ func TestResources_ContainsAll(t *testing.T) {
 		{r1: summedDisks, r2: resources(disks[1]), wants: true},
 		{r1: summedDisks, r2: resources(disks[2]), wants: false},
 		{r1: summedDisks, r2: resources(disks[3]), wants: false},
+		{r1: resources(disks[0]), r2: summedDisks, wants: false},
+		{r1: resources(disks[1]), r2: summedDisks, wants: false},
+		{r1: summedDisks2, r2: resources(disks[0]), wants: true},
+		{r1: summedDisks2, r2: resources(disks[4]), wants: true},
 	} {
 		actual := tc.r1.ContainsAll(tc.r2)
 		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
@@ -325,6 +350,13 @@ func TestResource_IsEmpty(t *testing.T) {
 }
 
 func TestResources_Minus(t *testing.T) {
+	disks := mesos.Resources{
+		resource(name("disk"), valueScalar(10), role("role"), disk("", "path")),
+		resource(name("disk"), valueScalar(10), role("role"), disk("", "")),
+		resource(name("disk"), valueScalar(10), role("role"), disk("1", "path")),
+		resource(name("disk"), valueScalar(10), role("role"), disk("2", "path")),
+		resource(name("disk"), valueScalar(10), role("role"), disk("2", "path2")),
+	}
 	for i, tc := range []struct {
 		r1, r2      mesos.Resources
 		wants       mesos.Resources
@@ -447,6 +479,10 @@ func TestResources_Minus(t *testing.T) {
 				resource(name("disks"), valueSet("sda1"), role("*")),
 			),
 		},
+		{r1: resources(disks[0]), r2: resources(disks[1]), wants: resources()},
+		{r1: resources(disks[2]), r2: resources(disks[3]), wants: resources(disks[2])},
+		{r1: resources(disks[2]), r2: resources(disks[2]), wants: resources()},
+		{r1: resources(disks[3]), r2: resources(disks[4]), wants: resources()},
 	} {
 		backup := tc.r1.Clone()
 

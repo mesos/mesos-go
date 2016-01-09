@@ -6,6 +6,39 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
+func TestOpCreate(t *testing.T) {
+	var (
+		total = resources(
+			resource(name("cpus"), valueScalar(1)),
+			resource(name("mem"), valueScalar(512)),
+			resource(name("disk"), valueScalar(1000), role("role")),
+		)
+		volume1 = resource(name("disk"), valueScalar(200), role("role"), disk("1", "path"))
+		volume2 = resource(name("disk"), valueScalar(2000), role("role"), disk("1", "path"))
+	)
+	op := create(resources(volume1))
+	rs, err := op.Apply(total)
+	if err != nil {
+		t.Fatalf("unexpected error: %+v", err)
+	}
+	expected := resources(
+		resource(name("cpus"), valueScalar(1)),
+		resource(name("mem"), valueScalar(512)),
+		resource(name("disk"), valueScalar(800), role("role")),
+		volume1,
+	)
+	if !expected.Equivalent(rs) {
+		t.Fatalf("expected %v instead of %v", expected, rs)
+	}
+
+	// check the case of insufficient disk resources
+	op = create(resources(volume2))
+	_, err = op.Apply(total)
+	if err == nil {
+		t.Fatalf("expected an error due to insufficient disk resources")
+	}
+}
+
 func TestOpUnreserve(t *testing.T) {
 	var (
 		reservedCPU = resources(

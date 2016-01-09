@@ -210,6 +210,14 @@ func TestResources_ContainsAll(t *testing.T) {
 
 		disks1 = resources(resource(name("disks"), valueSet("sda1", "sda2"), role("*")))
 		disks2 = resources(resource(name("disks"), valueSet("sda1", "sda3", "sda4", "sda2"), role("*")))
+
+		disks = mesos.Resources{
+			resource(name("disk"), valueScalar(10), role("role"), disk("1", "path")),
+			resource(name("disk"), valueScalar(10), role("role"), disk("2", "path")),
+			resource(name("disk"), valueScalar(20), role("role"), disk("1", "path")),
+			resource(name("disk"), valueScalar(20), role("role"), disk("", "path")),
+		}
+		summedDisks = resources(disks[0]).Plus(disks[1])
 	)
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources
@@ -287,6 +295,10 @@ func TestResources_ContainsAll(t *testing.T) {
 		{disks1, disks2, false},
 		// test case 16
 		{disks2, disks1, true},
+		{r1: summedDisks, r2: resources(disks[0]), wants: true},
+		{r1: summedDisks, r2: resources(disks[1]), wants: true},
+		{r1: summedDisks, r2: resources(disks[2]), wants: false},
+		{r1: summedDisks, r2: resources(disks[3]), wants: false},
 	} {
 		actual := tc.r1.ContainsAll(tc.r2)
 		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
@@ -476,12 +488,18 @@ func TestResources_Minus(t *testing.T) {
 }
 
 func TestResources_Plus(t *testing.T) {
+	disks := mesos.Resources{
+		resource(name("disk"), valueScalar(10), role("role"), disk("", "path")),
+		resource(name("disk"), valueScalar(10), role("role"), disk("", "")),
+		resource(name("disk"), valueScalar(20), role("role"), disk("", "path")),
+	}
 	for i, tc := range []struct {
 		r1, r2      mesos.Resources
 		wants       mesos.Resources
 		wantsCPU    float64
 		wantsMemory uint64
 	}{
+		{r1: resources(disks[0]), r2: resources(disks[1]), wants: resources(disks[2])},
 		{r1: nil, r2: nil, wants: nil},
 		{r1: resources(), r2: resources(), wants: resources()},
 		// simple scalars, same roles for everything

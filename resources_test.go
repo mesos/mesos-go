@@ -6,6 +6,8 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
+// TODO(jdef): incorporate ReservedResourcesTest's from resources_test.cpp
+
 func TestResource_RevocableResources(t *testing.T) {
 	rs := mesos.Resources{
 		resource(name("cpus"), valueScalar(1), role("*"), revocable()),

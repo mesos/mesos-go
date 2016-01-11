@@ -42,6 +42,14 @@ func main() {
 	}
 }
 
+type internalState struct {
+	tasksLaunched int
+	totalTasks    int
+	frameworkID   string
+	role          string
+	executor      *mesos.ExecutorInfo
+}
+
 func run(cfg *config) error {
 	cli := httpcli.New(
 		httpcli.URL(cfg.url),
@@ -66,15 +74,19 @@ func run(cfg *config) error {
 	}
 	subscribe := scheduler.SubscribeCall(true, frameworkInfo)
 	registrationTokens := backoffBucket(1*time.Second, 15*time.Second, nil)
+	var state internalState
 	for {
-		frameworkID, err := eventLoop(cli.Do(subscribe, httpcli.Close(true)))
+		events, conn, err := cli.Do(subscribe, httpcli.Close(true))
+		if err == nil {
+			err = eventLoop(&state, events, conn)
+		}
 		if err != nil {
 			log.Println(err)
 		} else {
 			log.Println("disconnected")
 		}
-		if frameworkID != "" {
-			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: frameworkID}
+		if state.frameworkID != "" {
+			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
 		}
 		<-registrationTokens
 		log.Println("reconnecting..")
@@ -83,13 +95,14 @@ func run(cfg *config) error {
 
 // returns the framework ID received by mesos (if any); callers should check for a
 // framework ID regardless of whether error != nil.
-func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, error) {
+func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (err error) {
 	defer func() {
 		if conn != nil {
 			conn.Close()
 		}
 	}()
-	frameworkID := ""
+
+	state.frameworkID = ""
 	callOptions := []scheduler.CallOpt{} // should be applied to every outgoing call
 
 	for err == nil {
@@ -121,7 +134,7 @@ func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, erro
 
 		case scheduler.Event_OFFERS.Enum():
 			log.Println("received an OFFERS event")
-			resourceOffers(frameworkID, e.GetOffers().GetOffers())
+			resourceOffers(state, e.GetOffers().GetOffers())
 
 		case scheduler.Event_UPDATE.Enum():
 			statusUpdate(e.GetUpdate().GetStatus())
@@ -134,13 +147,13 @@ func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, erro
 
 		case scheduler.Event_SUBSCRIBED.Enum():
 			log.Println("received a SUBSCRIBED event")
-			if frameworkID == "" {
-				frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
-				if frameworkID == "" {
+			if state.frameworkID == "" {
+				state.frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
+				if state.frameworkID == "" {
 					// sanity check
 					panic("mesos gave us an empty frameworkID")
 				}
-				callOptions = append(callOptions, scheduler.Framework(frameworkID))
+				callOptions = append(callOptions, scheduler.Framework(state.frameworkID))
 			}
 			// else, ignore subsequently received events like this on the same connection
 		default:
@@ -149,11 +162,43 @@ func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, erro
 
 		log.Printf("%+v\n", e)
 	}
-	return frameworkID, err
+	return err
 }
 
-func resourceOffers(frameworkID string, offers []mesos.Offer) {
-	// TODO..
+const (
+	CPUS_PER_TASK = 1
+	MEM_PER_TASK  = 128
+)
+
+var wantsTaskResources = mesos.Resources{
+	*mesos.BuildResource().Name("cpus").Scalar(CPUS_PER_TASK).Resource,
+	*mesos.BuildResource().Name("mem").Scalar(MEM_PER_TASK).Resource,
+}
+
+func resourceOffers(state *internalState, offers []mesos.Offer) {
+	for i := range offers {
+		log.Println("received offer id '" + offers[i].ID.Value + "'")
+		var (
+			remaining = mesos.Resources(offers[i].Resources)
+			tasks     = []mesos.TaskInfo{}
+		)
+		for state.tasksLaunched < state.totalTasks && remaining.Flatten("", nil).ContainsAll(wantsTaskResources) {
+			state.tasksLaunched++
+			taskID := state.tasksLaunched
+
+			log.Println("launching task " + strconv.Itoa(taskID) + " using offer " + offers[i].ID.Value)
+
+			task := mesos.TaskInfo{TaskID: mesos.TaskID{Value: strconv.Itoa(taskID)}}
+			task.Name = "Task " + task.TaskID.Value
+			task.AgentID = offers[i].AgentID
+			task.Executor = state.executor
+			task.Resources = remaining.Find(wantsTaskResources.Flatten(state.role, nil))
+
+			remaining.Subtract(task.Resources...)
+			tasks = append(tasks, task)
+		}
+	}
+	// TODO .. send ACCEPT call to launch tasks
 }
 
 func statusUpdate(s mesos.TaskStatus) {

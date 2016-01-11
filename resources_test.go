@@ -1,10 +1,44 @@
 package mesos_test
 
 import (
+	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/mesos/mesos-go"
 )
+
+func TestResources_Types(t *testing.T) {
+	rs := resources(
+		resource(name("cpus"), valueScalar(2), role("role1")),
+		resource(name("cpus"), valueScalar(4)),
+		resource(name("ports"), valueRange(span(1, 10)), role("role1")),
+		resource(name("ports"), valueRange(span(11, 20))),
+	)
+	types := rs.Types()
+	expected := map[string]mesos.Value_Type{
+		"cpus":  mesos.SCALAR,
+		"ports": mesos.RANGES,
+	}
+	if !reflect.DeepEqual(types, expected) {
+		t.Fatalf("expected %v instead of %v", expected, types)
+	}
+}
+
+func TestResources_Names(t *testing.T) {
+	rs := resources(
+		resource(name("cpus"), valueScalar(2), role("role1")),
+		resource(name("cpus"), valueScalar(4)),
+		resource(name("mem"), valueScalar(10), role("role1")),
+		resource(name("mem"), valueScalar(10)),
+	)
+	names := rs.Names()
+	sort.Strings(names)
+	expected := []string{"cpus", "mem"}
+	if !reflect.DeepEqual(names, expected) {
+		t.Fatalf("expected %v instead of %v", expected, names)
+	}
+}
 
 func TestResource_RevocableResources(t *testing.T) {
 	rs := mesos.Resources{

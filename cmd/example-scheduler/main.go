@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/mesos/mesos-go"
@@ -90,6 +91,7 @@ func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, erro
 	}()
 	frameworkID := ""
 	callOptions := []scheduler.CallOpt{} // should be applied to every outgoing call
+
 	for err == nil {
 		var e scheduler.Event
 		if err = events.Decode(&e); err != nil {
@@ -100,8 +102,29 @@ func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, erro
 		}
 
 		switch e.GetType().Enum() {
+		case scheduler.Event_FAILURE.Enum():
+			log.Println("received a FAILURE event")
+			if eid := e.GetFailure().GetExecutorID(); eid != nil {
+				// executor failed..
+				msg := "executor '" + eid.Value + "' terminated"
+				if e.Failure.AgentID != nil {
+					msg += "on agent '" + e.Failure.AgentID.Value + "'"
+				}
+				if e.Failure.Status != nil {
+					msg += ", with status=" + strconv.Itoa(int(*e.Failure.Status))
+				}
+				log.Println(msg)
+			} else if e.GetFailure().GetAgentID() != nil {
+				// agent failed..
+				log.Println("agent '" + e.Failure.AgentID.Value + "' terminated")
+			}
+
 		case scheduler.Event_OFFERS.Enum():
-		// ...
+			log.Println("received an OFFERS event")
+			resourceOffers(frameworkID, e.GetOffers().GetOffers())
+
+		case scheduler.Event_UPDATE.Enum():
+			statusUpdate(e.GetUpdate().GetStatus())
 
 		case scheduler.Event_ERROR.Enum():
 			// it's recommended that we abort and re-try subscribing; setting
@@ -110,6 +133,7 @@ func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, erro
 			err = fmt.Errorf("ERROR: " + e.GetError().GetMessage())
 
 		case scheduler.Event_SUBSCRIBED.Enum():
+			log.Println("received a SUBSCRIBED event")
 			if frameworkID == "" {
 				frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
 				if frameworkID == "" {
@@ -126,6 +150,14 @@ func eventLoop(events encoding.Decoder, conn io.Closer, err error) (string, erro
 		log.Printf("%+v\n", e)
 	}
 	return frameworkID, err
+}
+
+func resourceOffers(frameworkID string, offers []mesos.Offer) {
+	// TODO..
+}
+
+func statusUpdate(s mesos.TaskStatus) {
+	// TODO..
 }
 
 type config struct {

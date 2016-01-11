@@ -6,8 +6,6 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
-// TODO(jdef): incorporate ReservedResourcesTest's from resources_test.cpp
-
 func TestResource_RevocableResources(t *testing.T) {
 	rs := mesos.Resources{
 		resource(name("cpus"), valueScalar(1), role("*"), revocable()),
@@ -64,6 +62,32 @@ func TestResources_Validation(t *testing.T) {
 	err = mesos.Resources{resource(name("disk"), valueScalar(10), role("role"), disk("", "path"))}.Validate()
 	if err != nil {
 		t.Fatalf("unexpected error: %+v", err)
+	}
+
+	// reserved resources
+
+	// unreserved:
+	err = mesos.Resources{resource(name("cpus"), valueScalar(8), role("*"))}.Validate()
+	if err != nil {
+		t.Fatalf("unexpected error validating unreserved resource: %+v", err)
+	}
+
+	// statically role reserved:
+	err = mesos.Resources{resource(name("cpus"), valueScalar(8), role("role"))}.Validate()
+	if err != nil {
+		t.Fatalf("unexpected error validating statically role reserved resource: %+v", err)
+	}
+
+	// dynamically role reserved:
+	err = mesos.Resources{resource(name("cpus"), valueScalar(8), role("role"), reservation(reservedBy("principal2")))}.Validate()
+	if err != nil {
+		t.Fatalf("unexpected error validating dynamically role reserved resource: %+v", err)
+	}
+
+	// invalid
+	err = mesos.Resources{resource(name("cpus"), valueScalar(8), role("*"), reservation(reservedBy("principal1")))}.Validate()
+	if err == nil {
+		t.Fatalf("expected error for invalid reserved resource")
 	}
 }
 
@@ -248,6 +272,27 @@ func TestResources_Equivalent(t *testing.T) {
 		actual := tc.r1.Equivalent(tc.r2)
 		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 	}
+
+	possiblyReserved := mesos.Resources{
+		// unreserved
+		resource(name("cpus"), valueScalar(8), role("*")),
+		// statically role reserved
+		resource(name("cpus"), valueScalar(8), role("role1")),
+		resource(name("cpus"), valueScalar(8), role("role2")),
+		// dynamically role reserved:
+		resource(name("cpus"), valueScalar(8), role("role1"), reservation(reservedBy("principal1"))),
+		resource(name("cpus"), valueScalar(8), role("role2"), reservation(reservedBy("principal2"))),
+	}
+	for i := 0; i < len(possiblyReserved); i++ {
+		for j := 0; j < len(possiblyReserved); j++ {
+			if i == j {
+				continue
+			}
+			if resources(possiblyReserved[i]).Equivalent(resources(possiblyReserved[j])) {
+				t.Errorf("unexpected equivalence between %v and %v", possiblyReserved[i], possiblyReserved[j])
+			}
+		}
+	}
 }
 
 func TestResources_ContainsAll(t *testing.T) {
@@ -279,6 +324,12 @@ func TestResources_ContainsAll(t *testing.T) {
 		}
 		summedRevocables  = resources(revocables[0]).Plus(revocables[1])
 		summedRevocables2 = resources(revocables[0]).Plus(revocables[0])
+
+		possiblyReserved = mesos.Resources{
+			resource(name("cpus"), valueScalar(8), role("role")),
+			resource(name("cpus"), valueScalar(12), role("role"), reservation(reservedBy("principal"))),
+		}
+		sumPossiblyReserved = resources(possiblyReserved...)
 	)
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources
@@ -371,6 +422,9 @@ func TestResources_ContainsAll(t *testing.T) {
 		{r1: resources(revocables[0]), r2: summedRevocables2, wants: false},
 		{r1: summedRevocables2, r2: resources(revocables[0]), wants: true},
 		{r1: summedRevocables2, r2: summedRevocables2, wants: true},
+		{r1: resources(possiblyReserved[0]), r2: sumPossiblyReserved, wants: false},
+		{r1: resources(possiblyReserved[1]), r2: sumPossiblyReserved, wants: false},
+		{r1: sumPossiblyReserved, r2: sumPossiblyReserved, wants: true},
 	} {
 		actual := tc.r1.ContainsAll(tc.r2)
 		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
@@ -542,6 +596,22 @@ func TestResources_Minus(t *testing.T) {
 			wants:    resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
 			wantsCPU: 1,
 		},
+		// reserved
+		{
+			r1: resources(
+				resource(name("cpus"), valueScalar(8), role("role")),
+				resource(name("cpus"), valueScalar(8), role("role"), reservation(reservedBy("principal"))),
+			),
+			r2: resources(
+				resource(name("cpus"), valueScalar(2), role("role")),
+				resource(name("cpus"), valueScalar(4), role("role"), reservation(reservedBy("principal"))),
+			),
+			wants: resources(
+				resource(name("cpus"), valueScalar(6), role("role")),
+				resource(name("cpus"), valueScalar(4), role("role"), reservation(reservedBy("principal"))),
+			),
+			wantsCPU: 10,
+		},
 	} {
 		backup := tc.r1.Clone()
 
@@ -695,6 +765,20 @@ func TestResources_Plus(t *testing.T) {
 			r2:       resources(resource(name("cpus"), valueScalar(1), role("*"), revocable())),
 			wants:    resources(resource(name("cpus"), valueScalar(2), role("*"), revocable())),
 			wantsCPU: 2,
+		},
+		// statically reserved
+		{
+			r1:       resources(resource(name("cpus"), valueScalar(8), role("role"))),
+			r2:       resources(resource(name("cpus"), valueScalar(4), role("role"))),
+			wants:    resources(resource(name("cpus"), valueScalar(12), role("role"))),
+			wantsCPU: 12,
+		},
+		// dynamically reserved
+		{
+			r1:       resources(resource(name("cpus"), valueScalar(8), role("role"), reservation(reservedBy("principal")))),
+			r2:       resources(resource(name("cpus"), valueScalar(4), role("role"), reservation(reservedBy("principal")))),
+			wants:    resources(resource(name("cpus"), valueScalar(12), role("role"), reservation(reservedBy("principal")))),
+			wantsCPU: 12,
 		},
 	} {
 		backup := tc.r1.Clone()

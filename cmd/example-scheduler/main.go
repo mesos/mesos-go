@@ -13,6 +13,7 @@ import (
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
 	"github.com/mesos/mesos-go/scheduler"
+	"github.com/mesos/mesos-go/scheduler/calls"
 )
 
 func main() {
@@ -48,10 +49,12 @@ type internalState struct {
 	frameworkID   string
 	role          string
 	executor      *mesos.ExecutorInfo
+	cli           *httpcli.Client
 }
 
 func run(cfg *config) error {
-	cli := httpcli.New(
+	var state internalState
+	state.cli = httpcli.New(
 		httpcli.URL(cfg.url),
 		httpcli.Codec(cfg.codec.Codec),
 		httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
@@ -72,11 +75,10 @@ func run(cfg *config) error {
 		log.Println("using labels:", cfg.labels)
 		frameworkInfo.Labels = &mesos.Labels{Labels: cfg.labels}
 	}
-	subscribe := scheduler.SubscribeCall(true, frameworkInfo)
+	subscribe := calls.Subscribe(true, frameworkInfo)
 	registrationTokens := backoffBucket(1*time.Second, 15*time.Second, nil)
-	var state internalState
 	for {
-		events, conn, err := cli.Do(subscribe, httpcli.Close(true))
+		events, conn, err := state.cli.Do(subscribe, httpcli.Close(true))
 		if err == nil {
 			err = eventLoop(&state, events, conn)
 		}
@@ -103,7 +105,7 @@ func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (e
 	}()
 
 	state.frameworkID = ""
-	callOptions := []scheduler.CallOpt{} // should be applied to every outgoing call
+	callOptions := scheduler.CallOptions{} // should be applied to every outgoing call
 
 	for err == nil {
 		var e scheduler.Event
@@ -134,7 +136,7 @@ func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (e
 
 		case scheduler.Event_OFFERS.Enum():
 			log.Println("received an OFFERS event")
-			resourceOffers(state, e.GetOffers().GetOffers())
+			resourceOffers(state, callOptions.Copy(), e.GetOffers().GetOffers())
 
 		case scheduler.Event_UPDATE.Enum():
 			statusUpdate(e.GetUpdate().GetStatus())
@@ -153,7 +155,7 @@ func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (e
 					// sanity check
 					panic("mesos gave us an empty frameworkID")
 				}
-				callOptions = append(callOptions, scheduler.Framework(state.frameworkID))
+				callOptions = append(callOptions, calls.Framework(state.frameworkID))
 			}
 			// else, ignore subsequently received events like this on the same connection
 		default:
@@ -175,7 +177,7 @@ var wantsTaskResources = mesos.Resources{
 	*mesos.BuildResource().Name("mem").Scalar(MEM_PER_TASK).Resource,
 }
 
-func resourceOffers(state *internalState, offers []mesos.Offer) {
+func resourceOffers(state *internalState, callOptions scheduler.CallOptions, offers []mesos.Offer) {
 	for i := range offers {
 		log.Println("received offer id '" + offers[i].ID.Value + "'")
 		var (
@@ -197,8 +199,23 @@ func resourceOffers(state *internalState, offers []mesos.Offer) {
 			remaining.Subtract(task.Resources...)
 			tasks = append(tasks, task)
 		}
+
+		// build Accept call to launch all of the tasks we've assembled
+		accept := calls.Accept(
+			calls.OfferWithOperations(
+				offers[i].ID,
+				calls.Launch(tasks...),
+			),
+		).With(callOptions...)
+
+		// send Accept call to mesos
+		_, con, err := state.cli.Do(accept)
+		if err != nil {
+			log.Println("failed to launch tasks: %+v", err)
+		} else {
+			con.Close() // no data for these calls
+		}
 	}
-	// TODO .. send ACCEPT call to launch tasks
 }
 
 func statusUpdate(s mesos.TaskStatus) {

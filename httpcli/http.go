@@ -131,7 +131,13 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 		return nil, nil, err
 	}
 
-	events := c.codec.NewDecoder(recordio.NewReader(res.Body))
+	var events encoding.Decoder
+	switch res.StatusCode {
+	case http.StatusOK:
+		events = c.codec.NewDecoder(recordio.NewReader(res.Body))
+	case http.StatusAccepted:
+		// noop; no data to decode for these types of calls
+	}
 	return events, res.Body, codeErrors[res.StatusCode]
 }
 

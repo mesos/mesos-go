@@ -45,6 +45,7 @@ func main() {
 
 type internalState struct {
 	tasksLaunched int
+	tasksFinished int
 	totalTasks    int
 	frameworkID   string
 	role          string
@@ -139,7 +140,7 @@ func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (e
 			resourceOffers(state, callOptions.Copy(), e.GetOffers().GetOffers())
 
 		case scheduler.Event_UPDATE.Enum():
-			statusUpdate(e.GetUpdate().GetStatus())
+			statusUpdate(state, callOptions.Copy(), e.GetUpdate().GetStatus())
 
 		case scheduler.Event_ERROR.Enum():
 			// it's recommended that we abort and re-try subscribing; setting
@@ -204,7 +205,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		accept := calls.Accept(
 			calls.OfferWithOperations(
 				offers[i].ID,
-				calls.Launch(tasks...),
+				calls.OpLaunch(tasks...),
 			),
 		).With(callOptions...)
 
@@ -218,8 +219,45 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 	}
 }
 
-func statusUpdate(s mesos.TaskStatus) {
-	// TODO..
+func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mesos.TaskStatus) {
+	msg := "Task " + s.TaskID.Value + " is in state " + s.GetState().String()
+	if m := s.GetMessage(); m != "" {
+		msg += " with message '" + m + "'"
+	}
+	log.Println(msg)
+
+	if uuid := s.GetUUID(); len(uuid) > 0 {
+		ack := calls.Acknowledge(
+			s.GetAgentID().GetValue(),
+			s.TaskID.Value,
+			uuid,
+		).With(callOptions...)
+
+		// send Accept call to mesos
+		_, con, err := state.cli.Do(ack)
+		if err != nil {
+			log.Println("failed to ack status update for task: %+v", err)
+			return
+		} else {
+			con.Close() // no data for these calls
+		}
+	}
+	switch st := s.GetState(); st {
+	case mesos.TASK_FINISHED:
+		state.tasksFinished++
+	case mesos.TASK_LOST, mesos.TASK_KILLED, mesos.TASK_FAILED:
+		log.Println("Exiting because task " + s.GetTaskID().Value +
+			" is in an unexpected state " + st.String() +
+			" with reason " + s.GetReason().String() +
+			" from source " + s.GetSource().String() +
+			" with message '" + s.GetMessage() + "'")
+		os.Exit(1)
+	}
+
+	if state.tasksFinished == state.totalTasks {
+		log.Println("mission accomplished, terminating")
+		os.Exit(0)
+	}
 }
 
 type config struct {

@@ -78,8 +78,8 @@ func Accept(ops ...AcceptOpt) *scheduler.Call {
 	}
 }
 
-// Launch returns a launch operation builder for the given tasks
-func Launch(ti ...mesos.TaskInfo) OperationBuilder {
+// OpLaunch returns a launch operation builder for the given tasks
+func OpLaunch(ti ...mesos.TaskInfo) OperationBuilder {
 	return func() (op mesos.Offer_Operation) {
 		op.Type = mesos.LAUNCH.Enum()
 		op.Launch = &mesos.Offer_Operation_Launch{
@@ -89,7 +89,45 @@ func Launch(ti ...mesos.TaskInfo) OperationBuilder {
 	}
 }
 
-// TODO(jdef) add support for other Accept operations here..
+func OpReserve(rs ...mesos.Resource) OperationBuilder {
+	return func() (op mesos.Offer_Operation) {
+		op.Type = mesos.RESERVE.Enum()
+		op.Reserve = &mesos.Offer_Operation_Reserve{
+			Resources: rs,
+		}
+		return
+	}
+}
+
+func OpUnreserve(rs ...mesos.Resource) OperationBuilder {
+	return func() (op mesos.Offer_Operation) {
+		op.Type = mesos.UNRESERVE.Enum()
+		op.Unreserve = &mesos.Offer_Operation_Unreserve{
+			Resources: rs,
+		}
+		return
+	}
+}
+
+func OpCreate(rs ...mesos.Resource) OperationBuilder {
+	return func() (op mesos.Offer_Operation) {
+		op.Type = mesos.CREATE.Enum()
+		op.Create = &mesos.Offer_Operation_Create{
+			Volumes: rs,
+		}
+		return
+	}
+}
+
+func OpDestroy(rs ...mesos.Resource) OperationBuilder {
+	return func() (op mesos.Offer_Operation) {
+		op.Type = mesos.DESTROY.Enum()
+		op.Destroy = &mesos.Offer_Operation_Destroy{
+			Volumes: rs,
+		}
+		return
+	}
+}
 
 // Decline returns a decline call with the given parameters.
 // Callers are expected to fill in the FrameworkID and Filters.

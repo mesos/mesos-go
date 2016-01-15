@@ -136,6 +136,78 @@ func (x *Record_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type PromiseResponse_Type int32
+
+const (
+	PromiseResponse_ACCEPT PromiseResponse_Type = 1
+	PromiseResponse_REJECT PromiseResponse_Type = 2
+	PromiseResponse_IGNORE PromiseResponse_Type = 3
+)
+
+var PromiseResponse_Type_name = map[int32]string{
+	1: "ACCEPT",
+	2: "REJECT",
+	3: "IGNORE",
+}
+var PromiseResponse_Type_value = map[string]int32{
+	"ACCEPT": 1,
+	"REJECT": 2,
+	"IGNORE": 3,
+}
+
+func (x PromiseResponse_Type) Enum() *PromiseResponse_Type {
+	p := new(PromiseResponse_Type)
+	*p = x
+	return p
+}
+func (x PromiseResponse_Type) String() string {
+	return proto.EnumName(PromiseResponse_Type_name, int32(x))
+}
+func (x *PromiseResponse_Type) UnmarshalJSON(data []byte) error {
+	value, err := proto.UnmarshalJSONEnum(PromiseResponse_Type_value, data, "PromiseResponse_Type")
+	if err != nil {
+		return err
+	}
+	*x = PromiseResponse_Type(value)
+	return nil
+}
+
+type WriteResponse_Type int32
+
+const (
+	WriteResponse_ACCEPT WriteResponse_Type = 1
+	WriteResponse_REJECT WriteResponse_Type = 2
+	WriteResponse_IGNORE WriteResponse_Type = 3
+)
+
+var WriteResponse_Type_name = map[int32]string{
+	1: "ACCEPT",
+	2: "REJECT",
+	3: "IGNORE",
+}
+var WriteResponse_Type_value = map[string]int32{
+	"ACCEPT": 1,
+	"REJECT": 2,
+	"IGNORE": 3,
+}
+
+func (x WriteResponse_Type) Enum() *WriteResponse_Type {
+	p := new(WriteResponse_Type)
+	*p = x
+	return p
+}
+func (x WriteResponse_Type) String() string {
+	return proto.EnumName(WriteResponse_Type_name, int32(x))
+}
+func (x *WriteResponse_Type) UnmarshalJSON(data []byte) error {
+	value, err := proto.UnmarshalJSONEnum(WriteResponse_Type_value, data, "WriteResponse_Type")
+	if err != nil {
+		return err
+	}
+	*x = WriteResponse_Type(value)
+	return nil
+}
+
 // Represents a "promise" that a replica has made. A promise is
 // *implicitly* valid for _all_ future actions that get performed on
 // the replicated log (provided the action comes from the same
@@ -390,21 +462,36 @@ func (m *PromiseRequest) GetPosition() uint64 {
 	return 0
 }
 
-// Represents a "promise" response from a replica back to a proposer.
-// A replica represents a NACK (because it has promised a proposer
-// with a higher proposal number) by setting the okay field to false.
+// Represents a promise response corresponding to a promise request.
+// The kind of the response is given by the "type" field:
+//
+//   1. IGNORE: The recipient of the promise request was not in VOTING
+//      state, so it ignored the request.
+//   2. REJECT: The recipient of the proposal has already promised a
+//      proposer with a higher proposal number. This is called a
+//      "NACK" in the code.
+//   3. ACCEPT: The promise request was accepted.
+//
+// Before 0.26, we only sent responses for cases 2 and 3, so the
+// 'okay' field was used to distinguish these responses. For backward
+// compatibility, we continue setting 'okay' to false for both cases 1
+// and 2; this means old masters will treat IGNORE as a NACK: this
+// might result in demoting the current coordinator, but that should
+// be tolerable. TODO(neilc): Remove 'okay' in 0.27.
+//
 // The 'proposal' is either the aforementioned higher proposal number
-// when the response is a NACK, or the corresponding request's
-// proposal number if it is an ACK. The replica either sends back the
-// highest position it has recorded in the log (using the 'position'
-// field) or the specific action (if any) it has at the position
-// requested in PromiseRequest (using the 'action' field).
+// (for case 2), or the corresponding request's proposal number (for
+// cases 1 and 3). The replica either sends back the highest position
+// it has recorded in the log (using the 'position' field) or the
+// specific action (if any) it has at the position requested in
+// PromiseRequest (using the 'action' field).
 type PromiseResponse struct {
-	Okay             *bool   `protobuf:"varint,1,req,name=okay" json:"okay,omitempty"`
-	Proposal         *uint64 `protobuf:"varint,2,req,name=proposal" json:"proposal,omitempty"`
-	Position         *uint64 `protobuf:"varint,4,opt,name=position" json:"position,omitempty"`
-	Action           *Action `protobuf:"bytes,3,opt,name=action" json:"action,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Okay             *bool                 `protobuf:"varint,1,req,name=okay" json:"okay,omitempty"`
+	Type             *PromiseResponse_Type `protobuf:"varint,5,opt,name=type,enum=mesosproto.PromiseResponse_Type" json:"type,omitempty"`
+	Proposal         *uint64               `protobuf:"varint,2,req,name=proposal" json:"proposal,omitempty"`
+	Position         *uint64               `protobuf:"varint,4,opt,name=position" json:"position,omitempty"`
+	Action           *Action               `protobuf:"bytes,3,opt,name=action" json:"action,omitempty"`
+	XXX_unrecognized []byte                `json:"-"`
 }
 
 func (m *PromiseResponse) Reset()      { *m = PromiseResponse{} }
@@ -415,6 +502,13 @@ func (m *PromiseResponse) GetOkay() bool {
 		return *m.Okay
 	}
 	return false
+}
+
+func (m *PromiseResponse) GetType() PromiseResponse_Type {
+	if m != nil && m.Type != nil {
+		return *m.Type
+	}
+	return PromiseResponse_ACCEPT
 }
 
 func (m *PromiseResponse) GetProposal() uint64 {
@@ -505,19 +599,33 @@ func (m *WriteRequest) GetTruncate() *Action_Truncate {
 	return nil
 }
 
-// Represents a write response corresponding to a write request. A
-// replica represents a NACK (because it has promised a proposer with
-// a higher proposal number) by setting the okay field to false. If
-// the proposer is a coordinator, then it has been demoted. The
-// 'position' should always correspond to the position set in the
+// Represents a write response corresponding to a write request. The
+// kind of the response is given by the "type" field:
+//
+//   1. IGNORE: The recipient of the write request was not in VOTING
+//      state, so it ignored the request.
+//   2. REJECT: The recipient of the proposal has already promised a
+//      proposer with a higher proposal number. This is called a
+//      "NACK" in the code.
+//   3. ACCEPT: The promise request was accepted.
+//
+// Before 0.26, we only sent responses for cases 2 and 3, so the
+// 'okay' field was used to distinguish these responses. For backward
+// compatibility, we continue setting 'okay' to false for both cases 1
+// and 2; this means old masters will treat IGNORE as a NACK: this
+// might result in demoting the current coordinator, but that should
+// be tolerable. TODO(neilc): Remove 'okay' in 0.27.
+//
+// The 'position' should always correspond to the position set in the
 // request. The 'proposal' is either the same proposal number set in
-// the request in the case of an ACK, or the higher proposal number
-// this position has been promised to in the case of a NACK.
+// the request (cases 1 and 3), or the higher proposal number
+// this position has been promised to (case 2).
 type WriteResponse struct {
-	Okay             *bool   `protobuf:"varint,1,req,name=okay" json:"okay,omitempty"`
-	Proposal         *uint64 `protobuf:"varint,2,req,name=proposal" json:"proposal,omitempty"`
-	Position         *uint64 `protobuf:"varint,3,req,name=position" json:"position,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Okay             *bool               `protobuf:"varint,1,req,name=okay" json:"okay,omitempty"`
+	Type             *WriteResponse_Type `protobuf:"varint,4,opt,name=type,enum=mesosproto.WriteResponse_Type" json:"type,omitempty"`
+	Proposal         *uint64             `protobuf:"varint,2,req,name=proposal" json:"proposal,omitempty"`
+	Position         *uint64             `protobuf:"varint,3,req,name=position" json:"position,omitempty"`
+	XXX_unrecognized []byte              `json:"-"`
 }
 
 func (m *WriteResponse) Reset()      { *m = WriteResponse{} }
@@ -528,6 +636,13 @@ func (m *WriteResponse) GetOkay() bool {
 		return *m.Okay
 	}
 	return false
+}
+
+func (m *WriteResponse) GetType() WriteResponse_Type {
+	if m != nil && m.Type != nil {
+		return *m.Type
+	}
+	return WriteResponse_ACCEPT
 }
 
 func (m *WriteResponse) GetProposal() uint64 {
@@ -607,6 +722,8 @@ func init() {
 	proto.RegisterEnum("mesosproto.Action_Type", Action_Type_name, Action_Type_value)
 	proto.RegisterEnum("mesosproto.Metadata_Status", Metadata_Status_name, Metadata_Status_value)
 	proto.RegisterEnum("mesosproto.Record_Type", Record_Type_name, Record_Type_value)
+	proto.RegisterEnum("mesosproto.PromiseResponse_Type", PromiseResponse_Type_name, PromiseResponse_Type_value)
+	proto.RegisterEnum("mesosproto.WriteResponse_Type", WriteResponse_Type_name, WriteResponse_Type_value)
 }
 func (this *Promise) VerboseEqual(that interface{}) error {
 	if that == nil {
@@ -1301,6 +1418,15 @@ func (this *PromiseResponse) VerboseEqual(that interface{}) error {
 	} else if that1.Okay != nil {
 		return fmt.Errorf("Okay this(%v) Not Equal that(%v)", this.Okay, that1.Okay)
 	}
+	if this.Type != nil && that1.Type != nil {
+		if *this.Type != *that1.Type {
+			return fmt.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
+		}
+	} else if this.Type != nil {
+		return fmt.Errorf("this.Type == nil && that.Type != nil")
+	} else if that1.Type != nil {
+		return fmt.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+	}
 	if this.Proposal != nil && that1.Proposal != nil {
 		if *this.Proposal != *that1.Proposal {
 			return fmt.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
@@ -1354,6 +1480,15 @@ func (this *PromiseResponse) Equal(that interface{}) bool {
 	} else if this.Okay != nil {
 		return false
 	} else if that1.Okay != nil {
+		return false
+	}
+	if this.Type != nil && that1.Type != nil {
+		if *this.Type != *that1.Type {
+			return false
+		}
+	} else if this.Type != nil {
+		return false
+	} else if that1.Type != nil {
 		return false
 	}
 	if this.Proposal != nil && that1.Proposal != nil {
@@ -1551,6 +1686,15 @@ func (this *WriteResponse) VerboseEqual(that interface{}) error {
 	} else if that1.Okay != nil {
 		return fmt.Errorf("Okay this(%v) Not Equal that(%v)", this.Okay, that1.Okay)
 	}
+	if this.Type != nil && that1.Type != nil {
+		if *this.Type != *that1.Type {
+			return fmt.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
+		}
+	} else if this.Type != nil {
+		return fmt.Errorf("this.Type == nil && that.Type != nil")
+	} else if that1.Type != nil {
+		return fmt.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+	}
 	if this.Proposal != nil && that1.Proposal != nil {
 		if *this.Proposal != *that1.Proposal {
 			return fmt.Errorf("Proposal this(%v) Not Equal that(%v)", *this.Proposal, *that1.Proposal)
@@ -1601,6 +1745,15 @@ func (this *WriteResponse) Equal(that interface{}) bool {
 	} else if this.Okay != nil {
 		return false
 	} else if that1.Okay != nil {
+		return false
+	}
+	if this.Type != nil && that1.Type != nil {
+		if *this.Type != *that1.Type {
+			return false
+		}
+	} else if this.Type != nil {
+		return false
+	} else if that1.Type != nil {
 		return false
 	}
 	if this.Proposal != nil && that1.Proposal != nil {
@@ -1996,10 +2149,13 @@ func (this *PromiseResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 8)
+	s := make([]string, 0, 9)
 	s = append(s, "&mesosproto.PromiseResponse{")
 	if this.Okay != nil {
 		s = append(s, "Okay: "+valueToGoStringLog(this.Okay, "bool")+",\n")
+	}
+	if this.Type != nil {
+		s = append(s, "Type: "+valueToGoStringLog(this.Type, "mesosproto.PromiseResponse_Type")+",\n")
 	}
 	if this.Proposal != nil {
 		s = append(s, "Proposal: "+valueToGoStringLog(this.Proposal, "uint64")+",\n")
@@ -2053,10 +2209,13 @@ func (this *WriteResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 7)
+	s := make([]string, 0, 8)
 	s = append(s, "&mesosproto.WriteResponse{")
 	if this.Okay != nil {
 		s = append(s, "Okay: "+valueToGoStringLog(this.Okay, "bool")+",\n")
+	}
+	if this.Type != nil {
+		s = append(s, "Type: "+valueToGoStringLog(this.Type, "mesosproto.WriteResponse_Type")+",\n")
 	}
 	if this.Proposal != nil {
 		s = append(s, "Proposal: "+valueToGoStringLog(this.Proposal, "uint64")+",\n")
@@ -2515,6 +2674,11 @@ func (m *PromiseResponse) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeVarintLog(data, i, uint64(*m.Position))
 	}
+	if m.Type != nil {
+		data[i] = 0x28
+		i++
+		i = encodeVarintLog(data, i, uint64(*m.Type))
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
 	}
@@ -2643,6 +2807,11 @@ func (m *WriteResponse) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x18
 		i++
 		i = encodeVarintLog(data, i, uint64(*m.Position))
+	}
+	if m.Type != nil {
+		data[i] = 0x20
+		i++
+		i = encodeVarintLog(data, i, uint64(*m.Type))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -2908,24 +3077,28 @@ func NewPopulatedPromiseResponse(r randyLog, easy bool) *PromiseResponse {
 		v17 := uint64(uint64(r.Uint32()))
 		this.Position = &v17
 	}
+	if r.Intn(10) != 0 {
+		v18 := PromiseResponse_Type([]int32{1, 2, 3}[r.Intn(3)])
+		this.Type = &v18
+	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedLog(r, 5)
+		this.XXX_unrecognized = randUnrecognizedLog(r, 6)
 	}
 	return this
 }
 
 func NewPopulatedWriteRequest(r randyLog, easy bool) *WriteRequest {
 	this := &WriteRequest{}
-	v18 := uint64(uint64(r.Uint32()))
-	this.Proposal = &v18
 	v19 := uint64(uint64(r.Uint32()))
-	this.Position = &v19
+	this.Proposal = &v19
+	v20 := uint64(uint64(r.Uint32()))
+	this.Position = &v20
 	if r.Intn(10) != 0 {
-		v20 := bool(bool(r.Intn(2) == 0))
-		this.Learned = &v20
+		v21 := bool(bool(r.Intn(2) == 0))
+		this.Learned = &v21
 	}
-	v21 := Action_Type([]int32{1, 2, 3}[r.Intn(3)])
-	this.Type = &v21
+	v22 := Action_Type([]int32{1, 2, 3}[r.Intn(3)])
+	this.Type = &v22
 	if r.Intn(10) != 0 {
 		this.Nop = NewPopulatedAction_Nop(r, easy)
 	}
@@ -2943,14 +3116,18 @@ func NewPopulatedWriteRequest(r randyLog, easy bool) *WriteRequest {
 
 func NewPopulatedWriteResponse(r randyLog, easy bool) *WriteResponse {
 	this := &WriteResponse{}
-	v22 := bool(bool(r.Intn(2) == 0))
-	this.Okay = &v22
-	v23 := uint64(uint64(r.Uint32()))
-	this.Proposal = &v23
+	v23 := bool(bool(r.Intn(2) == 0))
+	this.Okay = &v23
 	v24 := uint64(uint64(r.Uint32()))
-	this.Position = &v24
+	this.Proposal = &v24
+	v25 := uint64(uint64(r.Uint32()))
+	this.Position = &v25
+	if r.Intn(10) != 0 {
+		v26 := WriteResponse_Type([]int32{1, 2, 3}[r.Intn(3)])
+		this.Type = &v26
+	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedLog(r, 4)
+		this.XXX_unrecognized = randUnrecognizedLog(r, 5)
 	}
 	return this
 }
@@ -2974,15 +3151,15 @@ func NewPopulatedRecoverRequest(r randyLog, easy bool) *RecoverRequest {
 
 func NewPopulatedRecoverResponse(r randyLog, easy bool) *RecoverResponse {
 	this := &RecoverResponse{}
-	v25 := Metadata_Status([]int32{1, 2, 3, 4}[r.Intn(4)])
-	this.Status = &v25
+	v27 := Metadata_Status([]int32{1, 2, 3, 4}[r.Intn(4)])
+	this.Status = &v27
 	if r.Intn(10) != 0 {
-		v26 := uint64(uint64(r.Uint32()))
-		this.Begin = &v26
+		v28 := uint64(uint64(r.Uint32()))
+		this.Begin = &v28
 	}
 	if r.Intn(10) != 0 {
-		v27 := uint64(uint64(r.Uint32()))
-		this.End = &v27
+		v29 := uint64(uint64(r.Uint32()))
+		this.End = &v29
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedLog(r, 4)
@@ -3009,9 +3186,9 @@ func randUTF8RuneLog(r randyLog) rune {
 	return rune(ru + 61)
 }
 func randStringLog(r randyLog) string {
-	v28 := r.Intn(100)
-	tmps := make([]rune, v28)
-	for i := 0; i < v28; i++ {
+	v30 := r.Intn(100)
+	tmps := make([]rune, v30)
+	for i := 0; i < v30; i++ {
 		tmps[i] = randUTF8RuneLog(r)
 	}
 	return string(tmps)
@@ -3033,11 +3210,11 @@ func randFieldLog(data []byte, r randyLog, fieldNumber int, wire int) []byte {
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateLog(data, uint64(key))
-		v29 := r.Int63()
+		v31 := r.Int63()
 		if r.Intn(2) == 0 {
-			v29 *= -1
+			v31 *= -1
 		}
-		data = encodeVarintPopulateLog(data, uint64(v29))
+		data = encodeVarintPopulateLog(data, uint64(v31))
 	case 1:
 		data = encodeVarintPopulateLog(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -3218,6 +3395,9 @@ func (m *PromiseResponse) Size() (n int) {
 	if m.Position != nil {
 		n += 1 + sovLog(uint64(*m.Position))
 	}
+	if m.Type != nil {
+		n += 1 + sovLog(uint64(*m.Type))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -3268,6 +3448,9 @@ func (m *WriteResponse) Size() (n int) {
 	}
 	if m.Position != nil {
 		n += 1 + sovLog(uint64(*m.Position))
+	}
+	if m.Type != nil {
+		n += 1 + sovLog(uint64(*m.Type))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -3437,6 +3620,7 @@ func (this *PromiseResponse) String() string {
 		`Proposal:` + valueToStringLog(this.Proposal) + `,`,
 		`Action:` + strings.Replace(fmt.Sprintf("%v", this.Action), "Action", "Action", 1) + `,`,
 		`Position:` + valueToStringLog(this.Position) + `,`,
+		`Type:` + valueToStringLog(this.Type) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -3467,6 +3651,7 @@ func (this *WriteResponse) String() string {
 		`Okay:` + valueToStringLog(this.Okay) + `,`,
 		`Proposal:` + valueToStringLog(this.Proposal) + `,`,
 		`Position:` + valueToStringLog(this.Position) + `,`,
+		`Type:` + valueToStringLog(this.Type) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -3519,8 +3704,12 @@ func (m *Promise) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -3533,6 +3722,12 @@ func (m *Promise) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Promise: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Promise: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -3540,6 +3735,9 @@ func (m *Promise) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3553,15 +3751,7 @@ func (m *Promise) Unmarshal(data []byte) error {
 			m.Proposal = &v
 			hasFields[0] |= uint64(0x00000001)
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -3580,6 +3770,9 @@ func (m *Promise) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("proposal")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *Action) Unmarshal(data []byte) error {
@@ -3587,8 +3780,12 @@ func (m *Action) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -3601,6 +3798,12 @@ func (m *Action) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Action: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Action: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -3608,6 +3811,9 @@ func (m *Action) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3626,6 +3832,9 @@ func (m *Action) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3644,6 +3853,9 @@ func (m *Action) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3661,6 +3873,9 @@ func (m *Action) Unmarshal(data []byte) error {
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3679,6 +3894,9 @@ func (m *Action) Unmarshal(data []byte) error {
 			}
 			var v Action_Type
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3696,6 +3914,9 @@ func (m *Action) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3726,6 +3947,9 @@ func (m *Action) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3756,6 +3980,9 @@ func (m *Action) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3781,15 +4008,7 @@ func (m *Action) Unmarshal(data []byte) error {
 			}
 			iNdEx = postIndex
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -3811,14 +4030,21 @@ func (m *Action) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("promised")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *Action_Nop) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -3830,17 +4056,16 @@ func (m *Action_Nop) Unmarshal(data []byte) error {
 			}
 		}
 		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Nop: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Nop: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -3856,6 +4081,9 @@ func (m *Action_Nop) Unmarshal(data []byte) error {
 		}
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *Action_Append) Unmarshal(data []byte) error {
@@ -3863,8 +4091,12 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -3877,6 +4109,12 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Append: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Append: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
@@ -3884,6 +4122,9 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3910,6 +4151,9 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3930,15 +4174,7 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 			m.Cksum = append([]byte{}, data[iNdEx:postIndex]...)
 			iNdEx = postIndex
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -3957,6 +4193,9 @@ func (m *Action_Append) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("bytes")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *Action_Truncate) Unmarshal(data []byte) error {
@@ -3964,8 +4203,12 @@ func (m *Action_Truncate) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -3978,6 +4221,12 @@ func (m *Action_Truncate) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Truncate: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Truncate: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -3985,6 +4234,9 @@ func (m *Action_Truncate) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -3998,15 +4250,7 @@ func (m *Action_Truncate) Unmarshal(data []byte) error {
 			m.To = &v
 			hasFields[0] |= uint64(0x00000001)
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -4025,6 +4269,9 @@ func (m *Action_Truncate) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("to")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *Metadata) Unmarshal(data []byte) error {
@@ -4032,8 +4279,12 @@ func (m *Metadata) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -4046,6 +4297,12 @@ func (m *Metadata) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Metadata: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Metadata: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -4053,6 +4310,9 @@ func (m *Metadata) Unmarshal(data []byte) error {
 			}
 			var v Metadata_Status
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4071,6 +4331,9 @@ func (m *Metadata) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4084,15 +4347,7 @@ func (m *Metadata) Unmarshal(data []byte) error {
 			m.Promised = &v
 			hasFields[0] |= uint64(0x00000002)
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -4114,6 +4369,9 @@ func (m *Metadata) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("promised")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *Record) Unmarshal(data []byte) error {
@@ -4121,8 +4379,12 @@ func (m *Record) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -4135,6 +4397,12 @@ func (m *Record) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Record: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Record: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -4142,6 +4410,9 @@ func (m *Record) Unmarshal(data []byte) error {
 			}
 			var v Record_Type
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4160,6 +4431,9 @@ func (m *Record) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4190,6 +4464,9 @@ func (m *Record) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4220,6 +4497,9 @@ func (m *Record) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4245,15 +4525,7 @@ func (m *Record) Unmarshal(data []byte) error {
 			}
 			iNdEx = postIndex
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -4272,6 +4544,9 @@ func (m *Record) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *PromiseRequest) Unmarshal(data []byte) error {
@@ -4279,8 +4554,12 @@ func (m *PromiseRequest) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -4293,6 +4572,12 @@ func (m *PromiseRequest) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PromiseRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PromiseRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -4300,6 +4585,9 @@ func (m *PromiseRequest) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4318,6 +4606,9 @@ func (m *PromiseRequest) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4330,15 +4621,7 @@ func (m *PromiseRequest) Unmarshal(data []byte) error {
 			}
 			m.Position = &v
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -4357,6 +4640,9 @@ func (m *PromiseRequest) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("proposal")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *PromiseResponse) Unmarshal(data []byte) error {
@@ -4364,8 +4650,12 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -4378,6 +4668,12 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PromiseResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PromiseResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -4385,6 +4681,9 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4404,6 +4703,9 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4422,6 +4724,9 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4452,6 +4757,9 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4463,16 +4771,28 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 				}
 			}
 			m.Position = &v
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			var v PromiseResponse_Type
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				v |= (PromiseResponse_Type(b) & 0x7F) << shift
+				if b < 0x80 {
 					break
 				}
 			}
-			iNdEx -= sizeOfWire
+			m.Type = &v
+		default:
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -4494,6 +4814,9 @@ func (m *PromiseResponse) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("proposal")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *WriteRequest) Unmarshal(data []byte) error {
@@ -4501,8 +4824,12 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -4515,6 +4842,12 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: WriteRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: WriteRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -4522,6 +4855,9 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4540,6 +4876,9 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4558,6 +4897,9 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4576,6 +4918,9 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			}
 			var v Action_Type
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4594,6 +4939,9 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4624,6 +4972,9 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4654,6 +5005,9 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4679,15 +5033,7 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 			}
 			iNdEx = postIndex
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -4712,6 +5058,9 @@ func (m *WriteRequest) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *WriteResponse) Unmarshal(data []byte) error {
@@ -4719,8 +5068,12 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -4733,6 +5086,12 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: WriteResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: WriteResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -4740,6 +5099,9 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4759,6 +5121,9 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4777,6 +5142,9 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4789,16 +5157,28 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 			}
 			m.Position = &v
 			hasFields[0] |= uint64(0x00000004)
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			var v WriteResponse_Type
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				v |= (WriteResponse_Type(b) & 0x7F) << shift
+				if b < 0x80 {
 					break
 				}
 			}
-			iNdEx -= sizeOfWire
+			m.Type = &v
+		default:
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -4823,6 +5203,9 @@ func (m *WriteResponse) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("position")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *LearnedMessage) Unmarshal(data []byte) error {
@@ -4830,8 +5213,12 @@ func (m *LearnedMessage) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -4844,6 +5231,12 @@ func (m *LearnedMessage) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LearnedMessage: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LearnedMessage: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
@@ -4851,6 +5244,9 @@ func (m *LearnedMessage) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4877,15 +5273,7 @@ func (m *LearnedMessage) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -4904,14 +5292,21 @@ func (m *LearnedMessage) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("action")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *RecoverRequest) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -4923,17 +5318,16 @@ func (m *RecoverRequest) Unmarshal(data []byte) error {
 			}
 		}
 		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RecoverRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RecoverRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -4949,6 +5343,9 @@ func (m *RecoverRequest) Unmarshal(data []byte) error {
 		}
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *RecoverResponse) Unmarshal(data []byte) error {
@@ -4956,8 +5353,12 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -4970,6 +5371,12 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RecoverResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RecoverResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
@@ -4977,6 +5384,9 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 			}
 			var v Metadata_Status
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -4995,6 +5405,9 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -5012,6 +5425,9 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 			}
 			var v uint64
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -5024,15 +5440,7 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 			}
 			m.End = &v
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipLog(data[iNdEx:])
 			if err != nil {
 				return err
@@ -5051,6 +5459,9 @@ func (m *RecoverResponse) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func skipLog(data []byte) (n int, err error) {
@@ -5059,6 +5470,9 @@ func skipLog(data []byte) (n int, err error) {
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowLog
+			}
 			if iNdEx >= l {
 				return 0, io.ErrUnexpectedEOF
 			}
@@ -5072,7 +5486,10 @@ func skipLog(data []byte) (n int, err error) {
 		wireType := int(wire & 0x7)
 		switch wireType {
 		case 0:
-			for {
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return 0, io.ErrUnexpectedEOF
 				}
@@ -5088,6 +5505,9 @@ func skipLog(data []byte) (n int, err error) {
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowLog
+				}
 				if iNdEx >= l {
 					return 0, io.ErrUnexpectedEOF
 				}
@@ -5108,6 +5528,9 @@ func skipLog(data []byte) (n int, err error) {
 				var innerWire uint64
 				var start int = iNdEx
 				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return 0, ErrIntOverflowLog
+					}
 					if iNdEx >= l {
 						return 0, io.ErrUnexpectedEOF
 					}
@@ -5143,4 +5566,5 @@ func skipLog(data []byte) (n int, err error) {
 
 var (
 	ErrInvalidLengthLog = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowLog   = fmt.Errorf("proto: integer overflow")
 )

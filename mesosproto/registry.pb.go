@@ -25,12 +25,23 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+// *
+// A top level object that is managed by the Registrar and persisted in a
+// replicated log.  This object is recovered upon master startup and failover.
 type Registry struct {
 	// Most recent leading master.
 	Master *Registry_Master `protobuf:"bytes,1,opt,name=master" json:"master,omitempty"`
 	// All admitted slaves.
-	Slaves           *Registry_Slaves `protobuf:"bytes,2,opt,name=slaves" json:"slaves,omitempty"`
-	XXX_unrecognized []byte           `json:"-"`
+	Slaves *Registry_Slaves `protobuf:"bytes,2,opt,name=slaves" json:"slaves,omitempty"`
+	// Holds a list of machines and some status information about each.
+	// See comments in `MachineInfo` for more information.
+	Machines *Registry_Machines `protobuf:"bytes,3,opt,name=machines" json:"machines,omitempty"`
+	// Describes a schedule for taking down specific machines for maintenance.
+	// The schedule is meant to give hints to frameworks about potential
+	// unavailability of resources.  The `schedules` are related to the status
+	// information found in `machines`.
+	Schedules        []*Schedule `protobuf:"bytes,4,rep,name=schedules" json:"schedules,omitempty"`
+	XXX_unrecognized []byte      `json:"-"`
 }
 
 func (m *Registry) Reset()      { *m = Registry{} }
@@ -46,6 +57,20 @@ func (m *Registry) GetMaster() *Registry_Master {
 func (m *Registry) GetSlaves() *Registry_Slaves {
 	if m != nil {
 		return m.Slaves
+	}
+	return nil
+}
+
+func (m *Registry) GetMachines() *Registry_Machines {
+	if m != nil {
+		return m.Machines
+	}
+	return nil
+}
+
+func (m *Registry) GetSchedules() []*Schedule {
+	if m != nil {
+		return m.Schedules
 	}
 	return nil
 }
@@ -95,6 +120,36 @@ func (m *Registry_Slaves) GetSlaves() []*Registry_Slave {
 	return nil
 }
 
+type Registry_Machine struct {
+	Info             *MachineInfo `protobuf:"bytes,1,req,name=info" json:"info,omitempty"`
+	XXX_unrecognized []byte       `json:"-"`
+}
+
+func (m *Registry_Machine) Reset()      { *m = Registry_Machine{} }
+func (*Registry_Machine) ProtoMessage() {}
+
+func (m *Registry_Machine) GetInfo() *MachineInfo {
+	if m != nil {
+		return m.Info
+	}
+	return nil
+}
+
+type Registry_Machines struct {
+	Machines         []*Registry_Machine `protobuf:"bytes,1,rep,name=machines" json:"machines,omitempty"`
+	XXX_unrecognized []byte              `json:"-"`
+}
+
+func (m *Registry_Machines) Reset()      { *m = Registry_Machines{} }
+func (*Registry_Machines) ProtoMessage() {}
+
+func (m *Registry_Machines) GetMachines() []*Registry_Machine {
+	if m != nil {
+		return m.Machines
+	}
+	return nil
+}
+
 func (this *Registry) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -120,6 +175,17 @@ func (this *Registry) VerboseEqual(that interface{}) error {
 	}
 	if !this.Slaves.Equal(that1.Slaves) {
 		return fmt.Errorf("Slaves this(%v) Not Equal that(%v)", this.Slaves, that1.Slaves)
+	}
+	if !this.Machines.Equal(that1.Machines) {
+		return fmt.Errorf("Machines this(%v) Not Equal that(%v)", this.Machines, that1.Machines)
+	}
+	if len(this.Schedules) != len(that1.Schedules) {
+		return fmt.Errorf("Schedules this(%v) Not Equal that(%v)", len(this.Schedules), len(that1.Schedules))
+	}
+	for i := range this.Schedules {
+		if !this.Schedules[i].Equal(that1.Schedules[i]) {
+			return fmt.Errorf("Schedules this[%v](%v) Not Equal that[%v](%v)", i, this.Schedules[i], i, that1.Schedules[i])
+		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
@@ -151,6 +217,17 @@ func (this *Registry) Equal(that interface{}) bool {
 	}
 	if !this.Slaves.Equal(that1.Slaves) {
 		return false
+	}
+	if !this.Machines.Equal(that1.Machines) {
+		return false
+	}
+	if len(this.Schedules) != len(that1.Schedules) {
+		return false
+	}
+	for i := range this.Schedules {
+		if !this.Schedules[i].Equal(that1.Schedules[i]) {
+			return false
+		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
@@ -335,17 +412,145 @@ func (this *Registry_Slaves) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *Registry_Machine) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Registry_Machine)
+	if !ok {
+		return fmt.Errorf("that is not of type *Registry_Machine")
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Registry_Machine but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Registry_Machinebut is not nil && this == nil")
+	}
+	if !this.Info.Equal(that1.Info) {
+		return fmt.Errorf("Info this(%v) Not Equal that(%v)", this.Info, that1.Info)
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Registry_Machine) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Registry_Machine)
+	if !ok {
+		return false
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Info.Equal(that1.Info) {
+		return false
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
+func (this *Registry_Machines) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Registry_Machines)
+	if !ok {
+		return fmt.Errorf("that is not of type *Registry_Machines")
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Registry_Machines but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Registry_Machinesbut is not nil && this == nil")
+	}
+	if len(this.Machines) != len(that1.Machines) {
+		return fmt.Errorf("Machines this(%v) Not Equal that(%v)", len(this.Machines), len(that1.Machines))
+	}
+	for i := range this.Machines {
+		if !this.Machines[i].Equal(that1.Machines[i]) {
+			return fmt.Errorf("Machines this[%v](%v) Not Equal that[%v](%v)", i, this.Machines[i], i, that1.Machines[i])
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
+	}
+	return nil
+}
+func (this *Registry_Machines) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Registry_Machines)
+	if !ok {
+		return false
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if len(this.Machines) != len(that1.Machines) {
+		return false
+	}
+	for i := range this.Machines {
+		if !this.Machines[i].Equal(that1.Machines[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
+		return false
+	}
+	return true
+}
 func (this *Registry) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 6)
+	s := make([]string, 0, 8)
 	s = append(s, "&mesosproto.Registry{")
 	if this.Master != nil {
 		s = append(s, "Master: "+fmt.Sprintf("%#v", this.Master)+",\n")
 	}
 	if this.Slaves != nil {
 		s = append(s, "Slaves: "+fmt.Sprintf("%#v", this.Slaves)+",\n")
+	}
+	if this.Machines != nil {
+		s = append(s, "Machines: "+fmt.Sprintf("%#v", this.Machines)+",\n")
+	}
+	if this.Schedules != nil {
+		s = append(s, "Schedules: "+fmt.Sprintf("%#v", this.Schedules)+",\n")
 	}
 	if this.XXX_unrecognized != nil {
 		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
@@ -391,6 +596,36 @@ func (this *Registry_Slaves) GoString() string {
 	s = append(s, "&mesosproto.Registry_Slaves{")
 	if this.Slaves != nil {
 		s = append(s, "Slaves: "+fmt.Sprintf("%#v", this.Slaves)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Registry_Machine) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&mesosproto.Registry_Machine{")
+	if this.Info != nil {
+		s = append(s, "Info: "+fmt.Sprintf("%#v", this.Info)+",\n")
+	}
+	if this.XXX_unrecognized != nil {
+		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Registry_Machines) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&mesosproto.Registry_Machines{")
+	if this.Machines != nil {
+		s = append(s, "Machines: "+fmt.Sprintf("%#v", this.Machines)+",\n")
 	}
 	if this.XXX_unrecognized != nil {
 		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
@@ -458,6 +693,28 @@ func (m *Registry) MarshalTo(data []byte) (int, error) {
 		}
 		i += n2
 	}
+	if m.Machines != nil {
+		data[i] = 0x1a
+		i++
+		i = encodeVarintRegistry(data, i, uint64(m.Machines.Size()))
+		n3, err := m.Machines.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n3
+	}
+	if len(m.Schedules) > 0 {
+		for _, msg := range m.Schedules {
+			data[i] = 0x22
+			i++
+			i = encodeVarintRegistry(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
 	}
@@ -485,11 +742,11 @@ func (m *Registry_Master) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintRegistry(data, i, uint64(m.Info.Size()))
-		n3, err := m.Info.MarshalTo(data[i:])
+		n4, err := m.Info.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n3
+		i += n4
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -518,11 +775,11 @@ func (m *Registry_Slave) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintRegistry(data, i, uint64(m.Info.Size()))
-		n4, err := m.Info.MarshalTo(data[i:])
+		n5, err := m.Info.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n4
+		i += n5
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -547,6 +804,72 @@ func (m *Registry_Slaves) MarshalTo(data []byte) (int, error) {
 	_ = l
 	if len(m.Slaves) > 0 {
 		for _, msg := range m.Slaves {
+			data[i] = 0xa
+			i++
+			i = encodeVarintRegistry(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Registry_Machine) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Registry_Machine) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Info == nil {
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("info")
+	} else {
+		data[i] = 0xa
+		i++
+		i = encodeVarintRegistry(data, i, uint64(m.Info.Size()))
+		n6, err := m.Info.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n6
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(data[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
+func (m *Registry_Machines) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Registry_Machines) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Machines) > 0 {
+		for _, msg := range m.Machines {
 			data[i] = 0xa
 			i++
 			i = encodeVarintRegistry(data, i, uint64(msg.Size()))
@@ -598,8 +921,18 @@ func NewPopulatedRegistry(r randyRegistry, easy bool) *Registry {
 	if r.Intn(10) != 0 {
 		this.Slaves = NewPopulatedRegistry_Slaves(r, easy)
 	}
+	if r.Intn(10) != 0 {
+		this.Machines = NewPopulatedRegistry_Machines(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		v1 := r.Intn(10)
+		this.Schedules = make([]*Schedule, v1)
+		for i := 0; i < v1; i++ {
+			this.Schedules[i] = NewPopulatedSchedule(r, easy)
+		}
+	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedRegistry(r, 3)
+		this.XXX_unrecognized = randUnrecognizedRegistry(r, 5)
 	}
 	return this
 }
@@ -625,10 +958,34 @@ func NewPopulatedRegistry_Slave(r randyRegistry, easy bool) *Registry_Slave {
 func NewPopulatedRegistry_Slaves(r randyRegistry, easy bool) *Registry_Slaves {
 	this := &Registry_Slaves{}
 	if r.Intn(10) != 0 {
-		v1 := r.Intn(10)
-		this.Slaves = make([]*Registry_Slave, v1)
-		for i := 0; i < v1; i++ {
+		v2 := r.Intn(10)
+		this.Slaves = make([]*Registry_Slave, v2)
+		for i := 0; i < v2; i++ {
 			this.Slaves[i] = NewPopulatedRegistry_Slave(r, easy)
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedRegistry(r, 2)
+	}
+	return this
+}
+
+func NewPopulatedRegistry_Machine(r randyRegistry, easy bool) *Registry_Machine {
+	this := &Registry_Machine{}
+	this.Info = NewPopulatedMachineInfo(r, easy)
+	if !easy && r.Intn(10) != 0 {
+		this.XXX_unrecognized = randUnrecognizedRegistry(r, 2)
+	}
+	return this
+}
+
+func NewPopulatedRegistry_Machines(r randyRegistry, easy bool) *Registry_Machines {
+	this := &Registry_Machines{}
+	if r.Intn(10) != 0 {
+		v3 := r.Intn(10)
+		this.Machines = make([]*Registry_Machine, v3)
+		for i := 0; i < v3; i++ {
+			this.Machines[i] = NewPopulatedRegistry_Machine(r, easy)
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -656,9 +1013,9 @@ func randUTF8RuneRegistry(r randyRegistry) rune {
 	return rune(ru + 61)
 }
 func randStringRegistry(r randyRegistry) string {
-	v2 := r.Intn(100)
-	tmps := make([]rune, v2)
-	for i := 0; i < v2; i++ {
+	v4 := r.Intn(100)
+	tmps := make([]rune, v4)
+	for i := 0; i < v4; i++ {
 		tmps[i] = randUTF8RuneRegistry(r)
 	}
 	return string(tmps)
@@ -680,11 +1037,11 @@ func randFieldRegistry(data []byte, r randyRegistry, fieldNumber int, wire int) 
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateRegistry(data, uint64(key))
-		v3 := r.Int63()
+		v5 := r.Int63()
 		if r.Intn(2) == 0 {
-			v3 *= -1
+			v5 *= -1
 		}
-		data = encodeVarintPopulateRegistry(data, uint64(v3))
+		data = encodeVarintPopulateRegistry(data, uint64(v5))
 	case 1:
 		data = encodeVarintPopulateRegistry(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -719,6 +1076,16 @@ func (m *Registry) Size() (n int) {
 	if m.Slaves != nil {
 		l = m.Slaves.Size()
 		n += 1 + l + sovRegistry(uint64(l))
+	}
+	if m.Machines != nil {
+		l = m.Machines.Size()
+		n += 1 + l + sovRegistry(uint64(l))
+	}
+	if len(m.Schedules) > 0 {
+		for _, e := range m.Schedules {
+			l = e.Size()
+			n += 1 + l + sovRegistry(uint64(l))
+		}
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -767,6 +1134,34 @@ func (m *Registry_Slaves) Size() (n int) {
 	return n
 }
 
+func (m *Registry_Machine) Size() (n int) {
+	var l int
+	_ = l
+	if m.Info != nil {
+		l = m.Info.Size()
+		n += 1 + l + sovRegistry(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Registry_Machines) Size() (n int) {
+	var l int
+	_ = l
+	if len(m.Machines) > 0 {
+		for _, e := range m.Machines {
+			l = e.Size()
+			n += 1 + l + sovRegistry(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
 func sovRegistry(x uint64) (n int) {
 	for {
 		n++
@@ -787,6 +1182,8 @@ func (this *Registry) String() string {
 	s := strings.Join([]string{`&Registry{`,
 		`Master:` + strings.Replace(fmt.Sprintf("%v", this.Master), "Registry_Master", "Registry_Master", 1) + `,`,
 		`Slaves:` + strings.Replace(fmt.Sprintf("%v", this.Slaves), "Registry_Slaves", "Registry_Slaves", 1) + `,`,
+		`Machines:` + strings.Replace(fmt.Sprintf("%v", this.Machines), "Registry_Machines", "Registry_Machines", 1) + `,`,
+		`Schedules:` + strings.Replace(fmt.Sprintf("%v", this.Schedules), "Schedule", "Schedule", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -825,6 +1222,28 @@ func (this *Registry_Slaves) String() string {
 	}, "")
 	return s
 }
+func (this *Registry_Machine) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Registry_Machine{`,
+		`Info:` + strings.Replace(fmt.Sprintf("%v", this.Info), "MachineInfo", "MachineInfo", 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Registry_Machines) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Registry_Machines{`,
+		`Machines:` + strings.Replace(fmt.Sprintf("%v", this.Machines), "Registry_Machine", "Registry_Machine", 1) + `,`,
+		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func valueToStringRegistry(v interface{}) string {
 	rv := reflect.ValueOf(v)
 	if rv.IsNil() {
@@ -837,8 +1256,12 @@ func (m *Registry) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRegistry
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -851,6 +1274,12 @@ func (m *Registry) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Registry: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Registry: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
@@ -858,6 +1287,9 @@ func (m *Registry) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRegistry
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -888,6 +1320,9 @@ func (m *Registry) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRegistry
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -912,16 +1347,72 @@ func (m *Registry) Unmarshal(data []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Machines", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRegistry
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
 					break
 				}
 			}
-			iNdEx -= sizeOfWire
+			if msglen < 0 {
+				return ErrInvalidLengthRegistry
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Machines == nil {
+				m.Machines = &Registry_Machines{}
+			}
+			if err := m.Machines.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Schedules", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRegistry
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRegistry
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Schedules = append(m.Schedules, &Schedule{})
+			if err := m.Schedules[len(m.Schedules)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
 			skippy, err := skipRegistry(data[iNdEx:])
 			if err != nil {
 				return err
@@ -937,6 +1428,9 @@ func (m *Registry) Unmarshal(data []byte) error {
 		}
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *Registry_Master) Unmarshal(data []byte) error {
@@ -944,8 +1438,12 @@ func (m *Registry_Master) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRegistry
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -958,6 +1456,12 @@ func (m *Registry_Master) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Master: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Master: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
@@ -965,6 +1469,9 @@ func (m *Registry_Master) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRegistry
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -991,15 +1498,7 @@ func (m *Registry_Master) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipRegistry(data[iNdEx:])
 			if err != nil {
 				return err
@@ -1018,6 +1517,9 @@ func (m *Registry_Master) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("info")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *Registry_Slave) Unmarshal(data []byte) error {
@@ -1025,8 +1527,12 @@ func (m *Registry_Slave) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRegistry
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1039,6 +1545,12 @@ func (m *Registry_Slave) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Slave: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Slave: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
@@ -1046,6 +1558,9 @@ func (m *Registry_Slave) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRegistry
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -1072,15 +1587,7 @@ func (m *Registry_Slave) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipRegistry(data[iNdEx:])
 			if err != nil {
 				return err
@@ -1099,14 +1606,21 @@ func (m *Registry_Slave) Unmarshal(data []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("info")
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func (m *Registry_Slaves) Unmarshal(data []byte) error {
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
+		preIndex := iNdEx
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRegistry
+			}
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1119,6 +1633,12 @@ func (m *Registry_Slaves) Unmarshal(data []byte) error {
 		}
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Slaves: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Slaves: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
@@ -1126,6 +1646,9 @@ func (m *Registry_Slaves) Unmarshal(data []byte) error {
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRegistry
+				}
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
@@ -1149,15 +1672,7 @@ func (m *Registry_Slaves) Unmarshal(data []byte) error {
 			}
 			iNdEx = postIndex
 		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
+			iNdEx = preIndex
 			skippy, err := skipRegistry(data[iNdEx:])
 			if err != nil {
 				return err
@@ -1173,6 +1688,180 @@ func (m *Registry_Slaves) Unmarshal(data []byte) error {
 		}
 	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Registry_Machine) Unmarshal(data []byte) error {
+	var hasFields [1]uint64
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRegistry
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Machine: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Machine: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Info", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRegistry
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRegistry
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Info == nil {
+				m.Info = &MachineInfo{}
+			}
+			if err := m.Info.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRegistry(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthRegistry
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("info")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Registry_Machines) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowRegistry
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Machines: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Machines: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Machines", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRegistry
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRegistry
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Machines = append(m.Machines, &Registry_Machine{})
+			if err := m.Machines[len(m.Machines)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipRegistry(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthRegistry
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 func skipRegistry(data []byte) (n int, err error) {
@@ -1181,6 +1870,9 @@ func skipRegistry(data []byte) (n int, err error) {
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowRegistry
+			}
 			if iNdEx >= l {
 				return 0, io.ErrUnexpectedEOF
 			}
@@ -1194,7 +1886,10 @@ func skipRegistry(data []byte) (n int, err error) {
 		wireType := int(wire & 0x7)
 		switch wireType {
 		case 0:
-			for {
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowRegistry
+				}
 				if iNdEx >= l {
 					return 0, io.ErrUnexpectedEOF
 				}
@@ -1210,6 +1905,9 @@ func skipRegistry(data []byte) (n int, err error) {
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowRegistry
+				}
 				if iNdEx >= l {
 					return 0, io.ErrUnexpectedEOF
 				}
@@ -1230,6 +1928,9 @@ func skipRegistry(data []byte) (n int, err error) {
 				var innerWire uint64
 				var start int = iNdEx
 				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return 0, ErrIntOverflowRegistry
+					}
 					if iNdEx >= l {
 						return 0, io.ErrUnexpectedEOF
 					}
@@ -1265,4 +1966,5 @@ func skipRegistry(data []byte) (n int, err error) {
 
 var (
 	ErrInvalidLengthRegistry = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowRegistry   = fmt.Errorf("proto: integer overflow")
 )

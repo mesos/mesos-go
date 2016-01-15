@@ -1,6 +1,7 @@
 package mesosutil
 
 import (
+	"os"
 	"os/exec"
 	"strings"
 
@@ -15,9 +16,14 @@ func GetHostname(hostnameOverride string) string {
 		// want the FQDN, and this is the easiest way to get it.
 		fqdn, err := exec.Command("hostname", "-f").Output()
 		if err != nil {
-			log.Fatalf("Couldn't determine hostname: %v", err)
+			log.Errorf("Couldn't determine hostname fqdn, failing back to hostname: %v", err)
+			hostname, err = os.Hostname()
+			if err != nil {
+				log.Fatalf("Error getting hostname: %v", err)
+			}
+		} else {
+			hostname = fqdn
 		}
-		hostname = fqdn
 	}
 	return strings.TrimSpace(string(hostname))
 }

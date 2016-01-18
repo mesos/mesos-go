@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -417,14 +418,17 @@ func main() {
 	cred := (*mesos.Credential)(nil)
 	if *mesosAuthPrincipal != "" {
 		fwinfo.Principal = proto.String(*mesosAuthPrincipal)
+		cred = &mesos.Credential{
+			Principal: proto.String(*mesosAuthPrincipal),
+		}
 		if *mesosAuthSecretFile != "" {
-			secret, err := ioutil.ReadFile(*mesosAuthSecretFile)
-			if err != nil {
-				log.Fatal(err)
-			}
-			cred = &mesos.Credential{
-				Principal: proto.String(*mesosAuthPrincipal),
-				Secret:    secret,
+			_, err := os.Stat(*mesosAuthSecretFile)
+			if err == nil {
+				secret, err := ioutil.ReadFile(*mesosAuthSecretFile)
+				if err != nil {
+					log.Fatal("failed to read secret file: ", err.Error())
+				}
+				cred.Secret = proto.String(string(secret))
 			}
 		}
 	}

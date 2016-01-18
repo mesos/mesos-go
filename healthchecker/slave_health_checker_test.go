@@ -51,8 +51,9 @@ func (t *thresholdMonitor) incAndTest() bool {
 // blockedServer replies only threshold times, after that
 // it will block.
 type blockedServer struct {
-	th *thresholdMonitor
-	ch chan struct{}
+	th       *thresholdMonitor
+	ch       chan struct{}
+	stopOnce sync.Once
 }
 
 func newBlockedServer(threshold int) *blockedServer {
@@ -70,7 +71,7 @@ func (s *blockedServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *blockedServer) stop() {
-	close(s.ch)
+	s.stopOnce.Do(func() { close(s.ch) })
 }
 
 // eofServer will close the connection after it replies for threshold times.
@@ -95,7 +96,7 @@ func (s *eofServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn.Close()
 }
 
-// errorStatusCodeServer will reply error status code (e.g. 503) after the
+// errorStatusCodeServer will reply error status code (e.g. 503) after
 // it replies for threhold time.
 type errorStatusCodeServer struct {
 	th *thresholdMonitor
@@ -159,6 +160,7 @@ func TestSlaveHealthCheckerFailedOnBlockedSlave(t *testing.T) {
 	ts := httptest.NewUnstartedServer(s)
 	ts.Start()
 	defer ts.Close()
+	defer s.stop()
 
 	upid, err := upid.Parse(fmt.Sprintf("slave@%s", ts.Listener.Addr().String()))
 	assert.NoError(t, err)
@@ -169,15 +171,14 @@ func TestSlaveHealthCheckerFailedOnBlockedSlave(t *testing.T) {
 
 	select {
 	case <-time.After(time.Second):
-		s.stop()
-		t.Fatal("timeout")
+		t.Error("timeout")
 	case <-ch:
-		s.stop()
 		assert.True(t, atomic.LoadInt32(&s.th.cnt) > 10)
 	}
 
 	// TODO(jdef) hack: this sucks, but there's a data race in httptest's handler when Close()
 	// and ServeHTTP() are invoked (WaitGroup DATA RACE). Sleeping here to attempt to avoid that.
+	// I think this is supposed to be fixed in go1.6
 	time.Sleep(5 * time.Second)
 }
 
@@ -224,6 +225,8 @@ func TestSlaveHealthCheckerFailedOnErrorStatusSlave(t *testing.T) {
 }
 
 func TestSlaveHealthCheckerSucceed(t *testing.T) {
+	t.Skip("skipping known flaky test (fails on busy CI servers, should use a fake clock)")
+
 	s := new(goodServer)
 	ts := httptest.NewUnstartedServer(s)
 	ts.Start()
@@ -245,6 +248,8 @@ func TestSlaveHealthCheckerSucceed(t *testing.T) {
 }
 
 func TestSlaveHealthCheckerPartitonedSlave(t *testing.T) {
+	t.Skip("skipping known flaky test (fails on busy CI servers, should use a fake clock)")
+
 	s := newPartitionedServer(5, 9)
 	ts := httptest.NewUnstartedServer(s)
 	ts.Start()

@@ -16,7 +16,6 @@
 		mesos.proto
 		messages.proto
 		registry.proto
-		scheduler.proto
 		state.proto
 
 	It has these top-level messages:
@@ -154,8 +153,6 @@
 		TaskHealthStatus
 		HookExecuted
 		Registry
-		Event
-		Call
 		Entry
 		Operation
 */

@@ -16,11 +16,12 @@
  * limitations under the License.
  */
 
-package mesosproto;
+package mesosproto.scheduler;
 
-import "mesos.proto";
+import "github.com/mesos/mesos-go/mesosproto/mesos.proto";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
+option go_package = "scheduler";
 option (gogoproto.gostring_all) = true;
 option (gogoproto.equal_all) = true;
 option (gogoproto.verbose_equal_all) = true;
@@ -319,7 +320,7 @@ message Call {
   // NOTE: The built-in hierarchical allocator doesn't have support
   // for this call and hence simply ignores it.
   message Request {
-    repeated Request requests = 1;
+    repeated mesosproto.Request requests = 1;
   }
 
   // Identifies who generated this call. Master assigns a framework id

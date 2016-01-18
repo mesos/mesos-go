@@ -34,6 +34,7 @@ import (
 	"github.com/mesos/mesos-go/auth"
 	"github.com/mesos/mesos-go/detector"
 	mesos "github.com/mesos/mesos-go/mesosproto"
+	"github.com/mesos/mesos-go/mesosproto/scheduler"
 	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/mesosutil/process"
 	"github.com/mesos/mesos-go/messenger"
@@ -1177,10 +1178,10 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, oper
 	}
 
 	// Accept Offers
-	message := &mesos.Call{
+	message := &scheduler.Call{
 		FrameworkId: driver.frameworkInfo.Id,
-		Type:        mesos.Call_ACCEPT.Enum(),
-		Accept: &mesos.Call_Accept{
+		Type:        scheduler.Call_ACCEPT.Enum(),
+		Accept: &scheduler.Call_Accept{
 			OfferIds:   offerIds,
 			Operations: okOperations,
 			Filters:    filters,

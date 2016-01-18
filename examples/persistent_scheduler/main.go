@@ -423,13 +423,14 @@ func main() {
 		}
 		if *mesosAuthSecretFile != "" {
 			_, err := os.Stat(*mesosAuthSecretFile)
-			if err == nil {
-				secret, err := ioutil.ReadFile(*mesosAuthSecretFile)
-				if err != nil {
-					log.Fatal("failed to read secret file: ", err.Error())
-				}
-				cred.Secret = proto.String(string(secret))
+			if err != nil {
+				log.Fatal("missing secret file: ", err.Error())
 			}
+			secret, err := ioutil.ReadFile(*mesosAuthSecretFile)
+			if err != nil {
+				log.Fatal("failed to read secret file: ", err.Error())
+			}
+			cred.Secret = proto.String(string(secret))
 		}
 	}
 	bindingAddress := parseIP(*address)

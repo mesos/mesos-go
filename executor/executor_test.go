@@ -23,7 +23,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mesos/mesos-go/healthchecker"
 	"github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
 	"github.com/mesos/mesos-go/messenger"
@@ -81,8 +80,7 @@ func (e *testExecutorDriver) setConnected(b bool) {
 
 func createTestExecutorDriver(t *testing.T) (
 	*testExecutorDriver,
-	*messenger.MockedMessenger,
-	*healthchecker.MockedHealthChecker) {
+	*messenger.MockedMessenger) {
 
 	exec := NewMockedExecutor()
 	exec.On("Error").Return(nil)
@@ -96,12 +94,8 @@ func createTestExecutorDriver(t *testing.T) (
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
 
-	checker := healthchecker.NewMockedHealthChecker()
-	checker.On("Start").Return()
-	checker.On("Stop").Return()
-
 	driver.messenger = messenger
-	return &testExecutorDriver{driver}, messenger, checker
+	return &testExecutorDriver{driver}, messenger
 }
 
 func TestExecutorDriverStartFailedToParseEnvironment(t *testing.T) {
@@ -176,10 +170,6 @@ func TestExecutorDriverStartSucceed(t *testing.T) {
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
 
-	checker := healthchecker.NewMockedHealthChecker()
-	checker.On("Start").Return()
-	checker.On("Stop").Return()
-
 	assert.False(t, driver.Running())
 	status, err := driver.Start()
 	assert.True(t, driver.Running())
@@ -207,10 +197,6 @@ func TestExecutorDriverRun(t *testing.T) {
 	driver := newTestExecutorDriver(t, exec)
 	driver.messenger = messenger
 	assert.False(t, driver.Running())
-
-	checker := healthchecker.NewMockedHealthChecker()
-	checker.On("Start").Return()
-	checker.On("Stop").Return()
 
 	ch := make(chan struct{})
 	go func() {
@@ -242,10 +228,6 @@ func TestExecutorDriverJoin(t *testing.T) {
 	driver.messenger = messenger
 	assert.False(t, driver.Running())
 
-	checker := healthchecker.NewMockedHealthChecker()
-	checker.On("Start").Return()
-	checker.On("Stop").Return()
-
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.True(t, driver.Running())
@@ -264,7 +246,7 @@ func TestExecutorDriverJoin(t *testing.T) {
 
 func TestExecutorDriverAbort(t *testing.T) {
 	statusChan := make(chan mesosproto.Status)
-	driver, messenger, _ := createTestExecutorDriver(t)
+	driver, messenger := createTestExecutorDriver(t)
 
 	assert.False(t, driver.Running())
 	stat, err := driver.Start()
@@ -305,7 +287,7 @@ func TestExecutorDriverAbort(t *testing.T) {
 
 func TestExecutorDriverStop(t *testing.T) {
 	statusChan := make(chan mesosproto.Status)
-	driver, messenger, _ := createTestExecutorDriver(t)
+	driver, messenger := createTestExecutorDriver(t)
 
 	assert.False(t, driver.Running())
 	stat, err := driver.Start()
@@ -345,7 +327,7 @@ func TestExecutorDriverStop(t *testing.T) {
 
 func TestExecutorDriverSendStatusUpdate(t *testing.T) {
 
-	driver, _, _ := createTestExecutorDriver(t)
+	driver, _ := createTestExecutorDriver(t)
 
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -364,7 +346,7 @@ func TestExecutorDriverSendStatusUpdate(t *testing.T) {
 
 func TestExecutorDriverSendStatusUpdateStaging(t *testing.T) {
 
-	driver, _, _ := createTestExecutorDriver(t)
+	driver, _ := createTestExecutorDriver(t)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
@@ -382,7 +364,7 @@ func TestExecutorDriverSendStatusUpdateStaging(t *testing.T) {
 
 func TestExecutorDriverSendFrameworkMessage(t *testing.T) {
 
-	driver, _, _ := createTestExecutorDriver(t)
+	driver, _ := createTestExecutorDriver(t)
 
 	stat, err := driver.SendFrameworkMessage("failed")
 	assert.Error(t, err)
@@ -398,7 +380,7 @@ func TestExecutorDriverSendFrameworkMessage(t *testing.T) {
 }
 
 func TestStatusUpdateAckRace_Issue103(t *testing.T) {
-	driver, _, _ := createTestExecutorDriver(t)
+	driver, _ := createTestExecutorDriver(t)
 	_, err := driver.Start()
 	assert.NoError(t, err)
 

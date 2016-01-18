@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -327,7 +328,7 @@ func (sched *ExampleScheduler) ExecutorLost(_ sched.SchedulerDriver, eid *mesos.
 	log.Errorf("executor %q lost on slave %q code %d", eid, sid, code)
 }
 func (sched *ExampleScheduler) Error(_ sched.SchedulerDriver, err string) {
-	log.Errorf("Scheduler received error:", err)
+	log.Errorf("Scheduler received error: %v", err)
 }
 
 // ----------------------- func init() ------------------------- //
@@ -417,15 +418,19 @@ func main() {
 	cred := (*mesos.Credential)(nil)
 	if *mesosAuthPrincipal != "" {
 		fwinfo.Principal = proto.String(*mesosAuthPrincipal)
+		cred = &mesos.Credential{
+			Principal: proto.String(*mesosAuthPrincipal),
+		}
 		if *mesosAuthSecretFile != "" {
+			_, err := os.Stat(*mesosAuthSecretFile)
+			if err != nil {
+				log.Fatal("missing secret file: ", err.Error())
+			}
 			secret, err := ioutil.ReadFile(*mesosAuthSecretFile)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatal("failed to read secret file: ", err.Error())
 			}
-			cred = &mesos.Credential{
-				Principal: proto.String(*mesosAuthPrincipal),
-				Secret:    secret,
-			}
+			cred.Secret = proto.String(string(secret))
 		}
 	}
 	bindingAddress := parseIP(*address)

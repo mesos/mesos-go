@@ -191,7 +191,7 @@ func (sched *ExampleScheduler) ExecutorLost(_ sched.SchedulerDriver, eid *mesos.
 	log.Errorf("executor %q lost on slave %q code %d", eid, sid, code)
 }
 func (sched *ExampleScheduler) Error(_ sched.SchedulerDriver, err string) {
-	log.Errorf("Scheduler received error:", err)
+	log.Errorf("Scheduler received error: %v", err)
 }
 
 // ----------------------- func init() ------------------------- //

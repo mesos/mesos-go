@@ -2,6 +2,125 @@
 // source: authentication.proto
 // DO NOT EDIT!
 
+/*
+Package mesosproto is a generated protocol buffer package.
+
+It is generated from these files:
+	authentication.proto
+	internal.proto
+	mesos.proto
+	messages.proto
+
+It has these top-level messages:
+	AuthenticateMessage
+	AuthenticationMechanismsMessage
+	AuthenticationStartMessage
+	AuthenticationStepMessage
+	AuthenticationCompletedMessage
+	AuthenticationFailedMessage
+	AuthenticationErrorMessage
+	InternalMasterChangeDetected
+	InternalTryAuthentication
+	InternalAuthenticationResult
+	FrameworkID
+	OfferID
+	SlaveID
+	TaskID
+	ExecutorID
+	ContainerID
+	TimeInfo
+	DurationInfo
+	Address
+	URL
+	Unavailability
+	MachineID
+	MachineInfo
+	FrameworkInfo
+	HealthCheck
+	CommandInfo
+	ExecutorInfo
+	MasterInfo
+	SlaveInfo
+	Value
+	Attribute
+	Resource
+	TrafficControlStatistics
+	ResourceStatistics
+	ResourceUsage
+	PerfStatistics
+	Request
+	Offer
+	InverseOffer
+	TaskInfo
+	TaskStatus
+	Filters
+	Environment
+	Parameter
+	Parameters
+	Credential
+	Credentials
+	RateLimit
+	RateLimits
+	Image
+	Volume
+	NetworkInfo
+	ContainerInfo
+	ContainerStatus
+	Labels
+	Label
+	Port
+	Ports
+	DiscoveryInfo
+	AppcImageManifest
+	Task
+	StatusUpdate
+	StatusUpdateRecord
+	SubmitSchedulerRequest
+	SubmitSchedulerResponse
+	ExecutorToFrameworkMessage
+	FrameworkToExecutorMessage
+	RegisterFrameworkMessage
+	ReregisterFrameworkMessage
+	FrameworkRegisteredMessage
+	FrameworkReregisteredMessage
+	UnregisterFrameworkMessage
+	DeactivateFrameworkMessage
+	ResourceRequestMessage
+	ResourceOffersMessage
+	LaunchTasksMessage
+	RescindResourceOfferMessage
+	ReviveOffersMessage
+	RunTaskMessage
+	KillTaskMessage
+	StatusUpdateMessage
+	StatusUpdateAcknowledgementMessage
+	LostSlaveMessage
+	ReconcileTasksMessage
+	FrameworkErrorMessage
+	RegisterSlaveMessage
+	ReregisterSlaveMessage
+	SlaveRegisteredMessage
+	SlaveReregisteredMessage
+	UnregisterSlaveMessage
+	MasterSlaveConnection
+	PingSlaveMessage
+	PongSlaveMessage
+	ShutdownFrameworkMessage
+	ShutdownExecutorMessage
+	UpdateFrameworkMessage
+	CheckpointResourcesMessage
+	UpdateSlaveMessage
+	RegisterExecutorMessage
+	ExecutorRegisteredMessage
+	ExecutorReregisteredMessage
+	ExitedExecutorMessage
+	ReconnectExecutorMessage
+	ReregisterExecutorMessage
+	ShutdownMessage
+	Archive
+	TaskHealthStatus
+	HookExecuted
+*/
 package mesosproto
 
 import proto "github.com/gogo/protobuf/proto"

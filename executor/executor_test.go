@@ -388,7 +388,7 @@ func TestStatusUpdateAckRace_Issue103(t *testing.T) {
 	go func() {
 		driver.lock.Lock()
 		defer driver.lock.Unlock()
-		driver.statusUpdateAcknowledgement(nil, msg)
+		driver.statusUpdateAcknowledgement(driver.context(), nil, msg)
 	}()
 
 	taskStatus := util.NewTaskStatus(

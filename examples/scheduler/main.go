@@ -27,6 +27,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
@@ -55,6 +56,7 @@ var (
 	taskCount           = flag.String("task-count", "5", "Total task count to run.")
 	mesosAuthPrincipal  = flag.String("mesos_authentication_principal", "", "Mesos authentication principal.")
 	mesosAuthSecretFile = flag.String("mesos_authentication_secret_file", "", "Mesos authentication secret file.")
+	slowLaunch          = flag.Bool("slow_launch", false, "When true the ResourceOffers func waits for several seconds before attempting to launch tasks; useful for debugging failover")
 )
 
 type ExampleScheduler struct {
@@ -83,13 +85,21 @@ func (sched *ExampleScheduler) Registered(driver sched.SchedulerDriver, framewor
 
 func (sched *ExampleScheduler) Reregistered(driver sched.SchedulerDriver, masterInfo *mesos.MasterInfo) {
 	log.Infoln("Framework Re-Registered with Master ", masterInfo)
+	_, err := driver.ReconcileTasks([]*mesos.TaskStatus{})
+	if err != nil {
+		log.Errorf("failed to request task reconciliation: %v", err)
+	}
 }
 
 func (sched *ExampleScheduler) Disconnected(sched.SchedulerDriver) {
-	log.Fatalf("disconnected from master, aborting")
+	log.Warningf("disconnected from master")
 }
 
 func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offers []*mesos.Offer) {
+
+	if *slowLaunch {
+		time.Sleep(3 * time.Second)
+	}
 
 	if sched.tasksLaunched >= sched.totalTasks {
 		log.Info("decline all of the offers since all of our tasks are already launched")

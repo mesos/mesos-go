@@ -212,7 +212,7 @@ var defaultMockServerConfigurator = mockServerConfigurator(func(frameworkId *mes
 		// this is what the mocked scheduler is expecting to receive
 		suite.driver.eventLock.Lock()
 		defer suite.driver.eventLock.Unlock()
-		suite.driver.frameworkRegistered(suite.driver.masterPid, &mesos.FrameworkRegisteredMessage{
+		suite.driver.frameworkRegistered(suite.driver.context(), suite.driver.masterPid, &mesos.FrameworkRegisteredMessage{
 			FrameworkId: frameworkId,
 			MasterInfo:  masterInfo,
 		})
@@ -228,7 +228,7 @@ var defaultMockServerConfigurator = mockServerConfigurator(func(frameworkId *mes
 		// this is what the mocked scheduler is expecting to receive
 		suite.driver.eventLock.Lock()
 		defer suite.driver.eventLock.Unlock()
-		suite.driver.frameworkReregistered(suite.driver.masterPid, &mesos.FrameworkReregisteredMessage{
+		suite.driver.frameworkReregistered(suite.driver.context(), suite.driver.masterPid, &mesos.FrameworkReregisteredMessage{
 			FrameworkId: frameworkId,
 			MasterInfo:  masterInfo,
 		})

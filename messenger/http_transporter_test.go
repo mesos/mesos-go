@@ -185,47 +185,6 @@ func TestTransporterStartAndRcvd(t *testing.T) {
 	}
 }
 
-func TestTransporterStartAndInject(t *testing.T) {
-	serverId := "testserver"
-	protoMsg := testmessage.GenerateSmallMessage()
-	msgName := getMessageName(protoMsg)
-	ctrl := make(chan struct{})
-
-	// setup receiver (server) process
-	receiver := NewHTTPTransporter(upid.UPID{ID: serverId, Host: "127.0.0.1"}, nil)
-	receiver.Install(msgName)
-	rcvPid, errch := receiver.Start()
-	defer receiver.Stop(false)
-
-	msg := &Message{
-		UPID:         &rcvPid,
-		Name:         msgName,
-		ProtoMessage: protoMsg,
-	}
-
-	receiver.Inject(context.TODO(), msg)
-
-	go func() {
-		defer close(ctrl)
-		msg, err := receiver.Recv()
-		assert.Nil(t, err)
-		assert.NotNil(t, msg)
-		if msg != nil {
-			assert.Equal(t, msgName, msg.Name)
-		}
-	}()
-
-	select {
-	case <-time.After(time.Second * 1):
-		t.Fatalf("Timeout")
-	case <-ctrl:
-	case err := <-errch:
-		if err != nil {
-			t.Fatalf(err.Error())
-		}
-	}
-}
-
 func TestTransporterStartAndStop(t *testing.T) {
 	serverId := "testserver"
 

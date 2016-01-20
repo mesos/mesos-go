@@ -223,6 +223,12 @@ func (driver *MesosExecutorDriver) Connected() bool {
 
 // --------------------- Message Handlers --------------------- //
 
+// networkError is invoked when there's a network-level error communicating with the mesos slave.
+// The driver reacts by entering a "disconnected" state and invoking the Executor.Disconnected
+// callback. The assumption is that if this driver was previously connected, and then there's a
+// network error, then the slave process must be dying/dead. The native driver implementation makes
+// this same assumption. I have some concerns that this may be a false-positive in some situations;
+// some network errors (timeouts) may be indicative of something other than a dead slave process.
 func (driver *MesosExecutorDriver) networkError(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
 	if !driver.connected {
 		log.V(1).Info("ignoring network error because not connected")

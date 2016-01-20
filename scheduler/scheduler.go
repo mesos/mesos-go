@@ -45,7 +45,7 @@ import (
 )
 
 const (
-	authTimeout                  = 5 * time.Second // timeout interval for an authentication attempt
+	defaultAuthenticationTimeout = 30 * time.Second // timeout interval for an authentication attempt
 	registrationRetryIntervalMax = float64(1 * time.Minute)
 	registrationBackoffFactor    = 2 * time.Second
 )
@@ -864,7 +864,7 @@ func (driver *MesosSchedulerDriver) start() (mesos.Status, error) {
 
 // authenticate against the spec'd master pid using the configured authenticationProvider.
 // the authentication process is canceled upon either cancelation of authenticating, or
-// else because it timed out (authTimeout).
+// else because it timed out (see defaultAuthenticationTimeout, auth.Timeout).
 //
 // TODO(jdef) perhaps at some point in the future this will get pushed down into
 // the messenger layer (e.g. to use HTTP-based authentication). We'd probably still
@@ -873,17 +873,28 @@ func (driver *MesosSchedulerDriver) start() (mesos.Status, error) {
 //
 func (driver *MesosSchedulerDriver) authenticate(pid *upid.UPID, authenticating *authenticationAttempt) error {
 	log.Infof("authenticating with master %v", pid)
-	ctx, cancel := context.WithTimeout(context.Background(), authTimeout)
-	handler := &CredentialHandler{
-		pid:        pid,
-		client:     driver.self,
-		credential: driver.credential,
+
+	var (
+		authTimeout = defaultAuthenticationTimeout
+		ctx         = driver.withAuthContext(context.TODO())
+		handler     = &CredentialHandler{
+			pid:        pid,
+			client:     driver.self,
+			credential: driver.credential,
+		}
+	)
+
+	// check for authentication timeout override
+	if d, ok := auth.TimeoutFrom(ctx); ok {
+		authTimeout = d
 	}
-	ctx = driver.withAuthContext(ctx)
+
+	ctx, cancel := context.WithTimeout(ctx, authTimeout)
 	ctx = auth.WithParentUPID(ctx, *driver.self)
 
 	ch := make(chan error, 1)
 	go func() { ch <- auth.Login(ctx, handler) }()
+
 	select {
 	case <-ctx.Done():
 		<-ch

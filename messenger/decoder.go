@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	DefaultReadTimeout  = 5 * time.Second
-	DefaultWriteTimeout = 5 * time.Second
+	DefaultReadTimeout  = 10 * time.Second
+	DefaultWriteTimeout = 10 * time.Second
 
 	// writeFlushPeriod is the amount of time we're willing to wait for a single
 	// response buffer to be fully written to the underlying TCP connection; after

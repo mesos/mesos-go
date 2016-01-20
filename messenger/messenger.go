@@ -338,6 +338,9 @@ func (m *MesosMessenger) sendLoop() {
 					err2 := m.Route(ctx, &m.upid, neterr)
 					if err2 != nil {
 						log.Error(err2)
+					} else {
+						log.V(1).Infof("swallowing raw error because we're reporting a networkError: %v", err)
+						return nil
 					}
 				}
 				return err

@@ -41,8 +41,10 @@ import (
 )
 
 const (
+	CPUS_PER_EXECUTOR   = 0.01
 	CPUS_PER_TASK       = 1
-	MEM_PER_TASK        = 128
+	MEM_PER_EXECUTOR    = 64
+	MEM_PER_TASK        = 64
 	defaultArtifactPort = 12345
 )
 
@@ -132,6 +134,12 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 		remainingCpus := cpus
 		remainingMems := mems
 
+		// account for executor resources if there's not an executor already running on the slave
+		if len(offer.ExecutorIds) == 0 {
+			remainingCpus -= CPUS_PER_EXECUTOR
+			remainingMems -= MEM_PER_EXECUTOR
+		}
+
 		var tasks []*mesos.TaskInfo
 		for sched.tasksLaunched < sched.totalTasks &&
 			CPUS_PER_TASK <= remainingCpus &&
@@ -168,6 +176,7 @@ func (sched *ExampleScheduler) StatusUpdate(driver sched.SchedulerDriver, status
 	log.Infoln("Status update: task", status.TaskId.GetValue(), " is in state ", status.State.Enum().String())
 	if status.GetState() == mesos.TaskState_TASK_FINISHED {
 		sched.tasksFinished++
+		driver.ReviveOffers() // TODO(jdef) rate-limit this
 	}
 
 	if sched.tasksFinished >= sched.totalTasks {
@@ -262,6 +271,10 @@ func prepareExecutorInfo() *mesos.ExecutorInfo {
 		Command: &mesos.CommandInfo{
 			Value: proto.String(executorCommand),
 			Uris:  executorUris,
+		},
+		Resources: []*mesos.Resource{
+			util.NewScalarResource("cpus", CPUS_PER_EXECUTOR),
+			util.NewScalarResource("mem", MEM_PER_EXECUTOR),
 		},
 	}
 }

@@ -329,6 +329,8 @@ func main() {
 
 	if stat, err := driver.Run(); err != nil {
 		log.Infof("Framework stopped with status %s and error: %s\n", stat.String(), err.Error())
+		time.Sleep(2 * time.Second)
+		os.Exit(1)
 	}
 	log.Infof("framework terminating")
 }

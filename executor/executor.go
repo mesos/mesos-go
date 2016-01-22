@@ -37,6 +37,10 @@ import (
 	"golang.org/x/net/context"
 )
 
+const (
+	defaultRecoveryTimeout = 15 * time.Minute
+)
+
 type DriverConfig struct {
 	Executor         Executor
 	HostnameOverride string                              // optional
@@ -65,6 +69,7 @@ type MesosExecutorDriver struct {
 	directory       string // TODO(yifan): Not used yet.
 	checkpoint      bool
 	recoveryTimeout time.Duration
+	recoveryTimer   *time.Timer
 	updates         map[string]*mesosproto.StatusUpdate // Key is a UUID string. TODO(yifan): Not used yet.
 	tasks           map[string]*mesosproto.TaskInfo     // Key is a UUID string. TODO(yifan): Not used yet.
 	withExecutor    func(f func(e Executor))
@@ -89,12 +94,13 @@ func NewMesosExecutorDriver(config DriverConfig) (*MesosExecutorDriver, error) {
 	}
 
 	driver := &MesosExecutorDriver{
-		status:  mesosproto.Status_DRIVER_NOT_STARTED,
-		stopCh:  make(chan struct{}),
-		updates: make(map[string]*mesosproto.StatusUpdate),
-		tasks:   make(map[string]*mesosproto.TaskInfo),
-		workDir: ".",
-		started: make(chan struct{}),
+		status:          mesosproto.Status_DRIVER_NOT_STARTED,
+		stopCh:          make(chan struct{}),
+		updates:         make(map[string]*mesosproto.StatusUpdate),
+		tasks:           make(map[string]*mesosproto.TaskInfo),
+		workDir:         ".",
+		started:         make(chan struct{}),
+		recoveryTimeout: defaultRecoveryTimeout,
 	}
 	driver.cond = sync.NewCond(&driver.lock)
 	// decouple serialized executor callback execution from goroutines of this driver
@@ -194,7 +200,13 @@ func (driver *MesosExecutorDriver) parseEnviroments() error {
 	if value == "1" {
 		driver.checkpoint = true
 	}
-	// TODO(yifan): Parse the duration. For now just use default.
+
+	/*
+		if driver.checkpoint {
+			value = os.Getenv("MESOS_RECOVERY_TIMEOUT")
+		}
+		// TODO(yifan): Parse the duration. For now just use default.
+	*/
 	return nil
 }
 
@@ -230,20 +242,66 @@ func (driver *MesosExecutorDriver) Connected() bool {
 // this same assumption. I have some concerns that this may be a false-positive in some situations;
 // some network errors (timeouts) may be indicative of something other than a dead slave process.
 func (driver *MesosExecutorDriver) networkError(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
-	if !driver.connected {
-		log.V(1).Info("ignoring network error because not connected")
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Info("ignoring network error because aborted")
 		return
 	}
 	msg := pbMsg.(*mesosproto.InternalNetworkError)
-	if msg.GetSession() == driver.connection.String() {
-		log.Info("slave disconnected")
+	if driver.connected {
 		driver.connected = false
-		driver.connection = uuid.UUID{}
-		driver.withExecutor(func(e Executor) { e.Disconnected(driver) })
+		session := msg.GetSession()
+
+		if session != driver.connection.String() {
+			log.V(1).Infoln("ignoring netwok error for disconnected/stale session")
+			return
+		}
+
+		if driver.checkpoint {
+			log.Infoln("slave disconnected, will wait for recovery")
+			driver.withExecutor(func(e Executor) { e.Disconnected(driver) })
+
+			if driver.recoveryTimer != nil {
+				driver.recoveryTimer.Stop()
+			}
+			t := time.NewTimer(driver.recoveryTimeout)
+			driver.recoveryTimer = t
+			go func() {
+				select {
+				case <-t.C:
+					// timer expired
+					driver.lock.Lock()
+					defer driver.lock.Unlock()
+					driver.recoveryTimedOut(session)
+
+				case <-driver.stopCh:
+					// driver stopped
+					return
+				}
+			}()
+			return
+		}
+	}
+	log.Infoln("slave exited ... shutting down")
+	driver.withExecutor(func(e Executor) { e.Shutdown(driver) }) // abnormal shutdown
+	driver.abort()
+}
+
+func (driver *MesosExecutorDriver) recoveryTimedOut(connection string) {
+	if driver.connected {
+		return
+	}
+	// ensure that connection ID's match otherwise we've been re-registered
+	if connection == driver.connection.String() {
+		log.Info("recovery timeout of %v exceeded; shutting down", driver.recoveryTimeout)
+		driver.shutdown(driver.context(), nil, nil)
 	}
 }
 
 func (driver *MesosExecutorDriver) registered(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Infof("ignoring registration message from slave because aborted")
+		return
+	}
 	log.Infoln("Executor driver registered")
 
 	msg := pbMsg.(*mesosproto.ExecutorRegisteredMessage)
@@ -265,6 +323,10 @@ func (driver *MesosExecutorDriver) registered(_ context.Context, from *upid.UPID
 }
 
 func (driver *MesosExecutorDriver) reregistered(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Infof("ignoring reregistration message from slave because aborted")
+		return
+	}
 	log.Infoln("Executor driver reregistered")
 
 	msg := pbMsg.(*mesosproto.ExecutorReregisteredMessage)
@@ -297,6 +359,10 @@ func (driver *MesosExecutorDriver) send(ctx context.Context, upid *upid.UPID, ms
 }
 
 func (driver *MesosExecutorDriver) reconnect(ctx context.Context, from *upid.UPID, pbMsg proto.Message) {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Infof("ignoring reconnect message from slave because aborted")
+		return
+	}
 	log.Infoln("Executor driver reconnect")
 
 	msg := pbMsg.(*mesosproto.ReconnectExecutorMessage)
@@ -329,6 +395,10 @@ func (driver *MesosExecutorDriver) reconnect(ctx context.Context, from *upid.UPI
 }
 
 func (driver *MesosExecutorDriver) runTask(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Infof("ignoring runTask message from slave because aborted")
+		return
+	}
 	log.Infoln("Executor driver runTask")
 
 	msg := pbMsg.(*mesosproto.RunTaskMessage)
@@ -349,6 +419,10 @@ func (driver *MesosExecutorDriver) runTask(_ context.Context, from *upid.UPID, p
 }
 
 func (driver *MesosExecutorDriver) killTask(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Infof("ignoring killTask message from slave because aborted")
+		return
+	}
 	log.Infoln("Executor driver killTask")
 
 	msg := pbMsg.(*mesosproto.KillTaskMessage)
@@ -364,6 +438,10 @@ func (driver *MesosExecutorDriver) killTask(_ context.Context, from *upid.UPID, 
 }
 
 func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Infof("ignoring status update ack message because aborted")
+		return
+	}
 	log.Infoln("Executor statusUpdateAcknowledgement")
 
 	msg := pbMsg.(*mesosproto.StatusUpdateAcknowledgementMessage)
@@ -385,6 +463,10 @@ func (driver *MesosExecutorDriver) statusUpdateAcknowledgement(_ context.Context
 }
 
 func (driver *MesosExecutorDriver) frameworkMessage(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Infof("ignoring frameworkMessage message from slave because aborted")
+		return
+	}
 	log.Infoln("Executor driver received frameworkMessage")
 
 	msg := pbMsg.(*mesosproto.FrameworkToExecutorMessage)
@@ -399,13 +481,12 @@ func (driver *MesosExecutorDriver) frameworkMessage(_ context.Context, from *upi
 	driver.withExecutor(func(e Executor) { e.FrameworkMessage(driver, string(data)) })
 }
 
-func (driver *MesosExecutorDriver) shutdown(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
-	log.Infoln("Executor driver received shutdown")
-
-	_, ok := pbMsg.(*mesosproto.ShutdownExecutorMessage)
-	if !ok {
-		panic("Not a ShutdownExecutorMessage! This should not happen")
+func (driver *MesosExecutorDriver) shutdown(_ context.Context, _ *upid.UPID, _ proto.Message) {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Infof("ignoring shutdown message because aborted")
+		return
 	}
+	log.Infoln("Executor driver received shutdown")
 
 	if driver.stopped() {
 		log.Infof("Ignoring shutdown message because the driver is stopped!\n")
@@ -420,6 +501,10 @@ func (driver *MesosExecutorDriver) shutdown(_ context.Context, from *upid.UPID, 
 }
 
 func (driver *MesosExecutorDriver) frameworkError(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
+	if driver.status == mesosproto.Status_DRIVER_ABORTED {
+		log.V(1).Infof("ignoring framework error message because aborted")
+		return
+	}
 	log.Infoln("Executor driver received error")
 
 	msg := pbMsg.(*mesosproto.FrameworkErrorMessage)

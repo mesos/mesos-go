@@ -327,7 +327,7 @@ func (m *MesosMessenger) sendLoop() {
 			f(responseFunc(func(ctx context.Context, msg *Message, err error) error {
 				if _, ok := err.(*networkError); ok {
 					// if transport reports a network error, then
-					// we're probably disconnected from the master?
+					// we're probably disconnected from the remote process?
 					pid := msg.UPID.String()
 					neterr := &mesos.InternalNetworkError{Pid: &pid}
 					sessionID, ok := sessionid.FromContext(ctx)

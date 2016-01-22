@@ -382,7 +382,6 @@ func (driver *MesosSchedulerDriver) handleNetworkError(_ context.Context, from *
 
 		log.Info("master disconnected")
 		driver.connected = false
-		driver.connection = uuid.UUID{}
 		driver.authenticated = false
 	}
 }
@@ -408,7 +407,6 @@ func (driver *MesosSchedulerDriver) handleMasterChanged(_ context.Context, from 
 	master := msg.Master
 
 	driver.connected = false
-	driver.connection = uuid.UUID{}
 	driver.authenticated = false
 
 	if master != nil {

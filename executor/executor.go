@@ -246,9 +246,9 @@ func (driver *MesosExecutorDriver) networkError(ctx context.Context, from *upid.
 		log.V(1).Info("ignoring network error because aborted")
 		return
 	}
-	msg := pbMsg.(*mesosproto.InternalNetworkError)
 	if driver.connected {
 		driver.connected = false
+		msg := pbMsg.(*mesosproto.InternalNetworkError)
 		session := msg.GetSession()
 
 		if session != driver.connection.String() {

@@ -175,8 +175,8 @@ func (e *networkError) Error() string {
 }
 
 // send delivers a message to a mesos component via HTTP, returns a mesosError if the
-// connection to the component was successful but was rejected. non-mesos errors indicate
-// that the HTTP connection attempt failed for some reason.
+// communication with the remote process was successful but rejected. A networkError
+// error indicates that communication with the remote process failed at the network layer.
 func (t *HTTPTransporter) send(ctx context.Context, msg *Message) (sendError error) {
 	log.V(2).Infof("Sending message to %v via http\n", msg.UPID)
 	req, err := t.makeLibprocessRequest(msg)

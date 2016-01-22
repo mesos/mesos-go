@@ -141,12 +141,12 @@ func UPIDBindingAddress(hostname string, bindingAddress net.IP) (string, error) 
 }
 
 // NewMesosMessenger creates a new mesos messenger.
-func NewHttp(upid upid.UPID) *MesosMessenger {
-	return NewHttpWithBindingAddress(upid, nil)
+func NewHttp(upid upid.UPID, opts ...httpOpt) *MesosMessenger {
+	return NewHttpWithBindingAddress(upid, nil, opts...)
 }
 
-func NewHttpWithBindingAddress(upid upid.UPID, address net.IP) *MesosMessenger {
-	return New(NewHTTPTransporter(upid, address))
+func NewHttpWithBindingAddress(upid upid.UPID, address net.IP, opts ...httpOpt) *MesosMessenger {
+	return New(NewHTTPTransporter(upid, address, opts...))
 }
 
 func New(t Transporter) *MesosMessenger {

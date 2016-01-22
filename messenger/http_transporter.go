@@ -20,6 +20,7 @@ package messenger
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -37,23 +38,33 @@ import (
 	"golang.org/x/net/context"
 )
 
+const (
+	DefaultReadTimeout  = 10 * time.Second
+	DefaultWriteTimeout = 10 * time.Second
+)
+
 var (
+	ReadTimeout  = DefaultReadTimeout
+	WriteTimeout = DefaultWriteTimeout
+
 	discardOnStopError = fmt.Errorf("discarding message because transport is shutting down")
 	errNotStarted      = errors.New("HTTP transport has not been started")
 	errTerminal        = errors.New("HTTP transport is terminated")
 	errAlreadyRunning  = errors.New("HTTP transport is already running")
 
-	httpTransport, httpClient = &http.Transport{
+	httpTransport = http.Transport{
 		Dial: (&net.Dialer{
 			Timeout:   10 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}).Dial,
-		TLSHandshakeTimeout: 10 * time.Second,
-	},
-		&http.Client{
-			Transport: httpTransport,
-			Timeout:   DefaultReadTimeout,
-		}
+		TLSHandshakeTimeout:   10 * time.Second,
+		ResponseHeaderTimeout: DefaultReadTimeout,
+	}
+
+	// HttpClient is used for sending messages to remote processes
+	HttpClient = http.Client{
+		Timeout: DefaultReadTimeout,
+	}
 )
 
 // httpTransporter is a subset of the Transporter interface
@@ -112,6 +123,9 @@ func (s *runningState) Start() (upid.UPID, <-chan error) {
 	return upid.UPID{}, ch
 }
 
+// httpOpt is a functional option type
+type httpOpt func(*HTTPTransporter)
+
 // HTTPTransporter implements the interfaces of the Transporter.
 type HTTPTransporter struct {
 	// If the host is empty("") then it will listen on localhost.
@@ -126,21 +140,49 @@ type HTTPTransporter struct {
 	shouldQuit   chan struct{}
 	stateLock    sync.RWMutex // protect lifecycle (start/stop) funcs
 	state        httpTransporter
+	server       *http.Server
 }
 
 // NewHTTPTransporter creates a new http transporter with an optional binding address.
-func NewHTTPTransporter(upid upid.UPID, address net.IP) *HTTPTransporter {
+func NewHTTPTransporter(upid upid.UPID, address net.IP, opts ...httpOpt) *HTTPTransporter {
+	transport := httpTransport
+	client := HttpClient
+	client.Transport = &transport
+	mux := http.NewServeMux()
+
 	result := &HTTPTransporter{
 		upid:         upid,
 		messageQueue: make(chan *Message, defaultQueueSize),
-		mux:          http.NewServeMux(),
-		client:       httpClient,
-		tr:           httpTransport,
+		mux:          mux,
+		client:       &client,
+		tr:           &transport,
 		address:      address,
 		shouldQuit:   make(chan struct{}),
+		server: &http.Server{
+			ReadTimeout:  ReadTimeout,
+			WriteTimeout: WriteTimeout,
+			Handler:      mux,
+		},
+	}
+	for _, f := range opts {
+		f(result)
 	}
 	result.state = &notStartedState{result}
 	return result
+}
+
+func ServerTLSConfig(config *tls.Config, nextProto map[string]func(*http.Server, *tls.Conn, http.Handler)) httpOpt {
+	return func(transport *HTTPTransporter) {
+		transport.server.TLSConfig = config
+		transport.server.TLSNextProto = nextProto
+	}
+}
+
+func ClientTLSConfig(config *tls.Config, handshakeTimeout time.Duration) httpOpt {
+	return func(transport *HTTPTransporter) {
+		transport.tr.TLSClientConfig = config
+		transport.tr.TLSHandshakeTimeout = handshakeTimeout
+	}
 }
 
 func (t *HTTPTransporter) getState() httpTransporter {
@@ -373,12 +415,7 @@ func (t *HTTPTransporter) start() (upid.UPID, <-chan error) {
 
 	// TODO(yifan): Set read/write deadline.
 	go func() {
-		s := &http.Server{
-			ReadTimeout:  DefaultReadTimeout,
-			WriteTimeout: DefaultWriteTimeout,
-			Handler:      t.mux,
-		}
-		err := s.Serve(t.listener)
+		err := t.server.Serve(t.listener)
 		select {
 		case <-t.shouldQuit:
 			log.V(1).Infof("HTTP server stopped because of shutdown")

@@ -232,7 +232,7 @@ func TestResources_Flatten(t *testing.T) {
 			),
 		},
 	} {
-		r := tc.r1.Flatten("", nil)
+		r := tc.r1.Flatten()
 		expect(t, r.Equivalent(tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
 	}
 }

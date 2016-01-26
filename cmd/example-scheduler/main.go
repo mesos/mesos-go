@@ -20,6 +20,7 @@ func main() {
 	cfg := config{
 		user:       "foobar",
 		name:       "example",
+		role:       "role",
 		url:        "http://:5050/api/v1/scheduler",
 		codec:      codec{Codec: &encoding.ProtobufCodec},
 		timeout:    time.Second,
@@ -29,6 +30,7 @@ func main() {
 	fs := flag.NewFlagSet("example-scheduler", flag.ExitOnError)
 	fs.StringVar(&cfg.user, "user", cfg.user, "Framework user to register with the Mesos master")
 	fs.StringVar(&cfg.name, "name", cfg.name, "Framework name to register with the Mesos master")
+	fs.StringVar(&cfg.role, "role", cfg.role, "Framework role to register with the Mesos master")
 	fs.Var(&cfg.codec, "codec", "Codec to encode/decode scheduler API communications [protobuf, json]")
 	fs.StringVar(&cfg.url, "url", cfg.url, "Mesos scheduler API URL")
 	fs.DurationVar(&cfg.timeout, "timeout", cfg.timeout, "Mesos scheduler API connection timeout")
@@ -43,16 +45,6 @@ func main() {
 	}
 }
 
-type internalState struct {
-	tasksLaunched int
-	tasksFinished int
-	totalTasks    int
-	frameworkID   string
-	role          string
-	executor      *mesos.ExecutorInfo
-	cli           *httpcli.Client
-}
-
 func run(cfg *config) error {
 	var state internalState
 	state.cli = httpcli.New(
@@ -65,6 +57,9 @@ func run(cfg *config) error {
 		User:       cfg.user,
 		Name:       cfg.name,
 		Checkpoint: &cfg.checkpoint,
+	}
+	if cfg.role != "" {
+		frameworkInfo.Role = &cfg.role
 	}
 	if cfg.principal != "" {
 		frameworkInfo.Principal = &cfg.principal
@@ -83,7 +78,7 @@ func run(cfg *config) error {
 		if err == nil {
 			err = eventLoop(&state, events, conn)
 		}
-		if err != nil {
+		if err != nil && err != io.EOF {
 			log.Println(err)
 		} else {
 			log.Println("disconnected")
@@ -111,29 +106,16 @@ func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (e
 	for err == nil {
 		var e scheduler.Event
 		if err = events.Decode(&e); err != nil {
-			if err == io.EOF {
-				err = nil
-			}
 			continue
 		}
+
+		log.Printf("%+v\n", e)
 
 		switch e.GetType().Enum() {
 		case scheduler.Event_FAILURE.Enum():
 			log.Println("received a FAILURE event")
-			if eid := e.GetFailure().GetExecutorID(); eid != nil {
-				// executor failed..
-				msg := "executor '" + eid.Value + "' terminated"
-				if e.Failure.AgentID != nil {
-					msg += "on agent '" + e.Failure.AgentID.Value + "'"
-				}
-				if e.Failure.Status != nil {
-					msg += ", with status=" + strconv.Itoa(int(*e.Failure.Status))
-				}
-				log.Println(msg)
-			} else if e.GetFailure().GetAgentID() != nil {
-				// agent failed..
-				log.Println("agent '" + e.Failure.AgentID.Value + "' terminated")
-			}
+			f := e.GetFailure()
+			failure(e.Failure.ExecutorID, e.Failure.AgentID, e.Failure.Status)
 
 		case scheduler.Event_OFFERS.Enum():
 			log.Println("received an OFFERS event")
@@ -162,10 +144,25 @@ func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (e
 		default:
 			// handle unknown event
 		}
-
-		log.Printf("%+v\n", e)
-	}
+	} // for
 	return err
+} // eventLoop
+
+func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
+	if eid != nil {
+		// executor failed..
+		msg := "executor '" + eid.Value + "' terminated"
+		if aid != nil {
+			msg += "on agent '" + aid.Value + "'"
+		}
+		if stat != nil {
+			msg += ", with status=" + strconv.Itoa(int(*stat))
+		}
+		log.Println(msg)
+	} else if aid != nil {
+		// agent failed..
+		log.Println("agent '" + aid.Value + "' terminated")
+	}
 }
 
 const (
@@ -185,7 +182,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			remaining = mesos.Resources(offers[i].Resources)
 			tasks     = []mesos.TaskInfo{}
 		)
-		for state.tasksLaunched < state.totalTasks && remaining.Flatten("", nil).ContainsAll(wantsTaskResources) {
+		for state.tasksLaunched < state.totalTasks && remaining.Flatten().ContainsAll(wantsTaskResources) {
 			state.tasksLaunched++
 			taskID := state.tasksLaunched
 
@@ -195,7 +192,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			task.Name = "Task " + task.TaskID.Value
 			task.AgentID = offers[i].AgentID
 			task.Executor = state.executor
-			task.Resources = remaining.Find(wantsTaskResources.Flatten(state.role, nil))
+			task.Resources = remaining.Find(wantsTaskResources.Flatten(mesos.Role(state.role).Assign()))
 
 			remaining.Subtract(task.Resources...)
 			tasks = append(tasks, task)
@@ -271,4 +268,14 @@ type config struct {
 	principal  string
 	hostname   string
 	labels     Labels
+}
+
+type internalState struct {
+	tasksLaunched int
+	tasksFinished int
+	totalTasks    int
+	frameworkID   string
+	role          string
+	executor      *mesos.ExecutorInfo
+	cli           *httpcli.Client
 }

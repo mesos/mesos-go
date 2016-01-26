@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	proto "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
@@ -25,6 +28,7 @@ func main() {
 		codec:      codec{Codec: &encoding.ProtobufCodec},
 		timeout:    time.Second,
 		checkpoint: true,
+		server:     server{address: "0.0.0.0"},
 	}
 
 	fs := flag.NewFlagSet("example-scheduler", flag.ExitOnError)
@@ -38,6 +42,9 @@ func main() {
 	fs.StringVar(&cfg.principal, "principal", cfg.principal, "Framework principal with which to authenticate")
 	fs.StringVar(&cfg.hostname, "hostname", cfg.hostname, "Framework hostname that is advertised to the master")
 	fs.Var(&cfg.labels, "label", "Framework label, may be specified multiple times")
+	fs.StringVar(&cfg.server.address, "server.address", cfg.server.address, "IP of artifact server")
+	fs.IntVar(&cfg.server.port, "server.port", cfg.server.port, "Port of artifact server")
+	fs.StringVar(&cfg.executor, "executor", cfg.executor, "Full path to executor binary")
 	fs.Parse(os.Args[1:])
 
 	if err := run(&cfg); err != nil {
@@ -52,6 +59,11 @@ func run(cfg *config) error {
 		httpcli.Codec(cfg.codec.Codec),
 		httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
 	)
+
+	if cfg.executor == "" {
+		panic("must specify an executor binary")
+	}
+	state.executor = prepareExecutorInfo(cfg.executor, cfg.server)
 
 	frameworkInfo := &mesos.FrameworkInfo{
 		User:       cfg.user,
@@ -115,7 +127,7 @@ func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (e
 		case scheduler.Event_FAILURE.Enum():
 			log.Println("received a FAILURE event")
 			f := e.GetFailure()
-			failure(e.Failure.ExecutorID, e.Failure.AgentID, e.Failure.Status)
+			failure(f.ExecutorID, f.AgentID, f.Status)
 
 		case scheduler.Event_OFFERS.Enum():
 			log.Println("received an OFFERS event")
@@ -257,10 +269,63 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 	}
 }
 
+// returns (downloadURI, basename(path))
+func serveExecutorArtifact(server server, path string) (string, string) {
+	serveFile := func(pattern string, filename string) {
+		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, filename)
+		})
+	}
+
+	// Create base path (http://foobar:5000/<base>)
+	pathSplit := strings.Split(path, "/")
+	var base string
+	if len(pathSplit) > 0 {
+		base = pathSplit[len(pathSplit)-1]
+	} else {
+		base = path
+	}
+	serveFile("/"+base, path)
+
+	hostURI := fmt.Sprintf("http://%s:%d/%s", server.address, server.port, base)
+	log.Println("Hosting artifact '" + path + "' at '" + hostURI + "'")
+
+	return hostURI, base
+}
+
+func prepareExecutorInfo(execBinary string, server server) *mesos.ExecutorInfo {
+	var (
+		executorUris     = []mesos.CommandInfo_URI{}
+		uri, executorCmd = serveExecutorArtifact(server, execBinary)
+		executorCommand  = fmt.Sprintf("./%s", executorCmd)
+	)
+	executorUris = append(executorUris, mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
+
+	go http.ListenAndServe(fmt.Sprintf("%s:%d", server.address, server.port), nil)
+	log.Println("Serving executor artifacts...")
+
+	// Create mesos scheduler driver.
+	return &mesos.ExecutorInfo{
+		ExecutorID: mesos.ExecutorID{Value: "default"},
+		Name:       proto.String("Test Executor"),
+		Source:     proto.String("foo"),
+		Command: mesos.CommandInfo{
+			Value: proto.String(executorCommand),
+			URIs:  executorUris,
+		},
+	}
+}
+
+type server struct {
+	address string
+	port    int
+}
+
 type config struct {
 	id         string
 	user       string
 	name       string
+	role       string
 	url        string
 	codec      codec
 	timeout    time.Duration
@@ -268,6 +333,8 @@ type config struct {
 	principal  string
 	hostname   string
 	labels     Labels
+	server     server
+	executor   string
 }
 
 type internalState struct {

@@ -55,7 +55,9 @@ func TestOpUnreserve(t *testing.T) {
 	)
 
 	// test case 1: unreserve some amount of CPU that's already been reserved
-	unreservedCPU := reservedCPU.Flatten("", nil)
+	unreservedCPU := reservedCPU.Flatten()
+	t.Log("unreservedCPU=" + unreservedCPU.String())
+
 	wantsUnreserved := reservedMem.Plus(unreservedCPU...)
 	actualUnreserved, err := unreserve(reservedCPU).Apply(reserved)
 	if err != nil {
@@ -83,7 +85,7 @@ func TestOpReserve(t *testing.T) {
 		unreservedCPU = resources(resource(name("cpus"), valueScalar(1)))
 		unreservedMem = resources(resource(name("mem"), valueScalar(512)))
 		unreserved    = unreservedCPU.Plus(unreservedMem...)
-		reservedCPU1  = unreservedCPU.Flatten("role", reservedBy("principal"))
+		reservedCPU1  = unreservedCPU.Flatten(mesos.Role("role").Assign(), reservedBy("principal").Assign())
 	)
 
 	// test case 1: reserve an amount of CPU that's available

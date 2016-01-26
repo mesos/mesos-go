@@ -1,12 +1,15 @@
 package mesos
 
 import (
+	"bytes"
 	"fmt"
+	"strconv"
 
 	"github.com/gogo/protobuf/proto"
 )
 
 type (
+	Role              string
 	Resources         []Resource
 	ResourceFilter    func(*Resource) bool
 	ResourceFilters   []ResourceFilter
@@ -17,10 +20,18 @@ type (
 		reason    string
 		spec      Resource
 	}
+
+	// functional option for resource flattening, via Flatten
+	FlattenOpt func(*FlattenConfig)
+
+	FlattenConfig struct {
+		Role        string
+		Reservation *Resource_ReservationInfo
+	}
 )
 
 const (
-	RoleDefault = "*"
+	RoleDefault = Role("*")
 
 	ResourceErrorTypeIllegalName ResourceErrorType = iota
 	ResourceErrorTypeIllegalType
@@ -90,6 +101,21 @@ func (err *ResourceError) Error() string {
 		return "resource error: " + err.reason
 	}
 	return "resource error"
+}
+
+func (r Role) IsDefault() bool {
+	return r == RoleDefault
+}
+
+func (r Role) Assign() FlattenOpt {
+	return func(fc *FlattenConfig) {
+		fc.Role = string(r)
+	}
+}
+
+func (r Role) Proto() *string {
+	s := string(r)
+	return &s
 }
 
 func (rf ResourceFilter) Or(f ResourceFilter) ResourceFilter {
@@ -262,7 +288,7 @@ func (resources Resources) Find(targets Resources) (total Resources) {
 func (resources Resources) find(target Resource) Resources {
 	var (
 		total      = resources.Clone()
-		remaining  = Resources{target}.Flatten("", nil)
+		remaining  = Resources{target}.Flatten()
 		found      Resources
 		predicates = ResourceFilters{
 			ReservedResources(target.GetRole()),
@@ -274,10 +300,12 @@ func (resources Resources) find(target Resource) Resources {
 		filtered := predicate.Select(total)
 		for i := range filtered {
 			// need to flatten to ignore the roles in ContainsAll()
-			flattened := Resources{filtered[i]}.Flatten("", nil)
+			flattened := Resources{filtered[i]}.Flatten()
 			if flattened.ContainsAll(remaining) {
 				// target has been found, return the result
-				return found.Add(remaining.Flatten(filtered[i].GetRole(), filtered[i].Reservation)...)
+				return found.Add(remaining.Flatten(
+					Role(filtered[i].GetRole()).Assign(),
+					filtered[i].Reservation.Assign())...)
 			}
 			if remaining.ContainsAll(flattened) {
 				found.add(filtered[i])
@@ -290,18 +318,24 @@ func (resources Resources) find(target Resource) Resources {
 	return nil
 }
 
-func (resources Resources) Flatten(role string, ri *Resource_ReservationInfo) (flattened Resources) {
-	if role == "" {
-		role = RoleDefault
+func (ri *Resource_ReservationInfo) Assign() FlattenOpt {
+	return func(fc *FlattenConfig) {
+		fc.Reservation = ri
+	}
+}
+
+func (resources Resources) Flatten(opts ...FlattenOpt) (flattened Resources) {
+	fc := &FlattenConfig{}
+	for _, f := range opts {
+		f(fc)
+	}
+	if fc.Role == "" {
+		fc.Role = string(RoleDefault)
 	}
 	// we intentionally manipulate a copy 'r' of the item in resources
 	for _, r := range resources {
-		r.Role = &role
-		if ri == nil {
-			r.Reservation = nil
-		} else {
-			r.Reservation = ri
-		}
+		r.Role = &fc.Role
+		r.Reservation = fc.Reservation
 		flattened.add(r)
 	}
 	return
@@ -476,6 +510,80 @@ func (resources *Resources) subtract(that Resource) Resources {
 	return *resources
 }
 
+func (resources Resources) String() string {
+	if len(resources) == 0 {
+		return ""
+	}
+	buf := bytes.Buffer{}
+	for i := range resources {
+		if i > 0 {
+			buf.WriteString(";")
+		}
+		r := &resources[i]
+		buf.WriteString(r.Name)
+		buf.WriteString("(")
+		buf.WriteString(r.GetRole())
+		if ri := r.GetReservation(); ri != nil {
+			buf.WriteString(", ")
+			buf.WriteString(ri.GetPrincipal())
+		}
+		buf.WriteString(")")
+		if d := r.GetDisk(); d != nil {
+			buf.WriteString("[")
+			if p := d.GetPersistence(); p != nil {
+				buf.WriteString(p.GetID())
+			}
+			if v := d.GetVolume(); v != nil {
+				buf.WriteString(":")
+				vconfig := v.GetContainerPath()
+				if h := v.GetHostPath(); h != "" {
+					vconfig = h + ":" + vconfig
+				}
+				if m := v.Mode; m != nil {
+					switch *m {
+					case RO:
+						vconfig += ":ro"
+					case RW:
+						vconfig += ":rw"
+					default:
+						panic("unrecognized volume mode: " + m.String())
+					}
+				}
+				buf.WriteString(vconfig)
+			}
+			buf.WriteString("]")
+		}
+		buf.WriteString(":")
+		switch r.GetType() {
+		case SCALAR:
+			buf.WriteString(strconv.FormatFloat(r.GetScalar().GetValue(), 'f', -1, 64))
+		case RANGES:
+			buf.WriteString("[")
+			ranges := Ranges(r.GetRanges().GetRange())
+			for j := range ranges {
+				if j > 0 {
+					buf.WriteString(",")
+				}
+				buf.WriteString(strconv.FormatUint(ranges[j].Begin, 10))
+				buf.WriteString("-")
+				buf.WriteString(strconv.FormatUint(ranges[j].End, 10))
+			}
+			buf.WriteString("]")
+		case SET:
+			buf.WriteString("{")
+			items := r.GetSet().GetItem()
+			for j := range items {
+				if j > 0 {
+					buf.WriteString(",")
+				}
+				buf.WriteString(items[j])
+			}
+			buf.WriteString("}")
+		}
+	}
+	return buf.String()
+}
+
 func (left *Resource) Validate() error {
 	if left.GetName() == "" {
 		return ResourceErrorTypeIllegalName.Generate(noReason)
@@ -530,8 +638,8 @@ func (left *Resource) Validate() error {
 	}
 
 	// check for invalid state of (role,reservation) pair
-	if left.GetRole() == RoleDefault && left.GetReservation() != nil {
-		return ResourceErrorTypeIllegalReservation.Generate("role \"" + RoleDefault + "\" cannot be dynamically assigned")
+	if left.GetRole() == string(RoleDefault) && left.GetReservation() != nil {
+		return ResourceErrorTypeIllegalReservation.Generate("default role cannot be dynamically assigned")
 	}
 
 	return nil
@@ -728,7 +836,7 @@ func (left *Resource) IsUnreserved() bool {
 	// role != RoleDefault     -> static reservation
 	// GetReservation() != nil -> dynamic reservation
 	// return {no-static-reservation} && {no-dynamic-reservation}
-	return left.GetRole() == RoleDefault && left.GetReservation() == nil
+	return left.GetRole() == string(RoleDefault) && left.GetReservation() == nil
 }
 
 // IsReserved returns true if this resource has been reserved for the given role.

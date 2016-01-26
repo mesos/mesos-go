@@ -94,7 +94,7 @@ func opReserve(operation Offer_Operation, resources Resources) (Resources, error
 		if opRes[i].GetReservation() == nil {
 			return nil, errors.New("missing 'reservation'")
 		}
-		unreserved := Resources{opRes[i]}.Flatten("", nil)
+		unreserved := Resources{opRes[i]}.Flatten()
 		if !result.ContainsAll(unreserved) {
 			return nil, fmt.Errorf("%+v does not contain %+v", result, unreserved)
 		}
@@ -121,7 +121,7 @@ func opUnreserve(operation Offer_Operation, resources Resources) (Resources, err
 		if !result.Contains(opRes[i]) {
 			return nil, errors.New("resources do not contain unreserve amount") //TODO(jdef) should output nicely formatted resource quantities here
 		}
-		unreserved := Resources{opRes[i]}.Flatten("", nil)
+		unreserved := Resources{opRes[i]}.Flatten()
 		result.subtract(opRes[i])
 		result.Add(unreserved...)
 	}

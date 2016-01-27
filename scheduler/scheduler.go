@@ -1,7 +1,5 @@
 package scheduler
 
-import "github.com/mesos/mesos-go"
-
 // A CallOpt is a functional option type for Calls.
 type CallOpt func(*Call)
 
@@ -13,11 +11,25 @@ func (c *Call) With(opts ...CallOpt) *Call {
 	return c
 }
 
-// SubscribeCall returns a subscribe call with the given parameters.
-func SubscribeCall(id string, force bool, info *mesos.FrameworkInfo) *Call {
-	return &Call{
-		Type:        Call_SUBSCRIBE.Enum(),
-		FrameworkID: &mesos.FrameworkID{Value: id},
-		Subscribe:   &Call_Subscribe{FrameworkInfo: info, Force: force},
+// A ReconcileOpt is a functional option type for Call_Reconcile
+type ReconcileOpt func(*Call_Reconcile)
+
+// With applies the given ReconcileOpt's to the receiving Call_Reconcile, returning it.
+func (r *Call_Reconcile) With(opts ...ReconcileOpt) *Call_Reconcile {
+	for _, opt := range opts {
+		opt(r)
 	}
+	return r
+}
+
+type CallOptions []CallOpt
+
+// Copy returns a cloned copy of CallOptions
+func (co CallOptions) Copy() CallOptions {
+	if len(co) == 0 {
+		return nil
+	}
+	x := make(CallOptions, len(co))
+	copy(x, co)
+	return x
 }

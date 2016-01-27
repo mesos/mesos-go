@@ -62,7 +62,7 @@ message FrameworkID {
  * A unique ID assigned to an offer.
  */
 message OfferID {
-  required string value = 1;
+  required string value = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -72,7 +72,7 @@ message OfferID {
  * assume any binding between an agent ID and and a hostname.
  */
 message AgentID {
-  required string value = 1;
+  required string value = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -83,7 +83,7 @@ message AgentID {
  * terminal state (e.g., TASK_FINISHED, TASK_LOST, TASK_KILLED, etc.).
  */
 message TaskID {
-  required string value = 1;
+  required string value = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -93,7 +93,7 @@ message TaskID {
  * time.
  */
 message ExecutorID {
-  required string value = 1;
+  required string value = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -104,7 +104,7 @@ message ExecutorID {
  * executor) pair must be unique.
  */
 message ContainerID {
-  required string value = 1;
+  required string value = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -112,7 +112,7 @@ message ContainerID {
  * Represents time since the epoch, in nanoseconds.
  */
 message TimeInfo {
-  required int64 nanoseconds = 1;
+  required int64 nanoseconds = 1 [(gogoproto.nullable) = false];
 
   // TODO(josephw): Add time zone information, if necessary.
 }
@@ -122,7 +122,7 @@ message TimeInfo {
  * Represents duration in nanoseconds.
  */
 message DurationInfo {
-  required int64 nanoseconds = 1;
+  required int64 nanoseconds = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -136,7 +136,7 @@ message Address {
   optional string hostname = 1;
   optional string ip = 2;
 
-  required int32 port = 3;
+  required int32 port = 3 [(gogoproto.nullable) = false];
 }
 
 
@@ -144,10 +144,10 @@ message Address {
  * Represents a URL.
  */
 message URL {
-  required string scheme = 1;
-  required Address address = 2;
+  required string scheme = 1 [(gogoproto.nullable) = false];
+  required Address address = 2 [(gogoproto.nullable) = false];
   optional string path = 3;
-  repeated Parameter query = 4;
+  repeated Parameter query = 4 [(gogoproto.nullable) = false];
   optional string fragment = 5;
 }
 
@@ -158,7 +158,7 @@ message URL {
  * and is not a generic interval.
  */
 message Unavailability {
-  required TimeInfo start = 1;
+  required TimeInfo start = 1 [(gogoproto.nullable) = false];
 
   // When added to `start`, this represents the end of the interval.
   // If unspecified, the duration is assumed to be infinite.
@@ -207,7 +207,7 @@ message MachineInfo {
     DOWN = 3;
   }
 
-  required MachineID id = 1;
+  required MachineID id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
   optional Mode mode = 2;
 
   // Signifies that the machine may be unavailable during the given interval.
@@ -283,7 +283,7 @@ message FrameworkInfo {
   // This field allows a framework to advertise its set of
   // capabilities (e.g., ability to receive offers for revocable
   // resources).
-  repeated Capability capabilities = 10;
+  repeated Capability capabilities = 10 [(gogoproto.nullable) = false];
 
   // Labels are free-form key value pairs supplied by the framework
   // scheduler (e.g., to describe additional functionality offered by
@@ -303,7 +303,7 @@ message HealthCheck {
   // recommended for use - see MESOS-2533.
   message HTTP {
     // Port to send the HTTP request.
-    required uint32 port = 1;
+    required uint32 port = 1 [(gogoproto.nullable) = false];
 
     // HTTP request path.
     optional string path = 2 [default = "/"];
@@ -362,7 +362,7 @@ message HealthCheck {
  */
 message CommandInfo {
   message URI {
-    required string value = 1;
+    required string value = 1 [(gogoproto.nullable) = false];
     optional bool executable = 2;
 
     // In case the fetched file is recognized as an archive, extract
@@ -395,7 +395,7 @@ message CommandInfo {
   // and "options".
   message ContainerInfo {
     // URI describing the container image name.
-    required string image = 1;
+    required string image = 1 [(gogoproto.nullable) = false];
 
     // Describes additional options passed to the containerizer.
     repeated string options = 2;
@@ -405,7 +405,7 @@ message CommandInfo {
   // attribute and tasks supplying a 'container' will fail.
   optional ContainerInfo container = 4;
 
-  repeated URI uris = 1;
+  repeated URI uris = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "URIs"];
 
   optional Environment environment = 2;
 
@@ -438,14 +438,14 @@ message CommandInfo {
  * used to pass arbitrary bytes to an executor.
  */
 message ExecutorInfo {
-  required ExecutorID executor_id = 1;
-  optional FrameworkID framework_id = 8; // TODO(benh): Make this required.
-  required CommandInfo command = 7;
+  required ExecutorID executor_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ExecutorID"];
+  optional FrameworkID framework_id = 8 [(gogoproto.customname) = "FrameworkID"]; // TODO(benh): Make this required.
+  required CommandInfo command = 7 [(gogoproto.nullable) = false];
   // Executor provided with a container will launch the container
   // with the executor's CommandInfo and we expect the container to
   // act as a Mesos executor.
   optional ContainerInfo container = 11;
-  repeated Resource resources = 5;
+  repeated Resource resources = 5 [(gogoproto.nullable) = false];
   optional string name = 9;
 
   // 'source' is an identifier style string used by frameworks to
@@ -473,11 +473,11 @@ message ExecutorInfo {
  * to a master webui.
  */
 message MasterInfo {
-  required string id = 1;
+  required string id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
 
   // The IP address (only IPv4) as a packed 4-bytes integer,
   // stored in network order.  Deprecated, use `address.ip` instead.
-  required uint32 ip = 2;
+  required uint32 ip = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "IP"];
 
   // The TCP port the Master is listening on for incoming
   // HTTP requests; deprecated, use `address.port` instead.
@@ -487,7 +487,7 @@ message MasterInfo {
   // about both the IP address, port and Master name; it should really
   // not be relied upon by external tooling/frameworks and be
   // considered an "internal" implementation field.
-  optional string pid = 4;
+  optional string pid = 4 [(gogoproto.customname) = "PID"];
 
   // The server's hostname, if available; it may be unreliable
   // in environments where the DNS configuration does not resolve
@@ -514,11 +514,11 @@ message MasterInfo {
  * frameworks' information (if a framework has checkpointing enabled).
  */
 message AgentInfo {
-  required string hostname = 1;
+  required string hostname = 1 [(gogoproto.nullable) = false];
   optional int32 port = 8 [default = 5051];
-  repeated Resource resources = 3;
-  repeated Attribute attributes = 5;
-  optional AgentID id = 6;
+  repeated Resource resources = 3 [(gogoproto.nullable) = false];
+  repeated Attribute attributes = 5 [(gogoproto.nullable) = false];
+  optional AgentID id = 6 [(gogoproto.customname) = "ID"];
 }
 
 
@@ -535,16 +535,16 @@ message Value {
   }
 
   message Scalar {
-    required double value = 1;
+    required double value = 1 [(gogoproto.nullable) = false];
   }
 
   message Range {
-    required uint64 begin = 1;
-    required uint64 end = 2;
+    required uint64 begin = 1 [(gogoproto.nullable) = false];
+    required uint64 end = 2 [(gogoproto.nullable) = false];
   }
 
   message Ranges {
-    repeated Range range = 1;
+    repeated Range range = 1 [(gogoproto.nullable) = false];
   }
 
   message Set {
@@ -552,7 +552,7 @@ message Value {
   }
 
   message Text {
-    required string value = 1;
+    required string value = 1 [(gogoproto.nullable) = false];
   }
 
   required Type type = 1;
@@ -569,7 +569,7 @@ message Value {
  * change in the future and attributes may only be string based.
  */
 message Attribute {
-  required string name = 1;
+  required string name = 1 [(gogoproto.nullable) = false];
   required Value.Type type = 2;
   optional Value.Scalar scalar = 3;
   optional Value.Ranges ranges = 4;
@@ -588,7 +588,7 @@ message Attribute {
  * cpus, memory, disk, network).
  */
 message Resource {
-  required string name = 1;
+  required string name = 1 [(gogoproto.nullable) = false];
   required Value.Type type = 2;
   optional Value.Scalar scalar = 3;
   optional Value.Ranges ranges = 4;
@@ -609,7 +609,7 @@ message Resource {
     // unreserve this resource is permitted to do so.
     // NOTE: This field should match the FrameworkInfo.principal of
     // the framework that reserved this resource.
-    required string principal = 1;
+    required string principal = 1 [(gogoproto.nullable) = false];
   }
 
   // If this is set, this resource was dynamically reserved by an
@@ -632,7 +632,7 @@ message Resource {
     message Persistence {
       // A unique ID for the persistent disk volume.
       // NOTE: The ID needs to be unique per role on each agent.
-      required string id = 1;
+      required string id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
     }
 
     optional Persistence persistence = 1;
@@ -688,7 +688,7 @@ message Resource {
  * found at http://www.lartc.org/lartc.html.
  */
 message TrafficControlStatistics {
-  required string id = 1;
+  required string id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
   optional uint64 backlog = 2;
   optional uint64 bytes = 3;
   optional uint64 drops = 4;
@@ -705,7 +705,7 @@ message TrafficControlStatistics {
  * A snapshot of resource usage statistics.
  */
 message ResourceStatistics {
-  required double timestamp = 1; // Snapshot time, in seconds since the Epoch.
+  required double timestamp = 1 [(gogoproto.nullable) = false]; // Snapshot time, in seconds since the Epoch.
 
   optional uint32 processes = 30;
   optional uint32 threads = 31;
@@ -800,7 +800,7 @@ message ResourceStatistics {
   // Network traffic flowing into or out of a container can be delayed
   // or dropped due to congestion or policy inside and outside the
   // container.
-  repeated TrafficControlStatistics net_traffic_control_statistics = 35;
+  repeated TrafficControlStatistics net_traffic_control_statistics = 35 [(gogoproto.nullable) = false];
 }
 
 
@@ -809,22 +809,22 @@ message ResourceStatistics {
  */
 message ResourceUsage {
   message Executor {
-    required ExecutorInfo executor_info = 1;
+    required ExecutorInfo executor_info = 1 [(gogoproto.nullable) = false];
 
     // This includes resources used by the executor itself
     // as well as its active tasks.
-    repeated Resource allocated = 2;
+    repeated Resource allocated = 2 [(gogoproto.nullable) = false];
 
     // Current resource usage. If absent, the containerizer
     // cannot provide resource usage.
     optional ResourceStatistics statistics = 3;
   }
 
-  repeated Executor executors = 1;
+  repeated Executor executors = 1 [(gogoproto.nullable) = false];
 
   // Agent's total resources including checkpointed dynamic
   // reservations and persistent volumes.
-  repeated Resource total = 2;
+  repeated Resource total = 2 [(gogoproto.nullable) = false];
 }
 
 
@@ -841,8 +841,8 @@ message ResourceUsage {
  *    cycles.
  */
 message PerfStatistics {
-  required double timestamp = 1; // Start of sample interval, in seconds since the Epoch.
-  required double duration = 2;  // Duration of sample interval, in seconds.
+  required double timestamp = 1 [(gogoproto.nullable) = false]; // Start of sample interval, in seconds since the Epoch.
+  required double duration = 2 [(gogoproto.nullable) = false];  // Duration of sample interval, in seconds.
 
   // Hardware event.
   optional uint64 cycles = 3;
@@ -910,8 +910,8 @@ message PerfStatistics {
  * agent.
  */
 message Request {
-  optional AgentID agent_id = 1;
-  repeated Resource resources = 2;
+  optional AgentID agent_id = 1 [(gogoproto.customname) = "AgentID"];
+  repeated Resource resources = 2 [(gogoproto.nullable) = false];
 }
 
 
@@ -920,17 +920,17 @@ message Request {
  * contains resources from a single agent.
  */
 message Offer {
-  required OfferID id = 1;
-  required FrameworkID framework_id = 2;
-  required AgentID agent_id = 3;
-  required string hostname = 4;
+  required OfferID id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
+  required FrameworkID framework_id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "FrameworkID"];
+  required AgentID agent_id = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
+  required string hostname = 4 [(gogoproto.nullable) = false];
 
   // URL for reaching the agent running on the host.
   optional URL url = 8;
 
-  repeated Resource resources = 5;
-  repeated Attribute attributes = 7;
-  repeated ExecutorID executor_ids = 6;
+  repeated Resource resources = 5 [(gogoproto.nullable) = false];
+  repeated Attribute attributes = 7 [(gogoproto.nullable) = false];
+  repeated ExecutorID executor_ids = 6 [(gogoproto.nullable) = false, (gogoproto.customname) = "ExecutorIDs"];
 
   // Signifies that the resources in this Offer may be unavailable during
   // the given interval.  Any tasks launched using these resources may be
@@ -955,23 +955,23 @@ message Offer {
     }
 
     message Launch {
-      repeated TaskInfo task_infos = 1;
+      repeated TaskInfo task_infos = 1 [(gogoproto.nullable) = false];
     }
 
     message Reserve {
-      repeated Resource resources = 1;
+      repeated Resource resources = 1 [(gogoproto.nullable) = false];
     }
 
     message Unreserve {
-      repeated Resource resources = 1;
+      repeated Resource resources = 1 [(gogoproto.nullable) = false];
     }
 
     message Create {
-      repeated Resource volumes = 1;
+      repeated Resource volumes = 1 [(gogoproto.nullable) = false];
     }
 
     message Destroy {
-      repeated Resource volumes = 1;
+      repeated Resource volumes = 1 [(gogoproto.nullable) = false];
     }
 
     required Type type = 1;
@@ -990,7 +990,7 @@ message Offer {
 message InverseOffer {
   // This is the same OfferID as found in normal offers, which allows
   // re-use of some of the OfferID-only messages.
-  required OfferID id = 1;
+  required OfferID id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "OfferID"];
 
   // URL for reaching the agent running on the host.  This enables some
   // optimizations as described in MESOS-3012, such as allowing the
@@ -1000,12 +1000,12 @@ message InverseOffer {
   // The framework that should release its resources.
   // If no specifics are provided (i.e. which agent), all the framework's
   // resources are requested back.
-  required FrameworkID framework_id = 3;
+  required FrameworkID framework_id = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "FrameworkID"];
 
   // Specified if the resources need to be released from a particular agent.
   // All the framework's resources on this agent are requested back,
   // unless further qualified by the `resources` field.
-  optional AgentID agent_id = 4;
+  optional AgentID agent_id = 4 [(gogoproto.customname) = "AgentID"];
 
   // This InverseOffer represents a planned unavailability event in the
   // specified interval.  Any tasks running on the given framework or agent
@@ -1021,14 +1021,14 @@ message InverseOffer {
   // be returned after the unavailiability interval.  The allocator has no
   // obligation to re-offer these resources to the prior framework after
   // the unavailability.
-  required Unavailability unavailability = 5;
+  required Unavailability unavailability = 5 [(gogoproto.nullable) = false];
 
   // A list of resources being requested back from the framework,
   // on the agent identified by `agent_id`.  If no resources are specified
   // then all resources are being requested back.  For the purpose of
   // maintenance, this field is always empty (maintenance always requests
   // all resources back).
-  repeated Resource resources = 6;
+  repeated Resource resources = 6 [(gogoproto.nullable) = false];
 
   // TODO(josephw): Add additional options for narrowing down the resources
   // being requested back.  Such as specific executors, tasks, etc.
@@ -1043,10 +1043,10 @@ message InverseOffer {
  * meant for the same executor can reuse the same ExecutorInfo struct.
  */
 message TaskInfo {
-  required string name = 1;
-  required TaskID task_id = 2;
-  required AgentID agent_id = 3;
-  repeated Resource resources = 4;
+  required string name = 1 [(gogoproto.nullable) = false];
+  required TaskID task_id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "TaskID"];
+  required AgentID agent_id = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
+  repeated Resource resources = 4 [(gogoproto.nullable) = false];
   optional ExecutorInfo executor = 5;
   optional CommandInfo command = 7;
   // Task provided with a container will launch the container as part
@@ -1128,14 +1128,14 @@ message TaskStatus {
     REASON_TASK_UNKNOWN = 16;
   }
 
-  required TaskID task_id = 1;
+  required TaskID task_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "TaskID"];
   required TaskState state = 2;
   optional string message = 4; // Possible message explaining state.
   optional Source source = 9;
   optional Reason reason = 10;
   optional bytes data = 3;
-  optional AgentID agent_id = 5;
-  optional ExecutorID executor_id = 7; // TODO(benh): Use in master/agent.
+  optional AgentID agent_id = 5 [(gogoproto.customname) = "AgentID"];
+  optional ExecutorID executor_id = 7 [(gogoproto.customname) = "ExecutorID"]; // TODO(benh): Use in master/agent.
   optional double timestamp = 6;
 
   // Statuses that are delivered reliably to the scheduler will
@@ -1147,7 +1147,7 @@ message TaskStatus {
   // TODO(bmahler): This is currently overwritten in the scheduler
   // driver and executor driver, but executors will need to set this
   // to a valid RFC-4122 UUID if using the HTTP API.
-  optional bytes uuid = 11;
+  optional bytes uuid = 11 [(gogoproto.customname) = "UUID"];
 
   // Describes whether the task has been determined to be healthy
   // (true) or unhealthy (false) according to the HealthCheck field in
@@ -1186,11 +1186,11 @@ message Filters {
 */
 message Environment {
   message Variable {
-    required string name = 1;
-    required string value = 2;
+    required string name = 1 [(gogoproto.nullable) = false];
+    required string value = 2 [(gogoproto.nullable) = false];
   }
 
-  repeated Variable variables = 1;
+  repeated Variable variables = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -1198,8 +1198,8 @@ message Environment {
  * A generic (key, value) pair used in various places for parameters.
  */
 message Parameter {
-  required string key = 1;
-  required string value = 2;
+  required string key = 1 [(gogoproto.nullable) = false];
+  required string value = 2 [(gogoproto.nullable) = false];
 }
 
 
@@ -1207,7 +1207,7 @@ message Parameter {
  * Collection of Parameter.
  */
 message Parameters {
-  repeated Parameter parameter = 1;
+  repeated Parameter parameter = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -1221,7 +1221,7 @@ message Parameters {
  * framework's executors/tasks are run.
  */
 message Credential {
-  required string principal = 1;
+  required string principal = 1 [(gogoproto.nullable) = false];
   optional bytes secret = 2;
 }
 
@@ -1232,7 +1232,7 @@ message Credential {
  * 'principal' and 'secret' respectively), etc.
  */
 message Credentials {
-  repeated Credential credentials = 1;
+  repeated Credential credentials = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -1248,7 +1248,7 @@ message RateLimit {
 
   // Principal of framework(s) to be throttled. Should match
   // FrameworkInfo.princpal and Credential.principal (if using authentication).
-  required string principal = 2;
+  required string principal = 2 [(gogoproto.nullable) = false];
 
   // Max number of outstanding messages from frameworks of this principal
   // allowed by master before the next message is dropped and an error is sent
@@ -1267,7 +1267,7 @@ message RateLimit {
  */
 message RateLimits {
   // Items should have unique principals.
-  repeated RateLimit limits = 1;
+  repeated RateLimit limits = 1 [(gogoproto.nullable) = false];
 
   // All the frameworks not specified in 'limits' get this default rate.
   // This rate is an aggregate rate for all of them, i.e., their combined
@@ -1293,13 +1293,13 @@ message Image {
   // https://github.com/appc/spec/blob/master/spec/aci.md
   message AppC {
     // The name of the image.
-    required string name = 1;
+    required string name = 1 [(gogoproto.nullable) = false];
 
     // An image ID is a string of the format "hash-value", where
     // "hash" is the hash algorithm used and "value" is the hex
     // encoded string of the digest. Currently the only permitted
     // hash algorithm is sha512.
-    required string id = 2;
+    required string id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"];
 
     // Optional labels. Suggested labels: "version", "os", and "arch".
     optional Labels labels = 3;
@@ -1326,7 +1326,7 @@ message Volume {
   required Mode mode = 3;
 
   // Absolute path pointing to a directory or file in the container.
-  required string container_path = 1;
+  required string container_path = 1 [(gogoproto.nullable) = false];
 
   // The following specifies the source of this volume. At most one of
   // the following should be set.
@@ -1354,7 +1354,7 @@ message ContainerInfo {
 
   message DockerInfo {
     // The docker image that is going to be passed to the registry.
-    required string image = 1;
+    required string image = 1 [(gogoproto.nullable) = false];
 
     // Network options.
     enum Network {
@@ -1366,13 +1366,13 @@ message ContainerInfo {
     optional Network network = 2 [default = HOST];
 
     message PortMapping {
-      required uint32 host_port = 1;
-      required uint32 container_port = 2;
+      required uint32 host_port = 1 [(gogoproto.nullable) = false];
+      required uint32 container_port = 2 [(gogoproto.nullable) = false];
       // Protocol to expose as (ie: tcp, udp).
       optional string protocol = 3;
     }
 
-    repeated PortMapping port_mappings = 3;
+    repeated PortMapping port_mappings = 3 [(gogoproto.nullable) = false];
 
     optional bool privileged = 4 [default = false];
 
@@ -1380,7 +1380,7 @@ message ContainerInfo {
     // Note that anything passed to this field is not guaranteed
     // to be supported moving forward, as we might move away from
     // the docker CLI.
-    repeated Parameter parameters = 5;
+    repeated Parameter parameters = 5 [(gogoproto.nullable) = false];
 
     // With this flag set to true, the docker containerizer will
     // pull the docker image from the registry even if the image
@@ -1393,7 +1393,7 @@ message ContainerInfo {
   }
 
   required Type type = 1;
-  repeated Volume volumes = 2;
+  repeated Volume volumes = 2 [(gogoproto.nullable) = false];
   optional string hostname = 4;
 
   // Only one of the following *Info messages should be set to match
@@ -1407,7 +1407,7 @@ message ContainerInfo {
  * Collection of labels.
  */
 message Labels {
-    repeated Label labels = 1;
+    repeated Label labels = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -1415,7 +1415,7 @@ message Labels {
  * Key, value pair used to store free form user-data.
  */
 message Label {
-  required string key = 1;
+  required string key = 1 [(gogoproto.nullable) = false];
   optional string value = 2;
 }
 
@@ -1424,7 +1424,7 @@ message Label {
  * Named port used for service discovery.
  */
 message Port {
-  required uint32 number = 1;
+  required uint32 number = 1 [(gogoproto.nullable) = false];
   optional string name = 2;
   optional string protocol = 3;
 }
@@ -1434,7 +1434,7 @@ message Port {
  * Collection of ports.
  */
 message Ports {
-  repeated Port ports = 1;
+  repeated Port ports = 1 [(gogoproto.nullable) = false];
 }
 
 
@@ -1458,7 +1458,7 @@ message DiscoveryInfo {
     EXTERNAL = 2;
   }
 
-  required Visibility visibility = 1;
+  required Visibility visibility = 1 [(gogoproto.nullable) = false];
   optional string name = 2;
   optional string environment = 3;
   optional string location = 4;

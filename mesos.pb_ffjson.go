@@ -35,7 +35,7 @@ func (mj *Address) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
+	buf.WriteByte('{')
 	if mj.Hostname != nil {
 		if true {
 			buf.WriteString(`"hostname":`)
@@ -50,14 +50,8 @@ func (mj *Address) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Port != nil {
-		if true {
-			buf.WriteString(`"port":`)
-			fflib.FormatBits2(buf, uint64(*mj.Port), 10, *mj.Port < 0)
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`"port":`)
+	fflib.FormatBits2(buf, uint64(mj.Port), 10, mj.Port < 0)
 	buf.WriteByte('}')
 	return nil
 }
@@ -296,8 +290,6 @@ handle_Port:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Port = nil
-
 		} else {
 
 			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 32)
@@ -306,8 +298,7 @@ handle_Port:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := int32(tval)
-			uj.Port = &ttypval
+			uj.Port = int32(tval)
 
 		}
 	}
@@ -353,15 +344,8 @@ func (mj *AgentID) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.WriteJsonString(buf, string(*mj.Value))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
 	buf.WriteByte('}')
 	return nil
 }
@@ -498,15 +482,11 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Value = &tval
+			uj.Value = string(string(outBuf))
 
 		}
 	}
@@ -552,14 +532,9 @@ func (mj *AgentInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Hostname != nil {
-		if true {
-			buf.WriteString(`"hostname":`)
-			fflib.WriteJsonString(buf, string(*mj.Hostname))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "hostname":`)
+	fflib.WriteJsonString(buf, string(mj.Hostname))
+	buf.WriteByte(',')
 	if mj.Port != nil {
 		if true {
 			buf.WriteString(`"port":`)
@@ -567,71 +542,56 @@ func (mj *AgentInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Resources) != 0 {
-		buf.WriteString(`"resources":`)
-		if mj.Resources != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Resources {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"resources":`)
+	if mj.Resources != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Resources {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
-		}
-		buf.WriteByte(',')
-	}
-	if len(mj.Attributes) != 0 {
-		buf.WriteString(`"attributes":`)
-		if mj.Attributes != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Attributes {
-				if i != 0 {
-					buf.WriteString(`,`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
 				}
 
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	if mj.Id != nil {
+	buf.WriteString(`,"attributes":`)
+	if mj.Attributes != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Attributes {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
+	buf.WriteByte(',')
+	if mj.ID != nil {
 		if true {
 			buf.WriteString(`"id":`)
 
 			{
 
-				err = mj.Id.MarshalJSONBuf(buf)
+				err = mj.ID.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -657,7 +617,7 @@ const (
 
 	ffj_t_AgentInfo_Attributes
 
-	ffj_t_AgentInfo_Id
+	ffj_t_AgentInfo_ID
 )
 
 var ffj_key_AgentInfo_Hostname = []byte("hostname")
@@ -668,7 +628,7 @@ var ffj_key_AgentInfo_Resources = []byte("resources")
 
 var ffj_key_AgentInfo_Attributes = []byte("attributes")
 
-var ffj_key_AgentInfo_Id = []byte("id")
+var ffj_key_AgentInfo_ID = []byte("id")
 
 func (uj *AgentInfo) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -747,8 +707,8 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_AgentInfo_Id, kn) {
-						currentKey = ffj_t_AgentInfo_Id
+					if bytes.Equal(ffj_key_AgentInfo_ID, kn) {
+						currentKey = ffj_t_AgentInfo_ID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -771,8 +731,8 @@ mainparse:
 
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_AgentInfo_Id, kn) {
-					currentKey = ffj_t_AgentInfo_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_AgentInfo_ID, kn) {
+					currentKey = ffj_t_AgentInfo_ID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -830,8 +790,8 @@ mainparse:
 				case ffj_t_AgentInfo_Attributes:
 					goto handle_Attributes
 
-				case ffj_t_AgentInfo_Id:
-					goto handle_Id
+				case ffj_t_AgentInfo_ID:
+					goto handle_ID
 
 				case ffj_t_AgentInfono_such_key:
 					err = fs.SkipField(tok)
@@ -861,15 +821,11 @@ handle_Hostname:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Hostname = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Hostname = &tval
+			uj.Hostname = string(string(outBuf))
 
 		}
 	}
@@ -912,7 +868,7 @@ handle_Port:
 
 handle_Resources:
 
-	/* handler: uj.Resources type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Resources type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -926,13 +882,13 @@ handle_Resources:
 			uj.Resources = nil
 		} else {
 
-			uj.Resources = make([]*Resource, 0)
+			uj.Resources = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -953,19 +909,13 @@ handle_Resources:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -986,7 +936,7 @@ handle_Resources:
 
 handle_Attributes:
 
-	/* handler: uj.Attributes type=[]*mesos.Attribute kind=slice quoted=false*/
+	/* handler: uj.Attributes type=[]mesos.Attribute kind=slice quoted=false*/
 
 	{
 
@@ -1000,13 +950,13 @@ handle_Attributes:
 			uj.Attributes = nil
 		} else {
 
-			uj.Attributes = make([]*Attribute, 0)
+			uj.Attributes = make([]Attribute, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Attribute
+				var v Attribute
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -1027,19 +977,13 @@ handle_Attributes:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Attribute kind=ptr quoted=false*/
+				/* handler: v type=mesos.Attribute kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Attribute)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -1058,24 +1002,24 @@ handle_Attributes:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Id:
+handle_ID:
 
-	/* handler: uj.Id type=mesos.AgentID kind=struct quoted=false*/
+	/* handler: uj.ID type=mesos.AgentID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Id = nil
+			uj.ID = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.Id == nil {
-			uj.Id = new(AgentID)
+		if uj.ID == nil {
+			uj.ID = new(AgentID)
 		}
 
-		err = uj.Id.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.ID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -1123,14 +1067,9 @@ func (mj *Attribute) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Name != nil {
-		if true {
-			buf.WriteString(`"name":`)
-			fflib.WriteJsonString(buf, string(*mj.Name))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "name":`)
+	fflib.WriteJsonString(buf, string(mj.Name))
+	buf.WriteByte(',')
 	if mj.Type != nil {
 		if true {
 			buf.WriteString(`"type":`)
@@ -1443,15 +1382,11 @@ handle_Name:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Name = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Name = &tval
+			uj.Name = string(string(outBuf))
 
 		}
 	}
@@ -1653,35 +1588,28 @@ func (mj *CommandInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Uris) != 0 {
-		buf.WriteString(`"uris":`)
-		if mj.Uris != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Uris {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"uris":`)
+	if mj.URIs != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.URIs {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
+	buf.WriteByte(',')
 	if mj.Environment != nil {
 		if true {
 			buf.WriteString(`"environment":`)
@@ -1748,7 +1676,7 @@ const (
 
 	ffj_t_CommandInfo_Container
 
-	ffj_t_CommandInfo_Uris
+	ffj_t_CommandInfo_URIs
 
 	ffj_t_CommandInfo_Environment
 
@@ -1763,7 +1691,7 @@ const (
 
 var ffj_key_CommandInfo_Container = []byte("container")
 
-var ffj_key_CommandInfo_Uris = []byte("uris")
+var ffj_key_CommandInfo_URIs = []byte("uris")
 
 var ffj_key_CommandInfo_Environment = []byte("environment")
 
@@ -1868,8 +1796,8 @@ mainparse:
 
 				case 'u':
 
-					if bytes.Equal(ffj_key_CommandInfo_Uris, kn) {
-						currentKey = ffj_t_CommandInfo_Uris
+					if bytes.Equal(ffj_key_CommandInfo_URIs, kn) {
+						currentKey = ffj_t_CommandInfo_URIs
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
@@ -1919,8 +1847,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_CommandInfo_Uris, kn) {
-					currentKey = ffj_t_CommandInfo_Uris
+				if fflib.EqualFoldRight(ffj_key_CommandInfo_URIs, kn) {
+					currentKey = ffj_t_CommandInfo_URIs
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -1951,8 +1879,8 @@ mainparse:
 				case ffj_t_CommandInfo_Container:
 					goto handle_Container
 
-				case ffj_t_CommandInfo_Uris:
-					goto handle_Uris
+				case ffj_t_CommandInfo_URIs:
+					goto handle_URIs
 
 				case ffj_t_CommandInfo_Environment:
 					goto handle_Environment
@@ -2010,9 +1938,9 @@ handle_Container:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Uris:
+handle_URIs:
 
-	/* handler: uj.Uris type=[]*mesos.CommandInfo_URI kind=slice quoted=false*/
+	/* handler: uj.URIs type=[]mesos.CommandInfo_URI kind=slice quoted=false*/
 
 	{
 
@@ -2023,16 +1951,16 @@ handle_Uris:
 		}
 
 		if tok == fflib.FFTok_null {
-			uj.Uris = nil
+			uj.URIs = nil
 		} else {
 
-			uj.Uris = make([]*CommandInfo_URI, 0)
+			uj.URIs = make([]CommandInfo_URI, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *CommandInfo_URI
+				var v CommandInfo_URI
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -2053,19 +1981,13 @@ handle_Uris:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.CommandInfo_URI kind=ptr quoted=false*/
+				/* handler: v type=mesos.CommandInfo_URI kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(CommandInfo_URI)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -2075,7 +1997,7 @@ handle_Uris:
 					state = fflib.FFParse_after_value
 				}
 
-				uj.Uris = append(uj.Uris, v)
+				uj.URIs = append(uj.URIs, v)
 				wantVal = false
 			}
 		}
@@ -2323,14 +2245,9 @@ func (mj *CommandInfo_ContainerInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) er
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Image != nil {
-		if true {
-			buf.WriteString(`"image":`)
-			fflib.WriteJsonString(buf, string(*mj.Image))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "image":`)
+	fflib.WriteJsonString(buf, string(mj.Image))
+	buf.WriteByte(',')
 	if len(mj.Options) != 0 {
 		buf.WriteString(`"options":`)
 		if mj.Options != nil {
@@ -2505,15 +2422,11 @@ handle_Image:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Image = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Image = &tval
+			uj.Image = string(string(outBuf))
 
 		}
 	}
@@ -2632,14 +2545,9 @@ func (mj *CommandInfo_URI) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.WriteJsonString(buf, string(*mj.Value))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
+	buf.WriteByte(',')
 	if mj.Executable != nil {
 		if true {
 			if *mj.Executable {
@@ -2867,15 +2775,11 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Value = &tval
+			uj.Value = string(string(outBuf))
 
 		}
 	}
@@ -3044,15 +2948,8 @@ func (mj *ContainerID) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.WriteJsonString(buf, string(*mj.Value))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
 	buf.WriteByte('}')
 	return nil
 }
@@ -3189,15 +3086,11 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Value = &tval
+			uj.Value = string(string(outBuf))
 
 		}
 	}
@@ -3260,35 +3153,28 @@ func (mj *ContainerInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Volumes) != 0 {
-		buf.WriteString(`"volumes":`)
-		if mj.Volumes != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Volumes {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"volumes":`)
+	if mj.Volumes != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Volumes {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
+	buf.WriteByte(',')
 	if mj.Hostname != nil {
 		if true {
 			buf.WriteString(`"hostname":`)
@@ -3567,7 +3453,7 @@ handle_Type:
 
 handle_Volumes:
 
-	/* handler: uj.Volumes type=[]*mesos.Volume kind=slice quoted=false*/
+	/* handler: uj.Volumes type=[]mesos.Volume kind=slice quoted=false*/
 
 	{
 
@@ -3581,13 +3467,13 @@ handle_Volumes:
 			uj.Volumes = nil
 		} else {
 
-			uj.Volumes = make([]*Volume, 0)
+			uj.Volumes = make([]Volume, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Volume
+				var v Volume
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -3608,19 +3494,13 @@ handle_Volumes:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Volume kind=ptr quoted=false*/
+				/* handler: v type=mesos.Volume kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Volume)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -3761,14 +3641,9 @@ func (mj *ContainerInfo_DockerInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Image != nil {
-		if true {
-			buf.WriteString(`"image":`)
-			fflib.WriteJsonString(buf, string(*mj.Image))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "image":`)
+	fflib.WriteJsonString(buf, string(mj.Image))
+	buf.WriteByte(',')
 	if mj.Network != nil {
 		if true {
 			buf.WriteString(`"network":`)
@@ -3785,35 +3660,28 @@ func (mj *ContainerInfo_DockerInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.PortMappings) != 0 {
-		buf.WriteString(`"port_mappings":`)
-		if mj.PortMappings != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.PortMappings {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"port_mappings":`)
+	if mj.PortMappings != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.PortMappings {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
+	buf.WriteByte(',')
 	if mj.Privileged != nil {
 		if true {
 			if *mj.Privileged {
@@ -3824,35 +3692,28 @@ func (mj *ContainerInfo_DockerInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Parameters) != 0 {
-		buf.WriteString(`"parameters":`)
-		if mj.Parameters != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Parameters {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"parameters":`)
+	if mj.Parameters != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Parameters {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
+	buf.WriteByte(',')
 	if mj.ForcePullImage != nil {
 		if true {
 			if *mj.ForcePullImage {
@@ -4099,15 +3960,11 @@ handle_Image:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Image = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Image = &tval
+			uj.Image = string(string(outBuf))
 
 		}
 	}
@@ -4149,7 +4006,7 @@ handle_Network:
 
 handle_PortMappings:
 
-	/* handler: uj.PortMappings type=[]*mesos.ContainerInfo_DockerInfo_PortMapping kind=slice quoted=false*/
+	/* handler: uj.PortMappings type=[]mesos.ContainerInfo_DockerInfo_PortMapping kind=slice quoted=false*/
 
 	{
 
@@ -4163,13 +4020,13 @@ handle_PortMappings:
 			uj.PortMappings = nil
 		} else {
 
-			uj.PortMappings = make([]*ContainerInfo_DockerInfo_PortMapping, 0)
+			uj.PortMappings = make([]ContainerInfo_DockerInfo_PortMapping, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *ContainerInfo_DockerInfo_PortMapping
+				var v ContainerInfo_DockerInfo_PortMapping
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -4190,19 +4047,13 @@ handle_PortMappings:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.ContainerInfo_DockerInfo_PortMapping kind=ptr quoted=false*/
+				/* handler: v type=mesos.ContainerInfo_DockerInfo_PortMapping kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(ContainerInfo_DockerInfo_PortMapping)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -4264,7 +4115,7 @@ handle_Privileged:
 
 handle_Parameters:
 
-	/* handler: uj.Parameters type=[]*mesos.Parameter kind=slice quoted=false*/
+	/* handler: uj.Parameters type=[]mesos.Parameter kind=slice quoted=false*/
 
 	{
 
@@ -4278,13 +4129,13 @@ handle_Parameters:
 			uj.Parameters = nil
 		} else {
 
-			uj.Parameters = make([]*Parameter, 0)
+			uj.Parameters = make([]Parameter, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Parameter
+				var v Parameter
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -4305,19 +4156,13 @@ handle_Parameters:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Parameter kind=ptr quoted=false*/
+				/* handler: v type=mesos.Parameter kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Parameter)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -4415,21 +4260,11 @@ func (mj *ContainerInfo_DockerInfo_PortMapping) MarshalJSONBuf(buf fflib.Encodin
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.HostPort != nil {
-		if true {
-			buf.WriteString(`"host_port":`)
-			fflib.FormatBits2(buf, uint64(*mj.HostPort), 10, false)
-			buf.WriteByte(',')
-		}
-	}
-	if mj.ContainerPort != nil {
-		if true {
-			buf.WriteString(`"container_port":`)
-			fflib.FormatBits2(buf, uint64(*mj.ContainerPort), 10, false)
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "host_port":`)
+	fflib.FormatBits2(buf, uint64(mj.HostPort), 10, false)
+	buf.WriteString(`,"container_port":`)
+	fflib.FormatBits2(buf, uint64(mj.ContainerPort), 10, false)
+	buf.WriteByte(',')
 	if mj.Protocol != nil {
 		if true {
 			buf.WriteString(`"protocol":`)
@@ -4616,8 +4451,6 @@ handle_HostPort:
 
 		if tok == fflib.FFTok_null {
 
-			uj.HostPort = nil
-
 		} else {
 
 			tval, err := fflib.ParseUint(fs.Output.Bytes(), 10, 32)
@@ -4626,8 +4459,7 @@ handle_HostPort:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := uint32(tval)
-			uj.HostPort = &ttypval
+			uj.HostPort = uint32(tval)
 
 		}
 	}
@@ -4649,8 +4481,6 @@ handle_ContainerPort:
 
 		if tok == fflib.FFTok_null {
 
-			uj.ContainerPort = nil
-
 		} else {
 
 			tval, err := fflib.ParseUint(fs.Output.Bytes(), 10, 32)
@@ -4659,8 +4489,7 @@ handle_ContainerPort:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := uint32(tval)
-			uj.ContainerPort = &ttypval
+			uj.ContainerPort = uint32(tval)
 
 		}
 	}
@@ -4940,14 +4769,9 @@ func (mj *Credential) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Principal != nil {
-		if true {
-			buf.WriteString(`"principal":`)
-			fflib.WriteJsonString(buf, string(*mj.Principal))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "principal":`)
+	fflib.WriteJsonString(buf, string(mj.Principal))
+	buf.WriteByte(',')
 	if len(mj.Secret) != 0 {
 		buf.WriteString(`"secret":`)
 		if mj.Secret != nil {
@@ -5121,15 +4945,11 @@ handle_Principal:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Principal = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Principal = &tval
+			uj.Principal = string(string(outBuf))
 
 		}
 	}
@@ -5205,37 +5025,27 @@ func (mj *Credentials) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Credentials) != 0 {
-		buf.WriteString(`"credentials":`)
-		if mj.Credentials != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Credentials {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"credentials":`)
+	if mj.Credentials != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Credentials {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -5360,7 +5170,7 @@ mainparse:
 
 handle_Credentials:
 
-	/* handler: uj.Credentials type=[]*mesos.Credential kind=slice quoted=false*/
+	/* handler: uj.Credentials type=[]mesos.Credential kind=slice quoted=false*/
 
 	{
 
@@ -5374,13 +5184,13 @@ handle_Credentials:
 			uj.Credentials = nil
 		} else {
 
-			uj.Credentials = make([]*Credential, 0)
+			uj.Credentials = make([]Credential, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Credential
+				var v Credential
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -5401,19 +5211,13 @@ handle_Credentials:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Credential kind=ptr quoted=false*/
+				/* handler: v type=mesos.Credential kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Credential)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -5470,23 +5274,18 @@ func (mj *DiscoveryInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Visibility != nil {
-		if true {
-			buf.WriteString(`"visibility":`)
+	buf.WriteString(`{ "visibility":`)
 
-			{
+	{
 
-				obj, err = mj.Visibility.MarshalJSON()
-				if err != nil {
-					return err
-				}
-				buf.Write(obj)
-
-			}
-			buf.WriteByte(',')
+		obj, err = mj.Visibility.MarshalJSON()
+		if err != nil {
+			return err
 		}
+		buf.Write(obj)
+
 	}
+	buf.WriteByte(',')
 	if mj.Name != nil {
 		if true {
 			buf.WriteString(`"name":`)
@@ -5795,8 +5594,6 @@ handle_Visibility:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Visibility = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
@@ -5804,10 +5601,6 @@ handle_Visibility:
 		tbuf, err := fs.CaptureField(tok)
 		if err != nil {
 			return fs.WrapErr(err)
-		}
-
-		if uj.Visibility == nil {
-			uj.Visibility = new(DiscoveryInfo_Visibility)
 		}
 
 		err = uj.Visibility.UnmarshalJSON(tbuf)
@@ -6032,15 +5825,8 @@ func (mj *DurationInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Nanoseconds != nil {
-		if true {
-			buf.WriteString(`"nanoseconds":`)
-			fflib.FormatBits2(buf, uint64(*mj.Nanoseconds), 10, *mj.Nanoseconds < 0)
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"nanoseconds":`)
+	fflib.FormatBits2(buf, uint64(mj.Nanoseconds), 10, mj.Nanoseconds < 0)
 	buf.WriteByte('}')
 	return nil
 }
@@ -6177,8 +5963,6 @@ handle_Nanoseconds:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Nanoseconds = nil
-
 		} else {
 
 			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
@@ -6187,8 +5971,7 @@ handle_Nanoseconds:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := int64(tval)
-			uj.Nanoseconds = &ttypval
+			uj.Nanoseconds = int64(tval)
 
 		}
 	}
@@ -6234,37 +6017,27 @@ func (mj *Environment) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Variables) != 0 {
-		buf.WriteString(`"variables":`)
-		if mj.Variables != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Variables {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"variables":`)
+	if mj.Variables != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Variables {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -6389,7 +6162,7 @@ mainparse:
 
 handle_Variables:
 
-	/* handler: uj.Variables type=[]*mesos.Environment_Variable kind=slice quoted=false*/
+	/* handler: uj.Variables type=[]mesos.Environment_Variable kind=slice quoted=false*/
 
 	{
 
@@ -6403,13 +6176,13 @@ handle_Variables:
 			uj.Variables = nil
 		} else {
 
-			uj.Variables = make([]*Environment_Variable, 0)
+			uj.Variables = make([]Environment_Variable, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Environment_Variable
+				var v Environment_Variable
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -6430,19 +6203,13 @@ handle_Variables:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Environment_Variable kind=ptr quoted=false*/
+				/* handler: v type=mesos.Environment_Variable kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Environment_Variable)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -6499,22 +6266,10 @@ func (mj *Environment_Variable) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Name != nil {
-		if true {
-			buf.WriteString(`"name":`)
-			fflib.WriteJsonString(buf, string(*mj.Name))
-			buf.WriteByte(',')
-		}
-	}
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.WriteJsonString(buf, string(*mj.Value))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"name":`)
+	fflib.WriteJsonString(buf, string(mj.Name))
+	buf.WriteString(`,"value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
 	buf.WriteByte('}')
 	return nil
 }
@@ -6672,15 +6427,11 @@ handle_Name:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Name = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Name = &tval
+			uj.Name = string(string(outBuf))
 
 		}
 	}
@@ -6702,15 +6453,11 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Value = &tval
+			uj.Value = string(string(outBuf))
 
 		}
 	}
@@ -6756,15 +6503,8 @@ func (mj *ExecutorID) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.WriteJsonString(buf, string(*mj.Value))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
 	buf.WriteByte('}')
 	return nil
 }
@@ -6901,15 +6641,11 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Value = &tval
+			uj.Value = string(string(outBuf))
 
 		}
 	}
@@ -6955,29 +6691,24 @@ func (mj *ExecutorInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.ExecutorId != nil {
-		if true {
-			buf.WriteString(`"executor_id":`)
+	buf.WriteString(`{ "executor_id":`)
 
-			{
+	{
 
-				err = mj.ExecutorId.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.ExecutorID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	if mj.FrameworkId != nil {
+	buf.WriteByte(',')
+	if mj.FrameworkID != nil {
 		if true {
 			buf.WriteString(`"framework_id":`)
 
 			{
 
-				err = mj.FrameworkId.MarshalJSONBuf(buf)
+				err = mj.FrameworkID.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -6986,21 +6717,17 @@ func (mj *ExecutorInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Command != nil {
-		if true {
-			buf.WriteString(`"command":`)
+	buf.WriteString(`"command":`)
 
-			{
+	{
 
-				err = mj.Command.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.Command.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
+	buf.WriteByte(',')
 	if mj.Container != nil {
 		if true {
 			buf.WriteString(`"container":`)
@@ -7016,35 +6743,28 @@ func (mj *ExecutorInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Resources) != 0 {
-		buf.WriteString(`"resources":`)
-		if mj.Resources != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Resources {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"resources":`)
+	if mj.Resources != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Resources {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
+	buf.WriteByte(',')
 	if mj.Name != nil {
 		if true {
 			buf.WriteString(`"name":`)
@@ -7098,9 +6818,9 @@ const (
 	ffj_t_ExecutorInfobase = iota
 	ffj_t_ExecutorInfono_such_key
 
-	ffj_t_ExecutorInfo_ExecutorId
+	ffj_t_ExecutorInfo_ExecutorID
 
-	ffj_t_ExecutorInfo_FrameworkId
+	ffj_t_ExecutorInfo_FrameworkID
 
 	ffj_t_ExecutorInfo_Command
 
@@ -7117,9 +6837,9 @@ const (
 	ffj_t_ExecutorInfo_Discovery
 )
 
-var ffj_key_ExecutorInfo_ExecutorId = []byte("executor_id")
+var ffj_key_ExecutorInfo_ExecutorID = []byte("executor_id")
 
-var ffj_key_ExecutorInfo_FrameworkId = []byte("framework_id")
+var ffj_key_ExecutorInfo_FrameworkID = []byte("framework_id")
 
 var ffj_key_ExecutorInfo_Command = []byte("command")
 
@@ -7222,16 +6942,16 @@ mainparse:
 
 				case 'e':
 
-					if bytes.Equal(ffj_key_ExecutorInfo_ExecutorId, kn) {
-						currentKey = ffj_t_ExecutorInfo_ExecutorId
+					if bytes.Equal(ffj_key_ExecutorInfo_ExecutorID, kn) {
+						currentKey = ffj_t_ExecutorInfo_ExecutorID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				case 'f':
 
-					if bytes.Equal(ffj_key_ExecutorInfo_FrameworkId, kn) {
-						currentKey = ffj_t_ExecutorInfo_FrameworkId
+					if bytes.Equal(ffj_key_ExecutorInfo_FrameworkID, kn) {
+						currentKey = ffj_t_ExecutorInfo_FrameworkID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -7304,14 +7024,14 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ExecutorInfo_FrameworkId, kn) {
-					currentKey = ffj_t_ExecutorInfo_FrameworkId
+				if fflib.EqualFoldRight(ffj_key_ExecutorInfo_FrameworkID, kn) {
+					currentKey = ffj_t_ExecutorInfo_FrameworkID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.AsciiEqualFold(ffj_key_ExecutorInfo_ExecutorId, kn) {
-					currentKey = ffj_t_ExecutorInfo_ExecutorId
+				if fflib.AsciiEqualFold(ffj_key_ExecutorInfo_ExecutorID, kn) {
+					currentKey = ffj_t_ExecutorInfo_ExecutorID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -7333,11 +7053,11 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_ExecutorInfo_ExecutorId:
-					goto handle_ExecutorId
+				case ffj_t_ExecutorInfo_ExecutorID:
+					goto handle_ExecutorID
 
-				case ffj_t_ExecutorInfo_FrameworkId:
-					goto handle_FrameworkId
+				case ffj_t_ExecutorInfo_FrameworkID:
+					goto handle_FrameworkID
 
 				case ffj_t_ExecutorInfo_Command:
 					goto handle_Command
@@ -7374,24 +7094,18 @@ mainparse:
 		}
 	}
 
-handle_ExecutorId:
+handle_ExecutorID:
 
-	/* handler: uj.ExecutorId type=mesos.ExecutorID kind=struct quoted=false*/
+	/* handler: uj.ExecutorID type=mesos.ExecutorID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.ExecutorId = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.ExecutorId == nil {
-			uj.ExecutorId = new(ExecutorID)
-		}
-
-		err = uj.ExecutorId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.ExecutorID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -7401,24 +7115,24 @@ handle_ExecutorId:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_FrameworkId:
+handle_FrameworkID:
 
-	/* handler: uj.FrameworkId type=mesos.FrameworkID kind=struct quoted=false*/
+	/* handler: uj.FrameworkID type=mesos.FrameworkID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.FrameworkId = nil
+			uj.FrameworkID = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.FrameworkId == nil {
-			uj.FrameworkId = new(FrameworkID)
+		if uj.FrameworkID == nil {
+			uj.FrameworkID = new(FrameworkID)
 		}
 
-		err = uj.FrameworkId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.FrameworkID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -7435,14 +7149,8 @@ handle_Command:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Command = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.Command == nil {
-			uj.Command = new(CommandInfo)
 		}
 
 		err = uj.Command.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -7484,7 +7192,7 @@ handle_Container:
 
 handle_Resources:
 
-	/* handler: uj.Resources type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Resources type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -7498,13 +7206,13 @@ handle_Resources:
 			uj.Resources = nil
 		} else {
 
-			uj.Resources = make([]*Resource, 0)
+			uj.Resources = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -7525,19 +7233,13 @@ handle_Resources:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -8166,35 +7868,28 @@ func (mj *FrameworkInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Capabilities) != 0 {
-		buf.WriteString(`"capabilities":`)
-		if mj.Capabilities != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Capabilities {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"capabilities":`)
+	if mj.Capabilities != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Capabilities {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
+	buf.WriteByte(',')
 	if mj.Labels != nil {
 		if true {
 			buf.WriteString(`"labels":`)
@@ -8815,7 +8510,7 @@ handle_WebuiUrl:
 
 handle_Capabilities:
 
-	/* handler: uj.Capabilities type=[]*mesos.FrameworkInfo_Capability kind=slice quoted=false*/
+	/* handler: uj.Capabilities type=[]mesos.FrameworkInfo_Capability kind=slice quoted=false*/
 
 	{
 
@@ -8829,13 +8524,13 @@ handle_Capabilities:
 			uj.Capabilities = nil
 		} else {
 
-			uj.Capabilities = make([]*FrameworkInfo_Capability, 0)
+			uj.Capabilities = make([]FrameworkInfo_Capability, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *FrameworkInfo_Capability
+				var v FrameworkInfo_Capability
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -8856,19 +8551,13 @@ handle_Capabilities:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.FrameworkInfo_Capability kind=ptr quoted=false*/
+				/* handler: v type=mesos.FrameworkInfo_Capability kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(FrameworkInfo_Capability)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -9731,14 +9420,9 @@ func (mj *HealthCheck_HTTP) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Port != nil {
-		if true {
-			buf.WriteString(`"port":`)
-			fflib.FormatBits2(buf, uint64(*mj.Port), 10, false)
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "port":`)
+	fflib.FormatBits2(buf, uint64(mj.Port), 10, false)
+	buf.WriteByte(',')
 	if mj.Path != nil {
 		if true {
 			buf.WriteString(`"path":`)
@@ -9938,8 +9622,6 @@ handle_Port:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Port = nil
-
 		} else {
 
 			tval, err := fflib.ParseUint(fs.Output.Bytes(), 10, 32)
@@ -9948,8 +9630,7 @@ handle_Port:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := uint32(tval)
-			uj.Port = &ttypval
+			uj.Port = uint32(tval)
 
 		}
 	}
@@ -10375,21 +10056,11 @@ func (mj *Image_AppC) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Name != nil {
-		if true {
-			buf.WriteString(`"name":`)
-			fflib.WriteJsonString(buf, string(*mj.Name))
-			buf.WriteByte(',')
-		}
-	}
-	if mj.Id != nil {
-		if true {
-			buf.WriteString(`"id":`)
-			fflib.WriteJsonString(buf, string(*mj.Id))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "name":`)
+	fflib.WriteJsonString(buf, string(mj.Name))
+	buf.WriteString(`,"id":`)
+	fflib.WriteJsonString(buf, string(mj.ID))
+	buf.WriteByte(',')
 	if mj.Labels != nil {
 		if true {
 			buf.WriteString(`"labels":`)
@@ -10416,14 +10087,14 @@ const (
 
 	ffj_t_Image_AppC_Name
 
-	ffj_t_Image_AppC_Id
+	ffj_t_Image_AppC_ID
 
 	ffj_t_Image_AppC_Labels
 )
 
 var ffj_key_Image_AppC_Name = []byte("name")
 
-var ffj_key_Image_AppC_Id = []byte("id")
+var ffj_key_Image_AppC_ID = []byte("id")
 
 var ffj_key_Image_AppC_Labels = []byte("labels")
 
@@ -10488,8 +10159,8 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_Image_AppC_Id, kn) {
-						currentKey = ffj_t_Image_AppC_Id
+					if bytes.Equal(ffj_key_Image_AppC_ID, kn) {
+						currentKey = ffj_t_Image_AppC_ID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -10518,8 +10189,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_Image_AppC_Id, kn) {
-					currentKey = ffj_t_Image_AppC_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_Image_AppC_ID, kn) {
+					currentKey = ffj_t_Image_AppC_ID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -10550,8 +10221,8 @@ mainparse:
 				case ffj_t_Image_AppC_Name:
 					goto handle_Name
 
-				case ffj_t_Image_AppC_Id:
-					goto handle_Id
+				case ffj_t_Image_AppC_ID:
+					goto handle_ID
 
 				case ffj_t_Image_AppC_Labels:
 					goto handle_Labels
@@ -10584,15 +10255,11 @@ handle_Name:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Name = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Name = &tval
+			uj.Name = string(string(outBuf))
 
 		}
 	}
@@ -10600,9 +10267,9 @@ handle_Name:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Id:
+handle_ID:
 
-	/* handler: uj.Id type=string kind=string quoted=false*/
+	/* handler: uj.ID type=string kind=string quoted=false*/
 
 	{
 
@@ -10614,15 +10281,11 @@ handle_Id:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Id = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Id = &tval
+			uj.ID = string(string(outBuf))
 
 		}
 	}
@@ -10695,22 +10358,17 @@ func (mj *InverseOffer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Id != nil {
-		if true {
-			buf.WriteString(`"id":`)
+	buf.WriteString(`{"id":`)
 
-			{
+	{
 
-				err = mj.Id.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.OfferID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
+	buf.WriteByte(',')
 	if mj.Url != nil {
 		if true {
 			buf.WriteString(`"url":`)
@@ -10726,28 +10384,24 @@ func (mj *InverseOffer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.FrameworkId != nil {
-		if true {
-			buf.WriteString(`"framework_id":`)
+	buf.WriteString(`"framework_id":`)
 
-			{
+	{
 
-				err = mj.FrameworkId.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.FrameworkID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	if mj.AgentId != nil {
+	buf.WriteByte(',')
+	if mj.AgentID != nil {
 		if true {
 			buf.WriteString(`"agent_id":`)
 
 			{
 
-				err = mj.AgentId.MarshalJSONBuf(buf)
+				err = mj.AgentID.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -10756,51 +10410,37 @@ func (mj *InverseOffer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Unavailability != nil {
-		if true {
-			buf.WriteString(`"unavailability":`)
+	buf.WriteString(`"unavailability":`)
+
+	{
+
+		err = mj.Unavailability.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteString(`,"resources":`)
+	if mj.Resources != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Resources {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
 
 			{
 
-				err = mj.Unavailability.MarshalJSONBuf(buf)
+				err = v.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
 
 			}
-			buf.WriteByte(',')
 		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	if len(mj.Resources) != 0 {
-		buf.WriteString(`"resources":`)
-		if mj.Resources != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Resources {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
-			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
-		}
-		buf.WriteByte(',')
-	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -10809,26 +10449,26 @@ const (
 	ffj_t_InverseOfferbase = iota
 	ffj_t_InverseOfferno_such_key
 
-	ffj_t_InverseOffer_Id
+	ffj_t_InverseOffer_OfferID
 
 	ffj_t_InverseOffer_Url
 
-	ffj_t_InverseOffer_FrameworkId
+	ffj_t_InverseOffer_FrameworkID
 
-	ffj_t_InverseOffer_AgentId
+	ffj_t_InverseOffer_AgentID
 
 	ffj_t_InverseOffer_Unavailability
 
 	ffj_t_InverseOffer_Resources
 )
 
-var ffj_key_InverseOffer_Id = []byte("id")
+var ffj_key_InverseOffer_OfferID = []byte("id")
 
 var ffj_key_InverseOffer_Url = []byte("url")
 
-var ffj_key_InverseOffer_FrameworkId = []byte("framework_id")
+var ffj_key_InverseOffer_FrameworkID = []byte("framework_id")
 
-var ffj_key_InverseOffer_AgentId = []byte("agent_id")
+var ffj_key_InverseOffer_AgentID = []byte("agent_id")
 
 var ffj_key_InverseOffer_Unavailability = []byte("unavailability")
 
@@ -10895,24 +10535,24 @@ mainparse:
 
 				case 'a':
 
-					if bytes.Equal(ffj_key_InverseOffer_AgentId, kn) {
-						currentKey = ffj_t_InverseOffer_AgentId
+					if bytes.Equal(ffj_key_InverseOffer_AgentID, kn) {
+						currentKey = ffj_t_InverseOffer_AgentID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				case 'f':
 
-					if bytes.Equal(ffj_key_InverseOffer_FrameworkId, kn) {
-						currentKey = ffj_t_InverseOffer_FrameworkId
+					if bytes.Equal(ffj_key_InverseOffer_FrameworkID, kn) {
+						currentKey = ffj_t_InverseOffer_FrameworkID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_InverseOffer_Id, kn) {
-						currentKey = ffj_t_InverseOffer_Id
+					if bytes.Equal(ffj_key_InverseOffer_OfferID, kn) {
+						currentKey = ffj_t_InverseOffer_OfferID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -10952,14 +10592,14 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.AsciiEqualFold(ffj_key_InverseOffer_AgentId, kn) {
-					currentKey = ffj_t_InverseOffer_AgentId
+				if fflib.AsciiEqualFold(ffj_key_InverseOffer_AgentID, kn) {
+					currentKey = ffj_t_InverseOffer_AgentID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_InverseOffer_FrameworkId, kn) {
-					currentKey = ffj_t_InverseOffer_FrameworkId
+				if fflib.EqualFoldRight(ffj_key_InverseOffer_FrameworkID, kn) {
+					currentKey = ffj_t_InverseOffer_FrameworkID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -10970,8 +10610,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_InverseOffer_Id, kn) {
-					currentKey = ffj_t_InverseOffer_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_InverseOffer_OfferID, kn) {
+					currentKey = ffj_t_InverseOffer_OfferID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -10993,17 +10633,17 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_InverseOffer_Id:
-					goto handle_Id
+				case ffj_t_InverseOffer_OfferID:
+					goto handle_OfferID
 
 				case ffj_t_InverseOffer_Url:
 					goto handle_Url
 
-				case ffj_t_InverseOffer_FrameworkId:
-					goto handle_FrameworkId
+				case ffj_t_InverseOffer_FrameworkID:
+					goto handle_FrameworkID
 
-				case ffj_t_InverseOffer_AgentId:
-					goto handle_AgentId
+				case ffj_t_InverseOffer_AgentID:
+					goto handle_AgentID
 
 				case ffj_t_InverseOffer_Unavailability:
 					goto handle_Unavailability
@@ -11025,24 +10665,18 @@ mainparse:
 		}
 	}
 
-handle_Id:
+handle_OfferID:
 
-	/* handler: uj.Id type=mesos.OfferID kind=struct quoted=false*/
+	/* handler: uj.OfferID type=mesos.OfferID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.Id = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.Id == nil {
-			uj.Id = new(OfferID)
-		}
-
-		err = uj.Id.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.OfferID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -11079,24 +10713,18 @@ handle_Url:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_FrameworkId:
+handle_FrameworkID:
 
-	/* handler: uj.FrameworkId type=mesos.FrameworkID kind=struct quoted=false*/
+	/* handler: uj.FrameworkID type=mesos.FrameworkID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.FrameworkId = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.FrameworkId == nil {
-			uj.FrameworkId = new(FrameworkID)
-		}
-
-		err = uj.FrameworkId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.FrameworkID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -11106,24 +10734,24 @@ handle_FrameworkId:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_AgentId:
+handle_AgentID:
 
-	/* handler: uj.AgentId type=mesos.AgentID kind=struct quoted=false*/
+	/* handler: uj.AgentID type=mesos.AgentID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.AgentId = nil
+			uj.AgentID = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.AgentId == nil {
-			uj.AgentId = new(AgentID)
+		if uj.AgentID == nil {
+			uj.AgentID = new(AgentID)
 		}
 
-		err = uj.AgentId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -11140,14 +10768,8 @@ handle_Unavailability:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Unavailability = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.Unavailability == nil {
-			uj.Unavailability = new(Unavailability)
 		}
 
 		err = uj.Unavailability.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -11162,7 +10784,7 @@ handle_Unavailability:
 
 handle_Resources:
 
-	/* handler: uj.Resources type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Resources type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -11176,13 +10798,13 @@ handle_Resources:
 			uj.Resources = nil
 		} else {
 
-			uj.Resources = make([]*Resource, 0)
+			uj.Resources = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -11203,19 +10825,13 @@ handle_Resources:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -11272,14 +10888,9 @@ func (mj *Label) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Key != nil {
-		if true {
-			buf.WriteString(`"key":`)
-			fflib.WriteJsonString(buf, string(*mj.Key))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "key":`)
+	fflib.WriteJsonString(buf, string(mj.Key))
+	buf.WriteByte(',')
 	if mj.Value != nil {
 		if true {
 			buf.WriteString(`"value":`)
@@ -11445,15 +11056,11 @@ handle_Key:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Key = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Key = &tval
+			uj.Key = string(string(outBuf))
 
 		}
 	}
@@ -11529,37 +11136,27 @@ func (mj *Labels) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Labels) != 0 {
-		buf.WriteString(`"labels":`)
-		if mj.Labels != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Labels {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"labels":`)
+	if mj.Labels != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Labels {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -11684,7 +11281,7 @@ mainparse:
 
 handle_Labels:
 
-	/* handler: uj.Labels type=[]*mesos.Label kind=slice quoted=false*/
+	/* handler: uj.Labels type=[]mesos.Label kind=slice quoted=false*/
 
 	{
 
@@ -11698,13 +11295,13 @@ handle_Labels:
 			uj.Labels = nil
 		} else {
 
-			uj.Labels = make([]*Label, 0)
+			uj.Labels = make([]Label, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Label
+				var v Label
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -11725,19 +11322,13 @@ handle_Labels:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Label kind=ptr quoted=false*/
+				/* handler: v type=mesos.Label kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Label)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -12051,22 +11642,17 @@ func (mj *MachineInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Id != nil {
-		if true {
-			buf.WriteString(`"id":`)
+	buf.WriteString(`{ "id":`)
 
-			{
+	{
 
-				err = mj.Id.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.ID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
+	buf.WriteByte(',')
 	if mj.Mode != nil {
 		if true {
 			buf.WriteString(`"mode":`)
@@ -12107,14 +11693,14 @@ const (
 	ffj_t_MachineInfobase = iota
 	ffj_t_MachineInfono_such_key
 
-	ffj_t_MachineInfo_Id
+	ffj_t_MachineInfo_ID
 
 	ffj_t_MachineInfo_Mode
 
 	ffj_t_MachineInfo_Unavailability
 )
 
-var ffj_key_MachineInfo_Id = []byte("id")
+var ffj_key_MachineInfo_ID = []byte("id")
 
 var ffj_key_MachineInfo_Mode = []byte("mode")
 
@@ -12181,8 +11767,8 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_MachineInfo_Id, kn) {
-						currentKey = ffj_t_MachineInfo_Id
+					if bytes.Equal(ffj_key_MachineInfo_ID, kn) {
+						currentKey = ffj_t_MachineInfo_ID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -12217,8 +11803,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_MachineInfo_Id, kn) {
-					currentKey = ffj_t_MachineInfo_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_MachineInfo_ID, kn) {
+					currentKey = ffj_t_MachineInfo_ID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -12240,8 +11826,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_MachineInfo_Id:
-					goto handle_Id
+				case ffj_t_MachineInfo_ID:
+					goto handle_ID
 
 				case ffj_t_MachineInfo_Mode:
 					goto handle_Mode
@@ -12263,24 +11849,18 @@ mainparse:
 		}
 	}
 
-handle_Id:
+handle_ID:
 
-	/* handler: uj.Id type=mesos.MachineID kind=struct quoted=false*/
+	/* handler: uj.ID type=mesos.MachineID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.Id = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.Id == nil {
-			uj.Id = new(MachineID)
-		}
-
-		err = uj.Id.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.ID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -12387,21 +11967,11 @@ func (mj *MasterInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Id != nil {
-		if true {
-			buf.WriteString(`"id":`)
-			fflib.WriteJsonString(buf, string(*mj.Id))
-			buf.WriteByte(',')
-		}
-	}
-	if mj.Ip != nil {
-		if true {
-			buf.WriteString(`"ip":`)
-			fflib.FormatBits2(buf, uint64(*mj.Ip), 10, false)
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "id":`)
+	fflib.WriteJsonString(buf, string(mj.ID))
+	buf.WriteString(`,"ip":`)
+	fflib.FormatBits2(buf, uint64(mj.IP), 10, false)
+	buf.WriteByte(',')
 	if mj.Port != nil {
 		if true {
 			buf.WriteString(`"port":`)
@@ -12409,10 +11979,10 @@ func (mj *MasterInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Pid != nil {
+	if mj.PID != nil {
 		if true {
 			buf.WriteString(`"pid":`)
-			fflib.WriteJsonString(buf, string(*mj.Pid))
+			fflib.WriteJsonString(buf, string(*mj.PID))
 			buf.WriteByte(',')
 		}
 	}
@@ -12454,13 +12024,13 @@ const (
 	ffj_t_MasterInfobase = iota
 	ffj_t_MasterInfono_such_key
 
-	ffj_t_MasterInfo_Id
+	ffj_t_MasterInfo_ID
 
-	ffj_t_MasterInfo_Ip
+	ffj_t_MasterInfo_IP
 
 	ffj_t_MasterInfo_Port
 
-	ffj_t_MasterInfo_Pid
+	ffj_t_MasterInfo_PID
 
 	ffj_t_MasterInfo_Hostname
 
@@ -12469,13 +12039,13 @@ const (
 	ffj_t_MasterInfo_Address
 )
 
-var ffj_key_MasterInfo_Id = []byte("id")
+var ffj_key_MasterInfo_ID = []byte("id")
 
-var ffj_key_MasterInfo_Ip = []byte("ip")
+var ffj_key_MasterInfo_IP = []byte("ip")
 
 var ffj_key_MasterInfo_Port = []byte("port")
 
-var ffj_key_MasterInfo_Pid = []byte("pid")
+var ffj_key_MasterInfo_PID = []byte("pid")
 
 var ffj_key_MasterInfo_Hostname = []byte("hostname")
 
@@ -12560,13 +12130,13 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_MasterInfo_Id, kn) {
-						currentKey = ffj_t_MasterInfo_Id
+					if bytes.Equal(ffj_key_MasterInfo_ID, kn) {
+						currentKey = ffj_t_MasterInfo_ID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_MasterInfo_Ip, kn) {
-						currentKey = ffj_t_MasterInfo_Ip
+					} else if bytes.Equal(ffj_key_MasterInfo_IP, kn) {
+						currentKey = ffj_t_MasterInfo_IP
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -12578,8 +12148,8 @@ mainparse:
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_MasterInfo_Pid, kn) {
-						currentKey = ffj_t_MasterInfo_Pid
+					} else if bytes.Equal(ffj_key_MasterInfo_PID, kn) {
+						currentKey = ffj_t_MasterInfo_PID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -12612,8 +12182,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_MasterInfo_Pid, kn) {
-					currentKey = ffj_t_MasterInfo_Pid
+				if fflib.SimpleLetterEqualFold(ffj_key_MasterInfo_PID, kn) {
+					currentKey = ffj_t_MasterInfo_PID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -12624,14 +12194,14 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_MasterInfo_Ip, kn) {
-					currentKey = ffj_t_MasterInfo_Ip
+				if fflib.SimpleLetterEqualFold(ffj_key_MasterInfo_IP, kn) {
+					currentKey = ffj_t_MasterInfo_IP
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_MasterInfo_Id, kn) {
-					currentKey = ffj_t_MasterInfo_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_MasterInfo_ID, kn) {
+					currentKey = ffj_t_MasterInfo_ID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -12653,17 +12223,17 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_MasterInfo_Id:
-					goto handle_Id
+				case ffj_t_MasterInfo_ID:
+					goto handle_ID
 
-				case ffj_t_MasterInfo_Ip:
-					goto handle_Ip
+				case ffj_t_MasterInfo_IP:
+					goto handle_IP
 
 				case ffj_t_MasterInfo_Port:
 					goto handle_Port
 
-				case ffj_t_MasterInfo_Pid:
-					goto handle_Pid
+				case ffj_t_MasterInfo_PID:
+					goto handle_PID
 
 				case ffj_t_MasterInfo_Hostname:
 					goto handle_Hostname
@@ -12688,9 +12258,9 @@ mainparse:
 		}
 	}
 
-handle_Id:
+handle_ID:
 
-	/* handler: uj.Id type=string kind=string quoted=false*/
+	/* handler: uj.ID type=string kind=string quoted=false*/
 
 	{
 
@@ -12702,15 +12272,11 @@ handle_Id:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Id = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Id = &tval
+			uj.ID = string(string(outBuf))
 
 		}
 	}
@@ -12718,9 +12284,9 @@ handle_Id:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Ip:
+handle_IP:
 
-	/* handler: uj.Ip type=uint32 kind=uint32 quoted=false*/
+	/* handler: uj.IP type=uint32 kind=uint32 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -12732,8 +12298,6 @@ handle_Ip:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Ip = nil
-
 		} else {
 
 			tval, err := fflib.ParseUint(fs.Output.Bytes(), 10, 32)
@@ -12742,8 +12306,7 @@ handle_Ip:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := uint32(tval)
-			uj.Ip = &ttypval
+			uj.IP = uint32(tval)
 
 		}
 	}
@@ -12784,9 +12347,9 @@ handle_Port:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Pid:
+handle_PID:
 
-	/* handler: uj.Pid type=string kind=string quoted=false*/
+	/* handler: uj.PID type=string kind=string quoted=false*/
 
 	{
 
@@ -12798,7 +12361,7 @@ handle_Pid:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Pid = nil
+			uj.PID = nil
 
 		} else {
 
@@ -12806,7 +12369,7 @@ handle_Pid:
 			outBuf := fs.Output.Bytes()
 
 			tval = string(string(outBuf))
-			uj.Pid = &tval
+			uj.PID = &tval
 
 		}
 	}
@@ -12939,59 +12502,39 @@ func (mj *Offer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Id != nil {
-		if true {
-			buf.WriteString(`"id":`)
+	buf.WriteString(`{ "id":`)
 
-			{
+	{
 
-				err = mj.Id.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.ID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	if mj.FrameworkId != nil {
-		if true {
-			buf.WriteString(`"framework_id":`)
+	buf.WriteString(`,"framework_id":`)
 
-			{
+	{
 
-				err = mj.FrameworkId.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.FrameworkID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	if mj.AgentId != nil {
-		if true {
-			buf.WriteString(`"agent_id":`)
+	buf.WriteString(`,"agent_id":`)
 
-			{
+	{
 
-				err = mj.AgentId.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.AgentID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	if mj.Hostname != nil {
-		if true {
-			buf.WriteString(`"hostname":`)
-			fflib.WriteJsonString(buf, string(*mj.Hostname))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`,"hostname":`)
+	fflib.WriteJsonString(buf, string(mj.Hostname))
+	buf.WriteByte(',')
 	if mj.Url != nil {
 		if true {
 			buf.WriteString(`"url":`)
@@ -13007,93 +12550,70 @@ func (mj *Offer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Resources) != 0 {
-		buf.WriteString(`"resources":`)
-		if mj.Resources != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Resources {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"resources":`)
+	if mj.Resources != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Resources {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
-		}
-		buf.WriteByte(',')
-	}
-	if len(mj.Attributes) != 0 {
-		buf.WriteString(`"attributes":`)
-		if mj.Attributes != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Attributes {
-				if i != 0 {
-					buf.WriteString(`,`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
 				}
 
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	if len(mj.ExecutorIds) != 0 {
-		buf.WriteString(`"executor_ids":`)
-		if mj.ExecutorIds != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.ExecutorIds {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`,"attributes":`)
+	if mj.Attributes != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Attributes {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
+	buf.WriteString(`,"executor_ids":`)
+	if mj.ExecutorIDs != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.ExecutorIDs {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
+	buf.WriteByte(',')
 	if mj.Unavailability != nil {
 		if true {
 			buf.WriteString(`"unavailability":`)
@@ -13118,11 +12638,11 @@ const (
 	ffj_t_Offerbase = iota
 	ffj_t_Offerno_such_key
 
-	ffj_t_Offer_Id
+	ffj_t_Offer_ID
 
-	ffj_t_Offer_FrameworkId
+	ffj_t_Offer_FrameworkID
 
-	ffj_t_Offer_AgentId
+	ffj_t_Offer_AgentID
 
 	ffj_t_Offer_Hostname
 
@@ -13132,16 +12652,16 @@ const (
 
 	ffj_t_Offer_Attributes
 
-	ffj_t_Offer_ExecutorIds
+	ffj_t_Offer_ExecutorIDs
 
 	ffj_t_Offer_Unavailability
 )
 
-var ffj_key_Offer_Id = []byte("id")
+var ffj_key_Offer_ID = []byte("id")
 
-var ffj_key_Offer_FrameworkId = []byte("framework_id")
+var ffj_key_Offer_FrameworkID = []byte("framework_id")
 
-var ffj_key_Offer_AgentId = []byte("agent_id")
+var ffj_key_Offer_AgentID = []byte("agent_id")
 
 var ffj_key_Offer_Hostname = []byte("hostname")
 
@@ -13151,7 +12671,7 @@ var ffj_key_Offer_Resources = []byte("resources")
 
 var ffj_key_Offer_Attributes = []byte("attributes")
 
-var ffj_key_Offer_ExecutorIds = []byte("executor_ids")
+var ffj_key_Offer_ExecutorIDs = []byte("executor_ids")
 
 var ffj_key_Offer_Unavailability = []byte("unavailability")
 
@@ -13216,8 +12736,8 @@ mainparse:
 
 				case 'a':
 
-					if bytes.Equal(ffj_key_Offer_AgentId, kn) {
-						currentKey = ffj_t_Offer_AgentId
+					if bytes.Equal(ffj_key_Offer_AgentID, kn) {
+						currentKey = ffj_t_Offer_AgentID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
@@ -13229,16 +12749,16 @@ mainparse:
 
 				case 'e':
 
-					if bytes.Equal(ffj_key_Offer_ExecutorIds, kn) {
-						currentKey = ffj_t_Offer_ExecutorIds
+					if bytes.Equal(ffj_key_Offer_ExecutorIDs, kn) {
+						currentKey = ffj_t_Offer_ExecutorIDs
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				case 'f':
 
-					if bytes.Equal(ffj_key_Offer_FrameworkId, kn) {
-						currentKey = ffj_t_Offer_FrameworkId
+					if bytes.Equal(ffj_key_Offer_FrameworkID, kn) {
+						currentKey = ffj_t_Offer_FrameworkID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -13253,8 +12773,8 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_Offer_Id, kn) {
-						currentKey = ffj_t_Offer_Id
+					if bytes.Equal(ffj_key_Offer_ID, kn) {
+						currentKey = ffj_t_Offer_ID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -13288,8 +12808,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Offer_ExecutorIds, kn) {
-					currentKey = ffj_t_Offer_ExecutorIds
+				if fflib.EqualFoldRight(ffj_key_Offer_ExecutorIDs, kn) {
+					currentKey = ffj_t_Offer_ExecutorIDs
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -13318,20 +12838,20 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.AsciiEqualFold(ffj_key_Offer_AgentId, kn) {
-					currentKey = ffj_t_Offer_AgentId
+				if fflib.AsciiEqualFold(ffj_key_Offer_AgentID, kn) {
+					currentKey = ffj_t_Offer_AgentID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Offer_FrameworkId, kn) {
-					currentKey = ffj_t_Offer_FrameworkId
+				if fflib.EqualFoldRight(ffj_key_Offer_FrameworkID, kn) {
+					currentKey = ffj_t_Offer_FrameworkID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_Offer_Id, kn) {
-					currentKey = ffj_t_Offer_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_Offer_ID, kn) {
+					currentKey = ffj_t_Offer_ID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -13353,14 +12873,14 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Offer_Id:
-					goto handle_Id
+				case ffj_t_Offer_ID:
+					goto handle_ID
 
-				case ffj_t_Offer_FrameworkId:
-					goto handle_FrameworkId
+				case ffj_t_Offer_FrameworkID:
+					goto handle_FrameworkID
 
-				case ffj_t_Offer_AgentId:
-					goto handle_AgentId
+				case ffj_t_Offer_AgentID:
+					goto handle_AgentID
 
 				case ffj_t_Offer_Hostname:
 					goto handle_Hostname
@@ -13374,8 +12894,8 @@ mainparse:
 				case ffj_t_Offer_Attributes:
 					goto handle_Attributes
 
-				case ffj_t_Offer_ExecutorIds:
-					goto handle_ExecutorIds
+				case ffj_t_Offer_ExecutorIDs:
+					goto handle_ExecutorIDs
 
 				case ffj_t_Offer_Unavailability:
 					goto handle_Unavailability
@@ -13394,24 +12914,18 @@ mainparse:
 		}
 	}
 
-handle_Id:
+handle_ID:
 
-	/* handler: uj.Id type=mesos.OfferID kind=struct quoted=false*/
+	/* handler: uj.ID type=mesos.OfferID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.Id = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.Id == nil {
-			uj.Id = new(OfferID)
-		}
-
-		err = uj.Id.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.ID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -13421,24 +12935,18 @@ handle_Id:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_FrameworkId:
+handle_FrameworkID:
 
-	/* handler: uj.FrameworkId type=mesos.FrameworkID kind=struct quoted=false*/
+	/* handler: uj.FrameworkID type=mesos.FrameworkID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.FrameworkId = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.FrameworkId == nil {
-			uj.FrameworkId = new(FrameworkID)
-		}
-
-		err = uj.FrameworkId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.FrameworkID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -13448,24 +12956,18 @@ handle_FrameworkId:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_AgentId:
+handle_AgentID:
 
-	/* handler: uj.AgentId type=mesos.AgentID kind=struct quoted=false*/
+	/* handler: uj.AgentID type=mesos.AgentID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.AgentId = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.AgentId == nil {
-			uj.AgentId = new(AgentID)
-		}
-
-		err = uj.AgentId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -13489,15 +12991,11 @@ handle_Hostname:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Hostname = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Hostname = &tval
+			uj.Hostname = string(string(outBuf))
 
 		}
 	}
@@ -13534,7 +13032,7 @@ handle_Url:
 
 handle_Resources:
 
-	/* handler: uj.Resources type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Resources type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -13548,13 +13046,13 @@ handle_Resources:
 			uj.Resources = nil
 		} else {
 
-			uj.Resources = make([]*Resource, 0)
+			uj.Resources = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -13575,19 +13073,13 @@ handle_Resources:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -13608,7 +13100,7 @@ handle_Resources:
 
 handle_Attributes:
 
-	/* handler: uj.Attributes type=[]*mesos.Attribute kind=slice quoted=false*/
+	/* handler: uj.Attributes type=[]mesos.Attribute kind=slice quoted=false*/
 
 	{
 
@@ -13622,13 +13114,13 @@ handle_Attributes:
 			uj.Attributes = nil
 		} else {
 
-			uj.Attributes = make([]*Attribute, 0)
+			uj.Attributes = make([]Attribute, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Attribute
+				var v Attribute
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -13649,19 +13141,13 @@ handle_Attributes:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Attribute kind=ptr quoted=false*/
+				/* handler: v type=mesos.Attribute kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Attribute)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -13680,9 +13166,9 @@ handle_Attributes:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_ExecutorIds:
+handle_ExecutorIDs:
 
-	/* handler: uj.ExecutorIds type=[]*mesos.ExecutorID kind=slice quoted=false*/
+	/* handler: uj.ExecutorIDs type=[]mesos.ExecutorID kind=slice quoted=false*/
 
 	{
 
@@ -13693,16 +13179,16 @@ handle_ExecutorIds:
 		}
 
 		if tok == fflib.FFTok_null {
-			uj.ExecutorIds = nil
+			uj.ExecutorIDs = nil
 		} else {
 
-			uj.ExecutorIds = make([]*ExecutorID, 0)
+			uj.ExecutorIDs = make([]ExecutorID, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *ExecutorID
+				var v ExecutorID
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -13723,19 +13209,13 @@ handle_ExecutorIds:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.ExecutorID kind=ptr quoted=false*/
+				/* handler: v type=mesos.ExecutorID kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(ExecutorID)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -13745,7 +13225,7 @@ handle_ExecutorIds:
 					state = fflib.FFParse_after_value
 				}
 
-				uj.ExecutorIds = append(uj.ExecutorIds, v)
+				uj.ExecutorIDs = append(uj.ExecutorIDs, v)
 				wantVal = false
 			}
 		}
@@ -13819,15 +13299,8 @@ func (mj *OfferID) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.WriteJsonString(buf, string(*mj.Value))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
 	buf.WriteByte('}')
 	return nil
 }
@@ -13964,15 +13437,11 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Value = &tval
+			uj.Value = string(string(outBuf))
 
 		}
 	}
@@ -14543,37 +14012,27 @@ func (mj *Offer_Operation_Create) MarshalJSONBuf(buf fflib.EncodingBuffer) error
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Volumes) != 0 {
-		buf.WriteString(`"volumes":`)
-		if mj.Volumes != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Volumes {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"volumes":`)
+	if mj.Volumes != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Volumes {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -14698,7 +14157,7 @@ mainparse:
 
 handle_Volumes:
 
-	/* handler: uj.Volumes type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Volumes type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -14712,13 +14171,13 @@ handle_Volumes:
 			uj.Volumes = nil
 		} else {
 
-			uj.Volumes = make([]*Resource, 0)
+			uj.Volumes = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -14739,19 +14198,13 @@ handle_Volumes:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -14808,37 +14261,27 @@ func (mj *Offer_Operation_Destroy) MarshalJSONBuf(buf fflib.EncodingBuffer) erro
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Volumes) != 0 {
-		buf.WriteString(`"volumes":`)
-		if mj.Volumes != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Volumes {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"volumes":`)
+	if mj.Volumes != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Volumes {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -14963,7 +14406,7 @@ mainparse:
 
 handle_Volumes:
 
-	/* handler: uj.Volumes type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Volumes type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -14977,13 +14420,13 @@ handle_Volumes:
 			uj.Volumes = nil
 		} else {
 
-			uj.Volumes = make([]*Resource, 0)
+			uj.Volumes = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -15004,19 +14447,13 @@ handle_Volumes:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -15073,37 +14510,27 @@ func (mj *Offer_Operation_Launch) MarshalJSONBuf(buf fflib.EncodingBuffer) error
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.TaskInfos) != 0 {
-		buf.WriteString(`"task_infos":`)
-		if mj.TaskInfos != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.TaskInfos {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"task_infos":`)
+	if mj.TaskInfos != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.TaskInfos {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -15228,7 +14655,7 @@ mainparse:
 
 handle_TaskInfos:
 
-	/* handler: uj.TaskInfos type=[]*mesos.TaskInfo kind=slice quoted=false*/
+	/* handler: uj.TaskInfos type=[]mesos.TaskInfo kind=slice quoted=false*/
 
 	{
 
@@ -15242,13 +14669,13 @@ handle_TaskInfos:
 			uj.TaskInfos = nil
 		} else {
 
-			uj.TaskInfos = make([]*TaskInfo, 0)
+			uj.TaskInfos = make([]TaskInfo, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *TaskInfo
+				var v TaskInfo
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -15269,19 +14696,13 @@ handle_TaskInfos:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.TaskInfo kind=ptr quoted=false*/
+				/* handler: v type=mesos.TaskInfo kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(TaskInfo)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -15338,37 +14759,27 @@ func (mj *Offer_Operation_Reserve) MarshalJSONBuf(buf fflib.EncodingBuffer) erro
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Resources) != 0 {
-		buf.WriteString(`"resources":`)
-		if mj.Resources != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Resources {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"resources":`)
+	if mj.Resources != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Resources {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -15493,7 +14904,7 @@ mainparse:
 
 handle_Resources:
 
-	/* handler: uj.Resources type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Resources type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -15507,13 +14918,13 @@ handle_Resources:
 			uj.Resources = nil
 		} else {
 
-			uj.Resources = make([]*Resource, 0)
+			uj.Resources = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -15534,19 +14945,13 @@ handle_Resources:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -15603,37 +15008,27 @@ func (mj *Offer_Operation_Unreserve) MarshalJSONBuf(buf fflib.EncodingBuffer) er
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Resources) != 0 {
-		buf.WriteString(`"resources":`)
-		if mj.Resources != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Resources {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"resources":`)
+	if mj.Resources != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Resources {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -15758,7 +15153,7 @@ mainparse:
 
 handle_Resources:
 
-	/* handler: uj.Resources type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Resources type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -15772,13 +15167,13 @@ handle_Resources:
 			uj.Resources = nil
 		} else {
 
-			uj.Resources = make([]*Resource, 0)
+			uj.Resources = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -15799,19 +15194,13 @@ handle_Resources:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -15868,22 +15257,10 @@ func (mj *Parameter) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Key != nil {
-		if true {
-			buf.WriteString(`"key":`)
-			fflib.WriteJsonString(buf, string(*mj.Key))
-			buf.WriteByte(',')
-		}
-	}
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.WriteJsonString(buf, string(*mj.Value))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"key":`)
+	fflib.WriteJsonString(buf, string(mj.Key))
+	buf.WriteString(`,"value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
 	buf.WriteByte('}')
 	return nil
 }
@@ -16041,15 +15418,11 @@ handle_Key:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Key = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Key = &tval
+			uj.Key = string(string(outBuf))
 
 		}
 	}
@@ -16071,15 +15444,11 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Value = &tval
+			uj.Value = string(string(outBuf))
 
 		}
 	}
@@ -16125,37 +15494,27 @@ func (mj *Parameters) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Parameter) != 0 {
-		buf.WriteString(`"parameter":`)
-		if mj.Parameter != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Parameter {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"parameter":`)
+	if mj.Parameter != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Parameter {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -16280,7 +15639,7 @@ mainparse:
 
 handle_Parameter:
 
-	/* handler: uj.Parameter type=[]*mesos.Parameter kind=slice quoted=false*/
+	/* handler: uj.Parameter type=[]mesos.Parameter kind=slice quoted=false*/
 
 	{
 
@@ -16294,13 +15653,13 @@ handle_Parameter:
 			uj.Parameter = nil
 		} else {
 
-			uj.Parameter = make([]*Parameter, 0)
+			uj.Parameter = make([]Parameter, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Parameter
+				var v Parameter
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -16321,19 +15680,13 @@ handle_Parameter:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Parameter kind=ptr quoted=false*/
+				/* handler: v type=mesos.Parameter kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Parameter)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -16390,21 +15743,11 @@ func (mj *PerfStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Timestamp != nil {
-		if true {
-			buf.WriteString(`"timestamp":`)
-			fflib.AppendFloat(buf, float64(*mj.Timestamp), 'g', -1, 64)
-			buf.WriteByte(',')
-		}
-	}
-	if mj.Duration != nil {
-		if true {
-			buf.WriteString(`"duration":`)
-			fflib.AppendFloat(buf, float64(*mj.Duration), 'g', -1, 64)
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "timestamp":`)
+	fflib.AppendFloat(buf, float64(mj.Timestamp), 'g', -1, 64)
+	buf.WriteString(`,"duration":`)
+	fflib.AppendFloat(buf, float64(mj.Duration), 'g', -1, 64)
+	buf.WriteByte(',')
 	if mj.Cycles != nil {
 		if true {
 			buf.WriteString(`"cycles":`)
@@ -17871,8 +17214,6 @@ handle_Timestamp:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Timestamp = nil
-
 		} else {
 
 			tval, err := fflib.ParseFloat(fs.Output.Bytes(), 64)
@@ -17881,8 +17222,7 @@ handle_Timestamp:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := float64(tval)
-			uj.Timestamp = &ttypval
+			uj.Timestamp = float64(tval)
 
 		}
 	}
@@ -17904,8 +17244,6 @@ handle_Duration:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Duration = nil
-
 		} else {
 
 			tval, err := fflib.ParseFloat(fs.Output.Bytes(), 64)
@@ -17914,8 +17252,7 @@ handle_Duration:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := float64(tval)
-			uj.Duration = &ttypval
+			uj.Duration = float64(tval)
 
 		}
 	}
@@ -19644,14 +18981,9 @@ func (mj *Port) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Number != nil {
-		if true {
-			buf.WriteString(`"number":`)
-			fflib.FormatBits2(buf, uint64(*mj.Number), 10, false)
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "number":`)
+	fflib.FormatBits2(buf, uint64(mj.Number), 10, false)
+	buf.WriteByte(',')
 	if mj.Name != nil {
 		if true {
 			buf.WriteString(`"name":`)
@@ -19842,8 +19174,6 @@ handle_Number:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Number = nil
-
 		} else {
 
 			tval, err := fflib.ParseUint(fs.Output.Bytes(), 10, 32)
@@ -19852,8 +19182,7 @@ handle_Number:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := uint32(tval)
-			uj.Number = &ttypval
+			uj.Number = uint32(tval)
 
 		}
 	}
@@ -19959,37 +19288,27 @@ func (mj *Ports) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Ports) != 0 {
-		buf.WriteString(`"ports":`)
-		if mj.Ports != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Ports {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"ports":`)
+	if mj.Ports != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Ports {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -20114,7 +19433,7 @@ mainparse:
 
 handle_Ports:
 
-	/* handler: uj.Ports type=[]*mesos.Port kind=slice quoted=false*/
+	/* handler: uj.Ports type=[]mesos.Port kind=slice quoted=false*/
 
 	{
 
@@ -20128,13 +19447,13 @@ handle_Ports:
 			uj.Ports = nil
 		} else {
 
-			uj.Ports = make([]*Port, 0)
+			uj.Ports = make([]Port, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Port
+				var v Port
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -20155,19 +19474,13 @@ handle_Ports:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Port kind=ptr quoted=false*/
+				/* handler: v type=mesos.Port kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Port)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -20232,13 +19545,9 @@ func (mj *RateLimit) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Principal != nil {
-		if true {
-			buf.WriteString(`"principal":`)
-			fflib.WriteJsonString(buf, string(*mj.Principal))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`"principal":`)
+	fflib.WriteJsonString(buf, string(mj.Principal))
+	buf.WriteByte(',')
 	if mj.Capacity != nil {
 		if true {
 			buf.WriteString(`"capacity":`)
@@ -20458,15 +19767,11 @@ handle_Principal:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Principal = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Principal = &tval
+			uj.Principal = string(string(outBuf))
 
 		}
 	}
@@ -20545,36 +19850,28 @@ func (mj *RateLimits) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Limits) != 0 {
-		buf.WriteString(`"limits":`)
-		if mj.Limits != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Limits {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{ "limits":`)
+	if mj.Limits != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Limits {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
+	buf.WriteByte(',')
 	if mj.AggregateDefaultQps != nil {
 		if true {
 			buf.WriteString(`"aggregate_default_qps":`)
@@ -20753,7 +20050,7 @@ mainparse:
 
 handle_Limits:
 
-	/* handler: uj.Limits type=[]*mesos.RateLimit kind=slice quoted=false*/
+	/* handler: uj.Limits type=[]mesos.RateLimit kind=slice quoted=false*/
 
 	{
 
@@ -20767,13 +20064,13 @@ handle_Limits:
 			uj.Limits = nil
 		} else {
 
-			uj.Limits = make([]*RateLimit, 0)
+			uj.Limits = make([]RateLimit, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *RateLimit
+				var v RateLimit
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -20794,19 +20091,13 @@ handle_Limits:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.RateLimit kind=ptr quoted=false*/
+				/* handler: v type=mesos.RateLimit kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(RateLimit)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -20929,14 +20220,14 @@ func (mj *Request) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.AgentId != nil {
+	buf.WriteByte('{')
+	if mj.AgentID != nil {
 		if true {
 			buf.WriteString(`"agent_id":`)
 
 			{
 
-				err = mj.AgentId.MarshalJSONBuf(buf)
+				err = mj.AgentID.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -20945,36 +20236,27 @@ func (mj *Request) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Resources) != 0 {
-		buf.WriteString(`"resources":`)
-		if mj.Resources != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Resources {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"resources":`)
+	if mj.Resources != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Resources {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -20983,12 +20265,12 @@ const (
 	ffj_t_Requestbase = iota
 	ffj_t_Requestno_such_key
 
-	ffj_t_Request_AgentId
+	ffj_t_Request_AgentID
 
 	ffj_t_Request_Resources
 )
 
-var ffj_key_Request_AgentId = []byte("agent_id")
+var ffj_key_Request_AgentID = []byte("agent_id")
 
 var ffj_key_Request_Resources = []byte("resources")
 
@@ -21053,8 +20335,8 @@ mainparse:
 
 				case 'a':
 
-					if bytes.Equal(ffj_key_Request_AgentId, kn) {
-						currentKey = ffj_t_Request_AgentId
+					if bytes.Equal(ffj_key_Request_AgentID, kn) {
+						currentKey = ffj_t_Request_AgentID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -21075,8 +20357,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.AsciiEqualFold(ffj_key_Request_AgentId, kn) {
-					currentKey = ffj_t_Request_AgentId
+				if fflib.AsciiEqualFold(ffj_key_Request_AgentID, kn) {
+					currentKey = ffj_t_Request_AgentID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -21098,8 +20380,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Request_AgentId:
-					goto handle_AgentId
+				case ffj_t_Request_AgentID:
+					goto handle_AgentID
 
 				case ffj_t_Request_Resources:
 					goto handle_Resources
@@ -21118,24 +20400,24 @@ mainparse:
 		}
 	}
 
-handle_AgentId:
+handle_AgentID:
 
-	/* handler: uj.AgentId type=mesos.AgentID kind=struct quoted=false*/
+	/* handler: uj.AgentID type=mesos.AgentID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.AgentId = nil
+			uj.AgentID = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.AgentId == nil {
-			uj.AgentId = new(AgentID)
+		if uj.AgentID == nil {
+			uj.AgentID = new(AgentID)
 		}
 
-		err = uj.AgentId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -21147,7 +20429,7 @@ handle_AgentId:
 
 handle_Resources:
 
-	/* handler: uj.Resources type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Resources type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -21161,13 +20443,13 @@ handle_Resources:
 			uj.Resources = nil
 		} else {
 
-			uj.Resources = make([]*Resource, 0)
+			uj.Resources = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -21188,19 +20470,13 @@ handle_Resources:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -21257,14 +20533,9 @@ func (mj *Resource) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Name != nil {
-		if true {
-			buf.WriteString(`"name":`)
-			fflib.WriteJsonString(buf, string(*mj.Name))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "name":`)
+	fflib.WriteJsonString(buf, string(mj.Name))
+	buf.WriteByte(',')
 	if mj.Type != nil {
 		if true {
 			buf.WriteString(`"type":`)
@@ -21671,15 +20942,11 @@ handle_Name:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Name = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Name = &tval
+			uj.Name = string(string(outBuf))
 
 		}
 	}
@@ -21949,14 +21216,9 @@ func (mj *ResourceStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Timestamp != nil {
-		if true {
-			buf.WriteString(`"timestamp":`)
-			fflib.AppendFloat(buf, float64(*mj.Timestamp), 'g', -1, 64)
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{"timestamp":`)
+	fflib.AppendFloat(buf, float64(mj.Timestamp), 'g', -1, 64)
+	buf.WriteByte(',')
 	if mj.Processes != nil {
 		if true {
 			buf.WriteString(`"processes":`)
@@ -22231,36 +21493,27 @@ func (mj *ResourceStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.NetTrafficControlStatistics) != 0 {
-		buf.WriteString(`"net_traffic_control_statistics":`)
-		if mj.NetTrafficControlStatistics != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.NetTrafficControlStatistics {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"net_traffic_control_statistics":`)
+	if mj.NetTrafficControlStatistics != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.NetTrafficControlStatistics {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -23114,8 +22367,6 @@ handle_Timestamp:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Timestamp = nil
-
 		} else {
 
 			tval, err := fflib.ParseFloat(fs.Output.Bytes(), 64)
@@ -23124,8 +22375,7 @@ handle_Timestamp:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := float64(tval)
-			uj.Timestamp = &ttypval
+			uj.Timestamp = float64(tval)
 
 		}
 	}
@@ -24383,7 +23633,7 @@ handle_NetTcpTimeWaitConnections:
 
 handle_NetTrafficControlStatistics:
 
-	/* handler: uj.NetTrafficControlStatistics type=[]*mesos.TrafficControlStatistics kind=slice quoted=false*/
+	/* handler: uj.NetTrafficControlStatistics type=[]mesos.TrafficControlStatistics kind=slice quoted=false*/
 
 	{
 
@@ -24397,13 +23647,13 @@ handle_NetTrafficControlStatistics:
 			uj.NetTrafficControlStatistics = nil
 		} else {
 
-			uj.NetTrafficControlStatistics = make([]*TrafficControlStatistics, 0)
+			uj.NetTrafficControlStatistics = make([]TrafficControlStatistics, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *TrafficControlStatistics
+				var v TrafficControlStatistics
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -24424,19 +23674,13 @@ handle_NetTrafficControlStatistics:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.TrafficControlStatistics kind=ptr quoted=false*/
+				/* handler: v type=mesos.TrafficControlStatistics kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(TrafficControlStatistics)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -24493,66 +23737,48 @@ func (mj *ResourceUsage) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Executors) != 0 {
-		buf.WriteString(`"executors":`)
-		if mj.Executors != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Executors {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"executors":`)
+	if mj.Executors != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Executors {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
-		}
-		buf.WriteByte(',')
-	}
-	if len(mj.Total) != 0 {
-		buf.WriteString(`"total":`)
-		if mj.Total != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Total {
-				if i != 0 {
-					buf.WriteString(`,`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
 				}
 
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
+	buf.WriteString(`,"total":`)
+	if mj.Total != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Total {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
 	buf.WriteByte('}')
 	return nil
 }
@@ -24698,7 +23924,7 @@ mainparse:
 
 handle_Executors:
 
-	/* handler: uj.Executors type=[]*mesos.ResourceUsage_Executor kind=slice quoted=false*/
+	/* handler: uj.Executors type=[]mesos.ResourceUsage_Executor kind=slice quoted=false*/
 
 	{
 
@@ -24712,13 +23938,13 @@ handle_Executors:
 			uj.Executors = nil
 		} else {
 
-			uj.Executors = make([]*ResourceUsage_Executor, 0)
+			uj.Executors = make([]ResourceUsage_Executor, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *ResourceUsage_Executor
+				var v ResourceUsage_Executor
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -24739,19 +23965,13 @@ handle_Executors:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.ResourceUsage_Executor kind=ptr quoted=false*/
+				/* handler: v type=mesos.ResourceUsage_Executor kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(ResourceUsage_Executor)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -24772,7 +23992,7 @@ handle_Executors:
 
 handle_Total:
 
-	/* handler: uj.Total type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Total type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -24786,13 +24006,13 @@ handle_Total:
 			uj.Total = nil
 		} else {
 
-			uj.Total = make([]*Resource, 0)
+			uj.Total = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -24813,19 +24033,13 @@ handle_Total:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -24882,51 +24096,38 @@ func (mj *ResourceUsage_Executor) MarshalJSONBuf(buf fflib.EncodingBuffer) error
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.ExecutorInfo != nil {
-		if true {
-			buf.WriteString(`"executor_info":`)
+	buf.WriteString(`{ "executor_info":`)
+
+	{
+
+		err = mj.ExecutorInfo.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteString(`,"allocated":`)
+	if mj.Allocated != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Allocated {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
 
 			{
 
-				err = mj.ExecutorInfo.MarshalJSONBuf(buf)
+				err = v.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
 
 			}
-			buf.WriteByte(',')
 		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	if len(mj.Allocated) != 0 {
-		buf.WriteString(`"allocated":`)
-		if mj.Allocated != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Allocated {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
-			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
-		}
-		buf.WriteByte(',')
-	}
+	buf.WriteByte(',')
 	if mj.Statistics != nil {
 		if true {
 			buf.WriteString(`"statistics":`)
@@ -25114,14 +24315,8 @@ handle_ExecutorInfo:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.ExecutorInfo = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.ExecutorInfo == nil {
-			uj.ExecutorInfo = new(ExecutorInfo)
 		}
 
 		err = uj.ExecutorInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -25136,7 +24331,7 @@ handle_ExecutorInfo:
 
 handle_Allocated:
 
-	/* handler: uj.Allocated type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Allocated type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -25150,13 +24345,13 @@ handle_Allocated:
 			uj.Allocated = nil
 		} else {
 
-			uj.Allocated = make([]*Resource, 0)
+			uj.Allocated = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -25177,19 +24372,13 @@ handle_Allocated:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -25540,15 +24729,8 @@ func (mj *Resource_DiskInfo_Persistence) MarshalJSONBuf(buf fflib.EncodingBuffer
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Id != nil {
-		if true {
-			buf.WriteString(`"id":`)
-			fflib.WriteJsonString(buf, string(*mj.Id))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"id":`)
+	fflib.WriteJsonString(buf, string(mj.ID))
 	buf.WriteByte('}')
 	return nil
 }
@@ -25557,10 +24739,10 @@ const (
 	ffj_t_Resource_DiskInfo_Persistencebase = iota
 	ffj_t_Resource_DiskInfo_Persistenceno_such_key
 
-	ffj_t_Resource_DiskInfo_Persistence_Id
+	ffj_t_Resource_DiskInfo_Persistence_ID
 )
 
-var ffj_key_Resource_DiskInfo_Persistence_Id = []byte("id")
+var ffj_key_Resource_DiskInfo_Persistence_ID = []byte("id")
 
 func (uj *Resource_DiskInfo_Persistence) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -25623,16 +24805,16 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_Resource_DiskInfo_Persistence_Id, kn) {
-						currentKey = ffj_t_Resource_DiskInfo_Persistence_Id
+					if bytes.Equal(ffj_key_Resource_DiskInfo_Persistence_ID, kn) {
+						currentKey = ffj_t_Resource_DiskInfo_Persistence_ID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_Resource_DiskInfo_Persistence_Id, kn) {
-					currentKey = ffj_t_Resource_DiskInfo_Persistence_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_Resource_DiskInfo_Persistence_ID, kn) {
+					currentKey = ffj_t_Resource_DiskInfo_Persistence_ID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -25654,8 +24836,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Resource_DiskInfo_Persistence_Id:
-					goto handle_Id
+				case ffj_t_Resource_DiskInfo_Persistence_ID:
+					goto handle_ID
 
 				case ffj_t_Resource_DiskInfo_Persistenceno_such_key:
 					err = fs.SkipField(tok)
@@ -25671,9 +24853,9 @@ mainparse:
 		}
 	}
 
-handle_Id:
+handle_ID:
 
-	/* handler: uj.Id type=string kind=string quoted=false*/
+	/* handler: uj.ID type=string kind=string quoted=false*/
 
 	{
 
@@ -25685,15 +24867,11 @@ handle_Id:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Id = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Id = &tval
+			uj.ID = string(string(outBuf))
 
 		}
 	}
@@ -25739,15 +24917,8 @@ func (mj *Resource_ReservationInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Principal != nil {
-		if true {
-			buf.WriteString(`"principal":`)
-			fflib.WriteJsonString(buf, string(*mj.Principal))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"principal":`)
+	fflib.WriteJsonString(buf, string(mj.Principal))
 	buf.WriteByte('}')
 	return nil
 }
@@ -25884,15 +25055,11 @@ handle_Principal:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Principal = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Principal = &tval
+			uj.Principal = string(string(outBuf))
 
 		}
 	}
@@ -26077,15 +25244,8 @@ func (mj *TaskID) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.WriteJsonString(buf, string(*mj.Value))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
 	buf.WriteByte('}')
 	return nil
 }
@@ -26222,15 +25382,11 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Value = &tval
+			uj.Value = string(string(outBuf))
 
 		}
 	}
@@ -26276,73 +25432,50 @@ func (mj *TaskInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Name != nil {
-		if true {
-			buf.WriteString(`"name":`)
-			fflib.WriteJsonString(buf, string(*mj.Name))
-			buf.WriteByte(',')
+	buf.WriteString(`{ "name":`)
+	fflib.WriteJsonString(buf, string(mj.Name))
+	buf.WriteString(`,"task_id":`)
+
+	{
+
+		err = mj.TaskID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	if mj.TaskId != nil {
-		if true {
-			buf.WriteString(`"task_id":`)
+	buf.WriteString(`,"agent_id":`)
+
+	{
+
+		err = mj.AgentID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteString(`,"resources":`)
+	if mj.Resources != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Resources {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
 
 			{
 
-				err = mj.TaskId.MarshalJSONBuf(buf)
+				err = v.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
 
 			}
-			buf.WriteByte(',')
 		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	if mj.AgentId != nil {
-		if true {
-			buf.WriteString(`"agent_id":`)
-
-			{
-
-				err = mj.AgentId.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
-		}
-	}
-	if len(mj.Resources) != 0 {
-		buf.WriteString(`"resources":`)
-		if mj.Resources != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Resources {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
-			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
-		}
-		buf.WriteByte(',')
-	}
+	buf.WriteByte(',')
 	if mj.Executor != nil {
 		if true {
 			buf.WriteString(`"executor":`)
@@ -26459,9 +25592,9 @@ const (
 
 	ffj_t_TaskInfo_Name
 
-	ffj_t_TaskInfo_TaskId
+	ffj_t_TaskInfo_TaskID
 
-	ffj_t_TaskInfo_AgentId
+	ffj_t_TaskInfo_AgentID
 
 	ffj_t_TaskInfo_Resources
 
@@ -26482,9 +25615,9 @@ const (
 
 var ffj_key_TaskInfo_Name = []byte("name")
 
-var ffj_key_TaskInfo_TaskId = []byte("task_id")
+var ffj_key_TaskInfo_TaskID = []byte("task_id")
 
-var ffj_key_TaskInfo_AgentId = []byte("agent_id")
+var ffj_key_TaskInfo_AgentID = []byte("agent_id")
 
 var ffj_key_TaskInfo_Resources = []byte("resources")
 
@@ -26563,8 +25696,8 @@ mainparse:
 
 				case 'a':
 
-					if bytes.Equal(ffj_key_TaskInfo_AgentId, kn) {
-						currentKey = ffj_t_TaskInfo_AgentId
+					if bytes.Equal(ffj_key_TaskInfo_AgentID, kn) {
+						currentKey = ffj_t_TaskInfo_AgentID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -26637,8 +25770,8 @@ mainparse:
 
 				case 't':
 
-					if bytes.Equal(ffj_key_TaskInfo_TaskId, kn) {
-						currentKey = ffj_t_TaskInfo_TaskId
+					if bytes.Equal(ffj_key_TaskInfo_TaskID, kn) {
+						currentKey = ffj_t_TaskInfo_TaskID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -26693,14 +25826,14 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.AsciiEqualFold(ffj_key_TaskInfo_AgentId, kn) {
-					currentKey = ffj_t_TaskInfo_AgentId
+				if fflib.AsciiEqualFold(ffj_key_TaskInfo_AgentID, kn) {
+					currentKey = ffj_t_TaskInfo_AgentID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_TaskInfo_TaskId, kn) {
-					currentKey = ffj_t_TaskInfo_TaskId
+				if fflib.EqualFoldRight(ffj_key_TaskInfo_TaskID, kn) {
+					currentKey = ffj_t_TaskInfo_TaskID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -26731,11 +25864,11 @@ mainparse:
 				case ffj_t_TaskInfo_Name:
 					goto handle_Name
 
-				case ffj_t_TaskInfo_TaskId:
-					goto handle_TaskId
+				case ffj_t_TaskInfo_TaskID:
+					goto handle_TaskID
 
-				case ffj_t_TaskInfo_AgentId:
-					goto handle_AgentId
+				case ffj_t_TaskInfo_AgentID:
+					goto handle_AgentID
 
 				case ffj_t_TaskInfo_Resources:
 					goto handle_Resources
@@ -26789,15 +25922,11 @@ handle_Name:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Name = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Name = &tval
+			uj.Name = string(string(outBuf))
 
 		}
 	}
@@ -26805,24 +25934,18 @@ handle_Name:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_TaskId:
+handle_TaskID:
 
-	/* handler: uj.TaskId type=mesos.TaskID kind=struct quoted=false*/
+	/* handler: uj.TaskID type=mesos.TaskID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.TaskId = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.TaskId == nil {
-			uj.TaskId = new(TaskID)
-		}
-
-		err = uj.TaskId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.TaskID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -26832,24 +25955,18 @@ handle_TaskId:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_AgentId:
+handle_AgentID:
 
-	/* handler: uj.AgentId type=mesos.AgentID kind=struct quoted=false*/
+	/* handler: uj.AgentID type=mesos.AgentID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.AgentId = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.AgentId == nil {
-			uj.AgentId = new(AgentID)
-		}
-
-		err = uj.AgentId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -26861,7 +25978,7 @@ handle_AgentId:
 
 handle_Resources:
 
-	/* handler: uj.Resources type=[]*mesos.Resource kind=slice quoted=false*/
+	/* handler: uj.Resources type=[]mesos.Resource kind=slice quoted=false*/
 
 	{
 
@@ -26875,13 +25992,13 @@ handle_Resources:
 			uj.Resources = nil
 		} else {
 
-			uj.Resources = make([]*Resource, 0)
+			uj.Resources = make([]Resource, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Resource
+				var v Resource
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -26902,19 +26019,13 @@ handle_Resources:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Resource kind=ptr quoted=false*/
+				/* handler: v type=mesos.Resource kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Resource)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -27163,22 +26274,17 @@ func (mj *TaskStatus) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.TaskId != nil {
-		if true {
-			buf.WriteString(`"task_id":`)
+	buf.WriteString(`{ "task_id":`)
 
-			{
+	{
 
-				err = mj.TaskId.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.TaskID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
+	buf.WriteByte(',')
 	if mj.State != nil {
 		if true {
 			buf.WriteString(`"state":`)
@@ -27249,13 +26355,13 @@ func (mj *TaskStatus) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 		}
 		buf.WriteByte(',')
 	}
-	if mj.AgentId != nil {
+	if mj.AgentID != nil {
 		if true {
 			buf.WriteString(`"agent_id":`)
 
 			{
 
-				err = mj.AgentId.MarshalJSONBuf(buf)
+				err = mj.AgentID.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -27264,13 +26370,13 @@ func (mj *TaskStatus) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.ExecutorId != nil {
+	if mj.ExecutorID != nil {
 		if true {
 			buf.WriteString(`"executor_id":`)
 
 			{
 
-				err = mj.ExecutorId.MarshalJSONBuf(buf)
+				err = mj.ExecutorID.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -27286,13 +26392,13 @@ func (mj *TaskStatus) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Uuid) != 0 {
+	if len(mj.UUID) != 0 {
 		buf.WriteString(`"uuid":`)
-		if mj.Uuid != nil {
+		if mj.UUID != nil {
 			buf.WriteString(`"`)
 			{
 				enc := base64.NewEncoder(base64.StdEncoding, buf)
-				enc.Write(reflect.Indirect(reflect.ValueOf(mj.Uuid)).Bytes())
+				enc.Write(reflect.Indirect(reflect.ValueOf(mj.UUID)).Bytes())
 				enc.Close()
 			}
 			buf.WriteString(`"`)
@@ -27335,7 +26441,7 @@ const (
 	ffj_t_TaskStatusbase = iota
 	ffj_t_TaskStatusno_such_key
 
-	ffj_t_TaskStatus_TaskId
+	ffj_t_TaskStatus_TaskID
 
 	ffj_t_TaskStatus_State
 
@@ -27347,20 +26453,20 @@ const (
 
 	ffj_t_TaskStatus_Data
 
-	ffj_t_TaskStatus_AgentId
+	ffj_t_TaskStatus_AgentID
 
-	ffj_t_TaskStatus_ExecutorId
+	ffj_t_TaskStatus_ExecutorID
 
 	ffj_t_TaskStatus_Timestamp
 
-	ffj_t_TaskStatus_Uuid
+	ffj_t_TaskStatus_UUID
 
 	ffj_t_TaskStatus_Healthy
 
 	ffj_t_TaskStatus_Labels
 )
 
-var ffj_key_TaskStatus_TaskId = []byte("task_id")
+var ffj_key_TaskStatus_TaskID = []byte("task_id")
 
 var ffj_key_TaskStatus_State = []byte("state")
 
@@ -27372,13 +26478,13 @@ var ffj_key_TaskStatus_Reason = []byte("reason")
 
 var ffj_key_TaskStatus_Data = []byte("data")
 
-var ffj_key_TaskStatus_AgentId = []byte("agent_id")
+var ffj_key_TaskStatus_AgentID = []byte("agent_id")
 
-var ffj_key_TaskStatus_ExecutorId = []byte("executor_id")
+var ffj_key_TaskStatus_ExecutorID = []byte("executor_id")
 
 var ffj_key_TaskStatus_Timestamp = []byte("timestamp")
 
-var ffj_key_TaskStatus_Uuid = []byte("uuid")
+var ffj_key_TaskStatus_UUID = []byte("uuid")
 
 var ffj_key_TaskStatus_Healthy = []byte("healthy")
 
@@ -27445,8 +26551,8 @@ mainparse:
 
 				case 'a':
 
-					if bytes.Equal(ffj_key_TaskStatus_AgentId, kn) {
-						currentKey = ffj_t_TaskStatus_AgentId
+					if bytes.Equal(ffj_key_TaskStatus_AgentID, kn) {
+						currentKey = ffj_t_TaskStatus_AgentID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -27461,8 +26567,8 @@ mainparse:
 
 				case 'e':
 
-					if bytes.Equal(ffj_key_TaskStatus_ExecutorId, kn) {
-						currentKey = ffj_t_TaskStatus_ExecutorId
+					if bytes.Equal(ffj_key_TaskStatus_ExecutorID, kn) {
+						currentKey = ffj_t_TaskStatus_ExecutorID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -27514,8 +26620,8 @@ mainparse:
 
 				case 't':
 
-					if bytes.Equal(ffj_key_TaskStatus_TaskId, kn) {
-						currentKey = ffj_t_TaskStatus_TaskId
+					if bytes.Equal(ffj_key_TaskStatus_TaskID, kn) {
+						currentKey = ffj_t_TaskStatus_TaskID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
@@ -27527,8 +26633,8 @@ mainparse:
 
 				case 'u':
 
-					if bytes.Equal(ffj_key_TaskStatus_Uuid, kn) {
-						currentKey = ffj_t_TaskStatus_Uuid
+					if bytes.Equal(ffj_key_TaskStatus_UUID, kn) {
+						currentKey = ffj_t_TaskStatus_UUID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -27547,8 +26653,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_TaskStatus_Uuid, kn) {
-					currentKey = ffj_t_TaskStatus_Uuid
+				if fflib.SimpleLetterEqualFold(ffj_key_TaskStatus_UUID, kn) {
+					currentKey = ffj_t_TaskStatus_UUID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -27559,14 +26665,14 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.AsciiEqualFold(ffj_key_TaskStatus_ExecutorId, kn) {
-					currentKey = ffj_t_TaskStatus_ExecutorId
+				if fflib.AsciiEqualFold(ffj_key_TaskStatus_ExecutorID, kn) {
+					currentKey = ffj_t_TaskStatus_ExecutorID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.AsciiEqualFold(ffj_key_TaskStatus_AgentId, kn) {
-					currentKey = ffj_t_TaskStatus_AgentId
+				if fflib.AsciiEqualFold(ffj_key_TaskStatus_AgentID, kn) {
+					currentKey = ffj_t_TaskStatus_AgentID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -27601,8 +26707,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_TaskStatus_TaskId, kn) {
-					currentKey = ffj_t_TaskStatus_TaskId
+				if fflib.EqualFoldRight(ffj_key_TaskStatus_TaskID, kn) {
+					currentKey = ffj_t_TaskStatus_TaskID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -27624,8 +26730,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_TaskStatus_TaskId:
-					goto handle_TaskId
+				case ffj_t_TaskStatus_TaskID:
+					goto handle_TaskID
 
 				case ffj_t_TaskStatus_State:
 					goto handle_State
@@ -27642,17 +26748,17 @@ mainparse:
 				case ffj_t_TaskStatus_Data:
 					goto handle_Data
 
-				case ffj_t_TaskStatus_AgentId:
-					goto handle_AgentId
+				case ffj_t_TaskStatus_AgentID:
+					goto handle_AgentID
 
-				case ffj_t_TaskStatus_ExecutorId:
-					goto handle_ExecutorId
+				case ffj_t_TaskStatus_ExecutorID:
+					goto handle_ExecutorID
 
 				case ffj_t_TaskStatus_Timestamp:
 					goto handle_Timestamp
 
-				case ffj_t_TaskStatus_Uuid:
-					goto handle_Uuid
+				case ffj_t_TaskStatus_UUID:
+					goto handle_UUID
 
 				case ffj_t_TaskStatus_Healthy:
 					goto handle_Healthy
@@ -27674,24 +26780,18 @@ mainparse:
 		}
 	}
 
-handle_TaskId:
+handle_TaskID:
 
-	/* handler: uj.TaskId type=mesos.TaskID kind=struct quoted=false*/
+	/* handler: uj.TaskID type=mesos.TaskID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
-
-			uj.TaskId = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.TaskId == nil {
-			uj.TaskId = new(TaskID)
-		}
-
-		err = uj.TaskId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.TaskID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -27857,24 +26957,24 @@ handle_Data:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_AgentId:
+handle_AgentID:
 
-	/* handler: uj.AgentId type=mesos.AgentID kind=struct quoted=false*/
+	/* handler: uj.AgentID type=mesos.AgentID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.AgentId = nil
+			uj.AgentID = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.AgentId == nil {
-			uj.AgentId = new(AgentID)
+		if uj.AgentID == nil {
+			uj.AgentID = new(AgentID)
 		}
 
-		err = uj.AgentId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -27884,24 +26984,24 @@ handle_AgentId:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_ExecutorId:
+handle_ExecutorID:
 
-	/* handler: uj.ExecutorId type=mesos.ExecutorID kind=struct quoted=false*/
+	/* handler: uj.ExecutorID type=mesos.ExecutorID kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.ExecutorId = nil
+			uj.ExecutorID = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.ExecutorId == nil {
-			uj.ExecutorId = new(ExecutorID)
+		if uj.ExecutorID == nil {
+			uj.ExecutorID = new(ExecutorID)
 		}
 
-		err = uj.ExecutorId.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.ExecutorID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -27944,9 +27044,9 @@ handle_Timestamp:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Uuid:
+handle_UUID:
 
-	/* handler: uj.Uuid type=[]uint8 kind=slice quoted=false*/
+	/* handler: uj.UUID type=[]uint8 kind=slice quoted=false*/
 
 	{
 
@@ -27957,7 +27057,7 @@ handle_Uuid:
 		}
 
 		if tok == fflib.FFTok_null {
-			uj.Uuid = nil
+			uj.UUID = nil
 		} else {
 			b := make([]byte, base64.StdEncoding.DecodedLen(fs.Output.Len()))
 			n, err := base64.StdEncoding.Decode(b, fs.Output.Bytes())
@@ -27965,7 +27065,7 @@ handle_Uuid:
 				return fs.WrapErr(err)
 			}
 
-			v := reflect.ValueOf(&uj.Uuid).Elem()
+			v := reflect.ValueOf(&uj.UUID).Elem()
 			v.SetBytes(b[0:n])
 
 		}
@@ -28080,15 +27180,8 @@ func (mj *TimeInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Nanoseconds != nil {
-		if true {
-			buf.WriteString(`"nanoseconds":`)
-			fflib.FormatBits2(buf, uint64(*mj.Nanoseconds), 10, *mj.Nanoseconds < 0)
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"nanoseconds":`)
+	fflib.FormatBits2(buf, uint64(mj.Nanoseconds), 10, mj.Nanoseconds < 0)
 	buf.WriteByte('}')
 	return nil
 }
@@ -28225,8 +27318,6 @@ handle_Nanoseconds:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Nanoseconds = nil
-
 		} else {
 
 			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 64)
@@ -28235,8 +27326,7 @@ handle_Nanoseconds:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := int64(tval)
-			uj.Nanoseconds = &ttypval
+			uj.Nanoseconds = int64(tval)
 
 		}
 	}
@@ -28282,14 +27372,9 @@ func (mj *TrafficControlStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Id != nil {
-		if true {
-			buf.WriteString(`"id":`)
-			fflib.WriteJsonString(buf, string(*mj.Id))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`{ "id":`)
+	fflib.WriteJsonString(buf, string(mj.ID))
+	buf.WriteByte(',')
 	if mj.Backlog != nil {
 		if true {
 			buf.WriteString(`"backlog":`)
@@ -28362,7 +27447,7 @@ const (
 	ffj_t_TrafficControlStatisticsbase = iota
 	ffj_t_TrafficControlStatisticsno_such_key
 
-	ffj_t_TrafficControlStatistics_Id
+	ffj_t_TrafficControlStatistics_ID
 
 	ffj_t_TrafficControlStatistics_Backlog
 
@@ -28383,7 +27468,7 @@ const (
 	ffj_t_TrafficControlStatistics_Requeues
 )
 
-var ffj_key_TrafficControlStatistics_Id = []byte("id")
+var ffj_key_TrafficControlStatistics_ID = []byte("id")
 
 var ffj_key_TrafficControlStatistics_Backlog = []byte("backlog")
 
@@ -28485,8 +27570,8 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_TrafficControlStatistics_Id, kn) {
-						currentKey = ffj_t_TrafficControlStatistics_Id
+					if bytes.Equal(ffj_key_TrafficControlStatistics_ID, kn) {
+						currentKey = ffj_t_TrafficControlStatistics_ID
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -28589,8 +27674,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_TrafficControlStatistics_Id, kn) {
-					currentKey = ffj_t_TrafficControlStatistics_Id
+				if fflib.SimpleLetterEqualFold(ffj_key_TrafficControlStatistics_ID, kn) {
+					currentKey = ffj_t_TrafficControlStatistics_ID
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -28612,8 +27697,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_TrafficControlStatistics_Id:
-					goto handle_Id
+				case ffj_t_TrafficControlStatistics_ID:
+					goto handle_ID
 
 				case ffj_t_TrafficControlStatistics_Backlog:
 					goto handle_Backlog
@@ -28656,9 +27741,9 @@ mainparse:
 		}
 	}
 
-handle_Id:
+handle_ID:
 
-	/* handler: uj.Id type=string kind=string quoted=false*/
+	/* handler: uj.ID type=string kind=string quoted=false*/
 
 	{
 
@@ -28670,15 +27755,11 @@ handle_Id:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Id = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Id = &tval
+			uj.ID = string(string(outBuf))
 
 		}
 	}
@@ -29021,29 +28102,19 @@ func (mj *URL) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Scheme != nil {
-		if true {
-			buf.WriteString(`"scheme":`)
-			fflib.WriteJsonString(buf, string(*mj.Scheme))
-			buf.WriteByte(',')
+	buf.WriteString(`{ "scheme":`)
+	fflib.WriteJsonString(buf, string(mj.Scheme))
+	buf.WriteString(`,"address":`)
+
+	{
+
+		err = mj.Address.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	if mj.Address != nil {
-		if true {
-			buf.WriteString(`"address":`)
-
-			{
-
-				err = mj.Address.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteByte(',')
 	if mj.Path != nil {
 		if true {
 			buf.WriteString(`"path":`)
@@ -29051,35 +28122,28 @@ func (mj *URL) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if len(mj.Query) != 0 {
-		buf.WriteString(`"query":`)
-		if mj.Query != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Query {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`"query":`)
+	if mj.Query != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Query {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
+	buf.WriteByte(',')
 	if mj.Fragment != nil {
 		if true {
 			buf.WriteString(`"fragment":`)
@@ -29308,15 +28372,11 @@ handle_Scheme:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Scheme = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Scheme = &tval
+			uj.Scheme = string(string(outBuf))
 
 		}
 	}
@@ -29331,14 +28391,8 @@ handle_Address:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Address = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.Address == nil {
-			uj.Address = new(Address)
 		}
 
 		err = uj.Address.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -29383,7 +28437,7 @@ handle_Path:
 
 handle_Query:
 
-	/* handler: uj.Query type=[]*mesos.Parameter kind=slice quoted=false*/
+	/* handler: uj.Query type=[]mesos.Parameter kind=slice quoted=false*/
 
 	{
 
@@ -29397,13 +28451,13 @@ handle_Query:
 			uj.Query = nil
 		} else {
 
-			uj.Query = make([]*Parameter, 0)
+			uj.Query = make([]Parameter, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Parameter
+				var v Parameter
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -29424,19 +28478,13 @@ handle_Query:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Parameter kind=ptr quoted=false*/
+				/* handler: v type=mesos.Parameter kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Parameter)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -29523,22 +28571,17 @@ func (mj *Unavailability) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Start != nil {
-		if true {
-			buf.WriteString(`"start":`)
+	buf.WriteString(`{ "start":`)
 
-			{
+	{
 
-				err = mj.Start.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.Start.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
+	buf.WriteByte(',')
 	if mj.Duration != nil {
 		if true {
 			buf.WriteString(`"duration":`)
@@ -29705,14 +28748,8 @@ handle_Start:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Start = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.Start == nil {
-			uj.Start = new(TimeInfo)
 		}
 
 		err = uj.Start.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -30246,22 +29283,10 @@ func (mj *Value_Range) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Begin != nil {
-		if true {
-			buf.WriteString(`"begin":`)
-			fflib.FormatBits2(buf, uint64(*mj.Begin), 10, false)
-			buf.WriteByte(',')
-		}
-	}
-	if mj.End != nil {
-		if true {
-			buf.WriteString(`"end":`)
-			fflib.FormatBits2(buf, uint64(*mj.End), 10, false)
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"begin":`)
+	fflib.FormatBits2(buf, uint64(mj.Begin), 10, false)
+	buf.WriteString(`,"end":`)
+	fflib.FormatBits2(buf, uint64(mj.End), 10, false)
 	buf.WriteByte('}')
 	return nil
 }
@@ -30419,8 +29444,6 @@ handle_Begin:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Begin = nil
-
 		} else {
 
 			tval, err := fflib.ParseUint(fs.Output.Bytes(), 10, 64)
@@ -30429,8 +29452,7 @@ handle_Begin:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := uint64(tval)
-			uj.Begin = &ttypval
+			uj.Begin = uint64(tval)
 
 		}
 	}
@@ -30452,8 +29474,6 @@ handle_End:
 
 		if tok == fflib.FFTok_null {
 
-			uj.End = nil
-
 		} else {
 
 			tval, err := fflib.ParseUint(fs.Output.Bytes(), 10, 64)
@@ -30462,8 +29482,7 @@ handle_End:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := uint64(tval)
-			uj.End = &ttypval
+			uj.End = uint64(tval)
 
 		}
 	}
@@ -30509,37 +29528,27 @@ func (mj *Value_Ranges) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Range) != 0 {
-		buf.WriteString(`"range":`)
-		if mj.Range != nil {
-			buf.WriteString(`[`)
-			for i, v := range mj.Range {
-				if i != 0 {
-					buf.WriteString(`,`)
-				}
-
-				{
-
-					if v == nil {
-						buf.WriteString("null")
-						return nil
-					}
-
-					err = v.MarshalJSONBuf(buf)
-					if err != nil {
-						return err
-					}
-
-				}
+	buf.WriteString(`{"range":`)
+	if mj.Range != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Range {
+			if i != 0 {
+				buf.WriteString(`,`)
 			}
-			buf.WriteString(`]`)
-		} else {
-			buf.WriteString(`null`)
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
 		}
-		buf.WriteByte(',')
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -30664,7 +29673,7 @@ mainparse:
 
 handle_Range:
 
-	/* handler: uj.Range type=[]*mesos.Value_Range kind=slice quoted=false*/
+	/* handler: uj.Range type=[]mesos.Value_Range kind=slice quoted=false*/
 
 	{
 
@@ -30678,13 +29687,13 @@ handle_Range:
 			uj.Range = nil
 		} else {
 
-			uj.Range = make([]*Value_Range, 0)
+			uj.Range = make([]Value_Range, 0)
 
 			wantVal := true
 
 			for {
 
-				var v *Value_Range
+				var v Value_Range
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -30705,19 +29714,13 @@ handle_Range:
 					wantVal = true
 				}
 
-				/* handler: v type=*mesos.Value_Range kind=ptr quoted=false*/
+				/* handler: v type=mesos.Value_Range kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
 
-						v = nil
-
 						state = fflib.FFParse_after_value
 						goto mainparse
-					}
-
-					if v == nil {
-						v = new(Value_Range)
 					}
 
 					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -30774,15 +29777,8 @@ func (mj *Value_Scalar) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.AppendFloat(buf, float64(*mj.Value), 'g', -1, 64)
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"value":`)
+	fflib.AppendFloat(buf, float64(mj.Value), 'g', -1, 64)
 	buf.WriteByte('}')
 	return nil
 }
@@ -30919,8 +29915,6 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
 			tval, err := fflib.ParseFloat(fs.Output.Bytes(), 64)
@@ -30929,8 +29923,7 @@ handle_Value:
 				return fs.WrapErr(err)
 			}
 
-			ttypval := float64(tval)
-			uj.Value = &ttypval
+			uj.Value = float64(tval)
 
 		}
 	}
@@ -31227,15 +30220,8 @@ func (mj *Value_Text) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Value != nil {
-		if true {
-			buf.WriteString(`"value":`)
-			fflib.WriteJsonString(buf, string(*mj.Value))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
 	buf.WriteByte('}')
 	return nil
 }
@@ -31372,15 +30358,11 @@ handle_Value:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Value = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Value = &tval
+			uj.Value = string(string(outBuf))
 
 		}
 	}
@@ -31443,13 +30425,9 @@ func (mj *Volume) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.ContainerPath != nil {
-		if true {
-			buf.WriteString(`"container_path":`)
-			fflib.WriteJsonString(buf, string(*mj.ContainerPath))
-			buf.WriteByte(',')
-		}
-	}
+	buf.WriteString(`"container_path":`)
+	fflib.WriteJsonString(buf, string(mj.ContainerPath))
+	buf.WriteByte(',')
 	if mj.HostPath != nil {
 		if true {
 			buf.WriteString(`"host_path":`)
@@ -31704,15 +30682,11 @@ handle_ContainerPath:
 
 		if tok == fflib.FFTok_null {
 
-			uj.ContainerPath = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.ContainerPath = &tval
+			uj.ContainerPath = string(string(outBuf))
 
 		}
 	}

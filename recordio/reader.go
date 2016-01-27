@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"io"
 	"strconv"
+
+	"github.com/mesos/mesos-go/encoding/framing"
 )
 
 // NewReader returns an io.Reader that unpacks the data read from r out of
@@ -17,9 +19,41 @@ func NewReader(r io.Reader) io.Reader {
 	return &reader{r: br}
 }
 
+func NewFrameReader(r io.Reader) framing.Reader {
+	br, ok := r.(*bufio.Reader)
+	if !ok {
+		br = bufio.NewReader(r)
+	}
+	return &reader{r: br}
+}
+
 type reader struct {
 	r       *bufio.Reader
 	pending uint64
+}
+
+func (rr *reader) ReadFrame(p []byte) (endOfFrame bool, n int, err error) {
+	for err == nil && len(p) > 0 && !endOfFrame {
+		if rr.pending == 0 {
+			if n > 0 {
+				endOfFrame = true
+				// We've read enough. Don't potentially block reading the next header.
+
+				// Only send back 1 frame at a time; note if pending==0 here then we basically
+				// skip over reporting an empty frame because the next time ReadFrame() is invoked
+				// we'll have no idea if we previously read pending==0 here, or if we're new.
+				break
+			}
+			rr.pending, err = rr.size()
+			continue
+		}
+		read, hi := 0, min(rr.pending, uint64(len(p)))
+		read, err = rr.r.Read(p[:hi])
+		n += read
+		p = p[read:]
+		rr.pending -= uint64(read)
+	}
+	return
 }
 
 func (rr *reader) Read(p []byte) (n int, err error) {

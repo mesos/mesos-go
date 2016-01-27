@@ -21,14 +21,13 @@ import (
 
 func main() {
 	cfg := config{
-		user:       "foobar",
+		user:       "root",
 		name:       "example",
-		role:       "role",
 		url:        "http://:5050/api/v1/scheduler",
 		codec:      codec{Codec: &encoding.ProtobufCodec},
 		timeout:    time.Second,
 		checkpoint: true,
-		server:     server{address: "0.0.0.0"},
+		server:     server{address: "127.0.0.1", port: 34567},
 	}
 
 	fs := flag.NewFlagSet("example-scheduler", flag.ExitOnError)
@@ -63,7 +62,9 @@ func run(cfg *config) error {
 	if cfg.executor == "" {
 		panic("must specify an executor binary")
 	}
+
 	state.executor = prepareExecutorInfo(cfg.executor, cfg.server)
+	state.totalTasks = 5 // TODO(jdef) parameterize this
 
 	frameworkInfo := &mesos.FrameworkInfo{
 		User:       cfg.user,
@@ -86,9 +87,9 @@ func run(cfg *config) error {
 	subscribe := calls.Subscribe(true, frameworkInfo)
 	registrationTokens := backoffBucket(1*time.Second, 15*time.Second, nil)
 	for {
-		events, conn, err := state.cli.Do(subscribe, httpcli.Close(true))
+		eventDecoder, conn, err := state.cli.Do(subscribe, httpcli.Close(true))
 		if err == nil {
-			err = eventLoop(&state, events, conn)
+			err = eventLoop(&state, eventDecoder, conn)
 		}
 		if err != nil && err != io.EOF {
 			log.Println(err)
@@ -105,7 +106,7 @@ func run(cfg *config) error {
 
 // returns the framework ID received by mesos (if any); callers should check for a
 // framework ID regardless of whether error != nil.
-func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (err error) {
+func eventLoop(state *internalState, eventDecoder encoding.Decoder, conn io.Closer) (err error) {
 	defer func() {
 		if conn != nil {
 			conn.Close()
@@ -117,32 +118,32 @@ func eventLoop(state *internalState, events encoding.Decoder, conn io.Closer) (e
 
 	for err == nil {
 		var e scheduler.Event
-		if err = events.Decode(&e); err != nil {
+		if err = eventDecoder.Invoke(&e); err != nil {
 			continue
 		}
 
 		log.Printf("%+v\n", e)
 
-		switch e.GetType().Enum() {
-		case scheduler.Event_FAILURE.Enum():
+		switch e.GetType() {
+		case scheduler.Event_FAILURE:
 			log.Println("received a FAILURE event")
 			f := e.GetFailure()
 			failure(f.ExecutorID, f.AgentID, f.Status)
 
-		case scheduler.Event_OFFERS.Enum():
+		case scheduler.Event_OFFERS:
 			log.Println("received an OFFERS event")
 			resourceOffers(state, callOptions.Copy(), e.GetOffers().GetOffers())
 
-		case scheduler.Event_UPDATE.Enum():
+		case scheduler.Event_UPDATE:
 			statusUpdate(state, callOptions.Copy(), e.GetUpdate().GetStatus())
 
-		case scheduler.Event_ERROR.Enum():
+		case scheduler.Event_ERROR:
 			// it's recommended that we abort and re-try subscribing; setting
 			// err here will cause the event loop to terminate and the connection
 			// will be reset.
 			err = fmt.Errorf("ERROR: " + e.GetError().GetMessage())
 
-		case scheduler.Event_SUBSCRIBED.Enum():
+		case scheduler.Event_SUBSCRIBED:
 			log.Println("received a SUBSCRIBED event")
 			if state.frameworkID == "" {
 				state.frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
@@ -179,22 +180,33 @@ func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 
 const (
 	CPUS_PER_TASK = 1
-	MEM_PER_TASK  = 128
+	MEM_PER_TASK  = 64
 )
 
-var wantsTaskResources = mesos.Resources{
-	*mesos.BuildResource().Name("cpus").Scalar(CPUS_PER_TASK).Resource,
-	*mesos.BuildResource().Name("mem").Scalar(MEM_PER_TASK).Resource,
-}
+var wantsTaskResources = func() (r mesos.Resources) {
+	r.Add(
+		*mesos.BuildResource().Name("cpus").Scalar(CPUS_PER_TASK).Resource,
+		*mesos.BuildResource().Name("mem").Scalar(MEM_PER_TASK).Resource,
+	)
+	log.Println("wants-task-resources = " + r.String())
+	return
+}()
 
 func resourceOffers(state *internalState, callOptions scheduler.CallOptions, offers []mesos.Offer) {
 	for i := range offers {
-		log.Println("received offer id '" + offers[i].ID.Value + "'")
 		var (
 			remaining = mesos.Resources(offers[i].Resources)
 			tasks     = []mesos.TaskInfo{}
 		)
-		for state.tasksLaunched < state.totalTasks && remaining.Flatten().ContainsAll(wantsTaskResources) {
+
+		log.Println("received offer id '" + offers[i].ID.Value + "' with resources " + remaining.String())
+
+		wantsResources := wantsTaskResources.Clone()
+		if len(offers[i].ExecutorIDs) == 0 {
+			wantsResources.Add(state.executor.Resources...)
+		}
+
+		for state.tasksLaunched < state.totalTasks && remaining.Flatten().ContainsAll(wantsResources) {
 			state.tasksLaunched++
 			taskID := state.tasksLaunched
 
@@ -293,6 +305,15 @@ func serveExecutorArtifact(server server, path string) (string, string) {
 	return hostURI, base
 }
 
+var wantsExecutorResources = func() (r mesos.Resources) {
+	r.Add(
+		*mesos.BuildResource().Name("cpus").Scalar(0.01).Resource,
+		*mesos.BuildResource().Name("mem").Scalar(64).Resource,
+	)
+	log.Println("wants-executor-resources = " + r.String())
+	return
+}()
+
 func prepareExecutorInfo(execBinary string, server server) *mesos.ExecutorInfo {
 	var (
 		executorUris     = []mesos.CommandInfo_URI{}
@@ -313,6 +334,7 @@ func prepareExecutorInfo(execBinary string, server server) *mesos.ExecutorInfo {
 			Value: proto.String(executorCommand),
 			URIs:  executorUris,
 		},
+		Resources: wantsExecutorResources,
 	}
 }
 

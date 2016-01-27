@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/mesos/mesos-go/encoding"
@@ -97,10 +98,12 @@ func (c *Client) With(opts ...Opt) *Client {
 // Do sends a Call and returns a streaming Decoder from which callers can read
 // Events from, an io.Closer to close the event stream on graceful termination
 // and an error in case of failure. Callers are expected to *always* close a
-// non-nil io.Closer if one is returned.
+// non-nil io.Closer if one is returned. For operations which are successful
+// but also for which there is no expected object stream as a result the
+// returned Decoder will be nil.
 func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, io.Closer, error) {
 	var body bytes.Buffer
-	if err := c.codec.NewEncoder(&body).Encode(m); err != nil {
+	if err := c.codec.NewEncoder(&body).Invoke(m); err != nil {
 		return nil, nil, err
 	}
 
@@ -134,9 +137,13 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 	var events encoding.Decoder
 	switch res.StatusCode {
 	case http.StatusOK:
-		events = c.codec.NewDecoder(recordio.NewReader(res.Body))
+		events = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
 	case http.StatusAccepted:
 		// noop; no data to decode for these types of calls
+	default:
+		//TODO(jdef) mesos v0.26 sends 503 if this request was sent to a non-leading master
+		// see https://issues.apache.org/jira/browse/MESOS-3832
+		panic("unexpected status code " + strconv.Itoa(int(res.StatusCode)))
 	}
 	return events, res.Body, codeErrors[res.StatusCode]
 }

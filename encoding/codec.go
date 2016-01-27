@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/mesos/mesos-go/encoding/framing"
 	"github.com/mesos/mesos-go/encoding/proto"
 
 	pb "github.com/gogo/protobuf/proto"
@@ -43,7 +44,7 @@ type Codec struct {
 	// NewEncoder returns a new encoder for the defined media type.
 	NewEncoder func(io.Writer) Encoder
 	// NewDecoder returns a new decoder for the defined media type.
-	NewDecoder func(io.Reader) Decoder
+	NewDecoder func(framing.Reader) Decoder
 }
 
 // String implements the fmt.Stringer interface.
@@ -67,10 +68,10 @@ type (
 )
 
 // Encode is an utility method that calls the Encoder itself.
-func (e Encoder) Encode(m Marshaler) error { return e(m) }
+func (e Encoder) Invoke(m Marshaler) error { return e(m) }
 
 // Decode is an utility method that calls the Decoder itself.
-func (d Decoder) Decode(u Unmarshaler) error { return d(u) }
+func (d Decoder) Invoke(u Unmarshaler) error { return d(u) }
 
 // NewProtobufEncoder returns a new Encoder of Calls to Protobuf messages written to
 // the given io.Writer.
@@ -88,14 +89,17 @@ func NewJSONEncoder(w io.Writer) Encoder {
 
 // NewProtobufDecoder returns a new Decoder of Protobuf messages read from the
 // given io.Reader to Events.
-func NewProtobufDecoder(r io.Reader) Decoder {
-	dec := proto.NewDecoder(r)
+func NewProtobufDecoder(r framing.Reader) Decoder {
+	uf := func(b []byte, m interface{}) error {
+		return pb.Unmarshal(b, m.(pb.Message))
+	}
+	dec := framing.NewDecoder(r, uf)
 	return func(u Unmarshaler) error { return dec.Decode(u) }
 }
 
 // NewJSONDecoder returns a new Decoder of JSON messages read from the
 // given io.Reader to Events.
-func NewJSONDecoder(r io.Reader) Decoder {
-	dec := json.NewDecoder(r)
+func NewJSONDecoder(r framing.Reader) Decoder {
+	dec := framing.NewDecoder(r, json.Unmarshal)
 	return func(u Unmarshaler) error { return dec.Decode(u) }
 }

@@ -1101,14 +1101,19 @@ func (driver *MesosSchedulerDriver) _stop(cause error, stopStatus mesos.Status) 
 		default:
 		}
 		close(driver.stopCh)
-		if cause != nil {
-			log.V(1).Infof("Sending error via withScheduler: %v", cause)
-			driver.withScheduler(func(s Scheduler) { s.Error(driver, cause.Error()) })
-		} else {
-			// send a noop func, withScheduler needs to see that stopCh is closed
-			log.V(1).Infof("Sending kill signal to withScheduler")
-			driver.withScheduler(func(_ Scheduler) {})
-		}
+		// decouple to avoid deadlock (avoid nested withScheduler() invocations)
+		go func() {
+			driver.eventLock.Lock()
+			defer driver.eventLock.Unlock()
+			if cause != nil {
+				log.V(1).Infof("Sending error via withScheduler: %v", cause)
+				driver.withScheduler(func(s Scheduler) { s.Error(driver, cause.Error()) })
+			} else {
+				// send a noop func, withScheduler needs to see that stopCh is closed
+				log.V(1).Infof("Sending kill signal to withScheduler")
+				driver.withScheduler(func(_ Scheduler) {})
+			}
+		}()
 	}()
 	driver.status = stopStatus
 	driver.connected = false

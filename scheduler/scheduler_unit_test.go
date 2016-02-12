@@ -128,7 +128,7 @@ func TestSchedulerDriverNew_WithPid(t *testing.T) {
 	mUpid, err := upid.Parse(masterAddr)
 	assert.NoError(t, err)
 	driver := newTestSchedulerDriver(t, driverConfig(NewMockScheduler(), &mesos.FrameworkInfo{}, masterAddr, nil))
-	driver.handleMasterChanged(driver.self, &mesos.InternalMasterChangeDetected{Master: &mesos.MasterInfo{Pid: proto.String(mUpid.String())}})
+	driver.handleMasterChanged(context.TODO(), driver.self, &mesos.InternalMasterChangeDetected{Master: &mesos.MasterInfo{Pid: proto.String(mUpid.String())}})
 	assert.True(t, driver.masterPid.Equal(mUpid), fmt.Sprintf("expected upid %+v instead of %+v", mUpid, driver.masterPid))
 	assert.NoError(t, err)
 }
@@ -394,7 +394,7 @@ func (suite *SchedulerTestSuite) TestSchedulerDriverErrorBeforeConnected() {
 	func() {
 		driver.eventLock.Lock()
 		defer driver.eventLock.Unlock()
-		driver.error(msg) // this is the callback that's eventually invoked when receiving an error from the master
+		driver.error(context.TODO(), msg) // this is the callback that's eventually invoked when receiving an error from the master
 	}()
 
 	<-errorTracker.called

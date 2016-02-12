@@ -53,8 +53,8 @@ type Messenger interface {
 	UPID() upid.UPID
 }
 
-type responseFunc func(context.Context, *Message, error) error
-type dispatchFunc func(responseFunc)
+type errorHandlerFunc func(context.Context, *Message, error) error
+type dispatchFunc func(errorHandlerFunc)
 
 // MesosMessenger is an implementation of the Messenger interface.
 type MesosMessenger struct {
@@ -201,7 +201,7 @@ func (m *MesosMessenger) Send(ctx context.Context, upid *upid.UPID, msg proto.Me
 	log.V(2).Infof("Sending message %v to %v\n", name, upid)
 
 	wrapped := &Message{upid, name, msg, b}
-	d := dispatchFunc(func(rf responseFunc) {
+	d := dispatchFunc(func(rf errorHandlerFunc) {
 		err := m.tr.Send(ctx, wrapped)
 		err = rf(ctx, wrapped, err)
 		if err != nil {
@@ -324,7 +324,7 @@ func (m *MesosMessenger) sendLoop() {
 		case <-m.stop:
 			return
 		case f := <-m.sendingQueue:
-			f(responseFunc(func(ctx context.Context, msg *Message, err error) error {
+			f(errorHandlerFunc(func(ctx context.Context, msg *Message, err error) error {
 				if _, ok := err.(*networkError); ok {
 					// if transport reports a network error, then
 					// we're probably disconnected from the remote process?

@@ -65,6 +65,7 @@ type ExampleScheduler struct {
 	executor      *mesos.ExecutorInfo
 	tasksLaunched int
 	tasksFinished int
+	tasksErrored  int
 	totalTasks    int
 }
 
@@ -74,10 +75,8 @@ func newExampleScheduler(exec *mesos.ExecutorInfo) *ExampleScheduler {
 		total = 5
 	}
 	return &ExampleScheduler{
-		executor:      exec,
-		tasksLaunched: 0,
-		tasksFinished: 0,
-		totalTasks:    total,
+		executor:   exec,
+		totalTasks: total,
 	}
 }
 
@@ -103,7 +102,7 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 		time.Sleep(3 * time.Second)
 	}
 
-	if sched.tasksLaunched >= sched.totalTasks {
+	if (sched.tasksLaunched - sched.tasksErrored) >= sched.totalTasks {
 		log.Info("decline all of the offers since all of our tasks are already launched")
 		ids := make([]*mesos.OfferID, len(offers))
 		for i, offer := range offers {
@@ -141,7 +140,7 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 		}
 
 		var tasks []*mesos.TaskInfo
-		for sched.tasksLaunched < sched.totalTasks &&
+		for (sched.tasksLaunched-sched.tasksErrored) < sched.totalTasks &&
 			CPUS_PER_TASK <= remainingCpus &&
 			MEM_PER_TASK <= remainingMems {
 
@@ -188,12 +187,7 @@ func (sched *ExampleScheduler) StatusUpdate(driver sched.SchedulerDriver, status
 		status.GetState() == mesos.TaskState_TASK_KILLED ||
 		status.GetState() == mesos.TaskState_TASK_FAILED ||
 		status.GetState() == mesos.TaskState_TASK_ERROR {
-		log.Infoln(
-			"Aborting because task", status.TaskId.GetValue(),
-			"is in unexpected state", status.State.String(),
-			"with message", status.GetMessage(),
-		)
-		driver.Abort()
+		sched.tasksErrored++
 	}
 }
 

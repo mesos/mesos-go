@@ -148,7 +148,7 @@ type MesosSchedulerDriver struct {
 	dispatch        func(context.Context, *upid.UPID, proto.Message) error // send a message somewhere
 	started         chan struct{}                                          // signal chan that closes upon a successful call to Start()
 	eventLock       sync.RWMutex                                           // guard for all driver state
-	withScheduler   func(f func(s Scheduler))                              // execute some func with respect to the given scheduler
+	withScheduler   func(f func(s Scheduler))                              // execute some func with respect to the given scheduler; should be the last thing invoked in a handler (lock semantics)
 	done            chan struct{}                                          // signal chan that closes when no more events will be processed
 }
 
@@ -377,12 +377,15 @@ func (driver *MesosSchedulerDriver) handleNetworkError(_ context.Context, from *
 	if driver.masterPid.String() == msg.GetPid() && driver.connection.String() == msg.GetSession() {
 		// fire a disconnection event
 		log.V(3).Info("Disconnecting scheduler.")
-		driver.masterPid = nil
-		driver.withScheduler(func(s Scheduler) { s.Disconnected(driver) })
 
-		log.Info("master disconnected")
+		// need to set all 3 of these at once, since withScheduler() temporarily releases the lock and we don't
+		// want inconsistent connection facts
+		driver.masterPid = nil
 		driver.connected = false
 		driver.authenticated = false
+
+		driver.withScheduler(func(s Scheduler) { s.Disconnected(driver) })
+		log.Info("master disconnected")
 	}
 }
 
@@ -397,17 +400,19 @@ func (driver *MesosSchedulerDriver) handleMasterChanged(_ context.Context, from 
 	}
 
 	// Reconnect every time a master is detected.
-	if driver.connected {
+	wasConnected := driver.connected
+	driver.connected = false
+	driver.authenticated = false
+
+	alertScheduler := false
+	if wasConnected {
 		log.V(3).Info("Disconnecting scheduler.")
 		driver.masterPid = nil
-		driver.withScheduler(func(s Scheduler) { s.Disconnected(driver) })
+		alertScheduler = true
 	}
 
 	msg := pbMsg.(*mesos.InternalMasterChangeDetected)
 	master := msg.Master
-
-	driver.connected = false
-	driver.authenticated = false
 
 	if master != nil {
 		log.Infof("New master %s detected\n", master.GetPid())
@@ -418,9 +423,12 @@ func (driver *MesosSchedulerDriver) handleMasterChanged(_ context.Context, from 
 		}
 
 		driver.masterPid = pid // save for downstream ops.
-		driver.tryAuthentication()
+		defer driver.tryAuthentication()
 	} else {
 		log.Infoln("No master detected.")
+	}
+	if alertScheduler {
+		driver.withScheduler(func(s Scheduler) { s.Disconnected(driver) })
 	}
 }
 
@@ -604,7 +612,6 @@ func (driver *MesosSchedulerDriver) frameworkReregistered(_ context.Context, fro
 	driver.connection = uuid.NewUUID()
 
 	driver.withScheduler(func(s Scheduler) { s.Reregistered(driver, msg.GetMasterInfo()) })
-
 }
 
 func (driver *MesosSchedulerDriver) resourcesOffered(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
@@ -713,7 +720,7 @@ func (driver *MesosSchedulerDriver) statusUpdated(ctx context.Context, from *upi
 		status.Uuid = msg.Update.Uuid
 	}
 
-	driver.withScheduler(func(s Scheduler) { s.StatusUpdate(driver, status) })
+	defer driver.withScheduler(func(s Scheduler) { s.StatusUpdate(driver, status) })
 
 	if driver.status == mesos.Status_DRIVER_ABORTED {
 		log.V(1).Infoln("Not sending StatusUpdate ACK, the driver is aborted!")

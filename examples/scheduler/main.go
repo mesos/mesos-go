@@ -59,6 +59,7 @@ var (
 	mesosAuthPrincipal  = flag.String("mesos_authentication_principal", "", "Mesos authentication principal.")
 	mesosAuthSecretFile = flag.String("mesos_authentication_secret_file", "", "Mesos authentication secret file.")
 	slowLaunch          = flag.Bool("slow_launch", false, "When true the ResourceOffers func waits for several seconds before attempting to launch tasks; useful for debugging failover")
+	slowTasks           = flag.Bool("slow_tasks", false, "When true tasks will take several seconds before responding with TASK_FINISHED; useful for debugging failover")
 )
 
 type ExampleScheduler struct {
@@ -252,7 +253,7 @@ func prepareExecutorInfo() *mesos.ExecutorInfo {
 			}
 		}
 	}
-	executorCommand := fmt.Sprintf("./%s -logtostderr=true -v=%d", executorCmd, v)
+	executorCommand := fmt.Sprintf("./%s -logtostderr=true -v=%d -slow_tasks=%v", executorCmd, v, *slowTasks)
 
 	go http.ListenAndServe(fmt.Sprintf("%s:%d", *address, *artifactPort), nil)
 	log.V(2).Info("Serving executor artifacts...")

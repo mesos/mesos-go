@@ -51,7 +51,8 @@ const (
 )
 
 var (
-	authenticationCanceledError = errors.New("authentication canceled")
+	ErrDisconnected           = errors.New("disconnected from mesos master")
+	errAuthenticationCanceled = errors.New("authentication canceled")
 )
 
 type ErrDriverAborted struct {
@@ -720,32 +721,30 @@ func (driver *MesosSchedulerDriver) statusUpdated(ctx context.Context, from *upi
 		status.Uuid = msg.Update.Uuid
 	}
 
-	defer driver.withScheduler(func(s Scheduler) { s.StatusUpdate(driver, status) })
-
 	if driver.status == mesos.Status_DRIVER_ABORTED {
 		log.V(1).Infoln("Not sending StatusUpdate ACK, the driver is aborted!")
-		return
-	}
-
-	// Send StatusUpdate Acknowledgement; see above for the rules.
-	// Only send ACK if udpate was not from this driver and spec'd a UUID; this is compat w/ 0.23+
-	ackRequired := len(msg.Update.Uuid) > 0 && !from.Equal(driver.self) && msg.GetPid() != driver.self.String()
-	if ackRequired {
-		ackMsg := &mesos.StatusUpdateAcknowledgementMessage{
-			SlaveId:     msg.Update.SlaveId,
-			FrameworkId: driver.frameworkInfo.Id,
-			TaskId:      msg.Update.Status.TaskId,
-			Uuid:        msg.Update.Uuid,
-		}
-
-		log.V(2).Infof("Sending ACK for status update %+v to %q", *msg.Update, from.String())
-		if err := driver.send(ctx, driver.masterPid, ackMsg); err != nil {
-			log.Errorf("Failed to send StatusUpdate ACK message: %v", err)
-			return
-		}
 	} else {
-		log.V(2).Infof("Not sending ACK, update is not from slave %q", from.String())
+
+		// Send StatusUpdate Acknowledgement; see above for the rules.
+		// Only send ACK if udpate was not from this driver and spec'd a UUID; this is compat w/ 0.23+
+		ackRequired := len(msg.Update.Uuid) > 0 && !from.Equal(driver.self) && msg.GetPid() != driver.self.String()
+		if ackRequired {
+			ackMsg := &mesos.StatusUpdateAcknowledgementMessage{
+				SlaveId:     msg.Update.SlaveId,
+				FrameworkId: driver.frameworkInfo.Id,
+				TaskId:      msg.Update.Status.TaskId,
+				Uuid:        msg.Update.Uuid,
+			}
+
+			log.V(2).Infof("Sending ACK for status update %+v to %q", *msg.Update, from.String())
+			if err := driver.send(ctx, driver.masterPid, ackMsg); err != nil {
+				log.Errorf("Failed to send StatusUpdate ACK message: %v", err)
+			}
+		} else {
+			log.V(2).Infof("Not sending ACK, update is not from slave %q", from.String())
+		}
 	}
+	driver.withScheduler(func(s Scheduler) { s.StatusUpdate(driver, status) })
 }
 
 func (driver *MesosSchedulerDriver) exitedExecutor(_ context.Context, from *upid.UPID, pbMsg proto.Message) {
@@ -907,7 +906,7 @@ func (driver *MesosSchedulerDriver) authenticate(pid *upid.UPID, authenticating 
 	case <-authenticating.done:
 		cancel()
 		<-ch
-		return authenticationCanceledError
+		return errAuthenticationCanceled
 	case e := <-ch:
 		cancel()
 		return e
@@ -1157,12 +1156,19 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, oper
 
 	ctx := driver.context()
 	if !driver.connected {
-		err := fmt.Errorf("Not connected to master.")
+		err := ErrDisconnected
 		for _, operation := range operations {
 			if *operation.Type == mesos.Offer_Operation_LAUNCH {
-				for _, task := range operation.Launch.TaskInfos {
-					driver.pushLostTask(ctx, task, "Unable to launch tasks: "+err.Error())
-				}
+				// decouple lost task processing to avoid deadlock (avoid nested withScheduler() invocations)
+				operation := operation
+				go func() {
+					driver.eventLock.Lock()
+					defer driver.eventLock.Unlock()
+
+					for _, task := range operation.Launch.TaskInfos {
+						driver.pushLostTask(ctx, task, err.Error())
+					}
+				}()
 			}
 		}
 		log.Errorf("Failed to send LaunchTask message: %v\n", err)
@@ -1247,9 +1253,16 @@ func (driver *MesosSchedulerDriver) AcceptOffers(offerIds []*mesos.OfferID, oper
 	if err := driver.send(ctx, driver.masterPid, message); err != nil {
 		for _, operation := range operations {
 			if *operation.Type == mesos.Offer_Operation_LAUNCH {
-				for _, task := range operation.Launch.TaskInfos {
-					driver.pushLostTask(ctx, task, "Unable to launch tasks: "+err.Error())
-				}
+				// decouple lost task processing to avoid deadlock (avoid nested withScheduler() invocations)
+				operation := operation
+				go func() {
+					driver.eventLock.Lock()
+					defer driver.eventLock.Unlock()
+
+					for _, task := range operation.Launch.TaskInfos {
+						driver.pushLostTask(ctx, task, "Unable to launch tasks: "+err.Error())
+					}
+				}()
 			}
 		}
 		log.Errorf("Failed to send LaunchTask message: %v\n", err)
@@ -1272,12 +1285,19 @@ func (driver *MesosSchedulerDriver) LaunchTasks(offerIds []*mesos.OfferID, tasks
 	// Launch tasks
 	if !driver.connected {
 		log.Infoln("Ignoring LaunchTasks message, disconnected from master.")
-		// Send statusUpdate with status=TASK_LOST for each task.
-		// See sched.cpp L#823
-		for _, task := range tasks {
-			driver.pushLostTask(ctx, task, "Master is disconnected")
-		}
-		return driver.status, fmt.Errorf("Not connected to master.  Tasks marked as lost.")
+		// decouple lost task processing to avoid deadlock (avoid nested withScheduler() invocations)
+		err := ErrDisconnected
+		go func() {
+			driver.eventLock.Lock()
+			defer driver.eventLock.Unlock()
+
+			// Send statusUpdate with status=TASK_LOST for each task.
+			// See sched.cpp L#823
+			for _, task := range tasks {
+				driver.pushLostTask(ctx, task, err.Error())
+			}
+		}()
+		return driver.status, err
 	}
 
 	okTasks := make([]*mesos.TaskInfo, 0, len(tasks))
@@ -1319,9 +1339,15 @@ func (driver *MesosSchedulerDriver) LaunchTasks(offerIds []*mesos.OfferID, tasks
 	}
 
 	if err := driver.send(ctx, driver.masterPid, message); err != nil {
-		for _, task := range tasks {
-			driver.pushLostTask(ctx, task, "Unable to launch tasks: "+err.Error())
-		}
+		// decouple lost task processing to avoid deadlock (avoid nested withScheduler() invocations)
+		go func() {
+			driver.eventLock.Lock()
+			defer driver.eventLock.Unlock()
+
+			for _, task := range tasks {
+				driver.pushLostTask(ctx, task, "Unable to launch tasks: "+err.Error())
+			}
+		}()
 		log.Errorf("Failed to send LaunchTask message: %v\n", err)
 		return driver.status, err
 	}
@@ -1363,7 +1389,7 @@ func (driver *MesosSchedulerDriver) KillTask(taskId *mesos.TaskID) (mesos.Status
 
 	if !driver.connected {
 		log.Infoln("Ignoring kill task message, disconnected from master.")
-		return driver.status, fmt.Errorf("Not connected to master")
+		return driver.status, ErrDisconnected
 	}
 
 	message := &mesos.KillTaskMessage{
@@ -1389,7 +1415,7 @@ func (driver *MesosSchedulerDriver) RequestResources(requests []*mesos.Request) 
 
 	if !driver.connected {
 		log.Infoln("Ignoring request resource message, disconnected from master.")
-		return driver.status, fmt.Errorf("Not connected to master")
+		return driver.status, ErrDisconnected
 	}
 
 	message := &mesos.ResourceRequestMessage{
@@ -1420,7 +1446,7 @@ func (driver *MesosSchedulerDriver) ReviveOffers() (mesos.Status, error) {
 	}
 	if !driver.connected {
 		log.Infoln("Ignoring revive offers message, disconnected from master.")
-		return driver.status, fmt.Errorf("Not connected to master.")
+		return driver.status, ErrDisconnected
 	}
 
 	message := &mesos.ReviveOffersMessage{
@@ -1443,7 +1469,7 @@ func (driver *MesosSchedulerDriver) SendFrameworkMessage(executorId *mesos.Execu
 	}
 	if !driver.connected {
 		log.Infoln("Ignoring send framework message, disconnected from master.")
-		return driver.status, fmt.Errorf("Not connected to master")
+		return driver.status, ErrDisconnected
 	}
 
 	message := &mesos.FrameworkToExecutorMessage{
@@ -1483,7 +1509,7 @@ func (driver *MesosSchedulerDriver) ReconcileTasks(statuses []*mesos.TaskStatus)
 	}
 	if !driver.connected {
 		log.Infoln("Ignoring send Reconcile Tasks message, disconnected from master.")
-		return driver.status, fmt.Errorf("Not connected to master.")
+		return driver.status, ErrDisconnected
 	}
 
 	message := &mesos.ReconcileTasksMessage{

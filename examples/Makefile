@@ -1,4 +1,4 @@
-BIN := persistent_scheduler scheduler executor zkdetect
+BIN := persistent_scheduler scheduler executor zkdetect flagcheck
 RACE := -race
 
 .PHONY:

@@ -37,6 +37,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	slavePID    = "slave(1)@127.0.0.1:8080"
+	slaveID     = "some-slave-id-uuid"
+	frameworkID = "some-framework-id-uuid"
+	executorID  = "some-executor-id-uuid"
+)
+
 // testScuduler is used for testing Schduler callbacks.
 type testExecutor struct {
 	ch chan bool

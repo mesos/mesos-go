@@ -7,21 +7,15 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/auth/callback"
 	"github.com/mesos/mesos-go/auth/sasl/mech/crammd5"
+	mock_sasl "github.com/mesos/mesos-go/auth/sasl/mock"
 	mesos "github.com/mesos/mesos-go/mesosproto"
 	"github.com/mesos/mesos-go/messenger"
+	mock_messenger "github.com/mesos/mesos-go/messenger/mock"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/net/context"
 )
-
-type MockTransport struct {
-	*messenger.MockedMessenger
-}
-
-func (m *MockTransport) Send(ctx context.Context, upid *upid.UPID, msg proto.Message) error {
-	return m.Called(mock.Anything, upid, msg).Error(0)
-}
 
 func TestAuthticatee_validLogin(t *testing.T) {
 	assert := assert.New(t)
@@ -56,9 +50,9 @@ func TestAuthticatee_validLogin(t *testing.T) {
 		}
 		return nil
 	})
-	var transport *MockTransport
+	var transport *mock_sasl.Transport
 	factory := transportFactoryFunc(func() messenger.Messenger {
-		transport = &MockTransport{messenger.NewMockedMessenger()}
+		transport = &mock_sasl.Transport{mock_messenger.NewMessenger()}
 		transport.On("Install").Return(nil)
 		transport.On("UPID").Return(tpid)
 		transport.On("Start").Return(nil)

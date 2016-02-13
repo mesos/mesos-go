@@ -34,40 +34,40 @@ func newTestMasterInfo(id int) []byte {
 }
 
 func TestMasterDetectorChildrenChanged(t *testing.T) {
-	md, err := NewMasterDetector(zkurl)
+	var (
+		path         = test_zk_path
+		snapDetected = make(chan struct{})
+
+		bf = func(client ZKInterface, done <-chan struct{}) (ZKInterface, error) {
+			if client == nil {
+				log.V(1).Infoln("bootstrapping detector")
+				defer log.V(1).Infoln("bootstrapping detector ..finished")
+
+				mocked, _, errs := mock_zkdetector.NewClient(test_zk_path, "info_0", "info_5", "info_10")
+				client = mocked
+
+				mocked.On("Data", fmt.Sprintf("%s/info_0", path)).Return(newTestMasterInfo(0), nil)
+
+				// wait for the first child snapshot to be processed before signaling end-of-watch
+				// (which is signalled by closing errs).
+				go func() {
+					defer close(errs)
+					select {
+					case <-snapDetected:
+					case <-done:
+						t.Errorf("detector died before child snapshot")
+					}
+				}()
+			}
+			return client, nil
+		}
+		called     = 0
+		lostMaster = make(chan struct{})
+		md, err    = NewMasterDetector(zkurl, MinCyclePeriod(10*time.Millisecond), Bootstrap(bf))
+	)
 	defer md.Cancel()
 	assert.NoError(t, err)
 
-	path := test_zk_path
-	snapDetected := make(chan struct{})
-	md.BootstrapFunc = func() error {
-		if md.Client != nil {
-			return nil
-		}
-		log.V(1).Infoln("bootstrapping detector")
-		defer log.V(1).Infoln("bootstrapping detector ..finished")
-
-		mocked, _, errs := mock_zkdetector.NewClient(test_zk_path, "info_0", "info_5", "info_10")
-		md.Client = mocked
-		md.MinDetectorCyclePeriod = 10 * time.Millisecond // we don't have all day!
-
-		mocked.On("Data", fmt.Sprintf("%s/info_0", path)).Return(newTestMasterInfo(0), nil)
-
-		// wait for the first child snapshot to be processed before signaling end-of-watch
-		// (which is signalled by closing errs).
-		go func() {
-			defer close(errs)
-			select {
-			case <-snapDetected:
-			case <-md.Done():
-				t.Errorf("detector died before child snapshot")
-			}
-		}()
-		return nil
-	}
-
-	called := 0
-	lostMaster := make(chan struct{})
 	const expectedLeader = "master(0)@localhost:5050"
 	err = md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
 		//expect 2 calls in sequence: the first setting a master
@@ -99,46 +99,46 @@ func TestMasterDetectorChildrenChanged(t *testing.T) {
 
 // single connector instance, it's internal connection to zk is flappy
 func TestMasterDetectorFlappyConnectionState(t *testing.T) {
-	md, err := NewMasterDetector(zkurl)
+	const ITERATIONS = 3
+	var (
+		path = test_zk_path
+
+		bf = func(client ZKInterface, _ <-chan struct{}) (ZKInterface, error) {
+			if client == nil {
+				log.V(1).Infoln("bootstrapping detector")
+				defer log.V(1).Infoln("bootstrapping detector ..finished")
+
+				children := []string{"info_0", "info_5", "info_10"}
+				mocked, snaps, errs := mock_zkdetector.NewClient(test_zk_path, children...)
+				client = mocked
+
+				mocked.On("Data", fmt.Sprintf("%s/info_0", path)).Return(newTestMasterInfo(0), nil)
+
+				// the first snapshot will be sent immediately and the detector will be awaiting en event.
+				// cycle through some connected/disconnected events but maintain the same snapshot
+				go func() {
+					defer close(errs)
+					for attempt := 0; attempt < ITERATIONS; attempt++ {
+						// send an error, should cause the detector to re-issue a watch
+						errs <- zk.ErrSessionExpired
+						// the detection loop issues another watch, so send it a snapshot..
+						// send another snapshot
+						snaps <- children
+					}
+				}()
+			}
+			return client, nil
+		}
+		called     = 0
+		lostMaster = make(chan struct{})
+		wg         sync.WaitGroup
+		md, err    = NewMasterDetector(zkurl, MinCyclePeriod(10*time.Millisecond), Bootstrap(bf))
+	)
 	defer md.Cancel()
 	assert.NoError(t, err)
 
-	const ITERATIONS = 3
-	var wg sync.WaitGroup
 	wg.Add(1 + ITERATIONS) // +1 for the initial snapshot that's sent for the first watch
-	path := test_zk_path
 
-	md.BootstrapFunc = func() error {
-		if md.Client != nil {
-			return nil
-		}
-		log.V(1).Infoln("bootstrapping detector")
-		defer log.V(1).Infoln("bootstrapping detector ..finished")
-
-		children := []string{"info_0", "info_5", "info_10"}
-		mocked, snaps, errs := mock_zkdetector.NewClient(test_zk_path, children...)
-		md.Client = mocked
-		md.MinDetectorCyclePeriod = 10 * time.Millisecond // we don't have all day!
-
-		mocked.On("Data", fmt.Sprintf("%s/info_0", path)).Return(newTestMasterInfo(0), nil)
-
-		// the first snapshot will be sent immediately and the detector will be awaiting en event.
-		// cycle through some connected/disconnected events but maintain the same snapshot
-		go func() {
-			defer close(errs)
-			for attempt := 0; attempt < ITERATIONS; attempt++ {
-				// send an error, should cause the detector to re-issue a watch
-				errs <- zk.ErrSessionExpired
-				// the detection loop issues another watch, so send it a snapshot..
-				// send another snapshot
-				snaps <- children
-			}
-		}()
-		return nil
-	}
-
-	called := 0
-	lostMaster := make(chan struct{})
 	const EXPECTED_CALLS = (ITERATIONS * 2) + 2 // +1 for initial snapshot, +1 for final lost-leader (close(errs))
 	err = md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
 		called++
@@ -171,58 +171,56 @@ func TestMasterDetectorFlappyConnectionState(t *testing.T) {
 }
 
 func TestMasterDetector_multipleLeadershipChanges(t *testing.T) {
-	md, err := NewMasterDetector(zkurl)
+	var (
+		leadershipChanges = [][]string{
+			{"info_014", "info_010", "info_005"},
+			{"info_005", "info_004", "info_022"},
+			{}, // indicates no master
+			{"info_017", "info_099", "info_200"},
+		}
+
+		ITERATIONS = len(leadershipChanges)
+		// +1 for initial snapshot, +1 for final lost-leader (close(errs))
+		EXPECTED_CALLS = (ITERATIONS + 2)
+		path           = test_zk_path
+
+		bf = func(client ZKInterface, _ <-chan struct{}) (ZKInterface, error) {
+			if client == nil {
+				log.V(1).Infoln("bootstrapping detector")
+				defer log.V(1).Infoln("bootstrapping detector ..finished")
+
+				children := []string{"info_0", "info_5", "info_10"}
+				mocked, snaps, errs := mock_zkdetector.NewClient(test_zk_path, children...)
+				client = mocked
+
+				mocked.On("Data", fmt.Sprintf("%s/info_0", path)).Return(newTestMasterInfo(0), nil)
+				mocked.On("Data", fmt.Sprintf("%s/info_005", path)).Return(newTestMasterInfo(5), nil)
+				mocked.On("Data", fmt.Sprintf("%s/info_004", path)).Return(newTestMasterInfo(4), nil)
+				mocked.On("Data", fmt.Sprintf("%s/info_017", path)).Return(newTestMasterInfo(17), nil)
+
+				// the first snapshot will be sent immediately and the detector will be awaiting en event.
+				// cycle through some connected/disconnected events but maintain the same snapshot
+				go func() {
+					defer close(errs)
+					for attempt := 0; attempt < ITERATIONS; attempt++ {
+						snaps <- leadershipChanges[attempt]
+					}
+				}()
+			}
+			return client, nil
+		}
+
+		called          = 0
+		lostMaster      = make(chan struct{})
+		expectedLeaders = []int{0, 5, 4, 17}
+		leaderIdx       = 0
+		wg              sync.WaitGroup
+		md, err         = NewMasterDetector(zkurl, MinCyclePeriod(10*time.Millisecond), Bootstrap(bf))
+	)
 	defer md.Cancel()
 	assert.NoError(t, err)
 
-	leadershipChanges := [][]string{
-		{"info_014", "info_010", "info_005"},
-		{"info_005", "info_004", "info_022"},
-		{}, // indicates no master
-		{"info_017", "info_099", "info_200"},
-	}
-
-	ITERATIONS := len(leadershipChanges)
-
-	// +1 for initial snapshot, +1 for final lost-leader (close(errs))
-	EXPECTED_CALLS := (ITERATIONS + 2)
-
-	var wg sync.WaitGroup
 	wg.Add(ITERATIONS) // +1 for the initial snapshot that's sent for the first watch, -1 because set 3 is empty
-	path := test_zk_path
-
-	md.BootstrapFunc = func() error {
-		if md.Client != nil {
-			return nil
-		}
-		log.V(1).Infoln("bootstrapping detector")
-		defer log.V(1).Infoln("bootstrapping detector ..finished")
-
-		children := []string{"info_0", "info_5", "info_10"}
-		mocked, snaps, errs := mock_zkdetector.NewClient(test_zk_path, children...)
-		md.Client = mocked
-		md.MinDetectorCyclePeriod = 10 * time.Millisecond // we don't have all day!
-
-		mocked.On("Data", fmt.Sprintf("%s/info_0", path)).Return(newTestMasterInfo(0), nil)
-		mocked.On("Data", fmt.Sprintf("%s/info_005", path)).Return(newTestMasterInfo(5), nil)
-		mocked.On("Data", fmt.Sprintf("%s/info_004", path)).Return(newTestMasterInfo(4), nil)
-		mocked.On("Data", fmt.Sprintf("%s/info_017", path)).Return(newTestMasterInfo(17), nil)
-
-		// the first snapshot will be sent immediately and the detector will be awaiting en event.
-		// cycle through some connected/disconnected events but maintain the same snapshot
-		go func() {
-			defer close(errs)
-			for attempt := 0; attempt < ITERATIONS; attempt++ {
-				snaps <- leadershipChanges[attempt]
-			}
-		}()
-		return nil
-	}
-
-	called := 0
-	lostMaster := make(chan struct{})
-	expectedLeaders := []int{0, 5, 4, 17}
-	leaderIdx := 0
 	err = md.Detect(detector.OnMasterChanged(func(master *mesos.MasterInfo) {
 		called++
 		log.V(3).Infof("detector invoked: called %d", called)
@@ -283,7 +281,7 @@ func fatalOn(t *testing.T, d time.Duration, ch <-chan struct{}, msg string, args
 	}
 }
 
-/* TODO(jdef) refactor this to work with the new zkInterface
+/* TODO(jdef) refactor this to work with the new ZKInterface
 func TestNotifyAllMasters(t *testing.T) {
 	c, err := newClient(test_zk_hosts, test_zk_path)
 	assert.NoError(t, err)

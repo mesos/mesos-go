@@ -46,7 +46,7 @@ func (m *Client) WatchChildren(path string) (a string, b <-chan []string, c <-ch
 	return
 }
 
-// newMockZkClient returns a mocked implementation of zkInterface that implements expectations
+// newMockZkClient returns a mocked implementation of ZKInterface that implements expectations
 // for Stop() and Stopped(); multiple calls to Stop() are safe.
 func NewClient(testZkPath string, initialChildren ...string) (mocked *Client, snaps chan []string, errs chan error) {
 	var doneOnce sync.Once

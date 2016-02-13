@@ -46,29 +46,30 @@ const (
 var ignoreChanged = detector.OnMasterChanged(func(*mesos.MasterInfo) {})
 
 type zkInterface interface {
-	stopped() <-chan struct{}
-	stop()
-	data(string) ([]byte, error)
-	watchChildren(string) (string, <-chan []string, <-chan error)
+	Stopped() <-chan struct{}
+	Stop()
+	Data(string) ([]byte, error)
+	WatchChildren(string) (string, <-chan []string, <-chan error)
 }
 
 type infoCodec func(path, node string) (*mesos.MasterInfo, error)
 
 // Detector uses ZooKeeper to detect new leading master.
 type MasterDetector struct {
-	client     zkInterface
+	Client     zkInterface
 	leaderNode string
 
-	bootstrapLock sync.RWMutex // guard against concurrent invocations of bootstrapFunc
-	bootstrapFunc func() error // for one-time zk client initiation
+	bootstrapLock sync.RWMutex // guard against concurrent invocations of BootstrapFunc
+	BootstrapFunc func() error // for one-time zk client initiation
 
 	// latch: only install, at most, one ignoreChanged listener; see MasterDetector.Detect
 	ignoreInstalled int32
 
 	// detection should not signal master change listeners more frequently than this
-	minDetectorCyclePeriod time.Duration
-	done                   chan struct{}
-	cancel                 func()
+	MinDetectorCyclePeriod time.Duration
+
+	done   chan struct{}
+	cancel func()
 }
 
 // Internal constructor function
@@ -80,14 +81,14 @@ func NewMasterDetector(zkurls string) (*MasterDetector, error) {
 	}
 
 	detector := &MasterDetector{
-		minDetectorCyclePeriod: defaultMinDetectorCyclePeriod,
+		MinDetectorCyclePeriod: defaultMinDetectorCyclePeriod,
 		done:   make(chan struct{}),
 		cancel: func() {},
 	}
 
-	detector.bootstrapFunc = func() (err error) {
-		if detector.client == nil {
-			detector.client, err = connect2(zkHosts, zkPath)
+	detector.BootstrapFunc = func() (err error) {
+		if detector.Client == nil {
+			detector.Client, err = connect2(zkHosts, zkPath)
 		}
 		return
 	}
@@ -157,7 +158,7 @@ func logPanic(f func()) {
 }
 
 func (md *MasterDetector) pullMasterInfo(path, node string) (*mesos.MasterInfo, error) {
-	data, err := md.client.data(fmt.Sprintf("%s/%s", path, node))
+	data, err := md.Client.Data(fmt.Sprintf("%s/%s", path, node))
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve leader data: %v", err)
 	}
@@ -171,7 +172,7 @@ func (md *MasterDetector) pullMasterInfo(path, node string) (*mesos.MasterInfo, 
 }
 
 func (md *MasterDetector) pullMasterJsonInfo(path, node string) (*mesos.MasterInfo, error) {
-	data, err := md.client.data(fmt.Sprintf("%s/%s", path, node))
+	data, err := md.Client.Data(fmt.Sprintf("%s/%s", path, node))
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve leader data: %v", err)
 	}
@@ -225,14 +226,14 @@ func (md *MasterDetector) callBootstrap() (e error) {
 	md.bootstrapLock.Lock()
 	defer md.bootstrapLock.Unlock()
 
-	clientConfigured := md.client != nil
-	if e = md.bootstrapFunc(); e == nil && !clientConfigured && md.client != nil {
+	clientConfigured := md.Client != nil
+	if e = md.BootstrapFunc(); e == nil && !clientConfigured && md.Client != nil {
 		// chain the lifetime of this detector to that of the newly created client impl
-		client := md.client
-		md.cancel = client.stop
+		client := md.Client
+		md.cancel = client.Stop
 		go func() {
 			defer close(md.done)
-			<-client.stopped()
+			<-client.Stopped()
 		}()
 	}
 	return
@@ -265,7 +266,7 @@ func (md *MasterDetector) Detect(f detector.MasterChanged) (err error) {
 }
 
 func (md *MasterDetector) detect(f detector.MasterChanged) {
-	log.V(3).Infoln("detecting children at", currentPath)
+	log.V(3).Infoln("detecting children at", CurrentPath)
 detectLoop:
 	for {
 		select {
@@ -273,8 +274,8 @@ detectLoop:
 			return
 		default:
 		}
-		log.V(3).Infoln("watching children at", currentPath)
-		path, childrenCh, errCh := md.client.watchChildren(currentPath)
+		log.V(3).Infoln("watching children at", CurrentPath)
+		path, childrenCh, errCh := md.Client.WatchChildren(CurrentPath)
 		rewatch := false
 		for {
 			started := time.Now()
@@ -314,7 +315,7 @@ detectLoop:
 				select {
 				case <-md.Done():
 					return
-				case <-time.After(md.minDetectorCyclePeriod - elapsed): // noop
+				case <-time.After(md.MinDetectorCyclePeriod - elapsed): // noop
 				}
 			}
 			if rewatch {

@@ -24,8 +24,10 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
@@ -39,8 +41,10 @@ import (
 )
 
 const (
+	CPUS_PER_EXECUTOR   = 0.01
 	CPUS_PER_TASK       = 1
-	MEM_PER_TASK        = 128
+	MEM_PER_EXECUTOR    = 64
+	MEM_PER_TASK        = 64
 	defaultArtifactPort = 12345
 )
 
@@ -54,12 +58,15 @@ var (
 	taskCount           = flag.String("task-count", "5", "Total task count to run.")
 	mesosAuthPrincipal  = flag.String("mesos_authentication_principal", "", "Mesos authentication principal.")
 	mesosAuthSecretFile = flag.String("mesos_authentication_secret_file", "", "Mesos authentication secret file.")
+	slowLaunch          = flag.Bool("slow_launch", false, "When true the ResourceOffers func waits for several seconds before attempting to launch tasks; useful for debugging failover")
+	slowTasks           = flag.Bool("slow_tasks", false, "When true tasks will take several seconds before responding with TASK_FINISHED; useful for debugging failover")
 )
 
 type ExampleScheduler struct {
 	executor      *mesos.ExecutorInfo
 	tasksLaunched int
 	tasksFinished int
+	tasksErrored  int
 	totalTasks    int
 }
 
@@ -69,10 +76,8 @@ func newExampleScheduler(exec *mesos.ExecutorInfo) *ExampleScheduler {
 		total = 5
 	}
 	return &ExampleScheduler{
-		executor:      exec,
-		tasksLaunched: 0,
-		tasksFinished: 0,
-		totalTasks:    total,
+		executor:   exec,
+		totalTasks: total,
 	}
 }
 
@@ -82,15 +87,23 @@ func (sched *ExampleScheduler) Registered(driver sched.SchedulerDriver, framewor
 
 func (sched *ExampleScheduler) Reregistered(driver sched.SchedulerDriver, masterInfo *mesos.MasterInfo) {
 	log.Infoln("Framework Re-Registered with Master ", masterInfo)
+	_, err := driver.ReconcileTasks([]*mesos.TaskStatus{})
+	if err != nil {
+		log.Errorf("failed to request task reconciliation: %v", err)
+	}
 }
 
 func (sched *ExampleScheduler) Disconnected(sched.SchedulerDriver) {
-	log.Fatalf("disconnected from master, aborting")
+	log.Warningf("disconnected from master")
 }
 
 func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offers []*mesos.Offer) {
 
-	if sched.tasksLaunched >= sched.totalTasks {
+	if *slowLaunch {
+		time.Sleep(3 * time.Second)
+	}
+
+	if (sched.tasksLaunched - sched.tasksErrored) >= sched.totalTasks {
 		log.Info("decline all of the offers since all of our tasks are already launched")
 		ids := make([]*mesos.OfferID, len(offers))
 		for i, offer := range offers {
@@ -121,8 +134,14 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 		remainingCpus := cpus
 		remainingMems := mems
 
+		// account for executor resources if there's not an executor already running on the slave
+		if len(offer.ExecutorIds) == 0 {
+			remainingCpus -= CPUS_PER_EXECUTOR
+			remainingMems -= MEM_PER_EXECUTOR
+		}
+
 		var tasks []*mesos.TaskInfo
-		for sched.tasksLaunched < sched.totalTasks &&
+		for (sched.tasksLaunched-sched.tasksErrored) < sched.totalTasks &&
 			CPUS_PER_TASK <= remainingCpus &&
 			MEM_PER_TASK <= remainingMems {
 
@@ -157,6 +176,7 @@ func (sched *ExampleScheduler) StatusUpdate(driver sched.SchedulerDriver, status
 	log.Infoln("Status update: task", status.TaskId.GetValue(), " is in state ", status.State.Enum().String())
 	if status.GetState() == mesos.TaskState_TASK_FINISHED {
 		sched.tasksFinished++
+		driver.ReviveOffers() // TODO(jdef) rate-limit this
 	}
 
 	if sched.tasksFinished >= sched.totalTasks {
@@ -168,12 +188,7 @@ func (sched *ExampleScheduler) StatusUpdate(driver sched.SchedulerDriver, status
 		status.GetState() == mesos.TaskState_TASK_KILLED ||
 		status.GetState() == mesos.TaskState_TASK_FAILED ||
 		status.GetState() == mesos.TaskState_TASK_ERROR {
-		log.Infoln(
-			"Aborting because task", status.TaskId.GetValue(),
-			"is in unexpected state", status.State.String(),
-			"with message", status.GetMessage(),
-		)
-		driver.Abort()
+		sched.tasksErrored++
 	}
 }
 
@@ -190,7 +205,7 @@ func (sched *ExampleScheduler) ExecutorLost(_ sched.SchedulerDriver, eid *mesos.
 	log.Errorf("executor %q lost on slave %q code %d", eid, sid, code)
 }
 func (sched *ExampleScheduler) Error(_ sched.SchedulerDriver, err string) {
-	log.Errorf("Scheduler received error:", err)
+	log.Errorf("Scheduler received error: %v", err)
 }
 
 // ----------------------- func init() ------------------------- //
@@ -238,7 +253,7 @@ func prepareExecutorInfo() *mesos.ExecutorInfo {
 			}
 		}
 	}
-	executorCommand := fmt.Sprintf("./%s -logtostderr=true -v=%d", executorCmd, v)
+	executorCommand := fmt.Sprintf("./%s -logtostderr=true -v=%d -slow_tasks=%v", executorCmd, v, *slowTasks)
 
 	go http.ListenAndServe(fmt.Sprintf("%s:%d", *address, *artifactPort), nil)
 	log.V(2).Info("Serving executor artifacts...")
@@ -251,6 +266,10 @@ func prepareExecutorInfo() *mesos.ExecutorInfo {
 		Command: &mesos.CommandInfo{
 			Value: proto.String(executorCommand),
 			Uris:  executorUris,
+		},
+		Resources: []*mesos.Resource{
+			util.NewScalarResource("cpus", CPUS_PER_EXECUTOR),
+			util.NewScalarResource("mem", MEM_PER_EXECUTOR),
 		},
 	}
 }
@@ -282,13 +301,19 @@ func main() {
 	cred := (*mesos.Credential)(nil)
 	if *mesosAuthPrincipal != "" {
 		fwinfo.Principal = proto.String(*mesosAuthPrincipal)
-		secret, err := ioutil.ReadFile(*mesosAuthSecretFile)
-		if err != nil {
-			log.Fatal(err)
-		}
 		cred = &mesos.Credential{
 			Principal: proto.String(*mesosAuthPrincipal),
-			Secret:    secret,
+		}
+		if *mesosAuthSecretFile != "" {
+			_, err := os.Stat(*mesosAuthSecretFile)
+			if err != nil {
+				log.Fatal("missing secret file: ", err.Error())
+			}
+			secret, err := ioutil.ReadFile(*mesosAuthSecretFile)
+			if err != nil {
+				log.Fatal("failed to read secret file: ", err.Error())
+			}
+			cred.Secret = proto.String(string(secret))
 		}
 	}
 	bindingAddress := parseIP(*address)
@@ -312,6 +337,8 @@ func main() {
 
 	if stat, err := driver.Run(); err != nil {
 		log.Infof("Framework stopped with status %s and error: %s\n", stat.String(), err.Error())
+		time.Sleep(2 * time.Second)
+		os.Exit(1)
 	}
 	log.Infof("framework terminating")
 }

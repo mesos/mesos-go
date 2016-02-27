@@ -91,6 +91,8 @@ junit_*
 
 # mesos-go specific
 /examples/_output
+/vendor
+/example-scheduler
 
 #webide
 .c9

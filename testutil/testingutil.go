@@ -68,7 +68,7 @@ func NewMockMasterHttpServer(t *testing.T, handler func(rsp http.ResponseWriter,
 	var server *httptest.Server
 	when := make(map[string]http.HandlerFunc)
 	stateHandler := func(rsp http.ResponseWriter, req *http.Request) {
-		if "/state.json" == req.RequestURI {
+		if "/state" == req.RequestURI {
 			state := fmt.Sprintf(`{ "leader": "master@%v" }`, server.Listener.Addr())
 			log.V(1).Infof("returning JSON %v", state)
 			io.WriteString(rsp, state)

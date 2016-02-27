@@ -16,19 +16,21 @@
  * limitations under the License.
  */
 
-package executor
+package executor_test
 
 import (
 	"fmt"
 	"os"
 	"testing"
 
-	"github.com/mesos/mesos-go/healthchecker"
+	mock_executor "github.com/mesos/mesos-go/executor/mock"
 	"github.com/mesos/mesos-go/mesosproto"
 	util "github.com/mesos/mesos-go/mesosutil"
-	"github.com/mesos/mesos-go/messenger"
+	mock_messenger "github.com/mesos/mesos-go/messenger/mock"
 	"github.com/mesos/mesos-go/upid"
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/mesos/mesos-go/executor"
 )
 
 var (
@@ -58,7 +60,7 @@ func clearEnvironments(t *testing.T) {
 	assert.NoError(t, os.Setenv("MESOS_EXECUTOR_ID", ""))
 }
 
-func newTestExecutorDriver(t *testing.T, exec Executor) *MesosExecutorDriver {
+func newTestExecutorDriver(t *testing.T, exec Executor) *TestDriver {
 	dconfig := DriverConfig{
 		Executor: exec,
 	}
@@ -66,47 +68,32 @@ func newTestExecutorDriver(t *testing.T, exec Executor) *MesosExecutorDriver {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return driver
-}
-
-type testExecutorDriver struct {
-	*MesosExecutorDriver
-}
-
-func (e *testExecutorDriver) setConnected(b bool) {
-	e.lock.Lock()
-	defer e.lock.Unlock()
-	e.connected = b
+	return &TestDriver{driver}
 }
 
 func createTestExecutorDriver(t *testing.T) (
-	*testExecutorDriver,
-	*messenger.MockedMessenger,
-	*healthchecker.MockedHealthChecker) {
+	*TestDriver,
+	*mock_messenger.Messenger) {
 
-	exec := NewMockedExecutor()
+	exec := mock_executor.New()
 	exec.On("Error").Return(nil)
 
 	setEnvironments(t, "", false)
 	driver := newTestExecutorDriver(t, exec)
 
-	messenger := messenger.NewMockedMessenger()
+	messenger := mock_messenger.NewMessenger()
 	messenger.On("Start").Return(nil)
 	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
 
-	checker := healthchecker.NewMockedHealthChecker()
-	checker.On("Start").Return()
-	checker.On("Stop").Return()
-
-	driver.messenger = messenger
-	return &testExecutorDriver{driver}, messenger, checker
+	driver.SetMessenger(messenger)
+	return driver, messenger
 }
 
 func TestExecutorDriverStartFailedToParseEnvironment(t *testing.T) {
 	clearEnvironments(t)
-	exec := NewMockedExecutor()
+	exec := mock_executor.New()
 	exec.On("Error").Return(nil)
 	dconfig := DriverConfig{Executor: exec}
 	driver, err := NewMesosExecutorDriver(dconfig)
@@ -115,13 +102,13 @@ func TestExecutorDriverStartFailedToParseEnvironment(t *testing.T) {
 }
 
 func TestExecutorDriverStartFailedToStartMessenger(t *testing.T) {
-	exec := NewMockedExecutor()
+	exec := mock_executor.New()
 
 	setEnvironments(t, "", false)
 	driver := newTestExecutorDriver(t, exec)
 	assert.NotNil(t, driver)
-	messenger := messenger.NewMockedMessenger()
-	driver.messenger = messenger
+	messenger := mock_messenger.NewMessenger()
+	driver.SetMessenger(messenger)
 
 	// Set expections and return values.
 	messenger.On("Start").Return(fmt.Errorf("messenger failed to start"))
@@ -138,12 +125,12 @@ func TestExecutorDriverStartFailedToStartMessenger(t *testing.T) {
 }
 
 func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
-	exec := NewMockedExecutor()
+	exec := mock_executor.New()
 
 	setEnvironments(t, "", false)
 	driver := newTestExecutorDriver(t, exec)
-	messenger := messenger.NewMockedMessenger()
-	driver.messenger = messenger
+	messenger := mock_messenger.NewMessenger()
+	driver.SetMessenger(messenger)
 
 	// Set expections and return values.
 	messenger.On("Start").Return(nil)
@@ -164,21 +151,17 @@ func TestExecutorDriverStartFailedToSendRegisterMessage(t *testing.T) {
 func TestExecutorDriverStartSucceed(t *testing.T) {
 	setEnvironments(t, "", false)
 
-	exec := NewMockedExecutor()
+	exec := mock_executor.New()
 	exec.On("Error").Return(nil)
 
 	driver := newTestExecutorDriver(t, exec)
 
-	messenger := messenger.NewMockedMessenger()
-	driver.messenger = messenger
+	messenger := mock_messenger.NewMessenger()
+	driver.SetMessenger(messenger)
 	messenger.On("Start").Return(nil)
 	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
-
-	checker := healthchecker.NewMockedHealthChecker()
-	checker.On("Start").Return()
-	checker.On("Stop").Return()
 
 	assert.False(t, driver.Running())
 	status, err := driver.Start()
@@ -195,22 +178,18 @@ func TestExecutorDriverRun(t *testing.T) {
 	setEnvironments(t, "", false)
 
 	// Set expections and return values.
-	messenger := messenger.NewMockedMessenger()
+	messenger := mock_messenger.NewMessenger()
 	messenger.On("Start").Return(nil)
 	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
 
-	exec := NewMockedExecutor()
+	exec := mock_executor.New()
 	exec.On("Error").Return(nil)
 
 	driver := newTestExecutorDriver(t, exec)
-	driver.messenger = messenger
+	driver.SetMessenger(messenger)
 	assert.False(t, driver.Running())
-
-	checker := healthchecker.NewMockedHealthChecker()
-	checker.On("Start").Return()
-	checker.On("Stop").Return()
 
 	ch := make(chan struct{})
 	go func() {
@@ -219,7 +198,7 @@ func TestExecutorDriverRun(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, mesosproto.Status_DRIVER_STOPPED, stat)
 	}()
-	<-driver.started
+	<-driver.Started()
 	assert.True(t, driver.Running())
 	driver.Stop()
 	<-ch
@@ -229,22 +208,18 @@ func TestExecutorDriverJoin(t *testing.T) {
 	setEnvironments(t, "", false)
 
 	// Set expections and return values.
-	messenger := messenger.NewMockedMessenger()
+	messenger := mock_messenger.NewMessenger()
 	messenger.On("Start").Return(nil)
 	messenger.On("UPID").Return(upid.UPID{})
 	messenger.On("Send").Return(nil)
 	messenger.On("Stop").Return(nil)
 
-	exec := NewMockedExecutor()
+	exec := mock_executor.New()
 	exec.On("Error").Return(nil)
 
 	driver := newTestExecutorDriver(t, exec)
-	driver.messenger = messenger
+	driver.SetMessenger(messenger)
 	assert.False(t, driver.Running())
-
-	checker := healthchecker.NewMockedHealthChecker()
-	checker.On("Start").Return()
-	checker.On("Stop").Return()
 
 	stat, err := driver.Start()
 	assert.NoError(t, err)
@@ -264,7 +239,7 @@ func TestExecutorDriverJoin(t *testing.T) {
 
 func TestExecutorDriverAbort(t *testing.T) {
 	statusChan := make(chan mesosproto.Status)
-	driver, messenger, _ := createTestExecutorDriver(t)
+	driver, messenger := createTestExecutorDriver(t)
 
 	assert.False(t, driver.Running())
 	stat, err := driver.Start()
@@ -305,7 +280,7 @@ func TestExecutorDriverAbort(t *testing.T) {
 
 func TestExecutorDriverStop(t *testing.T) {
 	statusChan := make(chan mesosproto.Status)
-	driver, messenger, _ := createTestExecutorDriver(t)
+	driver, messenger := createTestExecutorDriver(t)
 
 	assert.False(t, driver.Running())
 	stat, err := driver.Start()
@@ -345,12 +320,12 @@ func TestExecutorDriverStop(t *testing.T) {
 
 func TestExecutorDriverSendStatusUpdate(t *testing.T) {
 
-	driver, _, _ := createTestExecutorDriver(t)
+	driver, _ := createTestExecutorDriver(t)
 
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
-	driver.setConnected(true)
+	driver.SetConnected(true)
 
 	taskStatus := util.NewTaskStatus(
 		util.NewTaskID("test-task-001"),
@@ -364,11 +339,11 @@ func TestExecutorDriverSendStatusUpdate(t *testing.T) {
 
 func TestExecutorDriverSendStatusUpdateStaging(t *testing.T) {
 
-	driver, _, _ := createTestExecutorDriver(t)
+	driver, _ := createTestExecutorDriver(t)
 	stat, err := driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
-	driver.setConnected(true)
+	driver.SetConnected(true)
 
 	taskStatus := util.NewTaskStatus(
 		util.NewTaskID("test-task-001"),
@@ -382,7 +357,7 @@ func TestExecutorDriverSendStatusUpdateStaging(t *testing.T) {
 
 func TestExecutorDriverSendFrameworkMessage(t *testing.T) {
 
-	driver, _, _ := createTestExecutorDriver(t)
+	driver, _ := createTestExecutorDriver(t)
 
 	stat, err := driver.SendFrameworkMessage("failed")
 	assert.Error(t, err)
@@ -390,7 +365,7 @@ func TestExecutorDriverSendFrameworkMessage(t *testing.T) {
 	stat, err = driver.Start()
 	assert.NoError(t, err)
 	assert.Equal(t, mesosproto.Status_DRIVER_RUNNING, stat)
-	driver.setConnected(true)
+	driver.SetConnected(true)
 
 	stat, err = driver.SendFrameworkMessage("Testing Mesos")
 	assert.NoError(t, err)
@@ -398,16 +373,12 @@ func TestExecutorDriverSendFrameworkMessage(t *testing.T) {
 }
 
 func TestStatusUpdateAckRace_Issue103(t *testing.T) {
-	driver, _, _ := createTestExecutorDriver(t)
+	driver, _ := createTestExecutorDriver(t)
 	_, err := driver.Start()
 	assert.NoError(t, err)
 
 	msg := &mesosproto.StatusUpdateAcknowledgementMessage{}
-	go func() {
-		driver.lock.Lock()
-		defer driver.lock.Unlock()
-		driver.statusUpdateAcknowledgement(nil, msg)
-	}()
+	go driver.StatusUpdateAcknowledgement(driver.Context(), nil, msg)
 
 	taskStatus := util.NewTaskStatus(
 		util.NewTaskID("test-task-001"),

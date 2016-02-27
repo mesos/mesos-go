@@ -20,9 +20,6 @@ import (
 )
 
 const (
-	DefaultReadTimeout  = 5 * time.Second
-	DefaultWriteTimeout = 5 * time.Second
-
 	// writeFlushPeriod is the amount of time we're willing to wait for a single
 	// response buffer to be fully written to the underlying TCP connection; after
 	// this amount of time the remaining bytes of the response are discarded. see
@@ -43,12 +40,7 @@ func (did *decoderID) next() decoderID {
 var (
 	errHijackFailed = errors.New("failed to hijack http connection")
 	did             decoderID // decoder ID counter
-	closedChan      = make(chan struct{})
 )
-
-func init() {
-	close(closedChan)
-}
 
 type Decoder interface {
 	Requests() <-chan *Request
@@ -99,8 +91,8 @@ func DecodeHTTP(w http.ResponseWriter, r *http.Request) Decoder {
 		req:          r,
 		shouldQuit:   make(chan struct{}),
 		forceQuit:    make(chan struct{}),
-		readTimeout:  DefaultReadTimeout,
-		writeTimeout: DefaultWriteTimeout,
+		readTimeout:  ReadTimeout,
+		writeTimeout: WriteTimeout,
 		idtag:        id.String(),
 		outCh:        make(chan *bytes.Buffer),
 	}
@@ -209,7 +201,7 @@ func (d *httpDecoder) buildResponseEntity(resp *Response) *bytes.Buffer {
 
 // updateForRequest updates the chunked and kalive fields of the decoder to align
 // with the header values of the request
-func (d *httpDecoder) updateForRequest() {
+func (d *httpDecoder) updateForRequest(bootstrapping bool) {
 	// check "Transfer-Encoding" for "chunked"
 	d.chunked = false
 	for _, v := range d.req.Header["Transfer-Encoding"] {
@@ -219,11 +211,16 @@ func (d *httpDecoder) updateForRequest() {
 		}
 	}
 	if !d.chunked && d.req.ContentLength < 0 {
-		// strongly suspect that Go's internal net/http lib is stripping
-		// the Transfer-Encoding header from the initial request, so this
-		// workaround makes a very mesos-specific assumption: an unknown
-		// Content-Length indicates a chunked stream.
-		d.chunked = true
+		if bootstrapping {
+			// strongly suspect that Go's internal net/http lib is stripping
+			// the Transfer-Encoding header from the initial request, so this
+			// workaround makes a very mesos-specific assumption: an unknown
+			// Content-Length indicates a chunked stream.
+			d.chunked = true
+		} else {
+			// via https://tools.ietf.org/html/rfc7230#section-3.3.2
+			d.req.ContentLength = 0
+		}
 	}
 
 	// check "Connection" for "Keep-Alive"
@@ -351,7 +348,7 @@ func limit(r *bufio.Reader, limit int64) *io.LimitedReader {
 func (d *httpDecoder) bootstrapState(res http.ResponseWriter) httpState {
 	log.V(2).Infoln(d.idtag + "bootstrap-state")
 
-	d.updateForRequest()
+	d.updateForRequest(true)
 
 	// hijack
 	hj, ok := res.(http.Hijacker)
@@ -636,6 +633,6 @@ func readHeaderState(d *httpDecoder) httpState {
 			log.V(2).Infoln(d.idtag+"set content length", r.ContentLength)
 		}
 	}
-	d.updateForRequest()
+	d.updateForRequest(false)
 	return d.readBodyContent()
 }

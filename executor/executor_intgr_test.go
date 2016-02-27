@@ -37,6 +37,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	slavePID    = "slave(1)@127.0.0.1:8080"
+	slaveID     = "some-slave-id-uuid"
+	frameworkID = "some-framework-id-uuid"
+	executorID  = "some-executor-id-uuid"
+)
+
 // testScuduler is used for testing Schduler callbacks.
 type testExecutor struct {
 	ch chan bool
@@ -112,6 +119,7 @@ func (i *integrationTestDriver) setConnected(b bool) {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 	i.connected = b
+	i.connection = uuid.NewUUID()
 }
 
 // connectionListener returns a signal chan that closes once driver.connected == true.
@@ -528,40 +536,10 @@ func TestExecutorDriverShutdownEvent(t *testing.T) {
 
 	select {
 	case <-ch:
-	case <-time.After(time.Second * 5):
+	case <-time.After(time.Second * 20):
 		log.Errorf("Tired of waiting...")
 	}
 
 	<-time.After(time.Second * 1) // wait for shutdown to finish.
 	assert.Equal(t, mesos.Status_DRIVER_STOPPED, driver.Status())
-}
-
-func TestExecutorDriverError(t *testing.T) {
-	setTestEnv(t)
-	ch := make(chan bool, 2)
-	// Mock Slave process to respond to registration event.
-	server := testutil.NewMockSlaveHttpServer(t, func(rsp http.ResponseWriter, req *http.Request) {
-		reqPath, err := url.QueryUnescape(req.URL.String())
-		assert.NoError(t, err)
-		log.Infoln("RCVD request", reqPath)
-		rsp.WriteHeader(http.StatusAccepted)
-	})
-
-	exec := newTestExecutor(t)
-	exec.ch = ch
-	exec.t = t
-
-	driver := newIntegrationTestDriver(t, exec)
-	server.Close() // will cause error
-	// Run() cause async message processing to start
-	// Therefore, error-handling will be done via Executor.Error callaback.
-	stat, err := driver.Run()
-	assert.NoError(t, err)
-	assert.Equal(t, mesos.Status_DRIVER_STOPPED, stat)
-
-	select {
-	case <-ch:
-	case <-time.After(time.Second * 1):
-		log.Errorf("Tired of waiting...")
-	}
 }

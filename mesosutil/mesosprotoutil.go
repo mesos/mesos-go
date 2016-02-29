@@ -36,6 +36,15 @@ func FilterResources(resources []*mesos.Resource, filter func(*mesos.Resource) b
 	return result
 }
 
+func AddResourceRevocable(resource *mesos.Resource) *mesos.Resource {
+	resource.Revocable = &mesos.Resource_RevocableInfo{}
+	return resource
+}
+
+func NewScalarResourceWithRevocable(name string, value float64) *mesos.Resource {
+	return AddResourceRevocable(NewScalarResource(name, value))
+}
+
 func AddResourceReservation(resource *mesos.Resource, principal string, role string) *mesos.Resource {
 	resource.Reservation = &mesos.Resource_ReservationInfo{Principal: proto.String(principal)}
 	resource.Role = proto.String(role)

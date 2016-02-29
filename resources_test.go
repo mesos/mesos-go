@@ -8,6 +8,34 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
+func TestResources_PrecisionRounding(t *testing.T) {
+	var (
+		cpu = resources(resource(name("cpus"), valueScalar(1.5015)))
+		r1  = cpu.Plus(cpu...).Plus(cpu...).Minus(cpu...).Minus(cpu...)
+	)
+	if !cpu.Equivalent(r1) {
+		t.Fatalf("expected %v instead of %v", cpu, r1)
+	}
+	actual, ok := r1.CPUs()
+	if !(ok && actual == 1.502) {
+		t.Fatalf("expected 1.502 cpus instead of %v", actual)
+	}
+}
+
+func TestResources_PrecisionLost(t *testing.T) {
+	var (
+		cpu = resources(resource(name("cpus"), valueScalar(1.5011)))
+		r1  = cpu.Plus(cpu...).Plus(cpu...).Minus(cpu...).Minus(cpu...)
+	)
+	if !cpu.Equivalent(r1) {
+		t.Fatalf("expected %v instead of %v", cpu, r1)
+	}
+	actual, ok := r1.CPUs()
+	if !(ok && actual == 1.501) {
+		t.Fatalf("expected 1.501 cpus instead of %v", actual)
+	}
+}
+
 func TestResources_PrecisionManyConsecutiveOps(t *testing.T) {
 	var (
 		start     = resources(resource(name("cpus"), valueScalar(1.001)))

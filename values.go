@@ -1,14 +1,14 @@
 package mesos
 
 func (left *Value_Scalar) Compare(right *Value_Scalar) int {
-	if left == nil {
-		if right.GetValue() == 0 {
-			return 0
-		}
+	var (
+		a = convertToFixed64(left.GetValue())
+		b = convertToFixed64(right.GetValue())
+	)
+	if a < b {
 		return -1
-	} else if v := right.GetValue(); left.Value < v {
-		return -1
-	} else if left.Value > v {
+	}
+	if a > b {
 		return 1
 	}
 	return 0
@@ -132,9 +132,11 @@ func (left *Value_Ranges) Subtract(right *Value_Ranges) *Value_Ranges {
 }
 
 func (left *Value_Scalar) Add(right *Value_Scalar) *Value_Scalar {
-	return &Value_Scalar{Value: left.GetValue() + right.GetValue()}
+	sum := convertToFixed64(left.GetValue()) + convertToFixed64(right.GetValue())
+	return &Value_Scalar{Value: convertToFloat64(sum)}
 }
 
 func (left *Value_Scalar) Subtract(right *Value_Scalar) *Value_Scalar {
-	return &Value_Scalar{Value: left.GetValue() - right.GetValue()}
+	diff := convertToFixed64(left.GetValue()) - convertToFixed64(right.GetValue())
+	return &Value_Scalar{Value: convertToFloat64(diff)}
 }

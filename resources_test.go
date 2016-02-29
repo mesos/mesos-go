@@ -8,6 +8,61 @@ import (
 	"github.com/mesos/mesos-go"
 )
 
+func TestResources_PrecisionManyConsecutiveOps(t *testing.T) {
+	var (
+		start     = resources(resource(name("cpus"), valueScalar(1.001)))
+		increment = start.Clone()
+		current   = start.Clone()
+	)
+	for i := 0; i < 100000; i++ {
+		current.Add(increment...)
+	}
+	for i := 0; i < 100000; i++ {
+		current.Subtract(increment...)
+	}
+	if !start.Equivalent(current) {
+		t.Fatalf("expected start %v == current %v", start, current)
+	}
+}
+
+func TestResources_PrecisionManyOps(t *testing.T) {
+	var (
+		start   = resources(resource(name("cpus"), valueScalar(1.001)))
+		current = start.Clone()
+		next    mesos.Resources
+	)
+	for i := 0; i < 2500; i++ {
+		next = current.Plus(current...).Plus(current...).Minus(current...).Minus(current...)
+		actual, ok := next.CPUs()
+		if !(ok && actual == 1.001) {
+			t.Fatalf("expected 1.001 cpus instead of %v", next)
+		}
+		if !current.Equivalent(next) {
+			t.Fatalf("expected current %v == next %v", current, next)
+		}
+		if !start.Equivalent(next) {
+			t.Fatalf("expected start %v == next %v", start, next)
+		}
+	}
+}
+
+func TestResources_PrecisionSimple(t *testing.T) {
+	var (
+		cpu  = resources(resource(name("cpus"), valueScalar(1.001)))
+		zero = mesos.Resources{resource(name("cpus"), valueScalar(0))} // don't validate
+	)
+	actual, ok := cpu.CPUs()
+	if !(ok && actual == 1.001) {
+		t.Errorf("expected 1.001 instead of %f", actual)
+	}
+	if x := cpu.Plus(zero...); !x.Equivalent(cpu) {
+		t.Errorf("adding zero failed, expected '%v' instead of '%v'", cpu, x)
+	}
+	if y := cpu.Minus(zero...); !y.Equivalent(cpu) {
+		t.Errorf("subtracting zero failed, expected '%v' instead of '%v'", cpu, y)
+	}
+}
+
 func TestResources_Types(t *testing.T) {
 	rs := resources(
 		resource(name("cpus"), valueScalar(2), role("role1")),

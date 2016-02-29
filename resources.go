@@ -413,13 +413,15 @@ func (resources Resources) Minus(that ...Resource) Resources {
 // Subtract subtracts `that` from the receiving `resources` and returns the result (the modified
 // `resources` receiver).
 func (resources *Resources) Subtract(that ...Resource) (rs Resources) {
-	if resources != nil && len(that) > 0 {
-		x := make(Resources, len(that))
-		copy(x, that)
-		that = x
+	if resources != nil {
+		if len(that) > 0 {
+			x := make(Resources, len(that))
+			copy(x, that)
+			that = x
 
-		for i := range that {
-			resources.subtract(that[i])
+			for i := range that {
+				resources.subtract(that[i])
+			}
 		}
 		rs = *resources
 	}

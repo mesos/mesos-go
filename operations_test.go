@@ -111,9 +111,11 @@ func TestOpReserve(t *testing.T) {
 }
 
 func reservedBy(principal string) *mesos.Resource_ReservationInfo {
-	return &mesos.Resource_ReservationInfo{
-		Principal: principal,
+	result := &mesos.Resource_ReservationInfo{}
+	if principal != "" {
+		result.Principal = &principal
 	}
+	return result
 }
 
 func reserve(r mesos.Resources) *mesos.Offer_Operation {

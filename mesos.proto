@@ -293,7 +293,7 @@ message FrameworkInfo {
     }
 
     // Enum fields should be optional, see: MESOS-4997.
-    optional Type type = 1;
+    optional Type type = 1 [(gogoproto.nullable) = false];
   }
 
   // This field allows a framework to advertise its set of
@@ -517,7 +517,7 @@ message AgentInfo {
   optional AgentID id = 6 [(gogoproto.customname) = "ID"];
   // TODO(joerg84): Remove checkpoint field after deprecation cycle starting
   // with 0.27 (MESOS-2317).
-  optional bool checkpoint = 7 [default = false];
+  optional bool checkpoint = 7 [(gogoproto.nullable) = false];
 }
 
 
@@ -624,7 +624,7 @@ message Resource {
     // conjunction with the `UnreserveResources` ACL to determine
     // whether the entity attempting to unreserve this resource is
     // permitted to do so.
-    optional string principal = 1 [(gogoproto.nullable) = false];
+    optional string principal = 1;
 
     // Labels are free-form key value pairs that can be used to
     // associate arbitrary metadata with a reserved resource.  For
@@ -697,7 +697,7 @@ message Resource {
       // can be shared and carved up as necessary between frameworks.
       message Path {
         // Path to the folder (e.g., /mnt/raid/disk0).
-        required string root = 1;
+        required string root = 1 [(gogoproto.nullable) = false];
       }
 
       // A mounted file-system set up by the Agent administrator. This
@@ -705,7 +705,7 @@ message Resource {
       // partial amount of this disk.
       message Mount {
         // Path to mount point (e.g., /mnt/raid/disk0).
-        required string root = 1;
+        required string root = 1 [(gogoproto.nullable) = false];
       }
 
       required Type type = 1;
@@ -1475,6 +1475,7 @@ message Image {
   enum Type {
     APPC = 1;
     DOCKER = 2;
+    option (gogoproto.goproto_enum_prefix) = true;
   }
 
   // Protobuf for specifying an Appc container image. See:
@@ -1592,7 +1593,7 @@ message NetworkInfo {
     //
     // If an explicit address is requested but is unavailable, the network
     // isolator should fail the task.
-    optional string ip_address = 2;
+    optional string ip_address = 2 [(gogoproto.customname) = "IPAddress"];
   }
 
   // When included in a ContainerInfo, each of these represent a
@@ -1603,7 +1604,7 @@ message NetworkInfo {
   // scheduler about the IP addresses that are bound to the container
   // interface. When there are no custom network isolator modules installed,
   // this field is filled in automatically with the Agent IP address.
-  repeated IPAddress ip_addresses = 5;
+  repeated IPAddress ip_addresses = 5 [(gogoproto.nullable) = false, (gogoproto.customname) = "IPAddresses"];
 
   // Specify IP address requirement. Set protocol to the desired value to
   // request the network isolator on the Agent to assign an IP address to the
@@ -1616,7 +1617,7 @@ message NetworkInfo {
   // should not be used with the protocol field above.
   // NOTE: It is up to the networking 'provider' (IPAM/Isolator) to interpret
   // this either as a hint of as a requirement for assigning the IP.
-  optional string ip_address = 2 [deprecated = true]; // Since 0.26.0
+  optional string ip_address = 2 [deprecated = true, (gogoproto.customname) = "IPAddress"]; // Since 0.26.0
 
   // A group is the name given to a set of logically-related interfaces that
   // are allowed to communicate among themselves. Network traffic is allowed
@@ -1639,6 +1640,7 @@ message ContainerInfo {
   enum Type {
     DOCKER = 1;
     MESOS = 2;
+    option (gogoproto.goproto_enum_prefix) = true;
   }
 
   message DockerInfo {
@@ -1695,7 +1697,7 @@ message ContainerInfo {
 
   // A list of network requests. A framework can request multiple IP addresses
   // for the container.
-  repeated NetworkInfo network_infos = 7;
+  repeated NetworkInfo network_infos = 7 [(gogoproto.nullable) = false];
 }
 
 
@@ -1706,7 +1708,7 @@ message ContainerInfo {
  */
 message ContainerStatus {
   // This field can be reliably used to identify the container IP address.
-  repeated NetworkInfo network_infos = 1;
+  repeated NetworkInfo network_infos = 1 [(gogoproto.nullable) = false];
 
   // Information about Linux control group (cgroup).
   optional CgroupInfo cgroup_info = 2;
@@ -1723,10 +1725,10 @@ message CgroupInfo {
     // and a 16-bit minor handle. The major and minor handle are
     // represented using the format 0xAAAABBBB, where 0xAAAA is the
     // 16-bit major handle and 0xBBBB is the 16-bit minor handle.
-    optional uint32 classid = 1;
+    optional uint32 classid = 1 [(gogoproto.customname) = "ClassID"];
   }
 
-  optional NetCls net_cls = 1;
+  optional NetCls net_cls = 1 [(gogoproto.customname) = "NetCLS"];
 }
 
 
@@ -1813,7 +1815,7 @@ message DiscoveryInfo {
  * priority between the different roles.
  */
 message WeightInfo {
-  required double weight = 1;
+  required double weight = 1 [(gogoproto.nullable) = false];
 
   // Related role name.
   optional string role = 2;

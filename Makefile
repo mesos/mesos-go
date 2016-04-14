@@ -1,6 +1,6 @@
-PROTO_PATH := ${GOPATH}/src/:./vendor/src/:.
-PROTO_PATH := ${PROTO_PATH}:./vendor/src/github.com/gogo/protobuf/protobuf
-PROTO_PATH := ${PROTO_PATH}:./vendor/src/github.com/gogo/protobuf/gogoproto
+PROTO_PATH := ${GOPATH}/src/:./vendor/:.
+PROTO_PATH := ${PROTO_PATH}:./vendor/github.com/gogo/protobuf/protobuf
+PROTO_PATH := ${PROTO_PATH}:./vendor/github.com/gogo/protobuf/gogoproto
 
 .PHONY: test protobufs
 

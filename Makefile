@@ -7,7 +7,7 @@ PROTO_PATH := ${PROTO_PATH}:./vendor/github.com/gogo/protobuf/gogoproto
 all: test
 
 test:
-	go test ./...
+	go test $$(go list ./...|grep -v vendor)
 
 codecs: protobufs ffjson
 

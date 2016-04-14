@@ -245,8 +245,6 @@ type Event_Subscribed struct {
 	FrameworkID *mesos.FrameworkID `protobuf:"bytes,1,req,name=framework_id" json:"framework_id,omitempty"`
 	// This value will be set if the master is sending heartbeats. See
 	// the comment above on 'HEARTBEAT' for more details.
-	// TODO(vinod): Implement heartbeats in the master once the master
-	// can send HTTP events.
 	HeartbeatIntervalSeconds *float64 `protobuf:"fixed64,2,opt,name=heartbeat_interval_seconds" json:"heartbeat_interval_seconds,omitempty"`
 }
 
@@ -415,13 +413,9 @@ func (m *Event_Failure) GetStatus() int32 {
 	return 0
 }
 
-// Received when an invalid framework (e.g., unauthenticated,
-// unauthorized) attempts to subscribe with the master. Error can
-// also be received if scheduler sends invalid Calls (e.g., not
-// properly initialized).
-// TODO(vinod): Remove this once the old scheduler driver is no
-// longer supported. With HTTP API all errors will be signaled via
-// HTTP response codes.
+// Received when there is an unrecoverable error in the scheduler (e.g.,
+// scheduler failed over, rate limiting, authorization errors etc.). The
+// scheduler should abort on receiving this event.
 type Event_Error struct {
 	Message string `protobuf:"bytes,1,req,name=message" json:"message"`
 }
@@ -550,19 +544,13 @@ type Call_Subscribe struct {
 	// See the comments below on 'framework_id' on the semantics for
 	// 'framework_info.id'.
 	FrameworkInfo *mesos.FrameworkInfo `protobuf:"bytes,1,req,name=framework_info" json:"framework_info,omitempty"`
-	// 'force' field is only relevant when 'framework_info.id' is set.
-	// It tells the master what to do in case an instance of the
-	// scheduler attempts to subscribe when another instance of it is
-	// already connected (e.g., split brain due to network partition).
-	// If 'force' is true, this scheduler instance is allowed and the
-	// old connected scheduler instance is disconnected. If false,
-	// this scheduler instance is disallowed subscription in favor of
-	// the already connected scheduler instance.
-	//
-	// It is recommended to set this to true only when a newly elected
-	// scheduler instance is attempting to subscribe but not when a
-	// scheduler is retrying subscription (e.g., disconnection or
-	// master failover; see sched/sched.cpp for an example).
+	// NOTE: 'force' field is not present in v1/scheduler.proto because it is
+	// only used by the scheduler driver. The driver sets it to true when the
+	// scheduler re-registers for the first time after a failover. Once
+	// re-registered all subsequent re-registration attempts (e.g., due to ZK
+	// blip) will have 'force' set to false. This is important because master
+	// uses this field to know when it needs to send FrameworkRegisteredMessage
+	// vs FrameworkReregisteredMessage.
 	Force bool `protobuf:"varint,2,opt,name=force" json:"force"`
 }
 
@@ -600,10 +588,11 @@ func (m *Call_Subscribe) GetForce() bool {
 //     ]
 //   }
 //
-// Note that any of the offer’s resources not used in the 'Accept'
-// call (e.g., to launch a task) are considered unused and might be
-// reoffered to other frameworks. In other words, the same OfferID
-// cannot be used in more than one 'Accept' call.
+// NOTE: Any of the offer’s resources not used in the `Accept` call
+// (e.g., to launch a task) are considered unused and might be
+// reoffered to other frameworks. In other words, the same `OfferID`
+// cannot be used in more than one `Accept` call.
+// NOTE: All offers must belong to the same agent.
 type Call_Accept struct {
 	OfferIDs   []mesos.OfferID         `protobuf:"bytes,1,rep,name=offer_ids" json:"offer_ids"`
 	Operations []mesos.Offer_Operation `protobuf:"bytes,2,rep,name=operations" json:"operations"`
@@ -664,8 +653,8 @@ func (m *Call_Decline) GetFilters() *mesos.Filters {
 // the kill is forwarded to the executor and it is up to the
 // executor to kill the task and send a TASK_KILLED (or TASK_FAILED)
 // update. Note that Mesos releases the resources for a task once it
-// receives a terminal update (See TaskState in v1/mesos.proto) for
-// it. If the task is unknown to the master, a TASK_LOST update is
+// receives a terminal update (See TaskState in v1/mesos.proto) for it.
+// If the task is unknown to the master, a TASK_LOST update is
 // generated.
 type Call_Kill struct {
 	TaskID  mesos.TaskID   `protobuf:"bytes,1,req,name=task_id" json:"task_id"`

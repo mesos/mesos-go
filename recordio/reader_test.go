@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func ExampleReader() {
+func Example() {
 	r := NewReader(strings.NewReader("6\nhello 0\n6\nworld!"))
 	records, err := ioutil.ReadAll(r)
 	fmt.Println(string(records), err)
@@ -50,7 +50,7 @@ func TestReader(t *testing.T) {
 		}
 		r := NewReader(strings.NewReader(tt.in))
 		if n, err := r.Read(make([]byte, tt.fwd)); err != nil || n != tt.fwd {
-			t.Fatalf("test #%d: failed to read forward %d bytes: %v", n, err)
+			t.Fatalf("test #%d: failed to read forward %d bytes: %v", i, n, err)
 		}
 		want := expect{[]byte(tt.out), tt.n, tt.err}
 		got := expect{p: make([]byte, len(tt.out))}

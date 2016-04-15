@@ -29,22 +29,11 @@ func main() {
 		timeout:    time.Second,
 		checkpoint: true,
 		server:     server{address: "127.0.0.1", port: 34567},
+		tasks:      5,
 	}
 
 	fs := flag.NewFlagSet("example-scheduler", flag.ExitOnError)
-	fs.StringVar(&cfg.user, "user", cfg.user, "Framework user to register with the Mesos master")
-	fs.StringVar(&cfg.name, "name", cfg.name, "Framework name to register with the Mesos master")
-	fs.StringVar(&cfg.role, "role", cfg.role, "Framework role to register with the Mesos master")
-	fs.Var(&cfg.codec, "codec", "Codec to encode/decode scheduler API communications [protobuf, json]")
-	fs.StringVar(&cfg.url, "url", cfg.url, "Mesos scheduler API URL")
-	fs.DurationVar(&cfg.timeout, "timeout", cfg.timeout, "Mesos scheduler API connection timeout")
-	fs.BoolVar(&cfg.checkpoint, "checkpoint", cfg.checkpoint, "Enable/disable framework checkpointing")
-	fs.StringVar(&cfg.principal, "principal", cfg.principal, "Framework principal with which to authenticate")
-	fs.StringVar(&cfg.hostname, "hostname", cfg.hostname, "Framework hostname that is advertised to the master")
-	fs.Var(&cfg.labels, "label", "Framework label, may be specified multiple times")
-	fs.StringVar(&cfg.server.address, "server.address", cfg.server.address, "IP of artifact server")
-	fs.IntVar(&cfg.server.port, "server.port", cfg.server.port, "Port of artifact server")
-	fs.StringVar(&cfg.executor, "executor", cfg.executor, "Full path to executor binary")
+	cfg.addFlags(fs)
 	fs.Parse(os.Args[1:])
 
 	if err := run(&cfg); err != nil {
@@ -65,7 +54,7 @@ func run(cfg *config) error {
 	}
 
 	state.executor = prepareExecutorInfo(cfg.executor, cfg.server)
-	state.totalTasks = 5 // TODO(jdef) parameterize this
+	state.totalTasks = cfg.tasks
 
 	frameworkInfo := &mesos.FrameworkInfo{
 		User:       cfg.user,
@@ -362,6 +351,24 @@ type config struct {
 	labels     Labels
 	server     server
 	executor   string
+	tasks      int
+}
+
+func (cfg *config) addFlags(fs *flag.FlagSet) {
+	fs.StringVar(&cfg.user, "user", cfg.user, "Framework user to register with the Mesos master")
+	fs.StringVar(&cfg.name, "name", cfg.name, "Framework name to register with the Mesos master")
+	fs.StringVar(&cfg.role, "role", cfg.role, "Framework role to register with the Mesos master")
+	fs.Var(&cfg.codec, "codec", "Codec to encode/decode scheduler API communications [protobuf, json]")
+	fs.StringVar(&cfg.url, "url", cfg.url, "Mesos scheduler API URL")
+	fs.DurationVar(&cfg.timeout, "timeout", cfg.timeout, "Mesos scheduler API connection timeout")
+	fs.BoolVar(&cfg.checkpoint, "checkpoint", cfg.checkpoint, "Enable/disable framework checkpointing")
+	fs.StringVar(&cfg.principal, "principal", cfg.principal, "Framework principal with which to authenticate")
+	fs.StringVar(&cfg.hostname, "hostname", cfg.hostname, "Framework hostname that is advertised to the master")
+	fs.Var(&cfg.labels, "label", "Framework label, may be specified multiple times")
+	fs.StringVar(&cfg.server.address, "server.address", cfg.server.address, "IP of artifact server")
+	fs.IntVar(&cfg.server.port, "server.port", cfg.server.port, "Port of artifact server")
+	fs.StringVar(&cfg.executor, "executor", cfg.executor, "Full path to executor binary")
+	fs.IntVar(&cfg.tasks, "tasks", cfg.tasks, "Number of tasks to spawn")
 }
 
 type internalState struct {

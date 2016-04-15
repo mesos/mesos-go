@@ -129,6 +129,14 @@ func OpDestroy(rs ...mesos.Resource) OperationBuilder {
 	}
 }
 
+// Revive returns a revive call.
+// Callers are expected to fill in the FrameworkID.
+func Revive() *scheduler.Call {
+	return &scheduler.Call{
+		Type: scheduler.Call_REVIVE.Enum(),
+	}
+}
+
 // Decline returns a decline call with the given parameters.
 // Callers are expected to fill in the FrameworkID and Filters.
 func Decline(offerIDs ...mesos.OfferID) *scheduler.Call {

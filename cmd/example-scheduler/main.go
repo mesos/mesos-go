@@ -273,6 +273,13 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		log.Println("mission accomplished, terminating")
 		os.Exit(0)
 	}
+	// not done yet, revive offers!
+	resp, err := state.cli.Do(calls.Revive().With(callOptions...))
+	if err != nil {
+		log.Println("failed to revive offers: %+v", err)
+		return
+	}
+	resp.Close()
 }
 
 // returns (downloadURI, basename(path))

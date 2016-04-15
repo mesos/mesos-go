@@ -15,6 +15,7 @@ import (
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
+	"github.com/mesos/mesos-go/httpcli/stream"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
 )
@@ -87,9 +88,13 @@ func run(cfg *config) error {
 	subscribe := calls.Subscribe(true, frameworkInfo)
 	registrationTokens := backoffBucket(1*time.Second, 15*time.Second, nil)
 	for {
-		eventDecoder, conn, err := state.cli.Do(subscribe, httpcli.Close(true))
+		eventDecoder, conn, opt, err := stream.Subscribe(state.cli, subscribe)
 		if err == nil {
-			err = eventLoop(&state, eventDecoder, conn)
+			func() {
+				undo := state.cli.With(opt)
+				defer state.cli.With(undo) // strip the stream options
+				err = eventLoop(&state, eventDecoder, conn)
+			}()
 		}
 		if err != nil && err != io.EOF {
 			log.Println(err)

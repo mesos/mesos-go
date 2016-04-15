@@ -168,6 +168,7 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) 
 		// noop; no data to decode for these types of calls
 	case http.StatusTemporaryRedirect:
 		// TODO(jdef) refactor this
+		// mesos v0.29 will actually send back fully-formed URLs in the Location header
 		if debug {
 			log.Println("master changed!")
 		}
@@ -190,8 +191,8 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) 
 		}
 	default:
 		if _, found := codeErrors[res.StatusCode]; !found {
-			// mesos v0.26 sends 503 if this request was sent to a non-leading master
-			// see https://issues.apache.org/jira/browse/MESOS-3832; fixed by 0.28
+			// TODO(jdef) this is terrible, but handy during development; we should probably just
+			// return a ProtocolError or something
 			panic("unexpected status code " + strconv.Itoa(int(res.StatusCode)))
 		}
 	}

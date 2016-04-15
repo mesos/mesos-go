@@ -30,7 +30,7 @@ const MaxSize = 4 << 20 // 4MB
 var (
 	// ErrSize is returned by Decode calls when a message would exceed the maximum
 	// allowed size.
-	ErrSize = fmt.Errorf("proto: message exceeds %fMB", MaxSize>>20)
+	ErrSize = fmt.Errorf("proto: message exceeds %dMB", MaxSize>>20)
 )
 
 // Decode reads the next Protobuf-encoded message from its input and stores it
@@ -65,5 +65,4 @@ func (d *Decoder) Decode(m interface{}) error {
 			buf = buf[nr:]
 		}
 	}
-	panic("unreachable")
 }

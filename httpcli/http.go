@@ -65,6 +65,15 @@ const debug = false
 // even on errors.
 type DoFunc func(*http.Request) (*http.Response, error)
 
+// Response captures the output of a Mesos HTTP API operation. Callers are responsible for invoking
+// Close when they're finished processing the response otherwise there may be connection leaks.
+type Response struct {
+	io.Closer
+	StatusCode int
+	Header     http.Header
+	Decoder    encoding.Decoder
+}
+
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
 	url    string
@@ -113,15 +122,15 @@ func (c *Client) With(opts ...Opt) Opt {
 // non-nil io.Closer if one is returned. For operations which are successful
 // but also for which there is no expected object stream as a result the
 // returned Decoder will be nil.
-func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, io.Closer, error) {
+func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) {
 	var body bytes.Buffer
 	if err := c.codec.NewEncoder(&body).Invoke(m); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	req, err := http.NewRequest("POST", c.url, &body)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// default headers, applied to all requests
@@ -134,7 +143,9 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 
 	// apply per-request options
 	for _, o := range opt {
-		o(req)
+		if o != nil {
+			o(req)
+		}
 	}
 
 	// these headers override anything that a caller may have tried to set
@@ -146,7 +157,7 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, nil, err
+		return nil, err
 	}
 
 	var events encoding.Decoder
@@ -172,6 +183,7 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 					if debug {
 						log.Println("master changed, redirecting to " + c.url)
 					}
+					res.Body.Close()
 					return c.Do(m, opt...)
 				}
 			}
@@ -183,7 +195,12 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 			panic("unexpected status code " + strconv.Itoa(int(res.StatusCode)))
 		}
 	}
-	return events, res.Body, codeErrors[res.StatusCode]
+	return &Response{
+		StatusCode: res.StatusCode,
+		Header:     res.Header,
+		Decoder:    events,
+		Closer:     res.Body,
+	}, codeErrors[res.StatusCode]
 }
 
 // URL returns an Opt that sets a Client's URL.

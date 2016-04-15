@@ -2,7 +2,6 @@ package stream
 
 import (
 	"errors"
-	"io"
 	"log"
 	"net/http"
 
@@ -17,7 +16,7 @@ const (
 
 var errMissingMesosStreamId = errors.New("missing Mesos-Stream-Id header expected with successful SUBSCRIBE")
 
-func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (encoding.Decoder, io.Closer, httpcli.Opt, error) {
+func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (*httpcli.Response, httpcli.Opt, error) {
 	var mesosStreamID string
 	undo := cli.With(httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
 		return func(req *http.Request) (*http.Response, error) {
@@ -47,7 +46,7 @@ func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (encoding.Deco
 		}
 	}))
 	defer cli.With(undo) // strip the stream-id grabber
-	eventDecoder, conn, err := cli.Do(subscribe, httpcli.Close(true))
+	resp, err := cli.Do(subscribe, httpcli.Close(true))
 	streamHeaderOpt := httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID)
-	return eventDecoder, conn, streamHeaderOpt, err
+	return resp, streamHeaderOpt, err
 }

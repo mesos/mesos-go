@@ -5,8 +5,10 @@ import (
 	"crypto/tls"
 	"errors"
 	"io"
+	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -43,6 +45,8 @@ var (
 		429: ErrRateLimit,
 	}
 )
+
+const debug = false
 
 // DoFunc sends an HTTP request and returns an HTTP response.
 //
@@ -96,7 +100,9 @@ func (c *Client) With(opts ...Opt) Opt {
 
 	last := noop
 	for _, opt := range opts {
-		last = opt(c)
+		if opt != nil {
+			last = opt(c)
+		}
 	}
 	return last
 }
@@ -121,6 +127,9 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 	// default headers, applied to all requests
 	for k, v := range c.header {
 		req.Header[k] = v
+		if debug {
+			log.Println("request header " + k + ": " + v[0])
+		}
 	}
 
 	// apply per-request options
@@ -146,10 +155,33 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 		events = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
 	case http.StatusAccepted:
 		// noop; no data to decode for these types of calls
+	case http.StatusTemporaryRedirect:
+		// TODO(jdef) refactor this
+		if debug {
+			log.Println("master changed!")
+		}
+		newMaster := res.Header.Get("Location")
+		if newMaster != "" {
+			// current format appears to be //x.y.z.w:port
+			hostport, parseErr := url.Parse(newMaster)
+			if parseErr == nil && hostport.Host != "" {
+				current, parseErr := url.Parse(c.url)
+				if parseErr == nil {
+					current.Host = hostport.Host
+					c.url = current.String()
+					if debug {
+						log.Println("master changed, redirecting to " + c.url)
+					}
+					return c.Do(m, opt...)
+				}
+			}
+		}
 	default:
-		//TODO(jdef) mesos v0.26 sends 503 if this request was sent to a non-leading master
-		// see https://issues.apache.org/jira/browse/MESOS-3832
-		panic("unexpected status code " + strconv.Itoa(int(res.StatusCode)))
+		if _, found := codeErrors[res.StatusCode]; !found {
+			// mesos v0.26 sends 503 if this request was sent to a non-leading master
+			// see https://issues.apache.org/jira/browse/MESOS-3832; fixed by 0.28
+			panic("unexpected status code " + strconv.Itoa(int(res.StatusCode)))
+		}
 	}
 	return events, res.Body, codeErrors[res.StatusCode]
 }
@@ -166,7 +198,9 @@ func URL(rawurl string) Opt {
 // WrapDoer returns an Opt that decorates a Client's DoFunc
 func WrapDoer(f func(DoFunc) DoFunc) Opt {
 	return func(c *Client) Opt {
-		return Do(f(c.do))
+		old := c.do
+		c.do = f(c.do)
+		return Do(old)
 	}
 }
 
@@ -242,7 +276,9 @@ func With(opt ...ConfigOpt) DoFunc {
 		client:    &http.Client{Transport: transport},
 	}
 	for _, o := range opt {
-		o(config)
+		if o != nil {
+			o(config)
+		}
 	}
 	return config.client.Do
 }

@@ -318,8 +318,8 @@ func RoundTripper(rt http.RoundTripper) ConfigOpt {
 }
 
 // TLSConfig returns a ConfigOpt that sets a Config's TLS configuration.
-func TLSConfig(tc tls.Config) ConfigOpt {
+func TLSConfig(tc *tls.Config) ConfigOpt {
 	return func(c *Config) {
-		c.transport.TLSClientConfig = &tc
+		c.transport.TLSClientConfig = tc
 	}
 }

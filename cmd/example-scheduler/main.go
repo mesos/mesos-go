@@ -259,7 +259,7 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		// send Accept call to mesos
 		resp, err := state.cli.Do(ack)
 		if err != nil {
-			log.Println("failed to ack status update for task: %+v", err)
+			log.Printf("failed to ack status update for task: %+v", err)
 			return
 		} else {
 			resp.Close() // no data for these calls
@@ -284,7 +284,7 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 	// not done yet, revive offers!
 	resp, err := state.cli.Do(calls.Revive().With(callOptions...))
 	if err != nil {
-		log.Println("failed to revive offers: %+v", err)
+		log.Printf("failed to revive offers: %+v", err)
 		return
 	}
 	resp.Close()

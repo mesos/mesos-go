@@ -5,8 +5,10 @@ import (
 	"crypto/tls"
 	"errors"
 	"io"
+	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -44,6 +46,8 @@ var (
 	}
 )
 
+const debug = false
+
 // DoFunc sends an HTTP request and returns an HTTP response.
 //
 // An error is returned if caused by client policy (such as
@@ -60,6 +64,15 @@ var (
 // The request Body, if non-nil, will be closed by an underlying Transport,
 // even on errors.
 type DoFunc func(*http.Request) (*http.Response, error)
+
+// Response captures the output of a Mesos HTTP API operation. Callers are responsible for invoking
+// Close when they're finished processing the response otherwise there may be connection leaks.
+type Response struct {
+	io.Closer
+	StatusCode int
+	Header     http.Header
+	Decoder    encoding.Decoder
+}
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
@@ -78,21 +91,29 @@ func New(opts ...Opt) *Client {
 		do:     With(),
 		header: http.Header{},
 	}
-	return c.With(opts...)
+	c.With(opts...)
+	return c
 }
 
-// Opt defines a functional option for the HTTP client type.
-type Opt func(*Client)
+// Opt defines a functional option for the HTTP client type. A functional option
+// must return an Opt that acts as an "undo" if applied to the same Client.
+type Opt func(*Client) Opt
 
 // RequestOpt defines a functional option for an http.Request.
 type RequestOpt func(*http.Request)
 
 // With applies the given Opts to a Client and returns itself.
-func (c *Client) With(opts ...Opt) *Client {
+func (c *Client) With(opts ...Opt) Opt {
+	var noop Opt
+	noop = Opt(func(_ *Client) Opt { return noop })
+
+	last := noop
 	for _, opt := range opts {
-		opt(c)
+		if opt != nil {
+			last = opt(c)
+		}
 	}
-	return c
+	return last
 }
 
 // Do sends a Call and returns a streaming Decoder from which callers can read
@@ -101,25 +122,30 @@ func (c *Client) With(opts ...Opt) *Client {
 // non-nil io.Closer if one is returned. For operations which are successful
 // but also for which there is no expected object stream as a result the
 // returned Decoder will be nil.
-func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, io.Closer, error) {
+func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) {
 	var body bytes.Buffer
 	if err := c.codec.NewEncoder(&body).Invoke(m); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	req, err := http.NewRequest("POST", c.url, &body)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// default headers, applied to all requests
 	for k, v := range c.header {
 		req.Header[k] = v
+		if debug {
+			log.Println("request header " + k + ": " + v[0])
+		}
 	}
 
 	// apply per-request options
 	for _, o := range opt {
-		o(req)
+		if o != nil {
+			o(req)
+		}
 	}
 
 	// these headers override anything that a caller may have tried to set
@@ -131,7 +157,7 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, nil, err
+		return nil, err
 	}
 
 	var events encoding.Decoder
@@ -140,25 +166,96 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 		events = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
 	case http.StatusAccepted:
 		// noop; no data to decode for these types of calls
+	case http.StatusTemporaryRedirect:
+		// TODO(jdef) refactor this
+		// mesos v0.29 will actually send back fully-formed URLs in the Location header
+		if debug {
+			log.Println("master changed!")
+		}
+		newMaster := res.Header.Get("Location")
+		if newMaster != "" {
+			// current format appears to be //x.y.z.w:port
+			hostport, parseErr := url.Parse(newMaster)
+			if parseErr == nil && hostport.Host != "" {
+				current, parseErr := url.Parse(c.url)
+				if parseErr == nil {
+					current.Host = hostport.Host
+					c.url = current.String()
+					if debug {
+						log.Println("master changed, redirecting to " + c.url)
+					}
+					res.Body.Close()
+					return c.Do(m, opt...)
+				}
+			}
+		}
 	default:
-		//TODO(jdef) mesos v0.26 sends 503 if this request was sent to a non-leading master
-		// see https://issues.apache.org/jira/browse/MESOS-3832
-		panic("unexpected status code " + strconv.Itoa(int(res.StatusCode)))
+		if _, found := codeErrors[res.StatusCode]; !found {
+			// TODO(jdef) this is terrible, but handy during development; we should probably just
+			// return a ProtocolError or something
+			panic("unexpected status code " + strconv.Itoa(int(res.StatusCode)))
+		}
 	}
-	return events, res.Body, codeErrors[res.StatusCode]
+	return &Response{
+		StatusCode: res.StatusCode,
+		Header:     res.Header,
+		Decoder:    events,
+		Closer:     res.Body,
+	}, codeErrors[res.StatusCode]
 }
 
 // URL returns an Opt that sets a Client's URL.
-func URL(rawurl string) Opt { return func(c *Client) { c.url = rawurl } }
+func URL(rawurl string) Opt {
+	return func(c *Client) Opt {
+		old := c.url
+		c.url = rawurl
+		return URL(old)
+	}
+}
+
+// WrapDoer returns an Opt that decorates a Client's DoFunc
+func WrapDoer(f func(DoFunc) DoFunc) Opt {
+	return func(c *Client) Opt {
+		old := c.do
+		c.do = f(c.do)
+		return Do(old)
+	}
+}
 
 // Do returns an Opt that sets a Client's DoFunc
-func Do(do DoFunc) Opt { return func(c *Client) { c.do = do } }
+func Do(do DoFunc) Opt {
+	return func(c *Client) Opt {
+		old := c.do
+		c.do = do
+		return Do(old)
+	}
+}
 
 // Codec returns an Opt that sets a Client's Codec.
-func Codec(codec *encoding.Codec) Opt { return func(c *Client) { c.codec = codec } }
+func Codec(codec *encoding.Codec) Opt {
+	return func(c *Client) Opt {
+		old := c.codec
+		c.codec = codec
+		return Codec(old)
+	}
+}
 
 // DefaultHeader returns an Opt that adds a header to an Client's headers.
-func DefaultHeader(k, v string) Opt { return func(c *Client) { c.header.Add(k, v) } }
+func DefaultHeader(k, v string) Opt {
+	return func(c *Client) Opt {
+		old, found := c.header[k]
+		old = append([]string{}, old...) // clone
+		c.header.Add(k, v)
+		return func(c *Client) Opt {
+			if found {
+				c.header[k] = old
+			} else {
+				c.header.Del(k)
+			}
+			return DefaultHeader(k, v)
+		}
+	}
+}
 
 // Header returns an RequestOpt that adds a header value to an HTTP requests's header.
 func Header(k, v string) RequestOpt { return func(r *http.Request) { r.Header.Add(k, v) } }
@@ -197,7 +294,9 @@ func With(opt ...ConfigOpt) DoFunc {
 		client:    &http.Client{Transport: transport},
 	}
 	for _, o := range opt {
-		o(config)
+		if o != nil {
+			o(config)
+		}
 	}
 	return config.client.Do
 }

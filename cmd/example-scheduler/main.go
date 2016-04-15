@@ -15,6 +15,7 @@ import (
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
+	"github.com/mesos/mesos-go/httpcli/stream"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
 )
@@ -28,22 +29,11 @@ func main() {
 		timeout:    time.Second,
 		checkpoint: true,
 		server:     server{address: "127.0.0.1", port: 34567},
+		tasks:      5,
 	}
 
 	fs := flag.NewFlagSet("example-scheduler", flag.ExitOnError)
-	fs.StringVar(&cfg.user, "user", cfg.user, "Framework user to register with the Mesos master")
-	fs.StringVar(&cfg.name, "name", cfg.name, "Framework name to register with the Mesos master")
-	fs.StringVar(&cfg.role, "role", cfg.role, "Framework role to register with the Mesos master")
-	fs.Var(&cfg.codec, "codec", "Codec to encode/decode scheduler API communications [protobuf, json]")
-	fs.StringVar(&cfg.url, "url", cfg.url, "Mesos scheduler API URL")
-	fs.DurationVar(&cfg.timeout, "timeout", cfg.timeout, "Mesos scheduler API connection timeout")
-	fs.BoolVar(&cfg.checkpoint, "checkpoint", cfg.checkpoint, "Enable/disable framework checkpointing")
-	fs.StringVar(&cfg.principal, "principal", cfg.principal, "Framework principal with which to authenticate")
-	fs.StringVar(&cfg.hostname, "hostname", cfg.hostname, "Framework hostname that is advertised to the master")
-	fs.Var(&cfg.labels, "label", "Framework label, may be specified multiple times")
-	fs.StringVar(&cfg.server.address, "server.address", cfg.server.address, "IP of artifact server")
-	fs.IntVar(&cfg.server.port, "server.port", cfg.server.port, "Port of artifact server")
-	fs.StringVar(&cfg.executor, "executor", cfg.executor, "Full path to executor binary")
+	cfg.addFlags(fs)
 	fs.Parse(os.Args[1:])
 
 	if err := run(&cfg); err != nil {
@@ -64,7 +54,7 @@ func run(cfg *config) error {
 	}
 
 	state.executor = prepareExecutorInfo(cfg.executor, cfg.server)
-	state.totalTasks = 5 // TODO(jdef) parameterize this
+	state.totalTasks = cfg.tasks
 
 	frameworkInfo := &mesos.FrameworkInfo{
 		User:       cfg.user,
@@ -87,9 +77,13 @@ func run(cfg *config) error {
 	subscribe := calls.Subscribe(true, frameworkInfo)
 	registrationTokens := backoffBucket(1*time.Second, 15*time.Second, nil)
 	for {
-		eventDecoder, conn, err := state.cli.Do(subscribe, httpcli.Close(true))
+		resp, opt, err := stream.Subscribe(state.cli, subscribe)
 		if err == nil {
-			err = eventLoop(&state, eventDecoder, conn)
+			func() {
+				undo := state.cli.With(opt)
+				defer state.cli.With(undo) // strip the stream options
+				err = eventLoop(&state, resp.Decoder, resp)
+			}()
 		}
 		if err != nil && err != io.EOF {
 			log.Println(err)
@@ -231,11 +225,11 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		).With(callOptions...)
 
 		// send Accept call to mesos
-		_, con, err := state.cli.Do(accept)
+		resp, err := state.cli.Do(accept)
 		if err != nil {
-			log.Println("failed to launch tasks: %+v", err)
+			log.Printf("failed to launch tasks: %+v", err)
 		} else {
-			con.Close() // no data for these calls
+			resp.Close() // no data for these calls
 		}
 	}
 }
@@ -255,12 +249,12 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		).With(callOptions...)
 
 		// send Accept call to mesos
-		_, con, err := state.cli.Do(ack)
+		resp, err := state.cli.Do(ack)
 		if err != nil {
 			log.Println("failed to ack status update for task: %+v", err)
 			return
 		} else {
-			con.Close() // no data for these calls
+			resp.Close() // no data for these calls
 		}
 	}
 	switch st := s.GetState(); st {
@@ -279,6 +273,13 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		log.Println("mission accomplished, terminating")
 		os.Exit(0)
 	}
+	// not done yet, revive offers!
+	resp, err := state.cli.Do(calls.Revive().With(callOptions...))
+	if err != nil {
+		log.Println("failed to revive offers: %+v", err)
+		return
+	}
+	resp.Close()
 }
 
 // returns (downloadURI, basename(path))
@@ -357,6 +358,24 @@ type config struct {
 	labels     Labels
 	server     server
 	executor   string
+	tasks      int
+}
+
+func (cfg *config) addFlags(fs *flag.FlagSet) {
+	fs.StringVar(&cfg.user, "user", cfg.user, "Framework user to register with the Mesos master")
+	fs.StringVar(&cfg.name, "name", cfg.name, "Framework name to register with the Mesos master")
+	fs.StringVar(&cfg.role, "role", cfg.role, "Framework role to register with the Mesos master")
+	fs.Var(&cfg.codec, "codec", "Codec to encode/decode scheduler API communications [protobuf, json]")
+	fs.StringVar(&cfg.url, "url", cfg.url, "Mesos scheduler API URL")
+	fs.DurationVar(&cfg.timeout, "timeout", cfg.timeout, "Mesos scheduler API connection timeout")
+	fs.BoolVar(&cfg.checkpoint, "checkpoint", cfg.checkpoint, "Enable/disable framework checkpointing")
+	fs.StringVar(&cfg.principal, "principal", cfg.principal, "Framework principal with which to authenticate")
+	fs.StringVar(&cfg.hostname, "hostname", cfg.hostname, "Framework hostname that is advertised to the master")
+	fs.Var(&cfg.labels, "label", "Framework label, may be specified multiple times")
+	fs.StringVar(&cfg.server.address, "server.address", cfg.server.address, "IP of artifact server")
+	fs.IntVar(&cfg.server.port, "server.port", cfg.server.port, "Port of artifact server")
+	fs.StringVar(&cfg.executor, "executor", cfg.executor, "Full path to executor binary")
+	fs.IntVar(&cfg.tasks, "tasks", cfg.tasks, "Number of tasks to spawn")
 }
 
 type internalState struct {

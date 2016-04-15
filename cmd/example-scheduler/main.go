@@ -88,12 +88,12 @@ func run(cfg *config) error {
 	subscribe := calls.Subscribe(true, frameworkInfo)
 	registrationTokens := backoffBucket(1*time.Second, 15*time.Second, nil)
 	for {
-		eventDecoder, conn, opt, err := stream.Subscribe(state.cli, subscribe)
+		resp, opt, err := stream.Subscribe(state.cli, subscribe)
 		if err == nil {
 			func() {
 				undo := state.cli.With(opt)
 				defer state.cli.With(undo) // strip the stream options
-				err = eventLoop(&state, eventDecoder, conn)
+				err = eventLoop(&state, resp.Decoder, resp)
 			}()
 		}
 		if err != nil && err != io.EOF {
@@ -236,11 +236,11 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		).With(callOptions...)
 
 		// send Accept call to mesos
-		_, con, err := state.cli.Do(accept)
+		resp, err := state.cli.Do(accept)
 		if err != nil {
 			log.Printf("failed to launch tasks: %+v", err)
 		} else {
-			con.Close() // no data for these calls
+			resp.Close() // no data for these calls
 		}
 	}
 }
@@ -260,12 +260,12 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		).With(callOptions...)
 
 		// send Accept call to mesos
-		_, con, err := state.cli.Do(ack)
+		resp, err := state.cli.Do(ack)
 		if err != nil {
 			log.Println("failed to ack status update for task: %+v", err)
 			return
 		} else {
-			con.Close() // no data for these calls
+			resp.Close() // no data for these calls
 		}
 	}
 	switch st := s.GetState(); st {

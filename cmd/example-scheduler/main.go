@@ -238,7 +238,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		// send Accept call to mesos
 		_, con, err := state.cli.Do(accept)
 		if err != nil {
-			log.Println("failed to launch tasks: %+v", err)
+			log.Printf("failed to launch tasks: %+v", err)
 		} else {
 			con.Close() // no data for these calls
 		}

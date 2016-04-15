@@ -78,21 +78,27 @@ func New(opts ...Opt) *Client {
 		do:     With(),
 		header: http.Header{},
 	}
-	return c.With(opts...)
+	c.With(opts...)
+	return c
 }
 
-// Opt defines a functional option for the HTTP client type.
-type Opt func(*Client)
+// Opt defines a functional option for the HTTP client type. A functional option
+// must return an Opt that acts as an "undo" if applied to the same Client.
+type Opt func(*Client) Opt
 
 // RequestOpt defines a functional option for an http.Request.
 type RequestOpt func(*http.Request)
 
 // With applies the given Opts to a Client and returns itself.
-func (c *Client) With(opts ...Opt) *Client {
+func (c *Client) With(opts ...Opt) Opt {
+	var noop Opt
+	noop = Opt(func(_ *Client) Opt { return noop })
+
+	last := noop
 	for _, opt := range opts {
-		opt(c)
+		last = opt(c)
 	}
-	return c
+	return last
 }
 
 // Do sends a Call and returns a streaming Decoder from which callers can read
@@ -149,16 +155,55 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (encoding.Decoder, 
 }
 
 // URL returns an Opt that sets a Client's URL.
-func URL(rawurl string) Opt { return func(c *Client) { c.url = rawurl } }
+func URL(rawurl string) Opt {
+	return func(c *Client) Opt {
+		old := c.url
+		c.url = rawurl
+		return URL(old)
+	}
+}
+
+// WrapDoer returns an Opt that decorates a Client's DoFunc
+func WrapDoer(f func(DoFunc) DoFunc) Opt {
+	return func(c *Client) Opt {
+		return Do(f(c.do))
+	}
+}
 
 // Do returns an Opt that sets a Client's DoFunc
-func Do(do DoFunc) Opt { return func(c *Client) { c.do = do } }
+func Do(do DoFunc) Opt {
+	return func(c *Client) Opt {
+		old := c.do
+		c.do = do
+		return Do(old)
+	}
+}
 
 // Codec returns an Opt that sets a Client's Codec.
-func Codec(codec *encoding.Codec) Opt { return func(c *Client) { c.codec = codec } }
+func Codec(codec *encoding.Codec) Opt {
+	return func(c *Client) Opt {
+		old := c.codec
+		c.codec = codec
+		return Codec(old)
+	}
+}
 
 // DefaultHeader returns an Opt that adds a header to an Client's headers.
-func DefaultHeader(k, v string) Opt { return func(c *Client) { c.header.Add(k, v) } }
+func DefaultHeader(k, v string) Opt {
+	return func(c *Client) Opt {
+		old, found := c.header[k]
+		old = append([]string{}, old...) // clone
+		c.header.Add(k, v)
+		return func(c *Client) Opt {
+			if found {
+				c.header[k] = old
+			} else {
+				c.header.Del(k)
+			}
+			return DefaultHeader(k, v)
+		}
+	}
+}
 
 // Header returns an RequestOpt that adds a header value to an HTTP requests's header.
 func Header(k, v string) RequestOpt { return func(r *http.Request) { r.Header.Add(k, v) } }

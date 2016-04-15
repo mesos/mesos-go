@@ -36,25 +36,26 @@ func main() {
 	cfg.addFlags(fs)
 	fs.Parse(os.Args[1:])
 
-	if err := run(&cfg); err != nil {
+	if err := run(cfg); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run(cfg *config) error {
-	var state internalState
-	state.cli = httpcli.New(
-		httpcli.URL(cfg.url),
-		httpcli.Codec(cfg.codec.Codec),
-		httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
-	)
-
+func run(cfg config) error {
 	if cfg.executor == "" {
 		panic("must specify an executor binary")
 	}
 
-	state.executor = prepareExecutorInfo(cfg.executor, cfg.server)
-	state.totalTasks = cfg.tasks
+	state := internalState{
+		config: cfg,
+		cli: httpcli.New(
+			httpcli.URL(cfg.url),
+			httpcli.Codec(cfg.codec.Codec),
+			httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
+		),
+		executor:   prepareExecutorInfo(cfg.executor, cfg.server),
+		totalTasks: cfg.tasks,
+	}
 
 	frameworkInfo := &mesos.FrameworkInfo{
 		User:       cfg.user,
@@ -81,8 +82,11 @@ func run(cfg *config) error {
 		if err == nil {
 			func() {
 				undo := state.cli.With(opt)
-				defer state.cli.With(undo) // strip the stream options
-				err = eventLoop(&state, resp.Decoder, resp)
+				defer func() {
+					resp.Close()
+					state.cli.With(undo) // strip the stream options
+				}()
+				err = eventLoop(&state, resp.Decoder)
 			}()
 		}
 		if err != nil && err != io.EOF {
@@ -100,13 +104,7 @@ func run(cfg *config) error {
 
 // returns the framework ID received by mesos (if any); callers should check for a
 // framework ID regardless of whether error != nil.
-func eventLoop(state *internalState, eventDecoder encoding.Decoder, conn io.Closer) (err error) {
-	defer func() {
-		if conn != nil {
-			conn.Close()
-		}
-	}()
-
+func eventLoop(state *internalState, eventDecoder encoding.Decoder) (err error) {
 	state.frameworkID = ""
 	callOptions := scheduler.CallOptions{} // should be applied to every outgoing call
 
@@ -116,7 +114,9 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder, conn io.Clos
 			continue
 		}
 
-		log.Printf("%+v\n", e)
+		if state.config.verbose {
+			log.Printf("%+v\n", e)
+		}
 
 		switch e.GetType() {
 		case scheduler.Event_FAILURE:
@@ -125,7 +125,9 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder, conn io.Clos
 			failure(f.ExecutorID, f.AgentID, f.Status)
 
 		case scheduler.Event_OFFERS:
-			log.Println("received an OFFERS event")
+			if state.config.verbose {
+				log.Println("received an OFFERS event")
+			}
 			resourceOffers(state, callOptions.Copy(), e.GetOffers().GetOffers())
 
 		case scheduler.Event_UPDATE:
@@ -193,7 +195,9 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			tasks     = []mesos.TaskInfo{}
 		)
 
-		log.Println("received offer id '" + offers[i].ID.Value + "' with resources " + remaining.String())
+		if state.config.verbose {
+			log.Println("received offer id '" + offers[i].ID.Value + "' with resources " + remaining.String())
+		}
 
 		wantsResources := wantsTaskResources.Clone()
 		if len(offers[i].ExecutorIDs) == 0 {
@@ -204,7 +208,9 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			state.tasksLaunched++
 			taskID := state.tasksLaunched
 
-			log.Println("launching task " + strconv.Itoa(taskID) + " using offer " + offers[i].ID.Value)
+			if state.config.verbose {
+				log.Println("launching task " + strconv.Itoa(taskID) + " using offer " + offers[i].ID.Value)
+			}
 
 			task := mesos.TaskInfo{TaskID: mesos.TaskID{Value: strconv.Itoa(taskID)}}
 			task.Name = "Task " + task.TaskID.Value
@@ -239,7 +245,9 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 	if m := s.GetMessage(); m != "" {
 		msg += " with message '" + m + "'"
 	}
-	log.Println(msg)
+	if state.config.verbose {
+		log.Println(msg)
+	}
 
 	if uuid := s.GetUUID(); len(uuid) > 0 {
 		ack := calls.Acknowledge(
@@ -359,6 +367,7 @@ type config struct {
 	server     server
 	executor   string
 	tasks      int
+	verbose    bool
 }
 
 func (cfg *config) addFlags(fs *flag.FlagSet) {
@@ -376,6 +385,7 @@ func (cfg *config) addFlags(fs *flag.FlagSet) {
 	fs.IntVar(&cfg.server.port, "server.port", cfg.server.port, "Port of artifact server")
 	fs.StringVar(&cfg.executor, "executor", cfg.executor, "Full path to executor binary")
 	fs.IntVar(&cfg.tasks, "tasks", cfg.tasks, "Number of tasks to spawn")
+	fs.BoolVar(&cfg.verbose, "verbose", cfg.verbose, "Verbose logging")
 }
 
 type internalState struct {
@@ -386,4 +396,5 @@ type internalState struct {
 	role          string
 	executor      *mesos.ExecutorInfo
 	cli           *httpcli.Client
+	config        config
 }

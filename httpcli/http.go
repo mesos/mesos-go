@@ -51,7 +51,10 @@ var (
 	}
 )
 
-const debug = false
+const (
+	debug                      = false
+	defaultMaxRedirectAttempts = 9 // per-Do invocation
+)
 
 // DoFunc sends an HTTP request and returns an HTTP response.
 //
@@ -81,10 +84,11 @@ type Response struct {
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
-	url    string
-	do     DoFunc
-	header http.Header
-	codec  *encoding.Codec
+	url          string
+	do           DoFunc
+	header       http.Header
+	codec        *encoding.Codec
+	maxRedirects int
 }
 
 // New returns a new Client with the given Opts applied.
@@ -92,9 +96,10 @@ type Client struct {
 // invoking Do.
 func New(opts ...Opt) *Client {
 	c := &Client{
-		codec:  &encoding.ProtobufCodec,
-		do:     With(),
-		header: http.Header{},
+		codec:        &encoding.ProtobufCodec,
+		do:           With(),
+		header:       http.Header{},
+		maxRedirects: defaultMaxRedirectAttempts,
 	}
 	c.With(opts...)
 	return c
@@ -120,8 +125,6 @@ func (c *Client) With(opts ...Opt) Opt {
 	}
 	return last
 }
-
-const maxRedirectAttempts = 9
 
 // Do sends a Call and returns a streaming Decoder from which callers can read
 // Events from, an io.Closer to close the event stream on graceful termination
@@ -181,7 +184,7 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) 
 			if debug {
 				log.Println("master changed!")
 			}
-			if attempt < maxRedirectAttempts {
+			if attempt < c.maxRedirects {
 				attempt++
 				newMaster := res.Header.Get("Location")
 				if newMaster != "" {
@@ -216,6 +219,15 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) 
 			Decoder:    events,
 			Closer:     res.Body,
 		}, codeErrors[res.StatusCode]
+	}
+}
+
+// MaxRedirects returns an Opt that sets the max number of redirect attempts per-Do.
+func MaxRedirects(mr int) Opt {
+	return func(c *Client) Opt {
+		old := c.maxRedirects
+		c.maxRedirects = mr
+		return MaxRedirects(old)
 	}
 }
 

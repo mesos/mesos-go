@@ -2,8 +2,46 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 )
+
+func burstBucket(burst int, minWait, maxWait time.Duration, until <-chan struct{}) <-chan struct{} {
+	if burst < 1 {
+		return nil // no limit
+	}
+	if burst == 1 {
+		return backoffBucket(minWait, maxWait, until)
+	}
+	// build a synamic select/case statement based on burst size
+	cases := make([]reflect.SelectCase, burst+1)
+	for i := 0; i < burst; i++ {
+		ch := backoffBucket(minWait, maxWait, until)
+		cases[i].Dir = reflect.SelectRecv
+		cases[i].Chan = reflect.ValueOf(ch)
+	}
+	cases[burst].Dir = reflect.SelectRecv
+	cases[burst].Chan = reflect.ValueOf(until)
+
+	// listen for tokens emitted by child buckets and forward them to the tokens chan
+	tokens := make(chan struct{})
+	go func() {
+		for {
+			i, _, _ := reflect.Select(cases)
+			if i == burst {
+				// special case: this is the "until" chan
+				return
+			}
+			// otherwise we got a signal from a child bucket that we need to forward
+			select {
+			case tokens <- struct{}{}:
+			case <-until:
+				return
+			}
+		}
+	}()
+	return tokens
+}
 
 // backoffBucket returns a chan that yields a struct{}{} every so often. the wait period
 // between structs is between minWait and maxWait. greedy consumers that continuously read
@@ -11,6 +49,7 @@ import (
 //
 // Note: this func panics if minWait is a non-positive value to avoid busy-looping.
 func backoffBucket(minWait, maxWait time.Duration, until <-chan struct{}) <-chan struct{} {
+	// TODO(jdef) add jitter to this func
 	if maxWait < minWait {
 		maxWait, minWait = minWait, maxWait
 	}

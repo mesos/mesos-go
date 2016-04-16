@@ -28,8 +28,16 @@ func env(key, defaultValue string) (value string) {
 	return
 }
 
-func envint(key, defaultValue string) int {
+func envInt(key, defaultValue string) int {
 	value, err := strconv.Atoi(env(key, defaultValue))
+	if err != nil {
+		panic(err.Error())
+	}
+	return value
+}
+
+func envDuration(key, defaultValue string) time.Duration {
+	value, err := time.ParseDuration(env(key, defaultValue))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -42,10 +50,10 @@ func main() {
 		name:       env("FRAMEWORK_NAME", "example"),
 		url:        env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
 		codec:      codec{Codec: &encoding.ProtobufCodec},
-		timeout:    time.Second,
+		timeout:    envDuration("MESOS_CONNECT_TIMEOUT", "1s"),
 		checkpoint: true,
 		server:     server{address: env("LIBPROCESS_IP", "127.0.0.1")},
-		tasks:      envint("NUM_TASKS", "5"),
+		tasks:      envInt("NUM_TASKS", "5"),
 	}
 
 	fs := flag.NewFlagSet("config", flag.ExitOnError)

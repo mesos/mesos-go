@@ -23,18 +23,20 @@ import (
 
 func main() {
 	cfg := config{
-		user:       env("FRAMEWORK_USER", "root"),
-		name:       env("FRAMEWORK_NAME", "example"),
-		url:        env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
-		codec:      codec{Codec: &encoding.ProtobufCodec},
-		timeout:    envDuration("MESOS_CONNECT_TIMEOUT", "1s"),
-		checkpoint: true,
-		server:     server{address: env("LIBPROCESS_IP", "127.0.0.1")},
-		tasks:      envInt("NUM_TASKS", "5"),
-		taskCPU:    envFloat("TASK_CPU", "1"),
-		taskMemory: envFloat("TASK_MEMORY", "64"),
-		execCPU:    envFloat("EXEC_CPU", "0.01"),
-		execMemory: envFloat("EXEC_MEMORY", "64"),
+		user:        env("FRAMEWORK_USER", "root"),
+		name:        env("FRAMEWORK_NAME", "example"),
+		url:         env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
+		codec:       codec{Codec: &encoding.ProtobufCodec},
+		timeout:     envDuration("MESOS_CONNECT_TIMEOUT", "1s"),
+		checkpoint:  true,
+		server:      server{address: env("LIBPROCESS_IP", "127.0.0.1")},
+		tasks:       envInt("NUM_TASKS", "5"),
+		taskCPU:     envFloat("TASK_CPU", "1"),
+		taskMemory:  envFloat("TASK_MEMORY", "64"),
+		execCPU:     envFloat("EXEC_CPU", "0.01"),
+		execMemory:  envFloat("EXEC_MEMORY", "64"),
+		reviveBurst: envInt("REVIVE_BURST", "3"),
+		reviveWait:  envDuration("REVIVE_WAIT", "1s"),
 	}
 
 	fs := flag.NewFlagSet("config", flag.ExitOnError)
@@ -54,6 +56,7 @@ func run(cfg config) error {
 	state := internalState{
 		config:             cfg,
 		totalTasks:         cfg.tasks,
+		reviveTokens:       burstBucket(cfg.reviveBurst, cfg.reviveWait, cfg.reviveWait, nil),
 		wantsTaskResources: cfg.buildWantsTaskResources(),
 		executor: prepareExecutorInfo(
 			cfg.executor, cfg.server, cfg.buildWantsExecutorResources()),
@@ -274,13 +277,20 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		log.Println("mission accomplished, terminating")
 		os.Exit(0)
 	}
-	// not done yet, revive offers!
-	resp, err := state.cli.Do(calls.Revive().With(callOptions...))
-	if err != nil {
-		log.Printf("failed to revive offers: %+v", err)
-		return
+
+	// limit the rate at which we request offer revival
+	select {
+	case <-state.reviveTokens:
+		// not done yet, revive offers!
+		resp, err := state.cli.Do(calls.Revive().With(callOptions...))
+		if err != nil {
+			log.Printf("failed to revive offers: %+v", err)
+			return
+		}
+		resp.Close()
+	default:
+		// noop
 	}
-	resp.Close()
 }
 
 // returns (downloadURI, basename(path))
@@ -363,25 +373,27 @@ type server struct {
 }
 
 type config struct {
-	id         string
-	user       string
-	name       string
-	role       string
-	url        string
-	codec      codec
-	timeout    time.Duration
-	checkpoint bool
-	principal  string
-	hostname   string
-	labels     Labels
-	server     server
-	executor   string
-	tasks      int
-	verbose    bool
-	taskCPU    float64
-	taskMemory float64
-	execCPU    float64
-	execMemory float64
+	id          string
+	user        string
+	name        string
+	role        string
+	url         string
+	codec       codec
+	timeout     time.Duration
+	checkpoint  bool
+	principal   string
+	hostname    string
+	labels      Labels
+	server      server
+	executor    string
+	tasks       int
+	verbose     bool
+	taskCPU     float64
+	taskMemory  float64
+	execCPU     float64
+	execMemory  float64
+	reviveBurst int
+	reviveWait  time.Duration
 }
 
 func (cfg *config) addFlags(fs *flag.FlagSet) {
@@ -402,8 +414,10 @@ func (cfg *config) addFlags(fs *flag.FlagSet) {
 	fs.BoolVar(&cfg.verbose, "verbose", cfg.verbose, "Verbose logging")
 	fs.Float64Var(&cfg.taskCPU, "cpu", cfg.taskCPU, "CPU resources to consume per-task")
 	fs.Float64Var(&cfg.taskMemory, "memory", cfg.taskMemory, "Memory resources (MB) to consume per-task")
-	fs.Float64Var(&cfg.execCPU, "exec-cpu", cfg.execCPU, "CPU resources to consume per-executor")
-	fs.Float64Var(&cfg.execMemory, "exec-memory", cfg.execMemory, "Memory resources (MB) to consume per-executor")
+	fs.Float64Var(&cfg.execCPU, "exec.cpu", cfg.execCPU, "CPU resources to consume per-executor")
+	fs.Float64Var(&cfg.execMemory, "exec.memory", cfg.execMemory, "Memory resources (MB) to consume per-executor")
+	fs.IntVar(&cfg.reviveBurst, "revive.burst", cfg.reviveBurst, "Number of revive messages that may be sent in a burst within revive-wait period")
+	fs.DurationVar(&cfg.reviveWait, "revive.wait", cfg.reviveWait, "Wait this long to fully recharge revive-burst quota")
 }
 
 func (config config) buildWantsTaskResources() (r mesos.Resources) {
@@ -434,4 +448,5 @@ type internalState struct {
 	cli                *httpcli.Client
 	config             config
 	wantsTaskResources mesos.Resources
+	reviveTokens       <-chan struct{}
 }

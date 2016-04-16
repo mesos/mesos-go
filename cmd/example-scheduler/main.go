@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -20,19 +21,34 @@ import (
 	"github.com/mesos/mesos-go/scheduler/calls"
 )
 
+func env(key, defaultValue string) (value string) {
+	if value = os.Getenv(key); value == "" {
+		value = defaultValue
+	}
+	return
+}
+
+func envint(key, defaultValue string) int {
+	value, err := strconv.Atoi(env(key, defaultValue))
+	if err != nil {
+		panic(err.Error())
+	}
+	return value
+}
+
 func main() {
 	cfg := config{
-		user:       "root",
-		name:       "example",
-		url:        "http://:5050/api/v1/scheduler",
+		user:       env("FRAMEWORK_USER", "root"),
+		name:       env("FRAMEWORK_NAME", "example"),
+		url:        env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
 		codec:      codec{Codec: &encoding.ProtobufCodec},
 		timeout:    time.Second,
 		checkpoint: true,
-		server:     server{address: "127.0.0.1", port: 34567},
-		tasks:      5,
+		server:     server{address: env("LIBPROCESS_IP", "127.0.0.1")},
+		tasks:      envint("NUM_TASKS", "5"),
 	}
 
-	fs := flag.NewFlagSet("example-scheduler", flag.ExitOnError)
+	fs := flag.NewFlagSet("config", flag.ExitOnError)
 	cfg.addFlags(fs)
 	fs.Parse(os.Args[1:])
 
@@ -323,7 +339,33 @@ var wantsExecutorResources = func() (r mesos.Resources) {
 	return
 }()
 
+func prepareListener(server server) (*net.TCPListener, int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(server.address, strconv.Itoa(server.port)))
+	if err != nil {
+		return nil, 0, err
+	}
+	listener, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return nil, 0, err
+	}
+	bindAddress := listener.Addr().String()
+	_, port, err := net.SplitHostPort(bindAddress)
+	if err != nil {
+		return nil, 0, err
+	}
+	iport, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, 0, err
+	}
+	return listener, iport, nil
+}
+
 func prepareExecutorInfo(execBinary string, server server) *mesos.ExecutorInfo {
+	listener, iport, err := prepareListener(server)
+	if err != nil {
+		panic(err.Error()) // TODO(jdef) fixme
+	}
+	server.port = iport // we're just working with a copy of server, so this is OK
 	var (
 		executorUris     = []mesos.CommandInfo_URI{}
 		uri, executorCmd = serveExecutorArtifact(server, execBinary)
@@ -331,7 +373,7 @@ func prepareExecutorInfo(execBinary string, server server) *mesos.ExecutorInfo {
 	)
 	executorUris = append(executorUris, mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
 
-	go http.ListenAndServe(fmt.Sprintf("%s:%d", server.address, server.port), nil)
+	go http.Serve(listener, nil)
 	log.Println("Serving executor artifacts...")
 
 	// Create mesos scheduler driver.

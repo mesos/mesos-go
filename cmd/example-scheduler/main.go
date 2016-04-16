@@ -21,29 +21,6 @@ import (
 	"github.com/mesos/mesos-go/scheduler/calls"
 )
 
-func env(key, defaultValue string) (value string) {
-	if value = os.Getenv(key); value == "" {
-		value = defaultValue
-	}
-	return
-}
-
-func envInt(key, defaultValue string) int {
-	value, err := strconv.Atoi(env(key, defaultValue))
-	if err != nil {
-		panic(err.Error())
-	}
-	return value
-}
-
-func envDuration(key, defaultValue string) time.Duration {
-	value, err := time.ParseDuration(env(key, defaultValue))
-	if err != nil {
-		panic(err.Error())
-	}
-	return value
-}
-
 func main() {
 	cfg := config{
 		user:       env("FRAMEWORK_USER", "root"),
@@ -54,6 +31,10 @@ func main() {
 		checkpoint: true,
 		server:     server{address: env("LIBPROCESS_IP", "127.0.0.1")},
 		tasks:      envInt("NUM_TASKS", "5"),
+		taskCPU:    envFloat("TASK_CPU", "1"),
+		taskMemory: envFloat("TASK_MEMORY", "64"),
+		execCPU:    envFloat("EXEC_CPU", "0.01"),
+		execMemory: envFloat("EXEC_MEMORY", "64"),
 	}
 
 	fs := flag.NewFlagSet("config", flag.ExitOnError)
@@ -71,14 +52,16 @@ func run(cfg config) error {
 	}
 
 	state := internalState{
-		config: cfg,
+		config:             cfg,
+		totalTasks:         cfg.tasks,
+		wantsTaskResources: cfg.buildWantsTaskResources(),
+		executor: prepareExecutorInfo(
+			cfg.executor, cfg.server, cfg.buildWantsExecutorResources()),
 		cli: httpcli.New(
 			httpcli.URL(cfg.url),
 			httpcli.Codec(cfg.codec.Codec),
 			httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
 		),
-		executor:   prepareExecutorInfo(cfg.executor, cfg.server),
-		totalTasks: cfg.tasks,
 	}
 
 	frameworkInfo := &mesos.FrameworkInfo{
@@ -198,20 +181,6 @@ func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 	}
 }
 
-const (
-	CPUS_PER_TASK = 1
-	MEM_PER_TASK  = 64
-)
-
-var wantsTaskResources = func() (r mesos.Resources) {
-	r.Add(
-		*mesos.BuildResource().Name("cpus").Scalar(CPUS_PER_TASK).Resource,
-		*mesos.BuildResource().Name("mem").Scalar(MEM_PER_TASK).Resource,
-	)
-	log.Println("wants-task-resources = " + r.String())
-	return
-}()
-
 func resourceOffers(state *internalState, callOptions scheduler.CallOptions, offers []mesos.Offer) {
 	for i := range offers {
 		var (
@@ -223,7 +192,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			log.Println("received offer id '" + offers[i].ID.Value + "' with resources " + remaining.String())
 		}
 
-		wantsResources := wantsTaskResources.Clone()
+		wantsResources := state.wantsTaskResources.Clone()
 		if len(offers[i].ExecutorIDs) == 0 {
 			wantsResources.Add(state.executor.Resources...)
 		}
@@ -240,7 +209,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			task.Name = "Task " + task.TaskID.Value
 			task.AgentID = offers[i].AgentID
 			task.Executor = state.executor
-			task.Resources = remaining.Find(wantsTaskResources.Flatten(mesos.Role(state.role).Assign()))
+			task.Resources = remaining.Find(state.wantsTaskResources.Flatten(mesos.Role(state.role).Assign()))
 
 			remaining.Subtract(task.Resources...)
 			tasks = append(tasks, task)
@@ -338,15 +307,6 @@ func serveExecutorArtifact(server server, path string) (string, string) {
 	return hostURI, base
 }
 
-var wantsExecutorResources = func() (r mesos.Resources) {
-	r.Add(
-		*mesos.BuildResource().Name("cpus").Scalar(0.01).Resource,
-		*mesos.BuildResource().Name("mem").Scalar(64).Resource,
-	)
-	log.Println("wants-executor-resources = " + r.String())
-	return
-}()
-
 func prepareListener(server server) (*net.TCPListener, int, error) {
 	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(server.address, strconv.Itoa(server.port)))
 	if err != nil {
@@ -368,7 +328,7 @@ func prepareListener(server server) (*net.TCPListener, int, error) {
 	return listener, iport, nil
 }
 
-func prepareExecutorInfo(execBinary string, server server) *mesos.ExecutorInfo {
+func prepareExecutorInfo(execBinary string, server server, wantsResources mesos.Resources) *mesos.ExecutorInfo {
 	listener, iport, err := prepareListener(server)
 	if err != nil {
 		panic(err.Error()) // TODO(jdef) fixme
@@ -393,7 +353,7 @@ func prepareExecutorInfo(execBinary string, server server) *mesos.ExecutorInfo {
 			Value: proto.String(executorCommand),
 			URIs:  executorUris,
 		},
-		Resources: wantsExecutorResources,
+		Resources: wantsResources,
 	}
 }
 
@@ -418,6 +378,10 @@ type config struct {
 	executor   string
 	tasks      int
 	verbose    bool
+	taskCPU    float64
+	taskMemory float64
+	execCPU    float64
+	execMemory float64
 }
 
 func (cfg *config) addFlags(fs *flag.FlagSet) {
@@ -436,15 +400,38 @@ func (cfg *config) addFlags(fs *flag.FlagSet) {
 	fs.StringVar(&cfg.executor, "executor", cfg.executor, "Full path to executor binary")
 	fs.IntVar(&cfg.tasks, "tasks", cfg.tasks, "Number of tasks to spawn")
 	fs.BoolVar(&cfg.verbose, "verbose", cfg.verbose, "Verbose logging")
+	fs.Float64Var(&cfg.taskCPU, "cpu", cfg.taskCPU, "CPU resources to consume per-task")
+	fs.Float64Var(&cfg.taskMemory, "memory", cfg.taskMemory, "Memory resources (MB) to consume per-task")
+	fs.Float64Var(&cfg.execCPU, "exec-cpu", cfg.execCPU, "CPU resources to consume per-executor")
+	fs.Float64Var(&cfg.execMemory, "exec-memory", cfg.execMemory, "Memory resources (MB) to consume per-executor")
+}
+
+func (config config) buildWantsTaskResources() (r mesos.Resources) {
+	r.Add(
+		*mesos.BuildResource().Name("cpus").Scalar(config.taskCPU).Resource,
+		*mesos.BuildResource().Name("mem").Scalar(config.taskMemory).Resource,
+	)
+	log.Println("wants-task-resources = " + r.String())
+	return
+}
+
+func (config config) buildWantsExecutorResources() (r mesos.Resources) {
+	r.Add(
+		*mesos.BuildResource().Name("cpus").Scalar(config.execCPU).Resource,
+		*mesos.BuildResource().Name("mem").Scalar(config.execMemory).Resource,
+	)
+	log.Println("wants-executor-resources = " + r.String())
+	return
 }
 
 type internalState struct {
-	tasksLaunched int
-	tasksFinished int
-	totalTasks    int
-	frameworkID   string
-	role          string
-	executor      *mesos.ExecutorInfo
-	cli           *httpcli.Client
-	config        config
+	tasksLaunched      int
+	tasksFinished      int
+	totalTasks         int
+	frameworkID        string
+	role               string
+	executor           *mesos.ExecutorInfo
+	cli                *httpcli.Client
+	config             config
+	wantsTaskResources mesos.Resources
 }

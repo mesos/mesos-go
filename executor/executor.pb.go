@@ -3,7 +3,7 @@
 // DO NOT EDIT!
 
 /*
-	Package scheduler is a generated protocol buffer package.
+	Package executor is a generated protocol buffer package.
 
 	It is generated from these files:
 		executor/executor.proto
@@ -12,7 +12,7 @@
 		Event
 		Call
 */
-package scheduler
+package executor
 
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
@@ -1183,9 +1183,9 @@ func (this *Event) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 11)
-	s = append(s, "&scheduler.Event{")
+	s = append(s, "&executor.Event{")
 	if this.Type != nil {
-		s = append(s, "Type: "+valueToGoStringExecutor(this.Type, "scheduler.Event_Type")+",\n")
+		s = append(s, "Type: "+valueToGoStringExecutor(this.Type, "executor.Event_Type")+",\n")
 	}
 	if this.Subscribed != nil {
 		s = append(s, "Subscribed: "+fmt.Sprintf("%#v", this.Subscribed)+",\n")
@@ -1213,7 +1213,7 @@ func (this *Event_Subscribed) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 7)
-	s = append(s, "&scheduler.Event_Subscribed{")
+	s = append(s, "&executor.Event_Subscribed{")
 	if this.ExecutorInfo != nil {
 		s = append(s, "ExecutorInfo: "+fmt.Sprintf("%#v", this.ExecutorInfo)+",\n")
 	}
@@ -1231,7 +1231,7 @@ func (this *Event_Launch) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 5)
-	s = append(s, "&scheduler.Event_Launch{")
+	s = append(s, "&executor.Event_Launch{")
 	if this.Task != nil {
 		s = append(s, "Task: "+fmt.Sprintf("%#v", this.Task)+",\n")
 	}
@@ -1243,7 +1243,7 @@ func (this *Event_Kill) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 5)
-	s = append(s, "&scheduler.Event_Kill{")
+	s = append(s, "&executor.Event_Kill{")
 	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -1253,7 +1253,7 @@ func (this *Event_Acknowledged) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 6)
-	s = append(s, "&scheduler.Event_Acknowledged{")
+	s = append(s, "&executor.Event_Acknowledged{")
 	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
 	if this.UUID != nil {
 		s = append(s, "UUID: "+valueToGoStringExecutor(this.UUID, "byte")+",\n")
@@ -1266,7 +1266,7 @@ func (this *Event_Message) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 5)
-	s = append(s, "&scheduler.Event_Message{")
+	s = append(s, "&executor.Event_Message{")
 	if this.Data != nil {
 		s = append(s, "Data: "+valueToGoStringExecutor(this.Data, "byte")+",\n")
 	}
@@ -1278,7 +1278,7 @@ func (this *Event_Error) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 5)
-	s = append(s, "&scheduler.Event_Error{")
+	s = append(s, "&executor.Event_Error{")
 	if this.Message != nil {
 		s = append(s, "Message: "+valueToGoStringExecutor(this.Message, "string")+",\n")
 	}
@@ -1290,11 +1290,11 @@ func (this *Call) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 10)
-	s = append(s, "&scheduler.Call{")
+	s = append(s, "&executor.Call{")
 	s = append(s, "ExecutorID: "+strings.Replace(this.ExecutorID.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "FrameworkID: "+strings.Replace(this.FrameworkID.GoString(), `&`, ``, 1)+",\n")
 	if this.Type != nil {
-		s = append(s, "Type: "+valueToGoStringExecutor(this.Type, "scheduler.Call_Type")+",\n")
+		s = append(s, "Type: "+valueToGoStringExecutor(this.Type, "executor.Call_Type")+",\n")
 	}
 	if this.Subscribe != nil {
 		s = append(s, "Subscribe: "+fmt.Sprintf("%#v", this.Subscribe)+",\n")
@@ -1313,7 +1313,7 @@ func (this *Call_Subscribe) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 6)
-	s = append(s, "&scheduler.Call_Subscribe{")
+	s = append(s, "&executor.Call_Subscribe{")
 	if this.UnacknowledgedTasks != nil {
 		s = append(s, "UnacknowledgedTasks: "+strings.Replace(fmt.Sprintf("%#v", this.UnacknowledgedTasks), `&`, ``, 1)+",\n")
 	}
@@ -1328,7 +1328,7 @@ func (this *Call_Update) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 5)
-	s = append(s, "&scheduler.Call_Update{")
+	s = append(s, "&executor.Call_Update{")
 	if this.Status != nil {
 		s = append(s, "Status: "+fmt.Sprintf("%#v", this.Status)+",\n")
 	}
@@ -1340,7 +1340,7 @@ func (this *Call_Message) GoString() string {
 		return "nil"
 	}
 	s := make([]string, 0, 5)
-	s = append(s, "&scheduler.Call_Message{")
+	s = append(s, "&executor.Call_Message{")
 	if this.Data != nil {
 		s = append(s, "Data: "+valueToGoStringExecutor(this.Data, "byte")+",\n")
 	}

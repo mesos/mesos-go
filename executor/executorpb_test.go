@@ -3,7 +3,7 @@
 // DO NOT EDIT!
 
 /*
-Package scheduler is a generated protocol buffer package.
+Package executor is a generated protocol buffer package.
 
 It is generated from these files:
 	executor/executor.proto
@@ -12,7 +12,7 @@ It has these top-level messages:
 	Event
 	Call
 */
-package scheduler
+package executor
 
 import testing "testing"
 import math_rand "math/rand"

@@ -17,8 +17,11 @@ import (
 	"github.com/pborman/uuid"
 )
 
-const apiPath = "/api/v1/executor"
-const timeout = 10 * time.Second
+const (
+	apiPath = "/api/v1/executor"
+	timeout = 10 * time.Second
+	debug   = true
+)
 
 var errMustAbort = errors.New("received abort signal from mesos, will attempt to re-subscribe")
 
@@ -184,6 +187,19 @@ func launch(state *internalState, task mesos.TaskInfo) {
 	}
 }
 
+type marshalJSON interface {
+	MarshalJSON() ([]byte, error)
+}
+
+func debugJSON(mk marshalJSON) {
+	if debug {
+		b, err := mk.MarshalJSON()
+		if err == nil {
+			println(string(b))
+		}
+	}
+}
+
 // helper func to package strings up nicely for protobuf
 // NOTE(jdef): if we need any more proto funcs like this, just import the
 // proto package and use those.
@@ -194,6 +210,7 @@ func update(state *internalState, status mesos.TaskStatus) error {
 	resp, err := state.cli.Do(upd)
 	if err != nil {
 		log.Printf("failed to send update: %+v", err)
+		debugJSON(upd)
 	} else {
 		resp.Close()
 		state.unackedUpdates[string(status.UUID)] = *upd.Update

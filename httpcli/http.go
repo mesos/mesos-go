@@ -23,30 +23,38 @@ var (
 	ErrAuth = errors.New("scheduler: call not authenticated")
 	// ErrUnsubscribed is returned by Do calls that are sent before a subscription is established.
 	ErrUnsubscribed = errors.New("scheduler: no subscription established")
-	// ErrVersion is returned by Do calls that are sent to an	incompatible API version.
+	// ErrVersion is returned by Do calls that are sent to an incompatible API version.
 	ErrVersion = errors.New("scheduler: incompatible API version")
 	// ErrMalformed is returned by Do calls that are malformed.
 	ErrMalformed = errors.New("scheduler: malformed request")
 	// ErrMediaType is returned by Do calls that are sent with an unsupported media type.
 	ErrMediaType = errors.New("scheduler: unsupported media type")
-	// ErrRateLimit is returned by Do calls that are rate limited.
+	// ErrRateLimit is returned by Do calls that are rate limited. This is a temporary condition
+	// that should clear.
 	ErrRateLimit = errors.New("scheduler: rate limited")
+	// ErrUnavailable is returned by Do calls that are sent to a master that's in recovery, or
+	// does not yet realize that it's the leader. This is a temporary condition that should clear.
+	ErrUnavailable = errors.New("scheduler: master unavailable")
 
 	// codeErrors maps HTTP response codes to their respective errors.
 	codeErrors = map[int]error{
-		http.StatusOK:                nil,
-		http.StatusAccepted:          nil,
-		http.StatusTemporaryRedirect: ErrNotLeader,
-		http.StatusBadRequest:        ErrMalformed,
-		http.StatusConflict:          ErrVersion,
-		http.StatusForbidden:         ErrUnsubscribed,
-		http.StatusUnauthorized:      ErrAuth,
-		http.StatusNotAcceptable:     ErrMediaType,
-		429: ErrRateLimit,
+		http.StatusOK:                 nil,
+		http.StatusAccepted:           nil,
+		http.StatusTemporaryRedirect:  ErrNotLeader,
+		http.StatusBadRequest:         ErrMalformed,
+		http.StatusConflict:           ErrVersion,
+		http.StatusForbidden:          ErrUnsubscribed,
+		http.StatusUnauthorized:       ErrAuth,
+		http.StatusNotAcceptable:      ErrMediaType,
+		http.StatusServiceUnavailable: ErrUnavailable,
+		http.StatusTooManyRequests:    ErrRateLimit,
 	}
 )
 
-const debug = false
+const (
+	debug                      = false
+	defaultMaxRedirectAttempts = 9 // per-Do invocation
+)
 
 // DoFunc sends an HTTP request and returns an HTTP response.
 //
@@ -76,10 +84,11 @@ type Response struct {
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
-	url    string
-	do     DoFunc
-	header http.Header
-	codec  *encoding.Codec
+	url          string
+	do           DoFunc
+	header       http.Header
+	codec        *encoding.Codec
+	maxRedirects int
 }
 
 // New returns a new Client with the given Opts applied.
@@ -87,9 +96,10 @@ type Client struct {
 // invoking Do.
 func New(opts ...Opt) *Client {
 	c := &Client{
-		codec:  &encoding.ProtobufCodec,
-		do:     With(),
-		header: http.Header{},
+		codec:        &encoding.ProtobufCodec,
+		do:           With(),
+		header:       http.Header{},
+		maxRedirects: defaultMaxRedirectAttempts,
 	}
 	c.With(opts...)
 	return c
@@ -123,85 +133,102 @@ func (c *Client) With(opts ...Opt) Opt {
 // but also for which there is no expected object stream as a result the
 // returned Decoder will be nil.
 func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) {
-	var body bytes.Buffer
-	if err := c.codec.NewEncoder(&body).Invoke(m); err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", c.url, &body)
-	if err != nil {
-		return nil, err
-	}
-
-	// default headers, applied to all requests
-	for k, v := range c.header {
-		req.Header[k] = v
-		if debug {
-			log.Println("request header " + k + ": " + v[0])
+	attempt := 0
+	for {
+		var body bytes.Buffer
+		if err := c.codec.NewEncoder(&body).Invoke(m); err != nil {
+			return nil, err
 		}
-	}
 
-	// apply per-request options
-	for _, o := range opt {
-		if o != nil {
-			o(req)
+		req, err := http.NewRequest("POST", c.url, &body)
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	// these headers override anything that a caller may have tried to set
-	req.Header.Set("Content-Type", c.codec.MediaTypes[0])
-	req.Header.Set("Accept", c.codec.MediaTypes[1])
-
-	res, err := c.do(req)
-	if err != nil {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
+		// default headers, applied to all requests
+		for k, v := range c.header {
+			req.Header[k] = v
+			if debug {
+				log.Println("request header " + k + ": " + v[0])
+			}
 		}
-		return nil, err
-	}
 
-	var events encoding.Decoder
-	switch res.StatusCode {
-	case http.StatusOK:
-		events = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
-	case http.StatusAccepted:
-		// noop; no data to decode for these types of calls
-	case http.StatusTemporaryRedirect:
-		// TODO(jdef) refactor this
-		// mesos v0.29 will actually send back fully-formed URLs in the Location header
-		if debug {
-			log.Println("master changed!")
+		// apply per-request options
+		for _, o := range opt {
+			if o != nil {
+				o(req)
+			}
 		}
-		newMaster := res.Header.Get("Location")
-		if newMaster != "" {
-			// current format appears to be //x.y.z.w:port
-			hostport, parseErr := url.Parse(newMaster)
-			if parseErr == nil && hostport.Host != "" {
-				current, parseErr := url.Parse(c.url)
-				if parseErr == nil {
+
+		// these headers override anything that a caller may have tried to set
+		req.Header.Set("Content-Type", c.codec.MediaTypes[0])
+		req.Header.Set("Accept", c.codec.MediaTypes[1])
+
+		res, err := c.do(req)
+		if err != nil {
+			if res != nil && res.Body != nil {
+				res.Body.Close()
+			}
+			return nil, err
+		}
+
+		var events encoding.Decoder
+		switch res.StatusCode {
+		case http.StatusOK:
+			events = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
+		case http.StatusAccepted:
+			// noop; no data to decode for these types of calls
+		case http.StatusTemporaryRedirect:
+			// TODO(jdef) refactor this
+			// mesos v0.29 will actually send back fully-formed URLs in the Location header
+			if debug {
+				log.Println("master changed!")
+			}
+			if attempt < c.maxRedirects {
+				attempt++
+				newMaster := res.Header.Get("Location")
+				if newMaster != "" {
+					// current format appears to be //x.y.z.w:port
+					hostport, parseErr := url.Parse(newMaster)
+					if parseErr != nil || hostport.Host == "" {
+						break
+					}
+					current, parseErr := url.Parse(c.url)
+					if parseErr != nil {
+						break
+					}
 					current.Host = hostport.Host
 					c.url = current.String()
 					if debug {
 						log.Println("master changed, redirecting to " + c.url)
 					}
 					res.Body.Close()
-					return c.Do(m, opt...)
+					continue
 				}
 			}
+		default:
+			if _, found := codeErrors[res.StatusCode]; !found {
+				// TODO(jdef) this is terrible, but handy during development; we should probably just
+				// return a ProtocolError or something
+				panic("unexpected status code " + strconv.Itoa(int(res.StatusCode)))
+			}
 		}
-	default:
-		if _, found := codeErrors[res.StatusCode]; !found {
-			// TODO(jdef) this is terrible, but handy during development; we should probably just
-			// return a ProtocolError or something
-			panic("unexpected status code " + strconv.Itoa(int(res.StatusCode)))
-		}
+		return &Response{
+			StatusCode: res.StatusCode,
+			Header:     res.Header,
+			Decoder:    events,
+			Closer:     res.Body,
+		}, codeErrors[res.StatusCode]
 	}
-	return &Response{
-		StatusCode: res.StatusCode,
-		Header:     res.Header,
-		Decoder:    events,
-		Closer:     res.Body,
-	}, codeErrors[res.StatusCode]
+}
+
+// MaxRedirects returns an Opt that sets the max number of redirect attempts per-Do.
+func MaxRedirects(mr int) Opt {
+	return func(c *Client) Opt {
+		old := c.maxRedirects
+		c.maxRedirects = mr
+		return MaxRedirects(old)
+	}
 }
 
 // URL returns an Opt that sets a Client's URL.

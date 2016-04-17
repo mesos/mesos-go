@@ -1,3 +1,4 @@
 /example-scheduler
+/example-executor
 bin/
 pkg/

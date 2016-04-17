@@ -2139,15 +2139,8 @@ func (mj *Event_Error) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Message != nil {
-		if true {
-			buf.WriteString(`"message":`)
-			fflib.WriteJsonString(buf, string(*mj.Message))
-			buf.WriteByte(',')
-		}
-	}
-	buf.Rewind(1)
+	buf.WriteString(`{"message":`)
+	fflib.WriteJsonString(buf, string(mj.Message))
 	buf.WriteByte('}')
 	return nil
 }
@@ -2284,15 +2277,11 @@ handle_Message:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Message = nil
-
 		} else {
 
-			var tval string
 			outBuf := fs.Output.Bytes()
 
-			tval = string(string(outBuf))
-			uj.Message = &tval
+			uj.Message = string(string(outBuf))
 
 		}
 	}
@@ -2529,23 +2518,16 @@ func (mj *Event_Launch) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Task != nil {
-		if true {
-			buf.WriteString(`"task":`)
+	buf.WriteString(`{"task":`)
 
-			{
+	{
 
-				err = mj.Task.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.Task.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -2675,14 +2657,8 @@ handle_Task:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Task = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.Task == nil {
-			uj.Task = new(mesos.TaskInfo)
 		}
 
 		err = uj.Task.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -2940,53 +2916,36 @@ func (mj *Event_Subscribed) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.ExecutorInfo != nil {
-		if true {
-			buf.WriteString(`"executor_info":`)
+	buf.WriteString(`{"executor_info":`)
 
-			{
+	{
 
-				err = mj.ExecutorInfo.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.ExecutorInfo.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	if mj.FrameworkInfo != nil {
-		if true {
-			buf.WriteString(`"framework_info":`)
+	buf.WriteString(`,"framework_info":`)
 
-			{
+	{
 
-				err = mj.FrameworkInfo.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.FrameworkInfo.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	if mj.AgentInfo != nil {
-		if true {
-			buf.WriteString(`"agent_info":`)
+	buf.WriteString(`,"agent_info":`)
 
-			{
+	{
 
-				err = mj.AgentInfo.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.AgentInfo.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -3158,14 +3117,8 @@ handle_ExecutorInfo:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.ExecutorInfo = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.ExecutorInfo == nil {
-			uj.ExecutorInfo = new(mesos.ExecutorInfo)
 		}
 
 		err = uj.ExecutorInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -3185,14 +3138,8 @@ handle_FrameworkInfo:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.FrameworkInfo = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.FrameworkInfo == nil {
-			uj.FrameworkInfo = new(mesos.FrameworkInfo)
 		}
 
 		err = uj.FrameworkInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -3212,14 +3159,8 @@ handle_AgentInfo:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.AgentInfo = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.AgentInfo == nil {
-			uj.AgentInfo = new(mesos.AgentInfo)
 		}
 
 		err = uj.AgentInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)

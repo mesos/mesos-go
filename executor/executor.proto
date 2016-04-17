@@ -69,16 +69,16 @@ message Event {
   // First event received when the executor subscribes.
   // The 'id' field in the 'framework_info' will be set.
    message Subscribed {
-    required ExecutorInfo executor_info = 1;
-    required FrameworkInfo framework_info = 2;
-    required AgentInfo agent_info = 3;
+    required ExecutorInfo executor_info = 1 [(gogoproto.nullable) = false];
+    required FrameworkInfo framework_info = 2 [(gogoproto.nullable) = false];
+    required AgentInfo agent_info = 3 [(gogoproto.nullable) = false];
   }
 
   // Received when the framework attempts to launch a task. Once
   // the task is successfully launched, the executor must respond with
   // a TASK_RUNNING update (See TaskState in v1/mesos.proto).
   message Launch {
-    required TaskInfo task = 1;
+    required TaskInfo task = 1 [(gogoproto.nullable) = false];
   }
 
   // Received when the scheduler wants to kill a specific task. Once
@@ -115,7 +115,7 @@ message Event {
   // longer supported. With HTTP API all errors will be signaled via
   // HTTP response codes.
   message Error {
-    required string message = 1;
+    required string message = 1 [(gogoproto.nullable) = false];
   }
 
   // Type of the event, indicates which optional field below should be

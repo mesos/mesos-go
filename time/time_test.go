@@ -37,11 +37,11 @@ func TestParseDuration(t *testing.T) {
 			continue
 		}
 		if err != nil {
-			t.Error("test case %d failed: unexpected error %+v", i, err)
+			t.Errorf("test case %d failed: unexpected error %+v", i, err)
 		} else if tc.wantsError {
-			t.Error("test case %d failed: expected error for input %q", i, tc.input)
+			t.Errorf("test case %d failed: expected error for input %q", i, tc.input)
 		} else if tc.output != d {
-			t.Error("test case %d failed: expected output %v instead of %v", tc.output, d)
+			t.Errorf("test case %d failed: expected output %v instead of %v", i, tc.output, d)
 		}
 	}
 }

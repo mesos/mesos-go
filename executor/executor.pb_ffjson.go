@@ -1101,23 +1101,16 @@ func (mj *Call_Update) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Status != nil {
-		if true {
-			buf.WriteString(`"status":`)
+	buf.WriteString(`{"status":`)
 
-			{
+	{
 
-				err = mj.Status.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.Status.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -1247,14 +1240,8 @@ handle_Status:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Status = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.Status == nil {
-			uj.Status = new(mesos.TaskStatus)
 		}
 
 		err = uj.Status.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)

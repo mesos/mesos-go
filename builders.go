@@ -3,7 +3,8 @@ package mesos
 type (
 	// ResourceBuilder simplifies construction of Resource objects
 	ResourceBuilder struct{ *Resource }
-	RangeBuilder    struct{ Ranges }
+	// RangeBuilder simplifies construction of Range objects
+	RangeBuilder struct{ Ranges }
 )
 
 func BuildRanges() RangeBuilder {

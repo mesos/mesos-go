@@ -433,17 +433,17 @@ func (m *Call_Subscribe) GetUnacknowledgedUpdates() []Call_Update {
 // explicitly acknowledge the receipt of a status update. See
 // 'Acknowledged' in the 'Events' section above for the semantics.
 type Call_Update struct {
-	Status *mesos.TaskStatus `protobuf:"bytes,1,req,name=status" json:"status,omitempty"`
+	Status mesos.TaskStatus `protobuf:"bytes,1,req,name=status" json:"status"`
 }
 
 func (m *Call_Update) Reset()      { *m = Call_Update{} }
 func (*Call_Update) ProtoMessage() {}
 
-func (m *Call_Update) GetStatus() *mesos.TaskStatus {
+func (m *Call_Update) GetStatus() mesos.TaskStatus {
 	if m != nil {
 		return m.Status
 	}
-	return nil
+	return mesos.TaskStatus{}
 }
 
 // Sends arbitrary binary data to the scheduler. Note that Mesos
@@ -1098,7 +1098,7 @@ func (this *Call_Update) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Call_Updatebut is not nil && this == nil")
 	}
-	if !this.Status.Equal(that1.Status) {
+	if !this.Status.Equal(&that1.Status) {
 		return fmt.Errorf("Status this(%v) Not Equal that(%v)", this.Status, that1.Status)
 	}
 	return nil
@@ -1123,7 +1123,7 @@ func (this *Call_Update) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.Status.Equal(that1.Status) {
+	if !this.Status.Equal(&that1.Status) {
 		return false
 	}
 	return true
@@ -1329,9 +1329,7 @@ func (this *Call_Update) GoString() string {
 	}
 	s := make([]string, 0, 5)
 	s = append(s, "&executor.Call_Update{")
-	if this.Status != nil {
-		s = append(s, "Status: "+fmt.Sprintf("%#v", this.Status)+",\n")
-	}
+	s = append(s, "Status: "+strings.Replace(this.Status.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -1781,18 +1779,14 @@ func (m *Call_Update) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Status == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintExecutor(data, i, uint64(m.Status.Size()))
-		n18, err := m.Status.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n18
+	data[i] = 0xa
+	i++
+	i = encodeVarintExecutor(data, i, uint64(m.Status.Size()))
+	n18, err := m.Status.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n18
 	return i, nil
 }
 
@@ -1985,7 +1979,8 @@ func NewPopulatedCall_Subscribe(r randyExecutor, easy bool) *Call_Subscribe {
 
 func NewPopulatedCall_Update(r randyExecutor, easy bool) *Call_Update {
 	this := &Call_Update{}
-	this.Status = mesos.NewPopulatedTaskStatus(r, easy)
+	v14 := mesos.NewPopulatedTaskStatus(r, easy)
+	this.Status = *v14
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1993,9 +1988,9 @@ func NewPopulatedCall_Update(r randyExecutor, easy bool) *Call_Update {
 
 func NewPopulatedCall_Message(r randyExecutor, easy bool) *Call_Message {
 	this := &Call_Message{}
-	v14 := r.Intn(100)
-	this.Data = make([]byte, v14)
-	for i := 0; i < v14; i++ {
+	v15 := r.Intn(100)
+	this.Data = make([]byte, v15)
+	for i := 0; i < v15; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -2022,9 +2017,9 @@ func randUTF8RuneExecutor(r randyExecutor) rune {
 	return rune(ru + 61)
 }
 func randStringExecutor(r randyExecutor) string {
-	v15 := r.Intn(100)
-	tmps := make([]rune, v15)
-	for i := 0; i < v15; i++ {
+	v16 := r.Intn(100)
+	tmps := make([]rune, v16)
+	for i := 0; i < v16; i++ {
 		tmps[i] = randUTF8RuneExecutor(r)
 	}
 	return string(tmps)
@@ -2046,11 +2041,11 @@ func randFieldExecutor(data []byte, r randyExecutor, fieldNumber int, wire int) 
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateExecutor(data, uint64(key))
-		v16 := r.Int63()
+		v17 := r.Int63()
 		if r.Intn(2) == 0 {
-			v16 *= -1
+			v17 *= -1
 		}
-		data = encodeVarintPopulateExecutor(data, uint64(v16))
+		data = encodeVarintPopulateExecutor(data, uint64(v17))
 	case 1:
 		data = encodeVarintPopulateExecutor(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -2222,10 +2217,8 @@ func (m *Call_Subscribe) Size() (n int) {
 func (m *Call_Update) Size() (n int) {
 	var l int
 	_ = l
-	if m.Status != nil {
-		l = m.Status.Size()
-		n += 1 + l + sovExecutor(uint64(l))
-	}
+	l = m.Status.Size()
+	n += 1 + l + sovExecutor(uint64(l))
 	return n
 }
 
@@ -2362,7 +2355,7 @@ func (this *Call_Update) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Call_Update{`,
-		`Status:` + strings.Replace(fmt.Sprintf("%v", this.Status), "TaskStatus", "mesos.TaskStatus", 1) + `,`,
+		`Status:` + strings.Replace(strings.Replace(this.Status.String(), "TaskStatus", "mesos.TaskStatus", 1), `&`, ``, 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -3687,9 +3680,6 @@ func (m *Call_Update) Unmarshal(data []byte) error {
 			postIndex := iNdEx + msglen
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
-			}
-			if m.Status == nil {
-				m.Status = &mesos.TaskStatus{}
 			}
 			if err := m.Status.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err

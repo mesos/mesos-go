@@ -3,7 +3,7 @@
 // source: executor/executor.pb.go
 // DO NOT EDIT!
 
-package scheduler
+package executor
 
 import (
 	"bytes"
@@ -389,7 +389,7 @@ handle_FrameworkID:
 
 handle_Type:
 
-	/* handler: uj.Type type=scheduler.Call_Type kind=int32 quoted=false*/
+	/* handler: uj.Type type=executor.Call_Type kind=int32 quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -421,7 +421,7 @@ handle_Type:
 
 handle_Subscribe:
 
-	/* handler: uj.Subscribe type=scheduler.Call_Subscribe kind=struct quoted=false*/
+	/* handler: uj.Subscribe type=executor.Call_Subscribe kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -448,7 +448,7 @@ handle_Subscribe:
 
 handle_Update:
 
-	/* handler: uj.Update type=scheduler.Call_Update kind=struct quoted=false*/
+	/* handler: uj.Update type=executor.Call_Update kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -475,7 +475,7 @@ handle_Update:
 
 handle_Message:
 
-	/* handler: uj.Message type=scheduler.Call_Message kind=struct quoted=false*/
+	/* handler: uj.Message type=executor.Call_Message kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -997,7 +997,7 @@ handle_UnacknowledgedTasks:
 
 handle_UnacknowledgedUpdates:
 
-	/* handler: uj.UnacknowledgedUpdates type=[]scheduler.Call_Update kind=slice quoted=false*/
+	/* handler: uj.UnacknowledgedUpdates type=[]executor.Call_Update kind=slice quoted=false*/
 
 	{
 
@@ -1038,7 +1038,7 @@ handle_UnacknowledgedUpdates:
 					wantVal = true
 				}
 
-				/* handler: v type=scheduler.Call_Update kind=struct quoted=false*/
+				/* handler: v type=executor.Call_Update kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -1663,7 +1663,7 @@ mainparse:
 
 handle_Type:
 
-	/* handler: uj.Type type=scheduler.Event_Type kind=int32 quoted=false*/
+	/* handler: uj.Type type=executor.Event_Type kind=int32 quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -1695,7 +1695,7 @@ handle_Type:
 
 handle_Subscribed:
 
-	/* handler: uj.Subscribed type=scheduler.Event_Subscribed kind=struct quoted=false*/
+	/* handler: uj.Subscribed type=executor.Event_Subscribed kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -1722,7 +1722,7 @@ handle_Subscribed:
 
 handle_Acknowledged:
 
-	/* handler: uj.Acknowledged type=scheduler.Event_Acknowledged kind=struct quoted=false*/
+	/* handler: uj.Acknowledged type=executor.Event_Acknowledged kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -1749,7 +1749,7 @@ handle_Acknowledged:
 
 handle_Launch:
 
-	/* handler: uj.Launch type=scheduler.Event_Launch kind=struct quoted=false*/
+	/* handler: uj.Launch type=executor.Event_Launch kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -1776,7 +1776,7 @@ handle_Launch:
 
 handle_Kill:
 
-	/* handler: uj.Kill type=scheduler.Event_Kill kind=struct quoted=false*/
+	/* handler: uj.Kill type=executor.Event_Kill kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -1803,7 +1803,7 @@ handle_Kill:
 
 handle_Message:
 
-	/* handler: uj.Message type=scheduler.Event_Message kind=struct quoted=false*/
+	/* handler: uj.Message type=executor.Event_Message kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -1830,7 +1830,7 @@ handle_Message:
 
 handle_Error:
 
-	/* handler: uj.Error type=scheduler.Event_Error kind=struct quoted=false*/
+	/* handler: uj.Error type=executor.Event_Error kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {

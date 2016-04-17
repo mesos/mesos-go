@@ -23,6 +23,7 @@ codecs: protobufs ffjson
 protobufs: clean-protobufs
 	protoc --proto_path="${PROTO_PATH}" --gogo_out=. *.proto
 	protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./scheduler/*.proto
+	protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./executor/*.proto
 
 .PHONY: clean-protobufs
 clean-protobufs:
@@ -31,8 +32,9 @@ clean-protobufs:
 .PHONY: ffjson
 ffjson: clean-ffjson
 	ffjson *.pb.go
-	ffjson **/*.pb.go
+	ffjson scheduler/*.pb.go
+	ffjson executor/*.pb.go
 
 .PHONY: clean-ffjson
 clean-ffjson:
-	-rm *ffjson.go **/*ffjson.go
+	rm -f *ffjson.go **/*ffjson.go

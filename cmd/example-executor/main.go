@@ -20,7 +20,6 @@ import (
 const (
 	apiPath = "/api/v1/executor"
 	timeout = 10 * time.Second
-	debug   = true
 )
 
 var errMustAbort = errors.New("received abort signal from mesos, will attempt to re-subscribe")
@@ -184,19 +183,6 @@ func launch(state *internalState, task mesos.TaskInfo) {
 		status.State = mesos.TASK_FAILED.Enum()
 		status.Message = protoString(err.Error())
 		state.failedTasks[task.TaskID] = status
-	}
-}
-
-type marshalJSON interface {
-	MarshalJSON() ([]byte, error)
-}
-
-func debugJSON(mk marshalJSON) {
-	if debug {
-		b, err := mk.MarshalJSON()
-		if err == nil {
-			println(string(b))
-		}
 	}
 }
 

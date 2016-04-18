@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -175,8 +176,19 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) 
 		var events encoding.Decoder
 		switch res.StatusCode {
 		case http.StatusOK:
+			if debug {
+				log.Println("request OK, decoding response")
+			}
+			ct := res.Header.Get("Content-Type")
+			if ct != c.codec.MediaTypes[1] {
+				res.Body.Close()
+				return nil, fmt.Errorf("unexpected content type: %q", ct) //TODO(jdef) extact this into a typed error
+			}
 			events = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
 		case http.StatusAccepted:
+			if debug {
+				log.Println("request Accepted")
+			}
 			// noop; no data to decode for these types of calls
 		case http.StatusTemporaryRedirect:
 			// TODO(jdef) refactor this

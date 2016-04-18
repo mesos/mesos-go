@@ -56,7 +56,6 @@ func run(cfg config.Config) {
 	}
 	subscribe := calls.Subscribe(nil, nil).With(state.callOptions...)
 	for {
-		time.Sleep(5 * time.Second) // TODO(jdef) need backoff here
 		subscribe = subscribe.With(
 			unacknowledgedTasks(state),
 			unacknowledgedUpdates(state),
@@ -70,6 +69,7 @@ func run(cfg config.Config) {
 		} else {
 			log.Println("disconnected")
 		}
+		time.Sleep(5 * time.Second) // TODO(jdef) need backoff here
 	}
 }
 
@@ -209,7 +209,7 @@ func newStatus(state *internalState, id mesos.TaskID) mesos.TaskStatus {
 		TaskID:     id,
 		Source:     mesos.SOURCE_EXECUTOR.Enum(),
 		ExecutorID: &state.executor.ExecutorID,
-		UUID:       []byte(uuid.New()),
+		UUID:       []byte(uuid.NewRandom()),
 	}
 }
 

@@ -1,6 +1,6 @@
 package main
 
-const debug = true
+const debug = false
 
 type marshalJSON interface {
 	MarshalJSON() ([]byte, error)

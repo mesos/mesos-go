@@ -53,7 +53,7 @@ var (
 )
 
 const (
-	debug                      = true
+	debug                      = false
 	defaultMaxRedirectAttempts = 9 // per-Do invocation
 )
 

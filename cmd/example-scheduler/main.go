@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -14,37 +15,72 @@ import (
 
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go"
+	schedmetrics "github.com/mesos/mesos-go/cmd/example-scheduler/metrics"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
 	"github.com/mesos/mesos-go/httpcli/stream"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+func RefuseSecondsWithJitter(d time.Duration) scheduler.CallOpt {
+	return calls.Filters(func(f *mesos.Filters) {
+		s := time.Duration(rand.Int63n(int64(d))).Seconds()
+		f.RefuseSeconds = &s
+	})
+}
 
 func main() {
 	cfg := config{
-		user:        env("FRAMEWORK_USER", "root"),
-		name:        env("FRAMEWORK_NAME", "example"),
-		url:         env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
-		codec:       codec{Codec: &encoding.ProtobufCodec},
-		timeout:     envDuration("MESOS_CONNECT_TIMEOUT", "1s"),
-		checkpoint:  true,
-		server:      server{address: env("LIBPROCESS_IP", "127.0.0.1")},
-		tasks:       envInt("NUM_TASKS", "5"),
-		taskCPU:     envFloat("TASK_CPU", "1"),
-		taskMemory:  envFloat("TASK_MEMORY", "64"),
-		execCPU:     envFloat("EXEC_CPU", "0.01"),
-		execMemory:  envFloat("EXEC_MEMORY", "64"),
-		reviveBurst: envInt("REVIVE_BURST", "3"),
-		reviveWait:  envDuration("REVIVE_WAIT", "1s"),
+		user:             env("FRAMEWORK_USER", "root"),
+		name:             env("FRAMEWORK_NAME", "example"),
+		url:              env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
+		codec:            codec{Codec: &encoding.ProtobufCodec},
+		timeout:          envDuration("MESOS_CONNECT_TIMEOUT", "1s"),
+		checkpoint:       true,
+		server:           server{address: env("LIBPROCESS_IP", "127.0.0.1")},
+		tasks:            envInt("NUM_TASKS", "5"),
+		taskCPU:          envFloat("TASK_CPU", "1"),
+		taskMemory:       envFloat("TASK_MEMORY", "64"),
+		execCPU:          envFloat("EXEC_CPU", "0.01"),
+		execMemory:       envFloat("EXEC_MEMORY", "64"),
+		reviveBurst:      envInt("REVIVE_BURST", "3"),
+		reviveWait:       envDuration("REVIVE_WAIT", "1s"),
+		maxRefuseSeconds: envDuration("MAX_REFUSE_SECONDS", "5s"),
+		jobRestartDelay:  envDuration("JOB_RESTART_DELAY", "5s"),
+		metrics: metrics{
+			port: envInt("PORT0", "64009"),
+			path: env("METRICS_API_PATH", "/metrics"),
+		},
 	}
 
 	fs := flag.NewFlagSet("config", flag.ExitOnError)
 	cfg.addFlags(fs)
 	fs.Parse(os.Args[1:])
 
+	schedmetrics.Register()
+
+	metricsAddress := net.JoinHostPort(cfg.server.address, strconv.Itoa(cfg.metrics.port))
+	http.Handle(cfg.metrics.path, prometheus.Handler())
+	go forever("api-server", cfg.jobRestartDelay, func() error { return http.ListenAndServe(metricsAddress, nil) })
+
 	if err := run(cfg); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func forever(name string, jobRestartDelay time.Duration, f func() error) {
+	for {
+		schedmetrics.JobStartCount.WithLabelValues(name).Inc()
+		err := f()
+		if err != nil {
+			log.Printf("job %q exited with error %+v", name, err)
+		} else {
+			log.Printf("job %q exited")
+		}
+		time.Sleep(jobRestartDelay)
 	}
 }
 
@@ -53,13 +89,15 @@ func run(cfg config) error {
 		panic("must specify an executor binary")
 	}
 
+	log.Printf("scheduler running with configuration: %+v", cfg)
+
 	state := internalState{
 		config:             cfg,
 		totalTasks:         cfg.tasks,
 		reviveTokens:       burstBucket(cfg.reviveBurst, cfg.reviveWait, cfg.reviveWait, nil),
 		wantsTaskResources: buildWantsTaskResources(cfg),
 		executor: prepareExecutorInfo(
-			cfg.executor, cfg.server, buildWantsExecutorResources(cfg)),
+			cfg.executor, cfg.server, buildWantsExecutorResources(cfg), cfg.jobRestartDelay),
 		cli: httpcli.New(
 			httpcli.URL(cfg.url),
 			httpcli.Codec(cfg.codec.Codec),
@@ -88,6 +126,7 @@ func run(cfg config) error {
 	subscribe := calls.Subscribe(true, frameworkInfo)
 	registrationTokens := backoffBucket(1*time.Second, 15*time.Second, nil)
 	for {
+		schedmetrics.SubscriptionAttempts.Inc()
 		resp, opt, err := stream.Subscribe(state.cli, subscribe)
 		if err == nil {
 			func() {
@@ -100,6 +139,7 @@ func run(cfg config) error {
 			}()
 		}
 		if err != nil && err != io.EOF {
+			schedmetrics.APIErrorCount.WithLabelValues("subscribe").Inc()
 			log.Println(err)
 		} else {
 			log.Println("disconnected")
@@ -130,6 +170,7 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder) (err error) 
 
 		switch e.GetType() {
 		case scheduler.Event_FAILURE:
+			schedmetrics.FailuresReceived.Inc()
 			log.Println("received a FAILURE event")
 			f := e.GetFailure()
 			failure(f.ExecutorID, f.AgentID, f.Status)
@@ -138,18 +179,25 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder) (err error) 
 			if state.config.verbose {
 				log.Println("received an OFFERS event")
 			}
+			t := time.Now()
 			resourceOffers(state, callOptions.Copy(), e.GetOffers().GetOffers())
+			if state.config.summaryMetrics {
+				schedmetrics.ProcessOffersLatency.Observe(schedmetrics.InMicroseconds(time.Now().Sub(t)))
+			}
 
 		case scheduler.Event_UPDATE:
+			schedmetrics.UpdatesReceived.Inc()
 			statusUpdate(state, callOptions.Copy(), e.GetUpdate().GetStatus())
 
 		case scheduler.Event_ERROR:
+			schedmetrics.ErrorsReceived.Inc()
 			// it's recommended that we abort and re-try subscribing; setting
 			// err here will cause the event loop to terminate and the connection
 			// will be reset.
 			err = fmt.Errorf("ERROR: " + e.GetError().GetMessage())
 
 		case scheduler.Event_SUBSCRIBED:
+			schedmetrics.SubscribedReceived.Inc()
 			log.Println("received a SUBSCRIBED event")
 			if state.frameworkID == "" {
 				state.frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
@@ -185,6 +233,10 @@ func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 }
 
 func resourceOffers(state *internalState, callOptions scheduler.CallOptions, offers []mesos.Offer) {
+	schedmetrics.OffersReceived.Add(float64(len(offers)))
+	callOptions = append(callOptions, RefuseSecondsWithJitter(state.config.maxRefuseSeconds))
+	tasksLaunchedThisCycle := 0
+	offersDeclined := 0
 	for i := range offers {
 		var (
 			remaining = mesos.Resources(offers[i].Resources)
@@ -195,12 +247,25 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			log.Println("received offer id '" + offers[i].ID.Value + "' with resources " + remaining.String())
 		}
 
-		wantsResources := state.wantsTaskResources.Clone()
+		var wantsExecutorResources mesos.Resources
 		if len(offers[i].ExecutorIDs) == 0 {
-			wantsResources.Add(state.executor.Resources...)
+			wantsExecutorResources = mesos.Resources(state.executor.Resources)
 		}
 
-		for state.tasksLaunched < state.totalTasks && remaining.Flatten().ContainsAll(wantsResources) {
+		flattened := remaining.Flatten()
+
+		// avoid the expense of computing these if we can...
+		if state.config.summaryMetrics && state.config.resourceTypeMetrics {
+			for name, restype := range flattened.Types() {
+				if restype == mesos.SCALAR {
+					sum := flattened.SumScalars(mesos.NamedResources(name))
+					schedmetrics.OfferedResources.WithLabelValues(name).Observe(sum.GetValue())
+				}
+			}
+		}
+
+		taskWantsResources := state.wantsTaskResources.Plus(wantsExecutorResources...)
+		for state.tasksLaunched < state.totalTasks && flattened.ContainsAll(taskWantsResources) {
 			state.tasksLaunched++
 			taskID := state.tasksLaunched
 
@@ -216,6 +281,8 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 
 			remaining.Subtract(task.Resources...)
 			tasks = append(tasks, task)
+
+			flattened = remaining.Flatten()
 		}
 
 		// build Accept call to launch all of the tasks we've assembled
@@ -229,10 +296,21 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		// send Accept call to mesos
 		resp, err := state.cli.Do(accept)
 		if err != nil {
+			schedmetrics.APIErrorCount.WithLabelValues("accept").Inc()
 			log.Printf("failed to launch tasks: %+v", err)
 		} else {
+			if n := len(tasks); n > 0 {
+				tasksLaunchedThisCycle += n
+			} else {
+				offersDeclined++
+			}
 			resp.Close() // no data for these calls
 		}
+	}
+	schedmetrics.OffersDeclined.Add(float64(offersDeclined))
+	schedmetrics.TasksLaunched.Add(float64(tasksLaunchedThisCycle))
+	if state.config.summaryMetrics {
+		schedmetrics.TasksLaunchedPerOfferCycle.Observe(float64(tasksLaunchedThisCycle))
 	}
 }
 
@@ -252,9 +330,10 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 			uuid,
 		).With(callOptions...)
 
-		// send Accept call to mesos
+		// send Ack call to mesos
 		resp, err := state.cli.Do(ack)
 		if err != nil {
+			schedmetrics.APIErrorCount.WithLabelValues("ack").Inc()
 			log.Printf("failed to ack status update for task: %+v", err)
 			return
 		} else {
@@ -264,7 +343,9 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 	switch st := s.GetState(); st {
 	case mesos.TASK_FINISHED:
 		state.tasksFinished++
-	case mesos.TASK_LOST, mesos.TASK_KILLED, mesos.TASK_FAILED:
+		schedmetrics.TasksFinished.Inc()
+
+	case mesos.TASK_LOST, mesos.TASK_KILLED, mesos.TASK_FAILED, mesos.TASK_ERROR:
 		log.Println("Exiting because task " + s.GetTaskID().Value +
 			" is in an unexpected state " + st.String() +
 			" with reason " + s.GetReason().String() +
@@ -282,8 +363,10 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 	select {
 	case <-state.reviveTokens:
 		// not done yet, revive offers!
+		schedmetrics.ReviveCount.Inc()
 		resp, err := state.cli.Do(calls.Revive().With(callOptions...))
 		if err != nil {
+			schedmetrics.APIErrorCount.WithLabelValues("revive").Inc()
 			log.Printf("failed to revive offers: %+v", err)
 			return
 		}
@@ -338,7 +421,7 @@ func prepareListener(server server) (*net.TCPListener, int, error) {
 	return listener, iport, nil
 }
 
-func prepareExecutorInfo(execBinary string, server server, wantsResources mesos.Resources) *mesos.ExecutorInfo {
+func prepareExecutorInfo(execBinary string, server server, wantsResources mesos.Resources, jobRestartDelay time.Duration) *mesos.ExecutorInfo {
 	listener, iport, err := prepareListener(server)
 	if err != nil {
 		panic(err.Error()) // TODO(jdef) fixme
@@ -351,7 +434,7 @@ func prepareExecutorInfo(execBinary string, server server, wantsResources mesos.
 	)
 	executorUris = append(executorUris, mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
 
-	go http.Serve(listener, nil)
+	go forever("artifact-server", jobRestartDelay, func() error { return http.Serve(listener, nil) })
 	log.Println("Serving executor artifacts...")
 
 	// Create mesos scheduler driver.

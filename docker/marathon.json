@@ -6,10 +6,12 @@
   "env": {
     "NUM_TASKS": "10000",
     "MESOS_CONNECT_TIMEOUT": "10s",
+    "MAX_REFUSE_SECONDS": "3s",
+    "REVIVE_BURST": "5",
     "TASK_CPU": "0.1",
     "TASK_MEMORY": "0.1",
-    "EXEC_CPU": "1",
-    "EXEC_MEMORY": "128"
+    "EXEC_CPU": "0.9",
+    "EXEC_MEMORY": "256"
   },
   "container": {
     "type": "DOCKER",

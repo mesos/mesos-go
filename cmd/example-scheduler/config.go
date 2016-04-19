@@ -6,27 +6,32 @@ import (
 )
 
 type config struct {
-	id          string
-	user        string
-	name        string
-	role        string
-	url         string
-	codec       codec
-	timeout     time.Duration
-	checkpoint  bool
-	principal   string
-	hostname    string
-	labels      Labels
-	server      server
-	executor    string
-	tasks       int
-	verbose     bool
-	taskCPU     float64
-	taskMemory  float64
-	execCPU     float64
-	execMemory  float64
-	reviveBurst int
-	reviveWait  time.Duration
+	id                  string
+	user                string
+	name                string
+	role                string
+	url                 string
+	codec               codec
+	timeout             time.Duration
+	checkpoint          bool
+	principal           string
+	hostname            string
+	labels              Labels
+	server              server
+	executor            string
+	tasks               int
+	verbose             bool
+	taskCPU             float64
+	taskMemory          float64
+	execCPU             float64
+	execMemory          float64
+	reviveBurst         int
+	reviveWait          time.Duration
+	metrics             metrics
+	resourceTypeMetrics bool
+	maxRefuseSeconds    time.Duration
+	jobRestartDelay     time.Duration
+	summaryMetrics      bool
 }
 
 func (cfg *config) addFlags(fs *flag.FlagSet) {
@@ -51,9 +56,20 @@ func (cfg *config) addFlags(fs *flag.FlagSet) {
 	fs.Float64Var(&cfg.execMemory, "exec.memory", cfg.execMemory, "Memory resources (MB) to consume per-executor")
 	fs.IntVar(&cfg.reviveBurst, "revive.burst", cfg.reviveBurst, "Number of revive messages that may be sent in a burst within revive-wait period")
 	fs.DurationVar(&cfg.reviveWait, "revive.wait", cfg.reviveWait, "Wait this long to fully recharge revive-burst quota")
+	fs.IntVar(&cfg.metrics.port, "metrics.port", cfg.metrics.port, "Port of metrics server (listens on server.address)")
+	fs.StringVar(&cfg.metrics.path, "metrics.path", cfg.metrics.path, "URI path to metrics endpoint")
+	fs.BoolVar(&cfg.resourceTypeMetrics, "resourceTypeMetrics", cfg.resourceTypeMetrics, "Collect scalar resource metrics per-type")
+	fs.DurationVar(&cfg.maxRefuseSeconds, "maxRefuseSeconds", cfg.maxRefuseSeconds, "Max length of time to refuse future offers")
+	fs.DurationVar(&cfg.jobRestartDelay, "jobRestartDelay", cfg.jobRestartDelay, "Duration between job (internal service) restarts between failures")
+	fs.BoolVar(&cfg.summaryMetrics, "summaryMetrics", cfg.summaryMetrics, "Collect summary metrics for tasks launched per-offer-cycle, offer processing time, etc.")
 }
 
 type server struct {
 	address string
 	port    int
+}
+
+type metrics struct {
+	port int
+	path string
 }

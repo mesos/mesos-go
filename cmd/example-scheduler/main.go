@@ -128,27 +128,29 @@ func run(cfg config) error {
 	for {
 		schedmetrics.SubscriptionAttempts.Inc()
 		resp, opt, err := stream.Subscribe(state.cli, subscribe)
-		if err == nil {
-			func() {
-				undo := state.cli.With(opt)
-				defer func() {
-					resp.Close()
-					state.cli.With(undo) // strip the stream options
+		func() {
+			if resp != nil {
+				defer resp.Close()
+			}
+			if err == nil {
+				func() {
+					undo := state.cli.With(opt)
+					defer state.cli.With(undo) // strip the stream options
+					err = eventLoop(&state, resp.Decoder())
 				}()
-				err = eventLoop(&state, resp.Decoder)
-			}()
-		}
-		if err != nil && err != io.EOF {
-			schedmetrics.APIErrorCount.WithLabelValues("subscribe").Inc()
-			log.Println(err)
-		} else {
-			log.Println("disconnected")
-		}
-		if state.frameworkID != "" {
-			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
-		}
-		<-registrationTokens
-		log.Println("reconnecting..")
+			}
+			if err != nil && err != io.EOF {
+				schedmetrics.APIErrorCount.WithLabelValues("subscribe").Inc()
+				log.Println(err)
+			} else {
+				log.Println("disconnected")
+			}
+			if frameworkInfo.GetFailoverTimeout() > 0 && state.frameworkID != "" {
+				subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
+			}
+			<-registrationTokens
+			log.Println("reconnecting..")
+		}()
 	}
 }
 
@@ -295,6 +297,9 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 
 		// send Accept call to mesos
 		resp, err := state.cli.Do(accept)
+		if resp != nil {
+			resp.Close()
+		}
 		if err != nil {
 			schedmetrics.APIErrorCount.WithLabelValues("accept").Inc()
 			log.Printf("failed to launch tasks: %+v", err)
@@ -304,7 +309,6 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			} else {
 				offersDeclined++
 			}
-			resp.Close() // no data for these calls
 		}
 	}
 	schedmetrics.OffersDeclined.Add(float64(offersDeclined))
@@ -332,12 +336,13 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 
 		// send Ack call to mesos
 		resp, err := state.cli.Do(ack)
+		if resp != nil {
+			resp.Close()
+		}
 		if err != nil {
 			schedmetrics.APIErrorCount.WithLabelValues("ack").Inc()
 			log.Printf("failed to ack status update for task: %+v", err)
 			return
-		} else {
-			resp.Close() // no data for these calls
 		}
 	}
 	switch st := s.GetState(); st {
@@ -365,12 +370,14 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		// not done yet, revive offers!
 		schedmetrics.ReviveCount.Inc()
 		resp, err := state.cli.Do(calls.Revive().With(callOptions...))
+		if resp != nil {
+			resp.Close()
+		}
 		if err != nil {
 			schedmetrics.APIErrorCount.WithLabelValues("revive").Inc()
 			log.Printf("failed to revive offers: %+v", err)
 			return
 		}
-		resp.Close()
 	default:
 		// noop
 	}
@@ -380,6 +387,7 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 func serveExecutorArtifact(server server, path string) (string, string) {
 	serveFile := func(pattern string, filename string) {
 		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+			schedmetrics.ArtifactDownloads.Inc()
 			http.ServeFile(w, r, filename)
 		})
 	}

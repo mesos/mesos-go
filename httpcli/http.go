@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/recordio"
 )
@@ -78,10 +79,11 @@ type DoFunc func(*http.Request) (*http.Response, error)
 // Close when they're finished processing the response otherwise there may be connection leaks.
 type Response struct {
 	io.Closer
-	StatusCode int
-	Header     http.Header
-	Decoder    encoding.Decoder
+	decoder encoding.Decoder
 }
+
+// implements mesos.Response
+func (r *Response) Decoder() encoding.Decoder { return r.decoder }
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
@@ -127,13 +129,12 @@ func (c *Client) With(opts ...Opt) Opt {
 	return last
 }
 
-// Do sends a Call and returns a streaming Decoder from which callers can read
-// Events from, an io.Closer to close the event stream on graceful termination
-// and an error in case of failure. Callers are expected to *always* close a
-// non-nil io.Closer if one is returned. For operations which are successful
-// but also for which there is no expected object stream as a result the
-// returned Decoder will be nil.
-func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) {
+// Do sends a Call and returns (a) a Response (should be closed when finished) that
+// contains a streaming Decoder from which callers can read Events from, and; (b) an
+// error in case of failure. Callers are expected to *always* close a non-nil Response
+// if one is returned. For operations which are successful but also for which there is
+// no expected object stream as a result the embedded Decoder will be nil.
+func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (mesos.Response, error) {
 	attempt := 0
 	for {
 		var body bytes.Buffer
@@ -226,10 +227,8 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (*Response, error) 
 			}
 		}
 		return &Response{
-			StatusCode: res.StatusCode,
-			Header:     res.Header,
-			Decoder:    events,
-			Closer:     res.Body,
+			decoder: events,
+			Closer:  res.Body,
 		}, codeErrors[res.StatusCode]
 	}
 }

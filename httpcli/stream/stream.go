@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
 )
@@ -16,7 +17,7 @@ const (
 
 var errMissingMesosStreamId = errors.New("missing Mesos-Stream-Id header expected with successful SUBSCRIBE")
 
-func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (*httpcli.Response, httpcli.Opt, error) {
+func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (mesos.Response, httpcli.Opt, error) {
 	var mesosStreamID string
 	undo := cli.With(httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
 		return func(req *http.Request) (*http.Response, error) {

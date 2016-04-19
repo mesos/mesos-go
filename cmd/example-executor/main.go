@@ -61,14 +61,19 @@ func run(cfg config.Config) {
 			unacknowledgedUpdates(state),
 		)
 		resp, err := state.cli.Do(subscribe, httpcli.Close(true))
-		if err == nil {
-			err = eventLoop(state, resp.Decoder)
-		}
-		if err != nil && err != io.EOF {
-			log.Println(err)
-		} else {
-			log.Println("disconnected")
-		}
+		func() {
+			if resp != nil {
+				defer resp.Close()
+			}
+			if err == nil {
+				err = eventLoop(state, resp.Decoder())
+			}
+			if err != nil && err != io.EOF {
+				log.Println(err)
+			} else {
+				log.Println("disconnected")
+			}
+		}()
 		time.Sleep(5 * time.Second) // TODO(jdef) need backoff here
 	}
 }
@@ -194,11 +199,13 @@ func protoString(s string) *string { return &s }
 func update(state *internalState, status mesos.TaskStatus) error {
 	upd := calls.Update(status).With(state.callOptions...)
 	resp, err := state.cli.Do(upd)
+	if resp != nil {
+		resp.Close()
+	}
 	if err != nil {
 		log.Printf("failed to send update: %+v", err)
 		debugJSON(upd)
 	} else {
-		resp.Close()
 		state.unackedUpdates[string(status.UUID)] = *upd.Update
 	}
 	return err

@@ -89,6 +89,11 @@ var (
 		Name:      "tasks_launched_per_cycle",
 		Help:      "Number of tasks launched per-offers cycle (event).",
 	})
+	ArtifactDownloads = prometheus.NewCounter(prometheus.CounterOpts{
+		Subsystem: Subsystem,
+		Name:      "artifact_downloads",
+		Help:      "The number of artifacts served by the built-in http server.",
+	})
 )
 
 var registerMetrics sync.Once
@@ -110,6 +115,7 @@ func Register() {
 		prometheus.MustRegister(TasksLaunched)
 		prometheus.MustRegister(OfferedResources)
 		prometheus.MustRegister(TasksLaunchedPerOfferCycle)
+		prometheus.MustRegister(ArtifactDownloads)
 	})
 }
 

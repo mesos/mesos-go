@@ -15,6 +15,7 @@ import (
 
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go"
+	"github.com/mesos/mesos-go/cmd"
 	schedmetrics "github.com/mesos/mesos-go/cmd/example-scheduler/metrics"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
@@ -50,6 +51,8 @@ func main() {
 		reviveWait:       envDuration("REVIVE_WAIT", "1s"),
 		maxRefuseSeconds: envDuration("MAX_REFUSE_SECONDS", "5s"),
 		jobRestartDelay:  envDuration("JOB_RESTART_DELAY", "5s"),
+		execImage:        env("EXEC_IMAGE", cmd.DockerImageTag),
+		executor:         env("EXEC_BINARY", "/opt/example-executor"),
 		metrics: metrics{
 			port: envInt("PORT0", "64009"),
 			path: env("METRICS_API_PATH", "/metrics"),
@@ -85,8 +88,8 @@ func forever(name string, jobRestartDelay time.Duration, f func() error) {
 }
 
 func run(cfg config) error {
-	if cfg.executor == "" {
-		panic("must specify an executor binary")
+	if cfg.executor == "" && cfg.execImage == "" {
+		panic("must specify an executor binary or image")
 	}
 
 	log.Printf("scheduler running with configuration: %+v", cfg)
@@ -97,7 +100,7 @@ func run(cfg config) error {
 		reviveTokens:       burstBucket(cfg.reviveBurst, cfg.reviveWait, cfg.reviveWait, nil),
 		wantsTaskResources: buildWantsTaskResources(cfg),
 		executor: prepareExecutorInfo(
-			cfg.executor, cfg.server, buildWantsExecutorResources(cfg), cfg.jobRestartDelay),
+			cfg.executor, cfg.execImage, cfg.server, buildWantsExecutorResources(cfg), cfg.jobRestartDelay),
 		cli: httpcli.New(
 			httpcli.URL(cfg.url),
 			httpcli.Codec(cfg.codec.Codec),
@@ -429,32 +432,58 @@ func prepareListener(server server) (*net.TCPListener, int, error) {
 	return listener, iport, nil
 }
 
-func prepareExecutorInfo(execBinary string, server server, wantsResources mesos.Resources, jobRestartDelay time.Duration) *mesos.ExecutorInfo {
-	listener, iport, err := prepareListener(server)
-	if err != nil {
-		panic(err.Error()) // TODO(jdef) fixme
-	}
-	server.port = iport // we're just working with a copy of server, so this is OK
-	var (
-		executorUris     = []mesos.CommandInfo_URI{}
-		uri, executorCmd = serveExecutorArtifact(server, execBinary)
-		executorCommand  = fmt.Sprintf("./%s", executorCmd)
-	)
-	executorUris = append(executorUris, mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
+func prepareExecutorInfo(execBinary, execImage string, server server, wantsResources mesos.Resources, jobRestartDelay time.Duration) *mesos.ExecutorInfo {
+	if execImage != "" {
+		// Create mesos custom executor
+		return &mesos.ExecutorInfo{
+			ExecutorID: mesos.ExecutorID{Value: "default"},
+			Name:       proto.String("Test Executor"),
+			Command: mesos.CommandInfo{
+				Shell: func() *bool { x := false; return &x }(),
+			},
+			Container: &mesos.ContainerInfo{
+				Type: mesos.ContainerInfo_DOCKER.Enum(),
+				Docker: &mesos.ContainerInfo_DockerInfo{
+					Image:          execImage,
+					ForcePullImage: func() *bool { x := true; return &x }(),
+					Parameters: []mesos.Parameter{
+						{
+							Key:   "entrypoint",
+							Value: execBinary,
+						},
+					},
+				},
+			},
+			Resources: wantsResources,
+		}
+	} else {
+		log.Println("No executor image specified, will serve executor binary from built-in HTTP server")
 
-	go forever("artifact-server", jobRestartDelay, func() error { return http.Serve(listener, nil) })
-	log.Println("Serving executor artifacts...")
+		listener, iport, err := prepareListener(server)
+		if err != nil {
+			panic(err.Error()) // TODO(jdef) fixme
+		}
+		server.port = iport // we're just working with a copy of server, so this is OK
+		var (
+			executorUris     = []mesos.CommandInfo_URI{}
+			uri, executorCmd = serveExecutorArtifact(server, execBinary)
+			executorCommand  = fmt.Sprintf("./%s", executorCmd)
+		)
+		executorUris = append(executorUris, mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
 
-	// Create mesos scheduler driver.
-	return &mesos.ExecutorInfo{
-		ExecutorID: mesos.ExecutorID{Value: "default"},
-		Name:       proto.String("Test Executor"),
-		Source:     proto.String("foo"),
-		Command: mesos.CommandInfo{
-			Value: proto.String(executorCommand),
-			URIs:  executorUris,
-		},
-		Resources: wantsResources,
+		go forever("artifact-server", jobRestartDelay, func() error { return http.Serve(listener, nil) })
+		log.Println("Serving executor artifacts...")
+
+		// Create mesos custom executor
+		return &mesos.ExecutorInfo{
+			ExecutorID: mesos.ExecutorID{Value: "default"},
+			Name:       proto.String("Test Executor"),
+			Command: mesos.CommandInfo{
+				Value: proto.String(executorCommand),
+				URIs:  executorUris,
+			},
+			Resources: wantsResources,
+		}
 	}
 }
 

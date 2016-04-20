@@ -32,6 +32,7 @@ type config struct {
 	maxRefuseSeconds    time.Duration
 	jobRestartDelay     time.Duration
 	summaryMetrics      bool
+	execImage           string
 }
 
 func (cfg *config) addFlags(fs *flag.FlagSet) {
@@ -62,6 +63,7 @@ func (cfg *config) addFlags(fs *flag.FlagSet) {
 	fs.DurationVar(&cfg.maxRefuseSeconds, "maxRefuseSeconds", cfg.maxRefuseSeconds, "Max length of time to refuse future offers")
 	fs.DurationVar(&cfg.jobRestartDelay, "jobRestartDelay", cfg.jobRestartDelay, "Duration between job (internal service) restarts between failures")
 	fs.BoolVar(&cfg.summaryMetrics, "summaryMetrics", cfg.summaryMetrics, "Collect summary metrics for tasks launched per-offer-cycle, offer processing time, etc.")
+	fs.StringVar(&cfg.execImage, "exec.image", cfg.execImage, "Name of the docker image to run the executor")
 }
 
 type server struct {

@@ -16,7 +16,7 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "jdef/example-scheduler",
+      "image": "jdef/example-scheduler-httpv1",
       "network": "HOST",
       "forcePullImage": true
     }

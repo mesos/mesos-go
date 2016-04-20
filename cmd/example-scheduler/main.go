@@ -82,7 +82,7 @@ func forever(name string, jobRestartDelay time.Duration, f func() error) {
 		if err != nil {
 			log.Printf("job %q exited with error %+v", name, err)
 		} else {
-			log.Printf("job %q exited")
+			log.Printf("job %q exited", name)
 		}
 		time.Sleep(jobRestartDelay)
 	}

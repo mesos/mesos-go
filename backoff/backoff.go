@@ -1,4 +1,4 @@
-package main
+package backoff
 
 import (
 	"fmt"
@@ -6,17 +6,18 @@ import (
 	"time"
 )
 
-func burstBucket(burst int, minWait, maxWait time.Duration, until <-chan struct{}) <-chan struct{} {
+func BurstNotifier(burst int, minWait, maxWait time.Duration, until <-chan struct{}) <-chan struct{} {
 	if burst < 1 {
 		return nil // no limit
 	}
 	if burst == 1 {
-		return backoffBucket(minWait, maxWait, until)
+		return Notifier(minWait, maxWait, until)
 	}
+
 	// build a synamic select/case statement based on burst size
 	cases := make([]reflect.SelectCase, burst+1)
 	for i := 0; i < burst; i++ {
-		ch := backoffBucket(minWait, maxWait, until)
+		ch := Notifier(minWait, maxWait, until)
 		cases[i].Dir = reflect.SelectRecv
 		cases[i].Chan = reflect.ValueOf(ch)
 	}
@@ -43,12 +44,12 @@ func burstBucket(burst int, minWait, maxWait time.Duration, until <-chan struct{
 	return tokens
 }
 
-// backoffBucket returns a chan that yields a struct{}{} every so often. the wait period
+// Notifier returns a chan that yields a struct{}{} every so often. the wait period
 // between structs is between minWait and maxWait. greedy consumers that continuously read
-// from the returned bucket chan will see the wait period generally increase.
+// from the returned chan will see the wait period generally increase.
 //
 // Note: this func panics if minWait is a non-positive value to avoid busy-looping.
-func backoffBucket(minWait, maxWait time.Duration, until <-chan struct{}) <-chan struct{} {
+func Notifier(minWait, maxWait time.Duration, until <-chan struct{}) <-chan struct{} {
 	// TODO(jdef) add jitter to this func
 	if maxWait < minWait {
 		maxWait, minWait = minWait, maxWait

@@ -15,6 +15,7 @@ import (
 
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go"
+	"github.com/mesos/mesos-go/backoff"
 	"github.com/mesos/mesos-go/cmd"
 	schedmetrics "github.com/mesos/mesos-go/cmd/example-scheduler/metrics"
 	"github.com/mesos/mesos-go/encoding"
@@ -97,7 +98,7 @@ func run(cfg config) error {
 	state := internalState{
 		config:             cfg,
 		totalTasks:         cfg.tasks,
-		reviveTokens:       burstBucket(cfg.reviveBurst, cfg.reviveWait, cfg.reviveWait, nil),
+		reviveTokens:       backoff.BurstNotifier(cfg.reviveBurst, cfg.reviveWait, cfg.reviveWait, nil),
 		wantsTaskResources: buildWantsTaskResources(cfg),
 		executor: prepareExecutorInfo(
 			cfg.executor, cfg.execImage, cfg.server, buildWantsExecutorResources(cfg), cfg.jobRestartDelay),
@@ -127,7 +128,7 @@ func run(cfg config) error {
 		frameworkInfo.Labels = &mesos.Labels{Labels: cfg.labels}
 	}
 	subscribe := calls.Subscribe(true, frameworkInfo)
-	registrationTokens := backoffBucket(1*time.Second, 15*time.Second, nil)
+	registrationTokens := backoff.Notifier(1*time.Second, 15*time.Second, nil)
 	for {
 		schedmetrics.SubscriptionAttempts.Inc()
 		resp, opt, err := stream.Subscribe(state.cli, subscribe)

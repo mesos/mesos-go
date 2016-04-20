@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mesos/mesos-go"
+	"github.com/mesos/mesos-go/backoff"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/executor"
 	"github.com/mesos/mesos-go/executor/calls"
@@ -18,8 +19,8 @@ import (
 )
 
 const (
-	apiPath = "/api/v1/executor"
-	timeout = 10 * time.Second
+	apiPath     = "/api/v1/executor"
+	httpTimeout = 10 * time.Second
 )
 
 var errMustAbort = errors.New("received abort signal from mesos, will attempt to re-subscribe")
@@ -31,42 +32,49 @@ func main() {
 	}
 	log.Printf("configuration loaded: %+v", cfg)
 	run(cfg)
+	os.Exit(0)
 }
 
 func run(cfg config.Config) {
-	apiURL := url.URL{
-		Scheme: "http",
-		Host:   cfg.AgentEndpoint,
-		Path:   apiPath,
-	}
-	state := &internalState{
-		cli: httpcli.New(
-			httpcli.URL(apiURL.String()),
-			httpcli.Codec(&encoding.ProtobufCodec),
-			httpcli.Do(httpcli.With(httpcli.Timeout(timeout))),
-			httpcli.MaxRedirects(0),
-		),
-		callOptions: executor.CallOptions{
-			calls.Framework(cfg.FrameworkID),
-			calls.Executor(cfg.ExecutorID),
-		},
-		unackedTasks:   make(map[mesos.TaskID]mesos.TaskInfo),
-		unackedUpdates: make(map[string]executor.Call_Update),
-		failedTasks:    make(map[mesos.TaskID]mesos.TaskStatus),
-	}
-	subscribe := calls.Subscribe(nil, nil).With(state.callOptions...)
+	var (
+		apiURL = url.URL{
+			Scheme: "http", // TODO(jdef) make this configurable
+			Host:   cfg.AgentEndpoint,
+			Path:   apiPath,
+		}
+		state = &internalState{
+			cli: httpcli.New(
+				httpcli.URL(apiURL.String()),
+				httpcli.Codec(&encoding.ProtobufCodec),
+				httpcli.Do(httpcli.With(httpcli.Timeout(httpTimeout))),
+				httpcli.MaxRedirects(0), // no redirects for agent connections; there is only ever one
+			),
+			callOptions: executor.CallOptions{
+				calls.Framework(cfg.FrameworkID),
+				calls.Executor(cfg.ExecutorID),
+			},
+			unackedTasks:   make(map[mesos.TaskID]mesos.TaskInfo),
+			unackedUpdates: make(map[string]executor.Call_Update),
+			failedTasks:    make(map[mesos.TaskID]mesos.TaskStatus),
+		}
+		subscribe       = calls.Subscribe(nil, nil).With(state.callOptions...)
+		shouldReconnect = backoff.Notifier(1*time.Second, cfg.SubscriptionBackoffMax*4/3, nil)
+		disconnected    = time.Now()
+	)
 	for {
 		subscribe = subscribe.With(
 			unacknowledgedTasks(state),
 			unacknowledgedUpdates(state),
 		)
-		resp, err := state.cli.Do(subscribe, httpcli.Close(true))
 		func() {
+			resp, err := state.cli.Do(subscribe, httpcli.Close(true))
 			if resp != nil {
 				defer resp.Close()
 			}
 			if err == nil {
+				// we're officially connected, start decoding events
 				err = eventLoop(state, resp.Decoder())
+				disconnected = time.Now()
 			}
 			if err != nil && err != io.EOF {
 				log.Println(err)
@@ -74,7 +82,19 @@ func run(cfg config.Config) {
 				log.Println("disconnected")
 			}
 		}()
-		time.Sleep(5 * time.Second) // TODO(jdef) need backoff here
+		if state.shouldQuit {
+			log.Println("gracefully shutting down because we were told to")
+			return
+		}
+		if !cfg.Checkpoint {
+			log.Println("gracefully exiting because framework checkpointing is NOT enabled")
+			return
+		}
+		if time.Now().Sub(disconnected) > cfg.RecoveryTimeout {
+			log.Printf("failed to re-establish subscription with agent within %v, aborting", cfg.RecoveryTimeout)
+			return
+		}
+		<-shouldReconnect // wait for some amount of time before retrying subscription
 	}
 }
 
@@ -138,7 +158,8 @@ func eventLoop(state *internalState, decoder encoding.Decoder) (err error) {
 
 		case executor.Event_SHUTDOWN:
 			log.Println("SHUTDOWN received")
-			os.Exit(0)
+			state.shouldQuit = true
+			return nil
 
 		case executor.Event_ERROR:
 			log.Println("ERROR received")
@@ -230,4 +251,5 @@ type internalState struct {
 	unackedTasks   map[mesos.TaskID]mesos.TaskInfo
 	unackedUpdates map[string]executor.Call_Update
 	failedTasks    map[mesos.TaskID]mesos.TaskStatus // send updates for these as we can
+	shouldQuit     bool
 }

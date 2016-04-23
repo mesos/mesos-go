@@ -33,6 +33,7 @@ type config struct {
 	jobRestartDelay     time.Duration
 	summaryMetrics      bool
 	execImage           string
+	compression         bool
 }
 
 func (cfg *config) addFlags(fs *flag.FlagSet) {
@@ -64,6 +65,7 @@ func (cfg *config) addFlags(fs *flag.FlagSet) {
 	fs.DurationVar(&cfg.jobRestartDelay, "jobRestartDelay", cfg.jobRestartDelay, "Duration between job (internal service) restarts between failures")
 	fs.BoolVar(&cfg.summaryMetrics, "summaryMetrics", cfg.summaryMetrics, "Collect summary metrics for tasks launched per-offer-cycle, offer processing time, etc.")
 	fs.StringVar(&cfg.execImage, "exec.image", cfg.execImage, "Name of the docker image to run the executor")
+	fs.BoolVar(&cfg.compression, "compression", cfg.compression, "When true attempt to use compression for HTTP streams.")
 }
 
 type server struct {

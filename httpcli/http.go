@@ -113,6 +113,7 @@ type Client struct {
 	codec        *encoding.Codec
 	maxRedirects int
 	errorMapper  ErrorMapperFunc
+	requestOpts  []RequestOpt
 }
 
 // New returns a new Client with the given Opts applied.
@@ -136,6 +137,19 @@ type Opt func(*Client) Opt
 
 // RequestOpt defines a functional option for an http.Request.
 type RequestOpt func(*http.Request)
+
+// RequestOpts is a convenience type
+type RequestOpts []RequestOpt
+
+// Apply this set of request options to the given HTTP request.
+func (opts RequestOpts) Apply(req *http.Request) {
+	// apply per-request options
+	for _, o := range opts {
+		if o != nil {
+			o(req)
+		}
+	}
+}
 
 // With applies the given Opts to a Client and returns itself.
 func (c *Client) With(opts ...Opt) Opt {
@@ -177,12 +191,9 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (mesos.Response, er
 			}
 		}
 
-		// apply per-request options
-		for _, o := range opt {
-			if o != nil {
-				o(req)
-			}
-		}
+		// apply default, then per-request options
+		RequestOpts(c.requestOpts).Apply(req)
+		RequestOpts(opt).Apply(req)
 
 		// these headers override anything that a caller may have tried to set
 		req.Header.Set("Content-Type", c.codec.MediaTypes[0])
@@ -319,6 +330,15 @@ func DefaultHeader(k, v string) Opt {
 			}
 			return DefaultHeader(k, v)
 		}
+	}
+}
+
+// RequestOptions returns an Opt that applies the given set of options to every Client request.
+func RequestOptions(opts ...RequestOpt) Opt {
+	return func(c *Client) Opt {
+		old := append([]RequestOpt{}, c.requestOpts...)
+		c.requestOpts = opts
+		return RequestOptions(old...)
 	}
 }
 

@@ -112,6 +112,12 @@ func run(cfg config) error {
 			httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
 		),
 	}
+	if cfg.compression {
+		// TODO(jdef) experimental; currently released versions of Mesos will accept this
+		// header but will not send back compressed data due to flushing issues.
+		log.Println("compression enabled")
+		state.cli.With(httpcli.RequestOptions(httpcli.Header("Accept-Encoding", "gzip")))
+	}
 
 	frameworkInfo := &mesos.FrameworkInfo{
 		User:       cfg.user,

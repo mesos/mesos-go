@@ -95,13 +95,17 @@ func run(cfg config) error {
 
 	log.Printf("scheduler running with configuration: %+v", cfg)
 
+	executorInfo, err := prepareExecutorInfo(
+		cfg.executor, cfg.execImage, cfg.server, buildWantsExecutorResources(cfg), cfg.jobRestartDelay)
+	if err != nil {
+		return err
+	}
 	state := internalState{
 		config:             cfg,
 		totalTasks:         cfg.tasks,
 		reviveTokens:       backoff.BurstNotifier(cfg.reviveBurst, cfg.reviveWait, cfg.reviveWait, nil),
 		wantsTaskResources: buildWantsTaskResources(cfg),
-		executor: prepareExecutorInfo(
-			cfg.executor, cfg.execImage, cfg.server, buildWantsExecutorResources(cfg), cfg.jobRestartDelay),
+		executor:           executorInfo,
 		cli: httpcli.New(
 			httpcli.URL(cfg.url),
 			httpcli.Codec(cfg.codec.Codec),
@@ -387,15 +391,21 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 	}
 }
 
-// returns (downloadURI, basename(path))
-func serveExecutorArtifact(server server, path string) (string, string) {
-	serveFile := func(pattern string, filename string) {
+func serveFile(pattern string, filename string) error {
+	_, err := os.Stat(filename)
+	if err != nil {
+		err = fmt.Errorf("failed to locate artifact: %+v", err)
+	} else {
 		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 			schedmetrics.ArtifactDownloads.Inc()
 			http.ServeFile(w, r, filename)
 		})
 	}
+	return err
+}
 
+// returns (downloadURI, basename(path))
+func serveExecutorArtifact(server server, path string) (string, string, error) {
 	// Create base path (http://foobar:5000/<base>)
 	pathSplit := strings.Split(path, "/")
 	var base string
@@ -404,12 +414,15 @@ func serveExecutorArtifact(server server, path string) (string, string) {
 	} else {
 		base = path
 	}
-	serveFile("/"+base, path)
+	err := serveFile("/"+base, path)
+	if err != nil {
+		return "", "", err
+	}
 
 	hostURI := fmt.Sprintf("http://%s:%d/%s", server.address, server.port, base)
 	log.Println("Hosting artifact '" + path + "' at '" + hostURI + "'")
 
-	return hostURI, base
+	return hostURI, base, nil
 }
 
 func prepareListener(server server) (*net.TCPListener, int, error) {
@@ -433,7 +446,12 @@ func prepareListener(server server) (*net.TCPListener, int, error) {
 	return listener, iport, nil
 }
 
-func prepareExecutorInfo(execBinary, execImage string, server server, wantsResources mesos.Resources, jobRestartDelay time.Duration) *mesos.ExecutorInfo {
+func prepareExecutorInfo(
+	execBinary, execImage string,
+	server server,
+	wantsResources mesos.Resources,
+	jobRestartDelay time.Duration,
+) (*mesos.ExecutorInfo, error) {
 	if execImage != "" {
 		// Create mesos custom executor
 		return &mesos.ExecutorInfo{
@@ -456,7 +474,7 @@ func prepareExecutorInfo(execBinary, execImage string, server server, wantsResou
 				},
 			},
 			Resources: wantsResources,
-		}
+		}, nil
 	} else {
 		log.Println("No executor image specified, will serve executor binary from built-in HTTP server")
 
@@ -466,10 +484,13 @@ func prepareExecutorInfo(execBinary, execImage string, server server, wantsResou
 		}
 		server.port = iport // we're just working with a copy of server, so this is OK
 		var (
-			executorUris     = []mesos.CommandInfo_URI{}
-			uri, executorCmd = serveExecutorArtifact(server, execBinary)
-			executorCommand  = fmt.Sprintf("./%s", executorCmd)
+			executorUris           = []mesos.CommandInfo_URI{}
+			uri, executorCmd, err2 = serveExecutorArtifact(server, execBinary)
+			executorCommand        = fmt.Sprintf("./%s", executorCmd)
 		)
+		if err2 != nil {
+			return nil, err2
+		}
 		executorUris = append(executorUris, mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
 
 		go forever("artifact-server", jobRestartDelay, func() error { return http.Serve(listener, nil) })
@@ -484,7 +505,7 @@ func prepareExecutorInfo(execBinary, execImage string, server server, wantsResou
 				URIs:  executorUris,
 			},
 			Resources: wantsResources,
-		}
+		}, nil
 	}
 }
 

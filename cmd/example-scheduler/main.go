@@ -7,48 +7,19 @@ import (
 	"io"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	proto "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/backoff"
-	"github.com/mesos/mesos-go/cmd"
 	"github.com/mesos/mesos-go/encoding"
-	"github.com/mesos/mesos-go/httpcli"
-	"github.com/mesos/mesos-go/httpcli/httpsched"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
 )
 
 func main() {
-	cfg := config{
-		user:             env("FRAMEWORK_USER", "root"),
-		name:             env("FRAMEWORK_NAME", "example"),
-		url:              env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
-		codec:            codec{Codec: &encoding.ProtobufCodec},
-		timeout:          envDuration("MESOS_CONNECT_TIMEOUT", "1s"),
-		checkpoint:       true,
-		server:           server{address: env("LIBPROCESS_IP", "127.0.0.1")},
-		tasks:            envInt("NUM_TASKS", "5"),
-		taskCPU:          envFloat("TASK_CPU", "1"),
-		taskMemory:       envFloat("TASK_MEMORY", "64"),
-		execCPU:          envFloat("EXEC_CPU", "0.01"),
-		execMemory:       envFloat("EXEC_MEMORY", "64"),
-		reviveBurst:      envInt("REVIVE_BURST", "3"),
-		reviveWait:       envDuration("REVIVE_WAIT", "1s"),
-		maxRefuseSeconds: envDuration("MAX_REFUSE_SECONDS", "5s"),
-		jobRestartDelay:  envDuration("JOB_RESTART_DELAY", "5s"),
-		execImage:        env("EXEC_IMAGE", cmd.DockerImageTag),
-		executor:         env("EXEC_BINARY", "/opt/example-executor"),
-		metrics: metrics{
-			port: envInt("PORT0", "64009"),
-			path: env("METRICS_API_PATH", "/metrics"),
-		},
-	}
-
+	cfg := newConfig()
 	fs := flag.NewFlagSet("config", flag.ExitOnError)
 	cfg.addFlags(fs)
 	fs.Parse(os.Args[1:])
@@ -59,68 +30,25 @@ func main() {
 }
 
 func run(cfg config) error {
-	if cfg.executor == "" && cfg.execImage == "" {
-		return errors.New("must specify an executor binary or image")
-	}
-
 	log.Printf("scheduler running with configuration: %+v", cfg)
 
-	metricsAPI := initMetrics(cfg)
-	executorInfo, err := prepareExecutorInfo(
-		cfg.executor, cfg.execImage, cfg.server, buildWantsExecutorResources(cfg), cfg.jobRestartDelay, metricsAPI)
+	state, err := newInternalState(cfg)
 	if err != nil {
 		return err
 	}
-	state := internalState{
-		config:             cfg,
-		totalTasks:         cfg.tasks,
-		reviveTokens:       backoff.BurstNotifier(cfg.reviveBurst, cfg.reviveWait, cfg.reviveWait, nil),
-		wantsTaskResources: buildWantsTaskResources(cfg),
-		executor:           executorInfo,
-		metricsAPI:         metricsAPI,
-		cli: httpcli.New(
-			httpcli.URL(cfg.url),
-			httpcli.Codec(cfg.codec.Codec),
-			httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
-		),
-	}
-	if cfg.compression {
-		// TODO(jdef) experimental; currently released versions of Mesos will accept this
-		// header but will not send back compressed data due to flushing issues.
-		log.Println("compression enabled")
-		state.cli.With(httpcli.RequestOptions(httpcli.Header("Accept-Encoding", "gzip")))
-	}
-
-	frameworkInfo := &mesos.FrameworkInfo{
-		User:       cfg.user,
-		Name:       cfg.name,
-		Checkpoint: &cfg.checkpoint,
-	}
-	if cfg.role != "" {
-		frameworkInfo.Role = &cfg.role
-	}
-	if cfg.principal != "" {
-		frameworkInfo.Principal = &cfg.principal
-	}
-	if cfg.hostname != "" {
-		frameworkInfo.Hostname = &cfg.hostname
-	}
-	if len(cfg.labels) > 0 {
-		log.Println("using labels:", cfg.labels)
-		frameworkInfo.Labels = &mesos.Labels{Labels: cfg.labels}
-	}
+	frameworkInfo := buildFrameworkInfo(cfg)
 	subscribe := calls.Subscribe(true, frameworkInfo)
 	registrationTokens := backoff.Notifier(1*time.Second, 15*time.Second, nil)
 	for {
 		state.metricsAPI.subscriptionAttempts()
-		resp, opt, err := httpsched.Subscribe(state.cli, subscribe)
+		resp, opt, err := state.cli.Subscribe(subscribe)
 		func() {
 			if resp != nil {
 				defer resp.Close()
 			}
 			if err == nil {
 				err = state.cli.WithTemporary(opt, func() error {
-					return eventLoop(&state, resp.Decoder())
+					return eventLoop(state, resp.Decoder())
 				})
 			}
 			if err != nil && err != io.EOF {
@@ -292,7 +220,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		).With(callOptions...)
 
 		// send Accept call to mesos
-		err := httpsched.CallNoData(state.cli, accept)
+		err := state.cli.CallNoData(accept)
 		if err != nil {
 			state.metricsAPI.apiErrorCount("accept")
 			log.Printf("failed to launch tasks: %+v", err)
@@ -328,7 +256,7 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		).With(callOptions...)
 
 		// send Ack call to mesos
-		err := httpsched.CallNoData(state.cli, ack)
+		err := state.cli.CallNoData(ack)
 		if err != nil {
 			state.metricsAPI.apiErrorCount("ack")
 			log.Printf("failed to ack status update for task: %+v", err)
@@ -364,7 +292,7 @@ func tryReviveOffers(state *internalState, callOptions scheduler.CallOptions) {
 	case <-state.reviveTokens:
 		// not done yet, revive offers!
 		state.metricsAPI.reviveCount()
-		err := httpsched.CallNoData(state.cli, calls.Revive().With(callOptions...))
+		err := state.cli.CallNoData(calls.Revive().With(callOptions...))
 		if err != nil {
 			state.metricsAPI.apiErrorCount("revive")
 			log.Printf("failed to revive offers: %+v", err)
@@ -373,104 +301,4 @@ func tryReviveOffers(state *internalState, callOptions scheduler.CallOptions) {
 	default:
 		// noop
 	}
-}
-
-func prepareExecutorInfo(
-	execBinary, execImage string,
-	server server,
-	wantsResources mesos.Resources,
-	jobRestartDelay time.Duration,
-	metricsAPI *metricsAPI,
-) (*mesos.ExecutorInfo, error) {
-	if execImage != "" {
-		// Create mesos custom executor
-		return &mesos.ExecutorInfo{
-			ExecutorID: mesos.ExecutorID{Value: "default"},
-			Name:       proto.String("Test Executor"),
-			Command: mesos.CommandInfo{
-				Shell: func() *bool { x := false; return &x }(),
-			},
-			Container: &mesos.ContainerInfo{
-				Type: mesos.ContainerInfo_DOCKER.Enum(),
-				Docker: &mesos.ContainerInfo_DockerInfo{
-					Image:          execImage,
-					ForcePullImage: func() *bool { x := true; return &x }(),
-					Parameters: []mesos.Parameter{
-						{
-							Key:   "entrypoint",
-							Value: execBinary,
-						}}}},
-			Resources: wantsResources,
-		}, nil
-	} else {
-		log.Println("No executor image specified, will serve executor binary from built-in HTTP server")
-
-		listener, iport, err := newListener(server)
-		if err != nil {
-			return nil, err
-		}
-		server.port = iport // we're just working with a copy of server, so this is OK
-		var (
-			mux                    = http.NewServeMux()
-			executorUris           = []mesos.CommandInfo_URI{}
-			uri, executorCmd, err2 = serveExecutorArtifact(server, execBinary, mux)
-			executorCommand        = fmt.Sprintf("./%s", executorCmd)
-		)
-		if err2 != nil {
-			return nil, err2
-		}
-		wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			metricsAPI.artifactDownloads()
-			mux.ServeHTTP(w, r)
-		})
-		executorUris = append(executorUris, mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
-
-		go forever("artifact-server", jobRestartDelay, metricsAPI.jobStartCount, func() error { return http.Serve(listener, wrapper) })
-		log.Println("Serving executor artifacts...")
-
-		// Create mesos custom executor
-		return &mesos.ExecutorInfo{
-			ExecutorID: mesos.ExecutorID{Value: "default"},
-			Name:       proto.String("Test Executor"),
-			Command: mesos.CommandInfo{
-				Value: proto.String(executorCommand),
-				URIs:  executorUris,
-			},
-			Resources: wantsResources,
-		}, nil
-	}
-}
-
-func buildWantsTaskResources(config config) (r mesos.Resources) {
-	r.Add(
-		*mesos.BuildResource().Name("cpus").Scalar(config.taskCPU).Resource,
-		*mesos.BuildResource().Name("mem").Scalar(config.taskMemory).Resource,
-	)
-	log.Println("wants-task-resources = " + r.String())
-	return
-}
-
-func buildWantsExecutorResources(config config) (r mesos.Resources) {
-	r.Add(
-		*mesos.BuildResource().Name("cpus").Scalar(config.execCPU).Resource,
-		*mesos.BuildResource().Name("mem").Scalar(config.execMemory).Resource,
-	)
-	log.Println("wants-executor-resources = " + r.String())
-	return
-}
-
-type internalState struct {
-	tasksLaunched      int
-	tasksFinished      int
-	totalTasks         int
-	frameworkID        string
-	role               string
-	executor           *mesos.ExecutorInfo
-	cli                *httpcli.Client
-	config             config
-	wantsTaskResources mesos.Resources
-	reviveTokens       <-chan struct{}
-	metricsAPI         *metricsAPI
-	err                error
-	done               bool
 }

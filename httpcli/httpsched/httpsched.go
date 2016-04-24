@@ -17,7 +17,17 @@ const (
 
 var errMissingMesosStreamId = errors.New("missing Mesos-Stream-Id header expected with successful SUBSCRIBE")
 
-func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (resp mesos.Response, maybeOpt httpcli.Opt, err2 error) {
+// CallNoData is for scheduler calls that are not expected to return any data from the server.
+func CallNoData(cli *httpcli.Client, call encoding.Marshaler) error {
+	resp, err := cli.Do(call)
+	if resp != nil {
+		resp.Close()
+	}
+	return err
+}
+
+// Subscribe issues a SUBSCRIBE call to Mesos and properly manages the Mesos-Stream-Id header in the response.
+func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (resp mesos.Response, maybeOpt httpcli.Opt, subscribeErr error) {
 	var (
 		mesosStreamID = ""
 		opt           = httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
@@ -49,7 +59,7 @@ func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (resp mesos.Re
 		})
 	)
 	cli.WithTemporary(opt, func() error {
-		resp, err2 = cli.Do(subscribe, httpcli.Close(true))
+		resp, subscribeErr = cli.Do(subscribe, httpcli.Close(true))
 		return nil
 	})
 	maybeOpt = httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID)

@@ -119,11 +119,9 @@ func run(cfg config) error {
 				defer resp.Close()
 			}
 			if err == nil {
-				func() {
-					undo := state.cli.With(opt)
-					defer state.cli.With(undo) // strip the temporary options
-					err = eventLoop(&state, resp.Decoder())
-				}()
+				err = state.cli.WithTemporary(opt, func() error {
+					return eventLoop(&state, resp.Decoder())
+				})
 			}
 			if err != nil && err != io.EOF {
 				state.metricsAPI.apiErrorCount("subscribe")

@@ -18,7 +18,7 @@ import (
 	"github.com/mesos/mesos-go/cmd"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
-	"github.com/mesos/mesos-go/httpcli/stream"
+	"github.com/mesos/mesos-go/httpcli/httpsched"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
 )
@@ -113,7 +113,7 @@ func run(cfg config) error {
 	registrationTokens := backoff.Notifier(1*time.Second, 15*time.Second, nil)
 	for {
 		state.metricsAPI.subscriptionAttempts()
-		resp, opt, err := stream.Subscribe(state.cli, subscribe)
+		resp, opt, err := httpsched.Subscribe(state.cli, subscribe)
 		func() {
 			if resp != nil {
 				defer resp.Close()
@@ -121,7 +121,7 @@ func run(cfg config) error {
 			if err == nil {
 				func() {
 					undo := state.cli.With(opt)
-					defer state.cli.With(undo) // strip the stream options
+					defer state.cli.With(undo) // strip the temporary options
 					err = eventLoop(&state, resp.Decoder())
 				}()
 			}

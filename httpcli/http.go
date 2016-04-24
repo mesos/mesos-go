@@ -166,9 +166,9 @@ func (c *Client) With(opts ...Opt) Opt {
 }
 
 // Mesos returns a mesos.Client variant backed by this implementation
-func (c *Client) Mesos() mesos.Client {
+func (c *Client) Mesos(opts ...RequestOpt) mesos.Client {
 	return mesos.ClientFunc(func(m encoding.Marshaler) (mesos.Response, error) {
-		return c.Do(m)
+		return c.Do(m, opts...)
 	})
 }
 

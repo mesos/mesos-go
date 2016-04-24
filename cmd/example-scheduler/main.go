@@ -292,10 +292,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		).With(callOptions...)
 
 		// send Accept call to mesos
-		resp, err := state.cli.Do(accept)
-		if resp != nil {
-			resp.Close()
-		}
+		err := httpsched.CallNoData(state.cli, accept)
 		if err != nil {
 			state.metricsAPI.apiErrorCount("accept")
 			log.Printf("failed to launch tasks: %+v", err)
@@ -331,10 +328,7 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		).With(callOptions...)
 
 		// send Ack call to mesos
-		resp, err := state.cli.Do(ack)
-		if resp != nil {
-			resp.Close()
-		}
+		err := httpsched.CallNoData(state.cli, ack)
 		if err != nil {
 			state.metricsAPI.apiErrorCount("ack")
 			log.Printf("failed to ack status update for task: %+v", err)
@@ -370,10 +364,7 @@ func tryReviveOffers(state *internalState, callOptions scheduler.CallOptions) {
 	case <-state.reviveTokens:
 		// not done yet, revive offers!
 		state.metricsAPI.reviveCount()
-		resp, err := state.cli.Do(calls.Revive().With(callOptions...))
-		if resp != nil {
-			resp.Close()
-		}
+		err := httpsched.CallNoData(state.cli, calls.Revive().With(callOptions...))
 		if err != nil {
 			state.metricsAPI.apiErrorCount("revive")
 			log.Printf("failed to revive offers: %+v", err)

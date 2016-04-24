@@ -16,11 +16,34 @@ const (
 	debug               = false
 )
 
-var errMissingMesosStreamId = errors.New("missing Mesos-Stream-Id header expected with successful SUBSCRIBE")
+var (
+	errMissingMesosStreamId = errors.New("missing Mesos-Stream-Id header expected with successful SUBSCRIBE")
+	errNotHTTP              = errors.New("expected an HTTP object, found something else instead")
+)
 
-// CallNoData is for scheduler calls that are not expected to return any data from the server.
-func CallNoData(cli *httpcli.Client, call encoding.Marshaler) error {
-	resp, err := callWithRedirect(cli, func() (mesos.Response, error) {
+type (
+	client struct {
+		*httpcli.Client
+	}
+
+	Client interface {
+		// CallNoData is for scheduler calls that are not expected to return any data from the server.
+		CallNoData(encoding.Marshaler) error
+		// Subscribe issues a SUBSCRIBE call to Mesos and properly manages the Mesos-Stream-Id header in the response.
+		Subscribe(encoding.Marshaler) (mesos.Response, httpcli.Opt, error)
+		// WithTemporary configures the Client with the temporary option and returns the results of
+		// invoking f(). Changes made to the Client by the temporary option are reverted before this
+		// func returns.
+		WithTemporary(opt httpcli.Opt, f func() error) error
+	}
+)
+
+// NewClient returns a scheduler API Client
+func NewClient(cl *httpcli.Client) Client { return &client{Client: cl} }
+
+// CallNoData implements Client
+func (cli *client) CallNoData(call encoding.Marshaler) error {
+	resp, err := cli.callWithRedirect(func() (mesos.Response, error) {
 		return cli.Do(call)
 	})
 	if resp != nil {
@@ -29,8 +52,8 @@ func CallNoData(cli *httpcli.Client, call encoding.Marshaler) error {
 	return err
 }
 
-// Subscribe issues a SUBSCRIBE call to Mesos and properly manages the Mesos-Stream-Id header in the response.
-func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (resp mesos.Response, maybeOpt httpcli.Opt, subscribeErr error) {
+// Subscribe implements Client
+func (cli *client) Subscribe(subscribe encoding.Marshaler) (resp mesos.Response, maybeOpt httpcli.Opt, subscribeErr error) {
 	var (
 		mesosStreamID = ""
 		opt           = httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
@@ -62,7 +85,7 @@ func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (resp mesos.Re
 		})
 	)
 	cli.WithTemporary(opt, func() error {
-		resp, subscribeErr = callWithRedirect(cli, func() (mesos.Response, error) {
+		resp, subscribeErr = cli.callWithRedirect(func() (mesos.Response, error) {
 			return cli.Do(subscribe, httpcli.Close(true))
 		})
 		return nil
@@ -71,7 +94,7 @@ func Subscribe(cli *httpcli.Client, subscribe encoding.Marshaler) (resp mesos.Re
 	return
 }
 
-func callWithRedirect(cli *httpcli.Client, f func() (mesos.Response, error)) (resp mesos.Response, err error) {
+func (cli *client) callWithRedirect(f func() (mesos.Response, error)) (resp mesos.Response, err error) {
 	var (
 		attempt      = 0
 		maxRedirects = cli.MaxRedirects()
@@ -82,7 +105,13 @@ func callWithRedirect(cli *httpcli.Client, f func() (mesos.Response, error)) (re
 			return resp, err
 		}
 
-		res := resp.(*httpcli.Response)
+		res, ok := resp.(*httpcli.Response)
+		if !ok {
+			if resp != nil {
+				resp.Close()
+			}
+			return nil, errNotHTTP
+		}
 
 		// TODO(jdef) refactor this
 		// mesos v0.29 will actually send back fully-formed URLs in the Location header

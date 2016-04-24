@@ -165,6 +165,15 @@ func (c *Client) With(opts ...Opt) Opt {
 	return last
 }
 
+// WithTemporary configures the Client with the temporary option and returns the results of
+// invoking f(). Changes made to the Client by the temporary option are reverted before this
+// func returns.
+func (c *Client) WithTemporary(opt Opt, f func() error) error {
+	undo := c.With(opt)
+	defer c.With(undo)
+	return f()
+}
+
 // Mesos returns a mesos.Client variant backed by this implementation
 func (c *Client) Mesos(opts ...RequestOpt) mesos.Client {
 	return mesos.ClientFunc(func(m encoding.Marshaler) (mesos.Response, error) {

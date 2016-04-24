@@ -165,6 +165,13 @@ func (c *Client) With(opts ...Opt) Opt {
 	return last
 }
 
+// Mesos returns a mesos.Client variant backed by this implementation
+func (c *Client) Mesos() mesos.Client {
+	return mesos.ClientFunc(func(m encoding.Marshaler) (mesos.Response, error) {
+		return c.Do(m)
+	})
+}
+
 // Do sends a Call and returns (a) a Response (should be closed when finished) that
 // contains a streaming Decoder from which callers can read Events from, and; (b) an
 // error in case of failure. Callers are expected to *always* close a non-nil Response

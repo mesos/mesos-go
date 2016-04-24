@@ -20,7 +20,7 @@ import (
 
 func main() {
 	cfg := newConfig()
-	fs := flag.NewFlagSet("config", flag.ExitOnError)
+	fs := flag.NewFlagSet("scheduler", flag.ExitOnError)
 	cfg.addFlags(fs)
 	fs.Parse(os.Args[1:])
 

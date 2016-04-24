@@ -9,7 +9,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/mesos/mesos-go"
@@ -97,6 +96,7 @@ type DoFunc func(*http.Request) (*http.Response, error)
 type Response struct {
 	io.Closer
 	decoder encoding.Decoder
+	Header  http.Header
 }
 
 // implements mesos.Response
@@ -129,6 +129,16 @@ func New(opts ...Opt) *Client {
 	}
 	c.With(opts...)
 	return c
+}
+
+// URL returns the current Mesos API endpoint URL that the caller is set to invoke
+func (c *Client) URL() string {
+	return c.url
+}
+
+// MaxRedirects returns the max number of HTTP redirects that the client will follow (per-call)
+func (c *Client) MaxRedirects() int {
+	return c.maxRedirects
 }
 
 // Opt defines a functional option for the HTTP client type. A functional option
@@ -187,95 +197,65 @@ func (c *Client) Mesos(opts ...RequestOpt) mesos.Client {
 // if one is returned. For operations which are successful but also for which there is
 // no expected object stream as a result the embedded Decoder will be nil.
 func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (mesos.Response, error) {
-	attempt := 0
-	for {
-		var body bytes.Buffer
-		if err := c.codec.NewEncoder(&body).Invoke(m); err != nil {
-			return nil, err
-		}
-
-		req, err := http.NewRequest("POST", c.url, &body)
-		if err != nil {
-			return nil, err
-		}
-
-		// default headers, applied to all requests
-		for k, v := range c.header {
-			req.Header[k] = v
-			if debug {
-				log.Println("request header " + k + ": " + v[0])
-			}
-		}
-
-		// apply default, then per-request options
-		RequestOpts(c.requestOpts).Apply(req)
-		RequestOpts(opt).Apply(req)
-
-		// these headers override anything that a caller may have tried to set
-		req.Header.Set("Content-Type", c.codec.MediaTypes[0])
-		req.Header.Set("Accept", c.codec.MediaTypes[1])
-
-		res, err := c.do(req)
-		if err != nil {
-			if res != nil && res.Body != nil {
-				res.Body.Close()
-			}
-			return nil, err
-		}
-
-		var events encoding.Decoder
-		switch res.StatusCode {
-		case http.StatusOK:
-			if debug {
-				log.Println("request OK, decoding response")
-			}
-			ct := res.Header.Get("Content-Type")
-			if ct != c.codec.MediaTypes[1] {
-				res.Body.Close()
-				return nil, fmt.Errorf("unexpected content type: %q", ct) //TODO(jdef) extact this into a typed error
-			}
-			events = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
-		case http.StatusAccepted:
-			if debug {
-				log.Println("request Accepted")
-			}
-			// noop; no data to decode for these types of calls
-		case http.StatusTemporaryRedirect:
-			// TODO(jdef) refactor this
-			// mesos v0.29 will actually send back fully-formed URLs in the Location header
-			if debug {
-				log.Println("master changed!")
-			}
-			if attempt < c.maxRedirects {
-				attempt++
-				newMaster := res.Header.Get("Location")
-				if newMaster != "" {
-					// current format appears to be //x.y.z.w:port
-					hostport, parseErr := url.Parse(newMaster)
-					if parseErr != nil || hostport.Host == "" {
-						break
-					}
-					current, parseErr := url.Parse(c.url)
-					if parseErr != nil {
-						break
-					}
-					current.Host = hostport.Host
-					c.url = current.String()
-					if debug {
-						log.Println("master changed, redirecting to " + c.url)
-					}
-					res.Body.Close()
-					continue
-				}
-			}
-		default:
-			err = c.errorMapper(res.StatusCode)
-		}
-		return &Response{
-			decoder: events,
-			Closer:  res.Body,
-		}, err
+	var body bytes.Buffer
+	if err := c.codec.NewEncoder(&body).Invoke(m); err != nil {
+		return nil, err
 	}
+
+	req, err := http.NewRequest("POST", c.url, &body)
+	if err != nil {
+		return nil, err
+	}
+
+	// default headers, applied to all requests
+	for k, v := range c.header {
+		req.Header[k] = v
+		if debug {
+			log.Println("request header " + k + ": " + v[0])
+		}
+	}
+
+	// apply default, then per-request options
+	RequestOpts(c.requestOpts).Apply(req)
+	RequestOpts(opt).Apply(req)
+
+	// these headers override anything that a caller may have tried to set
+	req.Header.Set("Content-Type", c.codec.MediaTypes[0])
+	req.Header.Set("Accept", c.codec.MediaTypes[1])
+
+	res, err := c.do(req)
+	if err != nil {
+		if res != nil && res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, err
+	}
+
+	var events encoding.Decoder
+	switch res.StatusCode {
+	case http.StatusOK:
+		if debug {
+			log.Println("request OK, decoding response")
+		}
+		ct := res.Header.Get("Content-Type")
+		if ct != c.codec.MediaTypes[1] {
+			res.Body.Close()
+			return nil, fmt.Errorf("unexpected content type: %q", ct) //TODO(jdef) extact this into a typed error
+		}
+		events = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
+	case http.StatusAccepted:
+		if debug {
+			log.Println("request Accepted")
+		}
+		// noop; no decoder for these types of calls
+	default:
+		err = c.errorMapper(res.StatusCode)
+	}
+	return &Response{
+		decoder: events,
+		Closer:  res.Body,
+		Header:  res.Header,
+	}, err
 }
 
 // ErrorMapper returns am Opt that overrides the existing error mapping behavior of the client.
@@ -377,23 +357,25 @@ type ConfigOpt func(*Config)
 // keep-alive, connection, request/response read/write, and TLS handshake.
 // Callers can customize configuration by specifying one or more ConfigOpt's.
 func With(opt ...ConfigOpt) DoFunc {
-	dialer := &net.Dialer{
-		LocalAddr: &net.TCPAddr{IP: net.IPv4zero},
-		KeepAlive: 30 * time.Second,
-		Timeout:   5 * time.Second,
-	}
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		Dial:  dialer.Dial,
-		ResponseHeaderTimeout: 5 * time.Second,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: false},
-		TLSHandshakeTimeout:   5 * time.Second,
-	}
-	config := &Config{
-		dialer:    dialer,
-		transport: transport,
-		client:    &http.Client{Transport: transport},
-	}
+	var (
+		dialer = &net.Dialer{
+			LocalAddr: &net.TCPAddr{IP: net.IPv4zero},
+			KeepAlive: 30 * time.Second,
+			Timeout:   5 * time.Second,
+		}
+		transport = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			Dial:  dialer.Dial,
+			ResponseHeaderTimeout: 5 * time.Second,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: false},
+			TLSHandshakeTimeout:   5 * time.Second,
+		}
+		config = &Config{
+			dialer:    dialer,
+			transport: transport,
+			client:    &http.Client{Transport: transport},
+		}
+	)
 	for _, o := range opt {
 		if o != nil {
 			o(config)
@@ -422,5 +404,17 @@ func RoundTripper(rt http.RoundTripper) ConfigOpt {
 func TLSConfig(tc *tls.Config) ConfigOpt {
 	return func(c *Config) {
 		c.transport.TLSClientConfig = tc
+	}
+}
+
+// WrapRoundTripper allows a caller to customize a configuration's HTTP exchanger. Useful
+// for authentication protocols that operate over stock HTTP.
+func WrapRoundTripper(f func(http.RoundTripper) http.RoundTripper) ConfigOpt {
+	return func(c *Config) {
+		if f != nil {
+			if rt := f(c.client.Transport); rt != nil {
+				c.client.Transport = rt
+			}
+		}
 	}
 }

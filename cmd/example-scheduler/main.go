@@ -1,38 +1,27 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
-	"net"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/backoff"
 	"github.com/mesos/mesos-go/cmd"
-	schedmetrics "github.com/mesos/mesos-go/cmd/example-scheduler/metrics"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
 	"github.com/mesos/mesos-go/httpcli/stream"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
-
-func RefuseSecondsWithJitter(d time.Duration) scheduler.CallOpt {
-	return calls.Filters(func(f *mesos.Filters) {
-		s := time.Duration(rand.Int63n(int64(d))).Seconds()
-		f.RefuseSeconds = &s
-	})
-}
 
 func main() {
 	cfg := config{
@@ -64,39 +53,21 @@ func main() {
 	cfg.addFlags(fs)
 	fs.Parse(os.Args[1:])
 
-	schedmetrics.Register()
-
-	metricsAddress := net.JoinHostPort(cfg.server.address, strconv.Itoa(cfg.metrics.port))
-	http.Handle(cfg.metrics.path, prometheus.Handler())
-	go forever("api-server", cfg.jobRestartDelay, func() error { return http.ListenAndServe(metricsAddress, nil) })
-
 	if err := run(cfg); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func forever(name string, jobRestartDelay time.Duration, f func() error) {
-	for {
-		schedmetrics.JobStartCount.WithLabelValues(name).Inc()
-		err := f()
-		if err != nil {
-			log.Printf("job %q exited with error %+v", name, err)
-		} else {
-			log.Printf("job %q exited", name)
-		}
-		time.Sleep(jobRestartDelay)
-	}
-}
-
 func run(cfg config) error {
 	if cfg.executor == "" && cfg.execImage == "" {
-		panic("must specify an executor binary or image")
+		return errors.New("must specify an executor binary or image")
 	}
 
 	log.Printf("scheduler running with configuration: %+v", cfg)
 
+	metricsAPI := initMetrics(cfg)
 	executorInfo, err := prepareExecutorInfo(
-		cfg.executor, cfg.execImage, cfg.server, buildWantsExecutorResources(cfg), cfg.jobRestartDelay)
+		cfg.executor, cfg.execImage, cfg.server, buildWantsExecutorResources(cfg), cfg.jobRestartDelay, metricsAPI)
 	if err != nil {
 		return err
 	}
@@ -106,6 +77,7 @@ func run(cfg config) error {
 		reviveTokens:       backoff.BurstNotifier(cfg.reviveBurst, cfg.reviveWait, cfg.reviveWait, nil),
 		wantsTaskResources: buildWantsTaskResources(cfg),
 		executor:           executorInfo,
+		metricsAPI:         metricsAPI,
 		cli: httpcli.New(
 			httpcli.URL(cfg.url),
 			httpcli.Codec(cfg.codec.Codec),
@@ -140,7 +112,7 @@ func run(cfg config) error {
 	subscribe := calls.Subscribe(true, frameworkInfo)
 	registrationTokens := backoff.Notifier(1*time.Second, 15*time.Second, nil)
 	for {
-		schedmetrics.SubscriptionAttempts.Inc()
+		state.metricsAPI.subscriptionAttempts()
 		resp, opt, err := stream.Subscribe(state.cli, subscribe)
 		func() {
 			if resp != nil {
@@ -154,17 +126,20 @@ func run(cfg config) error {
 				}()
 			}
 			if err != nil && err != io.EOF {
-				schedmetrics.APIErrorCount.WithLabelValues("subscribe").Inc()
+				state.metricsAPI.apiErrorCount("subscribe")
 				log.Println(err)
 			} else {
 				log.Println("disconnected")
 			}
-			if frameworkInfo.GetFailoverTimeout() > 0 && state.frameworkID != "" {
-				subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
-			}
-			<-registrationTokens
-			log.Println("reconnecting..")
 		}()
+		if state.done {
+			return state.err
+		}
+		if frameworkInfo.GetFailoverTimeout() > 0 && state.frameworkID != "" {
+			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
+		}
+		<-registrationTokens
+		log.Println("reconnecting..")
 	}
 }
 
@@ -174,7 +149,7 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder) (err error) 
 	state.frameworkID = ""
 	callOptions := scheduler.CallOptions{} // should be applied to every outgoing call
 
-	for err == nil {
+	for err == nil && !state.done {
 		var e scheduler.Event
 		if err = eventDecoder.Invoke(&e); err != nil {
 			continue
@@ -186,7 +161,7 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder) (err error) 
 
 		switch e.GetType() {
 		case scheduler.Event_FAILURE:
-			schedmetrics.FailuresReceived.Inc()
+			state.metricsAPI.failuresReceived()
 			log.Println("received a FAILURE event")
 			f := e.GetFailure()
 			failure(f.ExecutorID, f.AgentID, f.Status)
@@ -195,31 +170,34 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder) (err error) 
 			if state.config.verbose {
 				log.Println("received an OFFERS event")
 			}
+			offers := e.GetOffers().GetOffers()
+			state.metricsAPI.offersReceived.Int(len(offers))
 			t := time.Now()
-			resourceOffers(state, callOptions.Copy(), e.GetOffers().GetOffers())
+			resourceOffers(state, callOptions.Copy(), offers)
 			if state.config.summaryMetrics {
-				schedmetrics.ProcessOffersLatency.Observe(schedmetrics.InMicroseconds(time.Now().Sub(t)))
+				state.metricsAPI.processOffersLatency.Since(t)
 			}
 
 		case scheduler.Event_UPDATE:
-			schedmetrics.UpdatesReceived.Inc()
+			state.metricsAPI.updatesReceived()
 			statusUpdate(state, callOptions.Copy(), e.GetUpdate().GetStatus())
 
 		case scheduler.Event_ERROR:
-			schedmetrics.ErrorsReceived.Inc()
+			state.metricsAPI.errorsReceived()
 			// it's recommended that we abort and re-try subscribing; setting
 			// err here will cause the event loop to terminate and the connection
 			// will be reset.
 			err = fmt.Errorf("ERROR: " + e.GetError().GetMessage())
 
 		case scheduler.Event_SUBSCRIBED:
-			schedmetrics.SubscribedReceived.Inc()
+			state.metricsAPI.subscribedReceived()
 			log.Println("received a SUBSCRIBED event")
 			if state.frameworkID == "" {
 				state.frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
 				if state.frameworkID == "" {
 					// sanity check
-					panic("mesos gave us an empty frameworkID")
+					err = errors.New("mesos gave us an empty frameworkID")
+					break
 				}
 				callOptions = append(callOptions, calls.Framework(state.frameworkID))
 			}
@@ -248,9 +226,15 @@ func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 	}
 }
 
+func refuseSecondsWithJitter(d time.Duration) scheduler.CallOpt {
+	return calls.Filters(func(f *mesos.Filters) {
+		s := time.Duration(rand.Int63n(int64(d))).Seconds()
+		f.RefuseSeconds = &s
+	})
+}
+
 func resourceOffers(state *internalState, callOptions scheduler.CallOptions, offers []mesos.Offer) {
-	schedmetrics.OffersReceived.Add(float64(len(offers)))
-	callOptions = append(callOptions, RefuseSecondsWithJitter(state.config.maxRefuseSeconds))
+	callOptions = append(callOptions, refuseSecondsWithJitter(state.config.maxRefuseSeconds))
 	tasksLaunchedThisCycle := 0
 	offersDeclined := 0
 	for i := range offers {
@@ -275,7 +259,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			for name, restype := range flattened.Types() {
 				if restype == mesos.SCALAR {
 					sum := flattened.SumScalars(mesos.NamedResources(name))
-					schedmetrics.OfferedResources.WithLabelValues(name).Observe(sum.GetValue())
+					state.metricsAPI.offeredResources(sum.GetValue(), name)
 				}
 			}
 		}
@@ -315,7 +299,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			resp.Close()
 		}
 		if err != nil {
-			schedmetrics.APIErrorCount.WithLabelValues("accept").Inc()
+			state.metricsAPI.apiErrorCount("accept")
 			log.Printf("failed to launch tasks: %+v", err)
 		} else {
 			if n := len(tasks); n > 0 {
@@ -325,10 +309,10 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 			}
 		}
 	}
-	schedmetrics.OffersDeclined.Add(float64(offersDeclined))
-	schedmetrics.TasksLaunched.Add(float64(tasksLaunchedThisCycle))
+	state.metricsAPI.offersDeclined.Int(offersDeclined)
+	state.metricsAPI.tasksLaunched.Int(tasksLaunchedThisCycle)
 	if state.config.summaryMetrics {
-		schedmetrics.TasksLaunchedPerOfferCycle.Observe(float64(tasksLaunchedThisCycle))
+		state.metricsAPI.launchesPerOfferCycle(float64(tasksLaunchedThisCycle))
 	}
 }
 
@@ -354,7 +338,7 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 			resp.Close()
 		}
 		if err != nil {
-			schedmetrics.APIErrorCount.WithLabelValues("ack").Inc()
+			state.metricsAPI.apiErrorCount("ack")
 			log.Printf("failed to ack status update for task: %+v", err)
 			return
 		}
@@ -362,33 +346,38 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 	switch st := s.GetState(); st {
 	case mesos.TASK_FINISHED:
 		state.tasksFinished++
-		schedmetrics.TasksFinished.Inc()
+		state.metricsAPI.tasksFinished()
 
 	case mesos.TASK_LOST, mesos.TASK_KILLED, mesos.TASK_FAILED, mesos.TASK_ERROR:
-		log.Println("Exiting because task " + s.GetTaskID().Value +
+		state.err = errors.New("Exiting because task " + s.GetTaskID().Value +
 			" is in an unexpected state " + st.String() +
 			" with reason " + s.GetReason().String() +
 			" from source " + s.GetSource().String() +
 			" with message '" + s.GetMessage() + "'")
-		os.Exit(1)
+		state.done = true
+		return
 	}
 
 	if state.tasksFinished == state.totalTasks {
 		log.Println("mission accomplished, terminating")
-		os.Exit(0)
+		state.done = true
+	} else {
+		tryReviveOffers(state, callOptions)
 	}
+}
 
+func tryReviveOffers(state *internalState, callOptions scheduler.CallOptions) {
 	// limit the rate at which we request offer revival
 	select {
 	case <-state.reviveTokens:
 		// not done yet, revive offers!
-		schedmetrics.ReviveCount.Inc()
+		state.metricsAPI.reviveCount()
 		resp, err := state.cli.Do(calls.Revive().With(callOptions...))
 		if resp != nil {
 			resp.Close()
 		}
 		if err != nil {
-			schedmetrics.APIErrorCount.WithLabelValues("revive").Inc()
+			state.metricsAPI.apiErrorCount("revive")
 			log.Printf("failed to revive offers: %+v", err)
 			return
 		}
@@ -397,66 +386,12 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 	}
 }
 
-func serveFile(pattern string, filename string) error {
-	_, err := os.Stat(filename)
-	if err != nil {
-		err = fmt.Errorf("failed to locate artifact: %+v", err)
-	} else {
-		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-			schedmetrics.ArtifactDownloads.Inc()
-			http.ServeFile(w, r, filename)
-		})
-	}
-	return err
-}
-
-// returns (downloadURI, basename(path))
-func serveExecutorArtifact(server server, path string) (string, string, error) {
-	// Create base path (http://foobar:5000/<base>)
-	pathSplit := strings.Split(path, "/")
-	var base string
-	if len(pathSplit) > 0 {
-		base = pathSplit[len(pathSplit)-1]
-	} else {
-		base = path
-	}
-	err := serveFile("/"+base, path)
-	if err != nil {
-		return "", "", err
-	}
-
-	hostURI := fmt.Sprintf("http://%s:%d/%s", server.address, server.port, base)
-	log.Println("Hosting artifact '" + path + "' at '" + hostURI + "'")
-
-	return hostURI, base, nil
-}
-
-func prepareListener(server server) (*net.TCPListener, int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(server.address, strconv.Itoa(server.port)))
-	if err != nil {
-		return nil, 0, err
-	}
-	listener, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return nil, 0, err
-	}
-	bindAddress := listener.Addr().String()
-	_, port, err := net.SplitHostPort(bindAddress)
-	if err != nil {
-		return nil, 0, err
-	}
-	iport, err := strconv.Atoi(port)
-	if err != nil {
-		return nil, 0, err
-	}
-	return listener, iport, nil
-}
-
 func prepareExecutorInfo(
 	execBinary, execImage string,
 	server server,
 	wantsResources mesos.Resources,
 	jobRestartDelay time.Duration,
+	metricsAPI *metricsAPI,
 ) (*mesos.ExecutorInfo, error) {
 	if execImage != "" {
 		// Create mesos custom executor
@@ -475,31 +410,33 @@ func prepareExecutorInfo(
 						{
 							Key:   "entrypoint",
 							Value: execBinary,
-						},
-					},
-				},
-			},
+						}}}},
 			Resources: wantsResources,
 		}, nil
 	} else {
 		log.Println("No executor image specified, will serve executor binary from built-in HTTP server")
 
-		listener, iport, err := prepareListener(server)
+		listener, iport, err := newListener(server)
 		if err != nil {
-			panic(err.Error()) // TODO(jdef) fixme
+			return nil, err
 		}
 		server.port = iport // we're just working with a copy of server, so this is OK
 		var (
+			mux                    = http.NewServeMux()
 			executorUris           = []mesos.CommandInfo_URI{}
-			uri, executorCmd, err2 = serveExecutorArtifact(server, execBinary)
+			uri, executorCmd, err2 = serveExecutorArtifact(server, execBinary, mux)
 			executorCommand        = fmt.Sprintf("./%s", executorCmd)
 		)
 		if err2 != nil {
 			return nil, err2
 		}
+		wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			metricsAPI.artifactDownloads()
+			mux.ServeHTTP(w, r)
+		})
 		executorUris = append(executorUris, mesos.CommandInfo_URI{Value: uri, Executable: proto.Bool(true)})
 
-		go forever("artifact-server", jobRestartDelay, func() error { return http.Serve(listener, nil) })
+		go forever("artifact-server", jobRestartDelay, metricsAPI.jobStartCount, func() error { return http.Serve(listener, wrapper) })
 		log.Println("Serving executor artifacts...")
 
 		// Create mesos custom executor
@@ -544,4 +481,7 @@ type internalState struct {
 	config             config
 	wantsTaskResources mesos.Resources
 	reviveTokens       <-chan struct{}
+	metricsAPI         *metricsAPI
+	err                error
+	done               bool
 }

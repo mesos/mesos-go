@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"time"
+
+	"github.com/mesos/mesos-go/cmd"
+	"github.com/mesos/mesos-go/encoding"
 )
 
 type config struct {
@@ -66,6 +69,33 @@ func (cfg *config) addFlags(fs *flag.FlagSet) {
 	fs.BoolVar(&cfg.summaryMetrics, "summaryMetrics", cfg.summaryMetrics, "Collect summary metrics for tasks launched per-offer-cycle, offer processing time, etc.")
 	fs.StringVar(&cfg.execImage, "exec.image", cfg.execImage, "Name of the docker image to run the executor")
 	fs.BoolVar(&cfg.compression, "compression", cfg.compression, "When true attempt to use compression for HTTP streams.")
+}
+
+func newConfig() config {
+	return config{
+		user:             env("FRAMEWORK_USER", "root"),
+		name:             env("FRAMEWORK_NAME", "example"),
+		url:              env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
+		codec:            codec{Codec: &encoding.ProtobufCodec},
+		timeout:          envDuration("MESOS_CONNECT_TIMEOUT", "1s"),
+		checkpoint:       true,
+		server:           server{address: env("LIBPROCESS_IP", "127.0.0.1")},
+		tasks:            envInt("NUM_TASKS", "5"),
+		taskCPU:          envFloat("TASK_CPU", "1"),
+		taskMemory:       envFloat("TASK_MEMORY", "64"),
+		execCPU:          envFloat("EXEC_CPU", "0.01"),
+		execMemory:       envFloat("EXEC_MEMORY", "64"),
+		reviveBurst:      envInt("REVIVE_BURST", "3"),
+		reviveWait:       envDuration("REVIVE_WAIT", "1s"),
+		maxRefuseSeconds: envDuration("MAX_REFUSE_SECONDS", "5s"),
+		jobRestartDelay:  envDuration("JOB_RESTART_DELAY", "5s"),
+		execImage:        env("EXEC_IMAGE", cmd.DockerImageTag),
+		executor:         env("EXEC_BINARY", "/opt/example-executor"),
+		metrics: metrics{
+			port: envInt("PORT0", "64009"),
+			path: env("METRICS_API_PATH", "/metrics"),
+		},
+	}
 }
 
 type server struct {

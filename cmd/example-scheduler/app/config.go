@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"flag"
@@ -8,7 +8,7 @@ import (
 	"github.com/mesos/mesos-go/encoding"
 )
 
-type config struct {
+type Config struct {
 	id                  string
 	user                string
 	name                string
@@ -39,7 +39,7 @@ type config struct {
 	compression         bool
 }
 
-func (cfg *config) addFlags(fs *flag.FlagSet) {
+func (cfg *Config) AddFlags(fs *flag.FlagSet) {
 	fs.StringVar(&cfg.user, "user", cfg.user, "Framework user to register with the Mesos master")
 	fs.StringVar(&cfg.name, "name", cfg.name, "Framework name to register with the Mesos master")
 	fs.StringVar(&cfg.role, "role", cfg.role, "Framework role to register with the Mesos master")
@@ -71,8 +71,8 @@ func (cfg *config) addFlags(fs *flag.FlagSet) {
 	fs.BoolVar(&cfg.compression, "compression", cfg.compression, "When true attempt to use compression for HTTP streams.")
 }
 
-func newConfig() config {
-	return config{
+func NewConfig() Config {
+	return Config{
 		user:             env("FRAMEWORK_USER", "root"),
 		name:             env("FRAMEWORK_NAME", "example"),
 		url:              env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),

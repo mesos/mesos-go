@@ -5,8 +5,10 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/mesos/mesos-go"
+	"github.com/mesos/mesos-go/backoff"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
 )
@@ -19,6 +21,11 @@ const (
 var (
 	errMissingMesosStreamId = errors.New("missing Mesos-Stream-Id header expected with successful SUBSCRIBE")
 	errNotHTTP              = errors.New("expected an HTTP object, found something else instead")
+
+	// MinRedirectBackoffPeriod MUST be set to some non-zero number, otherwise redirects will panic
+	MinRedirectBackoffPeriod = 100 * time.Millisecond
+	// MaxRedirectBackoffPeriod SHOULD be set to a value greater than MinRedirectBackoffPeriod
+	MaxRedirectBackoffPeriod = 13 * time.Second
 )
 
 type (
@@ -96,15 +103,26 @@ func (cli *client) Subscribe(subscribe encoding.Marshaler) (resp mesos.Response,
 
 func (cli *client) callWithRedirect(f func() (mesos.Response, error)) (resp mesos.Response, err error) {
 	var (
-		attempt      = 0
-		maxRedirects = cli.MaxRedirects()
+		done            chan struct{} // avoid allocating these chans unless we actually need to redirect
+		redirectBackoff <-chan struct{}
+		getBackoff      = func() <-chan struct{} {
+			if redirectBackoff == nil {
+				done = make(chan struct{})
+				redirectBackoff = backoff.Notifier(MinRedirectBackoffPeriod, MaxRedirectBackoffPeriod, done)
+			}
+			return redirectBackoff
+		}
 	)
-	for {
+	defer func() {
+		if done != nil {
+			close(done)
+		}
+	}()
+	for attempt := 0; ; attempt++ {
 		resp, err = f()
 		if err == nil || (err != nil && err != httpcli.ErrNotLeader) {
 			return resp, err
 		}
-
 		res, ok := resp.(*httpcli.Response)
 		if !ok {
 			if resp != nil {
@@ -112,31 +130,37 @@ func (cli *client) callWithRedirect(f func() (mesos.Response, error)) (resp meso
 			}
 			return nil, errNotHTTP
 		}
-
 		// TODO(jdef) refactor this
 		// mesos v0.29 will actually send back fully-formed URLs in the Location header
 		log.Println("master changed?")
-		if attempt < maxRedirects {
-			attempt++
-			newMaster := res.Header.Get("Location")
-			if newMaster != "" {
-				// current format appears to be //x.y.z.w:port
-				hostport, parseErr := url.Parse(newMaster)
-				if parseErr != nil || hostport.Host == "" {
-					return
-				}
-				current, parseErr := url.Parse(cli.URL())
-				if parseErr != nil {
-					return
-				}
-				current.Host = hostport.Host
-				endpoint := current.String()
-				log.Println("redirecting to " + endpoint)
-				cli.With(httpcli.URL(endpoint))
-				res.Close()
-				continue
+		if attempt < cli.MaxRedirects() {
+			location, ok := buildNewEndpoint(res.Header.Get("Location"), cli.URL())
+			if !ok {
+				return
 			}
+			res.Close()
+			log.Println("redirecting to " + location)
+			cli.With(httpcli.URL(location))
+			<-getBackoff()
+			continue
 		}
 		return
 	}
+}
+
+func buildNewEndpoint(location, currentEndpoint string) (string, bool) {
+	if location == "" {
+		return "", false
+	}
+	// current format appears to be //x.y.z.w:port
+	hostport, parseErr := url.Parse(location)
+	if parseErr != nil || hostport.Host == "" {
+		return "", false
+	}
+	current, parseErr := url.Parse(currentEndpoint)
+	if parseErr != nil {
+		return "", false
+	}
+	current.Host = hostport.Host
+	return current.String(), true
 }

@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"errors"
@@ -80,7 +80,7 @@ func prepareExecutorInfo(
 	return nil, errors.New("must specify an executor binary or image")
 }
 
-func buildWantsTaskResources(config config) (r mesos.Resources) {
+func buildWantsTaskResources(config Config) (r mesos.Resources) {
 	r.Add(
 		*mesos.BuildResource().Name("cpus").Scalar(config.taskCPU).Resource,
 		*mesos.BuildResource().Name("mem").Scalar(config.taskMemory).Resource,
@@ -89,7 +89,7 @@ func buildWantsTaskResources(config config) (r mesos.Resources) {
 	return
 }
 
-func buildWantsExecutorResources(config config) (r mesos.Resources) {
+func buildWantsExecutorResources(config Config) (r mesos.Resources) {
 	r.Add(
 		*mesos.BuildResource().Name("cpus").Scalar(config.execCPU).Resource,
 		*mesos.BuildResource().Name("mem").Scalar(config.execMemory).Resource,
@@ -98,7 +98,7 @@ func buildWantsExecutorResources(config config) (r mesos.Resources) {
 	return
 }
 
-func buildHTTPClient(cfg config) httpsched.Client {
+func buildHTTPClient(cfg Config) httpsched.Client {
 	cli := httpcli.New(
 		httpcli.URL(cfg.url),
 		httpcli.Codec(cfg.codec.Codec),
@@ -113,7 +113,7 @@ func buildHTTPClient(cfg config) httpsched.Client {
 	return httpsched.NewClient(cli)
 }
 
-func buildFrameworkInfo(cfg config) *mesos.FrameworkInfo {
+func buildFrameworkInfo(cfg Config) *mesos.FrameworkInfo {
 	frameworkInfo := &mesos.FrameworkInfo{
 		User:       cfg.user,
 		Name:       cfg.name,
@@ -135,7 +135,7 @@ func buildFrameworkInfo(cfg config) *mesos.FrameworkInfo {
 	return frameworkInfo
 }
 
-func newInternalState(cfg config) (*internalState, error) {
+func newInternalState(cfg Config) (*internalState, error) {
 	metricsAPI := initMetrics(cfg)
 	executorInfo, err := prepareExecutorInfo(
 		cfg.executor,
@@ -168,7 +168,7 @@ type internalState struct {
 	role               string
 	executor           *mesos.ExecutorInfo
 	cli                httpsched.Client
-	config             config
+	config             Config
 	wantsTaskResources mesos.Resources
 	reviveTokens       <-chan struct{}
 	metricsAPI         *metricsAPI

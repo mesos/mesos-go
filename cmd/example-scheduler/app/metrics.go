@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"net"
@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"time"
 
-	schedmetrics "github.com/mesos/mesos-go/cmd/example-scheduler/metrics"
+	schedmetrics "github.com/mesos/mesos-go/cmd/example-scheduler/app/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func initMetrics(cfg config) *metricsAPI {
+func initMetrics(cfg Config) *metricsAPI {
 	schedmetrics.Register()
 	metricsAddress := net.JoinHostPort(cfg.server.address, strconv.Itoa(cfg.metrics.port))
 	http.Handle(cfg.metrics.path, prometheus.Handler())

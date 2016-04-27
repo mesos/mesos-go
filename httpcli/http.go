@@ -70,8 +70,7 @@ type ProtocolError int
 func (pe ProtocolError) Error() string { return fmt.Sprintf("Unexpected Mesos HTTP error: %d", int(pe)) }
 
 const (
-	debug                      = false
-	defaultMaxRedirectAttempts = 9 // per-Do invocation
+	debug = false
 )
 
 // DoFunc sends an HTTP request and returns an HTTP response.
@@ -107,13 +106,12 @@ type ErrorMapperFunc func(statusCode int) error
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
-	url          string
-	do           DoFunc
-	header       http.Header
-	codec        *encoding.Codec
-	maxRedirects int
-	errorMapper  ErrorMapperFunc
-	requestOpts  []RequestOpt
+	url         string
+	do          DoFunc
+	header      http.Header
+	codec       *encoding.Codec
+	errorMapper ErrorMapperFunc
+	requestOpts []RequestOpt
 }
 
 // New returns a new Client with the given Opts applied.
@@ -121,24 +119,18 @@ type Client struct {
 // invoking Do.
 func New(opts ...Opt) *Client {
 	c := &Client{
-		codec:        &encoding.ProtobufCodec,
-		do:           With(),
-		header:       http.Header{},
-		maxRedirects: defaultMaxRedirectAttempts,
-		errorMapper:  defaultErrorMapper,
+		codec:       &encoding.ProtobufCodec,
+		do:          With(),
+		header:      http.Header{},
+		errorMapper: defaultErrorMapper,
 	}
 	c.With(opts...)
 	return c
 }
 
 // URL returns the current Mesos API endpoint URL that the caller is set to invoke
-func (c *Client) URL() string {
+func (c *Client) Endpoint() string {
 	return c.url
-}
-
-// MaxRedirects returns the max number of HTTP redirects that the client will follow (per-call)
-func (c *Client) MaxRedirects() int {
-	return c.maxRedirects
 }
 
 // Opt defines a functional option for the HTTP client type. A functional option
@@ -161,12 +153,15 @@ func (opts RequestOpts) Apply(req *http.Request) {
 	}
 }
 
+// noopOpt is a memento, noop option
+var noopOpt Opt = func() Opt {
+	var noop Opt
+	return Opt(func(_ *Client) Opt { return noop })
+}()
+
 // With applies the given Opts to a Client and returns itself.
 func (c *Client) With(opts ...Opt) Opt {
-	var noop Opt
-	noop = Opt(func(_ *Client) Opt { return noop })
-
-	last := noop
+	last := noopOpt
 	for _, opt := range opts {
 		if opt != nil {
 			last = opt(c)
@@ -179,8 +174,10 @@ func (c *Client) With(opts ...Opt) Opt {
 // invoking f(). Changes made to the Client by the temporary option are reverted before this
 // func returns.
 func (c *Client) WithTemporary(opt Opt, f func() error) error {
-	undo := c.With(opt)
-	defer c.With(undo)
+	if opt != nil {
+		undo := c.With(opt)
+		defer c.With(undo)
+	}
 	return f()
 }
 
@@ -267,21 +264,12 @@ func ErrorMapper(em ErrorMapperFunc) Opt {
 	}
 }
 
-// MaxRedirects returns an Opt that sets the max number of redirect attempts per-Do.
-func MaxRedirects(mr int) Opt {
-	return func(c *Client) Opt {
-		old := c.maxRedirects
-		c.maxRedirects = mr
-		return MaxRedirects(old)
-	}
-}
-
 // URL returns an Opt that sets a Client's URL.
-func URL(rawurl string) Opt {
+func Endpoint(rawurl string) Opt {
 	return func(c *Client) Opt {
 		old := c.url
 		c.url = rawurl
-		return URL(old)
+		return Endpoint(old)
 	}
 }
 

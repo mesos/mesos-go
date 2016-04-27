@@ -28,7 +28,7 @@ func Run(cfg Config) error {
 	registrationTokens := backoff.Notifier(1*time.Second, 15*time.Second, nil)
 	for {
 		state.metricsAPI.subscriptionAttempts()
-		resp, opt, err := state.cli.Subscribe(subscribe)
+		resp, opt, err := state.cli.Call(subscribe)
 		func() {
 			if resp != nil {
 				defer resp.Close()

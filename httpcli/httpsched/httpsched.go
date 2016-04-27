@@ -11,11 +11,13 @@ import (
 	"github.com/mesos/mesos-go/backoff"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
+	"github.com/mesos/mesos-go/scheduler"
 )
 
 const (
-	headerMesosStreamID = "Mesos-Stream-Id"
-	debug               = false
+	headerMesosStreamID        = "Mesos-Stream-Id"
+	debug                      = false
+	defaultMaxRedirectAttempts = 9 // per-Do invocation
 )
 
 var (
@@ -29,27 +31,60 @@ var (
 )
 
 type (
-	client struct {
-		*httpcli.Client
-	}
-
-	Client interface {
-		// CallNoData is for scheduler calls that are not expected to return any data from the server.
-		CallNoData(encoding.Marshaler) error
-		// Subscribe issues a SUBSCRIBE call to Mesos and properly manages the Mesos-Stream-Id header in the response.
-		Subscribe(encoding.Marshaler) (mesos.Response, httpcli.Opt, error)
+	withTemporary interface {
 		// WithTemporary configures the Client with the temporary option and returns the results of
 		// invoking f(). Changes made to the Client by the temporary option are reverted before this
 		// func returns.
 		WithTemporary(opt httpcli.Opt, f func() error) error
 	}
+
+	// httpClient is the Mesos transport layer client, for internal use
+	httpClient interface {
+		withTemporary
+		Endpoint() string
+		Do(encoding.Marshaler, ...httpcli.RequestOpt) (mesos.Response, error)
+		With(...httpcli.Opt) httpcli.Opt
+	}
+
+	client struct {
+		httpClient
+		maxRedirects int
+	}
+
+	// Client is the public interface ths framework scheduler's should consume
+	Client interface {
+		withTemporary
+		// CallNoData is for scheduler calls that are not expected to return any data from the server.
+		CallNoData(*scheduler.Call) error
+		// Call issues a call to Mesos and properly manages call-specific HTTP response headers & data.
+		Call(*scheduler.Call) (mesos.Response, httpcli.Opt, error)
+	}
+
+	Option func(*client) Option
 )
 
+// MaxRedirects is a functional option that sets the maximum number of per-call HTTP redirects for a scheduler client
+func MaxRedirects(mr int) Option {
+	return func(c *client) Option {
+		old := c.maxRedirects
+		c.maxRedirects = mr
+		return MaxRedirects(old)
+	}
+}
+
 // NewClient returns a scheduler API Client
-func NewClient(cl *httpcli.Client) Client { return &client{Client: cl} }
+func NewClient(cl *httpcli.Client, opts ...Option) Client {
+	result := &client{httpClient: cl, maxRedirects: defaultMaxRedirectAttempts}
+	for _, o := range opts {
+		if o != nil {
+			o(result)
+		}
+	}
+	return result
+}
 
 // CallNoData implements Client
-func (cli *client) CallNoData(call encoding.Marshaler) error {
+func (cli *client) CallNoData(call *scheduler.Call) error {
 	resp, err := cli.callWithRedirect(func() (mesos.Response, error) {
 		return cli.Do(call)
 	})
@@ -59,11 +94,28 @@ func (cli *client) CallNoData(call encoding.Marshaler) error {
 	return err
 }
 
-// Subscribe implements Client
-func (cli *client) Subscribe(subscribe encoding.Marshaler) (resp mesos.Response, maybeOpt httpcli.Opt, subscribeErr error) {
-	var (
-		mesosStreamID = ""
-		opt           = httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
+// Call implements Client
+func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, maybeOpt httpcli.Opt, err error) {
+	opt, requestOpt, optGen := cli.prepare(call)
+	cli.WithTemporary(opt, func() error {
+		resp, err = cli.callWithRedirect(func() (mesos.Response, error) {
+			return cli.Do(call, requestOpt...)
+		})
+		return nil
+	})
+	maybeOpt = optGen()
+	return
+}
+
+var defaultOptGen = func() httpcli.Opt { return nil }
+
+// prepare is invoked for scheduler call's that require pre-processing, post-processing, or both.
+func (cli *client) prepare(call *scheduler.Call) (undoable httpcli.Opt, requestOpt []httpcli.RequestOpt, optGen func() httpcli.Opt) {
+	optGen = defaultOptGen
+	switch call.GetType() {
+	case scheduler.Call_SUBSCRIBE:
+		mesosStreamID := ""
+		undoable = httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
 			return func(req *http.Request) (*http.Response, error) {
 				if debug {
 					log.Println("wrapping request")
@@ -90,14 +142,11 @@ func (cli *client) Subscribe(subscribe encoding.Marshaler) (resp mesos.Response,
 				return resp, err
 			}
 		})
-	)
-	cli.WithTemporary(opt, func() error {
-		resp, subscribeErr = cli.callWithRedirect(func() (mesos.Response, error) {
-			return cli.Do(subscribe, httpcli.Close(true))
-		})
-		return nil
-	})
-	maybeOpt = httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID)
+		requestOpt = []httpcli.RequestOpt{httpcli.Close(true)}
+		optGen = func() httpcli.Opt { return httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID) }
+	default:
+		// there are no other, special calls that generate data and require pre/post processing
+	}
 	return
 }
 
@@ -133,14 +182,14 @@ func (cli *client) callWithRedirect(f func() (mesos.Response, error)) (resp meso
 		// TODO(jdef) refactor this
 		// mesos v0.29 will actually send back fully-formed URLs in the Location header
 		log.Println("master changed?")
-		if attempt < cli.MaxRedirects() {
-			location, ok := buildNewEndpoint(res.Header.Get("Location"), cli.URL())
+		if attempt < cli.maxRedirects {
+			location, ok := buildNewEndpoint(res.Header.Get("Location"), cli.Endpoint())
 			if !ok {
 				return
 			}
 			res.Close()
 			log.Println("redirecting to " + location)
-			cli.With(httpcli.URL(location))
+			cli.With(httpcli.Endpoint(location))
 			<-getBackoff()
 			continue
 		}

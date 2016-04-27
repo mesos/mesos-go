@@ -100,7 +100,7 @@ func buildWantsExecutorResources(config Config) (r mesos.Resources) {
 
 func buildHTTPClient(cfg Config) httpsched.Client {
 	cli := httpcli.New(
-		httpcli.URL(cfg.url),
+		httpcli.Endpoint(cfg.url),
 		httpcli.Codec(cfg.codec.Codec),
 		httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
 	)

@@ -44,10 +44,9 @@ func run(cfg config.Config) {
 		}
 		state = &internalState{
 			cli: httpcli.New(
-				httpcli.URL(apiURL.String()),
+				httpcli.Endpoint(apiURL.String()),
 				httpcli.Codec(&encoding.ProtobufCodec),
 				httpcli.Do(httpcli.With(httpcli.Timeout(httpTimeout))),
-				httpcli.MaxRedirects(0), // no redirects for agent connections; there is only ever one
 			),
 			callOptions: executor.CallOptions{
 				calls.Framework(cfg.FrameworkID),

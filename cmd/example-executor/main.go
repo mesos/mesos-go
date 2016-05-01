@@ -137,10 +137,9 @@ func eventLoop(state *internalState, decoder encoding.Decoder, h events.Handler)
 		sendFailedTasks(state)
 
 		var e executor.Event
-		if err = decoder.Invoke(&e); err != nil {
-			continue
+		if err = decoder.Invoke(&e); err == nil {
+			err = h.HandleEvent(&e)
 		}
-		err = h.HandleEvent(&e)
 	}
 	return err
 }

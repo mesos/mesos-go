@@ -66,13 +66,12 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder, handler even
 	state.frameworkID = ""
 	for err == nil && !state.done {
 		var e scheduler.Event
-		if err = eventDecoder.Invoke(&e); err != nil {
-			continue
+		if err = eventDecoder.Invoke(&e); err == nil {
+			if state.config.verbose {
+				log.Printf("%+v\n", e)
+			}
+			err = handler.HandleEvent(&e)
 		}
-		if state.config.verbose {
-			log.Printf("%+v\n", e)
-		}
-		err = handler.HandleEvent(&e)
 	}
 	return err
 }

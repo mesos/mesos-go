@@ -30,7 +30,12 @@ func Run(cfg Config) error {
 		registrationTokens = backoff.Notifier(1*time.Second, 15*time.Second, nil)
 		handler            = buildEventHandler(state)
 	)
-	for {
+	for !state.done {
+		if frameworkInfo.GetFailoverTimeout() > 0 && state.frameworkID != "" {
+			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
+		}
+		<-registrationTokens
+		log.Println("connecting..")
 		state.metricsAPI.subscriptionAttempts()
 		resp, opt, err := state.cli.Call(subscribe)
 		func() {
@@ -49,15 +54,8 @@ func Run(cfg Config) error {
 				log.Println("disconnected")
 			}
 		}()
-		if state.done {
-			return state.err
-		}
-		if frameworkInfo.GetFailoverTimeout() > 0 && state.frameworkID != "" {
-			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
-		}
-		<-registrationTokens
-		log.Println("reconnecting..")
 	}
+	return state.err
 }
 
 // eventLoop returns the framework ID received by mesos (if any); callers should check for a

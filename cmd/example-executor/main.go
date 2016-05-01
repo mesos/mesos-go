@@ -14,6 +14,7 @@ import (
 	"github.com/mesos/mesos-go/executor"
 	"github.com/mesos/mesos-go/executor/calls"
 	"github.com/mesos/mesos-go/executor/config"
+	"github.com/mesos/mesos-go/executor/events"
 	"github.com/mesos/mesos-go/httpcli"
 	"github.com/pborman/uuid"
 )
@@ -59,6 +60,7 @@ func run(cfg config.Config) {
 		subscribe       = calls.Subscribe(nil, nil).With(state.callOptions...)
 		shouldReconnect = backoff.Notifier(1*time.Second, cfg.SubscriptionBackoffMax*4/3, nil)
 		disconnected    = time.Now()
+		handler         = buildEventHandler(state)
 	)
 	for {
 		subscribe = subscribe.With(
@@ -72,7 +74,7 @@ func run(cfg config.Config) {
 			}
 			if err == nil {
 				// we're officially connected, start decoding events
-				err = eventLoop(state, resp.Decoder())
+				err = eventLoop(state, resp.Decoder(), handler)
 				disconnected = time.Now()
 			}
 			if err != nil && err != io.EOF {
@@ -129,48 +131,56 @@ func unacknowledgedUpdates(state *internalState) executor.CallOpt {
 	}
 }
 
-func eventLoop(state *internalState, decoder encoding.Decoder) (err error) {
-	for err == nil {
+func eventLoop(state *internalState, decoder encoding.Decoder, h events.Handler) (err error) {
+	for err == nil && !state.shouldQuit {
+		// housekeeping
+		sendFailedTasks(state)
+
 		var e executor.Event
 		if err = decoder.Invoke(&e); err != nil {
 			continue
 		}
-		switch e.GetType() {
-		case executor.Event_SUBSCRIBED:
+		err = h.HandleEvent(&e)
+	}
+	return err
+}
+
+func buildEventHandler(state *internalState) events.Handler {
+	return events.NewMux(
+		events.Handle(executor.Event_SUBSCRIBED, events.HandlerFunc(func(e *executor.Event) error {
 			log.Println("SUBSCRIBED")
 			state.framework = e.Subscribed.FrameworkInfo
 			state.executor = e.Subscribed.ExecutorInfo
 			state.agent = e.Subscribed.AgentInfo
-
-		case executor.Event_LAUNCH:
+			return nil
+		})),
+		events.Handle(executor.Event_LAUNCH, events.HandlerFunc(func(e *executor.Event) error {
 			launch(state, e.Launch.Task)
-
-		case executor.Event_KILL:
+			return nil
+		})),
+		events.Handle(executor.Event_KILL, events.HandlerFunc(func(e *executor.Event) error {
 			log.Println("warning: KILL not implemented")
-
-		case executor.Event_ACKNOWLEDGED:
+			return nil
+		})),
+		events.Handle(executor.Event_ACKNOWLEDGED, events.HandlerFunc(func(e *executor.Event) error {
 			delete(state.unackedTasks, e.Acknowledged.TaskID)
 			delete(state.unackedUpdates, string(e.Acknowledged.UUID))
-
-		case executor.Event_MESSAGE:
+			return nil
+		})),
+		events.Handle(executor.Event_MESSAGE, events.HandlerFunc(func(e *executor.Event) error {
 			log.Printf("MESSAGE: received %d bytes of message data", len(e.Message.Data))
-
-		case executor.Event_SHUTDOWN:
+			return nil
+		})),
+		events.Handle(executor.Event_SHUTDOWN, events.HandlerFunc(func(e *executor.Event) error {
 			log.Println("SHUTDOWN received")
 			state.shouldQuit = true
 			return nil
-
-		case executor.Event_ERROR:
+		})),
+		events.Handle(executor.Event_ERROR, events.HandlerFunc(func(e *executor.Event) error {
 			log.Println("ERROR received")
-			err = errMustAbort
-		}
-
-		// housekeeping
-		if err == nil {
-			sendFailedTasks(state)
-		}
-	}
-	return err
+			return errMustAbort
+		})),
+	)
 }
 
 func sendFailedTasks(state *internalState) {

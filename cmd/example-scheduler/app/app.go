@@ -14,6 +14,7 @@ import (
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
+	"github.com/mesos/mesos-go/scheduler/events"
 )
 
 func Run(cfg Config) error {
@@ -23,9 +24,12 @@ func Run(cfg Config) error {
 	if err != nil {
 		return err
 	}
-	frameworkInfo := buildFrameworkInfo(cfg)
-	subscribe := calls.Subscribe(true, frameworkInfo)
-	registrationTokens := backoff.Notifier(1*time.Second, 15*time.Second, nil)
+	var (
+		frameworkInfo      = buildFrameworkInfo(cfg)
+		subscribe          = calls.Subscribe(true, frameworkInfo)
+		registrationTokens = backoff.Notifier(1*time.Second, 15*time.Second, nil)
+		handler            = buildEventHandler(state)
+	)
 	for {
 		state.metricsAPI.subscriptionAttempts()
 		resp, opt, err := state.cli.Call(subscribe)
@@ -35,7 +39,7 @@ func Run(cfg Config) error {
 			}
 			if err == nil {
 				err = state.cli.WithTemporary(opt, func() error {
-					return eventLoop(state, resp.Decoder())
+					return eventLoop(state, resp.Decoder(), handler)
 				})
 			}
 			if err != nil && err != io.EOF {
@@ -56,53 +60,62 @@ func Run(cfg Config) error {
 	}
 }
 
-// returns the framework ID received by mesos (if any); callers should check for a
+// eventLoop returns the framework ID received by mesos (if any); callers should check for a
 // framework ID regardless of whether error != nil.
-func eventLoop(state *internalState, eventDecoder encoding.Decoder) (err error) {
+func eventLoop(state *internalState, eventDecoder encoding.Decoder, handler events.Handler) (err error) {
 	state.frameworkID = ""
-	callOptions := scheduler.CallOptions{} // should be applied to every outgoing call
-
 	for err == nil && !state.done {
 		var e scheduler.Event
 		if err = eventDecoder.Invoke(&e); err != nil {
 			continue
 		}
-
 		if state.config.verbose {
 			log.Printf("%+v\n", e)
 		}
+		err = handler.HandleEvent(&e)
+	}
+	return err
+}
 
-		switch e.GetType() {
-		case scheduler.Event_FAILURE:
+// buildEventHandler generates and returns a handler to process events received from the subscription.
+func buildEventHandler(state *internalState) events.Handler {
+	callOptions := scheduler.CallOptions{} // should be applied to every outgoing call
+	// TODO(jdef) refactor per-event metrics as a generic, named counter; build generic functional wrapper that
+	// increments the count and apply the wrapper to each handler.
+	return events.NewMux(
+		events.Handle(scheduler.Event_FAILURE, events.HandlerFunc(func(e *scheduler.Event) error {
 			state.metricsAPI.failuresReceived()
 			log.Println("received a FAILURE event")
 			f := e.GetFailure()
 			failure(f.ExecutorID, f.AgentID, f.Status)
-
-		case scheduler.Event_OFFERS:
+			return nil
+		})),
+		events.Handle(scheduler.Event_OFFERS, events.HandlerFunc(func(e *scheduler.Event) error {
 			if state.config.verbose {
 				log.Println("received an OFFERS event")
 			}
 			offers := e.GetOffers().GetOffers()
 			state.metricsAPI.offersReceived.Int(len(offers))
 			t := time.Now()
-			resourceOffers(state, callOptions.Copy(), offers)
+			resourceOffers(state, callOptions[:], offers)
 			if state.config.summaryMetrics {
 				state.metricsAPI.processOffersLatency.Since(t)
 			}
-
-		case scheduler.Event_UPDATE:
+			return nil
+		})),
+		events.Handle(scheduler.Event_UPDATE, events.HandlerFunc(func(e *scheduler.Event) error {
 			state.metricsAPI.updatesReceived()
-			statusUpdate(state, callOptions.Copy(), e.GetUpdate().GetStatus())
-
-		case scheduler.Event_ERROR:
+			statusUpdate(state, callOptions[:], e.GetUpdate().GetStatus())
+			return nil
+		})),
+		events.Handle(scheduler.Event_ERROR, events.HandlerFunc(func(e *scheduler.Event) error {
 			state.metricsAPI.errorsReceived()
 			// it's recommended that we abort and re-try subscribing; setting
 			// err here will cause the event loop to terminate and the connection
 			// will be reset.
-			err = fmt.Errorf("ERROR: " + e.GetError().GetMessage())
-
-		case scheduler.Event_SUBSCRIBED:
+			return fmt.Errorf("ERROR: " + e.GetError().GetMessage())
+		})),
+		events.Handle(scheduler.Event_SUBSCRIBED, events.HandlerFunc(func(e *scheduler.Event) (err error) {
 			state.metricsAPI.subscribedReceived()
 			log.Println("received a SUBSCRIBED event")
 			if state.frameworkID == "" {
@@ -110,17 +123,14 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder) (err error) 
 				if state.frameworkID == "" {
 					// sanity check
 					err = errors.New("mesos gave us an empty frameworkID")
-					break
+				} else {
+					callOptions = append(callOptions, calls.Framework(state.frameworkID))
 				}
-				callOptions = append(callOptions, calls.Framework(state.frameworkID))
 			}
-			// else, ignore subsequently received events like this on the same connection
-		default:
-			// handle unknown event
-		}
-	} // for
-	return err
-} // eventLoop
+			return
+		})),
+	)
+} // buildEventHandler
 
 func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 	if eid != nil {

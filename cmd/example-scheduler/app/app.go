@@ -30,6 +30,9 @@ func Run(cfg Config) error {
 		registrationTokens = backoff.Notifier(1*time.Second, 15*time.Second, nil)
 		handler            = buildEventHandler(state)
 	)
+	if state.config.verbose {
+		handler = logAllEvents(handler)
+	}
 	for !state.done {
 		if frameworkInfo.GetFailoverTimeout() > 0 && state.frameworkID != "" {
 			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
@@ -43,6 +46,7 @@ func Run(cfg Config) error {
 				defer resp.Close()
 			}
 			if err == nil {
+				state.frameworkID = "" // we're newly (re?)subscribed, forget this
 				err = state.cli.WithTemporary(opt, func() error {
 					return eventLoop(state, resp.Decoder(), handler)
 				})
@@ -61,17 +65,21 @@ func Run(cfg Config) error {
 // eventLoop returns the framework ID received by mesos (if any); callers should check for a
 // framework ID regardless of whether error != nil.
 func eventLoop(state *internalState, eventDecoder encoding.Decoder, handler events.Handler) (err error) {
-	state.frameworkID = ""
 	for err == nil && !state.done {
 		var e scheduler.Event
 		if err = eventDecoder.Invoke(&e); err == nil {
-			if state.config.verbose {
-				log.Printf("%+v\n", e)
-			}
 			err = handler.HandleEvent(&e)
 		}
 	}
 	return err
+}
+
+// logAllEvents logs every observed event; this is somewhat expensive to do
+func logAllEvents(h events.Handler) events.Handler {
+	return events.HandlerFunc(func(e *scheduler.Event) error {
+		log.Printf("%+v\n", *e)
+		return h.HandleEvent(e)
+	})
 }
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.

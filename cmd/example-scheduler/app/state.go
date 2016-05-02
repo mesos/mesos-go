@@ -167,7 +167,7 @@ type internalState struct {
 	frameworkID        string
 	role               string
 	executor           *mesos.ExecutorInfo
-	cli                httpsched.Client
+	cli                httpsched.Caller
 	config             Config
 	wantsTaskResources mesos.Resources
 	reviveTokens       <-chan struct{}

@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mesos/mesos-go"
@@ -28,11 +29,11 @@ func Run(cfg Config) error {
 		frameworkInfo      = buildFrameworkInfo(cfg)
 		subscribe          = calls.Subscribe(true, frameworkInfo)
 		registrationTokens = backoff.Notifier(1*time.Second, 15*time.Second, nil)
-		handler            = buildEventHandler(state)
+		handler            = events.Decorators{
+			eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+			events.Decorator(logAllEvents).If(state.config.verbose),
+		}.Apply(buildEventHandler(state))
 	)
-	if state.config.verbose {
-		handler = logAllEvents(handler)
-	}
 	for !state.done {
 		if frameworkInfo.GetFailoverTimeout() > 0 && state.frameworkID != "" {
 			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
@@ -74,22 +75,11 @@ func eventLoop(state *internalState, eventDecoder encoding.Decoder, handler even
 	return err
 }
 
-// logAllEvents logs every observed event; this is somewhat expensive to do
-func logAllEvents(h events.Handler) events.Handler {
-	return events.HandlerFunc(func(e *scheduler.Event) error {
-		log.Printf("%+v\n", *e)
-		return h.HandleEvent(e)
-	})
-}
-
 // buildEventHandler generates and returns a handler to process events received from the subscription.
 func buildEventHandler(state *internalState) events.Handler {
 	callOptions := scheduler.CallOptions{} // should be applied to every outgoing call
-	// TODO(jdef) refactor per-event metrics as a generic, named counter; build generic functional wrapper that
-	// increments the count and apply the wrapper to each handler.
 	return events.NewMux(
 		events.Handle(scheduler.Event_FAILURE, events.HandlerFunc(func(e *scheduler.Event) error {
-			state.metricsAPI.failuresReceived()
 			log.Println("received a FAILURE event")
 			f := e.GetFailure()
 			failure(f.ExecutorID, f.AgentID, f.Status)
@@ -101,27 +91,20 @@ func buildEventHandler(state *internalState) events.Handler {
 			}
 			offers := e.GetOffers().GetOffers()
 			state.metricsAPI.offersReceived.Int(len(offers))
-			t := time.Now()
 			resourceOffers(state, callOptions[:], offers)
-			if state.config.summaryMetrics {
-				state.metricsAPI.processOffersLatency.Since(t)
-			}
 			return nil
 		})),
 		events.Handle(scheduler.Event_UPDATE, events.HandlerFunc(func(e *scheduler.Event) error {
-			state.metricsAPI.updatesReceived()
 			statusUpdate(state, callOptions[:], e.GetUpdate().GetStatus())
 			return nil
 		})),
 		events.Handle(scheduler.Event_ERROR, events.HandlerFunc(func(e *scheduler.Event) error {
-			state.metricsAPI.errorsReceived()
 			// it's recommended that we abort and re-try subscribing; setting
 			// err here will cause the event loop to terminate and the connection
 			// will be reset.
 			return fmt.Errorf("ERROR: " + e.GetError().GetMessage())
 		})),
 		events.Handle(scheduler.Event_SUBSCRIBED, events.HandlerFunc(func(e *scheduler.Event) (err error) {
-			state.metricsAPI.subscribedReceived()
 			log.Println("received a SUBSCRIBED event")
 			if state.frameworkID == "" {
 				state.frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
@@ -302,5 +285,35 @@ func tryReviveOffers(state *internalState, callOptions scheduler.CallOptions) {
 		}
 	default:
 		// noop
+	}
+}
+
+// logAllEvents logs every observed event; this is somewhat expensive to do
+func logAllEvents(h events.Handler) events.Handler {
+	return events.HandlerFunc(func(e *scheduler.Event) error {
+		log.Printf("%+v\n", *e)
+		return h.HandleEvent(e)
+	})
+}
+
+// eventMetrics logs metrics for every processed API event
+func eventMetrics(metricsAPI *metricsAPI, clock func() time.Time, summaryMetrics bool) events.Decorator {
+	observer := metricsAPI.eventReceivedLatency.Since
+	if !summaryMetrics {
+		clock = func() (t time.Time) { return } // noop
+		observer = func(_ time.Time, _ ...string) {}
+	}
+	return func(h events.Handler) events.Handler {
+		return events.HandlerFunc(func(e *scheduler.Event) error {
+			typename := strings.ToLower(e.GetType().String())
+			metricsAPI.eventReceivedCount(typename)
+			t := clock()
+			err := h.HandleEvent(e)
+			observer(t, typename)
+			if err != nil {
+				metricsAPI.eventErrorCount(typename)
+			}
+			return err
+		})
 	}
 }

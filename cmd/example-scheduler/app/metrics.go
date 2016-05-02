@@ -48,23 +48,21 @@ func newMetricWatchers(m *prometheus.SummaryVec) metricWatcher {
 }
 
 // Since records an observation of time.Now().Sub(t) in microseconds
-func (w metricWatcher) Since(t time.Time) {
-	w(schedmetrics.InMicroseconds(time.Now().Sub(t)))
+func (w metricWatcher) Since(t time.Time, s ...string) {
+	w(schedmetrics.InMicroseconds(time.Now().Sub(t)), s...)
 }
 
 type metricsAPI struct {
 	subscriptionAttempts  metricCounter
 	apiErrorCount         metricCounter
-	errorsReceived        metricCounter
-	updatesReceived       metricCounter
-	failuresReceived      metricCounter
-	subscribedReceived    metricCounter
+	eventErrorCount       metricCounter
+	eventReceivedCount    metricCounter
+	eventReceivedLatency  metricWatcher
 	offersReceived        metricAdder
 	offersDeclined        metricAdder
 	reviveCount           metricCounter
 	tasksLaunched         metricAdder
 	tasksFinished         metricCounter
-	processOffersLatency  metricWatcher
 	launchesPerOfferCycle metricWatcher
 	offeredResources      metricWatcher
 	jobStartCount         metricCounter
@@ -75,16 +73,14 @@ func newMetricsAPI() *metricsAPI {
 	return &metricsAPI{
 		subscriptionAttempts:  newMetricCounter(schedmetrics.SubscriptionAttempts),
 		apiErrorCount:         newMetricCounters(schedmetrics.APIErrorCount),
-		errorsReceived:        newMetricCounter(schedmetrics.ErrorsReceived),
-		failuresReceived:      newMetricCounter(schedmetrics.FailuresReceived),
-		updatesReceived:       newMetricCounter(schedmetrics.UpdatesReceived),
-		subscribedReceived:    newMetricCounter(schedmetrics.SubscribedReceived),
+		eventErrorCount:       newMetricCounters(schedmetrics.EventErrorCount),
+		eventReceivedCount:    newMetricCounters(schedmetrics.EventReceivedCount),
+		eventReceivedLatency:  newMetricWatchers(schedmetrics.EventReceivedLatency),
 		offersReceived:        newMetricAdder(schedmetrics.OffersReceived),
 		offersDeclined:        newMetricAdder(schedmetrics.OffersDeclined),
 		reviveCount:           newMetricCounter(schedmetrics.ReviveCount),
 		tasksLaunched:         newMetricAdder(schedmetrics.TasksLaunched),
 		tasksFinished:         newMetricCounter(schedmetrics.TasksFinished),
-		processOffersLatency:  newMetricWatcher(schedmetrics.ProcessOffersLatency),
 		launchesPerOfferCycle: newMetricWatcher(schedmetrics.TasksLaunchedPerOfferCycle),
 		offeredResources:      newMetricWatchers(schedmetrics.OfferedResources),
 		jobStartCount:         newMetricCounters(schedmetrics.JobStartCount),

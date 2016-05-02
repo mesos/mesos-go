@@ -51,17 +51,43 @@ type (
 		maxRedirects int
 	}
 
-	// Client is the public interface ths framework scheduler's should consume
-	Client interface {
-		withTemporary
+	Caller interface {
 		// CallNoData is for scheduler calls that are not expected to return any data from the server.
 		CallNoData(*scheduler.Call) error
 		// Call issues a call to Mesos and properly manages call-specific HTTP response headers & data.
-		Call(*scheduler.Call) (mesos.Response, httpcli.Opt, error)
+		// Subscriptions that succeed return a non-nil Caller that should be used for duration of the subscription.
+		Call(*scheduler.Call) (mesos.Response, Caller, error)
+	}
+
+	// Client is the public interface this framework scheduler's should consume
+	Client interface {
+		withTemporary
+		Caller
 	}
 
 	Option func(*client) Option
+
+	callerTemporary struct {
+		temp     httpcli.Opt
+		delegate Client
+	}
 )
+
+var _ = Caller(&callerTemporary{}) // callerTemporary implements Caller
+
+func (ct *callerTemporary) CallNoData(call *scheduler.Call) (err error) {
+	return ct.delegate.WithTemporary(ct.temp, func() error {
+		return ct.delegate.CallNoData(call)
+	})
+}
+
+func (ct *callerTemporary) Call(call *scheduler.Call) (resp mesos.Response, caller Caller, err error) {
+	ct.delegate.WithTemporary(ct.temp, func() error {
+		resp, caller, err = ct.delegate.Call(call)
+		return nil
+	})
+	return
+}
 
 // MaxRedirects is a functional option that sets the maximum number of per-call HTTP redirects for a scheduler client
 func MaxRedirects(mr int) Option {
@@ -95,7 +121,7 @@ func (cli *client) CallNoData(call *scheduler.Call) error {
 }
 
 // Call implements Client
-func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, maybeOpt httpcli.Opt, err error) {
+func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, caller Caller, err error) {
 	opt, requestOpt, optGen := cli.prepare(call)
 	cli.WithTemporary(opt, func() error {
 		resp, err = cli.callWithRedirect(func() (mesos.Response, error) {
@@ -103,7 +129,9 @@ func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, maybeOpt htt
 		})
 		return nil
 	})
-	maybeOpt = optGen()
+	if maybeOpt := optGen(); maybeOpt != nil {
+		caller = &callerTemporary{temp: maybeOpt, delegate: cli}
+	}
 	return
 }
 

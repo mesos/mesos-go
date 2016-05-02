@@ -41,16 +41,20 @@ func Run(cfg Config) error {
 		<-registrationTokens
 		log.Println("connecting..")
 		state.metricsAPI.subscriptionAttempts()
-		resp, opt, err := state.cli.Call(subscribe)
+		resp, newCaller, err := state.cli.Call(subscribe)
 		func() {
 			if resp != nil {
 				defer resp.Close()
 			}
 			if err == nil {
 				state.frameworkID = "" // we're newly (re?)subscribed, forget this
-				err = state.cli.WithTemporary(opt, func() error {
-					return eventLoop(state, resp.Decoder(), handler)
-				})
+				if newCaller != nil {
+					// newCaller is only good for the duration of the subscription
+					oldCaller := state.cli
+					state.cli = newCaller
+					defer func() { state.cli = oldCaller }()
+				}
+				err = eventLoop(state, resp.Decoder(), handler)
 			}
 			if err != nil && err != io.EOF {
 				state.metricsAPI.apiErrorCount("subscribe")

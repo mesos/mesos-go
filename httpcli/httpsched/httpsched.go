@@ -32,19 +32,14 @@ var (
 )
 
 type (
-	withTemporary interface {
-		// WithTemporary configures the Client with the temporary option and returns the results of
-		// invoking f(). Changes made to the Client by the temporary option are reverted before this
-		// func returns.
-		WithTemporary(opt httpcli.Opt, f func() error) error
-	}
-
 	client struct {
 		*httpcli.Client
 		maxRedirects int
 	}
 
 	Caller interface {
+		// Do is the generic HTTP execution interface from httpcli, leveraged (and overridden) here
+		Do(encoding.Marshaler, ...httpcli.RequestOpt) (mesos.Response, error)
 		// CallNoData is for scheduler calls that are not expected to return any data from the server.
 		CallNoData(*scheduler.Call) error
 		// Call issues a call to Mesos and properly manages call-specific HTTP response headers & data.
@@ -54,8 +49,11 @@ type (
 
 	// Client is the public interface this framework scheduler's should consume
 	Client interface {
-		withTemporary
 		Caller
+		// WithTemporary configures the Client with the temporary option and returns the results of
+		// invoking f(). Changes made to the Client by the temporary option are reverted before this
+		// func returns.
+		WithTemporary(opt httpcli.Opt, f func() error) error
 	}
 
 	Option func(*client) Option
@@ -67,6 +65,14 @@ type (
 )
 
 var _ = Caller(&callerTemporary{}) // callerTemporary implements Caller
+
+func (ct *callerTemporary) Do(m encoding.Marshaler, opt ...httpcli.RequestOpt) (resp mesos.Response, err error) {
+	ct.delegate.WithTemporary(ct.temp, func() error {
+		resp, err = ct.delegate.Do(m, opt...)
+		return nil
+	})
+	return
+}
 
 func (ct *callerTemporary) CallNoData(call *scheduler.Call) (err error) {
 	return ct.delegate.WithTemporary(ct.temp, func() error {
@@ -140,7 +146,12 @@ func (cli *client) Do(m encoding.Marshaler, opt ...httpcli.RequestOpt) (resp mes
 
 // CallNoData implements Client
 func (cli *client) CallNoData(call *scheduler.Call) error {
-	resp, err := cli.Do(call)
+	// TODO(jdef) is it wise to drop the option generator?
+	preparedCaller, requestOpt, _ := prepare(cli, call)
+	if preparedCaller == nil {
+		preparedCaller = cli
+	}
+	resp, err := preparedCaller.Do(call, requestOpt...)
 	if resp != nil {
 		resp.Close()
 	}
@@ -149,11 +160,11 @@ func (cli *client) CallNoData(call *scheduler.Call) error {
 
 // Call implements Client
 func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, caller Caller, err error) {
-	opt, requestOpt, optGen := cli.prepare(call)
-	cli.WithTemporary(opt, func() error {
-		resp, err = cli.Do(call, requestOpt...)
-		return nil
-	})
+	preparedCaller, requestOpt, optGen := prepare(cli, call)
+	if preparedCaller == nil {
+		preparedCaller = cli
+	}
+	resp, err = preparedCaller.Do(call, requestOpt...)
 	if maybeOpt := optGen(); maybeOpt != nil {
 		caller = &callerTemporary{temp: maybeOpt, delegate: cli}
 	}
@@ -163,12 +174,12 @@ func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, caller Calle
 var defaultOptGen = func() httpcli.Opt { return nil }
 
 // prepare is invoked for scheduler call's that require pre-processing, post-processing, or both.
-func (cli *client) prepare(call *scheduler.Call) (undoable httpcli.Opt, requestOpt []httpcli.RequestOpt, optGen func() httpcli.Opt) {
+func prepare(client Client, call *scheduler.Call) (subscribeCaller Caller, requestOpt []httpcli.RequestOpt, optGen func() httpcli.Opt) {
 	optGen = defaultOptGen
 	switch call.GetType() {
 	case scheduler.Call_SUBSCRIBE:
 		mesosStreamID := ""
-		undoable = httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
+		undoable := httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
 			return func(req *http.Request) (*http.Response, error) {
 				if debug {
 					log.Println("wrapping request")
@@ -195,6 +206,7 @@ func (cli *client) prepare(call *scheduler.Call) (undoable httpcli.Opt, requestO
 				return resp, err
 			}
 		})
+		subscribeCaller = &callerTemporary{undoable, client}
 		requestOpt = []httpcli.RequestOpt{httpcli.Close(true)}
 		optGen = func() httpcli.Opt { return httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID) }
 	default:

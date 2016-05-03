@@ -109,12 +109,14 @@ type ErrorMapperFunc func(statusCode int) error
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
-	url         string
-	do          DoFunc
-	header      http.Header
-	codec       *encoding.Codec
-	errorMapper ErrorMapperFunc
-	requestOpts []RequestOpt
+	url            string
+	do             DoFunc
+	header         http.Header
+	codec          *encoding.Codec
+	errorMapper    ErrorMapperFunc
+	requestOpts    []RequestOpt
+	buildRequest   func(encoding.Marshaler, ...RequestOpt) (*http.Request, error)
+	handleResponse func(*http.Response, error) (mesos.Response, error)
 }
 
 // New returns a new Client with the given Opts applied.
@@ -127,6 +129,8 @@ func New(opts ...Opt) *Client {
 		header:      http.Header{},
 		errorMapper: defaultErrorMapper,
 	}
+	c.buildRequest = c.BuildRequest
+	c.handleResponse = c.HandleResponse
 	c.With(opts...)
 	return c
 }
@@ -257,9 +261,9 @@ func (c *Client) HandleResponse(res *http.Response, err error) (mesos.Response, 
 // no expected object stream as a result the embedded Decoder will be nil.
 func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (res mesos.Response, err error) {
 	var req *http.Request
-	req, err = c.BuildRequest(m, opt...)
+	req, err = c.buildRequest(m, opt...)
 	if err == nil {
-		res, err = c.HandleResponse(c.do(req))
+		res, err = c.handleResponse(c.do(req))
 	}
 	return
 }
@@ -323,6 +327,15 @@ func DefaultHeader(k, v string) Opt {
 			}
 			return DefaultHeader(k, v)
 		}
+	}
+}
+
+// HandleResponse returns a functional config option to set the HTTP response handler of the client.
+func HandleResponse(f func(res *http.Response, err error) (mesos.Response, error)) Opt {
+	return func(c *Client) Opt {
+		old := c.handleResponse
+		c.handleResponse = f
+		return HandleResponse(old)
 	}
 }
 

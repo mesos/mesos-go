@@ -107,6 +107,9 @@ func (r *Response) Decoder() encoding.Decoder { return r.decoder }
 // ErrorMapperFunc generates an error for the given statusCode
 type ErrorMapperFunc func(statusCode int) error
 
+// ResponseHandler is invoked to process an HTTP response
+type ResponseHandler func(*http.Response, error) (mesos.Response, error)
+
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
 	url            string
@@ -116,7 +119,7 @@ type Client struct {
 	errorMapper    ErrorMapperFunc
 	requestOpts    []RequestOpt
 	buildRequest   func(encoding.Marshaler, ...RequestOpt) (*http.Request, error)
-	handleResponse func(*http.Response, error) (mesos.Response, error)
+	handleResponse ResponseHandler
 }
 
 // New returns a new Client with the given Opts applied.
@@ -208,7 +211,7 @@ func (c *Client) BuildRequest(m encoding.Marshaler, opt ...RequestOpt) (*http.Re
 		return nil, err
 	}
 
-	helper := HttpRequestHelper{req}
+	helper := HTTPRequestHelper{req}
 	return helper.
 		withOptions(c.requestOpts, opt).
 		withHeaders(c.header).
@@ -331,7 +334,7 @@ func DefaultHeader(k, v string) Opt {
 }
 
 // HandleResponse returns a functional config option to set the HTTP response handler of the client.
-func HandleResponse(f func(res *http.Response, err error) (mesos.Response, error)) Opt {
+func HandleResponse(f ResponseHandler) Opt {
 	return func(c *Client) Opt {
 		old := c.handleResponse
 		c.handleResponse = f
@@ -429,19 +432,19 @@ func WrapRoundTripper(f func(http.RoundTripper) http.RoundTripper) ConfigOpt {
 	}
 }
 
-// HttpRequestHelper wraps an http.Request and provides utility funcs to simplify code elsewhere
-type HttpRequestHelper struct {
+// HTTPRequestHelper wraps an http.Request and provides utility funcs to simplify code elsewhere
+type HTTPRequestHelper struct {
 	*http.Request
 }
 
-func (r *HttpRequestHelper) withOptions(optsets ...RequestOpts) *HttpRequestHelper {
+func (r *HTTPRequestHelper) withOptions(optsets ...RequestOpts) *HTTPRequestHelper {
 	for _, opts := range optsets {
 		opts.Apply(r.Request)
 	}
 	return r
 }
 
-func (r *HttpRequestHelper) withHeaders(hh http.Header) *HttpRequestHelper {
+func (r *HTTPRequestHelper) withHeaders(hh http.Header) *HTTPRequestHelper {
 	for k, v := range hh {
 		r.Header[k] = v
 		if debug {
@@ -451,7 +454,7 @@ func (r *HttpRequestHelper) withHeaders(hh http.Header) *HttpRequestHelper {
 	return r
 }
 
-func (r *HttpRequestHelper) withHeader(key, value string) *HttpRequestHelper {
+func (r *HTTPRequestHelper) withHeader(key, value string) *HTTPRequestHelper {
 	r.Header.Set(key, value)
 	return r
 }

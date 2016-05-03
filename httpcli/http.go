@@ -70,7 +70,10 @@ type ProtocolError int
 func (pe ProtocolError) Error() string { return fmt.Sprintf("Unexpected Mesos HTTP error: %d", int(pe)) }
 
 const (
-	debug = false
+	debug = false // TODO(jdef) kill me at some point
+
+	indexRequestContentType  = 0 // index into Client.codec.MediaTypes for request content type
+	indexResponseContentType = 1 // index into Client.codec.MediaTypes for expected response content type
 )
 
 // DoFunc sends an HTTP request and returns an HTTP response.
@@ -188,13 +191,10 @@ func (c *Client) Mesos(opts ...RequestOpt) mesos.Client {
 	})
 }
 
-// Do sends a Call and returns (a) a Response (should be closed when finished) that
-// contains a streaming Decoder from which callers can read Events from, and; (b) an
-// error in case of failure. Callers are expected to *always* close a non-nil Response
-// if one is returned. For operations which are successful but also for which there is
-// no expected object stream as a result the embedded Decoder will be nil.
-func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (mesos.Response, error) {
-	var body bytes.Buffer
+// BuildRequest is a factory func that generates and returns an http.Request for the
+// given marshaler and request options.
+func (c *Client) BuildRequest(m encoding.Marshaler, opt ...RequestOpt) (*http.Request, error) {
+	var body bytes.Buffer //TODO(jdef): use a pool to allocate these (and reduce garbage)?
 	if err := c.codec.NewEncoder(&body).Invoke(m); err != nil {
 		return nil, err
 	}
@@ -204,23 +204,18 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (mesos.Response, er
 		return nil, err
 	}
 
-	// default headers, applied to all requests
-	for k, v := range c.header {
-		req.Header[k] = v
-		if debug {
-			log.Println("request header " + k + ": " + v[0])
-		}
-	}
+	helper := HttpRequestHelper{req}
+	return helper.
+		withOptions(c.requestOpts, opt).
+		withHeaders(c.header).
+		withHeader("Content-Type", c.codec.MediaTypes[indexRequestContentType]).
+		withHeader("Accept", c.codec.MediaTypes[indexResponseContentType]).
+		Request, nil
+}
 
-	// apply default, then per-request options
-	RequestOpts(c.requestOpts).Apply(req)
-	RequestOpts(opt).Apply(req)
-
-	// these headers override anything that a caller may have tried to set
-	req.Header.Set("Content-Type", c.codec.MediaTypes[0])
-	req.Header.Set("Accept", c.codec.MediaTypes[1])
-
-	res, err := c.do(req)
+// HandleResponse parses an HTTP response from a Mesos service endpoint, transforming the
+// raw HTTP response into a mesos.Response.
+func (c *Client) HandleResponse(res *http.Response, err error) (mesos.Response, error) {
 	if err != nil {
 		if res != nil && res.Body != nil {
 			res.Body.Close()
@@ -235,7 +230,7 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (mesos.Response, er
 			log.Println("request OK, decoding response")
 		}
 		ct := res.Header.Get("Content-Type")
-		if ct != c.codec.MediaTypes[1] {
+		if ct != c.codec.MediaTypes[indexResponseContentType] {
 			res.Body.Close()
 			return nil, fmt.Errorf("unexpected content type: %q", ct) //TODO(jdef) extact this into a typed error
 		}
@@ -253,6 +248,20 @@ func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (mesos.Response, er
 		Closer:  res.Body,
 		Header:  res.Header,
 	}, err
+}
+
+// Do sends a Call and returns (a) a Response (should be closed when finished) that
+// contains a streaming Decoder from which callers can read Events from, and; (b) an
+// error in case of failure. Callers are expected to *always* close a non-nil Response
+// if one is returned. For operations which are successful but also for which there is
+// no expected object stream as a result the embedded Decoder will be nil.
+func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (res mesos.Response, err error) {
+	var req *http.Request
+	req, err = c.BuildRequest(m, opt...)
+	if err == nil {
+		res, err = c.HandleResponse(c.do(req))
+	}
+	return
 }
 
 // ErrorMapper returns am Opt that overrides the existing error mapping behavior of the client.
@@ -405,4 +414,31 @@ func WrapRoundTripper(f func(http.RoundTripper) http.RoundTripper) ConfigOpt {
 			}
 		}
 	}
+}
+
+// HttpRequestHelper wraps an http.Request and provides utility funcs to simplify code elsewhere
+type HttpRequestHelper struct {
+	*http.Request
+}
+
+func (r *HttpRequestHelper) withOptions(optsets ...RequestOpts) *HttpRequestHelper {
+	for _, opts := range optsets {
+		opts.Apply(r.Request)
+	}
+	return r
+}
+
+func (r *HttpRequestHelper) withHeaders(hh http.Header) *HttpRequestHelper {
+	for k, v := range hh {
+		r.Header[k] = v
+		if debug {
+			log.Println("request header " + k + ": " + v[0])
+		}
+	}
+	return r
+}
+
+func (r *HttpRequestHelper) withHeader(key, value string) *HttpRequestHelper {
+	r.Header.Set(key, value)
+	return r
 }

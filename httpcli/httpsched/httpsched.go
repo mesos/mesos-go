@@ -178,6 +178,9 @@ func (cli *client) prepare(call *scheduler.Call) (undoable httpcli.Opt, requestO
 	return
 }
 
+// callWithRedirect executes a scheduler Call, following possible HTTP redirects upon changes
+// to Mesos leadership. NOTE: this implementation will change the state of the client upon Mesos
+// leadership changes.
 func (cli *client) callWithRedirect(f func() (mesos.Response, error)) (resp mesos.Response, err error) {
 	var (
 		done            chan struct{} // avoid allocating these chans unless we actually need to redirect

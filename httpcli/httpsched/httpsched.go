@@ -9,7 +9,7 @@ import (
 
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/backoff"
-	"github.com/mesos/mesos-go/encoding"
+	//"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/httpcli"
 	"github.com/mesos/mesos-go/scheduler"
 )
@@ -38,16 +38,8 @@ type (
 		WithTemporary(opt httpcli.Opt, f func() error) error
 	}
 
-	// httpClient is the Mesos transport layer client, for internal use
-	httpClient interface {
-		withTemporary
-		Endpoint() string
-		Do(encoding.Marshaler, ...httpcli.RequestOpt) (mesos.Response, error)
-		With(...httpcli.Opt) httpcli.Opt
-	}
-
 	client struct {
-		httpClient
+		*httpcli.Client
 		maxRedirects int
 	}
 
@@ -100,7 +92,8 @@ func MaxRedirects(mr int) Option {
 
 // NewClient returns a scheduler API Client
 func NewClient(cl *httpcli.Client, opts ...Option) Client {
-	result := &client{httpClient: cl, maxRedirects: defaultMaxRedirectAttempts}
+	result := &client{Client: cl, maxRedirects: defaultMaxRedirectAttempts}
+	cl.With(result.redirectHandler())
 	for _, o := range opts {
 		if o != nil {
 			o(result)
@@ -178,9 +171,47 @@ func (cli *client) prepare(call *scheduler.Call) (undoable httpcli.Opt, requestO
 	return
 }
 
+type mesosRedirectionError struct {
+	newURL string
+}
+
+func (mre *mesosRedirectionError) Error() string {
+	return "mesos server sent redirect to: " + mre.newURL
+}
+
+// redirectHandler returns a config options that transforms normal Mesos redirect "errors" into
+// mesosRedirectionErrors by parsing the Location header and computing the address of the next
+// endpoint that should be used to replay the failed HTTP request.
+func (cli *client) redirectHandler() httpcli.Opt {
+	return httpcli.HandleResponse(func(hres *http.Response, err error) (mesos.Response, error) {
+		resp, err := cli.HandleResponse(hres, err) // default response handler
+		if err == nil || (err != nil && err != httpcli.ErrNotLeader) {
+			return resp, err
+		}
+		res, ok := resp.(*httpcli.Response)
+		if !ok {
+			if resp != nil {
+				resp.Close()
+			}
+			return nil, errNotHTTP
+		}
+		// TODO(jdef) refactor this
+		// mesos v0.29 will actually send back fully-formed URLs in the Location header
+		log.Println("master changed?")
+		location, ok := buildNewEndpoint(res.Header.Get("Location"), cli.Endpoint())
+		if !ok {
+			// TODO(jdef) should probably include the value of the Location header in the message here
+			return nil, errors.New("failed to build new Mesos service endpoint URL from Location header")
+		}
+		res.Close()
+		return nil, &mesosRedirectionError{location}
+	})
+}
+
 // callWithRedirect executes a scheduler Call, following possible HTTP redirects upon changes
 // to Mesos leadership. NOTE: this implementation will change the state of the client upon Mesos
 // leadership changes.
+// @deprecated
 func (cli *client) callWithRedirect(f func() (mesos.Response, error)) (resp mesos.Response, err error) {
 	var (
 		done            chan struct{} // avoid allocating these chans unless we actually need to redirect
@@ -200,27 +231,15 @@ func (cli *client) callWithRedirect(f func() (mesos.Response, error)) (resp meso
 	}()
 	for attempt := 0; ; attempt++ {
 		resp, err = f()
-		if err == nil || (err != nil && err != httpcli.ErrNotLeader) {
-			return resp, err
-		}
-		res, ok := resp.(*httpcli.Response)
+		redirectErr, ok := err.(*mesosRedirectionError)
 		if !ok {
-			if resp != nil {
-				resp.Close()
-			}
-			return nil, errNotHTTP
+			return resp, err
 		}
 		// TODO(jdef) refactor this
 		// mesos v0.29 will actually send back fully-formed URLs in the Location header
-		log.Println("master changed?")
 		if attempt < cli.maxRedirects {
-			location, ok := buildNewEndpoint(res.Header.Get("Location"), cli.Endpoint())
-			if !ok {
-				return
-			}
-			res.Close()
-			log.Println("redirecting to " + location)
-			cli.With(httpcli.Endpoint(location))
+			log.Println("redirecting to " + redirectErr.newURL)
+			cli.With(httpcli.Endpoint(redirectErr.newURL))
 			<-getBackoff()
 			continue
 		}

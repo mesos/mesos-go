@@ -47,6 +47,8 @@ type (
 		Call(*scheduler.Call) (mesos.Response, Caller, error)
 	}
 
+	Decorator func(Caller) Caller
+
 	// Client is the public interface this framework scheduler's should consume
 	Client interface {
 		Caller
@@ -265,4 +267,19 @@ func buildNewEndpoint(location, currentEndpoint string) (string, bool) {
 	}
 	current.Host = hostport.Host
 	return current.String(), true
+}
+
+var noopDecorator = Decorator(func(h Caller) Caller { return h })
+
+// If returns the receiving Decorator if the given bool is true; otherwise returns a no-op
+// Decorator instance.
+func (d Decorator) If(b bool) Decorator {
+	if d == nil {
+		return noopDecorator
+	}
+	result := noopDecorator
+	if b {
+		result = d
+	}
+	return result
 }

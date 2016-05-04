@@ -14,16 +14,21 @@ const (
 // TODO(jdef) time in between offers
 
 var (
-	SubscriptionAttempts = prometheus.NewCounter(prometheus.CounterOpts{
+	CallErrorCount = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Subsystem: Subsystem,
-		Name:      "subscription_attempts",
-		Help:      "The number of subscription attempts.",
-	})
-	APIErrorCount = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name:      "call_error_count",
+		Help:      "The number of errors for outgoing calls.",
+	}, []string{"type"})
+	CallCount = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Subsystem: Subsystem,
-		Name:      "api_error_count",
-		Help:      "The number of unexpected http/v1 API errors.",
-	}, []string{"call"})
+		Name:      "call_count",
+		Help:      "The number of outgoing calls.",
+	}, []string{"type"})
+	CallLatency = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Subsystem: Subsystem,
+		Name:      "call_latency",
+		Help:      "Time to execute various calls, by type.",
+	}, []string{"type"})
 	EventErrorCount = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Subsystem: Subsystem,
 		Name:      "event_error_count",
@@ -64,11 +69,6 @@ var (
 		Name:      "job_start_count",
 		Help:      "The number of internal background jobs started.",
 	}, []string{"job"})
-	ReviveCount = prometheus.NewCounter(prometheus.CounterOpts{
-		Subsystem: Subsystem,
-		Name:      "revive_count",
-		Help:      "The number of offer revive requests sent.",
-	})
 	OfferedResources = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Subsystem: Subsystem,
 		Name:      "offered_resources",
@@ -90,14 +90,14 @@ var registerMetrics sync.Once
 
 func Register() {
 	registerMetrics.Do(func() {
-		prometheus.MustRegister(SubscriptionAttempts)
-		prometheus.MustRegister(APIErrorCount)
+		prometheus.MustRegister(CallErrorCount)
+		prometheus.MustRegister(CallCount)
+		prometheus.MustRegister(CallLatency)
 		prometheus.MustRegister(EventErrorCount)
 		prometheus.MustRegister(EventReceivedCount)
 		prometheus.MustRegister(EventReceivedLatency)
 		prometheus.MustRegister(OffersReceived)
 		prometheus.MustRegister(OffersDeclined)
-		prometheus.MustRegister(ReviveCount)
 		prometheus.MustRegister(JobStartCount)
 		prometheus.MustRegister(TasksFinished)
 		prometheus.MustRegister(TasksLaunched)

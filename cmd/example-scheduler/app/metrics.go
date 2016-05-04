@@ -53,14 +53,14 @@ func (w metricWatcher) Since(t time.Time, s ...string) {
 }
 
 type metricsAPI struct {
-	subscriptionAttempts  metricCounter
-	apiErrorCount         metricCounter
 	eventErrorCount       metricCounter
 	eventReceivedCount    metricCounter
 	eventReceivedLatency  metricWatcher
+	callCount             metricCounter
+	callErrorCount        metricCounter
+	callLatency           metricWatcher
 	offersReceived        metricAdder
 	offersDeclined        metricAdder
-	reviveCount           metricCounter
 	tasksLaunched         metricAdder
 	tasksFinished         metricCounter
 	launchesPerOfferCycle metricWatcher
@@ -71,14 +71,14 @@ type metricsAPI struct {
 
 func newMetricsAPI() *metricsAPI {
 	return &metricsAPI{
-		subscriptionAttempts:  newMetricCounter(schedmetrics.SubscriptionAttempts),
-		apiErrorCount:         newMetricCounters(schedmetrics.APIErrorCount),
+		callCount:             newMetricCounters(schedmetrics.CallCount),
+		callErrorCount:        newMetricCounters(schedmetrics.CallErrorCount),
+		callLatency:           newMetricWatchers(schedmetrics.CallLatency),
 		eventErrorCount:       newMetricCounters(schedmetrics.EventErrorCount),
 		eventReceivedCount:    newMetricCounters(schedmetrics.EventReceivedCount),
 		eventReceivedLatency:  newMetricWatchers(schedmetrics.EventReceivedLatency),
 		offersReceived:        newMetricAdder(schedmetrics.OffersReceived),
 		offersDeclined:        newMetricAdder(schedmetrics.OffersDeclined),
-		reviveCount:           newMetricCounter(schedmetrics.ReviveCount),
 		tasksLaunched:         newMetricAdder(schedmetrics.TasksLaunched),
 		tasksFinished:         newMetricCounter(schedmetrics.TasksFinished),
 		launchesPerOfferCycle: newMetricWatcher(schedmetrics.TasksLaunchedPerOfferCycle),
@@ -86,4 +86,36 @@ func newMetricsAPI() *metricsAPI {
 		jobStartCount:         newMetricCounters(schedmetrics.JobStartCount),
 		artifactDownloads:     newMetricCounter(schedmetrics.ArtifactDownloads),
 	}
+}
+
+type metricsHarness func(func() error, ...string) error
+
+// newHarness generates and returns an execution harness that records metrics. `counts` and `errors`
+// are required; `timed` and `clock` must either both be nil, or both be non-nil.
+func newMetricsHarness(counts, errors metricCounter, timed metricWatcher, clock func() time.Time) metricsHarness {
+	var harness metricsHarness
+	if timed != nil && clock != nil {
+		harness = func(f func() error, labels ...string) error {
+			counts(labels...)
+			var (
+				t   = clock()
+				err = f()
+			)
+			timed.Since(t, labels...)
+			if err != nil {
+				errors(labels...)
+			}
+			return err
+		}
+	} else {
+		harness = func(f func() error, labels ...string) error {
+			counts(labels...)
+			err := f()
+			if err != nil {
+				errors(labels...)
+			}
+			return err
+		}
+	}
+	return harness
 }

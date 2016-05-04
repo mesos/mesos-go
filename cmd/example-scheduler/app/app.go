@@ -13,6 +13,7 @@ import (
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/backoff"
 	"github.com/mesos/mesos-go/encoding"
+	"github.com/mesos/mesos-go/httpcli/httpsched"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
 	"github.com/mesos/mesos-go/scheduler/events"
@@ -33,38 +34,46 @@ func Run(cfg Config) error {
 			eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
 			events.Decorator(logAllEvents).If(state.config.verbose),
 		}.Apply(buildEventHandler(state))
+		decorateCaller = callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics)
 	)
+	state.cli = decorateCaller(state.cli)
 	for !state.done {
 		if frameworkInfo.GetFailoverTimeout() > 0 && state.frameworkID != "" {
 			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
 		}
 		<-registrationTokens
 		log.Println("connecting..")
-		state.metricsAPI.subscriptionAttempts()
-		resp, newCaller, err := state.cli.Call(subscribe)
-		func() {
-			if resp != nil {
-				defer resp.Close()
-			}
-			if err == nil {
-				state.frameworkID = "" // we're newly (re?)subscribed, forget this
-				if newCaller != nil {
-					// newCaller is only good for the duration of the subscription
-					oldCaller := state.cli
-					state.cli = newCaller
-					defer func() { state.cli = oldCaller }()
-				}
-				err = eventLoop(state, resp.Decoder(), handler)
-			}
-			if err != nil && err != io.EOF {
-				state.metricsAPI.apiErrorCount("subscribe")
-				log.Println(err)
-			} else {
-				log.Println("disconnected")
-			}
-		}()
+		resp, subscribedCaller, err := state.cli.Call(subscribe)
+		processSubscription(state, handler, resp, decorateCaller(subscribedCaller), err)
 	}
 	return state.err
+}
+
+func processSubscription(
+	state *internalState,
+	handler events.Handler,
+	resp mesos.Response,
+	subscribedCaller httpsched.Caller,
+	err error,
+) {
+	if resp != nil {
+		defer resp.Close()
+	}
+	if err == nil {
+		state.frameworkID = "" // we're newly (re?)subscribed, forget this
+		if subscribedCaller != nil {
+			// subscribedCaller is only good for the duration of the subscription
+			oldCaller := state.cli
+			state.cli = subscribedCaller
+			defer func() { state.cli = oldCaller }()
+		}
+		err = eventLoop(state, resp.Decoder(), handler)
+	}
+	if err != nil && err != io.EOF {
+		log.Println(err)
+	} else {
+		log.Println("disconnected")
+	}
 }
 
 // eventLoop returns the framework ID received by mesos (if any); callers should check for a
@@ -211,7 +220,6 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		// send Accept call to mesos
 		err := state.cli.CallNoData(accept)
 		if err != nil {
-			state.metricsAPI.apiErrorCount("accept")
 			log.Printf("failed to launch tasks: %+v", err)
 		} else {
 			if n := len(tasks); n > 0 {
@@ -247,7 +255,6 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		// send Ack call to mesos
 		err := state.cli.CallNoData(ack)
 		if err != nil {
-			state.metricsAPI.apiErrorCount("ack")
 			log.Printf("failed to ack status update for task: %+v", err)
 			return
 		}
@@ -280,10 +287,8 @@ func tryReviveOffers(state *internalState, callOptions scheduler.CallOptions) {
 	select {
 	case <-state.reviveTokens:
 		// not done yet, revive offers!
-		state.metricsAPI.reviveCount()
 		err := state.cli.CallNoData(calls.Revive().With(callOptions...))
 		if err != nil {
-			state.metricsAPI.apiErrorCount("revive")
 			log.Printf("failed to revive offers: %+v", err)
 			return
 		}
@@ -302,22 +307,52 @@ func logAllEvents(h events.Handler) events.Handler {
 
 // eventMetrics logs metrics for every processed API event
 func eventMetrics(metricsAPI *metricsAPI, clock func() time.Time, summaryMetrics bool) events.Decorator {
-	observer := metricsAPI.eventReceivedLatency.Since
+	timed := metricsAPI.eventReceivedLatency
 	if !summaryMetrics {
-		clock = func() (t time.Time) { return } // noop
-		observer = func(_ time.Time, _ ...string) {}
+		timed = nil
 	}
+	harness := newMetricsHarness(metricsAPI.eventReceivedCount, metricsAPI.eventErrorCount, timed, clock)
 	return func(h events.Handler) events.Handler {
 		return events.HandlerFunc(func(e *scheduler.Event) error {
 			typename := strings.ToLower(e.GetType().String())
-			metricsAPI.eventReceivedCount(typename)
-			t := clock()
-			err := h.HandleEvent(e)
-			observer(t, typename)
-			if err != nil {
-				metricsAPI.eventErrorCount(typename)
-			}
-			return err
+			return harness(func() error { return h.HandleEvent(e) }, typename)
 		})
 	}
+}
+
+func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, summaryMetrics bool) httpsched.Decorator {
+	timed := metricsAPI.callLatency
+	if !summaryMetrics {
+		timed = nil
+	}
+	harness := newMetricsHarness(metricsAPI.callCount, metricsAPI.callErrorCount, timed, clock)
+	return func(c httpsched.Caller) httpsched.Caller {
+		if c == nil {
+			return nil
+		}
+		metricsCaller := &callerWithMetrics{
+			Caller:  c,
+			harness: harness,
+		}
+		return metricsCaller
+	}
+}
+
+type callerWithMetrics struct {
+	httpsched.Caller
+	harness func(func() error, ...string) error
+}
+
+func (cwm *callerWithMetrics) CallNoData(c *scheduler.Call) error {
+	typename := strings.ToLower(c.GetType().String())
+	return cwm.harness(func() error { return cwm.Caller.CallNoData(c) }, typename)
+}
+
+func (cwm *callerWithMetrics) Call(c *scheduler.Call) (res mesos.Response, caller httpsched.Caller, err error) {
+	typename := strings.ToLower(c.GetType().String())
+	cwm.harness(func() error {
+		res, caller, err = cwm.Caller.Call(c)
+		return err // need to count these
+	}, typename)
+	return
 }

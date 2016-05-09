@@ -37,6 +37,7 @@ type (
 		maxRedirects int
 	}
 
+	// Caller is the public interface this framework scheduler's should consume
 	Caller interface {
 		// Do is the generic HTTP execution interface from httpcli, leveraged (and overridden) here
 		Do(encoding.Marshaler, ...httpcli.RequestOpt) (mesos.Response, error)
@@ -47,10 +48,10 @@ type (
 		Call(*scheduler.Call) (mesos.Response, Caller, error)
 	}
 
+	// Decorator funcs usually return a Caller whose behavior has been somehow modified
 	Decorator func(Caller) Caller
 
-	// Client is the public interface this framework scheduler's should consume
-	Client interface {
+	callerInternal interface {
 		Caller
 		// WithTemporary configures the Client with the temporary option and returns the results of
 		// invoking f(). Changes made to the Client by the temporary option are reverted before this
@@ -58,11 +59,12 @@ type (
 		WithTemporary(opt httpcli.Opt, f func() error) error
 	}
 
+	// Option is a functional configuration option type
 	Option func(*client) Option
 
 	callerTemporary struct {
 		temp     httpcli.Opt
-		delegate Client
+		delegate callerInternal
 	}
 )
 
@@ -99,8 +101,8 @@ func MaxRedirects(mr int) Option {
 	}
 }
 
-// NewClient returns a scheduler API Client
-func NewClient(cl *httpcli.Client, opts ...Option) Client {
+// NewCaller returns a scheduler API Client
+func NewCaller(cl *httpcli.Client, opts ...Option) Caller {
 	result := &client{Client: cl, maxRedirects: defaultMaxRedirectAttempts}
 	cl.With(result.redirectHandler())
 	for _, o := range opts {
@@ -176,7 +178,7 @@ func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, caller Calle
 var defaultOptGen = func() httpcli.Opt { return nil }
 
 // prepare is invoked for scheduler call's that require pre-processing, post-processing, or both.
-func prepare(client Client, call *scheduler.Call) (subscribeCaller Caller, requestOpt []httpcli.RequestOpt, optGen func() httpcli.Opt) {
+func prepare(client callerInternal, call *scheduler.Call) (subscribeCaller Caller, requestOpt []httpcli.RequestOpt, optGen func() httpcli.Opt) {
 	optGen = defaultOptGen
 	switch call.GetType() {
 	case scheduler.Call_SUBSCRIBE:

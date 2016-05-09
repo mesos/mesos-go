@@ -98,7 +98,7 @@ func buildWantsExecutorResources(config Config) (r mesos.Resources) {
 	return
 }
 
-func buildHTTPClient(cfg Config) httpsched.Client {
+func buildHTTPSched(cfg Config) httpsched.Caller {
 	cli := httpcli.New(
 		httpcli.Endpoint(cfg.url),
 		httpcli.Codec(cfg.codec.Codec),
@@ -110,7 +110,7 @@ func buildHTTPClient(cfg Config) httpsched.Client {
 		log.Println("compression enabled")
 		cli.With(httpcli.RequestOptions(httpcli.Header("Accept-Encoding", "gzip")))
 	}
-	return httpsched.NewClient(cli)
+	return httpsched.NewCaller(cli)
 }
 
 func buildFrameworkInfo(cfg Config) *mesos.FrameworkInfo {
@@ -155,7 +155,7 @@ func newInternalState(cfg Config) (*internalState, error) {
 		wantsTaskResources: buildWantsTaskResources(cfg),
 		executor:           executorInfo,
 		metricsAPI:         metricsAPI,
-		cli:                buildHTTPClient(cfg),
+		cli:                buildHTTPSched(cfg),
 	}
 	return state, nil
 }

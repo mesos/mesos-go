@@ -24,23 +24,23 @@ var (
 	errNotHTTP              = errors.New("expected an HTTP object, found something else instead")
 	errBadLocation          = errors.New("failed to build new Mesos service endpoint URL from Location header")
 
-	defaultRedirectSettings = redirectSettings{
-		maxAttempts:      9,
-		maxBackoffPeriod: 13 * time.Second,
-		minBackoffPeriod: 100 * time.Millisecond,
+	DefaultRedirectSettings = RedirectSettings{
+		MaxAttempts:      9,
+		MaxBackoffPeriod: 13 * time.Second,
+		MinBackoffPeriod: 100 * time.Millisecond,
 	}
 )
 
 type (
-	redirectSettings struct {
-		maxAttempts      int           // per Do invocation
-		maxBackoffPeriod time.Duration // should be more than minBackoffPeriod
-		minBackoffPeriod time.Duration // should be less than maxBackoffPeriod
+	RedirectSettings struct {
+		MaxAttempts      int           // per Do invocation
+		MaxBackoffPeriod time.Duration // should be more than minBackoffPeriod
+		MinBackoffPeriod time.Duration // should be less than maxBackoffPeriod
 	}
 
 	client struct {
 		*httpcli.Client
-		redirect redirectSettings
+		redirect RedirectSettings
 	}
 
 	// Caller is the public interface this framework scheduler's should consume
@@ -101,15 +101,15 @@ func (ct *callerTemporary) Call(call *scheduler.Call) (resp mesos.Response, call
 // MaxRedirects is a functional option that sets the maximum number of per-call HTTP redirects for a scheduler client
 func MaxRedirects(mr int) Option {
 	return func(c *client) Option {
-		old := c.redirect.maxAttempts
-		c.redirect.maxAttempts = mr
+		old := c.redirect.MaxAttempts
+		c.redirect.MaxAttempts = mr
 		return MaxRedirects(old)
 	}
 }
 
 // NewCaller returns a scheduler API Client
 func NewCaller(cl *httpcli.Client, opts ...Option) Caller {
-	result := &client{Client: cl, redirect: defaultRedirectSettings}
+	result := &client{Client: cl, redirect: DefaultRedirectSettings}
 	cl.With(result.redirectHandler())
 	for _, o := range opts {
 		if o != nil {
@@ -128,7 +128,7 @@ func (cli *client) Do(m encoding.Marshaler, opt ...httpcli.RequestOpt) (resp mes
 		getBackoff      = func() <-chan struct{} {
 			if redirectBackoff == nil {
 				done = make(chan struct{})
-				redirectBackoff = backoff.Notifier(cli.redirect.minBackoffPeriod, cli.redirect.maxBackoffPeriod, done)
+				redirectBackoff = backoff.Notifier(cli.redirect.MinBackoffPeriod, cli.redirect.MaxBackoffPeriod, done)
 			}
 			return redirectBackoff
 		}
@@ -144,7 +144,7 @@ func (cli *client) Do(m encoding.Marshaler, opt ...httpcli.RequestOpt) (resp mes
 		if !ok {
 			return resp, err
 		}
-		if attempt < cli.redirect.maxAttempts {
+		if attempt < cli.redirect.MaxAttempts {
 			log.Println("redirecting to " + redirectErr.newURL)
 			cli.With(httpcli.Endpoint(redirectErr.newURL))
 			<-getBackoff()

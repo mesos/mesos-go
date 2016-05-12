@@ -326,15 +326,14 @@ func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, summaryMetrics 
 		timed = nil
 	}
 	harness := newMetricsHarness(metricsAPI.callCount, metricsAPI.callErrorCount, timed, clock)
-	return func(c httpsched.Caller) httpsched.Caller {
-		if c == nil {
-			return nil
+	return func(c httpsched.Caller) (metricsCaller httpsched.Caller) {
+		if c != nil {
+			metricsCaller = &callerWithMetrics{
+				Caller:  c,
+				harness: harness,
+			}
 		}
-		metricsCaller := &callerWithMetrics{
-			Caller:  c,
-			harness: harness,
-		}
-		return metricsCaller
+		return
 	}
 }
 

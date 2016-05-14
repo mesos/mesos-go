@@ -12,10 +12,10 @@ import (
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/backoff"
 	xmetrics "github.com/mesos/mesos-go/extras/metrics"
+	"github.com/mesos/mesos-go/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/httpcli/httpsched"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
-	"github.com/mesos/mesos-go/scheduler/controller"
 	"github.com/mesos/mesos-go/scheduler/events"
 )
 

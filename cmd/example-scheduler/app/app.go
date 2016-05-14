@@ -7,12 +7,12 @@ import (
 	"log"
 	"math/rand"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/backoff"
 	"github.com/mesos/mesos-go/encoding"
+	xmetrics "github.com/mesos/mesos-go/extras/metrics"
 	"github.com/mesos/mesos-go/httpcli/httpsched"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
@@ -306,39 +306,21 @@ func logAllEvents(h events.Handler) events.Handler {
 }
 
 // eventMetrics logs metrics for every processed API event
-func eventMetrics(metricsAPI *metricsAPI, clock func() time.Time, summaryMetrics bool) events.Decorator {
+func eventMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics bool) events.Decorator {
 	timed := metricsAPI.eventReceivedLatency
-	if !summaryMetrics {
+	if !timingMetrics {
 		timed = nil
 	}
-	harness := newMetricsHarness(metricsAPI.eventReceivedCount, metricsAPI.eventErrorCount, timed, clock)
-	return func(h events.Handler) events.Handler {
-		return events.HandlerFunc(func(e *scheduler.Event) error {
-			typename := strings.ToLower(e.GetType().String())
-			return harness(func() error { return h.HandleEvent(e) }, typename)
-		})
-	}
+	harness := xmetrics.NewHarness(metricsAPI.eventReceivedCount, metricsAPI.eventErrorCount, timed, clock)
+	return events.Metrics(harness)
 }
 
-func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, summaryMetrics bool) httpsched.Decorator {
+// callMetrics logs metrics for every outgoing Mesos call
+func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics bool) httpsched.Decorator {
 	timed := metricsAPI.callLatency
-	if !summaryMetrics {
+	if !timingMetrics {
 		timed = nil
 	}
-	harness := newMetricsHarness(metricsAPI.callCount, metricsAPI.callErrorCount, timed, clock)
-	return func(caller httpsched.Caller) (metricsCaller httpsched.Caller) {
-		if caller != nil {
-			metricsCaller = &httpsched.CallerAdapter{
-				CallFunc: func(c *scheduler.Call) (res mesos.Response, caller2 httpsched.Caller, err error) {
-					typename := strings.ToLower(c.GetType().String())
-					harness(func() error {
-						res, caller2, err = caller.Call(c)
-						return err // need to count these
-					}, typename)
-					return
-				},
-			}
-		}
-		return
-	}
+	harness := xmetrics.NewHarness(metricsAPI.callCount, metricsAPI.callErrorCount, timed, clock)
+	return httpsched.CallerMetrics(harness)
 }

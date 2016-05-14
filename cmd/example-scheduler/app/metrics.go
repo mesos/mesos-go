@@ -4,9 +4,9 @@ import (
 	"net"
 	"net/http"
 	"strconv"
-	"time"
 
 	schedmetrics "github.com/mesos/mesos-go/cmd/example-scheduler/app/metrics"
+	xmetrics "github.com/mesos/mesos-go/extras/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -19,54 +19,41 @@ func initMetrics(cfg Config) *metricsAPI {
 	return api
 }
 
-type metricCounter func(...string)
-type metricAdder func(float64, ...string)
-type metricWatcher func(float64, ...string)
-
-func (a metricAdder) Int(x int, s ...string) {
-	a(float64(x), s...)
+func newMetricAdder(m prometheus.Counter) xmetrics.Adder {
+	return func(x float64, _ ...string) { m.Add(x) }
 }
 
-func newMetricAdder(m prometheus.Counter) metricAdder {
-	return func(x float64, _ ...string) { m.Add(float64(x)) }
-}
-
-func newMetricCounter(m prometheus.Counter) metricCounter {
+func newMetricCounter(m prometheus.Counter) xmetrics.Counter {
 	return func(_ ...string) { m.Inc() }
 }
 
-func newMetricCounters(m *prometheus.CounterVec) metricCounter {
+func newMetricCounters(m *prometheus.CounterVec) xmetrics.Counter {
 	return func(s ...string) { m.WithLabelValues(s...).Inc() }
 }
 
-func newMetricWatcher(m prometheus.Summary) metricWatcher {
+func newMetricWatcher(m prometheus.Summary) xmetrics.Watcher {
 	return func(x float64, _ ...string) { m.Observe(x) }
 }
 
-func newMetricWatchers(m *prometheus.SummaryVec) metricWatcher {
+func newMetricWatchers(m *prometheus.SummaryVec) xmetrics.Watcher {
 	return func(x float64, s ...string) { m.WithLabelValues(s...).Observe(x) }
 }
 
-// Since records an observation of time.Now().Sub(t) in microseconds
-func (w metricWatcher) Since(t time.Time, s ...string) {
-	w(schedmetrics.InMicroseconds(time.Now().Sub(t)), s...)
-}
-
 type metricsAPI struct {
-	eventErrorCount       metricCounter
-	eventReceivedCount    metricCounter
-	eventReceivedLatency  metricWatcher
-	callCount             metricCounter
-	callErrorCount        metricCounter
-	callLatency           metricWatcher
-	offersReceived        metricAdder
-	offersDeclined        metricAdder
-	tasksLaunched         metricAdder
-	tasksFinished         metricCounter
-	launchesPerOfferCycle metricWatcher
-	offeredResources      metricWatcher
-	jobStartCount         metricCounter
-	artifactDownloads     metricCounter
+	eventErrorCount       xmetrics.Counter
+	eventReceivedCount    xmetrics.Counter
+	eventReceivedLatency  xmetrics.Watcher
+	callCount             xmetrics.Counter
+	callErrorCount        xmetrics.Counter
+	callLatency           xmetrics.Watcher
+	offersReceived        xmetrics.Adder
+	offersDeclined        xmetrics.Adder
+	tasksLaunched         xmetrics.Adder
+	tasksFinished         xmetrics.Counter
+	launchesPerOfferCycle xmetrics.Watcher
+	offeredResources      xmetrics.Watcher
+	jobStartCount         xmetrics.Counter
+	artifactDownloads     xmetrics.Counter
 }
 
 func newMetricsAPI() *metricsAPI {
@@ -86,36 +73,4 @@ func newMetricsAPI() *metricsAPI {
 		jobStartCount:         newMetricCounters(schedmetrics.JobStartCount),
 		artifactDownloads:     newMetricCounter(schedmetrics.ArtifactDownloads),
 	}
-}
-
-type metricsHarness func(func() error, ...string) error
-
-// newHarness generates and returns an execution harness that records metrics. `counts` and `errors`
-// are required; `timed` and `clock` must either both be nil, or both be non-nil.
-func newMetricsHarness(counts, errors metricCounter, timed metricWatcher, clock func() time.Time) metricsHarness {
-	var harness metricsHarness
-	if timed != nil && clock != nil {
-		harness = func(f func() error, labels ...string) error {
-			counts(labels...)
-			var (
-				t   = clock()
-				err = f()
-			)
-			timed.Since(t, labels...)
-			if err != nil {
-				errors(labels...)
-			}
-			return err
-		}
-	} else {
-		harness = func(f func() error, labels ...string) error {
-			counts(labels...)
-			err := f()
-			if err != nil {
-				errors(labels...)
-			}
-			return err
-		}
-	}
-	return harness
 }

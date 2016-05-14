@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"sync"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -105,8 +104,4 @@ func Register() {
 		prometheus.MustRegister(TasksLaunchedPerOfferCycle)
 		prometheus.MustRegister(ArtifactDownloads)
 	})
-}
-
-func InMicroseconds(d time.Duration) float64 {
-	return float64(d.Nanoseconds() / time.Microsecond.Nanoseconds())
 }

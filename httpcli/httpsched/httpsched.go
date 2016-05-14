@@ -66,6 +66,8 @@ type (
 	// Decorator funcs usually return a Caller whose behavior has been somehow modified
 	Decorator func(Caller) Caller
 
+	Decorators []Decorator
+
 	callerInternal interface {
 		Caller
 		// WithTemporary configures the Client with the temporary option and returns the results of
@@ -335,4 +337,35 @@ func (d Decorator) If(b bool) Decorator {
 		result = d
 	}
 	return result
+}
+
+// Apply applies the Decorators in the order they're listed such that the last Decorator invoked
+// generates the final (wrapping) Caller that is ultimately returned.
+func (ds Decorators) Combine() (result Decorator) {
+	actual := make(Decorators, 0, len(ds))
+	for _, d := range ds {
+		if d != nil {
+			actual = append(actual, d)
+		}
+	}
+	if len(actual) == 0 {
+		result = noopDecorator
+	} else {
+		result = Decorator(func(h Caller) Caller {
+			for _, d := range actual {
+				h = d(h)
+			}
+			return h
+		})
+	}
+	return
+}
+
+// CallerTracker invokes the tracking function `f` upon decorator invocation. This is a convenience
+// decorator that allows a client to receive callbacks when, in some context, a Caller is updated.
+func CallerTracker(f func(Caller)) Decorator {
+	return func(c Caller) Caller {
+		f(c)
+		return c
+	}
 }

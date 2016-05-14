@@ -11,11 +11,11 @@ import (
 
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/backoff"
-	"github.com/mesos/mesos-go/encoding"
 	xmetrics "github.com/mesos/mesos-go/extras/metrics"
 	"github.com/mesos/mesos-go/httpcli/httpsched"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
+	"github.com/mesos/mesos-go/scheduler/controller"
 	"github.com/mesos/mesos-go/scheduler/events"
 )
 
@@ -27,65 +27,33 @@ func Run(cfg Config) error {
 		return err
 	}
 	var (
-		frameworkInfo      = buildFrameworkInfo(cfg)
-		subscribe          = calls.Subscribe(true, frameworkInfo)
-		registrationTokens = backoff.Notifier(1*time.Second, 15*time.Second, nil)
-		handler            = events.Decorators{
-			eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
-			events.Decorator(logAllEvents).If(state.config.verbose),
-		}.Apply(buildEventHandler(state))
-		decorateCaller = callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics)
+		frameworkInfo  = buildFrameworkInfo(cfg)
+		controlContext = &controllerContext{
+			events: events.Decorators{
+				eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+				events.Decorator(logAllEvents).If(state.config.verbose),
+			}.Apply(buildEventHandler(state)),
+
+			callerChanged: httpsched.Decorators{
+				callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+				logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
+				// the next decorator must be last since it tracks the subscribed caller we'll use
+				httpsched.CallerTracker(func(c httpsched.Caller) { state.cli = c }),
+			}.Combine(),
+
+			errHandler: func(err error) {
+				if err != nil && err != io.EOF {
+					log.Println(err)
+				} else {
+					log.Println("disconnected")
+				}
+			},
+
+			state:              state,
+			registrationTokens: backoff.Notifier(1*time.Second, 15*time.Second, nil),
+		}
 	)
-	state.cli = decorateCaller(state.cli)
-	for !state.done {
-		if frameworkInfo.GetFailoverTimeout() > 0 && state.frameworkID != "" {
-			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: state.frameworkID}
-		}
-		<-registrationTokens
-		log.Println("connecting..")
-		resp, subscribedCaller, err := state.cli.Call(subscribe)
-		processSubscription(state, handler, resp, decorateCaller(subscribedCaller), err)
-	}
-	return state.err
-}
-
-func processSubscription(
-	state *internalState,
-	handler events.Handler,
-	resp mesos.Response,
-	subscribedCaller httpsched.Caller,
-	err error,
-) {
-	if resp != nil {
-		defer resp.Close()
-	}
-	if err == nil {
-		state.frameworkID = "" // we're newly (re?)subscribed, forget this
-		if subscribedCaller != nil {
-			// subscribedCaller is only good for the duration of the subscription
-			oldCaller := state.cli
-			state.cli = subscribedCaller
-			defer func() { state.cli = oldCaller }()
-		}
-		err = eventLoop(state, resp.Decoder(), handler)
-	}
-	if err != nil && err != io.EOF {
-		log.Println(err)
-	} else {
-		log.Println("disconnected")
-	}
-}
-
-// eventLoop returns the framework ID received by mesos (if any); callers should check for a
-// framework ID regardless of whether error != nil.
-func eventLoop(state *internalState, eventDecoder encoding.Decoder, handler events.Handler) (err error) {
-	for err == nil && !state.done {
-		var e scheduler.Event
-		if err = eventDecoder.Invoke(&e); err == nil {
-			err = handler.HandleEvent(&e)
-		}
-	}
-	return err
+	return controller.Run(controlContext, frameworkInfo, state.cli)
 }
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.
@@ -323,4 +291,36 @@ func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics b
 	}
 	harness := xmetrics.NewHarness(metricsAPI.callCount, metricsAPI.callErrorCount, timed, clock)
 	return httpsched.CallerMetrics(harness)
+}
+
+func logCalls(messages map[scheduler.Call_Type]string) httpsched.Decorator {
+	return func(caller httpsched.Caller) httpsched.Caller {
+		return &httpsched.CallerAdapter{
+			CallFunc: func(c *scheduler.Call) (mesos.Response, httpsched.Caller, error) {
+				if message, ok := messages[c.GetType()]; ok {
+					log.Println(message)
+				}
+				return caller.Call(c)
+			},
+		}
+	}
+}
+
+type controllerContext struct {
+	state              *internalState
+	events             events.Handler
+	registrationTokens <-chan struct{}
+	callerChanged      httpsched.Decorator
+	errHandler         func(error)
+}
+
+func (ci *controllerContext) Handler() events.Handler                    { return ci.events }
+func (ci *controllerContext) Done() bool                                 { return ci.state.done }
+func (ci *controllerContext) FrameworkID() string                        { return ci.state.frameworkID }
+func (ci *controllerContext) RegistrationTokens() <-chan struct{}        { return ci.registrationTokens }
+func (ci *controllerContext) Caller(c httpsched.Caller) httpsched.Caller { return ci.callerChanged(c) }
+func (ci *controllerContext) Error(err error) {
+	if ci.errHandler != nil {
+		ci.errHandler(err)
+	}
 }

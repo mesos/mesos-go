@@ -28,32 +28,36 @@ func Run(cfg Config) error {
 	}
 	var (
 		frameworkInfo  = buildFrameworkInfo(cfg)
-		controlContext = &controllerContext{
-			events: events.Decorators{
-				eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
-				events.Decorator(logAllEvents).If(state.config.verbose),
-			}.Apply(buildEventHandler(state)),
-
-			callerChanged: httpsched.Decorators{
-				callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
-				// the next decorator must be last since it tracks the subscribed caller we'll use
-				httpsched.CallerTracker(func(c httpsched.Caller) { state.cli = c }),
-			}.Combine(),
-
-			errHandler: func(err error) {
-				if err != nil && err != io.EOF {
-					log.Println(err)
-				} else {
-					log.Println("disconnected")
-				}
-			},
-
-			state:              state,
-			registrationTokens: backoff.Notifier(1*time.Second, 15*time.Second, nil),
-		}
+		controlContext = buildControllerContext(state, frameworkInfo)
 	)
 	return controller.Run(controlContext, frameworkInfo, state.cli)
+}
+
+func buildControllerContext(state *internalState, frameworkInfo *mesos.FrameworkInfo) controller.Context {
+	return &controllerContext{
+		events: events.Decorators{
+			eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+			events.Decorator(logAllEvents).If(state.config.verbose),
+		}.Apply(buildEventHandler(state)),
+
+		callerChanged: httpsched.Decorators{
+			callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+			logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
+			// the next decorator must be last since it tracks the subscribed caller we'll use
+			httpsched.CallerTracker(func(c httpsched.Caller) { state.cli = c }),
+		}.Combine(),
+
+		errHandler: func(err error) {
+			if err != nil && err != io.EOF {
+				log.Println(err)
+			} else {
+				log.Println("disconnected")
+			}
+		},
+
+		state:              state,
+		registrationTokens: backoff.Notifier(1*time.Second, 15*time.Second, nil),
+	}
 }
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.

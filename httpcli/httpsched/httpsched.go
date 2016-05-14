@@ -78,9 +78,9 @@ type (
 	Option func(*client) Option
 
 	callerTemporary struct {
-		requestOpts []httpcli.RequestOpt // requestOpts are temporary per-request options
-		opt         httpcli.Opt          // opt is a temporary client option
-		delegate    callerInternal       // delegate actually does the work
+		callerInternal                      // delegate actually does the work
+		requestOpts    []httpcli.RequestOpt // requestOpts are temporary per-request options
+		opt            httpcli.Opt          // opt is a temporary client option
 	}
 )
 
@@ -93,21 +93,21 @@ func (ca *CallerAdapter) Call(call *scheduler.Call) (mesos.Response, Caller, err
 }
 
 func (ct *callerTemporary) httpDo(m encoding.Marshaler, opt ...httpcli.RequestOpt) (resp mesos.Response, err error) {
-	ct.delegate.WithTemporary(ct.opt, func() error {
+	ct.callerInternal.WithTemporary(ct.opt, func() error {
 		if len(opt) == 0 {
 			opt = ct.requestOpts
 		} else if len(ct.requestOpts) > 0 {
 			opt = append(opt[:], ct.requestOpts...)
 		}
-		resp, err = ct.delegate.httpDo(m, opt...)
+		resp, err = ct.callerInternal.httpDo(m, opt...)
 		return nil
 	})
 	return
 }
 
 func (ct *callerTemporary) Call(call *scheduler.Call) (resp mesos.Response, caller Caller, err error) {
-	ct.delegate.WithTemporary(ct.opt, func() error {
-		resp, caller, err = ct.delegate.Call(call)
+	ct.callerInternal.WithTemporary(ct.opt, func() error {
+		resp, caller, err = ct.callerInternal.Call(call)
 		return nil
 	})
 	return
@@ -180,34 +180,49 @@ func CallNoData(caller Caller, call *scheduler.Call) error {
 }
 
 // Call implements Client
-func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, caller Caller, err error) {
-	var exec callerExec
+func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, exportCaller Caller, err error) {
+	var (
+		exec   = callerExec(prepareCall)
+		caller = callerInternal(cli)
+	)
+
+	// initial "prepare"; special case: if it returns a terminal exec we'll attempt
+	// to make a call anyway.
+	caller, exec = exec(caller, call)
+
+	// TODO(jdef) would it be cleaner to handle leadership changes here?
 	for {
-		caller, exec = prepareCall(cli, call)
 		resp, err = caller.httpDo(call)
 		if err != nil {
-			return
+			break
 		}
-		if exec != nil {
-			caller, exec = exec(caller, call)
+		if exec == nil {
+			// state machine finished
+			break
 		}
-		if exec != nil {
-			// discard intermediate responses, for now
-			if resp != nil {
-				resp.Close()
-			}
-			continue
+
+		// advance to the next exec state (subscribed?)
+		caller, exec = exec(caller, call)
+		if exec == nil {
+			// state machine finished
+			break
 		}
-		return
+
+		// discard intermediate responses, for now
+		if resp != nil {
+			resp.Close()
+		}
 	}
+	exportCaller = caller
+	return
 }
 
 // TODO(jdef) this is starting to feel like a functional state machine... can we simplify client
 // interaction with this package accordingly?
-type callerExec func(c Caller, call *scheduler.Call) (Caller, callerExec)
+type callerExec func(c callerInternal, call *scheduler.Call) (callerInternal, callerExec)
 
 // prepare is invoked for scheduler call's that require pre-processing, post-processing, or both.
-func prepareCall(client callerInternal, call *scheduler.Call) (Caller, callerExec) {
+func prepareCall(client callerInternal, call *scheduler.Call) (callerInternal, callerExec) {
 	switch call.GetType() {
 	case scheduler.Call_SUBSCRIBE:
 		mesosStreamID := ""
@@ -239,14 +254,14 @@ func prepareCall(client callerInternal, call *scheduler.Call) (Caller, callerExe
 			}
 		})
 		subscribeCaller := &callerTemporary{
-			opt:         undoable,
-			delegate:    client,
-			requestOpts: []httpcli.RequestOpt{httpcli.Close(true)},
+			opt:            undoable,
+			callerInternal: client,
+			requestOpts:    []httpcli.RequestOpt{httpcli.Close(true)},
 		}
-		return subscribeCaller, func(Caller, *scheduler.Call) (Caller, callerExec) {
+		return subscribeCaller, func(callerInternal, *scheduler.Call) (callerInternal, callerExec) {
 			return &callerTemporary{
-				opt:      httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID),
-				delegate: client,
+				opt:            httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID),
+				callerInternal: client,
 			}, nil
 		}
 	default:

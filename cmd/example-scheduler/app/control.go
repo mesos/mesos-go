@@ -3,9 +3,11 @@ package app
 import (
 	"log"
 	"time"
+
+	xmetrics "github.com/mesos/mesos-go/extras/metrics"
 )
 
-func forever(name string, jobRestartDelay time.Duration, counter metricCounter, f func() error) {
+func forever(name string, jobRestartDelay time.Duration, counter xmetrics.Counter, f func() error) {
 	for {
 		counter(name)
 		err := f()

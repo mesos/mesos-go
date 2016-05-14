@@ -218,7 +218,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		).With(callOptions...)
 
 		// send Accept call to mesos
-		err := state.cli.CallNoData(accept)
+		err := httpsched.CallNoData(state.cli, accept)
 		if err != nil {
 			log.Printf("failed to launch tasks: %+v", err)
 		} else {
@@ -253,7 +253,7 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		).With(callOptions...)
 
 		// send Ack call to mesos
-		err := state.cli.CallNoData(ack)
+		err := httpsched.CallNoData(state.cli, ack)
 		if err != nil {
 			log.Printf("failed to ack status update for task: %+v", err)
 			return
@@ -287,7 +287,7 @@ func tryReviveOffers(state *internalState, callOptions scheduler.CallOptions) {
 	select {
 	case <-state.reviveTokens:
 		// not done yet, revive offers!
-		err := state.cli.CallNoData(calls.Revive().With(callOptions...))
+		err := httpsched.CallNoData(state.cli, calls.Revive().With(callOptions...))
 		if err != nil {
 			log.Printf("failed to revive offers: %+v", err)
 			return
@@ -326,32 +326,19 @@ func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, summaryMetrics 
 		timed = nil
 	}
 	harness := newMetricsHarness(metricsAPI.callCount, metricsAPI.callErrorCount, timed, clock)
-	return func(c httpsched.Caller) (metricsCaller httpsched.Caller) {
-		if c != nil {
-			metricsCaller = &callerWithMetrics{
-				Caller:  c,
-				harness: harness,
+	return func(caller httpsched.Caller) (metricsCaller httpsched.Caller) {
+		if caller != nil {
+			metricsCaller = &httpsched.CallerAdapter{
+				CallFunc: func(c *scheduler.Call) (res mesos.Response, caller2 httpsched.Caller, err error) {
+					typename := strings.ToLower(c.GetType().String())
+					harness(func() error {
+						res, caller2, err = caller.Call(c)
+						return err // need to count these
+					}, typename)
+					return
+				},
 			}
 		}
 		return
 	}
-}
-
-type callerWithMetrics struct {
-	httpsched.Caller
-	harness func(func() error, ...string) error
-}
-
-func (cwm *callerWithMetrics) CallNoData(c *scheduler.Call) error {
-	typename := strings.ToLower(c.GetType().String())
-	return cwm.harness(func() error { return cwm.Caller.CallNoData(c) }, typename)
-}
-
-func (cwm *callerWithMetrics) Call(c *scheduler.Call) (res mesos.Response, caller httpsched.Caller, err error) {
-	typename := strings.ToLower(c.GetType().String())
-	cwm.harness(func() error {
-		res, caller, err = cwm.Caller.Call(c)
-		return err // need to count these
-	}, typename)
-	return
 }

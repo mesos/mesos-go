@@ -143,10 +143,6 @@ func (c *Client) Endpoint() string {
 	return c.url
 }
 
-// Opt defines a functional option for the HTTP client type. A functional option
-// must return an Opt that acts as an "undo" if applied to the same Client.
-type Opt func(*Client) Opt
-
 // RequestOpt defines a functional option for an http.Request.
 type RequestOpt func(*http.Request)
 
@@ -163,21 +159,9 @@ func (opts RequestOpts) Apply(req *http.Request) {
 	}
 }
 
-// noopOpt is a memento, noop option
-var noopOpt Opt = func() Opt {
-	var noop Opt
-	return Opt(func(_ *Client) Opt { return noop })
-}()
-
 // With applies the given Opts to a Client and returns itself.
 func (c *Client) With(opts ...Opt) Opt {
-	last := noopOpt
-	for _, opt := range opts {
-		if opt != nil {
-			last = opt(c)
-		}
-	}
-	return last
+	return Opts(opts).Merged().Apply(c)
 }
 
 // WithTemporary configures the Client with the temporary option and returns the results of
@@ -344,6 +328,9 @@ func HandleResponse(f ResponseHandler) Opt {
 
 // RequestOptions returns an Opt that applies the given set of options to every Client request.
 func RequestOptions(opts ...RequestOpt) Opt {
+	if len(opts) == 0 {
+		return nil
+	}
 	return func(c *Client) Opt {
 		old := append([]RequestOpt{}, c.requestOpts...)
 		c.requestOpts = opts

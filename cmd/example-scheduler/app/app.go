@@ -27,37 +27,37 @@ func Run(cfg Config) error {
 		return err
 	}
 	var (
-		frameworkInfo  = buildFrameworkInfo(cfg)
-		controlContext = buildControllerContext(state, frameworkInfo)
+		controlContext = &controller.ContextAdapter{
+			DoneFunc:        func() bool { return state.done },
+			FrameworkIDFunc: func() string { return state.frameworkID },
+			ErrorFunc: func(err error) {
+				if err != nil && err != io.EOF {
+					log.Println(err)
+				} else {
+					log.Println("disconnected")
+				}
+			},
+		}
+		controller = &controller.Controller{
+			Context:            controlContext,
+			Framework:          buildFrameworkInfo(cfg),
+			InitialCaller:      state.cli,
+			RegistrationTokens: backoff.Notifier(1*time.Second, 15*time.Second, nil),
+
+			Handler: events.Decorators{
+				eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+				events.Decorator(logAllEvents).If(state.config.verbose),
+			}.Apply(buildEventHandler(state)),
+
+			Caller: httpsched.Decorators{
+				callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+				logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
+				// the next decorator must be last since it tracks the subscribed caller we'll use
+				httpsched.CallerTracker(func(c httpsched.Caller) { state.cli = c }),
+			}.Combine(),
+		}
 	)
-	return controller.Run(controlContext, frameworkInfo, state.cli)
-}
-
-func buildControllerContext(state *internalState, frameworkInfo *mesos.FrameworkInfo) controller.Context {
-	return &controllerContext{
-		events: events.Decorators{
-			eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
-			events.Decorator(logAllEvents).If(state.config.verbose),
-		}.Apply(buildEventHandler(state)),
-
-		callerChanged: httpsched.Decorators{
-			callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
-			logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
-			// the next decorator must be last since it tracks the subscribed caller we'll use
-			httpsched.CallerTracker(func(c httpsched.Caller) { state.cli = c }),
-		}.Combine(),
-
-		errHandler: func(err error) {
-			if err != nil && err != io.EOF {
-				log.Println(err)
-			} else {
-				log.Println("disconnected")
-			}
-		},
-
-		state:              state,
-		registrationTokens: backoff.Notifier(1*time.Second, 15*time.Second, nil),
-	}
+	return controller.Run()
 }
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.
@@ -307,24 +307,5 @@ func logCalls(messages map[scheduler.Call_Type]string) httpsched.Decorator {
 				return caller.Call(c)
 			},
 		}
-	}
-}
-
-type controllerContext struct {
-	state              *internalState
-	events             events.Handler
-	registrationTokens <-chan struct{}
-	callerChanged      httpsched.Decorator
-	errHandler         func(error)
-}
-
-func (ci *controllerContext) Handler() events.Handler                    { return ci.events }
-func (ci *controllerContext) Done() bool                                 { return ci.state.done }
-func (ci *controllerContext) FrameworkID() string                        { return ci.state.frameworkID }
-func (ci *controllerContext) RegistrationTokens() <-chan struct{}        { return ci.registrationTokens }
-func (ci *controllerContext) Caller(c httpsched.Caller) httpsched.Caller { return ci.callerChanged(c) }
-func (ci *controllerContext) Error(err error) {
-	if ci.errHandler != nil {
-		ci.errHandler(err)
 	}
 }

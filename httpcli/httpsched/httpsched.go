@@ -86,6 +86,16 @@ type (
 	}
 )
 
+// Apply is a convenient, nil-safe applicator that returns the result of d(c) iff d != nil; otherwise c
+func (d Decorator) Apply(c Caller) (result Caller) {
+	if d != nil {
+		result = d(c)
+	} else {
+		result = c
+	}
+	return
+}
+
 func (ca *CallerAdapter) Call(call *scheduler.Call) (mesos.Response, Caller, error) {
 	f := ca.CallFunc
 	if f == nil && ca.Caller != nil {

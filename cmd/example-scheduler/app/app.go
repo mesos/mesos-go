@@ -84,8 +84,8 @@ func buildEventHandler(state *internalState) events.Handler {
 			return nil
 		})),
 		events.Handle(scheduler.Event_ERROR, events.HandlerFunc(func(e *scheduler.Event) error {
-			// it's recommended that we abort and re-try subscribing; setting
-			// err here will cause the event loop to terminate and the connection
+			// it's recommended that we abort and re-try subscribing; returning an
+			// error here will cause the event loop to terminate and the connection
 			// will be reset.
 			return fmt.Errorf("ERROR: " + e.GetError().GetMessage())
 		})),
@@ -297,6 +297,7 @@ func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics b
 	return httpsched.CallerMetrics(harness)
 }
 
+// logCalls logs a specific message string when a particular call-type is observed
 func logCalls(messages map[scheduler.Call_Type]string) httpsched.Decorator {
 	return func(caller httpsched.Caller) httpsched.Caller {
 		return &httpsched.CallerAdapter{

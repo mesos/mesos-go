@@ -39,7 +39,11 @@ type (
 		Context       Context              // Context is required
 		Framework     *mesos.FrameworkInfo // FrameworkInfo is required
 		InitialCaller httpsched.Caller     // InitialCaller is required
-		Handler       events.Handler       // Handler (optional) processes scheduler events
+
+		// Handler (optional) processes scheduler events. The controller's internal event processing
+		// loop is aborted if a Handler returns a non-nil error, after which the controller may attempt
+		// to re-register (subscribe) with Mesos.
+		Handler events.Handler
 
 		// RegistrationTokens (optional) limits the rate at which a framework (re)registers with Mesos.
 		// The returned chan should either be non-blocking (nil/closed), or should yield a struct{} in

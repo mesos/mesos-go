@@ -3,7 +3,6 @@ package controller
 import (
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/encoding"
-	"github.com/mesos/mesos-go/httpcli/httpsched"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
 	"github.com/mesos/mesos-go/scheduler/events"
@@ -38,7 +37,7 @@ type (
 	Controller struct {
 		Context       Context              // Context is required
 		Framework     *mesos.FrameworkInfo // FrameworkInfo is required
-		InitialCaller httpsched.Caller     // InitialCaller is required
+		InitialCaller calls.Caller         // InitialCaller is required
 
 		// Handler (optional) processes scheduler events. The controller's internal event processing
 		// loop is aborted if a Handler returns a non-nil error, after which the controller may attempt
@@ -52,7 +51,7 @@ type (
 
 		// Caller (optional) indicates a change of caller; the decorator returns the caller that will be
 		// used by the controller going forward until the next change-of-caller. May be nil.
-		Caller httpsched.Decorator
+		Caller calls.Decorator
 	}
 )
 

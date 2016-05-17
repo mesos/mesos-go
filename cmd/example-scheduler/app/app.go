@@ -2,7 +2,6 @@ package app
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -63,6 +62,7 @@ func Run(cfg Config) error {
 func buildEventHandler(state *internalState) events.Handler {
 	callOptions := scheduler.CallOptions{} // should be applied to every outgoing call
 	return events.NewMux(
+		events.DefaultHandler(events.HandlerFunc(controller.DefaultHandler)),
 		events.Handle(scheduler.Event_FAILURE, events.HandlerFunc(func(e *scheduler.Event) error {
 			log.Println("received a FAILURE event")
 			f := e.GetFailure()
@@ -82,12 +82,6 @@ func buildEventHandler(state *internalState) events.Handler {
 			statusUpdate(state, callOptions[:], e.GetUpdate().GetStatus())
 			return nil
 		})),
-		events.Handle(scheduler.Event_ERROR, events.HandlerFunc(func(e *scheduler.Event) error {
-			// it's recommended that we abort and re-try subscribing; returning an
-			// error here will cause the event loop to terminate and the connection
-			// will be reset.
-			return fmt.Errorf("ERROR: " + e.GetError().GetMessage())
-		})),
 		events.Handle(scheduler.Event_SUBSCRIBED, events.HandlerFunc(func(e *scheduler.Event) (err error) {
 			log.Println("received a SUBSCRIBED event")
 			if state.frameworkID == "" {
@@ -102,7 +96,7 @@ func buildEventHandler(state *internalState) events.Handler {
 			return
 		})),
 	)
-} // buildEventHandler
+}
 
 func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 	if eid != nil {

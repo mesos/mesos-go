@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"fmt"
+
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/encoding"
 	"github.com/mesos/mesos-go/scheduler"
@@ -49,7 +51,7 @@ type (
 		// order to allow the framework registration process to continue. May be nil.
 		RegistrationTokens <-chan struct{}
 
-		// Caller (optional) indicates a change of caller; the decorator returns the caller that will be
+		// Caller (optional) invoked upon a change of caller; the decorator returns the caller that will be
 		// used by the controller going forward until the next change-of-caller. May be nil.
 		Caller calls.Decorator
 	}
@@ -94,7 +96,7 @@ func (control *Controller) processSubscription(resp mesos.Response, err error) e
 func (control *Controller) eventLoop(eventDecoder encoding.Decoder) (err error) {
 	h := control.Handler
 	if h == nil {
-		h = events.HandlerFunc(func(*scheduler.Event) error { return nil })
+		h = events.HandlerFunc(DefaultHandler)
 	}
 	for err == nil && !control.Context.Done() {
 		var e scheduler.Event
@@ -120,4 +122,15 @@ func (ca *ContextAdapter) Error(err error) {
 	if ca.ErrorFunc != nil {
 		ca.ErrorFunc(err)
 	}
+}
+
+// DefaultHandler provides the minimum implementation required for correct controller behavior.
+func DefaultHandler(e *scheduler.Event) (err error) {
+	if e.GetType() == scheduler.Event_ERROR {
+		// it's recommended that we abort and re-try subscribing; returning an
+		// error here will cause the event loop to terminate and the connection
+		// will be reset.
+		err = fmt.Errorf("ERROR: %q", e.GetError().GetMessage())
+	}
+	return
 }

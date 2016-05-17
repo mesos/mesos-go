@@ -12,6 +12,7 @@ import (
 	"github.com/mesos/mesos-go/backoff"
 	"github.com/mesos/mesos-go/httpcli"
 	"github.com/mesos/mesos-go/httpcli/httpsched"
+	"github.com/mesos/mesos-go/scheduler/calls"
 )
 
 func prepareExecutorInfo(
@@ -167,7 +168,7 @@ type internalState struct {
 	frameworkID        string
 	role               string
 	executor           *mesos.ExecutorInfo
-	cli                httpsched.Caller
+	cli                calls.Caller
 	config             Config
 	wantsTaskResources mesos.Resources
 	reviveTokens       <-chan struct{}

@@ -13,7 +13,6 @@ import (
 	"github.com/mesos/mesos-go/backoff"
 	xmetrics "github.com/mesos/mesos-go/extras/metrics"
 	"github.com/mesos/mesos-go/extras/scheduler/controller"
-	"github.com/mesos/mesos-go/httpcli/httpsched"
 	"github.com/mesos/mesos-go/scheduler"
 	"github.com/mesos/mesos-go/scheduler/calls"
 	"github.com/mesos/mesos-go/scheduler/events"
@@ -49,11 +48,11 @@ func Run(cfg Config) error {
 				events.Decorator(logAllEvents).If(state.config.verbose),
 			}.Apply(buildEventHandler(state)),
 
-			Caller: httpsched.Decorators{
+			Caller: calls.Decorators{
 				callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
 				logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
 				// the next decorator must be last since it tracks the subscribed caller we'll use
-				httpsched.CallerTracker(func(c httpsched.Caller) { state.cli = c }),
+				calls.CallerTracker(func(c calls.Caller) { state.cli = c }),
 			}.Combine(),
 		}
 	)
@@ -190,7 +189,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 		).With(callOptions...)
 
 		// send Accept call to mesos
-		err := httpsched.CallNoData(state.cli, accept)
+		err := calls.CallNoData(state.cli, accept)
 		if err != nil {
 			log.Printf("failed to launch tasks: %+v", err)
 		} else {
@@ -225,7 +224,7 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		).With(callOptions...)
 
 		// send Ack call to mesos
-		err := httpsched.CallNoData(state.cli, ack)
+		err := calls.CallNoData(state.cli, ack)
 		if err != nil {
 			log.Printf("failed to ack status update for task: %+v", err)
 			return
@@ -259,7 +258,7 @@ func tryReviveOffers(state *internalState, callOptions scheduler.CallOptions) {
 	select {
 	case <-state.reviveTokens:
 		// not done yet, revive offers!
-		err := httpsched.CallNoData(state.cli, calls.Revive().With(callOptions...))
+		err := calls.CallNoData(state.cli, calls.Revive().With(callOptions...))
 		if err != nil {
 			log.Printf("failed to revive offers: %+v", err)
 			return
@@ -288,25 +287,23 @@ func eventMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics 
 }
 
 // callMetrics logs metrics for every outgoing Mesos call
-func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics bool) httpsched.Decorator {
+func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics bool) calls.Decorator {
 	timed := metricsAPI.callLatency
 	if !timingMetrics {
 		timed = nil
 	}
 	harness := xmetrics.NewHarness(metricsAPI.callCount, metricsAPI.callErrorCount, timed, clock)
-	return httpsched.CallerMetrics(harness)
+	return calls.CallerMetrics(harness)
 }
 
 // logCalls logs a specific message string when a particular call-type is observed
-func logCalls(messages map[scheduler.Call_Type]string) httpsched.Decorator {
-	return func(caller httpsched.Caller) httpsched.Caller {
-		return &httpsched.CallerAdapter{
-			CallFunc: func(c *scheduler.Call) (mesos.Response, httpsched.Caller, error) {
-				if message, ok := messages[c.GetType()]; ok {
-					log.Println(message)
-				}
-				return caller.Call(c)
-			},
-		}
+func logCalls(messages map[scheduler.Call_Type]string) calls.Decorator {
+	return func(caller calls.Caller) calls.Caller {
+		return calls.CallerFunc(func(c *scheduler.Call) (mesos.Response, calls.Caller, error) {
+			if message, ok := messages[c.GetType()]; ok {
+				log.Println(message)
+			}
+			return caller.Call(c)
+		})
 	}
 }

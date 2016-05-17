@@ -102,10 +102,10 @@ func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 		// executor failed..
 		msg := "executor '" + eid.Value + "' terminated"
 		if aid != nil {
-			msg += "on agent '" + aid.Value + "'"
+			msg += " on agent '" + aid.Value + "'"
 		}
 		if stat != nil {
-			msg += ", with status=" + strconv.Itoa(int(*stat))
+			msg += " with status=" + strconv.Itoa(int(*stat))
 		}
 		log.Println(msg)
 	} else if aid != nil {
@@ -194,11 +194,11 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 }
 
 func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mesos.TaskStatus) {
-	msg := "Task " + s.TaskID.Value + " is in state " + s.GetState().String()
-	if m := s.GetMessage(); m != "" {
-		msg += " with message '" + m + "'"
-	}
 	if state.config.verbose {
+		msg := "Task " + s.TaskID.Value + " is in state " + s.GetState().String()
+		if m := s.GetMessage(); m != "" {
+			msg += " with message '" + m + "'"
+		}
 		log.Println(msg)
 	}
 

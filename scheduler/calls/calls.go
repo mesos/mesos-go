@@ -2,6 +2,8 @@ package calls
 
 import (
 	"errors"
+	"math/rand"
+	"time"
 
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/scheduler"
@@ -19,6 +21,15 @@ func Filters(fo ...mesos.FilterOpt) scheduler.CallOpt {
 			panic("filters not supported for type " + c.Type.String())
 		}
 	}
+}
+
+// RefuseSecondsWithJitter returns a calls.Filters option that sets RefuseSeconds to a random number
+// of seconds between 0 and the given duration.
+func RefuseSecondsWithJitter(r *rand.Rand, d time.Duration) scheduler.CallOpt {
+	return Filters(func(f *mesos.Filters) {
+		s := time.Duration(r.Int63n(int64(d))).Seconds()
+		f.RefuseSeconds = &s
+	})
 }
 
 // Framework sets a scheduler.Call's FrameworkID

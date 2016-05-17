@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -157,6 +158,7 @@ func newInternalState(cfg Config) (*internalState, error) {
 		executor:           executorInfo,
 		metricsAPI:         metricsAPI,
 		cli:                buildHTTPSched(cfg),
+		random:             rand.New(rand.NewSource(time.Now().Unix())),
 	}
 	return state, nil
 }
@@ -175,4 +177,5 @@ type internalState struct {
 	metricsAPI         *metricsAPI
 	err                error
 	done               bool
+	random             *rand.Rand
 }

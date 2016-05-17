@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"log"
-	"math/rand"
 	"strconv"
 	"time"
 
@@ -115,15 +114,8 @@ func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 	}
 }
 
-func refuseSecondsWithJitter(d time.Duration) scheduler.CallOpt {
-	return calls.Filters(func(f *mesos.Filters) {
-		s := time.Duration(rand.Int63n(int64(d))).Seconds()
-		f.RefuseSeconds = &s
-	})
-}
-
 func resourceOffers(state *internalState, callOptions scheduler.CallOptions, offers []mesos.Offer) {
-	callOptions = append(callOptions, refuseSecondsWithJitter(state.config.maxRefuseSeconds))
+	callOptions = append(callOptions, calls.RefuseSecondsWithJitter(state.random, state.config.maxRefuseSeconds))
 	tasksLaunchedThisCycle := 0
 	offersDeclined := 0
 	for i := range offers {

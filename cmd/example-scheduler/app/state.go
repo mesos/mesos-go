@@ -3,9 +3,11 @@ package app
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 
 	proto "github.com/gogo/protobuf/proto"
@@ -100,11 +102,18 @@ func buildWantsExecutorResources(config Config) (r mesos.Resources) {
 	return
 }
 
-func buildHTTPSched(cfg Config) httpsched.Caller {
+func buildHTTPSched(cfg Config, creds credentials) httpsched.Caller {
+	var authConfigOpt httpcli.ConfigOpt
+	// TODO(jdef) make this auth-mode configuration more pluggable
+	if cfg.authMode == AuthModeBasic {
+		log.Println("configuring HTTP Basic authentication")
+		// TODO(jdef) this needs testing once mesos 0.29 is available
+		authConfigOpt = httpcli.BasicAuth(creds.username, creds.password)
+	}
 	cli := httpcli.New(
 		httpcli.Endpoint(cfg.url),
 		httpcli.Codec(cfg.codec.Codec),
-		httpcli.Do(httpcli.With(httpcli.Timeout(cfg.timeout))),
+		httpcli.Do(httpcli.With(authConfigOpt, httpcli.Timeout(cfg.timeout))),
 	)
 	if cfg.compression {
 		// TODO(jdef) experimental; currently released versions of Mesos will accept this
@@ -137,6 +146,30 @@ func buildFrameworkInfo(cfg Config) *mesos.FrameworkInfo {
 	return frameworkInfo
 }
 
+func loadCredentials(userConfig credentials) (result credentials, err error) {
+	result = userConfig
+	if result.password != "" {
+		// this is the path to a file containing the password
+		_, err = os.Stat(result.password)
+		if err != nil {
+			return
+		}
+		var f *os.File
+		f, err = os.Open(result.password)
+		if err != nil {
+			return
+		}
+		defer f.Close()
+		var bytes []byte
+		bytes, err = ioutil.ReadAll(f)
+		if err != nil {
+			return
+		}
+		result.password = string(bytes)
+	}
+	return
+}
+
 func newInternalState(cfg Config) (*internalState, error) {
 	metricsAPI := initMetrics(cfg)
 	executorInfo, err := prepareExecutorInfo(
@@ -150,6 +183,10 @@ func newInternalState(cfg Config) (*internalState, error) {
 	if err != nil {
 		return nil, err
 	}
+	creds, err := loadCredentials(cfg.credentials)
+	if err != nil {
+		return nil, err
+	}
 	state := &internalState{
 		config:             cfg,
 		totalTasks:         cfg.tasks,
@@ -157,7 +194,7 @@ func newInternalState(cfg Config) (*internalState, error) {
 		wantsTaskResources: buildWantsTaskResources(cfg),
 		executor:           executorInfo,
 		metricsAPI:         metricsAPI,
-		cli:                buildHTTPSched(cfg),
+		cli:                buildHTTPSched(cfg, creds),
 		random:             rand.New(rand.NewSource(time.Now().Unix())),
 	}
 	return state, nil

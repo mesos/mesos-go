@@ -9,7 +9,6 @@ import (
 )
 
 type Config struct {
-	id                  string
 	user                string
 	name                string
 	role                string
@@ -37,6 +36,8 @@ type Config struct {
 	summaryMetrics      bool
 	execImage           string
 	compression         bool
+	credentials         credentials
+	authMode            string
 }
 
 func (cfg *Config) AddFlags(fs *flag.FlagSet) {
@@ -69,7 +70,12 @@ func (cfg *Config) AddFlags(fs *flag.FlagSet) {
 	fs.BoolVar(&cfg.summaryMetrics, "summaryMetrics", cfg.summaryMetrics, "Collect summary metrics for tasks launched per-offer-cycle, offer processing time, etc.")
 	fs.StringVar(&cfg.execImage, "exec.image", cfg.execImage, "Name of the docker image to run the executor")
 	fs.BoolVar(&cfg.compression, "compression", cfg.compression, "When true attempt to use compression for HTTP streams.")
+	fs.StringVar(&cfg.credentials.username, "credentials.username", cfg.credentials.username, "Username for Mesos authentication")
+	fs.StringVar(&cfg.credentials.password, "credentials.passwordFile", cfg.credentials.password, "Path to file that contains the password for Mesos authentication")
+	fs.StringVar(&cfg.authMode, "authmode", cfg.authMode, "Method to use for Mesos authentication; specify '"+AuthModeBasic+"' for simple HTTP authentication")
 }
+
+const AuthModeBasic = "basic"
 
 func NewConfig() Config {
 	return Config{
@@ -95,6 +101,11 @@ func NewConfig() Config {
 			port: envInt("PORT0", "64009"),
 			path: env("METRICS_API_PATH", "/metrics"),
 		},
+		credentials: credentials{
+			username: env("AUTH_USER", ""),
+			password: env("AUTH_PASSWORD_FILE", ""),
+		},
+		authMode: env("AUTH_MODE", ""),
 	}
 }
 
@@ -106,4 +117,9 @@ type server struct {
 type metrics struct {
 	port int
 	path string
+}
+
+type credentials struct {
+	username string
+	password string
 }

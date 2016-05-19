@@ -2,6 +2,7 @@ package events
 
 import (
 	"github.com/mesos/mesos-go/scheduler"
+	"github.com/mesos/mesos-go/scheduler/calls"
 )
 
 type (
@@ -27,7 +28,7 @@ type (
 	Option func(*Mux) Option
 )
 
-// HandleEvents implements Handler for HandlerFunc
+// HandleEvent implements Handler for HandlerFunc
 func (f HandlerFunc) HandleEvent(e *scheduler.Event) error { return f(e) }
 
 // NewMux generates and returns a new, empty Mux instance.
@@ -88,4 +89,26 @@ func DefaultHandler(eh Handler) Option {
 		m.defaultHandler = eh
 		return DefaultHandler(old)
 	}
+}
+
+// AcknowledgeUpdates generates a Handler that sends an Acknowledge call to Mesos for every
+// UPDATE event that's received.
+func AcknowledgeUpdates(callerGetter func() calls.Caller) Handler {
+	return HandlerFunc(func(e *scheduler.Event) (err error) {
+		if e.GetType() == scheduler.Event_UPDATE {
+			var (
+				s    = e.GetUpdate().GetStatus()
+				uuid = s.GetUUID()
+			)
+			if len(uuid) > 0 {
+				ack := calls.Acknowledge(
+					s.GetAgentID().GetValue(),
+					s.TaskID.Value,
+					uuid,
+				)
+				err = calls.CallNoData(callerGetter(), ack)
+			}
+		}
+		return
+	})
 }

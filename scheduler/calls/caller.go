@@ -86,6 +86,16 @@ func CallerTracker(f func(Caller)) Decorator {
 	}
 }
 
+// FrameworkCaller generates and returns a Decorator that applies the given frameworkID to all calls.
+func FrameworkCaller(frameworkID string) Decorator {
+	return func(h Caller) Caller {
+		return CallerFunc(func(c *scheduler.Call) (mesos.Response, Caller, error) {
+			c.FrameworkID = &mesos.FrameworkID{Value: frameworkID}
+			return h.Call(c)
+		})
+	}
+}
+
 var noopDecorator = Decorator(func(h Caller) Caller { return h })
 
 // CallNoData is a convenience func that executes the given Call using the provided Caller

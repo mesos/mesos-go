@@ -66,7 +66,6 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.
 func buildEventHandler(state *internalState) events.Handler {
-	callOptions := scheduler.CallOptions{} // should be applied to every outgoing call
 	return events.NewMux(
 		events.DefaultHandler(events.HandlerFunc(controller.DefaultHandler)),
 		events.Handle(scheduler.Event_FAILURE, events.HandlerFunc(func(e *scheduler.Event) error {
@@ -81,11 +80,11 @@ func buildEventHandler(state *internalState) events.Handler {
 			}
 			offers := e.GetOffers().GetOffers()
 			state.metricsAPI.offersReceived.Int(len(offers))
-			resourceOffers(state, callOptions[:], offers)
+			resourceOffers(state, offers)
 			return nil
 		})),
 		events.Handle(scheduler.Event_UPDATE, events.HandlerFunc(func(e *scheduler.Event) error {
-			statusUpdate(state, callOptions[:], e.GetUpdate().GetStatus())
+			statusUpdate(state, e.GetUpdate().GetStatus())
 			return nil
 		})),
 		events.Handle(scheduler.Event_SUBSCRIBED, events.HandlerFunc(func(e *scheduler.Event) (err error) {
@@ -96,7 +95,8 @@ func buildEventHandler(state *internalState) events.Handler {
 					// sanity check
 					err = errors.New("mesos gave us an empty frameworkID")
 				} else {
-					callOptions = append(callOptions, calls.Framework(state.frameworkID))
+					// automatically set the frameworkID for all outgoing calls
+					state.cli = calls.FrameworkCaller(state.frameworkID).Apply(state.cli)
 				}
 			}
 			return
@@ -121,8 +121,8 @@ func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 	}
 }
 
-func resourceOffers(state *internalState, callOptions scheduler.CallOptions, offers []mesos.Offer) {
-	callOptions = append(callOptions, calls.RefuseSecondsWithJitter(state.random, state.config.maxRefuseSeconds))
+func resourceOffers(state *internalState, offers []mesos.Offer) {
+	callOption := calls.RefuseSecondsWithJitter(state.random, state.config.maxRefuseSeconds)
 	tasksLaunchedThisCycle := 0
 	offersDeclined := 0
 	for i := range offers {
@@ -161,11 +161,13 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 				log.Println("launching task " + strconv.Itoa(taskID) + " using offer " + offers[i].ID.Value)
 			}
 
-			task := mesos.TaskInfo{TaskID: mesos.TaskID{Value: strconv.Itoa(taskID)}}
+			task := mesos.TaskInfo{
+				TaskID:    mesos.TaskID{Value: strconv.Itoa(taskID)},
+				AgentID:   offers[i].AgentID,
+				Executor:  state.executor,
+				Resources: remaining.Find(state.wantsTaskResources.Flatten(mesos.Role(state.role).Assign())),
+			}
 			task.Name = "Task " + task.TaskID.Value
-			task.AgentID = offers[i].AgentID
-			task.Executor = state.executor
-			task.Resources = remaining.Find(state.wantsTaskResources.Flatten(mesos.Role(state.role).Assign()))
 
 			remaining.Subtract(task.Resources...)
 			tasks = append(tasks, task)
@@ -179,7 +181,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 				offers[i].ID,
 				calls.OpLaunch(tasks...),
 			),
-		).With(callOptions...)
+		).With(callOption)
 
 		// send Accept call to mesos
 		err := calls.CallNoData(state.cli, accept)
@@ -200,7 +202,7 @@ func resourceOffers(state *internalState, callOptions scheduler.CallOptions, off
 	}
 }
 
-func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mesos.TaskStatus) {
+func statusUpdate(state *internalState, s mesos.TaskStatus) {
 	if state.config.verbose {
 		msg := "Task " + s.TaskID.Value + " is in state " + s.GetState().String()
 		if m := s.GetMessage(); m != "" {
@@ -209,12 +211,13 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		log.Println(msg)
 	}
 
+	// TODO(jdef) this ACK block seems useful to make more reusable
 	if uuid := s.GetUUID(); len(uuid) > 0 {
 		ack := calls.Acknowledge(
 			s.GetAgentID().GetValue(),
 			s.TaskID.Value,
 			uuid,
-		).With(callOptions...)
+		)
 
 		// send Ack call to mesos
 		err := calls.CallNoData(state.cli, ack)
@@ -223,6 +226,7 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 			return
 		}
 	}
+
 	switch st := s.GetState(); st {
 	case mesos.TASK_FINISHED:
 		state.tasksFinished++
@@ -242,16 +246,16 @@ func statusUpdate(state *internalState, callOptions scheduler.CallOptions, s mes
 		log.Println("mission accomplished, terminating")
 		state.done = true
 	} else {
-		tryReviveOffers(state, callOptions)
+		tryReviveOffers(state)
 	}
 }
 
-func tryReviveOffers(state *internalState, callOptions scheduler.CallOptions) {
+func tryReviveOffers(state *internalState) {
 	// limit the rate at which we request offer revival
 	select {
 	case <-state.reviveTokens:
 		// not done yet, revive offers!
-		err := calls.CallNoData(state.cli, calls.Revive().With(callOptions...))
+		err := calls.CallNoData(state.cli, calls.Revive())
 		if err != nil {
 			log.Printf("failed to revive offers: %+v", err)
 			return

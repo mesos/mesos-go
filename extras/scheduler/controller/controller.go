@@ -22,6 +22,10 @@ type (
 		// Error is an error handler that is invoked at the end of every subscription cycle; the given
 		// error may be nil (if no errors occurred).
 		Error(error)
+
+		// CallerChanged invoked upon a change of caller; the decorator returns the caller that will be
+		// used by the controller going forward until the next change-of-caller. May be nil.
+		CallerChanged(calls.Caller) calls.Caller
 	}
 
 	ContextAdapter struct {
@@ -34,9 +38,13 @@ type (
 
 		// ErrorFunc is optional; if nil then errors are swallowed
 		ErrorFunc func(error)
+
+		// CallerChanged (optional) invoked upon a change of caller; the decorator returns the caller
+		// that will be used by the controller going forward until the next change-of-caller. May be nil.
+		CallerFunc calls.Decorator
 	}
 
-	Controller struct {
+	Config struct {
 		Context       Context              // Context is required
 		Framework     *mesos.FrameworkInfo // FrameworkInfo is required
 		InitialCaller calls.Caller         // InitialCaller is required
@@ -50,55 +58,68 @@ type (
 		// The returned chan should either be non-blocking (nil/closed), or should yield a struct{} in
 		// order to allow the framework registration process to continue. May be nil.
 		RegistrationTokens <-chan struct{}
-
-		// Caller (optional) invoked upon a change of caller; the decorator returns the caller that will be
-		// used by the controller going forward until the next change-of-caller. May be nil.
-		Caller calls.Decorator
 	}
+
+	Controller interface {
+		// Run executes the controller using the given Config
+		Run(Config) error
+	}
+
+	// ControllerFunc is a functional adaptation of a Controller
+	ControllerFunc func(Config) error
+
+	controllerImpl int
 )
+
+// Run implements Controller for ControllerFunc
+func (cf ControllerFunc) Run(config Config) error { return cf(config) }
+
+func New() Controller {
+	return new(controllerImpl)
+}
 
 // Run executes a control loop that registers a framework with Mesos and processes the scheduler events
 // that flow through the subscription. Upon disconnection, if the given Context reports !Done() then the
 // controller will attempt to re-register the framework and continue processing events.
-func (control *Controller) Run() (lastErr error) {
-	subscribe := calls.Subscribe(true, control.Framework)
-	for !control.Context.Done() {
+func (_ *controllerImpl) Run(config Config) (lastErr error) {
+	subscribe := calls.Subscribe(true, config.Framework)
+	for !config.Context.Done() {
 		var (
-			caller      = control.Caller.Apply(control.InitialCaller)
-			frameworkID = control.Context.FrameworkID()
+			caller      = config.Context.CallerChanged(config.InitialCaller)
+			frameworkID = config.Context.FrameworkID()
 		)
-		if control.Framework.GetFailoverTimeout() > 0 && frameworkID != "" {
+		if config.Framework.GetFailoverTimeout() > 0 && frameworkID != "" {
 			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: frameworkID}
 		}
-		<-control.RegistrationTokens
+		<-config.RegistrationTokens
 		resp, subscribedCaller, err := caller.Call(subscribe)
 		if subscribedCaller != nil {
-			control.Caller.Apply(subscribedCaller)
+			config.Context.CallerChanged(subscribedCaller)
 		}
-		lastErr = control.processSubscription(resp, err)
-		control.Context.Error(lastErr)
+		lastErr = processSubscription(config, resp, err)
+		config.Context.Error(lastErr)
 	}
 	return
 }
 
-func (control *Controller) processSubscription(resp mesos.Response, err error) error {
+func processSubscription(config Config, resp mesos.Response, err error) error {
 	if resp != nil {
 		defer resp.Close()
 	}
 	if err == nil {
-		err = control.eventLoop(resp.Decoder())
+		err = eventLoop(config, resp.Decoder())
 	}
 	return err
 }
 
 // eventLoop returns the framework ID received by mesos (if any); callers should check for a
 // framework ID regardless of whether error != nil.
-func (control *Controller) eventLoop(eventDecoder encoding.Decoder) (err error) {
-	h := control.Handler
+func eventLoop(config Config, eventDecoder encoding.Decoder) (err error) {
+	h := config.Handler
 	if h == nil {
 		h = events.HandlerFunc(DefaultHandler)
 	}
-	for err == nil && !control.Context.Done() {
+	for err == nil && !config.Context.Done() {
 		var e scheduler.Event
 		if err = eventDecoder.Invoke(&e); err == nil {
 			err = h.HandleEvent(&e)
@@ -122,6 +143,14 @@ func (ca *ContextAdapter) Error(err error) {
 	if ca.ErrorFunc != nil {
 		ca.ErrorFunc(err)
 	}
+}
+func (ca *ContextAdapter) CallerChanged(c calls.Caller) (rc calls.Caller) {
+	if ca.CallerFunc != nil {
+		rc = ca.CallerFunc(c)
+	} else {
+		rc = c
+	}
+	return
 }
 
 // DefaultHandler provides the minimum implementation required for correct controller behavior.

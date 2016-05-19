@@ -16,45 +16,52 @@ import (
 	"github.com/mesos/mesos-go/scheduler/events"
 )
 
+var (
+	RegistrationMinBackoff = 1 * time.Second
+	RegistrationMaxBackoff = 15 * time.Second
+)
+
 func Run(cfg Config) error {
 	log.Printf("scheduler running with configuration: %+v", cfg)
+	shutdown := make(chan struct{})
+	defer close(shutdown)
 
 	state, err := newInternalState(cfg)
 	if err != nil {
 		return err
 	}
-	var (
-		controlContext = &controller.ContextAdapter{
-			DoneFunc:        func() bool { return state.done },
-			FrameworkIDFunc: func() string { return state.frameworkID },
-			ErrorFunc: func(err error) {
-				if err != nil && err != io.EOF {
-					log.Println(err)
-				} else {
-					log.Println("disconnected")
-				}
-			},
-		}
-		controller = &controller.Controller{
-			Context:            controlContext,
-			Framework:          buildFrameworkInfo(cfg),
-			InitialCaller:      state.cli,
-			RegistrationTokens: backoff.Notifier(1*time.Second, 15*time.Second, nil),
+	return controller.New().Run(buildControllerConfig(state, shutdown))
+}
 
-			Handler: events.Decorators{
-				eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
-				events.Decorator(logAllEvents).If(state.config.verbose),
-			}.Apply(buildEventHandler(state)),
+func buildControllerConfig(state *internalState, shutdown <-chan struct{}) controller.Config {
+	controlContext := &controller.ContextAdapter{
+		DoneFunc:        func() bool { return state.done },
+		FrameworkIDFunc: func() string { return state.frameworkID },
+		ErrorFunc: func(err error) {
+			if err != nil && err != io.EOF {
+				log.Println(err)
+			} else {
+				log.Println("disconnected")
+			}
+		},
+		CallerFunc: calls.Decorators{
+			callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+			logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
+			// the next decorator must be last since it tracks the subscribed caller we'll use
+			calls.CallerTracker(func(c calls.Caller) { state.cli = c }),
+		}.Combine(),
+	}
+	return controller.Config{
+		Context:            controlContext,
+		Framework:          buildFrameworkInfo(state.config),
+		InitialCaller:      state.cli,
+		RegistrationTokens: backoff.Notifier(RegistrationMinBackoff, RegistrationMaxBackoff, shutdown),
 
-			Caller: calls.Decorators{
-				callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
-				logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
-				// the next decorator must be last since it tracks the subscribed caller we'll use
-				calls.CallerTracker(func(c calls.Caller) { state.cli = c }),
-			}.Combine(),
-		}
-	)
-	return controller.Run()
+		Handler: events.Decorators{
+			eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+			events.Decorator(logAllEvents).If(state.config.verbose),
+		}.Apply(buildEventHandler(state)),
+	}
 }
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.

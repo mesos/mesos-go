@@ -30,7 +30,11 @@ func Run(cfg Config) error {
 	if err != nil {
 		return err
 	}
-	return controller.New().Run(buildControllerConfig(state, shutdown))
+	err = controller.New().Run(buildControllerConfig(state, shutdown))
+	if state.err != nil {
+		err = state.err
+	}
+	return err
 }
 
 func buildControllerConfig(state *internalState, shutdown <-chan struct{}) controller.Config {
@@ -66,6 +70,9 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.
 func buildEventHandler(state *internalState) events.Handler {
+	// TODO(jdef) would be nice to merge this ack handler with the status update handler below; need to
+	// figure out appropriate error propagation among chained handlers.
+	ack := events.AcknowledgeUpdates(func() calls.Caller { return state.cli })
 	return events.NewMux(
 		events.DefaultHandler(events.HandlerFunc(controller.DefaultHandler)),
 		events.Handle(scheduler.Event_FAILURE, events.HandlerFunc(func(e *scheduler.Event) error {
@@ -84,6 +91,11 @@ func buildEventHandler(state *internalState) events.Handler {
 			return nil
 		})),
 		events.Handle(scheduler.Event_UPDATE, events.HandlerFunc(func(e *scheduler.Event) error {
+			if err := ack.HandleEvent(e); err != nil {
+				log.Printf("failed to ack status update for task: %+v", err)
+				// TODO(jdef) we don't return the error because that would cause the subscription
+				// to terminate; is that the right thing to do?
+			}
 			statusUpdate(state, e.GetUpdate().GetStatus())
 			return nil
 		})),
@@ -211,26 +223,17 @@ func statusUpdate(state *internalState, s mesos.TaskStatus) {
 		log.Println(msg)
 	}
 
-	// TODO(jdef) this ACK block seems useful to make more reusable
-	if uuid := s.GetUUID(); len(uuid) > 0 {
-		ack := calls.Acknowledge(
-			s.GetAgentID().GetValue(),
-			s.TaskID.Value,
-			uuid,
-		)
-
-		// send Ack call to mesos
-		err := calls.CallNoData(state.cli, ack)
-		if err != nil {
-			log.Printf("failed to ack status update for task: %+v", err)
-			return
-		}
-	}
-
 	switch st := s.GetState(); st {
 	case mesos.TASK_FINISHED:
 		state.tasksFinished++
 		state.metricsAPI.tasksFinished()
+
+		if state.tasksFinished == state.totalTasks {
+			log.Println("mission accomplished, terminating")
+			state.done = true
+		} else {
+			tryReviveOffers(state)
+		}
 
 	case mesos.TASK_LOST, mesos.TASK_KILLED, mesos.TASK_FAILED, mesos.TASK_ERROR:
 		state.err = errors.New("Exiting because task " + s.GetTaskID().Value +
@@ -239,14 +242,6 @@ func statusUpdate(state *internalState, s mesos.TaskStatus) {
 			" from source " + s.GetSource().String() +
 			" with message '" + s.GetMessage() + "'")
 		state.done = true
-		return
-	}
-
-	if state.tasksFinished == state.totalTasks {
-		log.Println("mission accomplished, terminating")
-		state.done = true
-	} else {
-		tryReviveOffers(state)
 	}
 }
 

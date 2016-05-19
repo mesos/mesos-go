@@ -81,6 +81,41 @@ func Handle(et scheduler.Event_Type, eh Handler) Option {
 	}
 }
 
+// Map returns an Option that configures multiple Handler objects.
+func Map(handlers map[scheduler.Event_Type]Handler) (option Option) {
+	option = func(m *Mux) Option {
+		type history struct {
+			et scheduler.Event_Type
+			h  Handler
+		}
+		old := make([]history, len(handlers))
+		for et, h := range handlers {
+			old = append(old, history{et, m.handlers[et]})
+			m.handlers[et] = h
+		}
+		return func(m *Mux) Option {
+			for i := range old {
+				if old[i].h == nil {
+					delete(m.handlers, old[i].et)
+				} else {
+					m.handlers[old[i].et] = old[i].h
+				}
+			}
+			return option
+		}
+	}
+	return
+}
+
+// MapFuncs is the functional adaptation of Map
+func MapFuncs(handlers map[scheduler.Event_Type]HandlerFunc) (option Option) {
+	h := make(map[scheduler.Event_Type]Handler, len(handlers))
+	for k, v := range handlers {
+		h[k] = v
+	}
+	return Map(h)
+}
+
 // DefaultHandler returns an option that configures the default handler that's invoked
 // in cases where there is no Handler registered for specific event type.
 func DefaultHandler(eh Handler) Option {

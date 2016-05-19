@@ -75,44 +75,46 @@ func buildEventHandler(state *internalState) events.Handler {
 	ack := events.AcknowledgeUpdates(func() calls.Caller { return state.cli })
 	return events.NewMux(
 		events.DefaultHandler(events.HandlerFunc(controller.DefaultHandler)),
-		events.Handle(scheduler.Event_FAILURE, events.HandlerFunc(func(e *scheduler.Event) error {
-			log.Println("received a FAILURE event")
-			f := e.GetFailure()
-			failure(f.ExecutorID, f.AgentID, f.Status)
-			return nil
-		})),
-		events.Handle(scheduler.Event_OFFERS, events.HandlerFunc(func(e *scheduler.Event) error {
-			if state.config.verbose {
-				log.Println("received an OFFERS event")
-			}
-			offers := e.GetOffers().GetOffers()
-			state.metricsAPI.offersReceived.Int(len(offers))
-			resourceOffers(state, offers)
-			return nil
-		})),
-		events.Handle(scheduler.Event_UPDATE, events.HandlerFunc(func(e *scheduler.Event) error {
-			if err := ack.HandleEvent(e); err != nil {
-				log.Printf("failed to ack status update for task: %+v", err)
-				// TODO(jdef) we don't return the error because that would cause the subscription
-				// to terminate; is that the right thing to do?
-			}
-			statusUpdate(state, e.GetUpdate().GetStatus())
-			return nil
-		})),
-		events.Handle(scheduler.Event_SUBSCRIBED, events.HandlerFunc(func(e *scheduler.Event) (err error) {
-			log.Println("received a SUBSCRIBED event")
-			if state.frameworkID == "" {
-				state.frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
-				if state.frameworkID == "" {
-					// sanity check
-					err = errors.New("mesos gave us an empty frameworkID")
-				} else {
-					// automatically set the frameworkID for all outgoing calls
-					state.cli = calls.FrameworkCaller(state.frameworkID).Apply(state.cli)
+		events.MapFuncs(map[scheduler.Event_Type]events.HandlerFunc{
+			scheduler.Event_FAILURE: func(e *scheduler.Event) error {
+				log.Println("received a FAILURE event")
+				f := e.GetFailure()
+				failure(f.ExecutorID, f.AgentID, f.Status)
+				return nil
+			},
+			scheduler.Event_OFFERS: func(e *scheduler.Event) error {
+				if state.config.verbose {
+					log.Println("received an OFFERS event")
 				}
-			}
-			return
-		})),
+				offers := e.GetOffers().GetOffers()
+				state.metricsAPI.offersReceived.Int(len(offers))
+				resourceOffers(state, offers)
+				return nil
+			},
+			scheduler.Event_UPDATE: func(e *scheduler.Event) error {
+				if err := ack.HandleEvent(e); err != nil {
+					log.Printf("failed to ack status update for task: %+v", err)
+					// TODO(jdef) we don't return the error because that would cause the subscription
+					// to terminate; is that the right thing to do?
+				}
+				statusUpdate(state, e.GetUpdate().GetStatus())
+				return nil
+			},
+			scheduler.Event_SUBSCRIBED: func(e *scheduler.Event) (err error) {
+				log.Println("received a SUBSCRIBED event")
+				if state.frameworkID == "" {
+					state.frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
+					if state.frameworkID == "" {
+						// sanity check
+						err = errors.New("mesos gave us an empty frameworkID")
+					} else {
+						// automatically set the frameworkID for all outgoing calls
+						state.cli = calls.FrameworkCaller(state.frameworkID).Apply(state.cli)
+					}
+				}
+				return
+			},
+		}),
 	)
 }
 

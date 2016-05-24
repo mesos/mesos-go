@@ -83,7 +83,7 @@ func disconnectedFn(state *state) stateFn {
 	)
 
 	// (c) execute the call, save the result in resp, err
-	state.resp, _, state.err = subscribeCaller.Call(state.call)
+	state.resp, state.err = subscribeCaller.Call(state.call)
 
 	// (d) if err != nil return unsubscribedFn
 	if state.err != nil {
@@ -107,14 +107,14 @@ func connectedFn(state *state) stateFn {
 	}
 
 	// (b) execute call, save the result in resp, err
-	state.resp, _, state.err = state.caller.Call(state.call)
+	state.resp, state.err = state.caller.Call(state.call)
 
 	// (c) return connectedFn; TODO(jdef) detect specific Mesos error codes as triggers -> disconnectedFn?
 	return connectedFn
 }
 
-func (state *state) Call(call *scheduler.Call) (resp mesos.Response, caller calls.Caller, err error) {
+func (state *state) Call(call *scheduler.Call) (resp mesos.Response, err error) {
 	state.call = call
 	state.fn = state.fn(state)
-	return state.resp, state, state.err
+	return state.resp, state.err
 }

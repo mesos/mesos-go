@@ -293,7 +293,7 @@ func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics b
 // logCalls logs a specific message string when a particular call-type is observed
 func logCalls(messages map[scheduler.Call_Type]string) calls.Decorator {
 	return func(caller calls.Caller) calls.Caller {
-		return calls.CallerFunc(func(c *scheduler.Call) (mesos.Response, calls.Caller, error) {
+		return calls.CallerFunc(func(c *scheduler.Call) (mesos.Response, error) {
 			if message, ok := messages[c.GetType()]; ok {
 				log.Println(message)
 			}

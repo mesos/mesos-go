@@ -92,10 +92,7 @@ func (_ *controllerImpl) Run(config Config) (lastErr error) {
 			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: frameworkID}
 		}
 		<-config.RegistrationTokens
-		resp, subscribedCaller, err := caller.Call(subscribe)
-		if subscribedCaller != nil {
-			config.Context.CallerChanged(subscribedCaller)
-		}
+		resp, err := caller.Call(subscribe)
 		lastErr = processSubscription(config, resp, err)
 		config.Context.Error(lastErr)
 	}

@@ -77,9 +77,9 @@ func (ct *callerTemporary) httpDo(m encoding.Marshaler, opt ...httpcli.RequestOp
 	return
 }
 
-func (ct *callerTemporary) Call(call *scheduler.Call) (resp mesos.Response, caller calls.Caller, err error) {
+func (ct *callerTemporary) Call(call *scheduler.Call) (resp mesos.Response, err error) {
 	ct.callerInternal.WithTemporary(ct.opt, func() error {
-		resp, caller, err = ct.callerInternal.Call(call)
+		resp, err = ct.callerInternal.Call(call)
 		return nil
 	})
 	return
@@ -145,9 +145,8 @@ func (cli *client) httpDo(m encoding.Marshaler, opt ...httpcli.RequestOpt) (resp
 }
 
 // Call implements Client
-func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, _ calls.Caller, err error) {
-	resp, err = cli.httpDo(call)
-	return
+func (cli *client) Call(call *scheduler.Call) (mesos.Response, error) {
+	return cli.httpDo(call)
 }
 
 type mesosRedirectionError struct{ newURL string }

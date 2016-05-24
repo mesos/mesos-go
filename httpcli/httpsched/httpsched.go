@@ -15,15 +15,9 @@ import (
 	"github.com/mesos/mesos-go/scheduler/calls"
 )
 
-const (
-	headerMesosStreamID = "Mesos-Stream-Id"
-	debug               = false
-)
-
 var (
-	errMissingMesosStreamId = errors.New("missing Mesos-Stream-Id header expected with successful SUBSCRIBE")
-	errNotHTTP              = errors.New("expected an HTTP object, found something else instead")
-	errBadLocation          = errors.New("failed to build new Mesos service endpoint URL from Location header")
+	errNotHTTP     = errors.New("expected an HTTP object, found something else instead")
+	errBadLocation = errors.New("failed to build new Mesos service endpoint URL from Location header")
 
 	DefaultRedirectSettings = RedirectSettings{
 		MaxAttempts:      9,
@@ -101,7 +95,7 @@ func MaxRedirects(mr int) Option {
 }
 
 // NewCaller returns a scheduler API Client
-func NewCaller(cl *httpcli.Client, opts ...Option) Caller {
+func NewCaller(cl *httpcli.Client, opts ...Option) calls.Caller {
 	result := &client{Client: cl, redirect: DefaultRedirectSettings}
 	cl.With(result.redirectHandler())
 	for _, o := range opts {
@@ -109,7 +103,10 @@ func NewCaller(cl *httpcli.Client, opts ...Option) Caller {
 			o(result)
 		}
 	}
-	return result
+	return &state{
+		client: result,
+		fn:     disconnectedFn,
+	}
 }
 
 // httpDo decorates the inherited behavior w/ support for HTTP redirection to follow Mesos leadership changes.
@@ -148,94 +145,9 @@ func (cli *client) httpDo(m encoding.Marshaler, opt ...httpcli.RequestOpt) (resp
 }
 
 // Call implements Client
-func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, exportCaller calls.Caller, err error) {
-	var (
-		exec   = callerExec(prepareCall)
-		caller = callerInternal(cli)
-	)
-
-	// initial "prepare"; special case: if it returns a terminal exec we'll attempt
-	// to make a call anyway.
-	caller, exec = exec(caller, call)
-
-	// TODO(jdef) would it be cleaner to handle leadership changes here?
-	for {
-		resp, err = caller.httpDo(call)
-		if err != nil {
-			break
-		}
-		if exec == nil {
-			// state machine finished
-			break
-		}
-
-		// advance to the next exec state (subscribed?)
-		caller, exec = exec(caller, call)
-		if exec == nil {
-			// state machine finished
-			break
-		}
-
-		// discard intermediate responses, for now
-		if resp != nil {
-			resp.Close()
-		}
-	}
-	exportCaller = caller
+func (cli *client) Call(call *scheduler.Call) (resp mesos.Response, _ calls.Caller, err error) {
+	resp, err = cli.httpDo(call)
 	return
-}
-
-// TODO(jdef) this is starting to feel like a functional state machine... can we simplify client
-// interaction with this package accordingly?
-type callerExec func(c callerInternal, call *scheduler.Call) (callerInternal, callerExec)
-
-// prepare is invoked for scheduler call's that require pre-processing, post-processing, or both.
-func prepareCall(client callerInternal, call *scheduler.Call) (callerInternal, callerExec) {
-	switch call.GetType() {
-	case scheduler.Call_SUBSCRIBE:
-		mesosStreamID := ""
-		undoable := httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
-			return func(req *http.Request) (*http.Response, error) {
-				if debug {
-					log.Println("wrapping request")
-				}
-				resp, err := f(req)
-				if debug && err == nil {
-					log.Printf("status %d", resp.StatusCode)
-					for k := range resp.Header {
-						log.Println("header " + k + ": " + resp.Header.Get(k))
-					}
-				}
-				if err == nil && resp.StatusCode == 200 {
-					// grab Mesos-Stream-Id header; if missing then
-					// close the response body and return an error
-					mesosStreamID = resp.Header.Get(headerMesosStreamID)
-					if mesosStreamID == "" {
-						resp.Body.Close()
-						return nil, errMissingMesosStreamId
-					}
-					if debug {
-						log.Println("found mesos-stream-id: " + mesosStreamID)
-					}
-				}
-				return resp, err
-			}
-		})
-		subscribeCaller := &callerTemporary{
-			opt:            undoable,
-			callerInternal: client,
-			requestOpts:    []httpcli.RequestOpt{httpcli.Close(true)},
-		}
-		return subscribeCaller, func(callerInternal, *scheduler.Call) (callerInternal, callerExec) {
-			return &callerTemporary{
-				opt:            httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID),
-				callerInternal: client,
-			}, nil
-		}
-	default:
-		// there are no other, special calls that generate data and require pre/post processing
-	}
-	return client, nil
 }
 
 type mesosRedirectionError struct{ newURL string }

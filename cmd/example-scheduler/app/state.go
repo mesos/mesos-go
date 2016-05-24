@@ -102,7 +102,7 @@ func buildWantsExecutorResources(config Config) (r mesos.Resources) {
 	return
 }
 
-func buildHTTPSched(cfg Config, creds credentials) httpsched.Caller {
+func buildHTTPSched(cfg Config, creds credentials) calls.Caller {
 	var authConfigOpt httpcli.ConfigOpt
 	// TODO(jdef) make this auth-mode configuration more pluggable
 	if cfg.authMode == AuthModeBasic {

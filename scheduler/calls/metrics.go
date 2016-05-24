@@ -11,10 +11,10 @@ import (
 func CallerMetrics(harness xmetrics.Harness) Decorator {
 	return func(caller Caller) (metricsCaller Caller) {
 		if caller != nil {
-			metricsCaller = CallerFunc(func(c *scheduler.Call) (res mesos.Response, caller2 Caller, err error) {
+			metricsCaller = CallerFunc(func(c *scheduler.Call) (res mesos.Response, err error) {
 				typename := strings.ToLower(c.GetType().String())
 				harness(func() error {
-					res, caller2, err = caller.Call(c)
+					res, err = caller.Call(c)
 					return err // need to count these
 				}, typename)
 				return

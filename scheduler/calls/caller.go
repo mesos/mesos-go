@@ -9,13 +9,11 @@ import (
 type (
 	Caller interface {
 		// Call issues a call to Mesos and properly manages call-specific HTTP response headers & data.
-		// Subscription calls (that succeed) return a non-nil Caller that should be used for duration of
-		// the subscription.
-		Call(*scheduler.Call) (mesos.Response, Caller, error)
+		Call(*scheduler.Call) (mesos.Response, error)
 	}
 
 	// CallerFunc is the functional adaptation of the Caller interface
-	CallerFunc func(*scheduler.Call) (mesos.Response, Caller, error)
+	CallerFunc func(*scheduler.Call) (mesos.Response, error)
 
 	// Decorator funcs usually return a Caller whose behavior has been somehow modified
 	Decorator func(Caller) Caller
@@ -25,7 +23,7 @@ type (
 )
 
 // Call implements the Caller interface for CallerFunc
-func (f CallerFunc) Call(c *scheduler.Call) (mesos.Response, Caller, error) { return f(c) }
+func (f CallerFunc) Call(c *scheduler.Call) (mesos.Response, error) { return f(c) }
 
 // Apply is a convenient, nil-safe applicator that returns the result of d(c) iff d != nil; otherwise c
 func (d Decorator) Apply(c Caller) (result Caller) {
@@ -89,7 +87,7 @@ func CallerTracker(f func(Caller)) Decorator {
 // FrameworkCaller generates and returns a Decorator that applies the given frameworkID to all calls.
 func FrameworkCaller(frameworkID string) Decorator {
 	return func(h Caller) Caller {
-		return CallerFunc(func(c *scheduler.Call) (mesos.Response, Caller, error) {
+		return CallerFunc(func(c *scheduler.Call) (mesos.Response, error) {
 			c.FrameworkID = &mesos.FrameworkID{Value: frameworkID}
 			return h.Call(c)
 		})
@@ -101,7 +99,7 @@ var noopDecorator = Decorator(func(h Caller) Caller { return h })
 // CallNoData is a convenience func that executes the given Call using the provided Caller
 // and always drops the response data.
 func CallNoData(caller Caller, call *scheduler.Call) error {
-	resp, _, err := caller.Call(call)
+	resp, err := caller.Call(call)
 	if resp != nil {
 		resp.Close()
 	}

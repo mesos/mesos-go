@@ -22,10 +22,6 @@ type (
 		// Error is an error handler that is invoked at the end of every subscription cycle; the given
 		// error may be nil (if no errors occurred).
 		Error(error)
-
-		// CallerChanged invoked upon a change of caller; the decorator returns the caller that will be
-		// used by the controller going forward until the next change-of-caller. May be nil.
-		CallerChanged(calls.Caller) calls.Caller
 	}
 
 	ContextAdapter struct {
@@ -38,16 +34,12 @@ type (
 
 		// ErrorFunc is optional; if nil then errors are swallowed
 		ErrorFunc func(error)
-
-		// CallerChanged (optional) invoked upon a change of caller; the decorator returns the caller
-		// that will be used by the controller going forward until the next change-of-caller. May be nil.
-		CallerFunc calls.Decorator
 	}
 
 	Config struct {
-		Context       Context              // Context is required
-		Framework     *mesos.FrameworkInfo // FrameworkInfo is required
-		InitialCaller calls.Caller         // InitialCaller is required
+		Context   Context              // Context is required
+		Framework *mesos.FrameworkInfo // FrameworkInfo is required
+		Caller    calls.Caller         // Caller  is required
 
 		// Handler (optional) processes scheduler events. The controller's internal event processing
 		// loop is aborted if a Handler returns a non-nil error, after which the controller may attempt
@@ -84,15 +76,12 @@ func New() Controller {
 func (_ *controllerImpl) Run(config Config) (lastErr error) {
 	subscribe := calls.Subscribe(true, config.Framework)
 	for !config.Context.Done() {
-		var (
-			caller      = config.Context.CallerChanged(config.InitialCaller)
-			frameworkID = config.Context.FrameworkID()
-		)
+		frameworkID := config.Context.FrameworkID()
 		if config.Framework.GetFailoverTimeout() > 0 && frameworkID != "" {
 			subscribe.Subscribe.FrameworkInfo.ID = &mesos.FrameworkID{Value: frameworkID}
 		}
 		<-config.RegistrationTokens
-		resp, err := caller.Call(subscribe)
+		resp, err := config.Caller.Call(subscribe)
 		lastErr = processSubscription(config, resp, err)
 		config.Context.Error(lastErr)
 	}
@@ -140,14 +129,6 @@ func (ca *ContextAdapter) Error(err error) {
 	if ca.ErrorFunc != nil {
 		ca.ErrorFunc(err)
 	}
-}
-func (ca *ContextAdapter) CallerChanged(c calls.Caller) (rc calls.Caller) {
-	if ca.CallerFunc != nil {
-		rc = ca.CallerFunc(c)
-	} else {
-		rc = c
-	}
-	return
 }
 
 // DefaultHandler provides the minimum implementation required for correct controller behavior.

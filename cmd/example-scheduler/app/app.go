@@ -48,17 +48,17 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 				log.Println("disconnected")
 			}
 		},
-		CallerFunc: calls.Decorators{
-			callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
-			logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
-			// the next decorator must be last since it tracks the subscribed caller we'll use
-			calls.CallerTracker(func(c calls.Caller) { state.cli = c }),
-		}.Combine(),
 	}
+
+	state.cli = calls.Decorators{
+		callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+		logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
+	}.Apply(state.cli)
+
 	return controller.Config{
 		Context:            controlContext,
 		Framework:          buildFrameworkInfo(state.config),
-		InitialCaller:      state.cli,
+		Caller:             state.cli,
 		RegistrationTokens: backoff.Notifier(RegistrationMinBackoff, RegistrationMaxBackoff, shutdown),
 
 		Handler: events.Decorators{

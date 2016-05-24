@@ -94,7 +94,9 @@ func MaxRedirects(mr int) Option {
 	}
 }
 
-// NewCaller returns a scheduler API Client
+// NewCaller returns a scheduler API Client in the form of a Caller. Concurrent invocations
+// of Call upon the returned caller are safely executed in a serial fashion. It is expected that
+// there are no other users of the given Client since its state may be modified by this impl.
 func NewCaller(cl *httpcli.Client, opts ...Option) calls.Caller {
 	result := &client{Client: cl, redirect: DefaultRedirectSettings}
 	cl.With(result.redirectHandler())

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/mesos/mesos-go"
 	"github.com/mesos/mesos-go/httpcli"
@@ -24,7 +25,9 @@ var (
 
 type (
 	state struct {
-		client *client      // client is a handle to the original underlying HTTP client
+		client *client // client is a handle to the original underlying HTTP client
+
+		m      sync.Mutex
 		fn     stateFn      // fn is the next state function to execute
 		caller calls.Caller // caller is (maybe) used by a state function to execute a call
 
@@ -35,6 +38,25 @@ type (
 
 	stateFn func(*state) stateFn
 )
+
+func maybeLogged(f httpcli.DoFunc) httpcli.DoFunc {
+	if debug {
+		return func(req *http.Request) (*http.Response, error) {
+			if debug {
+				log.Println("wrapping request")
+			}
+			resp, err := f(req)
+			if debug && err == nil {
+				log.Printf("status %d", resp.StatusCode)
+				for k := range resp.Header {
+					log.Println("header " + k + ": " + resp.Header.Get(k))
+				}
+			}
+			return resp, err
+		}
+	}
+	return f
+}
 
 func disconnectedFn(state *state) stateFn {
 	// (a) validate call = SUBSCRIBE
@@ -48,31 +70,20 @@ func disconnectedFn(state *state) stateFn {
 	var (
 		mesosStreamID = ""
 		undoable      = httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
-			return func(req *http.Request) (*http.Response, error) {
-				// TODO(jdef) extract debug logging into some helper doFunc wrapper
-				if debug {
-					log.Println("wrapping request")
-				}
-				resp, err := f(req)
-				if debug && err == nil {
-					log.Printf("status %d", resp.StatusCode)
-					for k := range resp.Header {
-						log.Println("header " + k + ": " + resp.Header.Get(k))
-					}
-				}
+			f = maybeLogged(f)
+			return func(req *http.Request) (resp *http.Response, err error) {
+				resp, err = f(req)
 				if err == nil && resp.StatusCode == 200 {
 					// grab Mesos-Stream-Id header; if missing then
 					// close the response body and return an error
 					mesosStreamID = resp.Header.Get(headerMesosStreamID)
 					if mesosStreamID == "" {
 						resp.Body.Close()
-						return nil, errMissingMesosStreamId
-					}
-					if debug {
-						log.Println("found mesos-stream-id: " + mesosStreamID)
+						resp = nil
+						err = errMissingMesosStreamId
 					}
 				}
-				return resp, err
+				return
 			}
 		})
 		subscribeCaller = &callerTemporary{
@@ -114,6 +125,8 @@ func connectedFn(state *state) stateFn {
 }
 
 func (state *state) Call(call *scheduler.Call) (resp mesos.Response, err error) {
+	state.m.Lock()
+	defer state.m.Unlock()
 	state.call = call
 	state.fn = state.fn(state)
 	return state.resp, state.err

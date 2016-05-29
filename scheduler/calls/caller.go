@@ -75,15 +75,6 @@ func (ds Decorators) Combine() (result Decorator) {
 	return
 }
 
-// CallerTracker invokes the tracking function `f` upon decorator invocation. This is a convenience
-// decorator that allows a client to receive callbacks when, in some context, a Caller is updated.
-func CallerTracker(f func(Caller)) Decorator {
-	return func(c Caller) Caller {
-		f(c)
-		return c
-	}
-}
-
 // FrameworkCaller generates and returns a Decorator that applies the given frameworkID to all calls.
 func FrameworkCaller(frameworkID string) Decorator {
 	return func(h Caller) Caller {

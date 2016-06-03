@@ -53,9 +53,14 @@ func (d Decorator) When(f func() bool) Decorator {
 // generates the final (wrapping) Handler that is ultimately returned.
 func (ds Decorators) Apply(h Handler) Handler {
 	for _, d := range ds {
-		if d != nil {
-			h = d(h)
-		}
+		h = d.Apply(h)
+	}
+	return h
+}
+
+func (d Decorator) Apply(h Handler) Handler {
+	if d != nil {
+		h = d(h)
 	}
 	return h
 }

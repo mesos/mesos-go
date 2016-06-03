@@ -30,6 +30,10 @@ func Run(cfg Config) error {
 	if err != nil {
 		return err
 	}
+
+	// TODO(jdef) how to track/handle timeout errors that occur for SUBSCRIBE calls? we should
+	// probably tolerate X number of subsequent subscribe failures before bailing. we'll need
+	// to track the lastCallAttempted along with subsequentSubscribeTimeouts.
 	err = controller.New().Run(buildControllerConfig(state, shutdown))
 	if state.err != nil {
 		err = state.err

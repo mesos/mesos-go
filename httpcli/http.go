@@ -407,6 +407,15 @@ func TLSConfig(tc *tls.Config) ConfigOpt {
 	}
 }
 
+// Transport returns a ConfigOpt that allows tweaks of the default Config's http.Transport
+func Transport(modifyTransport func(*http.Transport)) ConfigOpt {
+	return func(c *Config) {
+		if modifyTransport != nil {
+			modifyTransport(c.transport)
+		}
+	}
+}
+
 // WrapRoundTripper allows a caller to customize a configuration's HTTP exchanger. Useful
 // for authentication protocols that operate over stock HTTP.
 func WrapRoundTripper(f func(http.RoundTripper) http.RoundTripper) ConfigOpt {

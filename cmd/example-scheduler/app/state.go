@@ -113,7 +113,17 @@ func buildHTTPSched(cfg Config, creds credentials) calls.Caller {
 	cli := httpcli.New(
 		httpcli.Endpoint(cfg.url),
 		httpcli.Codec(cfg.codec.Codec),
-		httpcli.Do(httpcli.With(authConfigOpt, httpcli.Timeout(cfg.timeout))),
+		httpcli.Do(httpcli.With(
+			authConfigOpt,
+			httpcli.Timeout(cfg.timeout),
+			httpcli.Transport(func(t *http.Transport) {
+				// all calls should be ack'd by the server within this interval.
+				// TODO(jdef) it probably doesn't make sense if this value is larger
+				// than cfg.timeout.
+				t.ResponseHeaderTimeout = 15 * time.Second
+				t.MaxIdleConnsPerHost = 2 // don't depend on go's default
+			}),
+		)),
 	)
 	if cfg.compression {
 		// TODO(jdef) experimental; currently released versions of Mesos will accept this

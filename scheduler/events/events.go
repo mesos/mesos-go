@@ -26,6 +26,13 @@ type (
 	// Option is a functional configuration option that returns an "undo" option that
 	// reverts the change made by the option.
 	Option func(*Mux) Option
+
+	// Handlers aggregates Handler things
+	Handlers []Handler
+
+	Happens interface {
+		Happens() scheduler.EventPredicate
+	}
 )
 
 // HandleEvent implements Handler for HandlerFunc
@@ -146,4 +153,42 @@ func AcknowledgeUpdates(callerGetter func() calls.Caller) Handler {
 		}
 		return
 	})
+}
+
+func Once(h Handler) Handler {
+	called := false
+	return HandlerFunc(func(e *scheduler.Event) (err error) {
+		if !called {
+			called = true
+			err = h.HandleEvent(e)
+		}
+		return
+	})
+}
+
+func OnceFunc(h HandlerFunc) Handler { return Once(h) }
+
+func When(p Happens, h Handler) Handler {
+	return HandlerFunc(func(e *scheduler.Event) (err error) {
+		if p.Happens().Apply(e) {
+			err = h.HandleEvent(e)
+		}
+		return
+	})
+}
+
+func WhenFunc(p Happens, h HandlerFunc) Handler { return When(p, h) }
+
+var _ = Handler(Handlers{}) // Handlers implements Handler
+
+// HandleEvent implements Handler for Handlers
+func (hs Handlers) HandleEvent(e *scheduler.Event) (err error) {
+	for _, h := range hs {
+		if h != nil {
+			if err = h.HandleEvent(e); err != nil {
+				break
+			}
+		}
+	}
+	return err
 }

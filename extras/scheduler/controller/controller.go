@@ -50,6 +50,11 @@ type (
 		// The returned chan should either be non-blocking (nil/closed), or should yield a struct{} in
 		// order to allow the framework registration process to continue. May be nil.
 		RegistrationTokens <-chan struct{}
+
+		// MissedHeartbeatsThreshold determines when do abort an ongoing subscription after missing this
+		// number of subsequent heartbeat events from Mesos master. If unspecified it defaults to the value
+		// of DefaultMissedHeartbeatsThreshold.
+		MissedHeartbeatsThreshold int
 	}
 
 	Controller interface {
@@ -63,6 +68,9 @@ type (
 	controllerImpl int
 )
 
+// DefaultMissedHeartbeatsThreshold is the default value for config.MissedHeartbeatsThreshold.
+var DefaultMissedHeartbeatsThreshold = 5
+
 // Run implements Controller for ControllerFunc
 func (cf ControllerFunc) Run(config Config) error { return cf(config) }
 
@@ -73,7 +81,7 @@ func New() Controller {
 // Run executes a control loop that registers a framework with Mesos and processes the scheduler events
 // that flow through the subscription. Upon disconnection, if the given Context reports !Done() then the
 // controller will attempt to re-register the framework and continue processing events.
-func (_ *controllerImpl) Run(config Config) (lastErr error) {
+func (ci *controllerImpl) Run(config Config) (lastErr error) {
 	subscribe := calls.Subscribe(true, config.Framework)
 	for !config.Context.Done() {
 		frameworkID := config.Context.FrameworkID()
@@ -82,13 +90,13 @@ func (_ *controllerImpl) Run(config Config) (lastErr error) {
 		}
 		<-config.RegistrationTokens
 		resp, err := config.Caller.Call(subscribe)
-		lastErr = processSubscription(config, resp, err)
+		lastErr = ci.processSubscription(config, resp, err)
 		config.Context.Error(lastErr)
 	}
 	return
 }
 
-func processSubscription(config Config, resp mesos.Response, err error) error {
+func (ci *controllerImpl) processSubscription(config Config, resp mesos.Response, err error) error {
 	if resp != nil {
 		defer resp.Close()
 	}
@@ -98,17 +106,59 @@ func processSubscription(config Config, resp mesos.Response, err error) error {
 	return err
 }
 
-// eventLoop returns the framework ID received by mesos (if any); callers should check for a
-// framework ID regardless of whether error != nil.
+type monitorContext struct {
+	errCh chan error
+	done  chan struct{}
+}
+
+// Errors implements MonitorContext for monitorContext
+func (ctx *monitorContext) Errors() chan<- error { return ctx.errCh }
+
+// Done implements MonitorContext for monitorContext
+func (ctx *monitorContext) Done() <-chan struct{} { return ctx.done }
+
 func eventLoop(config Config, eventDecoder encoding.Decoder) (err error) {
 	h := config.Handler
 	if h == nil {
 		h = events.HandlerFunc(DefaultHandler)
 	}
+	var (
+		eventCh = make(chan *scheduler.Event)
+		ctx     = &monitorContext{make(chan error, 2), make(chan struct{})}
+	)
+	defer close(ctx.done)
+
+	hbt := config.MissedHeartbeatsThreshold
+	if hbt < 1 {
+		hbt = DefaultMissedHeartbeatsThreshold
+	}
+	// TODO(jdef) support hbt == -1 -> set hbt = 0 ? (tell heartbeat monitor to upon first missed heartbeat?)
+	h = HeartbeatMonitor(ctx, hbt).Apply(h)
+
+	go func() {
+		var handlerErr error
+		for handlerErr == nil && !config.Context.Done() {
+			var e scheduler.Event
+			if handlerErr = eventDecoder.Invoke(&e); handlerErr == nil {
+				select {
+				case eventCh <- &e:
+				case <-ctx.done:
+					return
+				}
+			} else {
+				select {
+				case ctx.errCh <- handlerErr:
+				case <-ctx.done:
+				}
+				return
+			}
+		}
+	}()
 	for err == nil && !config.Context.Done() {
-		var e scheduler.Event
-		if err = eventDecoder.Invoke(&e); err == nil {
-			err = h.HandleEvent(&e)
+		select {
+		case e := <-eventCh:
+			err = h.HandleEvent(e)
+		case err = <-ctx.errCh:
 		}
 	}
 	return err

@@ -195,10 +195,7 @@ func resourceOffers(state *internalState, offers []mesos.Offer) {
 
 		// build Accept call to launch all of the tasks we've assembled
 		accept := calls.Accept(
-			calls.OfferWithOperations(
-				offers[i].ID,
-				calls.OpLaunch(tasks...),
-			),
+			calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(offers[i].ID),
 		).With(callOption)
 
 		// send Accept call to mesos

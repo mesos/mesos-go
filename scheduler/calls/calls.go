@@ -56,14 +56,16 @@ type acceptBuilder struct {
 
 type AcceptOpt func(*acceptBuilder)
 
-type OperationBuilder func() mesos.Offer_Operation
+type OfferOperations []mesos.Offer_Operation
 
-func OfferWithOperations(oid mesos.OfferID, opOpts ...OperationBuilder) AcceptOpt {
+// WithOffers allows a client to pair some set of OfferOperations with multiple resource offers.
+// Example: calls.Accept(calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(offers...))
+func (ob OfferOperations) WithOffers(ids ...mesos.OfferID) AcceptOpt {
 	return func(ab *acceptBuilder) {
-		ab.offerIDs[oid] = struct{}{}
-		for _, op := range opOpts {
-			ab.operations = append(ab.operations, op())
+		for i := range ids {
+			ab.offerIDs[ids[i]] = struct{}{}
 		}
+		ab.operations = append(ab.operations, ob...)
 	}
 }
 
@@ -90,53 +92,48 @@ func Accept(ops ...AcceptOpt) *scheduler.Call {
 }
 
 // OpLaunch returns a launch operation builder for the given tasks
-func OpLaunch(ti ...mesos.TaskInfo) OperationBuilder {
-	return func() (op mesos.Offer_Operation) {
-		op.Type = mesos.LAUNCH.Enum()
-		op.Launch = &mesos.Offer_Operation_Launch{
+func OpLaunch(ti ...mesos.TaskInfo) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.LAUNCH.Enum(),
+		Launch: &mesos.Offer_Operation_Launch{
 			TaskInfos: ti,
-		}
-		return
+		},
 	}
 }
 
-func OpReserve(rs ...mesos.Resource) OperationBuilder {
-	return func() (op mesos.Offer_Operation) {
-		op.Type = mesos.RESERVE.Enum()
-		op.Reserve = &mesos.Offer_Operation_Reserve{
+func OpReserve(rs ...mesos.Resource) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.RESERVE.Enum(),
+		Reserve: &mesos.Offer_Operation_Reserve{
 			Resources: rs,
-		}
-		return
+		},
 	}
 }
 
-func OpUnreserve(rs ...mesos.Resource) OperationBuilder {
-	return func() (op mesos.Offer_Operation) {
-		op.Type = mesos.UNRESERVE.Enum()
-		op.Unreserve = &mesos.Offer_Operation_Unreserve{
+func OpUnreserve(rs ...mesos.Resource) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.UNRESERVE.Enum(),
+		Unreserve: &mesos.Offer_Operation_Unreserve{
 			Resources: rs,
-		}
-		return
+		},
 	}
 }
 
-func OpCreate(rs ...mesos.Resource) OperationBuilder {
-	return func() (op mesos.Offer_Operation) {
-		op.Type = mesos.CREATE.Enum()
-		op.Create = &mesos.Offer_Operation_Create{
+func OpCreate(rs ...mesos.Resource) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.CREATE.Enum(),
+		Create: &mesos.Offer_Operation_Create{
 			Volumes: rs,
-		}
-		return
+		},
 	}
 }
 
-func OpDestroy(rs ...mesos.Resource) OperationBuilder {
-	return func() (op mesos.Offer_Operation) {
-		op.Type = mesos.DESTROY.Enum()
-		op.Destroy = &mesos.Offer_Operation_Destroy{
+func OpDestroy(rs ...mesos.Resource) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.DESTROY.Enum(),
+		Destroy: &mesos.Offer_Operation_Destroy{
 			Volumes: rs,
-		}
-		return
+		},
 	}
 }
 

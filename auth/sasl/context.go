@@ -2,6 +2,7 @@ package sasl
 
 import (
 	"net"
+	"strconv"
 
 	"golang.org/x/net/context"
 )
@@ -15,6 +16,7 @@ type _key int
 const (
 	statusKey         _key = iota
 	bindingAddressKey      // bind address for login-related network ops
+	bindingPortKey         // port to bind auth listener if a specific port is needed
 )
 
 func withStatus(ctx context.Context, s statusType) context.Context {
@@ -40,4 +42,15 @@ func BindingAddressFrom(ctx context.Context) net.IP {
 	} else {
 		return nil
 	}
+}
+
+func WithBindingPort(ctx context.Context, port uint16) context.Context {
+	return context.WithValue(ctx, bindingPortKey, port)
+}
+
+func BindingPortFrom(ctx context.Context) string {
+	if port, ok := ctx.Value(bindingPortKey).(uint16); ok {
+		return strconv.Itoa(int(port))
+	}
+	return "0"
 }

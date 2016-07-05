@@ -76,11 +76,14 @@ func init() {
 			if parent == nil {
 				log.Fatal("expected to have a parent UPID in context")
 			}
+
 			process := process.New("sasl_authenticatee")
 			tpid := upid.UPID{
 				ID:   process.Label(),
 				Host: parent.Host,
+				Port: BindingPortFrom(ctx),
 			}
+
 			return messenger.NewHttpWithBindingAddress(tpid, BindingAddressFrom(ctx))
 		})
 	}

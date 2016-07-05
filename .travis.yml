@@ -6,7 +6,6 @@ go:
   - 1.5.1
   - tip
 before_install:
-  - go get golang.org/x/tools/cmd/vet
    #these two lines help users who fork mesos-go. It's a noop when running from the mesos organization
   - RepoName=`basename $PWD`; SrcDir=`dirname $PWD`; DestDir="`dirname $SrcDir`/mesos"
   - if [[ "$SrcDir" != "$DestDir" ]]; then mv "$SrcDir" "$DestDir"; cd ../../mesos/$RepoName; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$RepoName; fi

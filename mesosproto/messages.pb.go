@@ -7,8 +7,7 @@ package mesosproto
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
-
-// discarding unused import gogoproto "github.com/gogo/protobuf/gogoproto"
+import _ "github.com/gogo/protobuf/gogoproto"
 
 import bytes "bytes"
 
@@ -57,6 +56,9 @@ func (x *StatusUpdateRecord_Type) UnmarshalJSON(data []byte) error {
 	*x = StatusUpdateRecord_Type(value)
 	return nil
 }
+func (StatusUpdateRecord_Type) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{2, 0}
+}
 
 // *
 // Describes a task, similar to `TaskInfo`.
@@ -89,12 +91,15 @@ type Task struct {
 	// or acted upon by Mesos. It is up to a service discovery system
 	// to use this information as needed and to handle tasks without
 	// service discovery information.
-	Discovery        *DiscoveryInfo `protobuf:"bytes,12,opt,name=discovery" json:"discovery,omitempty"`
+	Discovery *DiscoveryInfo `protobuf:"bytes,12,opt,name=discovery" json:"discovery,omitempty"`
+	// Container information for the task.
+	Container        *ContainerInfo `protobuf:"bytes,13,opt,name=container" json:"container,omitempty"`
 	XXX_unrecognized []byte         `json:"-"`
 }
 
-func (m *Task) Reset()      { *m = Task{} }
-func (*Task) ProtoMessage() {}
+func (m *Task) Reset()                    { *m = Task{} }
+func (*Task) ProtoMessage()               {}
+func (*Task) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{0} }
 
 func (m *Task) GetName() string {
 	if m != nil && m.Name != nil {
@@ -180,6 +185,13 @@ func (m *Task) GetDiscovery() *DiscoveryInfo {
 	return nil
 }
 
+func (m *Task) GetContainer() *ContainerInfo {
+	if m != nil {
+		return m.Container
+	}
+	return nil
+}
+
 // *
 // Describes a task's status.
 //
@@ -207,8 +219,9 @@ type StatusUpdate struct {
 	XXX_unrecognized []byte     `json:"-"`
 }
 
-func (m *StatusUpdate) Reset()      { *m = StatusUpdate{} }
-func (*StatusUpdate) ProtoMessage() {}
+func (m *StatusUpdate) Reset()                    { *m = StatusUpdate{} }
+func (*StatusUpdate) ProtoMessage()               {}
+func (*StatusUpdate) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{1} }
 
 func (m *StatusUpdate) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -272,8 +285,9 @@ type StatusUpdateRecord struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *StatusUpdateRecord) Reset()      { *m = StatusUpdateRecord{} }
-func (*StatusUpdateRecord) ProtoMessage() {}
+func (m *StatusUpdateRecord) Reset()                    { *m = StatusUpdateRecord{} }
+func (*StatusUpdateRecord) ProtoMessage()               {}
+func (*StatusUpdateRecord) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{2} }
 
 func (m *StatusUpdateRecord) GetType() StatusUpdateRecord_Type {
 	if m != nil && m.Type != nil {
@@ -303,8 +317,9 @@ type SubmitSchedulerRequest struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *SubmitSchedulerRequest) Reset()      { *m = SubmitSchedulerRequest{} }
-func (*SubmitSchedulerRequest) ProtoMessage() {}
+func (m *SubmitSchedulerRequest) Reset()                    { *m = SubmitSchedulerRequest{} }
+func (*SubmitSchedulerRequest) ProtoMessage()               {}
+func (*SubmitSchedulerRequest) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{3} }
 
 func (m *SubmitSchedulerRequest) GetName() string {
 	if m != nil && m.Name != nil {
@@ -319,8 +334,9 @@ type SubmitSchedulerResponse struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *SubmitSchedulerResponse) Reset()      { *m = SubmitSchedulerResponse{} }
-func (*SubmitSchedulerResponse) ProtoMessage() {}
+func (m *SubmitSchedulerResponse) Reset()                    { *m = SubmitSchedulerResponse{} }
+func (*SubmitSchedulerResponse) ProtoMessage()               {}
+func (*SubmitSchedulerResponse) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{4} }
 
 func (m *SubmitSchedulerResponse) GetOkay() bool {
 	if m != nil && m.Okay != nil {
@@ -344,6 +360,9 @@ type ExecutorToFrameworkMessage struct {
 
 func (m *ExecutorToFrameworkMessage) Reset()      { *m = ExecutorToFrameworkMessage{} }
 func (*ExecutorToFrameworkMessage) ProtoMessage() {}
+func (*ExecutorToFrameworkMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{5}
+}
 
 func (m *ExecutorToFrameworkMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -388,6 +407,9 @@ type FrameworkToExecutorMessage struct {
 
 func (m *FrameworkToExecutorMessage) Reset()      { *m = FrameworkToExecutorMessage{} }
 func (*FrameworkToExecutorMessage) ProtoMessage() {}
+func (*FrameworkToExecutorMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{6}
+}
 
 func (m *FrameworkToExecutorMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -427,8 +449,9 @@ type RegisterFrameworkMessage struct {
 	XXX_unrecognized []byte         `json:"-"`
 }
 
-func (m *RegisterFrameworkMessage) Reset()      { *m = RegisterFrameworkMessage{} }
-func (*RegisterFrameworkMessage) ProtoMessage() {}
+func (m *RegisterFrameworkMessage) Reset()                    { *m = RegisterFrameworkMessage{} }
+func (*RegisterFrameworkMessage) ProtoMessage()               {}
+func (*RegisterFrameworkMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{7} }
 
 func (m *RegisterFrameworkMessage) GetFramework() *FrameworkInfo {
 	if m != nil {
@@ -452,6 +475,9 @@ type ReregisterFrameworkMessage struct {
 
 func (m *ReregisterFrameworkMessage) Reset()      { *m = ReregisterFrameworkMessage{} }
 func (*ReregisterFrameworkMessage) ProtoMessage() {}
+func (*ReregisterFrameworkMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{8}
+}
 
 func (m *ReregisterFrameworkMessage) GetFramework() *FrameworkInfo {
 	if m != nil {
@@ -480,6 +506,9 @@ type FrameworkRegisteredMessage struct {
 
 func (m *FrameworkRegisteredMessage) Reset()      { *m = FrameworkRegisteredMessage{} }
 func (*FrameworkRegisteredMessage) ProtoMessage() {}
+func (*FrameworkRegisteredMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{9}
+}
 
 func (m *FrameworkRegisteredMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -508,6 +537,9 @@ type FrameworkReregisteredMessage struct {
 
 func (m *FrameworkReregisteredMessage) Reset()      { *m = FrameworkReregisteredMessage{} }
 func (*FrameworkReregisteredMessage) ProtoMessage() {}
+func (*FrameworkReregisteredMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{10}
+}
 
 func (m *FrameworkReregisteredMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -535,6 +567,9 @@ type UnregisterFrameworkMessage struct {
 
 func (m *UnregisterFrameworkMessage) Reset()      { *m = UnregisterFrameworkMessage{} }
 func (*UnregisterFrameworkMessage) ProtoMessage() {}
+func (*UnregisterFrameworkMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{11}
+}
 
 func (m *UnregisterFrameworkMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -554,6 +589,9 @@ type DeactivateFrameworkMessage struct {
 
 func (m *DeactivateFrameworkMessage) Reset()      { *m = DeactivateFrameworkMessage{} }
 func (*DeactivateFrameworkMessage) ProtoMessage() {}
+func (*DeactivateFrameworkMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{12}
+}
 
 func (m *DeactivateFrameworkMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -575,8 +613,9 @@ type ResourceRequestMessage struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *ResourceRequestMessage) Reset()      { *m = ResourceRequestMessage{} }
-func (*ResourceRequestMessage) ProtoMessage() {}
+func (m *ResourceRequestMessage) Reset()                    { *m = ResourceRequestMessage{} }
+func (*ResourceRequestMessage) ProtoMessage()               {}
+func (*ResourceRequestMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{13} }
 
 func (m *ResourceRequestMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -609,8 +648,9 @@ type ResourceOffersMessage struct {
 	XXX_unrecognized []byte          `json:"-"`
 }
 
-func (m *ResourceOffersMessage) Reset()      { *m = ResourceOffersMessage{} }
-func (*ResourceOffersMessage) ProtoMessage() {}
+func (m *ResourceOffersMessage) Reset()                    { *m = ResourceOffersMessage{} }
+func (*ResourceOffersMessage) ProtoMessage()               {}
+func (*ResourceOffersMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{14} }
 
 func (m *ResourceOffersMessage) GetOffers() []*Offer {
 	if m != nil {
@@ -646,8 +686,9 @@ type LaunchTasksMessage struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *LaunchTasksMessage) Reset()      { *m = LaunchTasksMessage{} }
-func (*LaunchTasksMessage) ProtoMessage() {}
+func (m *LaunchTasksMessage) Reset()                    { *m = LaunchTasksMessage{} }
+func (*LaunchTasksMessage) ProtoMessage()               {}
+func (*LaunchTasksMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{15} }
 
 func (m *LaunchTasksMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -688,6 +729,9 @@ type RescindResourceOfferMessage struct {
 
 func (m *RescindResourceOfferMessage) Reset()      { *m = RescindResourceOfferMessage{} }
 func (*RescindResourceOfferMessage) ProtoMessage() {}
+func (*RescindResourceOfferMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{16}
+}
 
 func (m *RescindResourceOfferMessage) GetOfferId() *OfferID {
 	if m != nil {
@@ -706,8 +750,9 @@ type ReviveOffersMessage struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *ReviveOffersMessage) Reset()      { *m = ReviveOffersMessage{} }
-func (*ReviveOffersMessage) ProtoMessage() {}
+func (m *ReviveOffersMessage) Reset()                    { *m = ReviveOffersMessage{} }
+func (*ReviveOffersMessage) ProtoMessage()               {}
+func (*ReviveOffersMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{17} }
 
 func (m *ReviveOffersMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -738,8 +783,9 @@ type RunTaskMessage struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *RunTaskMessage) Reset()      { *m = RunTaskMessage{} }
-func (*RunTaskMessage) ProtoMessage() {}
+func (m *RunTaskMessage) Reset()                    { *m = RunTaskMessage{} }
+func (*RunTaskMessage) ProtoMessage()               {}
+func (*RunTaskMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{18} }
 
 func (m *RunTaskMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -781,8 +827,9 @@ type KillTaskMessage struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *KillTaskMessage) Reset()      { *m = KillTaskMessage{} }
-func (*KillTaskMessage) ProtoMessage() {}
+func (m *KillTaskMessage) Reset()                    { *m = KillTaskMessage{} }
+func (*KillTaskMessage) ProtoMessage()               {}
+func (*KillTaskMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{19} }
 
 func (m *KillTaskMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -811,8 +858,9 @@ type StatusUpdateMessage struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *StatusUpdateMessage) Reset()      { *m = StatusUpdateMessage{} }
-func (*StatusUpdateMessage) ProtoMessage() {}
+func (m *StatusUpdateMessage) Reset()                    { *m = StatusUpdateMessage{} }
+func (*StatusUpdateMessage) ProtoMessage()               {}
+func (*StatusUpdateMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{20} }
 
 func (m *StatusUpdateMessage) GetUpdate() *StatusUpdate {
 	if m != nil {
@@ -843,6 +891,9 @@ type StatusUpdateAcknowledgementMessage struct {
 
 func (m *StatusUpdateAcknowledgementMessage) Reset()      { *m = StatusUpdateAcknowledgementMessage{} }
 func (*StatusUpdateAcknowledgementMessage) ProtoMessage() {}
+func (*StatusUpdateAcknowledgementMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{21}
+}
 
 func (m *StatusUpdateAcknowledgementMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -881,8 +932,9 @@ type LostSlaveMessage struct {
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *LostSlaveMessage) Reset()      { *m = LostSlaveMessage{} }
-func (*LostSlaveMessage) ProtoMessage() {}
+func (m *LostSlaveMessage) Reset()                    { *m = LostSlaveMessage{} }
+func (*LostSlaveMessage) ProtoMessage()               {}
+func (*LostSlaveMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{22} }
 
 func (m *LostSlaveMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -904,8 +956,9 @@ type ReconcileTasksMessage struct {
 	XXX_unrecognized []byte        `json:"-"`
 }
 
-func (m *ReconcileTasksMessage) Reset()      { *m = ReconcileTasksMessage{} }
-func (*ReconcileTasksMessage) ProtoMessage() {}
+func (m *ReconcileTasksMessage) Reset()                    { *m = ReconcileTasksMessage{} }
+func (*ReconcileTasksMessage) ProtoMessage()               {}
+func (*ReconcileTasksMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{23} }
 
 func (m *ReconcileTasksMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -930,8 +983,9 @@ type FrameworkErrorMessage struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *FrameworkErrorMessage) Reset()      { *m = FrameworkErrorMessage{} }
-func (*FrameworkErrorMessage) ProtoMessage() {}
+func (m *FrameworkErrorMessage) Reset()                    { *m = FrameworkErrorMessage{} }
+func (*FrameworkErrorMessage) ProtoMessage()               {}
+func (*FrameworkErrorMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{24} }
 
 func (m *FrameworkErrorMessage) GetMessage() string {
 	if m != nil && m.Message != nil {
@@ -958,8 +1012,9 @@ type RegisterSlaveMessage struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *RegisterSlaveMessage) Reset()      { *m = RegisterSlaveMessage{} }
-func (*RegisterSlaveMessage) ProtoMessage() {}
+func (m *RegisterSlaveMessage) Reset()                    { *m = RegisterSlaveMessage{} }
+func (*RegisterSlaveMessage) ProtoMessage()               {}
+func (*RegisterSlaveMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{25} }
 
 func (m *RegisterSlaveMessage) GetSlave() *SlaveInfo {
 	if m != nil {
@@ -1005,8 +1060,9 @@ type ReregisterSlaveMessage struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *ReregisterSlaveMessage) Reset()      { *m = ReregisterSlaveMessage{} }
-func (*ReregisterSlaveMessage) ProtoMessage() {}
+func (m *ReregisterSlaveMessage) Reset()                    { *m = ReregisterSlaveMessage{} }
+func (*ReregisterSlaveMessage) ProtoMessage()               {}
+func (*ReregisterSlaveMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{26} }
 
 func (m *ReregisterSlaveMessage) GetSlave() *SlaveInfo {
 	if m != nil {
@@ -1059,8 +1115,9 @@ type SlaveRegisteredMessage struct {
 	XXX_unrecognized []byte                 `json:"-"`
 }
 
-func (m *SlaveRegisteredMessage) Reset()      { *m = SlaveRegisteredMessage{} }
-func (*SlaveRegisteredMessage) ProtoMessage() {}
+func (m *SlaveRegisteredMessage) Reset()                    { *m = SlaveRegisteredMessage{} }
+func (*SlaveRegisteredMessage) ProtoMessage()               {}
+func (*SlaveRegisteredMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{27} }
 
 func (m *SlaveRegisteredMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -1091,6 +1148,9 @@ type SlaveReregisteredMessage struct {
 
 func (m *SlaveReregisteredMessage) Reset()      { *m = SlaveReregisteredMessage{} }
 func (*SlaveReregisteredMessage) ProtoMessage() {}
+func (*SlaveReregisteredMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{28}
+}
 
 func (m *SlaveReregisteredMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -1121,8 +1181,9 @@ type UnregisterSlaveMessage struct {
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *UnregisterSlaveMessage) Reset()      { *m = UnregisterSlaveMessage{} }
-func (*UnregisterSlaveMessage) ProtoMessage() {}
+func (m *UnregisterSlaveMessage) Reset()                    { *m = UnregisterSlaveMessage{} }
+func (*UnregisterSlaveMessage) ProtoMessage()               {}
+func (*UnregisterSlaveMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{29} }
 
 func (m *UnregisterSlaveMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -1141,8 +1202,9 @@ type MasterSlaveConnection struct {
 	XXX_unrecognized        []byte   `json:"-"`
 }
 
-func (m *MasterSlaveConnection) Reset()      { *m = MasterSlaveConnection{} }
-func (*MasterSlaveConnection) ProtoMessage() {}
+func (m *MasterSlaveConnection) Reset()                    { *m = MasterSlaveConnection{} }
+func (*MasterSlaveConnection) ProtoMessage()               {}
+func (*MasterSlaveConnection) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{30} }
 
 func (m *MasterSlaveConnection) GetTotalPingTimeoutSeconds() float64 {
 	if m != nil && m.TotalPingTimeoutSeconds != nil {
@@ -1159,8 +1221,9 @@ type PingSlaveMessage struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *PingSlaveMessage) Reset()      { *m = PingSlaveMessage{} }
-func (*PingSlaveMessage) ProtoMessage() {}
+func (m *PingSlaveMessage) Reset()                    { *m = PingSlaveMessage{} }
+func (*PingSlaveMessage) ProtoMessage()               {}
+func (*PingSlaveMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{31} }
 
 func (m *PingSlaveMessage) GetConnected() bool {
 	if m != nil && m.Connected != nil {
@@ -1176,8 +1239,9 @@ type PongSlaveMessage struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *PongSlaveMessage) Reset()      { *m = PongSlaveMessage{} }
-func (*PongSlaveMessage) ProtoMessage() {}
+func (m *PongSlaveMessage) Reset()                    { *m = PongSlaveMessage{} }
+func (*PongSlaveMessage) ProtoMessage()               {}
+func (*PongSlaveMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{32} }
 
 // *
 // Tells an agent to shut down all executors of the given framework.
@@ -1188,6 +1252,9 @@ type ShutdownFrameworkMessage struct {
 
 func (m *ShutdownFrameworkMessage) Reset()      { *m = ShutdownFrameworkMessage{} }
 func (*ShutdownFrameworkMessage) ProtoMessage() {}
+func (*ShutdownFrameworkMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{33}
+}
 
 func (m *ShutdownFrameworkMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -1207,8 +1274,9 @@ type ShutdownExecutorMessage struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *ShutdownExecutorMessage) Reset()      { *m = ShutdownExecutorMessage{} }
-func (*ShutdownExecutorMessage) ProtoMessage() {}
+func (m *ShutdownExecutorMessage) Reset()                    { *m = ShutdownExecutorMessage{} }
+func (*ShutdownExecutorMessage) ProtoMessage()               {}
+func (*ShutdownExecutorMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{34} }
 
 func (m *ShutdownExecutorMessage) GetExecutorId() *ExecutorID {
 	if m != nil {
@@ -1233,8 +1301,9 @@ type UpdateFrameworkMessage struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *UpdateFrameworkMessage) Reset()      { *m = UpdateFrameworkMessage{} }
-func (*UpdateFrameworkMessage) ProtoMessage() {}
+func (m *UpdateFrameworkMessage) Reset()                    { *m = UpdateFrameworkMessage{} }
+func (*UpdateFrameworkMessage) ProtoMessage()               {}
+func (*UpdateFrameworkMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{35} }
 
 func (m *UpdateFrameworkMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -1261,6 +1330,9 @@ type CheckpointResourcesMessage struct {
 
 func (m *CheckpointResourcesMessage) Reset()      { *m = CheckpointResourcesMessage{} }
 func (*CheckpointResourcesMessage) ProtoMessage() {}
+func (*CheckpointResourcesMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{36}
+}
 
 func (m *CheckpointResourcesMessage) GetResources() []*Resource {
 	if m != nil {
@@ -1279,8 +1351,9 @@ type UpdateSlaveMessage struct {
 	XXX_unrecognized        []byte      `json:"-"`
 }
 
-func (m *UpdateSlaveMessage) Reset()      { *m = UpdateSlaveMessage{} }
-func (*UpdateSlaveMessage) ProtoMessage() {}
+func (m *UpdateSlaveMessage) Reset()                    { *m = UpdateSlaveMessage{} }
+func (*UpdateSlaveMessage) ProtoMessage()               {}
+func (*UpdateSlaveMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{37} }
 
 func (m *UpdateSlaveMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -1306,8 +1379,9 @@ type RegisterExecutorMessage struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *RegisterExecutorMessage) Reset()      { *m = RegisterExecutorMessage{} }
-func (*RegisterExecutorMessage) ProtoMessage() {}
+func (m *RegisterExecutorMessage) Reset()                    { *m = RegisterExecutorMessage{} }
+func (*RegisterExecutorMessage) ProtoMessage()               {}
+func (*RegisterExecutorMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{38} }
 
 func (m *RegisterExecutorMessage) GetFrameworkId() *FrameworkID {
 	if m != nil {
@@ -1338,6 +1412,9 @@ type ExecutorRegisteredMessage struct {
 
 func (m *ExecutorRegisteredMessage) Reset()      { *m = ExecutorRegisteredMessage{} }
 func (*ExecutorRegisteredMessage) ProtoMessage() {}
+func (*ExecutorRegisteredMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{39}
+}
 
 func (m *ExecutorRegisteredMessage) GetExecutorInfo() *ExecutorInfo {
 	if m != nil {
@@ -1386,6 +1463,9 @@ type ExecutorReregisteredMessage struct {
 
 func (m *ExecutorReregisteredMessage) Reset()      { *m = ExecutorReregisteredMessage{} }
 func (*ExecutorReregisteredMessage) ProtoMessage() {}
+func (*ExecutorReregisteredMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{40}
+}
 
 func (m *ExecutorReregisteredMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -1413,8 +1493,9 @@ type ExitedExecutorMessage struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *ExitedExecutorMessage) Reset()      { *m = ExitedExecutorMessage{} }
-func (*ExitedExecutorMessage) ProtoMessage() {}
+func (m *ExitedExecutorMessage) Reset()                    { *m = ExitedExecutorMessage{} }
+func (*ExitedExecutorMessage) ProtoMessage()               {}
+func (*ExitedExecutorMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{41} }
 
 func (m *ExitedExecutorMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -1454,6 +1535,9 @@ type ReconnectExecutorMessage struct {
 
 func (m *ReconnectExecutorMessage) Reset()      { *m = ReconnectExecutorMessage{} }
 func (*ReconnectExecutorMessage) ProtoMessage() {}
+func (*ReconnectExecutorMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{42}
+}
 
 func (m *ReconnectExecutorMessage) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -1478,6 +1562,9 @@ type ReregisterExecutorMessage struct {
 
 func (m *ReregisterExecutorMessage) Reset()      { *m = ReregisterExecutorMessage{} }
 func (*ReregisterExecutorMessage) ProtoMessage() {}
+func (*ReregisterExecutorMessage) Descriptor() ([]byte, []int) {
+	return fileDescriptorMessages, []int{43}
+}
 
 func (m *ReregisterExecutorMessage) GetExecutorId() *ExecutorID {
 	if m != nil {
@@ -1516,8 +1603,9 @@ type ShutdownMessage struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *ShutdownMessage) Reset()      { *m = ShutdownMessage{} }
-func (*ShutdownMessage) ProtoMessage() {}
+func (m *ShutdownMessage) Reset()                    { *m = ShutdownMessage{} }
+func (*ShutdownMessage) ProtoMessage()               {}
+func (*ShutdownMessage) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{44} }
 
 func (m *ShutdownMessage) GetMessage() string {
 	if m != nil && m.Message != nil {
@@ -1533,8 +1621,9 @@ type Archive struct {
 	XXX_unrecognized []byte               `json:"-"`
 }
 
-func (m *Archive) Reset()      { *m = Archive{} }
-func (*Archive) ProtoMessage() {}
+func (m *Archive) Reset()                    { *m = Archive{} }
+func (*Archive) ProtoMessage()               {}
+func (*Archive) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{45} }
 
 func (m *Archive) GetFrameworks() []*Archive_Framework {
 	if m != nil {
@@ -1550,8 +1639,9 @@ type Archive_Framework struct {
 	XXX_unrecognized []byte         `json:"-"`
 }
 
-func (m *Archive_Framework) Reset()      { *m = Archive_Framework{} }
-func (*Archive_Framework) ProtoMessage() {}
+func (m *Archive_Framework) Reset()                    { *m = Archive_Framework{} }
+func (*Archive_Framework) ProtoMessage()               {}
+func (*Archive_Framework) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{45, 0} }
 
 func (m *Archive_Framework) GetFrameworkInfo() *FrameworkInfo {
 	if m != nil {
@@ -1592,8 +1682,9 @@ type TaskHealthStatus struct {
 	XXX_unrecognized    []byte `json:"-"`
 }
 
-func (m *TaskHealthStatus) Reset()      { *m = TaskHealthStatus{} }
-func (*TaskHealthStatus) ProtoMessage() {}
+func (m *TaskHealthStatus) Reset()                    { *m = TaskHealthStatus{} }
+func (*TaskHealthStatus) ProtoMessage()               {}
+func (*TaskHealthStatus) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{46} }
 
 const Default_TaskHealthStatus_KillTask bool = false
 
@@ -1632,8 +1723,9 @@ type HookExecuted struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *HookExecuted) Reset()      { *m = HookExecuted{} }
-func (*HookExecuted) ProtoMessage() {}
+func (m *HookExecuted) Reset()                    { *m = HookExecuted{} }
+func (*HookExecuted) ProtoMessage()               {}
+func (*HookExecuted) Descriptor() ([]byte, []int) { return fileDescriptorMessages, []int{47} }
 
 func (m *HookExecuted) GetModule() string {
 	if m != nil && m.Module != nil {
@@ -1643,6 +1735,55 @@ func (m *HookExecuted) GetModule() string {
 }
 
 func init() {
+	proto.RegisterType((*Task)(nil), "mesosproto.Task")
+	proto.RegisterType((*StatusUpdate)(nil), "mesosproto.StatusUpdate")
+	proto.RegisterType((*StatusUpdateRecord)(nil), "mesosproto.StatusUpdateRecord")
+	proto.RegisterType((*SubmitSchedulerRequest)(nil), "mesosproto.SubmitSchedulerRequest")
+	proto.RegisterType((*SubmitSchedulerResponse)(nil), "mesosproto.SubmitSchedulerResponse")
+	proto.RegisterType((*ExecutorToFrameworkMessage)(nil), "mesosproto.ExecutorToFrameworkMessage")
+	proto.RegisterType((*FrameworkToExecutorMessage)(nil), "mesosproto.FrameworkToExecutorMessage")
+	proto.RegisterType((*RegisterFrameworkMessage)(nil), "mesosproto.RegisterFrameworkMessage")
+	proto.RegisterType((*ReregisterFrameworkMessage)(nil), "mesosproto.ReregisterFrameworkMessage")
+	proto.RegisterType((*FrameworkRegisteredMessage)(nil), "mesosproto.FrameworkRegisteredMessage")
+	proto.RegisterType((*FrameworkReregisteredMessage)(nil), "mesosproto.FrameworkReregisteredMessage")
+	proto.RegisterType((*UnregisterFrameworkMessage)(nil), "mesosproto.UnregisterFrameworkMessage")
+	proto.RegisterType((*DeactivateFrameworkMessage)(nil), "mesosproto.DeactivateFrameworkMessage")
+	proto.RegisterType((*ResourceRequestMessage)(nil), "mesosproto.ResourceRequestMessage")
+	proto.RegisterType((*ResourceOffersMessage)(nil), "mesosproto.ResourceOffersMessage")
+	proto.RegisterType((*LaunchTasksMessage)(nil), "mesosproto.LaunchTasksMessage")
+	proto.RegisterType((*RescindResourceOfferMessage)(nil), "mesosproto.RescindResourceOfferMessage")
+	proto.RegisterType((*ReviveOffersMessage)(nil), "mesosproto.ReviveOffersMessage")
+	proto.RegisterType((*RunTaskMessage)(nil), "mesosproto.RunTaskMessage")
+	proto.RegisterType((*KillTaskMessage)(nil), "mesosproto.KillTaskMessage")
+	proto.RegisterType((*StatusUpdateMessage)(nil), "mesosproto.StatusUpdateMessage")
+	proto.RegisterType((*StatusUpdateAcknowledgementMessage)(nil), "mesosproto.StatusUpdateAcknowledgementMessage")
+	proto.RegisterType((*LostSlaveMessage)(nil), "mesosproto.LostSlaveMessage")
+	proto.RegisterType((*ReconcileTasksMessage)(nil), "mesosproto.ReconcileTasksMessage")
+	proto.RegisterType((*FrameworkErrorMessage)(nil), "mesosproto.FrameworkErrorMessage")
+	proto.RegisterType((*RegisterSlaveMessage)(nil), "mesosproto.RegisterSlaveMessage")
+	proto.RegisterType((*ReregisterSlaveMessage)(nil), "mesosproto.ReregisterSlaveMessage")
+	proto.RegisterType((*SlaveRegisteredMessage)(nil), "mesosproto.SlaveRegisteredMessage")
+	proto.RegisterType((*SlaveReregisteredMessage)(nil), "mesosproto.SlaveReregisteredMessage")
+	proto.RegisterType((*UnregisterSlaveMessage)(nil), "mesosproto.UnregisterSlaveMessage")
+	proto.RegisterType((*MasterSlaveConnection)(nil), "mesosproto.MasterSlaveConnection")
+	proto.RegisterType((*PingSlaveMessage)(nil), "mesosproto.PingSlaveMessage")
+	proto.RegisterType((*PongSlaveMessage)(nil), "mesosproto.PongSlaveMessage")
+	proto.RegisterType((*ShutdownFrameworkMessage)(nil), "mesosproto.ShutdownFrameworkMessage")
+	proto.RegisterType((*ShutdownExecutorMessage)(nil), "mesosproto.ShutdownExecutorMessage")
+	proto.RegisterType((*UpdateFrameworkMessage)(nil), "mesosproto.UpdateFrameworkMessage")
+	proto.RegisterType((*CheckpointResourcesMessage)(nil), "mesosproto.CheckpointResourcesMessage")
+	proto.RegisterType((*UpdateSlaveMessage)(nil), "mesosproto.UpdateSlaveMessage")
+	proto.RegisterType((*RegisterExecutorMessage)(nil), "mesosproto.RegisterExecutorMessage")
+	proto.RegisterType((*ExecutorRegisteredMessage)(nil), "mesosproto.ExecutorRegisteredMessage")
+	proto.RegisterType((*ExecutorReregisteredMessage)(nil), "mesosproto.ExecutorReregisteredMessage")
+	proto.RegisterType((*ExitedExecutorMessage)(nil), "mesosproto.ExitedExecutorMessage")
+	proto.RegisterType((*ReconnectExecutorMessage)(nil), "mesosproto.ReconnectExecutorMessage")
+	proto.RegisterType((*ReregisterExecutorMessage)(nil), "mesosproto.ReregisterExecutorMessage")
+	proto.RegisterType((*ShutdownMessage)(nil), "mesosproto.ShutdownMessage")
+	proto.RegisterType((*Archive)(nil), "mesosproto.Archive")
+	proto.RegisterType((*Archive_Framework)(nil), "mesosproto.Archive.Framework")
+	proto.RegisterType((*TaskHealthStatus)(nil), "mesosproto.TaskHealthStatus")
+	proto.RegisterType((*HookExecuted)(nil), "mesosproto.HookExecuted")
 	proto.RegisterEnum("mesosproto.StatusUpdateRecord_Type", StatusUpdateRecord_Type_name, StatusUpdateRecord_Type_value)
 }
 func (this *Task) VerboseEqual(that interface{}) error {
@@ -1655,7 +1796,12 @@ func (this *Task) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Task)
 	if !ok {
-		return fmt.Errorf("that is not of type *Task")
+		that2, ok := that.(Task)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Task")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -1663,7 +1809,7 @@ func (this *Task) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Task but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Taskbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Task but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -1729,6 +1875,9 @@ func (this *Task) VerboseEqual(that interface{}) error {
 	if !this.Discovery.Equal(that1.Discovery) {
 		return fmt.Errorf("Discovery this(%v) Not Equal that(%v)", this.Discovery, that1.Discovery)
 	}
+	if !this.Container.Equal(that1.Container) {
+		return fmt.Errorf("Container this(%v) Not Equal that(%v)", this.Container, that1.Container)
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
 	}
@@ -1744,7 +1893,12 @@ func (this *Task) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Task)
 	if !ok {
-		return false
+		that2, ok := that.(Task)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -1818,6 +1972,9 @@ func (this *Task) Equal(that interface{}) bool {
 	if !this.Discovery.Equal(that1.Discovery) {
 		return false
 	}
+	if !this.Container.Equal(that1.Container) {
+		return false
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
@@ -1833,7 +1990,12 @@ func (this *StatusUpdate) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*StatusUpdate)
 	if !ok {
-		return fmt.Errorf("that is not of type *StatusUpdate")
+		that2, ok := that.(StatusUpdate)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *StatusUpdate")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -1841,7 +2003,7 @@ func (this *StatusUpdate) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *StatusUpdate but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *StatusUpdatebut is not nil && this == nil")
+		return fmt.Errorf("that is type *StatusUpdate but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -1891,7 +2053,12 @@ func (this *StatusUpdate) Equal(that interface{}) bool {
 
 	that1, ok := that.(*StatusUpdate)
 	if !ok {
-		return false
+		that2, ok := that.(StatusUpdate)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -1949,7 +2116,12 @@ func (this *StatusUpdateRecord) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*StatusUpdateRecord)
 	if !ok {
-		return fmt.Errorf("that is not of type *StatusUpdateRecord")
+		that2, ok := that.(StatusUpdateRecord)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *StatusUpdateRecord")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -1957,7 +2129,7 @@ func (this *StatusUpdateRecord) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *StatusUpdateRecord but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *StatusUpdateRecordbut is not nil && this == nil")
+		return fmt.Errorf("that is type *StatusUpdateRecord but is not nil && this == nil")
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
@@ -1989,7 +2161,12 @@ func (this *StatusUpdateRecord) Equal(that interface{}) bool {
 
 	that1, ok := that.(*StatusUpdateRecord)
 	if !ok {
-		return false
+		that2, ok := that.(StatusUpdateRecord)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2029,7 +2206,12 @@ func (this *SubmitSchedulerRequest) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*SubmitSchedulerRequest)
 	if !ok {
-		return fmt.Errorf("that is not of type *SubmitSchedulerRequest")
+		that2, ok := that.(SubmitSchedulerRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *SubmitSchedulerRequest")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2037,7 +2219,7 @@ func (this *SubmitSchedulerRequest) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *SubmitSchedulerRequest but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *SubmitSchedulerRequestbut is not nil && this == nil")
+		return fmt.Errorf("that is type *SubmitSchedulerRequest but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -2063,7 +2245,12 @@ func (this *SubmitSchedulerRequest) Equal(that interface{}) bool {
 
 	that1, ok := that.(*SubmitSchedulerRequest)
 	if !ok {
-		return false
+		that2, ok := that.(SubmitSchedulerRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2097,7 +2284,12 @@ func (this *SubmitSchedulerResponse) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*SubmitSchedulerResponse)
 	if !ok {
-		return fmt.Errorf("that is not of type *SubmitSchedulerResponse")
+		that2, ok := that.(SubmitSchedulerResponse)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *SubmitSchedulerResponse")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2105,7 +2297,7 @@ func (this *SubmitSchedulerResponse) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *SubmitSchedulerResponse but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *SubmitSchedulerResponsebut is not nil && this == nil")
+		return fmt.Errorf("that is type *SubmitSchedulerResponse but is not nil && this == nil")
 	}
 	if this.Okay != nil && that1.Okay != nil {
 		if *this.Okay != *that1.Okay {
@@ -2131,7 +2323,12 @@ func (this *SubmitSchedulerResponse) Equal(that interface{}) bool {
 
 	that1, ok := that.(*SubmitSchedulerResponse)
 	if !ok {
-		return false
+		that2, ok := that.(SubmitSchedulerResponse)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2165,7 +2362,12 @@ func (this *ExecutorToFrameworkMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ExecutorToFrameworkMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ExecutorToFrameworkMessage")
+		that2, ok := that.(ExecutorToFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ExecutorToFrameworkMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2173,7 +2375,7 @@ func (this *ExecutorToFrameworkMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ExecutorToFrameworkMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ExecutorToFrameworkMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ExecutorToFrameworkMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -2202,7 +2404,12 @@ func (this *ExecutorToFrameworkMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ExecutorToFrameworkMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ExecutorToFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2239,7 +2446,12 @@ func (this *FrameworkToExecutorMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*FrameworkToExecutorMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *FrameworkToExecutorMessage")
+		that2, ok := that.(FrameworkToExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *FrameworkToExecutorMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2247,7 +2459,7 @@ func (this *FrameworkToExecutorMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *FrameworkToExecutorMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *FrameworkToExecutorMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *FrameworkToExecutorMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -2276,7 +2488,12 @@ func (this *FrameworkToExecutorMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*FrameworkToExecutorMessage)
 	if !ok {
-		return false
+		that2, ok := that.(FrameworkToExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2313,7 +2530,12 @@ func (this *RegisterFrameworkMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*RegisterFrameworkMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *RegisterFrameworkMessage")
+		that2, ok := that.(RegisterFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *RegisterFrameworkMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2321,7 +2543,7 @@ func (this *RegisterFrameworkMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *RegisterFrameworkMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *RegisterFrameworkMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *RegisterFrameworkMessage but is not nil && this == nil")
 	}
 	if !this.Framework.Equal(that1.Framework) {
 		return fmt.Errorf("Framework this(%v) Not Equal that(%v)", this.Framework, that1.Framework)
@@ -2341,7 +2563,12 @@ func (this *RegisterFrameworkMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*RegisterFrameworkMessage)
 	if !ok {
-		return false
+		that2, ok := that.(RegisterFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2369,7 +2596,12 @@ func (this *ReregisterFrameworkMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ReregisterFrameworkMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ReregisterFrameworkMessage")
+		that2, ok := that.(ReregisterFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ReregisterFrameworkMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2377,7 +2609,7 @@ func (this *ReregisterFrameworkMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ReregisterFrameworkMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ReregisterFrameworkMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ReregisterFrameworkMessage but is not nil && this == nil")
 	}
 	if !this.Framework.Equal(that1.Framework) {
 		return fmt.Errorf("Framework this(%v) Not Equal that(%v)", this.Framework, that1.Framework)
@@ -2406,7 +2638,12 @@ func (this *ReregisterFrameworkMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ReregisterFrameworkMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ReregisterFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2443,7 +2680,12 @@ func (this *FrameworkRegisteredMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*FrameworkRegisteredMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *FrameworkRegisteredMessage")
+		that2, ok := that.(FrameworkRegisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *FrameworkRegisteredMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2451,7 +2693,7 @@ func (this *FrameworkRegisteredMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *FrameworkRegisteredMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *FrameworkRegisteredMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *FrameworkRegisteredMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -2474,7 +2716,12 @@ func (this *FrameworkRegisteredMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*FrameworkRegisteredMessage)
 	if !ok {
-		return false
+		that2, ok := that.(FrameworkRegisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2505,7 +2752,12 @@ func (this *FrameworkReregisteredMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*FrameworkReregisteredMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *FrameworkReregisteredMessage")
+		that2, ok := that.(FrameworkReregisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *FrameworkReregisteredMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2513,7 +2765,7 @@ func (this *FrameworkReregisteredMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *FrameworkReregisteredMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *FrameworkReregisteredMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *FrameworkReregisteredMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -2536,7 +2788,12 @@ func (this *FrameworkReregisteredMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*FrameworkReregisteredMessage)
 	if !ok {
-		return false
+		that2, ok := that.(FrameworkReregisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2567,7 +2824,12 @@ func (this *UnregisterFrameworkMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*UnregisterFrameworkMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *UnregisterFrameworkMessage")
+		that2, ok := that.(UnregisterFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *UnregisterFrameworkMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2575,7 +2837,7 @@ func (this *UnregisterFrameworkMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *UnregisterFrameworkMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *UnregisterFrameworkMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *UnregisterFrameworkMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -2595,7 +2857,12 @@ func (this *UnregisterFrameworkMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*UnregisterFrameworkMessage)
 	if !ok {
-		return false
+		that2, ok := that.(UnregisterFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2623,7 +2890,12 @@ func (this *DeactivateFrameworkMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*DeactivateFrameworkMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *DeactivateFrameworkMessage")
+		that2, ok := that.(DeactivateFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *DeactivateFrameworkMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2631,7 +2903,7 @@ func (this *DeactivateFrameworkMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *DeactivateFrameworkMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *DeactivateFrameworkMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *DeactivateFrameworkMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -2651,7 +2923,12 @@ func (this *DeactivateFrameworkMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*DeactivateFrameworkMessage)
 	if !ok {
-		return false
+		that2, ok := that.(DeactivateFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2679,7 +2956,12 @@ func (this *ResourceRequestMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ResourceRequestMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ResourceRequestMessage")
+		that2, ok := that.(ResourceRequestMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ResourceRequestMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2687,7 +2969,7 @@ func (this *ResourceRequestMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ResourceRequestMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ResourceRequestMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ResourceRequestMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -2715,7 +2997,12 @@ func (this *ResourceRequestMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ResourceRequestMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ResourceRequestMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2751,7 +3038,12 @@ func (this *ResourceOffersMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ResourceOffersMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ResourceOffersMessage")
+		that2, ok := that.(ResourceOffersMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ResourceOffersMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2759,7 +3051,7 @@ func (this *ResourceOffersMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ResourceOffersMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ResourceOffersMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ResourceOffersMessage but is not nil && this == nil")
 	}
 	if len(this.Offers) != len(that1.Offers) {
 		return fmt.Errorf("Offers this(%v) Not Equal that(%v)", len(this.Offers), len(that1.Offers))
@@ -2800,7 +3092,12 @@ func (this *ResourceOffersMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ResourceOffersMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ResourceOffersMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2849,7 +3146,12 @@ func (this *LaunchTasksMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*LaunchTasksMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *LaunchTasksMessage")
+		that2, ok := that.(LaunchTasksMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *LaunchTasksMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2857,7 +3159,7 @@ func (this *LaunchTasksMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *LaunchTasksMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *LaunchTasksMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *LaunchTasksMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -2896,7 +3198,12 @@ func (this *LaunchTasksMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*LaunchTasksMessage)
 	if !ok {
-		return false
+		that2, ok := that.(LaunchTasksMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2943,7 +3250,12 @@ func (this *RescindResourceOfferMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*RescindResourceOfferMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *RescindResourceOfferMessage")
+		that2, ok := that.(RescindResourceOfferMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *RescindResourceOfferMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2951,7 +3263,7 @@ func (this *RescindResourceOfferMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *RescindResourceOfferMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *RescindResourceOfferMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *RescindResourceOfferMessage but is not nil && this == nil")
 	}
 	if !this.OfferId.Equal(that1.OfferId) {
 		return fmt.Errorf("OfferId this(%v) Not Equal that(%v)", this.OfferId, that1.OfferId)
@@ -2971,7 +3283,12 @@ func (this *RescindResourceOfferMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*RescindResourceOfferMessage)
 	if !ok {
-		return false
+		that2, ok := that.(RescindResourceOfferMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -2999,7 +3316,12 @@ func (this *ReviveOffersMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ReviveOffersMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ReviveOffersMessage")
+		that2, ok := that.(ReviveOffersMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ReviveOffersMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3007,7 +3329,7 @@ func (this *ReviveOffersMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ReviveOffersMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ReviveOffersMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ReviveOffersMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -3027,7 +3349,12 @@ func (this *ReviveOffersMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ReviveOffersMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ReviveOffersMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3055,7 +3382,12 @@ func (this *RunTaskMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*RunTaskMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *RunTaskMessage")
+		that2, ok := that.(RunTaskMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *RunTaskMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3063,7 +3395,7 @@ func (this *RunTaskMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *RunTaskMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *RunTaskMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *RunTaskMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -3098,7 +3430,12 @@ func (this *RunTaskMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*RunTaskMessage)
 	if !ok {
-		return false
+		that2, ok := that.(RunTaskMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3141,7 +3478,12 @@ func (this *KillTaskMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*KillTaskMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *KillTaskMessage")
+		that2, ok := that.(KillTaskMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *KillTaskMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3149,7 +3491,7 @@ func (this *KillTaskMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *KillTaskMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *KillTaskMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *KillTaskMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -3172,7 +3514,12 @@ func (this *KillTaskMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*KillTaskMessage)
 	if !ok {
-		return false
+		that2, ok := that.(KillTaskMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3203,7 +3550,12 @@ func (this *StatusUpdateMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*StatusUpdateMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *StatusUpdateMessage")
+		that2, ok := that.(StatusUpdateMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *StatusUpdateMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3211,7 +3563,7 @@ func (this *StatusUpdateMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *StatusUpdateMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *StatusUpdateMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *StatusUpdateMessage but is not nil && this == nil")
 	}
 	if !this.Update.Equal(that1.Update) {
 		return fmt.Errorf("Update this(%v) Not Equal that(%v)", this.Update, that1.Update)
@@ -3240,7 +3592,12 @@ func (this *StatusUpdateMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*StatusUpdateMessage)
 	if !ok {
-		return false
+		that2, ok := that.(StatusUpdateMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3277,7 +3634,12 @@ func (this *StatusUpdateAcknowledgementMessage) VerboseEqual(that interface{}) e
 
 	that1, ok := that.(*StatusUpdateAcknowledgementMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *StatusUpdateAcknowledgementMessage")
+		that2, ok := that.(StatusUpdateAcknowledgementMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *StatusUpdateAcknowledgementMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3285,7 +3647,7 @@ func (this *StatusUpdateAcknowledgementMessage) VerboseEqual(that interface{}) e
 		}
 		return fmt.Errorf("that is type *StatusUpdateAcknowledgementMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *StatusUpdateAcknowledgementMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *StatusUpdateAcknowledgementMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -3314,7 +3676,12 @@ func (this *StatusUpdateAcknowledgementMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*StatusUpdateAcknowledgementMessage)
 	if !ok {
-		return false
+		that2, ok := that.(StatusUpdateAcknowledgementMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3351,7 +3718,12 @@ func (this *LostSlaveMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*LostSlaveMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *LostSlaveMessage")
+		that2, ok := that.(LostSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *LostSlaveMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3359,7 +3731,7 @@ func (this *LostSlaveMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *LostSlaveMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *LostSlaveMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *LostSlaveMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -3379,7 +3751,12 @@ func (this *LostSlaveMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*LostSlaveMessage)
 	if !ok {
-		return false
+		that2, ok := that.(LostSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3407,7 +3784,12 @@ func (this *ReconcileTasksMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ReconcileTasksMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ReconcileTasksMessage")
+		that2, ok := that.(ReconcileTasksMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ReconcileTasksMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3415,7 +3797,7 @@ func (this *ReconcileTasksMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ReconcileTasksMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ReconcileTasksMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ReconcileTasksMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -3443,7 +3825,12 @@ func (this *ReconcileTasksMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ReconcileTasksMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ReconcileTasksMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3479,7 +3866,12 @@ func (this *FrameworkErrorMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*FrameworkErrorMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *FrameworkErrorMessage")
+		that2, ok := that.(FrameworkErrorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *FrameworkErrorMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3487,7 +3879,7 @@ func (this *FrameworkErrorMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *FrameworkErrorMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *FrameworkErrorMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *FrameworkErrorMessage but is not nil && this == nil")
 	}
 	if this.Message != nil && that1.Message != nil {
 		if *this.Message != *that1.Message {
@@ -3513,7 +3905,12 @@ func (this *FrameworkErrorMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*FrameworkErrorMessage)
 	if !ok {
-		return false
+		that2, ok := that.(FrameworkErrorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3547,7 +3944,12 @@ func (this *RegisterSlaveMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*RegisterSlaveMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *RegisterSlaveMessage")
+		that2, ok := that.(RegisterSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *RegisterSlaveMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3555,7 +3957,7 @@ func (this *RegisterSlaveMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *RegisterSlaveMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *RegisterSlaveMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *RegisterSlaveMessage but is not nil && this == nil")
 	}
 	if !this.Slave.Equal(that1.Slave) {
 		return fmt.Errorf("Slave this(%v) Not Equal that(%v)", this.Slave, that1.Slave)
@@ -3592,7 +3994,12 @@ func (this *RegisterSlaveMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*RegisterSlaveMessage)
 	if !ok {
-		return false
+		that2, ok := that.(RegisterSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3637,7 +4044,12 @@ func (this *ReregisterSlaveMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ReregisterSlaveMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ReregisterSlaveMessage")
+		that2, ok := that.(ReregisterSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ReregisterSlaveMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3645,7 +4057,7 @@ func (this *ReregisterSlaveMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ReregisterSlaveMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ReregisterSlaveMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ReregisterSlaveMessage but is not nil && this == nil")
 	}
 	if !this.Slave.Equal(that1.Slave) {
 		return fmt.Errorf("Slave this(%v) Not Equal that(%v)", this.Slave, that1.Slave)
@@ -3706,7 +4118,12 @@ func (this *ReregisterSlaveMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ReregisterSlaveMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ReregisterSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3775,7 +4192,12 @@ func (this *SlaveRegisteredMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*SlaveRegisteredMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *SlaveRegisteredMessage")
+		that2, ok := that.(SlaveRegisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *SlaveRegisteredMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3783,7 +4205,7 @@ func (this *SlaveRegisteredMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *SlaveRegisteredMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *SlaveRegisteredMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *SlaveRegisteredMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -3806,7 +4228,12 @@ func (this *SlaveRegisteredMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*SlaveRegisteredMessage)
 	if !ok {
-		return false
+		that2, ok := that.(SlaveRegisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3837,7 +4264,12 @@ func (this *SlaveReregisteredMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*SlaveReregisteredMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *SlaveReregisteredMessage")
+		that2, ok := that.(SlaveReregisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *SlaveReregisteredMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3845,7 +4277,7 @@ func (this *SlaveReregisteredMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *SlaveReregisteredMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *SlaveReregisteredMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *SlaveReregisteredMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -3876,7 +4308,12 @@ func (this *SlaveReregisteredMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*SlaveReregisteredMessage)
 	if !ok {
-		return false
+		that2, ok := that.(SlaveReregisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3915,7 +4352,12 @@ func (this *UnregisterSlaveMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*UnregisterSlaveMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *UnregisterSlaveMessage")
+		that2, ok := that.(UnregisterSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *UnregisterSlaveMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3923,7 +4365,7 @@ func (this *UnregisterSlaveMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *UnregisterSlaveMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *UnregisterSlaveMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *UnregisterSlaveMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -3943,7 +4385,12 @@ func (this *UnregisterSlaveMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*UnregisterSlaveMessage)
 	if !ok {
-		return false
+		that2, ok := that.(UnregisterSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3971,7 +4418,12 @@ func (this *MasterSlaveConnection) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*MasterSlaveConnection)
 	if !ok {
-		return fmt.Errorf("that is not of type *MasterSlaveConnection")
+		that2, ok := that.(MasterSlaveConnection)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *MasterSlaveConnection")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -3979,7 +4431,7 @@ func (this *MasterSlaveConnection) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *MasterSlaveConnection but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *MasterSlaveConnectionbut is not nil && this == nil")
+		return fmt.Errorf("that is type *MasterSlaveConnection but is not nil && this == nil")
 	}
 	if this.TotalPingTimeoutSeconds != nil && that1.TotalPingTimeoutSeconds != nil {
 		if *this.TotalPingTimeoutSeconds != *that1.TotalPingTimeoutSeconds {
@@ -4005,7 +4457,12 @@ func (this *MasterSlaveConnection) Equal(that interface{}) bool {
 
 	that1, ok := that.(*MasterSlaveConnection)
 	if !ok {
-		return false
+		that2, ok := that.(MasterSlaveConnection)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4039,7 +4496,12 @@ func (this *PingSlaveMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*PingSlaveMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *PingSlaveMessage")
+		that2, ok := that.(PingSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *PingSlaveMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4047,7 +4509,7 @@ func (this *PingSlaveMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *PingSlaveMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *PingSlaveMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *PingSlaveMessage but is not nil && this == nil")
 	}
 	if this.Connected != nil && that1.Connected != nil {
 		if *this.Connected != *that1.Connected {
@@ -4073,7 +4535,12 @@ func (this *PingSlaveMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*PingSlaveMessage)
 	if !ok {
-		return false
+		that2, ok := that.(PingSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4107,7 +4574,12 @@ func (this *PongSlaveMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*PongSlaveMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *PongSlaveMessage")
+		that2, ok := that.(PongSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *PongSlaveMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4115,7 +4587,7 @@ func (this *PongSlaveMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *PongSlaveMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *PongSlaveMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *PongSlaveMessage but is not nil && this == nil")
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
@@ -4132,7 +4604,12 @@ func (this *PongSlaveMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*PongSlaveMessage)
 	if !ok {
-		return false
+		that2, ok := that.(PongSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4157,7 +4634,12 @@ func (this *ShutdownFrameworkMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ShutdownFrameworkMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ShutdownFrameworkMessage")
+		that2, ok := that.(ShutdownFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ShutdownFrameworkMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4165,7 +4647,7 @@ func (this *ShutdownFrameworkMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ShutdownFrameworkMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ShutdownFrameworkMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ShutdownFrameworkMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -4185,7 +4667,12 @@ func (this *ShutdownFrameworkMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ShutdownFrameworkMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ShutdownFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4213,7 +4700,12 @@ func (this *ShutdownExecutorMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ShutdownExecutorMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ShutdownExecutorMessage")
+		that2, ok := that.(ShutdownExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ShutdownExecutorMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4221,7 +4713,7 @@ func (this *ShutdownExecutorMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ShutdownExecutorMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ShutdownExecutorMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ShutdownExecutorMessage but is not nil && this == nil")
 	}
 	if !this.ExecutorId.Equal(that1.ExecutorId) {
 		return fmt.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
@@ -4244,7 +4736,12 @@ func (this *ShutdownExecutorMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ShutdownExecutorMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ShutdownExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4275,7 +4772,12 @@ func (this *UpdateFrameworkMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*UpdateFrameworkMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *UpdateFrameworkMessage")
+		that2, ok := that.(UpdateFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *UpdateFrameworkMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4283,7 +4785,7 @@ func (this *UpdateFrameworkMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *UpdateFrameworkMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *UpdateFrameworkMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *UpdateFrameworkMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -4312,7 +4814,12 @@ func (this *UpdateFrameworkMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*UpdateFrameworkMessage)
 	if !ok {
-		return false
+		that2, ok := that.(UpdateFrameworkMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4349,7 +4856,12 @@ func (this *CheckpointResourcesMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*CheckpointResourcesMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *CheckpointResourcesMessage")
+		that2, ok := that.(CheckpointResourcesMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *CheckpointResourcesMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4357,7 +4869,7 @@ func (this *CheckpointResourcesMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *CheckpointResourcesMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *CheckpointResourcesMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *CheckpointResourcesMessage but is not nil && this == nil")
 	}
 	if len(this.Resources) != len(that1.Resources) {
 		return fmt.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
@@ -4382,7 +4894,12 @@ func (this *CheckpointResourcesMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*CheckpointResourcesMessage)
 	if !ok {
-		return false
+		that2, ok := that.(CheckpointResourcesMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4415,7 +4932,12 @@ func (this *UpdateSlaveMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*UpdateSlaveMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *UpdateSlaveMessage")
+		that2, ok := that.(UpdateSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *UpdateSlaveMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4423,7 +4945,7 @@ func (this *UpdateSlaveMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *UpdateSlaveMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *UpdateSlaveMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *UpdateSlaveMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -4451,7 +4973,12 @@ func (this *UpdateSlaveMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*UpdateSlaveMessage)
 	if !ok {
-		return false
+		that2, ok := that.(UpdateSlaveMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4487,7 +5014,12 @@ func (this *RegisterExecutorMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*RegisterExecutorMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *RegisterExecutorMessage")
+		that2, ok := that.(RegisterExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *RegisterExecutorMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4495,7 +5027,7 @@ func (this *RegisterExecutorMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *RegisterExecutorMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *RegisterExecutorMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *RegisterExecutorMessage but is not nil && this == nil")
 	}
 	if !this.FrameworkId.Equal(that1.FrameworkId) {
 		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
@@ -4518,7 +5050,12 @@ func (this *RegisterExecutorMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*RegisterExecutorMessage)
 	if !ok {
-		return false
+		that2, ok := that.(RegisterExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4549,7 +5086,12 @@ func (this *ExecutorRegisteredMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ExecutorRegisteredMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ExecutorRegisteredMessage")
+		that2, ok := that.(ExecutorRegisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ExecutorRegisteredMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4557,7 +5099,7 @@ func (this *ExecutorRegisteredMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ExecutorRegisteredMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ExecutorRegisteredMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ExecutorRegisteredMessage but is not nil && this == nil")
 	}
 	if !this.ExecutorInfo.Equal(that1.ExecutorInfo) {
 		return fmt.Errorf("ExecutorInfo this(%v) Not Equal that(%v)", this.ExecutorInfo, that1.ExecutorInfo)
@@ -4589,7 +5131,12 @@ func (this *ExecutorRegisteredMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ExecutorRegisteredMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ExecutorRegisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4629,7 +5176,12 @@ func (this *ExecutorReregisteredMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ExecutorReregisteredMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ExecutorReregisteredMessage")
+		that2, ok := that.(ExecutorReregisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ExecutorReregisteredMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4637,7 +5189,7 @@ func (this *ExecutorReregisteredMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ExecutorReregisteredMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ExecutorReregisteredMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ExecutorReregisteredMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -4660,7 +5212,12 @@ func (this *ExecutorReregisteredMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ExecutorReregisteredMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ExecutorReregisteredMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4691,7 +5248,12 @@ func (this *ExitedExecutorMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ExitedExecutorMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ExitedExecutorMessage")
+		that2, ok := that.(ExitedExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ExitedExecutorMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4699,7 +5261,7 @@ func (this *ExitedExecutorMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ExitedExecutorMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ExitedExecutorMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ExitedExecutorMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -4734,7 +5296,12 @@ func (this *ExitedExecutorMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ExitedExecutorMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ExitedExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4777,7 +5344,12 @@ func (this *ReconnectExecutorMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ReconnectExecutorMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ReconnectExecutorMessage")
+		that2, ok := that.(ReconnectExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ReconnectExecutorMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4785,7 +5357,7 @@ func (this *ReconnectExecutorMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ReconnectExecutorMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ReconnectExecutorMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ReconnectExecutorMessage but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -4805,7 +5377,12 @@ func (this *ReconnectExecutorMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ReconnectExecutorMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ReconnectExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4833,7 +5410,12 @@ func (this *ReregisterExecutorMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ReregisterExecutorMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ReregisterExecutorMessage")
+		that2, ok := that.(ReregisterExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ReregisterExecutorMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4841,7 +5423,7 @@ func (this *ReregisterExecutorMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ReregisterExecutorMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ReregisterExecutorMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ReregisterExecutorMessage but is not nil && this == nil")
 	}
 	if !this.ExecutorId.Equal(that1.ExecutorId) {
 		return fmt.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
@@ -4880,7 +5462,12 @@ func (this *ReregisterExecutorMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ReregisterExecutorMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ReregisterExecutorMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4927,7 +5514,12 @@ func (this *ShutdownMessage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ShutdownMessage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ShutdownMessage")
+		that2, ok := that.(ShutdownMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ShutdownMessage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4935,7 +5527,7 @@ func (this *ShutdownMessage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ShutdownMessage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ShutdownMessagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ShutdownMessage but is not nil && this == nil")
 	}
 	if this.Message != nil && that1.Message != nil {
 		if *this.Message != *that1.Message {
@@ -4961,7 +5553,12 @@ func (this *ShutdownMessage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ShutdownMessage)
 	if !ok {
-		return false
+		that2, ok := that.(ShutdownMessage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4995,7 +5592,12 @@ func (this *Archive) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Archive)
 	if !ok {
-		return fmt.Errorf("that is not of type *Archive")
+		that2, ok := that.(Archive)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Archive")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5003,7 +5605,7 @@ func (this *Archive) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Archive but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Archivebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Archive but is not nil && this == nil")
 	}
 	if len(this.Frameworks) != len(that1.Frameworks) {
 		return fmt.Errorf("Frameworks this(%v) Not Equal that(%v)", len(this.Frameworks), len(that1.Frameworks))
@@ -5028,7 +5630,12 @@ func (this *Archive) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Archive)
 	if !ok {
-		return false
+		that2, ok := that.(Archive)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5061,7 +5668,12 @@ func (this *Archive_Framework) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Archive_Framework)
 	if !ok {
-		return fmt.Errorf("that is not of type *Archive_Framework")
+		that2, ok := that.(Archive_Framework)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Archive_Framework")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5069,7 +5681,7 @@ func (this *Archive_Framework) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Archive_Framework but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Archive_Frameworkbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Archive_Framework but is not nil && this == nil")
 	}
 	if !this.FrameworkInfo.Equal(that1.FrameworkInfo) {
 		return fmt.Errorf("FrameworkInfo this(%v) Not Equal that(%v)", this.FrameworkInfo, that1.FrameworkInfo)
@@ -5106,7 +5718,12 @@ func (this *Archive_Framework) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Archive_Framework)
 	if !ok {
-		return false
+		that2, ok := that.(Archive_Framework)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5151,7 +5768,12 @@ func (this *TaskHealthStatus) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*TaskHealthStatus)
 	if !ok {
-		return fmt.Errorf("that is not of type *TaskHealthStatus")
+		that2, ok := that.(TaskHealthStatus)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *TaskHealthStatus")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5159,7 +5781,7 @@ func (this *TaskHealthStatus) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *TaskHealthStatus but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *TaskHealthStatusbut is not nil && this == nil")
+		return fmt.Errorf("that is type *TaskHealthStatus but is not nil && this == nil")
 	}
 	if !this.TaskId.Equal(that1.TaskId) {
 		return fmt.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
@@ -5206,7 +5828,12 @@ func (this *TaskHealthStatus) Equal(that interface{}) bool {
 
 	that1, ok := that.(*TaskHealthStatus)
 	if !ok {
-		return false
+		that2, ok := that.(TaskHealthStatus)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5261,7 +5888,12 @@ func (this *HookExecuted) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*HookExecuted)
 	if !ok {
-		return fmt.Errorf("that is not of type *HookExecuted")
+		that2, ok := that.(HookExecuted)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *HookExecuted")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5269,7 +5901,7 @@ func (this *HookExecuted) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *HookExecuted but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *HookExecutedbut is not nil && this == nil")
+		return fmt.Errorf("that is type *HookExecuted but is not nil && this == nil")
 	}
 	if this.Module != nil && that1.Module != nil {
 		if *this.Module != *that1.Module {
@@ -5295,7 +5927,12 @@ func (this *HookExecuted) Equal(that interface{}) bool {
 
 	that1, ok := that.(*HookExecuted)
 	if !ok {
-		return false
+		that2, ok := that.(HookExecuted)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5323,7 +5960,7 @@ func (this *Task) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 16)
+	s := make([]string, 0, 17)
 	s = append(s, "&mesosproto.Task{")
 	if this.Name != nil {
 		s = append(s, "Name: "+valueToGoStringMessages(this.Name, "string")+",\n")
@@ -5360,6 +5997,9 @@ func (this *Task) GoString() string {
 	}
 	if this.Discovery != nil {
 		s = append(s, "Discovery: "+fmt.Sprintf("%#v", this.Discovery)+",\n")
+	}
+	if this.Container != nil {
+		s = append(s, "Container: "+fmt.Sprintf("%#v", this.Container)+",\n")
 	}
 	if this.XXX_unrecognized != nil {
 		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
@@ -6278,11 +6918,12 @@ func valueToGoStringMessages(v interface{}, typ string) string {
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
-func extensionToGoStringMessages(e map[int32]github_com_gogo_protobuf_proto.Extension) string {
+func extensionToGoStringMessages(m github_com_gogo_protobuf_proto.Message) string {
+	e := github_com_gogo_protobuf_proto.GetUnsafeExtensionsMap(m)
 	if e == nil {
 		return "nil"
 	}
-	s := "map[int32]proto.Extension{"
+	s := "proto.NewUnsafeXXX_InternalExtensions(map[int32]proto.Extension{"
 	keys := make([]int, 0, len(e))
 	for k := range e {
 		keys = append(keys, int(k))
@@ -6292,7 +6933,7 @@ func extensionToGoStringMessages(e map[int32]github_com_gogo_protobuf_proto.Exte
 	for _, k := range keys {
 		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
 	}
-	s += strings.Join(ss, ",") + "}"
+	s += strings.Join(ss, ",") + "})"
 	return s
 }
 func (m *Task) Marshal() (data []byte, err error) {
@@ -6426,6 +7067,16 @@ func (m *Task) MarshalTo(data []byte) (int, error) {
 		}
 		i += n6
 	}
+	if m.Container != nil {
+		data[i] = 0x6a
+		i++
+		i = encodeVarintMessages(data, i, uint64(m.Container.Size()))
+		n7, err := m.Container.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n7
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
 	}
@@ -6453,31 +7104,31 @@ func (m *StatusUpdate) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n7, err := m.FrameworkId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n7
-	}
-	if m.ExecutorId != nil {
-		data[i] = 0x12
-		i++
-		i = encodeVarintMessages(data, i, uint64(m.ExecutorId.Size()))
-		n8, err := m.ExecutorId.MarshalTo(data[i:])
+		n8, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n8
 	}
-	if m.SlaveId != nil {
-		data[i] = 0x1a
+	if m.ExecutorId != nil {
+		data[i] = 0x12
 		i++
-		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n9, err := m.SlaveId.MarshalTo(data[i:])
+		i = encodeVarintMessages(data, i, uint64(m.ExecutorId.Size()))
+		n9, err := m.ExecutorId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n9
+	}
+	if m.SlaveId != nil {
+		data[i] = 0x1a
+		i++
+		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
+		n10, err := m.SlaveId.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n10
 	}
 	if m.Status == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
@@ -6485,18 +7136,18 @@ func (m *StatusUpdate) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Status.Size()))
-		n10, err := m.Status.MarshalTo(data[i:])
+		n11, err := m.Status.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n10
+		i += n11
 	}
 	if m.Timestamp == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("timestamp")
 	} else {
 		data[i] = 0x29
 		i++
-		i = encodeFixed64Messages(data, i, uint64(math.Float64bits(*m.Timestamp)))
+		i = encodeFixed64Messages(data, i, uint64(math.Float64bits(float64(*m.Timestamp))))
 	}
 	if m.Uuid != nil {
 		data[i] = 0x32
@@ -6541,11 +7192,11 @@ func (m *StatusUpdateRecord) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Update.Size()))
-		n11, err := m.Update.MarshalTo(data[i:])
+		n12, err := m.Update.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n11
+		i += n12
 	}
 	if m.Uuid != nil {
 		data[i] = 0x1a
@@ -6642,11 +7293,11 @@ func (m *ExecutorToFrameworkMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n12, err := m.SlaveId.MarshalTo(data[i:])
+		n13, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n12
+		i += n13
 	}
 	if m.FrameworkId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
@@ -6654,11 +7305,11 @@ func (m *ExecutorToFrameworkMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n13, err := m.FrameworkId.MarshalTo(data[i:])
+		n14, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n13
+		i += n14
 	}
 	if m.ExecutorId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
@@ -6666,11 +7317,11 @@ func (m *ExecutorToFrameworkMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.ExecutorId.Size()))
-		n14, err := m.ExecutorId.MarshalTo(data[i:])
+		n15, err := m.ExecutorId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n14
+		i += n15
 	}
 	if m.Data == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
@@ -6707,11 +7358,11 @@ func (m *FrameworkToExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n15, err := m.SlaveId.MarshalTo(data[i:])
+		n16, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n15
+		i += n16
 	}
 	if m.FrameworkId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
@@ -6719,11 +7370,11 @@ func (m *FrameworkToExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n16, err := m.FrameworkId.MarshalTo(data[i:])
+		n17, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n16
+		i += n17
 	}
 	if m.ExecutorId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
@@ -6731,11 +7382,11 @@ func (m *FrameworkToExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.ExecutorId.Size()))
-		n17, err := m.ExecutorId.MarshalTo(data[i:])
+		n18, err := m.ExecutorId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n17
+		i += n18
 	}
 	if m.Data == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
@@ -6772,11 +7423,11 @@ func (m *RegisterFrameworkMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Framework.Size()))
-		n18, err := m.Framework.MarshalTo(data[i:])
+		n19, err := m.Framework.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n18
+		i += n19
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -6805,11 +7456,11 @@ func (m *ReregisterFrameworkMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Framework.Size()))
-		n19, err := m.Framework.MarshalTo(data[i:])
+		n20, err := m.Framework.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n19
+		i += n20
 	}
 	if m.Failover == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("failover")
@@ -6850,11 +7501,11 @@ func (m *FrameworkRegisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n20, err := m.FrameworkId.MarshalTo(data[i:])
+		n21, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n20
+		i += n21
 	}
 	if m.MasterInfo == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("master_info")
@@ -6862,11 +7513,11 @@ func (m *FrameworkRegisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.MasterInfo.Size()))
-		n21, err := m.MasterInfo.MarshalTo(data[i:])
+		n22, err := m.MasterInfo.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n21
+		i += n22
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -6895,11 +7546,11 @@ func (m *FrameworkReregisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n22, err := m.FrameworkId.MarshalTo(data[i:])
+		n23, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n22
+		i += n23
 	}
 	if m.MasterInfo == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("master_info")
@@ -6907,11 +7558,11 @@ func (m *FrameworkReregisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.MasterInfo.Size()))
-		n23, err := m.MasterInfo.MarshalTo(data[i:])
+		n24, err := m.MasterInfo.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n23
+		i += n24
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -6940,11 +7591,11 @@ func (m *UnregisterFrameworkMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n24, err := m.FrameworkId.MarshalTo(data[i:])
+		n25, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n24
+		i += n25
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -6973,11 +7624,11 @@ func (m *DeactivateFrameworkMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n25, err := m.FrameworkId.MarshalTo(data[i:])
+		n26, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n25
+		i += n26
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7006,11 +7657,11 @@ func (m *ResourceRequestMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n26, err := m.FrameworkId.MarshalTo(data[i:])
+		n27, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n26
+		i += n27
 	}
 	if len(m.Requests) > 0 {
 		for _, msg := range m.Requests {
@@ -7111,11 +7762,11 @@ func (m *LaunchTasksMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n27, err := m.FrameworkId.MarshalTo(data[i:])
+		n28, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n27
+		i += n28
 	}
 	if len(m.Tasks) > 0 {
 		for _, msg := range m.Tasks {
@@ -7135,11 +7786,11 @@ func (m *LaunchTasksMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Filters.Size()))
-		n28, err := m.Filters.MarshalTo(data[i:])
+		n29, err := m.Filters.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n28
+		i += n29
 	}
 	if len(m.OfferIds) > 0 {
 		for _, msg := range m.OfferIds {
@@ -7180,11 +7831,11 @@ func (m *RescindResourceOfferMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.OfferId.Size()))
-		n29, err := m.OfferId.MarshalTo(data[i:])
+		n30, err := m.OfferId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n29
+		i += n30
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7213,11 +7864,11 @@ func (m *ReviveOffersMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n30, err := m.FrameworkId.MarshalTo(data[i:])
+		n31, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n30
+		i += n31
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7244,11 +7895,11 @@ func (m *RunTaskMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n31, err := m.FrameworkId.MarshalTo(data[i:])
+		n32, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n31
+		i += n32
 	}
 	if m.Framework == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework")
@@ -7256,11 +7907,11 @@ func (m *RunTaskMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Framework.Size()))
-		n32, err := m.Framework.MarshalTo(data[i:])
+		n33, err := m.Framework.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n32
+		i += n33
 	}
 	if m.Pid != nil {
 		data[i] = 0x1a
@@ -7274,11 +7925,11 @@ func (m *RunTaskMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Task.Size()))
-		n33, err := m.Task.MarshalTo(data[i:])
+		n34, err := m.Task.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n33
+		i += n34
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7307,11 +7958,11 @@ func (m *KillTaskMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n34, err := m.FrameworkId.MarshalTo(data[i:])
+		n35, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n34
+		i += n35
 	}
 	if m.TaskId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
@@ -7319,11 +7970,11 @@ func (m *KillTaskMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.TaskId.Size()))
-		n35, err := m.TaskId.MarshalTo(data[i:])
+		n36, err := m.TaskId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n35
+		i += n36
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7352,11 +8003,11 @@ func (m *StatusUpdateMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Update.Size()))
-		n36, err := m.Update.MarshalTo(data[i:])
+		n37, err := m.Update.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n36
+		i += n37
 	}
 	if m.Pid != nil {
 		data[i] = 0x12
@@ -7391,11 +8042,11 @@ func (m *StatusUpdateAcknowledgementMessage) MarshalTo(data []byte) (int, error)
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n37, err := m.SlaveId.MarshalTo(data[i:])
+		n38, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n37
+		i += n38
 	}
 	if m.FrameworkId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
@@ -7403,11 +8054,11 @@ func (m *StatusUpdateAcknowledgementMessage) MarshalTo(data []byte) (int, error)
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n38, err := m.FrameworkId.MarshalTo(data[i:])
+		n39, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n38
+		i += n39
 	}
 	if m.TaskId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
@@ -7415,11 +8066,11 @@ func (m *StatusUpdateAcknowledgementMessage) MarshalTo(data []byte) (int, error)
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.TaskId.Size()))
-		n39, err := m.TaskId.MarshalTo(data[i:])
+		n40, err := m.TaskId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n39
+		i += n40
 	}
 	if m.Uuid == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("uuid")
@@ -7456,11 +8107,11 @@ func (m *LostSlaveMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n40, err := m.SlaveId.MarshalTo(data[i:])
+		n41, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n40
+		i += n41
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7489,11 +8140,11 @@ func (m *ReconcileTasksMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n41, err := m.FrameworkId.MarshalTo(data[i:])
+		n42, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n41
+		i += n42
 	}
 	if len(m.Statuses) > 0 {
 		for _, msg := range m.Statuses {
@@ -7563,11 +8214,11 @@ func (m *RegisterSlaveMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Slave.Size()))
-		n42, err := m.Slave.MarshalTo(data[i:])
+		n43, err := m.Slave.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n42
+		i += n43
 	}
 	if m.Version != nil {
 		data[i] = 0x12
@@ -7614,11 +8265,11 @@ func (m *ReregisterSlaveMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Slave.Size()))
-		n43, err := m.Slave.MarshalTo(data[i:])
+		n44, err := m.Slave.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n43
+		i += n44
 	}
 	if len(m.Tasks) > 0 {
 		for _, msg := range m.Tasks {
@@ -7701,21 +8352,21 @@ func (m *SlaveRegisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n44, err := m.SlaveId.MarshalTo(data[i:])
+		n45, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n44
+		i += n45
 	}
 	if m.Connection != nil {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Connection.Size()))
-		n45, err := m.Connection.MarshalTo(data[i:])
+		n46, err := m.Connection.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n45
+		i += n46
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7744,11 +8395,11 @@ func (m *SlaveReregisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n46, err := m.SlaveId.MarshalTo(data[i:])
+		n47, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n46
+		i += n47
 	}
 	if len(m.Reconciliations) > 0 {
 		for _, msg := range m.Reconciliations {
@@ -7766,11 +8417,11 @@ func (m *SlaveReregisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.Connection.Size()))
-		n47, err := m.Connection.MarshalTo(data[i:])
+		n48, err := m.Connection.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n47
+		i += n48
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7799,11 +8450,11 @@ func (m *UnregisterSlaveMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n48, err := m.SlaveId.MarshalTo(data[i:])
+		n49, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n48
+		i += n49
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7829,7 +8480,7 @@ func (m *MasterSlaveConnection) MarshalTo(data []byte) (int, error) {
 	if m.TotalPingTimeoutSeconds != nil {
 		data[i] = 0x9
 		i++
-		i = encodeFixed64Messages(data, i, uint64(math.Float64bits(*m.TotalPingTimeoutSeconds)))
+		i = encodeFixed64Messages(data, i, uint64(math.Float64bits(float64(*m.TotalPingTimeoutSeconds))))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7912,11 +8563,11 @@ func (m *ShutdownFrameworkMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n49, err := m.FrameworkId.MarshalTo(data[i:])
+		n50, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n49
+		i += n50
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7943,21 +8594,21 @@ func (m *ShutdownExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.ExecutorId.Size()))
-		n50, err := m.ExecutorId.MarshalTo(data[i:])
+		n51, err := m.ExecutorId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n50
+		i += n51
 	}
 	if m.FrameworkId != nil {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n51, err := m.FrameworkId.MarshalTo(data[i:])
+		n52, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n51
+		i += n52
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -7986,11 +8637,11 @@ func (m *UpdateFrameworkMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n52, err := m.FrameworkId.MarshalTo(data[i:])
+		n53, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n52
+		i += n53
 	}
 	if m.Pid != nil {
 		data[i] = 0x12
@@ -8058,11 +8709,11 @@ func (m *UpdateSlaveMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n53, err := m.SlaveId.MarshalTo(data[i:])
+		n54, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n53
+		i += n54
 	}
 	if len(m.OversubscribedResources) > 0 {
 		for _, msg := range m.OversubscribedResources {
@@ -8103,11 +8754,11 @@ func (m *RegisterExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n54, err := m.FrameworkId.MarshalTo(data[i:])
+		n55, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n54
+		i += n55
 	}
 	if m.ExecutorId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
@@ -8115,11 +8766,11 @@ func (m *RegisterExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.ExecutorId.Size()))
-		n55, err := m.ExecutorId.MarshalTo(data[i:])
+		n56, err := m.ExecutorId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n55
+		i += n56
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -8148,11 +8799,11 @@ func (m *ExecutorRegisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.ExecutorInfo.Size()))
-		n56, err := m.ExecutorInfo.MarshalTo(data[i:])
+		n57, err := m.ExecutorInfo.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n56
+		i += n57
 	}
 	if m.FrameworkId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
@@ -8160,11 +8811,11 @@ func (m *ExecutorRegisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n57, err := m.FrameworkId.MarshalTo(data[i:])
+		n58, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n57
+		i += n58
 	}
 	if m.FrameworkInfo == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_info")
@@ -8172,11 +8823,11 @@ func (m *ExecutorRegisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkInfo.Size()))
-		n58, err := m.FrameworkInfo.MarshalTo(data[i:])
+		n59, err := m.FrameworkInfo.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n58
+		i += n59
 	}
 	if m.SlaveId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("slave_id")
@@ -8184,11 +8835,11 @@ func (m *ExecutorRegisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n59, err := m.SlaveId.MarshalTo(data[i:])
+		n60, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n59
+		i += n60
 	}
 	if m.SlaveInfo == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("slave_info")
@@ -8196,11 +8847,11 @@ func (m *ExecutorRegisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x32
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveInfo.Size()))
-		n60, err := m.SlaveInfo.MarshalTo(data[i:])
+		n61, err := m.SlaveInfo.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n60
+		i += n61
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -8229,11 +8880,11 @@ func (m *ExecutorReregisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n61, err := m.SlaveId.MarshalTo(data[i:])
+		n62, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n61
+		i += n62
 	}
 	if m.SlaveInfo == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("slave_info")
@@ -8241,11 +8892,11 @@ func (m *ExecutorReregisteredMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveInfo.Size()))
-		n62, err := m.SlaveInfo.MarshalTo(data[i:])
+		n63, err := m.SlaveInfo.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n62
+		i += n63
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -8274,11 +8925,11 @@ func (m *ExitedExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n63, err := m.SlaveId.MarshalTo(data[i:])
+		n64, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n63
+		i += n64
 	}
 	if m.FrameworkId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
@@ -8286,11 +8937,11 @@ func (m *ExitedExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n64, err := m.FrameworkId.MarshalTo(data[i:])
+		n65, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n64
+		i += n65
 	}
 	if m.ExecutorId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
@@ -8298,11 +8949,11 @@ func (m *ExitedExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.ExecutorId.Size()))
-		n65, err := m.ExecutorId.MarshalTo(data[i:])
+		n66, err := m.ExecutorId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n65
+		i += n66
 	}
 	if m.Status == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
@@ -8338,11 +8989,11 @@ func (m *ReconnectExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.SlaveId.Size()))
-		n66, err := m.SlaveId.MarshalTo(data[i:])
+		n67, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n66
+		i += n67
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -8371,11 +9022,11 @@ func (m *ReregisterExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.ExecutorId.Size()))
-		n67, err := m.ExecutorId.MarshalTo(data[i:])
+		n68, err := m.ExecutorId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n67
+		i += n68
 	}
 	if m.FrameworkId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
@@ -8383,11 +9034,11 @@ func (m *ReregisterExecutorMessage) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkId.Size()))
-		n68, err := m.FrameworkId.MarshalTo(data[i:])
+		n69, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n68
+		i += n69
 	}
 	if len(m.Tasks) > 0 {
 		for _, msg := range m.Tasks {
@@ -8500,11 +9151,11 @@ func (m *Archive_Framework) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.FrameworkInfo.Size()))
-		n69, err := m.FrameworkInfo.MarshalTo(data[i:])
+		n70, err := m.FrameworkInfo.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n69
+		i += n70
 	}
 	if m.Pid != nil {
 		data[i] = 0x12
@@ -8551,11 +9202,11 @@ func (m *TaskHealthStatus) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMessages(data, i, uint64(m.TaskId.Size()))
-		n70, err := m.TaskId.MarshalTo(data[i:])
+		n71, err := m.TaskId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n70
+		i += n71
 	}
 	if m.Healthy == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("healthy")
@@ -8654,24 +9305,24 @@ func NewPopulatedTask(r randyMessages, easy bool) *Task {
 		this.ExecutorId = NewPopulatedExecutorID(r, easy)
 	}
 	this.SlaveId = NewPopulatedSlaveID(r, easy)
-	v2 := TaskState([]int32{6, 0, 1, 2, 3, 4, 5, 7}[r.Intn(8)])
+	v2 := TaskState([]int32{6, 0, 1, 2, 3, 4, 5, 7, 8}[r.Intn(9)])
 	this.State = &v2
 	if r.Intn(10) != 0 {
-		v3 := r.Intn(10)
+		v3 := r.Intn(5)
 		this.Resources = make([]*Resource, v3)
 		for i := 0; i < v3; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v4 := r.Intn(10)
+		v4 := r.Intn(5)
 		this.Statuses = make([]*TaskStatus, v4)
 		for i := 0; i < v4; i++ {
 			this.Statuses[i] = NewPopulatedTaskStatus(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v5 := TaskState([]int32{6, 0, 1, 2, 3, 4, 5, 7}[r.Intn(8)])
+		v5 := TaskState([]int32{6, 0, 1, 2, 3, 4, 5, 7, 8}[r.Intn(9)])
 		this.StatusUpdateState = &v5
 	}
 	if r.Intn(10) != 0 {
@@ -8687,8 +9338,11 @@ func NewPopulatedTask(r randyMessages, easy bool) *Task {
 	if r.Intn(10) != 0 {
 		this.Discovery = NewPopulatedDiscoveryInfo(r, easy)
 	}
+	if r.Intn(10) != 0 {
+		this.Container = NewPopulatedContainerInfo(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMessages(r, 13)
+		this.XXX_unrecognized = randUnrecognizedMessages(r, 14)
 	}
 	return this
 }
@@ -8716,7 +9370,7 @@ func NewPopulatedStatusUpdate(r randyMessages, easy bool) *StatusUpdate {
 		}
 	}
 	if r.Intn(10) != 0 {
-		v9 := TaskState([]int32{6, 0, 1, 2, 3, 4, 5, 7}[r.Intn(8)])
+		v9 := TaskState([]int32{6, 0, 1, 2, 3, 4, 5, 7, 8}[r.Intn(9)])
 		this.LatestState = &v9
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -8859,7 +9513,7 @@ func NewPopulatedResourceRequestMessage(r randyMessages, easy bool) *ResourceReq
 	this := &ResourceRequestMessage{}
 	this.FrameworkId = NewPopulatedFrameworkID(r, easy)
 	if r.Intn(10) != 0 {
-		v17 := r.Intn(10)
+		v17 := r.Intn(5)
 		this.Requests = make([]*Request, v17)
 		for i := 0; i < v17; i++ {
 			this.Requests[i] = NewPopulatedRequest(r, easy)
@@ -8874,7 +9528,7 @@ func NewPopulatedResourceRequestMessage(r randyMessages, easy bool) *ResourceReq
 func NewPopulatedResourceOffersMessage(r randyMessages, easy bool) *ResourceOffersMessage {
 	this := &ResourceOffersMessage{}
 	if r.Intn(10) != 0 {
-		v18 := r.Intn(10)
+		v18 := r.Intn(5)
 		this.Offers = make([]*Offer, v18)
 		for i := 0; i < v18; i++ {
 			this.Offers[i] = NewPopulatedOffer(r, easy)
@@ -8888,7 +9542,7 @@ func NewPopulatedResourceOffersMessage(r randyMessages, easy bool) *ResourceOffe
 		}
 	}
 	if r.Intn(10) != 0 {
-		v20 := r.Intn(10)
+		v20 := r.Intn(5)
 		this.InverseOffers = make([]*InverseOffer, v20)
 		for i := 0; i < v20; i++ {
 			this.InverseOffers[i] = NewPopulatedInverseOffer(r, easy)
@@ -8904,7 +9558,7 @@ func NewPopulatedLaunchTasksMessage(r randyMessages, easy bool) *LaunchTasksMess
 	this := &LaunchTasksMessage{}
 	this.FrameworkId = NewPopulatedFrameworkID(r, easy)
 	if r.Intn(10) != 0 {
-		v21 := r.Intn(10)
+		v21 := r.Intn(5)
 		this.Tasks = make([]*TaskInfo, v21)
 		for i := 0; i < v21; i++ {
 			this.Tasks[i] = NewPopulatedTaskInfo(r, easy)
@@ -8912,7 +9566,7 @@ func NewPopulatedLaunchTasksMessage(r randyMessages, easy bool) *LaunchTasksMess
 	}
 	this.Filters = NewPopulatedFilters(r, easy)
 	if r.Intn(10) != 0 {
-		v22 := r.Intn(10)
+		v22 := r.Intn(5)
 		this.OfferIds = make([]*OfferID, v22)
 		for i := 0; i < v22; i++ {
 			this.OfferIds[i] = NewPopulatedOfferID(r, easy)
@@ -9011,7 +9665,7 @@ func NewPopulatedReconcileTasksMessage(r randyMessages, easy bool) *ReconcileTas
 	this := &ReconcileTasksMessage{}
 	this.FrameworkId = NewPopulatedFrameworkID(r, easy)
 	if r.Intn(10) != 0 {
-		v26 := r.Intn(10)
+		v26 := r.Intn(5)
 		this.Statuses = make([]*TaskStatus, v26)
 		for i := 0; i < v26; i++ {
 			this.Statuses[i] = NewPopulatedTaskStatus(r, easy)
@@ -9041,7 +9695,7 @@ func NewPopulatedRegisterSlaveMessage(r randyMessages, easy bool) *RegisterSlave
 		this.Version = &v28
 	}
 	if r.Intn(10) != 0 {
-		v29 := r.Intn(10)
+		v29 := r.Intn(5)
 		this.CheckpointedResources = make([]*Resource, v29)
 		for i := 0; i < v29; i++ {
 			this.CheckpointedResources[i] = NewPopulatedResource(r, easy)
@@ -9057,21 +9711,21 @@ func NewPopulatedReregisterSlaveMessage(r randyMessages, easy bool) *ReregisterS
 	this := &ReregisterSlaveMessage{}
 	this.Slave = NewPopulatedSlaveInfo(r, easy)
 	if r.Intn(10) != 0 {
-		v30 := r.Intn(10)
+		v30 := r.Intn(5)
 		this.Tasks = make([]*Task, v30)
 		for i := 0; i < v30; i++ {
 			this.Tasks[i] = NewPopulatedTask(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v31 := r.Intn(10)
+		v31 := r.Intn(5)
 		this.ExecutorInfos = make([]*ExecutorInfo, v31)
 		for i := 0; i < v31; i++ {
 			this.ExecutorInfos[i] = NewPopulatedExecutorInfo(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v32 := r.Intn(10)
+		v32 := r.Intn(5)
 		this.CompletedFrameworks = make([]*Archive_Framework, v32)
 		for i := 0; i < v32; i++ {
 			this.CompletedFrameworks[i] = NewPopulatedArchive_Framework(r, easy)
@@ -9082,7 +9736,7 @@ func NewPopulatedReregisterSlaveMessage(r randyMessages, easy bool) *ReregisterS
 		this.Version = &v33
 	}
 	if r.Intn(10) != 0 {
-		v34 := r.Intn(10)
+		v34 := r.Intn(5)
 		this.CheckpointedResources = make([]*Resource, v34)
 		for i := 0; i < v34; i++ {
 			this.CheckpointedResources[i] = NewPopulatedResource(r, easy)
@@ -9110,7 +9764,7 @@ func NewPopulatedSlaveReregisteredMessage(r randyMessages, easy bool) *SlaveRere
 	this := &SlaveReregisteredMessage{}
 	this.SlaveId = NewPopulatedSlaveID(r, easy)
 	if r.Intn(10) != 0 {
-		v35 := r.Intn(10)
+		v35 := r.Intn(5)
 		this.Reconciliations = make([]*ReconcileTasksMessage, v35)
 		for i := 0; i < v35; i++ {
 			this.Reconciliations[i] = NewPopulatedReconcileTasksMessage(r, easy)
@@ -9206,7 +9860,7 @@ func NewPopulatedUpdateFrameworkMessage(r randyMessages, easy bool) *UpdateFrame
 func NewPopulatedCheckpointResourcesMessage(r randyMessages, easy bool) *CheckpointResourcesMessage {
 	this := &CheckpointResourcesMessage{}
 	if r.Intn(10) != 0 {
-		v39 := r.Intn(10)
+		v39 := r.Intn(5)
 		this.Resources = make([]*Resource, v39)
 		for i := 0; i < v39; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
@@ -9222,7 +9876,7 @@ func NewPopulatedUpdateSlaveMessage(r randyMessages, easy bool) *UpdateSlaveMess
 	this := &UpdateSlaveMessage{}
 	this.SlaveId = NewPopulatedSlaveID(r, easy)
 	if r.Intn(10) != 0 {
-		v40 := r.Intn(10)
+		v40 := r.Intn(5)
 		this.OversubscribedResources = make([]*Resource, v40)
 		for i := 0; i < v40; i++ {
 			this.OversubscribedResources[i] = NewPopulatedResource(r, easy)
@@ -9297,14 +9951,14 @@ func NewPopulatedReregisterExecutorMessage(r randyMessages, easy bool) *Reregist
 	this.ExecutorId = NewPopulatedExecutorID(r, easy)
 	this.FrameworkId = NewPopulatedFrameworkID(r, easy)
 	if r.Intn(10) != 0 {
-		v42 := r.Intn(10)
+		v42 := r.Intn(5)
 		this.Tasks = make([]*TaskInfo, v42)
 		for i := 0; i < v42; i++ {
 			this.Tasks[i] = NewPopulatedTaskInfo(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v43 := r.Intn(10)
+		v43 := r.Intn(5)
 		this.Updates = make([]*StatusUpdate, v43)
 		for i := 0; i < v43; i++ {
 			this.Updates[i] = NewPopulatedStatusUpdate(r, easy)
@@ -9331,7 +9985,7 @@ func NewPopulatedShutdownMessage(r randyMessages, easy bool) *ShutdownMessage {
 func NewPopulatedArchive(r randyMessages, easy bool) *Archive {
 	this := &Archive{}
 	if r.Intn(10) != 0 {
-		v45 := r.Intn(10)
+		v45 := r.Intn(5)
 		this.Frameworks = make([]*Archive_Framework, v45)
 		for i := 0; i < v45; i++ {
 			this.Frameworks[i] = NewPopulatedArchive_Framework(r, easy)
@@ -9351,7 +10005,7 @@ func NewPopulatedArchive_Framework(r randyMessages, easy bool) *Archive_Framewor
 		this.Pid = &v46
 	}
 	if r.Intn(10) != 0 {
-		v47 := r.Intn(10)
+		v47 := r.Intn(5)
 		this.Tasks = make([]*Task, v47)
 		for i := 0; i < v47; i++ {
 			this.Tasks[i] = NewPopulatedTask(r, easy)
@@ -9520,6 +10174,10 @@ func (m *Task) Size() (n int) {
 	}
 	if m.Discovery != nil {
 		l = m.Discovery.Size()
+		n += 1 + l + sovMessages(uint64(l))
+	}
+	if m.Container != nil {
+		l = m.Container.Size()
 		n += 1 + l + sovMessages(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -10453,6 +11111,7 @@ func (this *Task) String() string {
 		`StatusUpdateUuid:` + valueToStringMessages(this.StatusUpdateUuid) + `,`,
 		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Labels", "Labels", 1) + `,`,
 		`Discovery:` + strings.Replace(fmt.Sprintf("%v", this.Discovery), "DiscoveryInfo", "DiscoveryInfo", 1) + `,`,
+		`Container:` + strings.Replace(fmt.Sprintf("%v", this.Container), "ContainerInfo", "ContainerInfo", 1) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -11380,7 +12039,10 @@ func (m *Task) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.StatusUpdateUuid = append([]byte{}, data[iNdEx:postIndex]...)
+			m.StatusUpdateUuid = append(m.StatusUpdateUuid[:0], data[iNdEx:postIndex]...)
+			if m.StatusUpdateUuid == nil {
+				m.StatusUpdateUuid = []byte{}
+			}
 			iNdEx = postIndex
 		case 11:
 			if wireType != 2 {
@@ -11445,6 +12107,39 @@ func (m *Task) Unmarshal(data []byte) error {
 				m.Discovery = &DiscoveryInfo{}
 			}
 			if err := m.Discovery.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 13:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Container", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMessages
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMessages
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Container == nil {
+				m.Container = &ContainerInfo{}
+			}
+			if err := m.Container.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -11695,7 +12390,10 @@ func (m *StatusUpdate) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Uuid = append([]byte{}, data[iNdEx:postIndex]...)
+			m.Uuid = append(m.Uuid[:0], data[iNdEx:postIndex]...)
+			if m.Uuid == nil {
+				m.Uuid = []byte{}
+			}
 			iNdEx = postIndex
 		case 7:
 			if wireType != 0 {
@@ -11858,7 +12556,10 @@ func (m *StatusUpdateRecord) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Uuid = append([]byte{}, data[iNdEx:postIndex]...)
+			m.Uuid = append(m.Uuid[:0], data[iNdEx:postIndex]...)
+			if m.Uuid == nil {
+				m.Uuid = []byte{}
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -12206,7 +12907,10 @@ func (m *ExecutorToFrameworkMessage) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Data = append([]byte{}, data[iNdEx:postIndex]...)
+			m.Data = append(m.Data[:0], data[iNdEx:postIndex]...)
+			if m.Data == nil {
+				m.Data = []byte{}
+			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000008)
 		default:
@@ -12401,7 +13105,10 @@ func (m *FrameworkToExecutorMessage) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Data = append([]byte{}, data[iNdEx:postIndex]...)
+			m.Data = append(m.Data[:0], data[iNdEx:postIndex]...)
+			if m.Data == nil {
+				m.Data = []byte{}
+			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000008)
 		default:
@@ -14291,7 +14998,10 @@ func (m *StatusUpdateAcknowledgementMessage) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Uuid = append([]byte{}, data[iNdEx:postIndex]...)
+			m.Uuid = append(m.Uuid[:0], data[iNdEx:postIndex]...)
+			if m.Uuid == nil {
+				m.Uuid = []byte{}
+			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000008)
 		default:
@@ -17711,3 +18421,113 @@ var (
 	ErrInvalidLengthMessages = fmt.Errorf("proto: negative length found during unmarshaling")
 	ErrIntOverflowMessages   = fmt.Errorf("proto: integer overflow")
 )
+
+func init() { proto.RegisterFile("messages.proto", fileDescriptorMessages) }
+
+var fileDescriptorMessages = []byte{
+	// 1660 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xcc, 0x58, 0x4f, 0x6f, 0xdb, 0xc8,
+	0x15, 0xcf, 0x50, 0xb2, 0xfe, 0x3c, 0x29, 0xb6, 0x42, 0xdb, 0x32, 0xad, 0xa4, 0xaa, 0x33, 0xf9,
+	0xa7, 0x20, 0x89, 0x53, 0x1b, 0x6d, 0x81, 0x26, 0x87, 0xc2, 0xb1, 0x1c, 0x44, 0x88, 0x83, 0x06,
+	0xb2, 0x73, 0x2b, 0x20, 0xd0, 0xe4, 0x48, 0x22, 0x4c, 0x71, 0x54, 0xce, 0x50, 0x89, 0x73, 0x0a,
+	0x50, 0x14, 0xfd, 0x04, 0xbd, 0xf5, 0xb4, 0xa7, 0x45, 0x80, 0xbd, 0x2d, 0x16, 0x7b, 0xdc, 0xdb,
+	0xee, 0x71, 0x8f, 0x7b, 0x8c, 0xfd, 0x09, 0xf6, 0xb8, 0xc7, 0xc5, 0x0c, 0x49, 0x89, 0x34, 0x25,
+	0xd9, 0xb2, 0xb1, 0x8b, 0xdc, 0x44, 0xcd, 0x6f, 0xde, 0x7b, 0xf3, 0xde, 0x9b, 0xf7, 0x7e, 0x6f,
+	0x60, 0xbe, 0x47, 0x18, 0xd3, 0x3b, 0x84, 0xad, 0xf7, 0x5d, 0xca, 0xa9, 0x0a, 0x3d, 0xc2, 0x28,
+	0x93, 0xbf, 0x2b, 0x05, 0xf9, 0xdb, 0x5f, 0xa8, 0x3c, 0xea, 0x58, 0xbc, 0xeb, 0x1d, 0xac, 0x1b,
+	0xb4, 0xf7, 0xb8, 0x43, 0x3b, 0xf4, 0xb1, 0xfc, 0xfb, 0xc0, 0x6b, 0xcb, 0x2f, 0xf9, 0x21, 0x7f,
+	0xf9, 0x70, 0xfc, 0x9f, 0x34, 0xa4, 0xf7, 0x75, 0x76, 0xa8, 0x16, 0x21, 0xed, 0xe8, 0x3d, 0xa2,
+	0xa1, 0x35, 0xa5, 0x96, 0x57, 0x6f, 0x41, 0x96, 0xeb, 0xec, 0xb0, 0x65, 0x99, 0x9a, 0xb2, 0xa6,
+	0xd4, 0x0a, 0x9b, 0xea, 0xfa, 0x48, 0xe1, 0xba, 0xd8, 0xd0, 0xa8, 0xab, 0x8f, 0xa0, 0xd8, 0x76,
+	0xf5, 0x1e, 0x79, 0x4b, 0x5d, 0x89, 0x4c, 0x49, 0xe4, 0x4a, 0x14, 0xf9, 0x3c, 0x5c, 0x6f, 0xd4,
+	0xd5, 0x07, 0x50, 0x20, 0xef, 0x88, 0xe1, 0x71, 0xea, 0x0a, 0x74, 0x7a, 0x0d, 0xd5, 0x0a, 0x9b,
+	0xe5, 0x28, 0x7a, 0x27, 0x58, 0x6e, 0xd4, 0xd5, 0x3b, 0x90, 0x63, 0xb6, 0x3e, 0x20, 0x02, 0x39,
+	0x27, 0xe5, 0x2e, 0x46, 0x91, 0x7b, 0x62, 0xad, 0x51, 0x57, 0x6f, 0xc3, 0x1c, 0xe3, 0x3a, 0x27,
+	0x5a, 0x66, 0x4d, 0xa9, 0xcd, 0x6f, 0x2e, 0x9f, 0xb6, 0x72, 0x4f, 0x2c, 0xaa, 0xf7, 0x20, 0xef,
+	0x12, 0x46, 0x3d, 0xd7, 0x20, 0x4c, 0xcb, 0xae, 0xa5, 0x6a, 0x85, 0xcd, 0xa5, 0x28, 0xb2, 0x19,
+	0x2c, 0xaa, 0x35, 0xc8, 0x09, 0x71, 0x1e, 0x23, 0x4c, 0xcb, 0x49, 0x5c, 0x79, 0x9c, 0x44, 0x8f,
+	0xa9, 0x9b, 0xb0, 0xe8, 0x23, 0x5b, 0x5e, 0xdf, 0xd4, 0x39, 0x69, 0xf9, 0x66, 0xe4, 0xd7, 0xd0,
+	0x64, 0x33, 0x2a, 0xa0, 0xc6, 0xf7, 0x78, 0x9e, 0x65, 0x6a, 0xb0, 0x86, 0x6a, 0x45, 0x15, 0x43,
+	0xc6, 0xd6, 0x0f, 0x88, 0xcd, 0xb4, 0x82, 0xf4, 0x4b, 0xcc, 0xdf, 0xbb, 0x72, 0x45, 0x7d, 0x08,
+	0x79, 0xd3, 0x62, 0x06, 0x1d, 0x10, 0xf7, 0x48, 0x2b, 0x4a, 0xd8, 0x6a, 0x14, 0x56, 0x0f, 0x17,
+	0x1b, 0x4e, 0x9b, 0x0a, 0xb4, 0x41, 0x1d, 0xae, 0x5b, 0x0e, 0x71, 0xb5, 0xab, 0x49, 0xf4, 0x76,
+	0xb8, 0x28, 0xd0, 0xf8, 0xbf, 0x0a, 0x14, 0xfd, 0xa3, 0xbd, 0x91, 0xb6, 0x25, 0x82, 0x8b, 0x66,
+	0x0a, 0xae, 0x72, 0xee, 0xe0, 0xa6, 0x24, 0x72, 0x6c, 0x70, 0xef, 0x42, 0xc6, 0xf7, 0x97, 0x96,
+	0x96, 0xca, 0x27, 0xc5, 0xe2, 0x1a, 0xe4, 0xb9, 0xd5, 0x23, 0x8c, 0xeb, 0xbd, 0xbe, 0x4c, 0x16,
+	0x24, 0xb2, 0x59, 0x3a, 0x37, 0x23, 0x9d, 0xfb, 0x00, 0x8a, 0xb6, 0xce, 0x09, 0xe3, 0x41, 0x94,
+	0xb2, 0x53, 0xa2, 0x84, 0xff, 0x8f, 0x40, 0x8d, 0x7a, 0xa2, 0x49, 0x0c, 0xea, 0x9a, 0xea, 0x06,
+	0xa4, 0xf9, 0x51, 0xdf, 0xbf, 0x1f, 0xf3, 0x9b, 0xb7, 0x62, 0xf6, 0x26, 0xd0, 0xeb, 0xfb, 0x47,
+	0x7d, 0x91, 0x4d, 0x19, 0x3f, 0xd0, 0x81, 0x3b, 0xb4, 0x49, 0x9b, 0x86, 0xe6, 0x0a, 0x67, 0x14,
+	0xf1, 0x75, 0x48, 0xcb, 0xfd, 0x00, 0x99, 0x37, 0xaf, 0xeb, 0x5b, 0xfb, 0x3b, 0xa5, 0x2b, 0x6a,
+	0x16, 0x52, 0x5b, 0xdb, 0x2f, 0x4b, 0x08, 0xdf, 0x85, 0xf2, 0x9e, 0x77, 0xd0, 0xb3, 0xf8, 0x9e,
+	0xd1, 0x25, 0xa6, 0x67, 0x13, 0xb7, 0x49, 0xfe, 0xe5, 0x11, 0xc6, 0xe3, 0x37, 0x18, 0xdf, 0x83,
+	0x95, 0x04, 0x8e, 0xf5, 0xa9, 0xc3, 0xa4, 0x36, 0x7a, 0xa8, 0x1f, 0x49, 0x60, 0x0e, 0x7f, 0x85,
+	0xa0, 0x12, 0xc6, 0x66, 0x9f, 0x0e, 0x63, 0xfa, 0xca, 0xaf, 0x37, 0xb1, 0x58, 0xa1, 0xc9, 0x17,
+	0xf1, 0x74, 0xba, 0x28, 0x33, 0xa5, 0x4b, 0x2a, 0x19, 0xdf, 0x48, 0xba, 0x14, 0x21, 0x6d, 0xea,
+	0x5c, 0x97, 0x59, 0x50, 0x94, 0xf6, 0x0e, 0x45, 0xed, 0xd3, 0x10, 0xf7, 0xd9, 0xda, 0xfb, 0x02,
+	0xb4, 0x26, 0xe9, 0x58, 0x8c, 0x13, 0x37, 0xe1, 0xdc, 0x87, 0x90, 0x1f, 0x5a, 0x11, 0x58, 0xbb,
+	0x3a, 0xde, 0x04, 0x71, 0x47, 0xff, 0x09, 0x95, 0x26, 0x71, 0xcf, 0x25, 0x4b, 0x39, 0x43, 0x96,
+	0x5a, 0x82, 0x5c, 0x5b, 0xb7, 0x6c, 0x51, 0x2e, 0xe4, 0x69, 0x72, 0xf8, 0x5d, 0xc4, 0xad, 0xa1,
+	0xc1, 0xc4, 0x0c, 0xa5, 0xcf, 0x5e, 0x0e, 0x7a, 0xba, 0x90, 0xd0, 0xb2, 0x9c, 0x36, 0x0d, 0xcc,
+	0x89, 0xf9, 0xeb, 0x95, 0x5c, 0x96, 0xe7, 0x7a, 0x0f, 0x37, 0x22, 0x9a, 0xdd, 0xdf, 0x55, 0xf7,
+	0x4b, 0xa8, 0xbc, 0x71, 0x26, 0xfa, 0x74, 0x36, 0xcd, 0x42, 0x58, 0x9d, 0xe8, 0x06, 0xb7, 0x06,
+	0x3a, 0x27, 0x97, 0x15, 0xe6, 0x40, 0x39, 0xec, 0x4b, 0xc1, 0x0d, 0xbf, 0xa0, 0x3f, 0xee, 0x40,
+	0xce, 0xf5, 0x05, 0x30, 0x4d, 0x91, 0x4d, 0x6d, 0x31, 0xde, 0xfc, 0xe4, 0x1a, 0x7e, 0x0f, 0xcb,
+	0xa1, 0xbe, 0x7f, 0xb4, 0xdb, 0xc4, 0x65, 0xa1, 0xba, 0x9b, 0x90, 0xa1, 0xf2, 0x0f, 0x0d, 0xc9,
+	0xdd, 0xd7, 0xa2, 0xbb, 0x25, 0x54, 0x64, 0x7c, 0xdf, 0x32, 0x7d, 0xf1, 0x79, 0xf5, 0x4f, 0x30,
+	0x6f, 0x39, 0x03, 0xe2, 0x32, 0xd2, 0x0a, 0x36, 0xa6, 0xe4, 0xc6, 0x58, 0xfd, 0x6b, 0xf8, 0x08,
+	0xb9, 0x1f, 0x7f, 0x83, 0x40, 0xdd, 0xd5, 0x3d, 0xc7, 0xe8, 0x8a, 0x3a, 0xcc, 0x2e, 0x78, 0xd0,
+	0x5b, 0x30, 0x27, 0x48, 0x4b, 0xa8, 0x6e, 0x29, 0x41, 0x59, 0x44, 0xe2, 0xdf, 0x86, 0x6c, 0xdb,
+	0xb2, 0xb9, 0xb0, 0x6a, 0x0c, 0xaf, 0x78, 0xee, 0x2f, 0xa9, 0x77, 0x21, 0x2f, 0x4d, 0x6f, 0x89,
+	0x53, 0x65, 0x92, 0x4e, 0x93, 0x66, 0x37, 0xea, 0xb8, 0x0e, 0xd7, 0x9b, 0x84, 0x19, 0x96, 0x63,
+	0xc6, 0x7c, 0x17, 0x29, 0x46, 0xa1, 0x98, 0x71, 0xc5, 0x68, 0x24, 0x65, 0xb1, 0x49, 0x06, 0xd6,
+	0xe0, 0x94, 0xe3, 0x67, 0x4c, 0x98, 0x2f, 0x10, 0xcc, 0x37, 0x3d, 0x47, 0x9c, 0x34, 0x94, 0xb0,
+	0x91, 0x90, 0x80, 0xa6, 0x48, 0x78, 0xa6, 0x68, 0x68, 0xc6, 0x32, 0x52, 0x80, 0x54, 0x3f, 0xe8,
+	0x5b, 0x79, 0x15, 0x43, 0x5a, 0xf8, 0x3f, 0xe8, 0xd6, 0x63, 0xdd, 0x8f, 0x09, 0x2c, 0xbc, 0xb4,
+	0x6c, 0x3b, 0x6a, 0xe4, 0xcc, 0x51, 0x3e, 0x9b, 0x9a, 0xe2, 0x5d, 0x58, 0x8c, 0x36, 0xd8, 0x50,
+	0xd5, 0xa8, 0x23, 0xfb, 0x4a, 0x26, 0x77, 0xe4, 0xe0, 0x60, 0xa2, 0x71, 0xe7, 0x45, 0xcb, 0xc1,
+	0xd1, 0xd5, 0x2d, 0xe3, 0xd0, 0xa1, 0x6f, 0x6d, 0x62, 0x76, 0x48, 0x8f, 0x38, 0xfc, 0xb7, 0x6d,
+	0x3d, 0x91, 0xf3, 0xa6, 0x26, 0x52, 0xf1, 0x90, 0x40, 0xf8, 0x2d, 0xe7, 0x6f, 0x50, 0xda, 0xa5,
+	0x8c, 0x4b, 0x85, 0xb3, 0x19, 0x87, 0xfb, 0xa2, 0x0a, 0x18, 0xd4, 0x31, 0x2c, 0x9b, 0x5c, 0xe6,
+	0x2e, 0x46, 0x99, 0xb4, 0x32, 0x8d, 0x49, 0xe3, 0x1a, 0x2c, 0x0f, 0x37, 0xee, 0xb8, 0xee, 0xa8,
+	0x93, 0x2f, 0x40, 0x36, 0x18, 0x7a, 0xa4, 0x8b, 0xf2, 0xf8, 0xdf, 0x08, 0x96, 0xc2, 0xce, 0x14,
+	0x3b, 0x9b, 0x98, 0x02, 0xc4, 0x77, 0x60, 0xd4, 0x72, 0xf2, 0x60, 0x22, 0x57, 0x17, 0x20, 0x2b,
+	0x4a, 0x8e, 0x45, 0x1d, 0x3f, 0xac, 0xea, 0x9f, 0xa1, 0x6c, 0x74, 0x89, 0x71, 0xd8, 0xa7, 0x96,
+	0xc3, 0x89, 0xd9, 0x1a, 0xcd, 0x08, 0xa9, 0xc9, 0x33, 0x02, 0xfe, 0x9f, 0x22, 0x0a, 0xb3, 0x3b,
+	0xd5, 0x0e, 0x65, 0x9a, 0x1d, 0x7f, 0x8c, 0x97, 0xa9, 0xd2, 0x69, 0xbf, 0x88, 0xfa, 0x39, 0x22,
+	0x1b, 0x4e, 0x9b, 0x0a, 0xfe, 0x9b, 0xa8, 0x9f, 0x43, 0xbe, 0x21, 0x44, 0x3e, 0x85, 0x25, 0x83,
+	0xf6, 0xfa, 0x36, 0x11, 0xc7, 0x18, 0x86, 0x49, 0x54, 0x38, 0xb1, 0xef, 0x0f, 0xd1, 0x7d, 0x5b,
+	0xae, 0xd1, 0xb5, 0x06, 0x64, 0x14, 0xac, 0xa8, 0x5f, 0x32, 0x67, 0xf8, 0x65, 0xca, 0xec, 0x84,
+	0x07, 0x50, 0x96, 0x67, 0x4c, 0x72, 0x87, 0x73, 0xde, 0x8b, 0xbf, 0x00, 0x18, 0xd4, 0x71, 0x88,
+	0xc1, 0xc3, 0x10, 0x15, 0x36, 0x6f, 0x26, 0xdb, 0xb6, 0x84, 0x6f, 0x0f, 0x81, 0xf8, 0x6b, 0x04,
+	0x5a, 0xa0, 0xd8, 0xbd, 0xa8, 0xea, 0x27, 0xb0, 0xe0, 0x06, 0x59, 0x6f, 0xe9, 0x42, 0x6a, 0x98,
+	0xb4, 0x37, 0xe3, 0x47, 0x1d, 0x77, 0x31, 0xe2, 0x66, 0xa7, 0xce, 0x6b, 0xf6, 0xdf, 0xa1, 0x3c,
+	0x22, 0x1e, 0x17, 0xb9, 0xa9, 0x4f, 0x61, 0x79, 0xac, 0x64, 0x15, 0x43, 0x85, 0x53, 0xae, 0xdb,
+	0xad, 0xbe, 0xe5, 0x74, 0x5a, 0x62, 0x32, 0xa2, 0x1e, 0x6f, 0x31, 0x61, 0xbc, 0xc9, 0x64, 0x0b,
+	0x40, 0xf8, 0x0e, 0x94, 0x5e, 0x5b, 0x4e, 0x27, 0xa6, 0xf7, 0x9a, 0x1c, 0x18, 0x85, 0x14, 0x62,
+	0x06, 0xb3, 0x81, 0x0a, 0xa5, 0xd7, 0x34, 0x0e, 0xc3, 0x0d, 0xd0, 0xf6, 0xba, 0x1e, 0x37, 0xe9,
+	0x5b, 0xe7, 0xb2, 0x14, 0xc7, 0x83, 0x95, 0x50, 0xd4, 0x69, 0x1a, 0x7f, 0x8a, 0x70, 0xa3, 0xa9,
+	0xf3, 0x64, 0xb2, 0xa2, 0x4e, 0x6b, 0x73, 0x78, 0x1f, 0xca, 0x7e, 0x1d, 0xbf, 0xa4, 0xfd, 0xf1,
+	0x26, 0xb1, 0x03, 0x95, 0xed, 0xe1, 0xad, 0x09, 0x6f, 0xc5, 0x30, 0x4b, 0x62, 0x4f, 0x10, 0x68,
+	0xca, 0x35, 0x62, 0xa0, 0xfa, 0xc6, 0x5d, 0x20, 0x27, 0xd4, 0xbf, 0x82, 0x26, 0x18, 0x3d, 0xf3,
+	0x0e, 0x98, 0xe1, 0x5a, 0x07, 0xb1, 0xbb, 0xab, 0x4c, 0x51, 0xea, 0xc1, 0x4a, 0x78, 0x6d, 0x4f,
+	0x07, 0xe2, 0xb2, 0xef, 0x00, 0x53, 0x06, 0x25, 0xfc, 0x41, 0x81, 0xd5, 0xf0, 0x33, 0x59, 0x36,
+	0x1e, 0xc3, 0xd5, 0x58, 0x19, 0x0c, 0x84, 0x4d, 0xae, 0x82, 0x33, 0xbe, 0x47, 0x6d, 0xc0, 0x7c,
+	0x04, 0x2e, 0x14, 0xa4, 0xcf, 0xa2, 0x3b, 0xe7, 0x7c, 0x95, 0xba, 0x0f, 0x10, 0xc0, 0x84, 0xd4,
+	0xcc, 0x94, 0x66, 0x80, 0x29, 0x5c, 0x1f, 0x79, 0xe0, 0xc2, 0xf5, 0x2b, 0xae, 0x70, 0x5a, 0xf7,
+	0xc1, 0x1f, 0x11, 0x2c, 0xef, 0xbc, 0xb3, 0x38, 0x31, 0x3f, 0xc3, 0xc9, 0x79, 0x3e, 0xf6, 0xe2,
+	0x33, 0x87, 0xb7, 0xc4, 0xec, 0x1c, 0x14, 0xa5, 0x8b, 0x99, 0x8b, 0xbf, 0x47, 0xb0, 0x3a, 0xf2,
+	0xec, 0x99, 0x65, 0x46, 0x99, 0xa9, 0xcc, 0x5c, 0x7e, 0x1c, 0xb9, 0x0f, 0x59, 0x9f, 0x91, 0x8e,
+	0x6d, 0xf2, 0x51, 0xd2, 0x89, 0x31, 0x2c, 0x84, 0xd5, 0x72, 0x0c, 0x45, 0x42, 0xb2, 0x08, 0x7d,
+	0x44, 0x90, 0x0d, 0x3a, 0xbc, 0xba, 0x01, 0x10, 0xa1, 0x02, 0xe8, 0x1c, 0x54, 0xa0, 0x62, 0x43,
+	0x7e, 0xc4, 0x0b, 0x92, 0xf7, 0x03, 0x9d, 0x73, 0x1c, 0xf0, 0xe9, 0xd5, 0x59, 0x3c, 0x07, 0x7f,
+	0x40, 0x50, 0x12, 0x3f, 0x5e, 0x10, 0xdd, 0xe6, 0xdd, 0xe0, 0x31, 0x2f, 0x42, 0x77, 0xd1, 0x44,
+	0xba, 0xbb, 0x00, 0xd9, 0xae, 0xdc, 0x74, 0x24, 0x83, 0x90, 0x53, 0x35, 0xc8, 0x1f, 0x5a, 0xb6,
+	0xdd, 0x92, 0xf3, 0x87, 0xe8, 0xc1, 0xb9, 0x27, 0x73, 0x6d, 0xdd, 0x66, 0x44, 0xbd, 0x21, 0xa8,
+	0x91, 0xc3, 0x44, 0x10, 0xad, 0x01, 0x69, 0xb5, 0x75, 0xcb, 0xf6, 0x5c, 0xe9, 0x6d, 0x54, 0x9b,
+	0xc3, 0x55, 0x28, 0xbe, 0xa0, 0xf4, 0xd0, 0x0f, 0x32, 0x31, 0x45, 0x02, 0xf6, 0xa8, 0xe9, 0xd9,
+	0x81, 0x3f, 0x9f, 0x3d, 0xfc, 0xe9, 0xb8, 0x7a, 0xe5, 0xd3, 0x71, 0x15, 0xfd, 0x7c, 0x5c, 0x45,
+	0xbf, 0x1c, 0x57, 0xd1, 0x87, 0x93, 0x2a, 0xfa, 0xf2, 0xa4, 0x8a, 0xbe, 0x3d, 0xa9, 0xa2, 0xef,
+	0x4e, 0xaa, 0xe8, 0x87, 0x93, 0x2a, 0xfa, 0xf1, 0xa4, 0x8a, 0x3e, 0x9d, 0x54, 0xd1, 0xaf, 0x01,
+	0x00, 0x00, 0xff, 0xff, 0x4a, 0xd1, 0x08, 0x6e, 0xa5, 0x17, 0x00, 0x00,
+}

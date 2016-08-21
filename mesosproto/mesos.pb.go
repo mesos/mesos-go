@@ -2,13 +2,119 @@
 // source: mesos.proto
 // DO NOT EDIT!
 
+/*
+	Package mesosproto is a generated protocol buffer package.
+
+	It is generated from these files:
+		mesos.proto
+		messages.proto
+
+	It has these top-level messages:
+		FrameworkID
+		OfferID
+		SlaveID
+		TaskID
+		ExecutorID
+		ContainerID
+		TimeInfo
+		DurationInfo
+		Address
+		URL
+		Unavailability
+		MachineID
+		MachineInfo
+		FrameworkInfo
+		HealthCheck
+		CommandInfo
+		ExecutorInfo
+		MasterInfo
+		SlaveInfo
+		Value
+		Attribute
+		Resource
+		TrafficControlStatistics
+		ResourceStatistics
+		ResourceUsage
+		PerfStatistics
+		Request
+		Offer
+		InverseOffer
+		TaskInfo
+		TaskStatus
+		Filters
+		Environment
+		Parameter
+		Parameters
+		Credential
+		Credentials
+		RateLimit
+		RateLimits
+		Image
+		Volume
+		NetworkInfo
+		ContainerInfo
+		ContainerStatus
+		Labels
+		Label
+		Port
+		Ports
+		DiscoveryInfo
+		AppcImageManifest
+		Task
+		StatusUpdate
+		StatusUpdateRecord
+		SubmitSchedulerRequest
+		SubmitSchedulerResponse
+		ExecutorToFrameworkMessage
+		FrameworkToExecutorMessage
+		RegisterFrameworkMessage
+		ReregisterFrameworkMessage
+		FrameworkRegisteredMessage
+		FrameworkReregisteredMessage
+		UnregisterFrameworkMessage
+		DeactivateFrameworkMessage
+		ResourceRequestMessage
+		ResourceOffersMessage
+		LaunchTasksMessage
+		RescindResourceOfferMessage
+		ReviveOffersMessage
+		RunTaskMessage
+		KillTaskMessage
+		StatusUpdateMessage
+		StatusUpdateAcknowledgementMessage
+		LostSlaveMessage
+		ReconcileTasksMessage
+		FrameworkErrorMessage
+		RegisterSlaveMessage
+		ReregisterSlaveMessage
+		SlaveRegisteredMessage
+		SlaveReregisteredMessage
+		UnregisterSlaveMessage
+		MasterSlaveConnection
+		PingSlaveMessage
+		PongSlaveMessage
+		ShutdownFrameworkMessage
+		ShutdownExecutorMessage
+		UpdateFrameworkMessage
+		CheckpointResourcesMessage
+		UpdateSlaveMessage
+		RegisterExecutorMessage
+		ExecutorRegisteredMessage
+		ExecutorReregisteredMessage
+		ExitedExecutorMessage
+		ReconnectExecutorMessage
+		ReregisterExecutorMessage
+		ShutdownMessage
+		Archive
+		TaskHealthStatus
+		HookExecuted
+*/
 package mesosproto
 
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
-
-// discarding unused import gogoproto "github.com/gogo/protobuf/gogoproto"
+import _ "github.com/gogo/protobuf/gogoproto"
 
 import bytes "bytes"
 
@@ -24,6 +130,12 @@ import io "io"
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
 // *
 // Status is used to indicate the state of the scheduler and executor
@@ -66,6 +178,7 @@ func (x *Status) UnmarshalJSON(data []byte) error {
 	*x = Status(value)
 	return nil
 }
+func (Status) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{0} }
 
 // *
 // Describes possible task states. IMPORTANT: Mesos assumes tasks that
@@ -84,6 +197,7 @@ const (
 	TaskState_TASK_KILLED   TaskState = 4
 	TaskState_TASK_LOST     TaskState = 5
 	TaskState_TASK_ERROR    TaskState = 7
+	TaskState_TASK_KILLING  TaskState = 8
 )
 
 var TaskState_name = map[int32]string{
@@ -95,6 +209,7 @@ var TaskState_name = map[int32]string{
 	4: "TASK_KILLED",
 	5: "TASK_LOST",
 	7: "TASK_ERROR",
+	8: "TASK_KILLING",
 }
 var TaskState_value = map[string]int32{
 	"TASK_STAGING":  6,
@@ -105,6 +220,7 @@ var TaskState_value = map[string]int32{
 	"TASK_KILLED":   4,
 	"TASK_LOST":     5,
 	"TASK_ERROR":    7,
+	"TASK_KILLING":  8,
 }
 
 func (x TaskState) Enum() *TaskState {
@@ -123,6 +239,7 @@ func (x *TaskState) UnmarshalJSON(data []byte) error {
 	*x = TaskState(value)
 	return nil
 }
+func (TaskState) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{1} }
 
 // Describes the several states that a machine can be in.  A `Mode`
 // applies to a machine and to all associated slaves on the machine.
@@ -171,6 +288,7 @@ func (x *MachineInfo_Mode) UnmarshalJSON(data []byte) error {
 	*x = MachineInfo_Mode(value)
 	return nil
 }
+func (MachineInfo_Mode) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{12, 0} }
 
 type FrameworkInfo_Capability_Type int32
 
@@ -179,13 +297,19 @@ const (
 	// message for details.
 	// TODO(vinod): This is currently a no-op.
 	FrameworkInfo_Capability_REVOCABLE_RESOURCES FrameworkInfo_Capability_Type = 1
+	// Receive the TASK_KILLING TaskState when a task is being
+	// killed by an executor. The executor will examine this
+	// capability to determine whether it can send TASK_KILLING.
+	FrameworkInfo_Capability_TASK_KILLING_STATE FrameworkInfo_Capability_Type = 2
 )
 
 var FrameworkInfo_Capability_Type_name = map[int32]string{
 	1: "REVOCABLE_RESOURCES",
+	2: "TASK_KILLING_STATE",
 }
 var FrameworkInfo_Capability_Type_value = map[string]int32{
 	"REVOCABLE_RESOURCES": 1,
+	"TASK_KILLING_STATE":  2,
 }
 
 func (x FrameworkInfo_Capability_Type) Enum() *FrameworkInfo_Capability_Type {
@@ -203,6 +327,9 @@ func (x *FrameworkInfo_Capability_Type) UnmarshalJSON(data []byte) error {
 	}
 	*x = FrameworkInfo_Capability_Type(value)
 	return nil
+}
+func (FrameworkInfo_Capability_Type) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{13, 0, 0}
 }
 
 type Value_Type int32
@@ -243,6 +370,7 @@ func (x *Value_Type) UnmarshalJSON(data []byte) error {
 	*x = Value_Type(value)
 	return nil
 }
+func (Value_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19, 0} }
 
 type Offer_Operation_Type int32
 
@@ -285,6 +413,9 @@ func (x *Offer_Operation_Type) UnmarshalJSON(data []byte) error {
 	*x = Offer_Operation_Type(value)
 	return nil
 }
+func (Offer_Operation_Type) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{27, 0, 0}
+}
 
 // Describes the source of the task status update.
 type TaskStatus_Source int32
@@ -322,6 +453,7 @@ func (x *TaskStatus_Source) UnmarshalJSON(data []byte) error {
 	*x = TaskStatus_Source(value)
 	return nil
 }
+func (TaskStatus_Source) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{30, 0} }
 
 // Detailed reason for the task status update.
 //
@@ -431,6 +563,7 @@ func (x *TaskStatus_Reason) UnmarshalJSON(data []byte) error {
 	*x = TaskStatus_Reason(value)
 	return nil
 }
+func (TaskStatus_Reason) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{30, 1} }
 
 type Image_Type int32
 
@@ -464,6 +597,7 @@ func (x *Image_Type) UnmarshalJSON(data []byte) error {
 	*x = Image_Type(value)
 	return nil
 }
+func (Image_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{39, 0} }
 
 type Volume_Mode int32
 
@@ -497,6 +631,7 @@ func (x *Volume_Mode) UnmarshalJSON(data []byte) error {
 	*x = Volume_Mode(value)
 	return nil
 }
+func (Volume_Mode) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{40, 0} }
 
 type NetworkInfo_Protocol int32
 
@@ -530,6 +665,7 @@ func (x *NetworkInfo_Protocol) UnmarshalJSON(data []byte) error {
 	*x = NetworkInfo_Protocol(value)
 	return nil
 }
+func (NetworkInfo_Protocol) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{41, 0} }
 
 // All container implementation types.
 type ContainerInfo_Type int32
@@ -564,6 +700,7 @@ func (x *ContainerInfo_Type) UnmarshalJSON(data []byte) error {
 	*x = ContainerInfo_Type(value)
 	return nil
 }
+func (ContainerInfo_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{42, 0} }
 
 // Network options.
 type ContainerInfo_DockerInfo_Network int32
@@ -601,6 +738,9 @@ func (x *ContainerInfo_DockerInfo_Network) UnmarshalJSON(data []byte) error {
 	*x = ContainerInfo_DockerInfo_Network(value)
 	return nil
 }
+func (ContainerInfo_DockerInfo_Network) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{42, 0, 0}
+}
 
 type DiscoveryInfo_Visibility int32
 
@@ -637,6 +777,9 @@ func (x *DiscoveryInfo_Visibility) UnmarshalJSON(data []byte) error {
 	*x = DiscoveryInfo_Visibility(value)
 	return nil
 }
+func (DiscoveryInfo_Visibility) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{48, 0}
+}
 
 // *
 // A unique ID assigned to a framework. A framework can reuse this ID
@@ -646,8 +789,9 @@ type FrameworkID struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *FrameworkID) Reset()      { *m = FrameworkID{} }
-func (*FrameworkID) ProtoMessage() {}
+func (m *FrameworkID) Reset()                    { *m = FrameworkID{} }
+func (*FrameworkID) ProtoMessage()               {}
+func (*FrameworkID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{0} }
 
 func (m *FrameworkID) GetValue() string {
 	if m != nil && m.Value != nil {
@@ -663,8 +807,9 @@ type OfferID struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *OfferID) Reset()      { *m = OfferID{} }
-func (*OfferID) ProtoMessage() {}
+func (m *OfferID) Reset()                    { *m = OfferID{} }
+func (*OfferID) ProtoMessage()               {}
+func (*OfferID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{1} }
 
 func (m *OfferID) GetValue() string {
 	if m != nil && m.Value != nil {
@@ -682,8 +827,9 @@ type SlaveID struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *SlaveID) Reset()      { *m = SlaveID{} }
-func (*SlaveID) ProtoMessage() {}
+func (m *SlaveID) Reset()                    { *m = SlaveID{} }
+func (*SlaveID) ProtoMessage()               {}
+func (*SlaveID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{2} }
 
 func (m *SlaveID) GetValue() string {
 	if m != nil && m.Value != nil {
@@ -702,8 +848,9 @@ type TaskID struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *TaskID) Reset()      { *m = TaskID{} }
-func (*TaskID) ProtoMessage() {}
+func (m *TaskID) Reset()                    { *m = TaskID{} }
+func (*TaskID) ProtoMessage()               {}
+func (*TaskID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{3} }
 
 func (m *TaskID) GetValue() string {
 	if m != nil && m.Value != nil {
@@ -721,8 +868,9 @@ type ExecutorID struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *ExecutorID) Reset()      { *m = ExecutorID{} }
-func (*ExecutorID) ProtoMessage() {}
+func (m *ExecutorID) Reset()                    { *m = ExecutorID{} }
+func (*ExecutorID) ProtoMessage()               {}
+func (*ExecutorID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{4} }
 
 func (m *ExecutorID) GetValue() string {
 	if m != nil && m.Value != nil {
@@ -741,8 +889,9 @@ type ContainerID struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *ContainerID) Reset()      { *m = ContainerID{} }
-func (*ContainerID) ProtoMessage() {}
+func (m *ContainerID) Reset()                    { *m = ContainerID{} }
+func (*ContainerID) ProtoMessage()               {}
+func (*ContainerID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{5} }
 
 func (m *ContainerID) GetValue() string {
 	if m != nil && m.Value != nil {
@@ -758,8 +907,9 @@ type TimeInfo struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *TimeInfo) Reset()      { *m = TimeInfo{} }
-func (*TimeInfo) ProtoMessage() {}
+func (m *TimeInfo) Reset()                    { *m = TimeInfo{} }
+func (*TimeInfo) ProtoMessage()               {}
+func (*TimeInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{6} }
 
 func (m *TimeInfo) GetNanoseconds() int64 {
 	if m != nil && m.Nanoseconds != nil {
@@ -775,8 +925,9 @@ type DurationInfo struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *DurationInfo) Reset()      { *m = DurationInfo{} }
-func (*DurationInfo) ProtoMessage() {}
+func (m *DurationInfo) Reset()                    { *m = DurationInfo{} }
+func (*DurationInfo) ProtoMessage()               {}
+func (*DurationInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{7} }
 
 func (m *DurationInfo) GetNanoseconds() int64 {
 	if m != nil && m.Nanoseconds != nil {
@@ -797,8 +948,9 @@ type Address struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Address) Reset()      { *m = Address{} }
-func (*Address) ProtoMessage() {}
+func (m *Address) Reset()                    { *m = Address{} }
+func (*Address) ProtoMessage()               {}
+func (*Address) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{8} }
 
 func (m *Address) GetHostname() string {
 	if m != nil && m.Hostname != nil {
@@ -832,8 +984,9 @@ type URL struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *URL) Reset()      { *m = URL{} }
-func (*URL) ProtoMessage() {}
+func (m *URL) Reset()                    { *m = URL{} }
+func (*URL) ProtoMessage()               {}
+func (*URL) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{9} }
 
 func (m *URL) GetScheme() string {
 	if m != nil && m.Scheme != nil {
@@ -882,8 +1035,9 @@ type Unavailability struct {
 	XXX_unrecognized []byte        `json:"-"`
 }
 
-func (m *Unavailability) Reset()      { *m = Unavailability{} }
-func (*Unavailability) ProtoMessage() {}
+func (m *Unavailability) Reset()                    { *m = Unavailability{} }
+func (*Unavailability) ProtoMessage()               {}
+func (*Unavailability) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{10} }
 
 func (m *Unavailability) GetStart() *TimeInfo {
 	if m != nil {
@@ -911,8 +1065,9 @@ type MachineID struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *MachineID) Reset()      { *m = MachineID{} }
-func (*MachineID) ProtoMessage() {}
+func (m *MachineID) Reset()                    { *m = MachineID{} }
+func (*MachineID) ProtoMessage()               {}
+func (*MachineID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{11} }
 
 func (m *MachineID) GetHostname() string {
 	if m != nil && m.Hostname != nil {
@@ -941,8 +1096,9 @@ type MachineInfo struct {
 	XXX_unrecognized []byte          `json:"-"`
 }
 
-func (m *MachineInfo) Reset()      { *m = MachineInfo{} }
-func (*MachineInfo) ProtoMessage() {}
+func (m *MachineInfo) Reset()                    { *m = MachineInfo{} }
+func (*MachineInfo) ProtoMessage()               {}
+func (*MachineInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{12} }
 
 func (m *MachineInfo) GetId() *MachineID {
 	if m != nil {
@@ -1018,8 +1174,9 @@ type FrameworkInfo struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *FrameworkInfo) Reset()      { *m = FrameworkInfo{} }
-func (*FrameworkInfo) ProtoMessage() {}
+func (m *FrameworkInfo) Reset()                    { *m = FrameworkInfo{} }
+func (*FrameworkInfo) ProtoMessage()               {}
+func (*FrameworkInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{13} }
 
 const Default_FrameworkInfo_FailoverTimeout float64 = 0
 const Default_FrameworkInfo_Checkpoint bool = false
@@ -1109,6 +1266,9 @@ type FrameworkInfo_Capability struct {
 
 func (m *FrameworkInfo_Capability) Reset()      { *m = FrameworkInfo_Capability{} }
 func (*FrameworkInfo_Capability) ProtoMessage() {}
+func (*FrameworkInfo_Capability) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{13, 0}
+}
 
 func (m *FrameworkInfo_Capability) GetType() FrameworkInfo_Capability_Type {
 	if m != nil && m.Type != nil {
@@ -1140,8 +1300,9 @@ type HealthCheck struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *HealthCheck) Reset()      { *m = HealthCheck{} }
-func (*HealthCheck) ProtoMessage() {}
+func (m *HealthCheck) Reset()                    { *m = HealthCheck{} }
+func (*HealthCheck) ProtoMessage()               {}
+func (*HealthCheck) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{14} }
 
 const Default_HealthCheck_DelaySeconds float64 = 15
 const Default_HealthCheck_IntervalSeconds float64 = 10
@@ -1211,8 +1372,9 @@ type HealthCheck_HTTP struct {
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *HealthCheck_HTTP) Reset()      { *m = HealthCheck_HTTP{} }
-func (*HealthCheck_HTTP) ProtoMessage() {}
+func (m *HealthCheck_HTTP) Reset()                    { *m = HealthCheck_HTTP{} }
+func (*HealthCheck_HTTP) ProtoMessage()               {}
+func (*HealthCheck_HTTP) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{14, 0} }
 
 const Default_HealthCheck_HTTP_Path string = "/"
 
@@ -1247,11 +1409,8 @@ func (m *HealthCheck_HTTP) GetStatuses() []uint32 {
 // false. In addition, any environment variables are set before executing
 // the command (so they can be used to "parameterize" your command).
 type CommandInfo struct {
-	// NOTE: MesosContainerizer does currently not support this
-	// attribute and tasks supplying a 'container' will fail.
-	Container   *CommandInfo_ContainerInfo `protobuf:"bytes,4,opt,name=container" json:"container,omitempty"`
-	Uris        []*CommandInfo_URI         `protobuf:"bytes,1,rep,name=uris" json:"uris,omitempty"`
-	Environment *Environment               `protobuf:"bytes,2,opt,name=environment" json:"environment,omitempty"`
+	Uris        []*CommandInfo_URI `protobuf:"bytes,1,rep,name=uris" json:"uris,omitempty"`
+	Environment *Environment       `protobuf:"bytes,2,opt,name=environment" json:"environment,omitempty"`
 	// There are two ways to specify the command:
 	// 1) If 'shell == true', the command will be launched via shell
 	// 		(i.e., /bin/sh -c 'value'). The 'value' specified will be
@@ -1275,17 +1434,11 @@ type CommandInfo struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *CommandInfo) Reset()      { *m = CommandInfo{} }
-func (*CommandInfo) ProtoMessage() {}
+func (m *CommandInfo) Reset()                    { *m = CommandInfo{} }
+func (*CommandInfo) ProtoMessage()               {}
+func (*CommandInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{15} }
 
 const Default_CommandInfo_Shell bool = true
-
-func (m *CommandInfo) GetContainer() *CommandInfo_ContainerInfo {
-	if m != nil {
-		return m.Container
-	}
-	return nil
-}
 
 func (m *CommandInfo) GetUris() []*CommandInfo_URI {
 	if m != nil {
@@ -1351,8 +1504,9 @@ type CommandInfo_URI struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *CommandInfo_URI) Reset()      { *m = CommandInfo_URI{} }
-func (*CommandInfo_URI) ProtoMessage() {}
+func (m *CommandInfo_URI) Reset()                    { *m = CommandInfo_URI{} }
+func (*CommandInfo_URI) ProtoMessage()               {}
+func (*CommandInfo_URI) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{15, 0} }
 
 const Default_CommandInfo_URI_Extract bool = true
 
@@ -1384,40 +1538,6 @@ func (m *CommandInfo_URI) GetCache() bool {
 	return false
 }
 
-// Describes a container.
-// Not all containerizers currently implement ContainerInfo, so it
-// is possible that a launched task will fail due to supplying this
-// attribute.
-// NOTE: The containerizer API is currently in an early beta or
-// even alpha state. Some details, like the exact semantics of an
-// "image" or "options" are not yet hardened.
-// TODO(tillt): Describe the exact scheme and semantics of "image"
-// and "options".
-type CommandInfo_ContainerInfo struct {
-	// URI describing the container image name.
-	Image *string `protobuf:"bytes,1,req,name=image" json:"image,omitempty"`
-	// Describes additional options passed to the containerizer.
-	Options          []string `protobuf:"bytes,2,rep,name=options" json:"options,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
-}
-
-func (m *CommandInfo_ContainerInfo) Reset()      { *m = CommandInfo_ContainerInfo{} }
-func (*CommandInfo_ContainerInfo) ProtoMessage() {}
-
-func (m *CommandInfo_ContainerInfo) GetImage() string {
-	if m != nil && m.Image != nil {
-		return *m.Image
-	}
-	return ""
-}
-
-func (m *CommandInfo_ContainerInfo) GetOptions() []string {
-	if m != nil {
-		return m.Options
-	}
-	return nil
-}
-
 // *
 // Describes information about an executor. The 'data' field can be
 // used to pass arbitrary bytes to an executor.
@@ -1447,8 +1567,9 @@ type ExecutorInfo struct {
 	XXX_unrecognized []byte         `json:"-"`
 }
 
-func (m *ExecutorInfo) Reset()      { *m = ExecutorInfo{} }
-func (*ExecutorInfo) ProtoMessage() {}
+func (m *ExecutorInfo) Reset()                    { *m = ExecutorInfo{} }
+func (*ExecutorInfo) ProtoMessage()               {}
+func (*ExecutorInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{16} }
 
 func (m *ExecutorInfo) GetExecutorId() *ExecutorID {
 	if m != nil {
@@ -1545,8 +1666,9 @@ type MasterInfo struct {
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *MasterInfo) Reset()      { *m = MasterInfo{} }
-func (*MasterInfo) ProtoMessage() {}
+func (m *MasterInfo) Reset()                    { *m = MasterInfo{} }
+func (*MasterInfo) ProtoMessage()               {}
+func (*MasterInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{17} }
 
 const Default_MasterInfo_Port uint32 = 5050
 
@@ -1617,8 +1739,9 @@ type SlaveInfo struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *SlaveInfo) Reset()      { *m = SlaveInfo{} }
-func (*SlaveInfo) ProtoMessage() {}
+func (m *SlaveInfo) Reset()                    { *m = SlaveInfo{} }
+func (*SlaveInfo) ProtoMessage()               {}
+func (*SlaveInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{18} }
 
 const Default_SlaveInfo_Port int32 = 5051
 const Default_SlaveInfo_Checkpoint bool = false
@@ -1677,8 +1800,9 @@ type Value struct {
 	XXX_unrecognized []byte        `json:"-"`
 }
 
-func (m *Value) Reset()      { *m = Value{} }
-func (*Value) ProtoMessage() {}
+func (m *Value) Reset()                    { *m = Value{} }
+func (*Value) ProtoMessage()               {}
+func (*Value) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19} }
 
 func (m *Value) GetType() Value_Type {
 	if m != nil && m.Type != nil {
@@ -1720,8 +1844,9 @@ type Value_Scalar struct {
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *Value_Scalar) Reset()      { *m = Value_Scalar{} }
-func (*Value_Scalar) ProtoMessage() {}
+func (m *Value_Scalar) Reset()                    { *m = Value_Scalar{} }
+func (*Value_Scalar) ProtoMessage()               {}
+func (*Value_Scalar) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19, 0} }
 
 func (m *Value_Scalar) GetValue() float64 {
 	if m != nil && m.Value != nil {
@@ -1736,8 +1861,9 @@ type Value_Range struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Value_Range) Reset()      { *m = Value_Range{} }
-func (*Value_Range) ProtoMessage() {}
+func (m *Value_Range) Reset()                    { *m = Value_Range{} }
+func (*Value_Range) ProtoMessage()               {}
+func (*Value_Range) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19, 1} }
 
 func (m *Value_Range) GetBegin() uint64 {
 	if m != nil && m.Begin != nil {
@@ -1758,8 +1884,9 @@ type Value_Ranges struct {
 	XXX_unrecognized []byte         `json:"-"`
 }
 
-func (m *Value_Ranges) Reset()      { *m = Value_Ranges{} }
-func (*Value_Ranges) ProtoMessage() {}
+func (m *Value_Ranges) Reset()                    { *m = Value_Ranges{} }
+func (*Value_Ranges) ProtoMessage()               {}
+func (*Value_Ranges) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19, 2} }
 
 func (m *Value_Ranges) GetRange() []*Value_Range {
 	if m != nil {
@@ -1773,8 +1900,9 @@ type Value_Set struct {
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *Value_Set) Reset()      { *m = Value_Set{} }
-func (*Value_Set) ProtoMessage() {}
+func (m *Value_Set) Reset()                    { *m = Value_Set{} }
+func (*Value_Set) ProtoMessage()               {}
+func (*Value_Set) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19, 3} }
 
 func (m *Value_Set) GetItem() []string {
 	if m != nil {
@@ -1788,8 +1916,9 @@ type Value_Text struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Value_Text) Reset()      { *m = Value_Text{} }
-func (*Value_Text) ProtoMessage() {}
+func (m *Value_Text) Reset()                    { *m = Value_Text{} }
+func (*Value_Text) ProtoMessage()               {}
+func (*Value_Text) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19, 4} }
 
 func (m *Value_Text) GetValue() string {
 	if m != nil && m.Value != nil {
@@ -1812,8 +1941,9 @@ type Attribute struct {
 	XXX_unrecognized []byte        `json:"-"`
 }
 
-func (m *Attribute) Reset()      { *m = Attribute{} }
-func (*Attribute) ProtoMessage() {}
+func (m *Attribute) Reset()                    { *m = Attribute{} }
+func (*Attribute) ProtoMessage()               {}
+func (*Attribute) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{20} }
 
 func (m *Attribute) GetName() string {
 	if m != nil && m.Name != nil {
@@ -1887,8 +2017,9 @@ type Resource struct {
 	XXX_unrecognized []byte                  `json:"-"`
 }
 
-func (m *Resource) Reset()      { *m = Resource{} }
-func (*Resource) ProtoMessage() {}
+func (m *Resource) Reset()                    { *m = Resource{} }
+func (*Resource) ProtoMessage()               {}
+func (*Resource) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{21} }
 
 const Default_Resource_Role string = "*"
 
@@ -1968,6 +2099,9 @@ type Resource_ReservationInfo struct {
 
 func (m *Resource_ReservationInfo) Reset()      { *m = Resource_ReservationInfo{} }
 func (*Resource_ReservationInfo) ProtoMessage() {}
+func (*Resource_ReservationInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{21, 0}
+}
 
 func (m *Resource_ReservationInfo) GetPrincipal() string {
 	if m != nil && m.Principal != nil {
@@ -1991,8 +2125,9 @@ type Resource_DiskInfo struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Resource_DiskInfo) Reset()      { *m = Resource_DiskInfo{} }
-func (*Resource_DiskInfo) ProtoMessage() {}
+func (m *Resource_DiskInfo) Reset()                    { *m = Resource_DiskInfo{} }
+func (*Resource_DiskInfo) ProtoMessage()               {}
+func (*Resource_DiskInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{21, 1} }
 
 func (m *Resource_DiskInfo) GetPersistence() *Resource_DiskInfo_Persistence {
 	if m != nil {
@@ -2028,6 +2163,9 @@ type Resource_DiskInfo_Persistence struct {
 
 func (m *Resource_DiskInfo_Persistence) Reset()      { *m = Resource_DiskInfo_Persistence{} }
 func (*Resource_DiskInfo_Persistence) ProtoMessage() {}
+func (*Resource_DiskInfo_Persistence) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{21, 1, 0}
+}
 
 func (m *Resource_DiskInfo_Persistence) GetId() string {
 	if m != nil && m.Id != nil {
@@ -2040,8 +2178,9 @@ type Resource_RevocableInfo struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *Resource_RevocableInfo) Reset()      { *m = Resource_RevocableInfo{} }
-func (*Resource_RevocableInfo) ProtoMessage() {}
+func (m *Resource_RevocableInfo) Reset()                    { *m = Resource_RevocableInfo{} }
+func (*Resource_RevocableInfo) ProtoMessage()               {}
+func (*Resource_RevocableInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{21, 2} }
 
 // *
 // When the network bandwidth caps are enabled and the container
@@ -2081,8 +2220,9 @@ type TrafficControlStatistics struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *TrafficControlStatistics) Reset()      { *m = TrafficControlStatistics{} }
-func (*TrafficControlStatistics) ProtoMessage() {}
+func (m *TrafficControlStatistics) Reset()                    { *m = TrafficControlStatistics{} }
+func (*TrafficControlStatistics) ProtoMessage()               {}
+func (*TrafficControlStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{22} }
 
 func (m *TrafficControlStatistics) GetId() string {
 	if m != nil && m.Id != nil {
@@ -2233,8 +2373,9 @@ type ResourceStatistics struct {
 	XXX_unrecognized            []byte                      `json:"-"`
 }
 
-func (m *ResourceStatistics) Reset()      { *m = ResourceStatistics{} }
-func (*ResourceStatistics) ProtoMessage() {}
+func (m *ResourceStatistics) Reset()                    { *m = ResourceStatistics{} }
+func (*ResourceStatistics) ProtoMessage()               {}
+func (*ResourceStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{23} }
 
 func (m *ResourceStatistics) GetTimestamp() float64 {
 	if m != nil && m.Timestamp != nil {
@@ -2533,8 +2674,9 @@ type ResourceUsage struct {
 	XXX_unrecognized []byte      `json:"-"`
 }
 
-func (m *ResourceUsage) Reset()      { *m = ResourceUsage{} }
-func (*ResourceUsage) ProtoMessage() {}
+func (m *ResourceUsage) Reset()                    { *m = ResourceUsage{} }
+func (*ResourceUsage) ProtoMessage()               {}
+func (*ResourceUsage) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24} }
 
 func (m *ResourceUsage) GetExecutors() []*ResourceUsage_Executor {
 	if m != nil {
@@ -2563,8 +2705,9 @@ type ResourceUsage_Executor struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *ResourceUsage_Executor) Reset()      { *m = ResourceUsage_Executor{} }
-func (*ResourceUsage_Executor) ProtoMessage() {}
+func (m *ResourceUsage_Executor) Reset()                    { *m = ResourceUsage_Executor{} }
+func (*ResourceUsage_Executor) ProtoMessage()               {}
+func (*ResourceUsage_Executor) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24, 0} }
 
 func (m *ResourceUsage_Executor) GetExecutorInfo() *ExecutorInfo {
 	if m != nil {
@@ -2665,8 +2808,9 @@ type PerfStatistics struct {
 	XXX_unrecognized       []byte  `json:"-"`
 }
 
-func (m *PerfStatistics) Reset()      { *m = PerfStatistics{} }
-func (*PerfStatistics) ProtoMessage() {}
+func (m *PerfStatistics) Reset()                    { *m = PerfStatistics{} }
+func (*PerfStatistics) ProtoMessage()               {}
+func (*PerfStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{25} }
 
 func (m *PerfStatistics) GetTimestamp() float64 {
 	if m != nil && m.Timestamp != nil {
@@ -3050,8 +3194,9 @@ type Request struct {
 	XXX_unrecognized []byte      `json:"-"`
 }
 
-func (m *Request) Reset()      { *m = Request{} }
-func (*Request) ProtoMessage() {}
+func (m *Request) Reset()                    { *m = Request{} }
+func (*Request) ProtoMessage()               {}
+func (*Request) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26} }
 
 func (m *Request) GetSlaveId() *SlaveID {
 	if m != nil {
@@ -3094,8 +3239,9 @@ type Offer struct {
 	XXX_unrecognized []byte          `json:"-"`
 }
 
-func (m *Offer) Reset()      { *m = Offer{} }
-func (*Offer) ProtoMessage() {}
+func (m *Offer) Reset()                    { *m = Offer{} }
+func (*Offer) ProtoMessage()               {}
+func (*Offer) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{27} }
 
 func (m *Offer) GetId() *OfferID {
 	if m != nil {
@@ -3171,8 +3317,9 @@ type Offer_Operation struct {
 	XXX_unrecognized []byte                     `json:"-"`
 }
 
-func (m *Offer_Operation) Reset()      { *m = Offer_Operation{} }
-func (*Offer_Operation) ProtoMessage() {}
+func (m *Offer_Operation) Reset()                    { *m = Offer_Operation{} }
+func (*Offer_Operation) ProtoMessage()               {}
+func (*Offer_Operation) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{27, 0} }
 
 func (m *Offer_Operation) GetType() Offer_Operation_Type {
 	if m != nil && m.Type != nil {
@@ -3223,6 +3370,9 @@ type Offer_Operation_Launch struct {
 
 func (m *Offer_Operation_Launch) Reset()      { *m = Offer_Operation_Launch{} }
 func (*Offer_Operation_Launch) ProtoMessage() {}
+func (*Offer_Operation_Launch) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{27, 0, 0}
+}
 
 func (m *Offer_Operation_Launch) GetTaskInfos() []*TaskInfo {
 	if m != nil {
@@ -3238,6 +3388,9 @@ type Offer_Operation_Reserve struct {
 
 func (m *Offer_Operation_Reserve) Reset()      { *m = Offer_Operation_Reserve{} }
 func (*Offer_Operation_Reserve) ProtoMessage() {}
+func (*Offer_Operation_Reserve) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{27, 0, 1}
+}
 
 func (m *Offer_Operation_Reserve) GetResources() []*Resource {
 	if m != nil {
@@ -3253,6 +3406,9 @@ type Offer_Operation_Unreserve struct {
 
 func (m *Offer_Operation_Unreserve) Reset()      { *m = Offer_Operation_Unreserve{} }
 func (*Offer_Operation_Unreserve) ProtoMessage() {}
+func (*Offer_Operation_Unreserve) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{27, 0, 2}
+}
 
 func (m *Offer_Operation_Unreserve) GetResources() []*Resource {
 	if m != nil {
@@ -3268,6 +3424,9 @@ type Offer_Operation_Create struct {
 
 func (m *Offer_Operation_Create) Reset()      { *m = Offer_Operation_Create{} }
 func (*Offer_Operation_Create) ProtoMessage() {}
+func (*Offer_Operation_Create) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{27, 0, 3}
+}
 
 func (m *Offer_Operation_Create) GetVolumes() []*Resource {
 	if m != nil {
@@ -3283,6 +3442,9 @@ type Offer_Operation_Destroy struct {
 
 func (m *Offer_Operation_Destroy) Reset()      { *m = Offer_Operation_Destroy{} }
 func (*Offer_Operation_Destroy) ProtoMessage() {}
+func (*Offer_Operation_Destroy) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{27, 0, 4}
+}
 
 func (m *Offer_Operation_Destroy) GetVolumes() []*Resource {
 	if m != nil {
@@ -3333,8 +3495,9 @@ type InverseOffer struct {
 	XXX_unrecognized []byte      `json:"-"`
 }
 
-func (m *InverseOffer) Reset()      { *m = InverseOffer{} }
-func (*InverseOffer) ProtoMessage() {}
+func (m *InverseOffer) Reset()                    { *m = InverseOffer{} }
+func (*InverseOffer) ProtoMessage()               {}
+func (*InverseOffer) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{28} }
 
 func (m *InverseOffer) GetId() *OfferID {
 	if m != nil {
@@ -3412,8 +3575,9 @@ type TaskInfo struct {
 	XXX_unrecognized []byte         `json:"-"`
 }
 
-func (m *TaskInfo) Reset()      { *m = TaskInfo{} }
-func (*TaskInfo) ProtoMessage() {}
+func (m *TaskInfo) Reset()                    { *m = TaskInfo{} }
+func (*TaskInfo) ProtoMessage()               {}
+func (*TaskInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{29} }
 
 func (m *TaskInfo) GetName() string {
 	if m != nil && m.Name != nil {
@@ -3531,8 +3695,9 @@ type TaskStatus struct {
 	XXX_unrecognized []byte           `json:"-"`
 }
 
-func (m *TaskStatus) Reset()      { *m = TaskStatus{} }
-func (*TaskStatus) ProtoMessage() {}
+func (m *TaskStatus) Reset()                    { *m = TaskStatus{} }
+func (*TaskStatus) ProtoMessage()               {}
+func (*TaskStatus) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{30} }
 
 func (m *TaskStatus) GetTaskId() *TaskID {
 	if m != nil {
@@ -3639,8 +3804,9 @@ type Filters struct {
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *Filters) Reset()      { *m = Filters{} }
-func (*Filters) ProtoMessage() {}
+func (m *Filters) Reset()                    { *m = Filters{} }
+func (*Filters) ProtoMessage()               {}
+func (*Filters) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{31} }
 
 const Default_Filters_RefuseSeconds float64 = 5
 
@@ -3660,8 +3826,9 @@ type Environment struct {
 	XXX_unrecognized []byte                  `json:"-"`
 }
 
-func (m *Environment) Reset()      { *m = Environment{} }
-func (*Environment) ProtoMessage() {}
+func (m *Environment) Reset()                    { *m = Environment{} }
+func (*Environment) ProtoMessage()               {}
+func (*Environment) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{32} }
 
 func (m *Environment) GetVariables() []*Environment_Variable {
 	if m != nil {
@@ -3676,8 +3843,9 @@ type Environment_Variable struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Environment_Variable) Reset()      { *m = Environment_Variable{} }
-func (*Environment_Variable) ProtoMessage() {}
+func (m *Environment_Variable) Reset()                    { *m = Environment_Variable{} }
+func (*Environment_Variable) ProtoMessage()               {}
+func (*Environment_Variable) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{32, 0} }
 
 func (m *Environment_Variable) GetName() string {
 	if m != nil && m.Name != nil {
@@ -3701,8 +3869,9 @@ type Parameter struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Parameter) Reset()      { *m = Parameter{} }
-func (*Parameter) ProtoMessage() {}
+func (m *Parameter) Reset()                    { *m = Parameter{} }
+func (*Parameter) ProtoMessage()               {}
+func (*Parameter) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{33} }
 
 func (m *Parameter) GetKey() string {
 	if m != nil && m.Key != nil {
@@ -3725,8 +3894,9 @@ type Parameters struct {
 	XXX_unrecognized []byte       `json:"-"`
 }
 
-func (m *Parameters) Reset()      { *m = Parameters{} }
-func (*Parameters) ProtoMessage() {}
+func (m *Parameters) Reset()                    { *m = Parameters{} }
+func (*Parameters) ProtoMessage()               {}
+func (*Parameters) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{34} }
 
 func (m *Parameters) GetParameter() []*Parameter {
 	if m != nil {
@@ -3749,8 +3919,9 @@ type Credential struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Credential) Reset()      { *m = Credential{} }
-func (*Credential) ProtoMessage() {}
+func (m *Credential) Reset()                    { *m = Credential{} }
+func (*Credential) ProtoMessage()               {}
+func (*Credential) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{35} }
 
 func (m *Credential) GetPrincipal() string {
 	if m != nil && m.Principal != nil {
@@ -3775,8 +3946,9 @@ type Credentials struct {
 	XXX_unrecognized []byte        `json:"-"`
 }
 
-func (m *Credentials) Reset()      { *m = Credentials{} }
-func (*Credentials) ProtoMessage() {}
+func (m *Credentials) Reset()                    { *m = Credentials{} }
+func (*Credentials) ProtoMessage()               {}
+func (*Credentials) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{36} }
 
 func (m *Credentials) GetCredentials() []*Credential {
 	if m != nil {
@@ -3806,8 +3978,9 @@ type RateLimit struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *RateLimit) Reset()      { *m = RateLimit{} }
-func (*RateLimit) ProtoMessage() {}
+func (m *RateLimit) Reset()                    { *m = RateLimit{} }
+func (*RateLimit) ProtoMessage()               {}
+func (*RateLimit) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{37} }
 
 func (m *RateLimit) GetQps() float64 {
 	if m != nil && m.Qps != nil {
@@ -3847,8 +4020,9 @@ type RateLimits struct {
 	XXX_unrecognized         []byte  `json:"-"`
 }
 
-func (m *RateLimits) Reset()      { *m = RateLimits{} }
-func (*RateLimits) ProtoMessage() {}
+func (m *RateLimits) Reset()                    { *m = RateLimits{} }
+func (*RateLimits) ProtoMessage()               {}
+func (*RateLimits) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{38} }
 
 func (m *RateLimits) GetLimits() []*RateLimit {
 	if m != nil {
@@ -3885,8 +4059,9 @@ type Image struct {
 	XXX_unrecognized []byte        `json:"-"`
 }
 
-func (m *Image) Reset()      { *m = Image{} }
-func (*Image) ProtoMessage() {}
+func (m *Image) Reset()                    { *m = Image{} }
+func (*Image) ProtoMessage()               {}
+func (*Image) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{39} }
 
 func (m *Image) GetType() Image_Type {
 	if m != nil && m.Type != nil {
@@ -3924,8 +4099,9 @@ type Image_Appc struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Image_Appc) Reset()      { *m = Image_Appc{} }
-func (*Image_Appc) ProtoMessage() {}
+func (m *Image_Appc) Reset()                    { *m = Image_Appc{} }
+func (*Image_Appc) ProtoMessage()               {}
+func (*Image_Appc) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{39, 0} }
 
 func (m *Image_Appc) GetName() string {
 	if m != nil && m.Name != nil {
@@ -3957,8 +4133,9 @@ type Image_Docker struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Image_Docker) Reset()      { *m = Image_Docker{} }
-func (*Image_Docker) ProtoMessage() {}
+func (m *Image_Docker) Reset()                    { *m = Image_Docker{} }
+func (*Image_Docker) ProtoMessage()               {}
+func (*Image_Docker) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{39, 1} }
 
 func (m *Image_Docker) GetName() string {
 	if m != nil && m.Name != nil {
@@ -3986,8 +4163,9 @@ type Volume struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *Volume) Reset()      { *m = Volume{} }
-func (*Volume) ProtoMessage() {}
+func (m *Volume) Reset()                    { *m = Volume{} }
+func (*Volume) ProtoMessage()               {}
+func (*Volume) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{40} }
 
 func (m *Volume) GetMode() Volume_Mode {
 	if m != nil && m.Mode != nil {
@@ -4068,8 +4246,9 @@ type NetworkInfo struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *NetworkInfo) Reset()      { *m = NetworkInfo{} }
-func (*NetworkInfo) ProtoMessage() {}
+func (m *NetworkInfo) Reset()                    { *m = NetworkInfo{} }
+func (*NetworkInfo) ProtoMessage()               {}
+func (*NetworkInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{41} }
 
 func (m *NetworkInfo) GetIpAddresses() []*NetworkInfo_IPAddress {
 	if m != nil {
@@ -4129,8 +4308,9 @@ type NetworkInfo_IPAddress struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *NetworkInfo_IPAddress) Reset()      { *m = NetworkInfo_IPAddress{} }
-func (*NetworkInfo_IPAddress) ProtoMessage() {}
+func (m *NetworkInfo_IPAddress) Reset()                    { *m = NetworkInfo_IPAddress{} }
+func (*NetworkInfo_IPAddress) ProtoMessage()               {}
+func (*NetworkInfo_IPAddress) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{41, 0} }
 
 func (m *NetworkInfo_IPAddress) GetProtocol() NetworkInfo_Protocol {
 	if m != nil && m.Protocol != nil {
@@ -4163,8 +4343,9 @@ type ContainerInfo struct {
 	XXX_unrecognized []byte         `json:"-"`
 }
 
-func (m *ContainerInfo) Reset()      { *m = ContainerInfo{} }
-func (*ContainerInfo) ProtoMessage() {}
+func (m *ContainerInfo) Reset()                    { *m = ContainerInfo{} }
+func (*ContainerInfo) ProtoMessage()               {}
+func (*ContainerInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{42} }
 
 func (m *ContainerInfo) GetType() ContainerInfo_Type {
 	if m != nil && m.Type != nil {
@@ -4228,6 +4409,9 @@ type ContainerInfo_DockerInfo struct {
 
 func (m *ContainerInfo_DockerInfo) Reset()      { *m = ContainerInfo_DockerInfo{} }
 func (*ContainerInfo_DockerInfo) ProtoMessage() {}
+func (*ContainerInfo_DockerInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{42, 0}
+}
 
 const Default_ContainerInfo_DockerInfo_Network ContainerInfo_DockerInfo_Network = ContainerInfo_DockerInfo_HOST
 const Default_ContainerInfo_DockerInfo_Privileged bool = false
@@ -4284,6 +4468,9 @@ type ContainerInfo_DockerInfo_PortMapping struct {
 
 func (m *ContainerInfo_DockerInfo_PortMapping) Reset()      { *m = ContainerInfo_DockerInfo_PortMapping{} }
 func (*ContainerInfo_DockerInfo_PortMapping) ProtoMessage() {}
+func (*ContainerInfo_DockerInfo_PortMapping) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{42, 0, 0}
+}
 
 func (m *ContainerInfo_DockerInfo_PortMapping) GetHostPort() uint32 {
 	if m != nil && m.HostPort != nil {
@@ -4311,8 +4498,9 @@ type ContainerInfo_MesosInfo struct {
 	XXX_unrecognized []byte `json:"-"`
 }
 
-func (m *ContainerInfo_MesosInfo) Reset()      { *m = ContainerInfo_MesosInfo{} }
-func (*ContainerInfo_MesosInfo) ProtoMessage() {}
+func (m *ContainerInfo_MesosInfo) Reset()                    { *m = ContainerInfo_MesosInfo{} }
+func (*ContainerInfo_MesosInfo) ProtoMessage()               {}
+func (*ContainerInfo_MesosInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{42, 1} }
 
 func (m *ContainerInfo_MesosInfo) GetImage() *Image {
 	if m != nil {
@@ -4330,8 +4518,9 @@ type ContainerStatus struct {
 	XXX_unrecognized []byte         `json:"-"`
 }
 
-func (m *ContainerStatus) Reset()      { *m = ContainerStatus{} }
-func (*ContainerStatus) ProtoMessage() {}
+func (m *ContainerStatus) Reset()                    { *m = ContainerStatus{} }
+func (*ContainerStatus) ProtoMessage()               {}
+func (*ContainerStatus) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{43} }
 
 func (m *ContainerStatus) GetNetworkInfos() []*NetworkInfo {
 	if m != nil {
@@ -4347,8 +4536,9 @@ type Labels struct {
 	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *Labels) Reset()      { *m = Labels{} }
-func (*Labels) ProtoMessage() {}
+func (m *Labels) Reset()                    { *m = Labels{} }
+func (*Labels) ProtoMessage()               {}
+func (*Labels) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{44} }
 
 func (m *Labels) GetLabels() []*Label {
 	if m != nil {
@@ -4365,8 +4555,9 @@ type Label struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Label) Reset()      { *m = Label{} }
-func (*Label) ProtoMessage() {}
+func (m *Label) Reset()                    { *m = Label{} }
+func (*Label) ProtoMessage()               {}
+func (*Label) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{45} }
 
 func (m *Label) GetKey() string {
 	if m != nil && m.Key != nil {
@@ -4392,8 +4583,9 @@ type Port struct {
 	XXX_unrecognized []byte                    `json:"-"`
 }
 
-func (m *Port) Reset()      { *m = Port{} }
-func (*Port) ProtoMessage() {}
+func (m *Port) Reset()                    { *m = Port{} }
+func (*Port) ProtoMessage()               {}
+func (*Port) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{46} }
 
 func (m *Port) GetNumber() uint32 {
 	if m != nil && m.Number != nil {
@@ -4430,8 +4622,9 @@ type Ports struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Ports) Reset()      { *m = Ports{} }
-func (*Ports) ProtoMessage() {}
+func (m *Ports) Reset()                    { *m = Ports{} }
+func (*Ports) ProtoMessage()               {}
+func (*Ports) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{47} }
 
 func (m *Ports) GetPorts() []*Port {
 	if m != nil {
@@ -4464,8 +4657,9 @@ type DiscoveryInfo struct {
 	XXX_unrecognized []byte                    `json:"-"`
 }
 
-func (m *DiscoveryInfo) Reset()      { *m = DiscoveryInfo{} }
-func (*DiscoveryInfo) ProtoMessage() {}
+func (m *DiscoveryInfo) Reset()                    { *m = DiscoveryInfo{} }
+func (*DiscoveryInfo) ProtoMessage()               {}
+func (*DiscoveryInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{48} }
 
 func (m *DiscoveryInfo) GetVisibility() DiscoveryInfo_Visibility {
 	if m != nil && m.Visibility != nil {
@@ -4536,8 +4730,9 @@ type AppcImageManifest struct {
 	XXX_unrecognized []byte                          `json:"-"`
 }
 
-func (m *AppcImageManifest) Reset()      { *m = AppcImageManifest{} }
-func (*AppcImageManifest) ProtoMessage() {}
+func (m *AppcImageManifest) Reset()                    { *m = AppcImageManifest{} }
+func (*AppcImageManifest) ProtoMessage()               {}
+func (*AppcImageManifest) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{49} }
 
 func (m *AppcImageManifest) GetAcKind() string {
 	if m != nil && m.AcKind != nil {
@@ -4580,8 +4775,9 @@ type AppcImageManifest_Label struct {
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *AppcImageManifest_Label) Reset()      { *m = AppcImageManifest_Label{} }
-func (*AppcImageManifest_Label) ProtoMessage() {}
+func (m *AppcImageManifest_Label) Reset()                    { *m = AppcImageManifest_Label{} }
+func (*AppcImageManifest_Label) ProtoMessage()               {}
+func (*AppcImageManifest_Label) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{49, 0} }
 
 func (m *AppcImageManifest_Label) GetName() string {
 	if m != nil && m.Name != nil {
@@ -4605,6 +4801,9 @@ type AppcImageManifest_Annotation struct {
 
 func (m *AppcImageManifest_Annotation) Reset()      { *m = AppcImageManifest_Annotation{} }
 func (*AppcImageManifest_Annotation) ProtoMessage() {}
+func (*AppcImageManifest_Annotation) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{49, 1}
+}
 
 func (m *AppcImageManifest_Annotation) GetName() string {
 	if m != nil && m.Name != nil {
@@ -4621,6 +4820,84 @@ func (m *AppcImageManifest_Annotation) GetValue() string {
 }
 
 func init() {
+	proto.RegisterType((*FrameworkID)(nil), "mesosproto.FrameworkID")
+	proto.RegisterType((*OfferID)(nil), "mesosproto.OfferID")
+	proto.RegisterType((*SlaveID)(nil), "mesosproto.SlaveID")
+	proto.RegisterType((*TaskID)(nil), "mesosproto.TaskID")
+	proto.RegisterType((*ExecutorID)(nil), "mesosproto.ExecutorID")
+	proto.RegisterType((*ContainerID)(nil), "mesosproto.ContainerID")
+	proto.RegisterType((*TimeInfo)(nil), "mesosproto.TimeInfo")
+	proto.RegisterType((*DurationInfo)(nil), "mesosproto.DurationInfo")
+	proto.RegisterType((*Address)(nil), "mesosproto.Address")
+	proto.RegisterType((*URL)(nil), "mesosproto.URL")
+	proto.RegisterType((*Unavailability)(nil), "mesosproto.Unavailability")
+	proto.RegisterType((*MachineID)(nil), "mesosproto.MachineID")
+	proto.RegisterType((*MachineInfo)(nil), "mesosproto.MachineInfo")
+	proto.RegisterType((*FrameworkInfo)(nil), "mesosproto.FrameworkInfo")
+	proto.RegisterType((*FrameworkInfo_Capability)(nil), "mesosproto.FrameworkInfo.Capability")
+	proto.RegisterType((*HealthCheck)(nil), "mesosproto.HealthCheck")
+	proto.RegisterType((*HealthCheck_HTTP)(nil), "mesosproto.HealthCheck.HTTP")
+	proto.RegisterType((*CommandInfo)(nil), "mesosproto.CommandInfo")
+	proto.RegisterType((*CommandInfo_URI)(nil), "mesosproto.CommandInfo.URI")
+	proto.RegisterType((*ExecutorInfo)(nil), "mesosproto.ExecutorInfo")
+	proto.RegisterType((*MasterInfo)(nil), "mesosproto.MasterInfo")
+	proto.RegisterType((*SlaveInfo)(nil), "mesosproto.SlaveInfo")
+	proto.RegisterType((*Value)(nil), "mesosproto.Value")
+	proto.RegisterType((*Value_Scalar)(nil), "mesosproto.Value.Scalar")
+	proto.RegisterType((*Value_Range)(nil), "mesosproto.Value.Range")
+	proto.RegisterType((*Value_Ranges)(nil), "mesosproto.Value.Ranges")
+	proto.RegisterType((*Value_Set)(nil), "mesosproto.Value.Set")
+	proto.RegisterType((*Value_Text)(nil), "mesosproto.Value.Text")
+	proto.RegisterType((*Attribute)(nil), "mesosproto.Attribute")
+	proto.RegisterType((*Resource)(nil), "mesosproto.Resource")
+	proto.RegisterType((*Resource_ReservationInfo)(nil), "mesosproto.Resource.ReservationInfo")
+	proto.RegisterType((*Resource_DiskInfo)(nil), "mesosproto.Resource.DiskInfo")
+	proto.RegisterType((*Resource_DiskInfo_Persistence)(nil), "mesosproto.Resource.DiskInfo.Persistence")
+	proto.RegisterType((*Resource_RevocableInfo)(nil), "mesosproto.Resource.RevocableInfo")
+	proto.RegisterType((*TrafficControlStatistics)(nil), "mesosproto.TrafficControlStatistics")
+	proto.RegisterType((*ResourceStatistics)(nil), "mesosproto.ResourceStatistics")
+	proto.RegisterType((*ResourceUsage)(nil), "mesosproto.ResourceUsage")
+	proto.RegisterType((*ResourceUsage_Executor)(nil), "mesosproto.ResourceUsage.Executor")
+	proto.RegisterType((*PerfStatistics)(nil), "mesosproto.PerfStatistics")
+	proto.RegisterType((*Request)(nil), "mesosproto.Request")
+	proto.RegisterType((*Offer)(nil), "mesosproto.Offer")
+	proto.RegisterType((*Offer_Operation)(nil), "mesosproto.Offer.Operation")
+	proto.RegisterType((*Offer_Operation_Launch)(nil), "mesosproto.Offer.Operation.Launch")
+	proto.RegisterType((*Offer_Operation_Reserve)(nil), "mesosproto.Offer.Operation.Reserve")
+	proto.RegisterType((*Offer_Operation_Unreserve)(nil), "mesosproto.Offer.Operation.Unreserve")
+	proto.RegisterType((*Offer_Operation_Create)(nil), "mesosproto.Offer.Operation.Create")
+	proto.RegisterType((*Offer_Operation_Destroy)(nil), "mesosproto.Offer.Operation.Destroy")
+	proto.RegisterType((*InverseOffer)(nil), "mesosproto.InverseOffer")
+	proto.RegisterType((*TaskInfo)(nil), "mesosproto.TaskInfo")
+	proto.RegisterType((*TaskStatus)(nil), "mesosproto.TaskStatus")
+	proto.RegisterType((*Filters)(nil), "mesosproto.Filters")
+	proto.RegisterType((*Environment)(nil), "mesosproto.Environment")
+	proto.RegisterType((*Environment_Variable)(nil), "mesosproto.Environment.Variable")
+	proto.RegisterType((*Parameter)(nil), "mesosproto.Parameter")
+	proto.RegisterType((*Parameters)(nil), "mesosproto.Parameters")
+	proto.RegisterType((*Credential)(nil), "mesosproto.Credential")
+	proto.RegisterType((*Credentials)(nil), "mesosproto.Credentials")
+	proto.RegisterType((*RateLimit)(nil), "mesosproto.RateLimit")
+	proto.RegisterType((*RateLimits)(nil), "mesosproto.RateLimits")
+	proto.RegisterType((*Image)(nil), "mesosproto.Image")
+	proto.RegisterType((*Image_Appc)(nil), "mesosproto.Image.Appc")
+	proto.RegisterType((*Image_Docker)(nil), "mesosproto.Image.Docker")
+	proto.RegisterType((*Volume)(nil), "mesosproto.Volume")
+	proto.RegisterType((*NetworkInfo)(nil), "mesosproto.NetworkInfo")
+	proto.RegisterType((*NetworkInfo_IPAddress)(nil), "mesosproto.NetworkInfo.IPAddress")
+	proto.RegisterType((*ContainerInfo)(nil), "mesosproto.ContainerInfo")
+	proto.RegisterType((*ContainerInfo_DockerInfo)(nil), "mesosproto.ContainerInfo.DockerInfo")
+	proto.RegisterType((*ContainerInfo_DockerInfo_PortMapping)(nil), "mesosproto.ContainerInfo.DockerInfo.PortMapping")
+	proto.RegisterType((*ContainerInfo_MesosInfo)(nil), "mesosproto.ContainerInfo.MesosInfo")
+	proto.RegisterType((*ContainerStatus)(nil), "mesosproto.ContainerStatus")
+	proto.RegisterType((*Labels)(nil), "mesosproto.Labels")
+	proto.RegisterType((*Label)(nil), "mesosproto.Label")
+	proto.RegisterType((*Port)(nil), "mesosproto.Port")
+	proto.RegisterType((*Ports)(nil), "mesosproto.Ports")
+	proto.RegisterType((*DiscoveryInfo)(nil), "mesosproto.DiscoveryInfo")
+	proto.RegisterType((*AppcImageManifest)(nil), "mesosproto.AppcImageManifest")
+	proto.RegisterType((*AppcImageManifest_Label)(nil), "mesosproto.AppcImageManifest.Label")
+	proto.RegisterType((*AppcImageManifest_Annotation)(nil), "mesosproto.AppcImageManifest.Annotation")
 	proto.RegisterEnum("mesosproto.Status", Status_name, Status_value)
 	proto.RegisterEnum("mesosproto.TaskState", TaskState_name, TaskState_value)
 	proto.RegisterEnum("mesosproto.MachineInfo_Mode", MachineInfo_Mode_name, MachineInfo_Mode_value)
@@ -4646,7 +4923,12 @@ func (this *FrameworkID) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*FrameworkID)
 	if !ok {
-		return fmt.Errorf("that is not of type *FrameworkID")
+		that2, ok := that.(FrameworkID)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *FrameworkID")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4654,7 +4936,7 @@ func (this *FrameworkID) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *FrameworkID but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *FrameworkIDbut is not nil && this == nil")
+		return fmt.Errorf("that is type *FrameworkID but is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
@@ -4680,7 +4962,12 @@ func (this *FrameworkID) Equal(that interface{}) bool {
 
 	that1, ok := that.(*FrameworkID)
 	if !ok {
-		return false
+		that2, ok := that.(FrameworkID)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4714,7 +5001,12 @@ func (this *OfferID) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*OfferID)
 	if !ok {
-		return fmt.Errorf("that is not of type *OfferID")
+		that2, ok := that.(OfferID)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *OfferID")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4722,7 +5014,7 @@ func (this *OfferID) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *OfferID but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *OfferIDbut is not nil && this == nil")
+		return fmt.Errorf("that is type *OfferID but is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
@@ -4748,7 +5040,12 @@ func (this *OfferID) Equal(that interface{}) bool {
 
 	that1, ok := that.(*OfferID)
 	if !ok {
-		return false
+		that2, ok := that.(OfferID)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4782,7 +5079,12 @@ func (this *SlaveID) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*SlaveID)
 	if !ok {
-		return fmt.Errorf("that is not of type *SlaveID")
+		that2, ok := that.(SlaveID)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *SlaveID")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4790,7 +5092,7 @@ func (this *SlaveID) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *SlaveID but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *SlaveIDbut is not nil && this == nil")
+		return fmt.Errorf("that is type *SlaveID but is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
@@ -4816,7 +5118,12 @@ func (this *SlaveID) Equal(that interface{}) bool {
 
 	that1, ok := that.(*SlaveID)
 	if !ok {
-		return false
+		that2, ok := that.(SlaveID)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4850,7 +5157,12 @@ func (this *TaskID) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*TaskID)
 	if !ok {
-		return fmt.Errorf("that is not of type *TaskID")
+		that2, ok := that.(TaskID)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *TaskID")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4858,7 +5170,7 @@ func (this *TaskID) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *TaskID but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *TaskIDbut is not nil && this == nil")
+		return fmt.Errorf("that is type *TaskID but is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
@@ -4884,7 +5196,12 @@ func (this *TaskID) Equal(that interface{}) bool {
 
 	that1, ok := that.(*TaskID)
 	if !ok {
-		return false
+		that2, ok := that.(TaskID)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4918,7 +5235,12 @@ func (this *ExecutorID) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ExecutorID)
 	if !ok {
-		return fmt.Errorf("that is not of type *ExecutorID")
+		that2, ok := that.(ExecutorID)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ExecutorID")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4926,7 +5248,7 @@ func (this *ExecutorID) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ExecutorID but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ExecutorIDbut is not nil && this == nil")
+		return fmt.Errorf("that is type *ExecutorID but is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
@@ -4952,7 +5274,12 @@ func (this *ExecutorID) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ExecutorID)
 	if !ok {
-		return false
+		that2, ok := that.(ExecutorID)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4986,7 +5313,12 @@ func (this *ContainerID) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ContainerID)
 	if !ok {
-		return fmt.Errorf("that is not of type *ContainerID")
+		that2, ok := that.(ContainerID)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ContainerID")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -4994,7 +5326,7 @@ func (this *ContainerID) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ContainerID but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ContainerIDbut is not nil && this == nil")
+		return fmt.Errorf("that is type *ContainerID but is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
@@ -5020,7 +5352,12 @@ func (this *ContainerID) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ContainerID)
 	if !ok {
-		return false
+		that2, ok := that.(ContainerID)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5054,7 +5391,12 @@ func (this *TimeInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*TimeInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *TimeInfo")
+		that2, ok := that.(TimeInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *TimeInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5062,7 +5404,7 @@ func (this *TimeInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *TimeInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *TimeInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *TimeInfo but is not nil && this == nil")
 	}
 	if this.Nanoseconds != nil && that1.Nanoseconds != nil {
 		if *this.Nanoseconds != *that1.Nanoseconds {
@@ -5088,7 +5430,12 @@ func (this *TimeInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*TimeInfo)
 	if !ok {
-		return false
+		that2, ok := that.(TimeInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5122,7 +5469,12 @@ func (this *DurationInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*DurationInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *DurationInfo")
+		that2, ok := that.(DurationInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *DurationInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5130,7 +5482,7 @@ func (this *DurationInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *DurationInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *DurationInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *DurationInfo but is not nil && this == nil")
 	}
 	if this.Nanoseconds != nil && that1.Nanoseconds != nil {
 		if *this.Nanoseconds != *that1.Nanoseconds {
@@ -5156,7 +5508,12 @@ func (this *DurationInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*DurationInfo)
 	if !ok {
-		return false
+		that2, ok := that.(DurationInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5190,7 +5547,12 @@ func (this *Address) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Address)
 	if !ok {
-		return fmt.Errorf("that is not of type *Address")
+		that2, ok := that.(Address)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Address")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5198,7 +5560,7 @@ func (this *Address) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Address but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Addressbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Address but is not nil && this == nil")
 	}
 	if this.Hostname != nil && that1.Hostname != nil {
 		if *this.Hostname != *that1.Hostname {
@@ -5242,7 +5604,12 @@ func (this *Address) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Address)
 	if !ok {
-		return false
+		that2, ok := that.(Address)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5294,7 +5661,12 @@ func (this *URL) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*URL)
 	if !ok {
-		return fmt.Errorf("that is not of type *URL")
+		that2, ok := that.(URL)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *URL")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5302,7 +5674,7 @@ func (this *URL) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *URL but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *URLbut is not nil && this == nil")
+		return fmt.Errorf("that is type *URL but is not nil && this == nil")
 	}
 	if this.Scheme != nil && that1.Scheme != nil {
 		if *this.Scheme != *that1.Scheme {
@@ -5357,7 +5729,12 @@ func (this *URL) Equal(that interface{}) bool {
 
 	that1, ok := that.(*URL)
 	if !ok {
-		return false
+		that2, ok := that.(URL)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5420,7 +5797,12 @@ func (this *Unavailability) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Unavailability)
 	if !ok {
-		return fmt.Errorf("that is not of type *Unavailability")
+		that2, ok := that.(Unavailability)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Unavailability")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5428,7 +5810,7 @@ func (this *Unavailability) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Unavailability but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Unavailabilitybut is not nil && this == nil")
+		return fmt.Errorf("that is type *Unavailability but is not nil && this == nil")
 	}
 	if !this.Start.Equal(that1.Start) {
 		return fmt.Errorf("Start this(%v) Not Equal that(%v)", this.Start, that1.Start)
@@ -5451,7 +5833,12 @@ func (this *Unavailability) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Unavailability)
 	if !ok {
-		return false
+		that2, ok := that.(Unavailability)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5482,7 +5869,12 @@ func (this *MachineID) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*MachineID)
 	if !ok {
-		return fmt.Errorf("that is not of type *MachineID")
+		that2, ok := that.(MachineID)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *MachineID")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5490,7 +5882,7 @@ func (this *MachineID) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *MachineID but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *MachineIDbut is not nil && this == nil")
+		return fmt.Errorf("that is type *MachineID but is not nil && this == nil")
 	}
 	if this.Hostname != nil && that1.Hostname != nil {
 		if *this.Hostname != *that1.Hostname {
@@ -5525,7 +5917,12 @@ func (this *MachineID) Equal(that interface{}) bool {
 
 	that1, ok := that.(*MachineID)
 	if !ok {
-		return false
+		that2, ok := that.(MachineID)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5568,7 +5965,12 @@ func (this *MachineInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*MachineInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *MachineInfo")
+		that2, ok := that.(MachineInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *MachineInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5576,7 +5978,7 @@ func (this *MachineInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *MachineInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *MachineInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *MachineInfo but is not nil && this == nil")
 	}
 	if !this.Id.Equal(that1.Id) {
 		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
@@ -5608,7 +6010,12 @@ func (this *MachineInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*MachineInfo)
 	if !ok {
-		return false
+		that2, ok := that.(MachineInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5648,7 +6055,12 @@ func (this *FrameworkInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*FrameworkInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *FrameworkInfo")
+		that2, ok := that.(FrameworkInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *FrameworkInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5656,7 +6068,7 @@ func (this *FrameworkInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *FrameworkInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *FrameworkInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *FrameworkInfo but is not nil && this == nil")
 	}
 	if this.User != nil && that1.User != nil {
 		if *this.User != *that1.User {
@@ -5759,7 +6171,12 @@ func (this *FrameworkInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*FrameworkInfo)
 	if !ok {
-		return false
+		that2, ok := that.(FrameworkInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5870,7 +6287,12 @@ func (this *FrameworkInfo_Capability) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*FrameworkInfo_Capability)
 	if !ok {
-		return fmt.Errorf("that is not of type *FrameworkInfo_Capability")
+		that2, ok := that.(FrameworkInfo_Capability)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *FrameworkInfo_Capability")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5878,7 +6300,7 @@ func (this *FrameworkInfo_Capability) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *FrameworkInfo_Capability but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *FrameworkInfo_Capabilitybut is not nil && this == nil")
+		return fmt.Errorf("that is type *FrameworkInfo_Capability but is not nil && this == nil")
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
@@ -5904,7 +6326,12 @@ func (this *FrameworkInfo_Capability) Equal(that interface{}) bool {
 
 	that1, ok := that.(*FrameworkInfo_Capability)
 	if !ok {
-		return false
+		that2, ok := that.(FrameworkInfo_Capability)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5938,7 +6365,12 @@ func (this *HealthCheck) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*HealthCheck)
 	if !ok {
-		return fmt.Errorf("that is not of type *HealthCheck")
+		that2, ok := that.(HealthCheck)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *HealthCheck")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -5946,7 +6378,7 @@ func (this *HealthCheck) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *HealthCheck but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *HealthCheckbut is not nil && this == nil")
+		return fmt.Errorf("that is type *HealthCheck but is not nil && this == nil")
 	}
 	if !this.Http.Equal(that1.Http) {
 		return fmt.Errorf("Http this(%v) Not Equal that(%v)", this.Http, that1.Http)
@@ -6014,7 +6446,12 @@ func (this *HealthCheck) Equal(that interface{}) bool {
 
 	that1, ok := that.(*HealthCheck)
 	if !ok {
-		return false
+		that2, ok := that.(HealthCheck)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6090,7 +6527,12 @@ func (this *HealthCheck_HTTP) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*HealthCheck_HTTP)
 	if !ok {
-		return fmt.Errorf("that is not of type *HealthCheck_HTTP")
+		that2, ok := that.(HealthCheck_HTTP)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *HealthCheck_HTTP")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6098,7 +6540,7 @@ func (this *HealthCheck_HTTP) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *HealthCheck_HTTP but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *HealthCheck_HTTPbut is not nil && this == nil")
+		return fmt.Errorf("that is type *HealthCheck_HTTP but is not nil && this == nil")
 	}
 	if this.Port != nil && that1.Port != nil {
 		if *this.Port != *that1.Port {
@@ -6141,7 +6583,12 @@ func (this *HealthCheck_HTTP) Equal(that interface{}) bool {
 
 	that1, ok := that.(*HealthCheck_HTTP)
 	if !ok {
-		return false
+		that2, ok := that.(HealthCheck_HTTP)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6192,7 +6639,12 @@ func (this *CommandInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*CommandInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *CommandInfo")
+		that2, ok := that.(CommandInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *CommandInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6200,10 +6652,7 @@ func (this *CommandInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *CommandInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *CommandInfobut is not nil && this == nil")
-	}
-	if !this.Container.Equal(that1.Container) {
-		return fmt.Errorf("Container this(%v) Not Equal that(%v)", this.Container, that1.Container)
+		return fmt.Errorf("that is type *CommandInfo but is not nil && this == nil")
 	}
 	if len(this.Uris) != len(that1.Uris) {
 		return fmt.Errorf("Uris this(%v) Not Equal that(%v)", len(this.Uris), len(that1.Uris))
@@ -6266,7 +6715,12 @@ func (this *CommandInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*CommandInfo)
 	if !ok {
-		return false
+		that2, ok := that.(CommandInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6274,9 +6728,6 @@ func (this *CommandInfo) Equal(that interface{}) bool {
 		}
 		return false
 	} else if this == nil {
-		return false
-	}
-	if !this.Container.Equal(that1.Container) {
 		return false
 	}
 	if len(this.Uris) != len(that1.Uris) {
@@ -6340,7 +6791,12 @@ func (this *CommandInfo_URI) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*CommandInfo_URI)
 	if !ok {
-		return fmt.Errorf("that is not of type *CommandInfo_URI")
+		that2, ok := that.(CommandInfo_URI)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *CommandInfo_URI")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6348,7 +6804,7 @@ func (this *CommandInfo_URI) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *CommandInfo_URI but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *CommandInfo_URIbut is not nil && this == nil")
+		return fmt.Errorf("that is type *CommandInfo_URI but is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
@@ -6401,7 +6857,12 @@ func (this *CommandInfo_URI) Equal(that interface{}) bool {
 
 	that1, ok := that.(*CommandInfo_URI)
 	if !ok {
-		return false
+		that2, ok := that.(CommandInfo_URI)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6452,90 +6913,6 @@ func (this *CommandInfo_URI) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *CommandInfo_ContainerInfo) VerboseEqual(that interface{}) error {
-	if that == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that == nil && this != nil")
-	}
-
-	that1, ok := that.(*CommandInfo_ContainerInfo)
-	if !ok {
-		return fmt.Errorf("that is not of type *CommandInfo_ContainerInfo")
-	}
-	if that1 == nil {
-		if this == nil {
-			return nil
-		}
-		return fmt.Errorf("that is type *CommandInfo_ContainerInfo but is nil && this != nil")
-	} else if this == nil {
-		return fmt.Errorf("that is type *CommandInfo_ContainerInfobut is not nil && this == nil")
-	}
-	if this.Image != nil && that1.Image != nil {
-		if *this.Image != *that1.Image {
-			return fmt.Errorf("Image this(%v) Not Equal that(%v)", *this.Image, *that1.Image)
-		}
-	} else if this.Image != nil {
-		return fmt.Errorf("this.Image == nil && that.Image != nil")
-	} else if that1.Image != nil {
-		return fmt.Errorf("Image this(%v) Not Equal that(%v)", this.Image, that1.Image)
-	}
-	if len(this.Options) != len(that1.Options) {
-		return fmt.Errorf("Options this(%v) Not Equal that(%v)", len(this.Options), len(that1.Options))
-	}
-	for i := range this.Options {
-		if this.Options[i] != that1.Options[i] {
-			return fmt.Errorf("Options this[%v](%v) Not Equal that[%v](%v)", i, this.Options[i], i, that1.Options[i])
-		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
-	}
-	return nil
-}
-func (this *CommandInfo_ContainerInfo) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*CommandInfo_ContainerInfo)
-	if !ok {
-		return false
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if this.Image != nil && that1.Image != nil {
-		if *this.Image != *that1.Image {
-			return false
-		}
-	} else if this.Image != nil {
-		return false
-	} else if that1.Image != nil {
-		return false
-	}
-	if len(this.Options) != len(that1.Options) {
-		return false
-	}
-	for i := range this.Options {
-		if this.Options[i] != that1.Options[i] {
-			return false
-		}
-	}
-	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
-		return false
-	}
-	return true
-}
 func (this *ExecutorInfo) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -6546,7 +6923,12 @@ func (this *ExecutorInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ExecutorInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *ExecutorInfo")
+		that2, ok := that.(ExecutorInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ExecutorInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6554,7 +6936,7 @@ func (this *ExecutorInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ExecutorInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ExecutorInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *ExecutorInfo but is not nil && this == nil")
 	}
 	if !this.ExecutorId.Equal(that1.ExecutorId) {
 		return fmt.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
@@ -6615,7 +6997,12 @@ func (this *ExecutorInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ExecutorInfo)
 	if !ok {
-		return false
+		that2, ok := that.(ExecutorInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6684,7 +7071,12 @@ func (this *MasterInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*MasterInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *MasterInfo")
+		that2, ok := that.(MasterInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *MasterInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6692,7 +7084,7 @@ func (this *MasterInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *MasterInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *MasterInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *MasterInfo but is not nil && this == nil")
 	}
 	if this.Id != nil && that1.Id != nil {
 		if *this.Id != *that1.Id {
@@ -6766,7 +7158,12 @@ func (this *MasterInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*MasterInfo)
 	if !ok {
-		return false
+		that2, ok := that.(MasterInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6848,7 +7245,12 @@ func (this *SlaveInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*SlaveInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *SlaveInfo")
+		that2, ok := that.(SlaveInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *SlaveInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6856,7 +7258,7 @@ func (this *SlaveInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *SlaveInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *SlaveInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *SlaveInfo but is not nil && this == nil")
 	}
 	if this.Hostname != nil && that1.Hostname != nil {
 		if *this.Hostname != *that1.Hostname {
@@ -6919,7 +7321,12 @@ func (this *SlaveInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*SlaveInfo)
 	if !ok {
-		return false
+		that2, ok := that.(SlaveInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6990,7 +7397,12 @@ func (this *Value) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Value)
 	if !ok {
-		return fmt.Errorf("that is not of type *Value")
+		that2, ok := that.(Value)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Value")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -6998,7 +7410,7 @@ func (this *Value) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Value but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Valuebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Value but is not nil && this == nil")
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
@@ -7036,7 +7448,12 @@ func (this *Value) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Value)
 	if !ok {
-		return false
+		that2, ok := that.(Value)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7082,7 +7499,12 @@ func (this *Value_Scalar) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Value_Scalar)
 	if !ok {
-		return fmt.Errorf("that is not of type *Value_Scalar")
+		that2, ok := that.(Value_Scalar)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Value_Scalar")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7090,7 +7512,7 @@ func (this *Value_Scalar) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Value_Scalar but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Value_Scalarbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Value_Scalar but is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
@@ -7116,7 +7538,12 @@ func (this *Value_Scalar) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Value_Scalar)
 	if !ok {
-		return false
+		that2, ok := that.(Value_Scalar)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7150,7 +7577,12 @@ func (this *Value_Range) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Value_Range)
 	if !ok {
-		return fmt.Errorf("that is not of type *Value_Range")
+		that2, ok := that.(Value_Range)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Value_Range")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7158,7 +7590,7 @@ func (this *Value_Range) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Value_Range but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Value_Rangebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Value_Range but is not nil && this == nil")
 	}
 	if this.Begin != nil && that1.Begin != nil {
 		if *this.Begin != *that1.Begin {
@@ -7193,7 +7625,12 @@ func (this *Value_Range) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Value_Range)
 	if !ok {
-		return false
+		that2, ok := that.(Value_Range)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7236,7 +7673,12 @@ func (this *Value_Ranges) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Value_Ranges)
 	if !ok {
-		return fmt.Errorf("that is not of type *Value_Ranges")
+		that2, ok := that.(Value_Ranges)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Value_Ranges")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7244,7 +7686,7 @@ func (this *Value_Ranges) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Value_Ranges but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Value_Rangesbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Value_Ranges but is not nil && this == nil")
 	}
 	if len(this.Range) != len(that1.Range) {
 		return fmt.Errorf("Range this(%v) Not Equal that(%v)", len(this.Range), len(that1.Range))
@@ -7269,7 +7711,12 @@ func (this *Value_Ranges) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Value_Ranges)
 	if !ok {
-		return false
+		that2, ok := that.(Value_Ranges)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7302,7 +7749,12 @@ func (this *Value_Set) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Value_Set)
 	if !ok {
-		return fmt.Errorf("that is not of type *Value_Set")
+		that2, ok := that.(Value_Set)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Value_Set")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7310,7 +7762,7 @@ func (this *Value_Set) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Value_Set but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Value_Setbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Value_Set but is not nil && this == nil")
 	}
 	if len(this.Item) != len(that1.Item) {
 		return fmt.Errorf("Item this(%v) Not Equal that(%v)", len(this.Item), len(that1.Item))
@@ -7335,7 +7787,12 @@ func (this *Value_Set) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Value_Set)
 	if !ok {
-		return false
+		that2, ok := that.(Value_Set)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7368,7 +7825,12 @@ func (this *Value_Text) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Value_Text)
 	if !ok {
-		return fmt.Errorf("that is not of type *Value_Text")
+		that2, ok := that.(Value_Text)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Value_Text")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7376,7 +7838,7 @@ func (this *Value_Text) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Value_Text but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Value_Textbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Value_Text but is not nil && this == nil")
 	}
 	if this.Value != nil && that1.Value != nil {
 		if *this.Value != *that1.Value {
@@ -7402,7 +7864,12 @@ func (this *Value_Text) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Value_Text)
 	if !ok {
-		return false
+		that2, ok := that.(Value_Text)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7436,7 +7903,12 @@ func (this *Attribute) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Attribute)
 	if !ok {
-		return fmt.Errorf("that is not of type *Attribute")
+		that2, ok := that.(Attribute)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Attribute")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7444,7 +7916,7 @@ func (this *Attribute) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Attribute but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Attributebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Attribute but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -7491,7 +7963,12 @@ func (this *Attribute) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Attribute)
 	if !ok {
-		return false
+		that2, ok := that.(Attribute)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7546,7 +8023,12 @@ func (this *Resource) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Resource)
 	if !ok {
-		return fmt.Errorf("that is not of type *Resource")
+		that2, ok := that.(Resource)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Resource")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7554,7 +8036,7 @@ func (this *Resource) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Resource but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Resourcebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Resource but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -7616,7 +8098,12 @@ func (this *Resource) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Resource)
 	if !ok {
-		return false
+		that2, ok := that.(Resource)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7686,7 +8173,12 @@ func (this *Resource_ReservationInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Resource_ReservationInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *Resource_ReservationInfo")
+		that2, ok := that.(Resource_ReservationInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Resource_ReservationInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7694,7 +8186,7 @@ func (this *Resource_ReservationInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Resource_ReservationInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Resource_ReservationInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *Resource_ReservationInfo but is not nil && this == nil")
 	}
 	if this.Principal != nil && that1.Principal != nil {
 		if *this.Principal != *that1.Principal {
@@ -7720,7 +8212,12 @@ func (this *Resource_ReservationInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Resource_ReservationInfo)
 	if !ok {
-		return false
+		that2, ok := that.(Resource_ReservationInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7754,7 +8251,12 @@ func (this *Resource_DiskInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Resource_DiskInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *Resource_DiskInfo")
+		that2, ok := that.(Resource_DiskInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Resource_DiskInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7762,7 +8264,7 @@ func (this *Resource_DiskInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Resource_DiskInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Resource_DiskInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *Resource_DiskInfo but is not nil && this == nil")
 	}
 	if !this.Persistence.Equal(that1.Persistence) {
 		return fmt.Errorf("Persistence this(%v) Not Equal that(%v)", this.Persistence, that1.Persistence)
@@ -7785,7 +8287,12 @@ func (this *Resource_DiskInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Resource_DiskInfo)
 	if !ok {
-		return false
+		that2, ok := that.(Resource_DiskInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7816,7 +8323,12 @@ func (this *Resource_DiskInfo_Persistence) VerboseEqual(that interface{}) error 
 
 	that1, ok := that.(*Resource_DiskInfo_Persistence)
 	if !ok {
-		return fmt.Errorf("that is not of type *Resource_DiskInfo_Persistence")
+		that2, ok := that.(Resource_DiskInfo_Persistence)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Resource_DiskInfo_Persistence")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7824,7 +8336,7 @@ func (this *Resource_DiskInfo_Persistence) VerboseEqual(that interface{}) error 
 		}
 		return fmt.Errorf("that is type *Resource_DiskInfo_Persistence but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Resource_DiskInfo_Persistencebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Resource_DiskInfo_Persistence but is not nil && this == nil")
 	}
 	if this.Id != nil && that1.Id != nil {
 		if *this.Id != *that1.Id {
@@ -7850,7 +8362,12 @@ func (this *Resource_DiskInfo_Persistence) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Resource_DiskInfo_Persistence)
 	if !ok {
-		return false
+		that2, ok := that.(Resource_DiskInfo_Persistence)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7884,7 +8401,12 @@ func (this *Resource_RevocableInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Resource_RevocableInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *Resource_RevocableInfo")
+		that2, ok := that.(Resource_RevocableInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Resource_RevocableInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7892,7 +8414,7 @@ func (this *Resource_RevocableInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Resource_RevocableInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Resource_RevocableInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *Resource_RevocableInfo but is not nil && this == nil")
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return fmt.Errorf("XXX_unrecognized this(%v) Not Equal that(%v)", this.XXX_unrecognized, that1.XXX_unrecognized)
@@ -7909,7 +8431,12 @@ func (this *Resource_RevocableInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Resource_RevocableInfo)
 	if !ok {
-		return false
+		that2, ok := that.(Resource_RevocableInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7934,7 +8461,12 @@ func (this *TrafficControlStatistics) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*TrafficControlStatistics)
 	if !ok {
-		return fmt.Errorf("that is not of type *TrafficControlStatistics")
+		that2, ok := that.(TrafficControlStatistics)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *TrafficControlStatistics")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -7942,7 +8474,7 @@ func (this *TrafficControlStatistics) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *TrafficControlStatistics but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *TrafficControlStatisticsbut is not nil && this == nil")
+		return fmt.Errorf("that is type *TrafficControlStatistics but is not nil && this == nil")
 	}
 	if this.Id != nil && that1.Id != nil {
 		if *this.Id != *that1.Id {
@@ -8049,7 +8581,12 @@ func (this *TrafficControlStatistics) Equal(that interface{}) bool {
 
 	that1, ok := that.(*TrafficControlStatistics)
 	if !ok {
-		return false
+		that2, ok := that.(TrafficControlStatistics)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -8164,7 +8701,12 @@ func (this *ResourceStatistics) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ResourceStatistics)
 	if !ok {
-		return fmt.Errorf("that is not of type *ResourceStatistics")
+		that2, ok := that.(ResourceStatistics)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ResourceStatistics")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -8172,7 +8714,7 @@ func (this *ResourceStatistics) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ResourceStatistics but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ResourceStatisticsbut is not nil && this == nil")
+		return fmt.Errorf("that is type *ResourceStatistics but is not nil && this == nil")
 	}
 	if this.Timestamp != nil && that1.Timestamp != nil {
 		if *this.Timestamp != *that1.Timestamp {
@@ -8551,7 +9093,12 @@ func (this *ResourceStatistics) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ResourceStatistics)
 	if !ok {
-		return false
+		that2, ok := that.(ResourceStatistics)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -8938,7 +9485,12 @@ func (this *ResourceUsage) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ResourceUsage)
 	if !ok {
-		return fmt.Errorf("that is not of type *ResourceUsage")
+		that2, ok := that.(ResourceUsage)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ResourceUsage")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -8946,7 +9498,7 @@ func (this *ResourceUsage) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ResourceUsage but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ResourceUsagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *ResourceUsage but is not nil && this == nil")
 	}
 	if len(this.Executors) != len(that1.Executors) {
 		return fmt.Errorf("Executors this(%v) Not Equal that(%v)", len(this.Executors), len(that1.Executors))
@@ -8979,7 +9531,12 @@ func (this *ResourceUsage) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ResourceUsage)
 	if !ok {
-		return false
+		that2, ok := that.(ResourceUsage)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -9020,7 +9577,12 @@ func (this *ResourceUsage_Executor) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ResourceUsage_Executor)
 	if !ok {
-		return fmt.Errorf("that is not of type *ResourceUsage_Executor")
+		that2, ok := that.(ResourceUsage_Executor)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ResourceUsage_Executor")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -9028,7 +9590,7 @@ func (this *ResourceUsage_Executor) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ResourceUsage_Executor but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ResourceUsage_Executorbut is not nil && this == nil")
+		return fmt.Errorf("that is type *ResourceUsage_Executor but is not nil && this == nil")
 	}
 	if !this.ExecutorInfo.Equal(that1.ExecutorInfo) {
 		return fmt.Errorf("ExecutorInfo this(%v) Not Equal that(%v)", this.ExecutorInfo, that1.ExecutorInfo)
@@ -9062,7 +9624,12 @@ func (this *ResourceUsage_Executor) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ResourceUsage_Executor)
 	if !ok {
-		return false
+		that2, ok := that.(ResourceUsage_Executor)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -9104,7 +9671,12 @@ func (this *PerfStatistics) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*PerfStatistics)
 	if !ok {
-		return fmt.Errorf("that is not of type *PerfStatistics")
+		that2, ok := that.(PerfStatistics)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *PerfStatistics")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -9112,7 +9684,7 @@ func (this *PerfStatistics) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *PerfStatistics but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *PerfStatisticsbut is not nil && this == nil")
+		return fmt.Errorf("that is type *PerfStatistics but is not nil && this == nil")
 	}
 	if this.Timestamp != nil && that1.Timestamp != nil {
 		if *this.Timestamp != *that1.Timestamp {
@@ -9606,7 +10178,12 @@ func (this *PerfStatistics) Equal(that interface{}) bool {
 
 	that1, ok := that.(*PerfStatistics)
 	if !ok {
-		return false
+		that2, ok := that.(PerfStatistics)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10108,7 +10685,12 @@ func (this *Request) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Request)
 	if !ok {
-		return fmt.Errorf("that is not of type *Request")
+		that2, ok := that.(Request)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Request")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10116,7 +10698,7 @@ func (this *Request) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Request but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Requestbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Request but is not nil && this == nil")
 	}
 	if !this.SlaveId.Equal(that1.SlaveId) {
 		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
@@ -10144,7 +10726,12 @@ func (this *Request) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Request)
 	if !ok {
-		return false
+		that2, ok := that.(Request)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10180,7 +10767,12 @@ func (this *Offer) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Offer)
 	if !ok {
-		return fmt.Errorf("that is not of type *Offer")
+		that2, ok := that.(Offer)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10188,7 +10780,7 @@ func (this *Offer) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Offer but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Offerbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Offer but is not nil && this == nil")
 	}
 	if !this.Id.Equal(that1.Id) {
 		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
@@ -10253,7 +10845,12 @@ func (this *Offer) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Offer)
 	if !ok {
-		return false
+		that2, ok := that.(Offer)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10326,7 +10923,12 @@ func (this *Offer_Operation) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Offer_Operation)
 	if !ok {
-		return fmt.Errorf("that is not of type *Offer_Operation")
+		that2, ok := that.(Offer_Operation)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10334,7 +10936,7 @@ func (this *Offer_Operation) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Offer_Operation but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Offer_Operationbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Offer_Operation but is not nil && this == nil")
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
@@ -10375,7 +10977,12 @@ func (this *Offer_Operation) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Offer_Operation)
 	if !ok {
-		return false
+		that2, ok := that.(Offer_Operation)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10424,7 +11031,12 @@ func (this *Offer_Operation_Launch) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Offer_Operation_Launch)
 	if !ok {
-		return fmt.Errorf("that is not of type *Offer_Operation_Launch")
+		that2, ok := that.(Offer_Operation_Launch)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation_Launch")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10432,7 +11044,7 @@ func (this *Offer_Operation_Launch) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Offer_Operation_Launch but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Offer_Operation_Launchbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Offer_Operation_Launch but is not nil && this == nil")
 	}
 	if len(this.TaskInfos) != len(that1.TaskInfos) {
 		return fmt.Errorf("TaskInfos this(%v) Not Equal that(%v)", len(this.TaskInfos), len(that1.TaskInfos))
@@ -10457,7 +11069,12 @@ func (this *Offer_Operation_Launch) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Offer_Operation_Launch)
 	if !ok {
-		return false
+		that2, ok := that.(Offer_Operation_Launch)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10490,7 +11107,12 @@ func (this *Offer_Operation_Reserve) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Offer_Operation_Reserve)
 	if !ok {
-		return fmt.Errorf("that is not of type *Offer_Operation_Reserve")
+		that2, ok := that.(Offer_Operation_Reserve)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation_Reserve")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10498,7 +11120,7 @@ func (this *Offer_Operation_Reserve) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Offer_Operation_Reserve but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Offer_Operation_Reservebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Offer_Operation_Reserve but is not nil && this == nil")
 	}
 	if len(this.Resources) != len(that1.Resources) {
 		return fmt.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
@@ -10523,7 +11145,12 @@ func (this *Offer_Operation_Reserve) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Offer_Operation_Reserve)
 	if !ok {
-		return false
+		that2, ok := that.(Offer_Operation_Reserve)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10556,7 +11183,12 @@ func (this *Offer_Operation_Unreserve) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Offer_Operation_Unreserve)
 	if !ok {
-		return fmt.Errorf("that is not of type *Offer_Operation_Unreserve")
+		that2, ok := that.(Offer_Operation_Unreserve)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation_Unreserve")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10564,7 +11196,7 @@ func (this *Offer_Operation_Unreserve) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Offer_Operation_Unreserve but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Offer_Operation_Unreservebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Offer_Operation_Unreserve but is not nil && this == nil")
 	}
 	if len(this.Resources) != len(that1.Resources) {
 		return fmt.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
@@ -10589,7 +11221,12 @@ func (this *Offer_Operation_Unreserve) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Offer_Operation_Unreserve)
 	if !ok {
-		return false
+		that2, ok := that.(Offer_Operation_Unreserve)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10622,7 +11259,12 @@ func (this *Offer_Operation_Create) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Offer_Operation_Create)
 	if !ok {
-		return fmt.Errorf("that is not of type *Offer_Operation_Create")
+		that2, ok := that.(Offer_Operation_Create)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation_Create")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10630,7 +11272,7 @@ func (this *Offer_Operation_Create) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Offer_Operation_Create but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Offer_Operation_Createbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Offer_Operation_Create but is not nil && this == nil")
 	}
 	if len(this.Volumes) != len(that1.Volumes) {
 		return fmt.Errorf("Volumes this(%v) Not Equal that(%v)", len(this.Volumes), len(that1.Volumes))
@@ -10655,7 +11297,12 @@ func (this *Offer_Operation_Create) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Offer_Operation_Create)
 	if !ok {
-		return false
+		that2, ok := that.(Offer_Operation_Create)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10688,7 +11335,12 @@ func (this *Offer_Operation_Destroy) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Offer_Operation_Destroy)
 	if !ok {
-		return fmt.Errorf("that is not of type *Offer_Operation_Destroy")
+		that2, ok := that.(Offer_Operation_Destroy)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation_Destroy")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10696,7 +11348,7 @@ func (this *Offer_Operation_Destroy) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Offer_Operation_Destroy but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Offer_Operation_Destroybut is not nil && this == nil")
+		return fmt.Errorf("that is type *Offer_Operation_Destroy but is not nil && this == nil")
 	}
 	if len(this.Volumes) != len(that1.Volumes) {
 		return fmt.Errorf("Volumes this(%v) Not Equal that(%v)", len(this.Volumes), len(that1.Volumes))
@@ -10721,7 +11373,12 @@ func (this *Offer_Operation_Destroy) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Offer_Operation_Destroy)
 	if !ok {
-		return false
+		that2, ok := that.(Offer_Operation_Destroy)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10754,7 +11411,12 @@ func (this *InverseOffer) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*InverseOffer)
 	if !ok {
-		return fmt.Errorf("that is not of type *InverseOffer")
+		that2, ok := that.(InverseOffer)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *InverseOffer")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10762,7 +11424,7 @@ func (this *InverseOffer) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *InverseOffer but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *InverseOfferbut is not nil && this == nil")
+		return fmt.Errorf("that is type *InverseOffer but is not nil && this == nil")
 	}
 	if !this.Id.Equal(that1.Id) {
 		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
@@ -10802,7 +11464,12 @@ func (this *InverseOffer) Equal(that interface{}) bool {
 
 	that1, ok := that.(*InverseOffer)
 	if !ok {
-		return false
+		that2, ok := that.(InverseOffer)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10850,7 +11517,12 @@ func (this *TaskInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*TaskInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *TaskInfo")
+		that2, ok := that.(TaskInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *TaskInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10858,7 +11530,7 @@ func (this *TaskInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *TaskInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *TaskInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *TaskInfo but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -10919,7 +11591,12 @@ func (this *TaskInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*TaskInfo)
 	if !ok {
-		return false
+		that2, ok := that.(TaskInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10988,7 +11665,12 @@ func (this *TaskStatus) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*TaskStatus)
 	if !ok {
-		return fmt.Errorf("that is not of type *TaskStatus")
+		that2, ok := that.(TaskStatus)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *TaskStatus")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -10996,7 +11678,7 @@ func (this *TaskStatus) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *TaskStatus but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *TaskStatusbut is not nil && this == nil")
+		return fmt.Errorf("that is type *TaskStatus but is not nil && this == nil")
 	}
 	if !this.TaskId.Equal(that1.TaskId) {
 		return fmt.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
@@ -11088,7 +11770,12 @@ func (this *TaskStatus) Equal(that interface{}) bool {
 
 	that1, ok := that.(*TaskStatus)
 	if !ok {
-		return false
+		that2, ok := that.(TaskStatus)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11188,7 +11875,12 @@ func (this *Filters) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Filters)
 	if !ok {
-		return fmt.Errorf("that is not of type *Filters")
+		that2, ok := that.(Filters)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Filters")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11196,7 +11888,7 @@ func (this *Filters) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Filters but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Filtersbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Filters but is not nil && this == nil")
 	}
 	if this.RefuseSeconds != nil && that1.RefuseSeconds != nil {
 		if *this.RefuseSeconds != *that1.RefuseSeconds {
@@ -11222,7 +11914,12 @@ func (this *Filters) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Filters)
 	if !ok {
-		return false
+		that2, ok := that.(Filters)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11256,7 +11953,12 @@ func (this *Environment) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Environment)
 	if !ok {
-		return fmt.Errorf("that is not of type *Environment")
+		that2, ok := that.(Environment)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Environment")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11264,7 +11966,7 @@ func (this *Environment) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Environment but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Environmentbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Environment but is not nil && this == nil")
 	}
 	if len(this.Variables) != len(that1.Variables) {
 		return fmt.Errorf("Variables this(%v) Not Equal that(%v)", len(this.Variables), len(that1.Variables))
@@ -11289,7 +11991,12 @@ func (this *Environment) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Environment)
 	if !ok {
-		return false
+		that2, ok := that.(Environment)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11322,7 +12029,12 @@ func (this *Environment_Variable) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Environment_Variable)
 	if !ok {
-		return fmt.Errorf("that is not of type *Environment_Variable")
+		that2, ok := that.(Environment_Variable)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Environment_Variable")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11330,7 +12042,7 @@ func (this *Environment_Variable) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Environment_Variable but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Environment_Variablebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Environment_Variable but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -11365,7 +12077,12 @@ func (this *Environment_Variable) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Environment_Variable)
 	if !ok {
-		return false
+		that2, ok := that.(Environment_Variable)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11408,7 +12125,12 @@ func (this *Parameter) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Parameter)
 	if !ok {
-		return fmt.Errorf("that is not of type *Parameter")
+		that2, ok := that.(Parameter)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Parameter")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11416,7 +12138,7 @@ func (this *Parameter) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Parameter but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Parameterbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Parameter but is not nil && this == nil")
 	}
 	if this.Key != nil && that1.Key != nil {
 		if *this.Key != *that1.Key {
@@ -11451,7 +12173,12 @@ func (this *Parameter) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Parameter)
 	if !ok {
-		return false
+		that2, ok := that.(Parameter)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11494,7 +12221,12 @@ func (this *Parameters) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Parameters)
 	if !ok {
-		return fmt.Errorf("that is not of type *Parameters")
+		that2, ok := that.(Parameters)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Parameters")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11502,7 +12234,7 @@ func (this *Parameters) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Parameters but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Parametersbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Parameters but is not nil && this == nil")
 	}
 	if len(this.Parameter) != len(that1.Parameter) {
 		return fmt.Errorf("Parameter this(%v) Not Equal that(%v)", len(this.Parameter), len(that1.Parameter))
@@ -11527,7 +12259,12 @@ func (this *Parameters) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Parameters)
 	if !ok {
-		return false
+		that2, ok := that.(Parameters)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11560,7 +12297,12 @@ func (this *Credential) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Credential)
 	if !ok {
-		return fmt.Errorf("that is not of type *Credential")
+		that2, ok := that.(Credential)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Credential")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11568,7 +12310,7 @@ func (this *Credential) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Credential but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Credentialbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Credential but is not nil && this == nil")
 	}
 	if this.Principal != nil && that1.Principal != nil {
 		if *this.Principal != *that1.Principal {
@@ -11603,7 +12345,12 @@ func (this *Credential) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Credential)
 	if !ok {
-		return false
+		that2, ok := that.(Credential)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11646,7 +12393,12 @@ func (this *Credentials) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Credentials)
 	if !ok {
-		return fmt.Errorf("that is not of type *Credentials")
+		that2, ok := that.(Credentials)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Credentials")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11654,7 +12406,7 @@ func (this *Credentials) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Credentials but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Credentialsbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Credentials but is not nil && this == nil")
 	}
 	if len(this.Credentials) != len(that1.Credentials) {
 		return fmt.Errorf("Credentials this(%v) Not Equal that(%v)", len(this.Credentials), len(that1.Credentials))
@@ -11679,7 +12431,12 @@ func (this *Credentials) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Credentials)
 	if !ok {
-		return false
+		that2, ok := that.(Credentials)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11712,7 +12469,12 @@ func (this *RateLimit) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*RateLimit)
 	if !ok {
-		return fmt.Errorf("that is not of type *RateLimit")
+		that2, ok := that.(RateLimit)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *RateLimit")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11720,7 +12482,7 @@ func (this *RateLimit) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *RateLimit but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *RateLimitbut is not nil && this == nil")
+		return fmt.Errorf("that is type *RateLimit but is not nil && this == nil")
 	}
 	if this.Qps != nil && that1.Qps != nil {
 		if *this.Qps != *that1.Qps {
@@ -11764,7 +12526,12 @@ func (this *RateLimit) Equal(that interface{}) bool {
 
 	that1, ok := that.(*RateLimit)
 	if !ok {
-		return false
+		that2, ok := that.(RateLimit)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11816,7 +12583,12 @@ func (this *RateLimits) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*RateLimits)
 	if !ok {
-		return fmt.Errorf("that is not of type *RateLimits")
+		that2, ok := that.(RateLimits)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *RateLimits")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11824,7 +12596,7 @@ func (this *RateLimits) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *RateLimits but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *RateLimitsbut is not nil && this == nil")
+		return fmt.Errorf("that is type *RateLimits but is not nil && this == nil")
 	}
 	if len(this.Limits) != len(that1.Limits) {
 		return fmt.Errorf("Limits this(%v) Not Equal that(%v)", len(this.Limits), len(that1.Limits))
@@ -11867,7 +12639,12 @@ func (this *RateLimits) Equal(that interface{}) bool {
 
 	that1, ok := that.(*RateLimits)
 	if !ok {
-		return false
+		that2, ok := that.(RateLimits)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11918,7 +12695,12 @@ func (this *Image) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Image)
 	if !ok {
-		return fmt.Errorf("that is not of type *Image")
+		that2, ok := that.(Image)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Image")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11926,7 +12708,7 @@ func (this *Image) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Image but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Imagebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Image but is not nil && this == nil")
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
@@ -11958,7 +12740,12 @@ func (this *Image) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Image)
 	if !ok {
-		return false
+		that2, ok := that.(Image)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -11998,7 +12785,12 @@ func (this *Image_Appc) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Image_Appc)
 	if !ok {
-		return fmt.Errorf("that is not of type *Image_Appc")
+		that2, ok := that.(Image_Appc)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Image_Appc")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12006,7 +12798,7 @@ func (this *Image_Appc) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Image_Appc but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Image_Appcbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Image_Appc but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -12044,7 +12836,12 @@ func (this *Image_Appc) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Image_Appc)
 	if !ok {
-		return false
+		that2, ok := that.(Image_Appc)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12090,7 +12887,12 @@ func (this *Image_Docker) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Image_Docker)
 	if !ok {
-		return fmt.Errorf("that is not of type *Image_Docker")
+		that2, ok := that.(Image_Docker)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Image_Docker")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12098,7 +12900,7 @@ func (this *Image_Docker) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Image_Docker but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Image_Dockerbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Image_Docker but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -12124,7 +12926,12 @@ func (this *Image_Docker) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Image_Docker)
 	if !ok {
-		return false
+		that2, ok := that.(Image_Docker)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12158,7 +12965,12 @@ func (this *Volume) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Volume)
 	if !ok {
-		return fmt.Errorf("that is not of type *Volume")
+		that2, ok := that.(Volume)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Volume")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12166,7 +12978,7 @@ func (this *Volume) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Volume but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Volumebut is not nil && this == nil")
+		return fmt.Errorf("that is type *Volume but is not nil && this == nil")
 	}
 	if this.Mode != nil && that1.Mode != nil {
 		if *this.Mode != *that1.Mode {
@@ -12213,7 +13025,12 @@ func (this *Volume) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Volume)
 	if !ok {
-		return false
+		that2, ok := that.(Volume)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12268,7 +13085,12 @@ func (this *NetworkInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*NetworkInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *NetworkInfo")
+		that2, ok := that.(NetworkInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *NetworkInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12276,7 +13098,7 @@ func (this *NetworkInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *NetworkInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *NetworkInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *NetworkInfo but is not nil && this == nil")
 	}
 	if len(this.IpAddresses) != len(that1.IpAddresses) {
 		return fmt.Errorf("IpAddresses this(%v) Not Equal that(%v)", len(this.IpAddresses), len(that1.IpAddresses))
@@ -12330,7 +13152,12 @@ func (this *NetworkInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*NetworkInfo)
 	if !ok {
-		return false
+		that2, ok := that.(NetworkInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12392,7 +13219,12 @@ func (this *NetworkInfo_IPAddress) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*NetworkInfo_IPAddress)
 	if !ok {
-		return fmt.Errorf("that is not of type *NetworkInfo_IPAddress")
+		that2, ok := that.(NetworkInfo_IPAddress)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *NetworkInfo_IPAddress")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12400,7 +13232,7 @@ func (this *NetworkInfo_IPAddress) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *NetworkInfo_IPAddress but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *NetworkInfo_IPAddressbut is not nil && this == nil")
+		return fmt.Errorf("that is type *NetworkInfo_IPAddress but is not nil && this == nil")
 	}
 	if this.Protocol != nil && that1.Protocol != nil {
 		if *this.Protocol != *that1.Protocol {
@@ -12435,7 +13267,12 @@ func (this *NetworkInfo_IPAddress) Equal(that interface{}) bool {
 
 	that1, ok := that.(*NetworkInfo_IPAddress)
 	if !ok {
-		return false
+		that2, ok := that.(NetworkInfo_IPAddress)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12478,7 +13315,12 @@ func (this *ContainerInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ContainerInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *ContainerInfo")
+		that2, ok := that.(ContainerInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ContainerInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12486,7 +13328,7 @@ func (this *ContainerInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ContainerInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ContainerInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *ContainerInfo but is not nil && this == nil")
 	}
 	if this.Type != nil && that1.Type != nil {
 		if *this.Type != *that1.Type {
@@ -12543,7 +13385,12 @@ func (this *ContainerInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ContainerInfo)
 	if !ok {
-		return false
+		that2, ok := that.(ContainerInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12608,7 +13455,12 @@ func (this *ContainerInfo_DockerInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ContainerInfo_DockerInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *ContainerInfo_DockerInfo")
+		that2, ok := that.(ContainerInfo_DockerInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ContainerInfo_DockerInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12616,7 +13468,7 @@ func (this *ContainerInfo_DockerInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ContainerInfo_DockerInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ContainerInfo_DockerInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *ContainerInfo_DockerInfo but is not nil && this == nil")
 	}
 	if this.Image != nil && that1.Image != nil {
 		if *this.Image != *that1.Image {
@@ -12685,7 +13537,12 @@ func (this *ContainerInfo_DockerInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ContainerInfo_DockerInfo)
 	if !ok {
-		return false
+		that2, ok := that.(ContainerInfo_DockerInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12762,7 +13619,12 @@ func (this *ContainerInfo_DockerInfo_PortMapping) VerboseEqual(that interface{})
 
 	that1, ok := that.(*ContainerInfo_DockerInfo_PortMapping)
 	if !ok {
-		return fmt.Errorf("that is not of type *ContainerInfo_DockerInfo_PortMapping")
+		that2, ok := that.(ContainerInfo_DockerInfo_PortMapping)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ContainerInfo_DockerInfo_PortMapping")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12770,7 +13632,7 @@ func (this *ContainerInfo_DockerInfo_PortMapping) VerboseEqual(that interface{})
 		}
 		return fmt.Errorf("that is type *ContainerInfo_DockerInfo_PortMapping but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ContainerInfo_DockerInfo_PortMappingbut is not nil && this == nil")
+		return fmt.Errorf("that is type *ContainerInfo_DockerInfo_PortMapping but is not nil && this == nil")
 	}
 	if this.HostPort != nil && that1.HostPort != nil {
 		if *this.HostPort != *that1.HostPort {
@@ -12814,7 +13676,12 @@ func (this *ContainerInfo_DockerInfo_PortMapping) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ContainerInfo_DockerInfo_PortMapping)
 	if !ok {
-		return false
+		that2, ok := that.(ContainerInfo_DockerInfo_PortMapping)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12866,7 +13733,12 @@ func (this *ContainerInfo_MesosInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ContainerInfo_MesosInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *ContainerInfo_MesosInfo")
+		that2, ok := that.(ContainerInfo_MesosInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ContainerInfo_MesosInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12874,7 +13746,7 @@ func (this *ContainerInfo_MesosInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ContainerInfo_MesosInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ContainerInfo_MesosInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *ContainerInfo_MesosInfo but is not nil && this == nil")
 	}
 	if !this.Image.Equal(that1.Image) {
 		return fmt.Errorf("Image this(%v) Not Equal that(%v)", this.Image, that1.Image)
@@ -12894,7 +13766,12 @@ func (this *ContainerInfo_MesosInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ContainerInfo_MesosInfo)
 	if !ok {
-		return false
+		that2, ok := that.(ContainerInfo_MesosInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12922,7 +13799,12 @@ func (this *ContainerStatus) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*ContainerStatus)
 	if !ok {
-		return fmt.Errorf("that is not of type *ContainerStatus")
+		that2, ok := that.(ContainerStatus)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ContainerStatus")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12930,7 +13812,7 @@ func (this *ContainerStatus) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *ContainerStatus but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *ContainerStatusbut is not nil && this == nil")
+		return fmt.Errorf("that is type *ContainerStatus but is not nil && this == nil")
 	}
 	if len(this.NetworkInfos) != len(that1.NetworkInfos) {
 		return fmt.Errorf("NetworkInfos this(%v) Not Equal that(%v)", len(this.NetworkInfos), len(that1.NetworkInfos))
@@ -12955,7 +13837,12 @@ func (this *ContainerStatus) Equal(that interface{}) bool {
 
 	that1, ok := that.(*ContainerStatus)
 	if !ok {
-		return false
+		that2, ok := that.(ContainerStatus)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12988,7 +13875,12 @@ func (this *Labels) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Labels)
 	if !ok {
-		return fmt.Errorf("that is not of type *Labels")
+		that2, ok := that.(Labels)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Labels")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -12996,7 +13888,7 @@ func (this *Labels) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Labels but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Labelsbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Labels but is not nil && this == nil")
 	}
 	if len(this.Labels) != len(that1.Labels) {
 		return fmt.Errorf("Labels this(%v) Not Equal that(%v)", len(this.Labels), len(that1.Labels))
@@ -13021,7 +13913,12 @@ func (this *Labels) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Labels)
 	if !ok {
-		return false
+		that2, ok := that.(Labels)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13054,7 +13951,12 @@ func (this *Label) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Label)
 	if !ok {
-		return fmt.Errorf("that is not of type *Label")
+		that2, ok := that.(Label)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Label")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13062,7 +13964,7 @@ func (this *Label) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Label but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Labelbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Label but is not nil && this == nil")
 	}
 	if this.Key != nil && that1.Key != nil {
 		if *this.Key != *that1.Key {
@@ -13097,7 +13999,12 @@ func (this *Label) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Label)
 	if !ok {
-		return false
+		that2, ok := that.(Label)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13140,7 +14047,12 @@ func (this *Port) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Port)
 	if !ok {
-		return fmt.Errorf("that is not of type *Port")
+		that2, ok := that.(Port)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Port")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13148,7 +14060,7 @@ func (this *Port) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Port but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Portbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Port but is not nil && this == nil")
 	}
 	if this.Number != nil && that1.Number != nil {
 		if *this.Number != *that1.Number {
@@ -13201,7 +14113,12 @@ func (this *Port) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Port)
 	if !ok {
-		return false
+		that2, ok := that.(Port)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13262,7 +14179,12 @@ func (this *Ports) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*Ports)
 	if !ok {
-		return fmt.Errorf("that is not of type *Ports")
+		that2, ok := that.(Ports)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Ports")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13270,7 +14192,7 @@ func (this *Ports) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *Ports but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *Portsbut is not nil && this == nil")
+		return fmt.Errorf("that is type *Ports but is not nil && this == nil")
 	}
 	if len(this.Ports) != len(that1.Ports) {
 		return fmt.Errorf("Ports this(%v) Not Equal that(%v)", len(this.Ports), len(that1.Ports))
@@ -13295,7 +14217,12 @@ func (this *Ports) Equal(that interface{}) bool {
 
 	that1, ok := that.(*Ports)
 	if !ok {
-		return false
+		that2, ok := that.(Ports)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13328,7 +14255,12 @@ func (this *DiscoveryInfo) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*DiscoveryInfo)
 	if !ok {
-		return fmt.Errorf("that is not of type *DiscoveryInfo")
+		that2, ok := that.(DiscoveryInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *DiscoveryInfo")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13336,7 +14268,7 @@ func (this *DiscoveryInfo) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *DiscoveryInfo but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *DiscoveryInfobut is not nil && this == nil")
+		return fmt.Errorf("that is type *DiscoveryInfo but is not nil && this == nil")
 	}
 	if this.Visibility != nil && that1.Visibility != nil {
 		if *this.Visibility != *that1.Visibility {
@@ -13404,7 +14336,12 @@ func (this *DiscoveryInfo) Equal(that interface{}) bool {
 
 	that1, ok := that.(*DiscoveryInfo)
 	if !ok {
-		return false
+		that2, ok := that.(DiscoveryInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13480,7 +14417,12 @@ func (this *AppcImageManifest) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*AppcImageManifest)
 	if !ok {
-		return fmt.Errorf("that is not of type *AppcImageManifest")
+		that2, ok := that.(AppcImageManifest)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *AppcImageManifest")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13488,7 +14430,7 @@ func (this *AppcImageManifest) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *AppcImageManifest but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *AppcImageManifestbut is not nil && this == nil")
+		return fmt.Errorf("that is type *AppcImageManifest but is not nil && this == nil")
 	}
 	if this.AcKind != nil && that1.AcKind != nil {
 		if *this.AcKind != *that1.AcKind {
@@ -13548,7 +14490,12 @@ func (this *AppcImageManifest) Equal(that interface{}) bool {
 
 	that1, ok := that.(*AppcImageManifest)
 	if !ok {
-		return false
+		that2, ok := that.(AppcImageManifest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13616,7 +14563,12 @@ func (this *AppcImageManifest_Label) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*AppcImageManifest_Label)
 	if !ok {
-		return fmt.Errorf("that is not of type *AppcImageManifest_Label")
+		that2, ok := that.(AppcImageManifest_Label)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *AppcImageManifest_Label")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13624,7 +14576,7 @@ func (this *AppcImageManifest_Label) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *AppcImageManifest_Label but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *AppcImageManifest_Labelbut is not nil && this == nil")
+		return fmt.Errorf("that is type *AppcImageManifest_Label but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -13659,7 +14611,12 @@ func (this *AppcImageManifest_Label) Equal(that interface{}) bool {
 
 	that1, ok := that.(*AppcImageManifest_Label)
 	if !ok {
-		return false
+		that2, ok := that.(AppcImageManifest_Label)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13702,7 +14659,12 @@ func (this *AppcImageManifest_Annotation) VerboseEqual(that interface{}) error {
 
 	that1, ok := that.(*AppcImageManifest_Annotation)
 	if !ok {
-		return fmt.Errorf("that is not of type *AppcImageManifest_Annotation")
+		that2, ok := that.(AppcImageManifest_Annotation)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *AppcImageManifest_Annotation")
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -13710,7 +14672,7 @@ func (this *AppcImageManifest_Annotation) VerboseEqual(that interface{}) error {
 		}
 		return fmt.Errorf("that is type *AppcImageManifest_Annotation but is nil && this != nil")
 	} else if this == nil {
-		return fmt.Errorf("that is type *AppcImageManifest_Annotationbut is not nil && this == nil")
+		return fmt.Errorf("that is type *AppcImageManifest_Annotation but is not nil && this == nil")
 	}
 	if this.Name != nil && that1.Name != nil {
 		if *this.Name != *that1.Name {
@@ -13745,7 +14707,12 @@ func (this *AppcImageManifest_Annotation) Equal(that interface{}) bool {
 
 	that1, ok := that.(*AppcImageManifest_Annotation)
 	if !ok {
-		return false
+		that2, ok := that.(AppcImageManifest_Annotation)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
 	}
 	if that1 == nil {
 		if this == nil {
@@ -14121,11 +15088,8 @@ func (this *CommandInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 11)
+	s := make([]string, 0, 10)
 	s = append(s, "&mesosproto.CommandInfo{")
-	if this.Container != nil {
-		s = append(s, "Container: "+fmt.Sprintf("%#v", this.Container)+",\n")
-	}
 	if this.Uris != nil {
 		s = append(s, "Uris: "+fmt.Sprintf("%#v", this.Uris)+",\n")
 	}
@@ -14167,24 +15131,6 @@ func (this *CommandInfo_URI) GoString() string {
 	}
 	if this.Cache != nil {
 		s = append(s, "Cache: "+valueToGoStringMesos(this.Cache, "bool")+",\n")
-	}
-	if this.XXX_unrecognized != nil {
-		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *CommandInfo_ContainerInfo) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&mesosproto.CommandInfo_ContainerInfo{")
-	if this.Image != nil {
-		s = append(s, "Image: "+valueToGoStringMesos(this.Image, "string")+",\n")
-	}
-	if this.Options != nil {
-		s = append(s, "Options: "+fmt.Sprintf("%#v", this.Options)+",\n")
 	}
 	if this.XXX_unrecognized != nil {
 		s = append(s, "XXX_unrecognized:"+fmt.Sprintf("%#v", this.XXX_unrecognized)+",\n")
@@ -15775,11 +16721,12 @@ func valueToGoStringMesos(v interface{}, typ string) string {
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
-func extensionToGoStringMesos(e map[int32]github_com_gogo_protobuf_proto.Extension) string {
+func extensionToGoStringMesos(m github_com_gogo_protobuf_proto.Message) string {
+	e := github_com_gogo_protobuf_proto.GetUnsafeExtensionsMap(m)
 	if e == nil {
 		return "nil"
 	}
-	s := "map[int32]proto.Extension{"
+	s := "proto.NewUnsafeXXX_InternalExtensions(map[int32]proto.Extension{"
 	keys := make([]int, 0, len(e))
 	for k := range e {
 		keys = append(keys, int(k))
@@ -15789,7 +16736,7 @@ func extensionToGoStringMesos(e map[int32]github_com_gogo_protobuf_proto.Extensi
 	for _, k := range keys {
 		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
 	}
-	s += strings.Join(ss, ",") + "}"
+	s += strings.Join(ss, ",") + "})"
 	return s
 }
 func (m *FrameworkID) Marshal() (data []byte, err error) {
@@ -16295,7 +17242,7 @@ func (m *FrameworkInfo) MarshalTo(data []byte) (int, error) {
 	if m.FailoverTimeout != nil {
 		data[i] = 0x21
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.FailoverTimeout)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.FailoverTimeout))))
 	}
 	if m.Checkpoint != nil {
 		data[i] = 0x28
@@ -16415,17 +17362,17 @@ func (m *HealthCheck) MarshalTo(data []byte) (int, error) {
 	if m.DelaySeconds != nil {
 		data[i] = 0x11
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.DelaySeconds)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.DelaySeconds))))
 	}
 	if m.IntervalSeconds != nil {
 		data[i] = 0x19
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.IntervalSeconds)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.IntervalSeconds))))
 	}
 	if m.TimeoutSeconds != nil {
 		data[i] = 0x21
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.TimeoutSeconds)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.TimeoutSeconds))))
 	}
 	if m.ConsecutiveFailures != nil {
 		data[i] = 0x28
@@ -16435,7 +17382,7 @@ func (m *HealthCheck) MarshalTo(data []byte) (int, error) {
 	if m.GracePeriodSeconds != nil {
 		data[i] = 0x31
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.GracePeriodSeconds)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.GracePeriodSeconds))))
 	}
 	if m.Command != nil {
 		data[i] = 0x3a
@@ -16537,16 +17484,6 @@ func (m *CommandInfo) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
 		i += copy(data[i:], *m.Value)
 	}
-	if m.Container != nil {
-		data[i] = 0x22
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.Container.Size()))
-		n11, err := m.Container.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n11
-	}
 	if m.User != nil {
 		data[i] = 0x2a
 		i++
@@ -16643,50 +17580,6 @@ func (m *CommandInfo_URI) MarshalTo(data []byte) (int, error) {
 	return i, nil
 }
 
-func (m *CommandInfo_ContainerInfo) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *CommandInfo_ContainerInfo) MarshalTo(data []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Image == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("image")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Image)))
-		i += copy(data[i:], *m.Image)
-	}
-	if len(m.Options) > 0 {
-		for _, s := range m.Options {
-			data[i] = 0x12
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				data[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			data[i] = uint8(l)
-			i++
-			i += copy(data[i:], s)
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(data[i:], m.XXX_unrecognized)
-	}
-	return i, nil
-}
-
 func (m *ExecutorInfo) Marshal() (data []byte, err error) {
 	size := m.Size()
 	data = make([]byte, size)
@@ -16708,11 +17601,11 @@ func (m *ExecutorInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.ExecutorId.Size()))
-		n12, err := m.ExecutorId.MarshalTo(data[i:])
+		n11, err := m.ExecutorId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n12
+		i += n11
 	}
 	if m.Data != nil {
 		data[i] = 0x22
@@ -16738,21 +17631,21 @@ func (m *ExecutorInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x3a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Command.Size()))
-		n13, err := m.Command.MarshalTo(data[i:])
+		n12, err := m.Command.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n13
+		i += n12
 	}
 	if m.FrameworkId != nil {
 		data[i] = 0x42
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.FrameworkId.Size()))
-		n14, err := m.FrameworkId.MarshalTo(data[i:])
+		n13, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n14
+		i += n13
 	}
 	if m.Name != nil {
 		data[i] = 0x4a
@@ -16770,21 +17663,21 @@ func (m *ExecutorInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x5a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Container.Size()))
-		n15, err := m.Container.MarshalTo(data[i:])
+		n14, err := m.Container.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n15
+		i += n14
 	}
 	if m.Discovery != nil {
 		data[i] = 0x62
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Discovery.Size()))
-		n16, err := m.Discovery.MarshalTo(data[i:])
+		n15, err := m.Discovery.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n16
+		i += n15
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -16851,11 +17744,11 @@ func (m *MasterInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x3a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Address.Size()))
-		n17, err := m.Address.MarshalTo(data[i:])
+		n16, err := m.Address.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n17
+		i += n16
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -16914,11 +17807,11 @@ func (m *SlaveInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x32
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n18, err := m.Id.MarshalTo(data[i:])
+		n17, err := m.Id.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n18
+		i += n17
 	}
 	if m.Checkpoint != nil {
 		data[i] = 0x38
@@ -16967,41 +17860,41 @@ func (m *Value) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Scalar.Size()))
-		n19, err := m.Scalar.MarshalTo(data[i:])
+		n18, err := m.Scalar.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n19
+		i += n18
 	}
 	if m.Ranges != nil {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Ranges.Size()))
-		n20, err := m.Ranges.MarshalTo(data[i:])
+		n19, err := m.Ranges.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n20
+		i += n19
 	}
 	if m.Set != nil {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Set.Size()))
-		n21, err := m.Set.MarshalTo(data[i:])
+		n20, err := m.Set.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n21
+		i += n20
 	}
 	if m.Text != nil {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Text.Size()))
-		n22, err := m.Text.MarshalTo(data[i:])
+		n21, err := m.Text.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n22
+		i += n21
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -17029,7 +17922,7 @@ func (m *Value_Scalar) MarshalTo(data []byte) (int, error) {
 	} else {
 		data[i] = 0x9
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.Value)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.Value))))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -17204,41 +18097,41 @@ func (m *Attribute) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Scalar.Size()))
-		n23, err := m.Scalar.MarshalTo(data[i:])
+		n22, err := m.Scalar.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n23
+		i += n22
 	}
 	if m.Ranges != nil {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Ranges.Size()))
-		n24, err := m.Ranges.MarshalTo(data[i:])
+		n23, err := m.Ranges.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n24
+		i += n23
 	}
 	if m.Text != nil {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Text.Size()))
-		n25, err := m.Text.MarshalTo(data[i:])
+		n24, err := m.Text.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n25
+		i += n24
 	}
 	if m.Set != nil {
 		data[i] = 0x32
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Set.Size()))
-		n26, err := m.Set.MarshalTo(data[i:])
+		n25, err := m.Set.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n26
+		i += n25
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -17280,31 +18173,31 @@ func (m *Resource) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Scalar.Size()))
-		n27, err := m.Scalar.MarshalTo(data[i:])
+		n26, err := m.Scalar.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n27
+		i += n26
 	}
 	if m.Ranges != nil {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Ranges.Size()))
-		n28, err := m.Ranges.MarshalTo(data[i:])
+		n27, err := m.Ranges.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n28
+		i += n27
 	}
 	if m.Set != nil {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Set.Size()))
-		n29, err := m.Set.MarshalTo(data[i:])
+		n28, err := m.Set.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n29
+		i += n28
 	}
 	if m.Role != nil {
 		data[i] = 0x32
@@ -17316,31 +18209,31 @@ func (m *Resource) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x3a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Disk.Size()))
-		n30, err := m.Disk.MarshalTo(data[i:])
+		n29, err := m.Disk.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n30
+		i += n29
 	}
 	if m.Reservation != nil {
 		data[i] = 0x42
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Reservation.Size()))
-		n31, err := m.Reservation.MarshalTo(data[i:])
+		n30, err := m.Reservation.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n31
+		i += n30
 	}
 	if m.Revocable != nil {
 		data[i] = 0x4a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Revocable.Size()))
-		n32, err := m.Revocable.MarshalTo(data[i:])
+		n31, err := m.Revocable.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n32
+		i += n31
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -17396,21 +18289,21 @@ func (m *Resource_DiskInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Persistence.Size()))
-		n33, err := m.Persistence.MarshalTo(data[i:])
+		n32, err := m.Persistence.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n33
+		i += n32
 	}
 	if m.Volume != nil {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Volume.Size()))
-		n34, err := m.Volume.MarshalTo(data[i:])
+		n33, err := m.Volume.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n34
+		i += n33
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -17562,22 +18455,22 @@ func (m *ResourceStatistics) MarshalTo(data []byte) (int, error) {
 	} else {
 		data[i] = 0x9
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.Timestamp)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.Timestamp))))
 	}
 	if m.CpusUserTimeSecs != nil {
 		data[i] = 0x11
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.CpusUserTimeSecs)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.CpusUserTimeSecs))))
 	}
 	if m.CpusSystemTimeSecs != nil {
 		data[i] = 0x19
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.CpusSystemTimeSecs)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.CpusSystemTimeSecs))))
 	}
 	if m.CpusLimit != nil {
 		data[i] = 0x21
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.CpusLimit)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.CpusLimit))))
 	}
 	if m.MemRssBytes != nil {
 		data[i] = 0x28
@@ -17602,7 +18495,7 @@ func (m *ResourceStatistics) MarshalTo(data []byte) (int, error) {
 	if m.CpusThrottledTimeSecs != nil {
 		data[i] = 0x49
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.CpusThrottledTimeSecs)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.CpusThrottledTimeSecs))))
 	}
 	if m.MemFileBytes != nil {
 		data[i] = 0x50
@@ -17623,11 +18516,11 @@ func (m *ResourceStatistics) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x6a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Perf.Size()))
-		n35, err := m.Perf.MarshalTo(data[i:])
+		n34, err := m.Perf.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n35
+		i += n34
 	}
 	if m.NetRxPackets != nil {
 		data[i] = 0x70
@@ -17686,28 +18579,28 @@ func (m *ResourceStatistics) MarshalTo(data []byte) (int, error) {
 		i++
 		data[i] = 0x1
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.NetTcpRttMicrosecsP50)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.NetTcpRttMicrosecsP50))))
 	}
 	if m.NetTcpRttMicrosecsP90 != nil {
 		data[i] = 0xb9
 		i++
 		data[i] = 0x1
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.NetTcpRttMicrosecsP90)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.NetTcpRttMicrosecsP90))))
 	}
 	if m.NetTcpRttMicrosecsP95 != nil {
 		data[i] = 0xc1
 		i++
 		data[i] = 0x1
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.NetTcpRttMicrosecsP95)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.NetTcpRttMicrosecsP95))))
 	}
 	if m.NetTcpRttMicrosecsP99 != nil {
 		data[i] = 0xc9
 		i++
 		data[i] = 0x1
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.NetTcpRttMicrosecsP99)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.NetTcpRttMicrosecsP99))))
 	}
 	if m.DiskLimitBytes != nil {
 		data[i] = 0xd0
@@ -17728,14 +18621,14 @@ func (m *ResourceStatistics) MarshalTo(data []byte) (int, error) {
 		i++
 		data[i] = 0x1
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.NetTcpActiveConnections)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.NetTcpActiveConnections))))
 	}
 	if m.NetTcpTimeWaitConnections != nil {
 		data[i] = 0xe9
 		i++
 		data[i] = 0x1
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.NetTcpTimeWaitConnections)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.NetTcpTimeWaitConnections))))
 	}
 	if m.Processes != nil {
 		data[i] = 0xf0
@@ -17900,11 +18793,11 @@ func (m *ResourceUsage_Executor) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.ExecutorInfo.Size()))
-		n36, err := m.ExecutorInfo.MarshalTo(data[i:])
+		n35, err := m.ExecutorInfo.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n36
+		i += n35
 	}
 	if len(m.Allocated) > 0 {
 		for _, msg := range m.Allocated {
@@ -17922,11 +18815,11 @@ func (m *ResourceUsage_Executor) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Statistics.Size()))
-		n37, err := m.Statistics.MarshalTo(data[i:])
+		n36, err := m.Statistics.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n37
+		i += n36
 	}
 	if m.ContainerId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
@@ -17934,11 +18827,11 @@ func (m *ResourceUsage_Executor) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.ContainerId.Size()))
-		n38, err := m.ContainerId.MarshalTo(data[i:])
+		n37, err := m.ContainerId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n38
+		i += n37
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -17966,14 +18859,14 @@ func (m *PerfStatistics) MarshalTo(data []byte) (int, error) {
 	} else {
 		data[i] = 0x9
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.Timestamp)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.Timestamp))))
 	}
 	if m.Duration == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("duration")
 	} else {
 		data[i] = 0x11
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.Duration)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.Duration))))
 	}
 	if m.Cycles != nil {
 		data[i] = 0x18
@@ -18028,12 +18921,12 @@ func (m *PerfStatistics) MarshalTo(data []byte) (int, error) {
 	if m.CpuClock != nil {
 		data[i] = 0x69
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.CpuClock)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.CpuClock))))
 	}
 	if m.TaskClock != nil {
 		data[i] = 0x71
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.TaskClock)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.TaskClock))))
 	}
 	if m.PageFaults != nil {
 		data[i] = 0x78
@@ -18331,11 +19224,11 @@ func (m *Request) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n39, err := m.SlaveId.MarshalTo(data[i:])
+		n38, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n39
+		i += n38
 	}
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
@@ -18376,11 +19269,11 @@ func (m *Offer) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n40, err := m.Id.MarshalTo(data[i:])
+		n39, err := m.Id.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n40
+		i += n39
 	}
 	if m.FrameworkId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
@@ -18388,11 +19281,11 @@ func (m *Offer) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.FrameworkId.Size()))
-		n41, err := m.FrameworkId.MarshalTo(data[i:])
+		n40, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n41
+		i += n40
 	}
 	if m.SlaveId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("slave_id")
@@ -18400,11 +19293,11 @@ func (m *Offer) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n42, err := m.SlaveId.MarshalTo(data[i:])
+		n41, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n42
+		i += n41
 	}
 	if m.Hostname == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("hostname")
@@ -18454,21 +19347,21 @@ func (m *Offer) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x42
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Url.Size()))
-		n43, err := m.Url.MarshalTo(data[i:])
+		n42, err := m.Url.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n43
+		i += n42
 	}
 	if m.Unavailability != nil {
 		data[i] = 0x4a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Unavailability.Size()))
-		n44, err := m.Unavailability.MarshalTo(data[i:])
+		n43, err := m.Unavailability.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n44
+		i += n43
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -18502,51 +19395,51 @@ func (m *Offer_Operation) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Launch.Size()))
-		n45, err := m.Launch.MarshalTo(data[i:])
+		n44, err := m.Launch.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n45
+		i += n44
 	}
 	if m.Reserve != nil {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Reserve.Size()))
-		n46, err := m.Reserve.MarshalTo(data[i:])
+		n45, err := m.Reserve.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n46
+		i += n45
 	}
 	if m.Unreserve != nil {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Unreserve.Size()))
-		n47, err := m.Unreserve.MarshalTo(data[i:])
+		n46, err := m.Unreserve.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n47
+		i += n46
 	}
 	if m.Create != nil {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Create.Size()))
-		n48, err := m.Create.MarshalTo(data[i:])
+		n47, err := m.Create.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n48
+		i += n47
 	}
 	if m.Destroy != nil {
 		data[i] = 0x32
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Destroy.Size()))
-		n49, err := m.Destroy.MarshalTo(data[i:])
+		n48, err := m.Destroy.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n49
+		i += n48
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -18740,21 +19633,21 @@ func (m *InverseOffer) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n50, err := m.Id.MarshalTo(data[i:])
+		n49, err := m.Id.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n50
+		i += n49
 	}
 	if m.Url != nil {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Url.Size()))
-		n51, err := m.Url.MarshalTo(data[i:])
+		n50, err := m.Url.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n51
+		i += n50
 	}
 	if m.FrameworkId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
@@ -18762,21 +19655,21 @@ func (m *InverseOffer) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.FrameworkId.Size()))
-		n52, err := m.FrameworkId.MarshalTo(data[i:])
+		n51, err := m.FrameworkId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n52
+		i += n51
 	}
 	if m.SlaveId != nil {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n53, err := m.SlaveId.MarshalTo(data[i:])
+		n52, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n53
+		i += n52
 	}
 	if m.Unavailability == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("unavailability")
@@ -18784,11 +19677,11 @@ func (m *InverseOffer) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Unavailability.Size()))
-		n54, err := m.Unavailability.MarshalTo(data[i:])
+		n53, err := m.Unavailability.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n54
+		i += n53
 	}
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
@@ -18837,11 +19730,11 @@ func (m *TaskInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.TaskId.Size()))
-		n55, err := m.TaskId.MarshalTo(data[i:])
+		n54, err := m.TaskId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n55
+		i += n54
 	}
 	if m.SlaveId == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("slave_id")
@@ -18849,11 +19742,11 @@ func (m *TaskInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n56, err := m.SlaveId.MarshalTo(data[i:])
+		n55, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n56
+		i += n55
 	}
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
@@ -18871,11 +19764,11 @@ func (m *TaskInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Executor.Size()))
-		n57, err := m.Executor.MarshalTo(data[i:])
+		n56, err := m.Executor.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n57
+		i += n56
 	}
 	if m.Data != nil {
 		data[i] = 0x32
@@ -18887,51 +19780,51 @@ func (m *TaskInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x3a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Command.Size()))
-		n58, err := m.Command.MarshalTo(data[i:])
+		n57, err := m.Command.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n58
+		i += n57
 	}
 	if m.HealthCheck != nil {
 		data[i] = 0x42
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.HealthCheck.Size()))
-		n59, err := m.HealthCheck.MarshalTo(data[i:])
+		n58, err := m.HealthCheck.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n59
+		i += n58
 	}
 	if m.Container != nil {
 		data[i] = 0x4a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Container.Size()))
-		n60, err := m.Container.MarshalTo(data[i:])
+		n59, err := m.Container.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n60
+		i += n59
 	}
 	if m.Labels != nil {
 		data[i] = 0x52
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Labels.Size()))
-		n61, err := m.Labels.MarshalTo(data[i:])
+		n60, err := m.Labels.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n61
+		i += n60
 	}
 	if m.Discovery != nil {
 		data[i] = 0x5a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Discovery.Size()))
-		n62, err := m.Discovery.MarshalTo(data[i:])
+		n61, err := m.Discovery.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n62
+		i += n61
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -18960,11 +19853,11 @@ func (m *TaskStatus) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.TaskId.Size()))
-		n63, err := m.TaskId.MarshalTo(data[i:])
+		n62, err := m.TaskId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n63
+		i += n62
 	}
 	if m.State == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
@@ -18989,26 +19882,26 @@ func (m *TaskStatus) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n64, err := m.SlaveId.MarshalTo(data[i:])
+		n63, err := m.SlaveId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n64
+		i += n63
 	}
 	if m.Timestamp != nil {
 		data[i] = 0x31
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.Timestamp)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.Timestamp))))
 	}
 	if m.ExecutorId != nil {
 		data[i] = 0x3a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.ExecutorId.Size()))
-		n65, err := m.ExecutorId.MarshalTo(data[i:])
+		n64, err := m.ExecutorId.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n65
+		i += n64
 	}
 	if m.Healthy != nil {
 		data[i] = 0x40
@@ -19040,21 +19933,21 @@ func (m *TaskStatus) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x62
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Labels.Size()))
-		n66, err := m.Labels.MarshalTo(data[i:])
+		n65, err := m.Labels.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n66
+		i += n65
 	}
 	if m.ContainerStatus != nil {
 		data[i] = 0x6a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.ContainerStatus.Size()))
-		n67, err := m.ContainerStatus.MarshalTo(data[i:])
+		n66, err := m.ContainerStatus.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n67
+		i += n66
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -19080,7 +19973,7 @@ func (m *Filters) MarshalTo(data []byte) (int, error) {
 	if m.RefuseSeconds != nil {
 		data[i] = 0x9
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.RefuseSeconds)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.RefuseSeconds))))
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -19314,7 +20207,7 @@ func (m *RateLimit) MarshalTo(data []byte) (int, error) {
 	if m.Qps != nil {
 		data[i] = 0x9
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.Qps)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.Qps))))
 	}
 	if m.Principal == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("principal")
@@ -19365,7 +20258,7 @@ func (m *RateLimits) MarshalTo(data []byte) (int, error) {
 	if m.AggregateDefaultQps != nil {
 		data[i] = 0x11
 		i++
-		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(*m.AggregateDefaultQps)))
+		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.AggregateDefaultQps))))
 	}
 	if m.AggregateDefaultCapacity != nil {
 		data[i] = 0x18
@@ -19404,21 +20297,21 @@ func (m *Image) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Appc.Size()))
-		n68, err := m.Appc.MarshalTo(data[i:])
+		n67, err := m.Appc.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n68
+		i += n67
 	}
 	if m.Docker != nil {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Docker.Size()))
-		n69, err := m.Docker.MarshalTo(data[i:])
+		n68, err := m.Docker.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n69
+		i += n68
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -19459,11 +20352,11 @@ func (m *Image_Appc) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Labels.Size()))
-		n70, err := m.Labels.MarshalTo(data[i:])
+		n69, err := m.Labels.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n70
+		i += n69
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -19540,11 +20433,11 @@ func (m *Volume) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Image.Size()))
-		n71, err := m.Image.MarshalTo(data[i:])
+		n70, err := m.Image.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n71
+		i += n70
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -19597,11 +20490,11 @@ func (m *NetworkInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x22
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Labels.Size()))
-		n72, err := m.Labels.MarshalTo(data[i:])
+		n71, err := m.Labels.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n72
+		i += n71
 	}
 	if len(m.IpAddresses) > 0 {
 		for _, msg := range m.IpAddresses {
@@ -19691,11 +20584,11 @@ func (m *ContainerInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Docker.Size()))
-		n73, err := m.Docker.MarshalTo(data[i:])
+		n72, err := m.Docker.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n73
+		i += n72
 	}
 	if m.Hostname != nil {
 		data[i] = 0x22
@@ -19707,11 +20600,11 @@ func (m *ContainerInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Mesos.Size()))
-		n74, err := m.Mesos.MarshalTo(data[i:])
+		n73, err := m.Mesos.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n74
+		i += n73
 	}
 	if len(m.NetworkInfos) > 0 {
 		for _, msg := range m.NetworkInfos {
@@ -19869,11 +20762,11 @@ func (m *ContainerInfo_MesosInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Image.Size()))
-		n75, err := m.Image.MarshalTo(data[i:])
+		n74, err := m.Image.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n75
+		i += n74
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -20110,21 +21003,21 @@ func (m *DiscoveryInfo) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x32
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Ports.Size()))
-		n76, err := m.Ports.MarshalTo(data[i:])
+		n75, err := m.Ports.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n76
+		i += n75
 	}
 	if m.Labels != nil {
 		data[i] = 0x3a
 		i++
 		i = encodeVarintMesos(data, i, uint64(m.Labels.Size()))
-		n77, err := m.Labels.MarshalTo(data[i:])
+		n76, err := m.Labels.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n77
+		i += n76
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(data[i:], m.XXX_unrecognized)
@@ -20419,7 +21312,7 @@ func NewPopulatedURL(r randyMesos, easy bool) *URL {
 		this.Path = &v13
 	}
 	if r.Intn(10) != 0 {
-		v14 := r.Intn(10)
+		v14 := r.Intn(5)
 		this.Query = make([]*Parameter, v14)
 		for i := 0; i < v14; i++ {
 			this.Query[i] = NewPopulatedParameter(r, easy)
@@ -20516,7 +21409,7 @@ func NewPopulatedFrameworkInfo(r randyMesos, easy bool) *FrameworkInfo {
 		this.WebuiUrl = &v26
 	}
 	if r.Intn(10) != 0 {
-		v27 := r.Intn(10)
+		v27 := r.Intn(5)
 		this.Capabilities = make([]*FrameworkInfo_Capability, v27)
 		for i := 0; i < v27; i++ {
 			this.Capabilities[i] = NewPopulatedFrameworkInfo_Capability(r, easy)
@@ -20533,7 +21426,7 @@ func NewPopulatedFrameworkInfo(r randyMesos, easy bool) *FrameworkInfo {
 
 func NewPopulatedFrameworkInfo_Capability(r randyMesos, easy bool) *FrameworkInfo_Capability {
 	this := &FrameworkInfo_Capability{}
-	v28 := FrameworkInfo_Capability_Type([]int32{1}[r.Intn(1)])
+	v28 := FrameworkInfo_Capability_Type([]int32{1, 2}[r.Intn(2)])
 	this.Type = &v28
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
@@ -20596,7 +21489,7 @@ func NewPopulatedHealthCheck_HTTP(r randyMesos, easy bool) *HealthCheck_HTTP {
 		this.Path = &v35
 	}
 	if r.Intn(10) != 0 {
-		v36 := r.Intn(100)
+		v36 := r.Intn(10)
 		this.Statuses = make([]uint32, v36)
 		for i := 0; i < v36; i++ {
 			this.Statuses[i] = uint32(r.Uint32())
@@ -20611,7 +21504,7 @@ func NewPopulatedHealthCheck_HTTP(r randyMesos, easy bool) *HealthCheck_HTTP {
 func NewPopulatedCommandInfo(r randyMesos, easy bool) *CommandInfo {
 	this := &CommandInfo{}
 	if r.Intn(10) != 0 {
-		v37 := r.Intn(10)
+		v37 := r.Intn(5)
 		this.Uris = make([]*CommandInfo_URI, v37)
 		for i := 0; i < v37; i++ {
 			this.Uris[i] = NewPopulatedCommandInfo_URI(r, easy)
@@ -20623,9 +21516,6 @@ func NewPopulatedCommandInfo(r randyMesos, easy bool) *CommandInfo {
 	if r.Intn(10) != 0 {
 		v38 := randStringMesos(r)
 		this.Value = &v38
-	}
-	if r.Intn(10) != 0 {
-		this.Container = NewPopulatedCommandInfo_ContainerInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		v39 := randStringMesos(r)
@@ -20670,37 +21560,20 @@ func NewPopulatedCommandInfo_URI(r randyMesos, easy bool) *CommandInfo_URI {
 	return this
 }
 
-func NewPopulatedCommandInfo_ContainerInfo(r randyMesos, easy bool) *CommandInfo_ContainerInfo {
-	this := &CommandInfo_ContainerInfo{}
-	v46 := randStringMesos(r)
-	this.Image = &v46
-	if r.Intn(10) != 0 {
-		v47 := r.Intn(10)
-		this.Options = make([]string, v47)
-		for i := 0; i < v47; i++ {
-			this.Options[i] = randStringMesos(r)
-		}
-	}
-	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
-	}
-	return this
-}
-
 func NewPopulatedExecutorInfo(r randyMesos, easy bool) *ExecutorInfo {
 	this := &ExecutorInfo{}
 	this.ExecutorId = NewPopulatedExecutorID(r, easy)
 	if r.Intn(10) != 0 {
-		v48 := r.Intn(100)
-		this.Data = make([]byte, v48)
-		for i := 0; i < v48; i++ {
+		v46 := r.Intn(100)
+		this.Data = make([]byte, v46)
+		for i := 0; i < v46; i++ {
 			this.Data[i] = byte(r.Intn(256))
 		}
 	}
 	if r.Intn(10) != 0 {
-		v49 := r.Intn(10)
-		this.Resources = make([]*Resource, v49)
-		for i := 0; i < v49; i++ {
+		v47 := r.Intn(5)
+		this.Resources = make([]*Resource, v47)
+		for i := 0; i < v47; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -20709,12 +21582,12 @@ func NewPopulatedExecutorInfo(r randyMesos, easy bool) *ExecutorInfo {
 		this.FrameworkId = NewPopulatedFrameworkID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v50 := randStringMesos(r)
-		this.Name = &v50
+		v48 := randStringMesos(r)
+		this.Name = &v48
 	}
 	if r.Intn(10) != 0 {
-		v51 := randStringMesos(r)
-		this.Source = &v51
+		v49 := randStringMesos(r)
+		this.Source = &v49
 	}
 	if r.Intn(10) != 0 {
 		this.Container = NewPopulatedContainerInfo(r, easy)
@@ -20730,23 +21603,23 @@ func NewPopulatedExecutorInfo(r randyMesos, easy bool) *ExecutorInfo {
 
 func NewPopulatedMasterInfo(r randyMesos, easy bool) *MasterInfo {
 	this := &MasterInfo{}
-	v52 := randStringMesos(r)
-	this.Id = &v52
-	v53 := uint32(r.Uint32())
-	this.Ip = &v53
-	v54 := uint32(r.Uint32())
-	this.Port = &v54
+	v50 := randStringMesos(r)
+	this.Id = &v50
+	v51 := uint32(r.Uint32())
+	this.Ip = &v51
+	v52 := uint32(r.Uint32())
+	this.Port = &v52
+	if r.Intn(10) != 0 {
+		v53 := randStringMesos(r)
+		this.Pid = &v53
+	}
+	if r.Intn(10) != 0 {
+		v54 := randStringMesos(r)
+		this.Hostname = &v54
+	}
 	if r.Intn(10) != 0 {
 		v55 := randStringMesos(r)
-		this.Pid = &v55
-	}
-	if r.Intn(10) != 0 {
-		v56 := randStringMesos(r)
-		this.Hostname = &v56
-	}
-	if r.Intn(10) != 0 {
-		v57 := randStringMesos(r)
-		this.Version = &v57
+		this.Version = &v55
 	}
 	if r.Intn(10) != 0 {
 		this.Address = NewPopulatedAddress(r, easy)
@@ -20759,19 +21632,19 @@ func NewPopulatedMasterInfo(r randyMesos, easy bool) *MasterInfo {
 
 func NewPopulatedSlaveInfo(r randyMesos, easy bool) *SlaveInfo {
 	this := &SlaveInfo{}
-	v58 := randStringMesos(r)
-	this.Hostname = &v58
+	v56 := randStringMesos(r)
+	this.Hostname = &v56
 	if r.Intn(10) != 0 {
-		v59 := r.Intn(10)
-		this.Resources = make([]*Resource, v59)
-		for i := 0; i < v59; i++ {
+		v57 := r.Intn(5)
+		this.Resources = make([]*Resource, v57)
+		for i := 0; i < v57; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v60 := r.Intn(10)
-		this.Attributes = make([]*Attribute, v60)
-		for i := 0; i < v60; i++ {
+		v58 := r.Intn(5)
+		this.Attributes = make([]*Attribute, v58)
+		for i := 0; i < v58; i++ {
 			this.Attributes[i] = NewPopulatedAttribute(r, easy)
 		}
 	}
@@ -20779,15 +21652,15 @@ func NewPopulatedSlaveInfo(r randyMesos, easy bool) *SlaveInfo {
 		this.Id = NewPopulatedSlaveID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v61 := bool(bool(r.Intn(2) == 0))
-		this.Checkpoint = &v61
+		v59 := bool(bool(r.Intn(2) == 0))
+		this.Checkpoint = &v59
 	}
 	if r.Intn(10) != 0 {
-		v62 := int32(r.Int31())
+		v60 := int32(r.Int31())
 		if r.Intn(2) == 0 {
-			v62 *= -1
+			v60 *= -1
 		}
-		this.Port = &v62
+		this.Port = &v60
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 9)
@@ -20797,8 +21670,8 @@ func NewPopulatedSlaveInfo(r randyMesos, easy bool) *SlaveInfo {
 
 func NewPopulatedValue(r randyMesos, easy bool) *Value {
 	this := &Value{}
-	v63 := Value_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
-	this.Type = &v63
+	v61 := Value_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
+	this.Type = &v61
 	if r.Intn(10) != 0 {
 		this.Scalar = NewPopulatedValue_Scalar(r, easy)
 	}
@@ -20819,11 +21692,11 @@ func NewPopulatedValue(r randyMesos, easy bool) *Value {
 
 func NewPopulatedValue_Scalar(r randyMesos, easy bool) *Value_Scalar {
 	this := &Value_Scalar{}
-	v64 := float64(r.Float64())
+	v62 := float64(r.Float64())
 	if r.Intn(2) == 0 {
-		v64 *= -1
+		v62 *= -1
 	}
-	this.Value = &v64
+	this.Value = &v62
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
@@ -20832,10 +21705,10 @@ func NewPopulatedValue_Scalar(r randyMesos, easy bool) *Value_Scalar {
 
 func NewPopulatedValue_Range(r randyMesos, easy bool) *Value_Range {
 	this := &Value_Range{}
-	v65 := uint64(uint64(r.Uint32()))
-	this.Begin = &v65
-	v66 := uint64(uint64(r.Uint32()))
-	this.End = &v66
+	v63 := uint64(uint64(r.Uint32()))
+	this.Begin = &v63
+	v64 := uint64(uint64(r.Uint32()))
+	this.End = &v64
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
@@ -20845,9 +21718,9 @@ func NewPopulatedValue_Range(r randyMesos, easy bool) *Value_Range {
 func NewPopulatedValue_Ranges(r randyMesos, easy bool) *Value_Ranges {
 	this := &Value_Ranges{}
 	if r.Intn(10) != 0 {
-		v67 := r.Intn(10)
-		this.Range = make([]*Value_Range, v67)
-		for i := 0; i < v67; i++ {
+		v65 := r.Intn(5)
+		this.Range = make([]*Value_Range, v65)
+		for i := 0; i < v65; i++ {
 			this.Range[i] = NewPopulatedValue_Range(r, easy)
 		}
 	}
@@ -20860,9 +21733,9 @@ func NewPopulatedValue_Ranges(r randyMesos, easy bool) *Value_Ranges {
 func NewPopulatedValue_Set(r randyMesos, easy bool) *Value_Set {
 	this := &Value_Set{}
 	if r.Intn(10) != 0 {
-		v68 := r.Intn(10)
-		this.Item = make([]string, v68)
-		for i := 0; i < v68; i++ {
+		v66 := r.Intn(10)
+		this.Item = make([]string, v66)
+		for i := 0; i < v66; i++ {
 			this.Item[i] = randStringMesos(r)
 		}
 	}
@@ -20874,8 +21747,8 @@ func NewPopulatedValue_Set(r randyMesos, easy bool) *Value_Set {
 
 func NewPopulatedValue_Text(r randyMesos, easy bool) *Value_Text {
 	this := &Value_Text{}
-	v69 := randStringMesos(r)
-	this.Value = &v69
+	v67 := randStringMesos(r)
+	this.Value = &v67
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
@@ -20884,10 +21757,10 @@ func NewPopulatedValue_Text(r randyMesos, easy bool) *Value_Text {
 
 func NewPopulatedAttribute(r randyMesos, easy bool) *Attribute {
 	this := &Attribute{}
-	v70 := randStringMesos(r)
-	this.Name = &v70
-	v71 := Value_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
-	this.Type = &v71
+	v68 := randStringMesos(r)
+	this.Name = &v68
+	v69 := Value_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
+	this.Type = &v69
 	if r.Intn(10) != 0 {
 		this.Scalar = NewPopulatedValue_Scalar(r, easy)
 	}
@@ -20908,10 +21781,10 @@ func NewPopulatedAttribute(r randyMesos, easy bool) *Attribute {
 
 func NewPopulatedResource(r randyMesos, easy bool) *Resource {
 	this := &Resource{}
-	v72 := randStringMesos(r)
-	this.Name = &v72
-	v73 := Value_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
-	this.Type = &v73
+	v70 := randStringMesos(r)
+	this.Name = &v70
+	v71 := Value_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
+	this.Type = &v71
 	if r.Intn(10) != 0 {
 		this.Scalar = NewPopulatedValue_Scalar(r, easy)
 	}
@@ -20922,8 +21795,8 @@ func NewPopulatedResource(r randyMesos, easy bool) *Resource {
 		this.Set = NewPopulatedValue_Set(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v74 := randStringMesos(r)
-		this.Role = &v74
+		v72 := randStringMesos(r)
+		this.Role = &v72
 	}
 	if r.Intn(10) != 0 {
 		this.Disk = NewPopulatedResource_DiskInfo(r, easy)
@@ -20942,8 +21815,8 @@ func NewPopulatedResource(r randyMesos, easy bool) *Resource {
 
 func NewPopulatedResource_ReservationInfo(r randyMesos, easy bool) *Resource_ReservationInfo {
 	this := &Resource_ReservationInfo{}
-	v75 := randStringMesos(r)
-	this.Principal = &v75
+	v73 := randStringMesos(r)
+	this.Principal = &v73
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
@@ -20966,8 +21839,8 @@ func NewPopulatedResource_DiskInfo(r randyMesos, easy bool) *Resource_DiskInfo {
 
 func NewPopulatedResource_DiskInfo_Persistence(r randyMesos, easy bool) *Resource_DiskInfo_Persistence {
 	this := &Resource_DiskInfo_Persistence{}
-	v76 := randStringMesos(r)
-	this.Id = &v76
+	v74 := randStringMesos(r)
+	this.Id = &v74
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
@@ -20984,43 +21857,43 @@ func NewPopulatedResource_RevocableInfo(r randyMesos, easy bool) *Resource_Revoc
 
 func NewPopulatedTrafficControlStatistics(r randyMesos, easy bool) *TrafficControlStatistics {
 	this := &TrafficControlStatistics{}
-	v77 := randStringMesos(r)
-	this.Id = &v77
+	v75 := randStringMesos(r)
+	this.Id = &v75
+	if r.Intn(10) != 0 {
+		v76 := uint64(uint64(r.Uint32()))
+		this.Backlog = &v76
+	}
+	if r.Intn(10) != 0 {
+		v77 := uint64(uint64(r.Uint32()))
+		this.Bytes = &v77
+	}
 	if r.Intn(10) != 0 {
 		v78 := uint64(uint64(r.Uint32()))
-		this.Backlog = &v78
+		this.Drops = &v78
 	}
 	if r.Intn(10) != 0 {
 		v79 := uint64(uint64(r.Uint32()))
-		this.Bytes = &v79
+		this.Overlimits = &v79
 	}
 	if r.Intn(10) != 0 {
 		v80 := uint64(uint64(r.Uint32()))
-		this.Drops = &v80
+		this.Packets = &v80
 	}
 	if r.Intn(10) != 0 {
 		v81 := uint64(uint64(r.Uint32()))
-		this.Overlimits = &v81
+		this.Qlen = &v81
 	}
 	if r.Intn(10) != 0 {
 		v82 := uint64(uint64(r.Uint32()))
-		this.Packets = &v82
+		this.Ratebps = &v82
 	}
 	if r.Intn(10) != 0 {
 		v83 := uint64(uint64(r.Uint32()))
-		this.Qlen = &v83
+		this.Ratepps = &v83
 	}
 	if r.Intn(10) != 0 {
 		v84 := uint64(uint64(r.Uint32()))
-		this.Ratebps = &v84
-	}
-	if r.Intn(10) != 0 {
-		v85 := uint64(uint64(r.Uint32()))
-		this.Ratepps = &v85
-	}
-	if r.Intn(10) != 0 {
-		v86 := uint64(uint64(r.Uint32()))
-		this.Requeues = &v86
+		this.Requeues = &v84
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 11)
@@ -21030,202 +21903,202 @@ func NewPopulatedTrafficControlStatistics(r randyMesos, easy bool) *TrafficContr
 
 func NewPopulatedResourceStatistics(r randyMesos, easy bool) *ResourceStatistics {
 	this := &ResourceStatistics{}
-	v87 := float64(r.Float64())
+	v85 := float64(r.Float64())
 	if r.Intn(2) == 0 {
-		v87 *= -1
+		v85 *= -1
 	}
-	this.Timestamp = &v87
+	this.Timestamp = &v85
+	if r.Intn(10) != 0 {
+		v86 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v86 *= -1
+		}
+		this.CpusUserTimeSecs = &v86
+	}
+	if r.Intn(10) != 0 {
+		v87 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v87 *= -1
+		}
+		this.CpusSystemTimeSecs = &v87
+	}
 	if r.Intn(10) != 0 {
 		v88 := float64(r.Float64())
 		if r.Intn(2) == 0 {
 			v88 *= -1
 		}
-		this.CpusUserTimeSecs = &v88
+		this.CpusLimit = &v88
 	}
 	if r.Intn(10) != 0 {
-		v89 := float64(r.Float64())
+		v89 := uint64(uint64(r.Uint32()))
+		this.MemRssBytes = &v89
+	}
+	if r.Intn(10) != 0 {
+		v90 := uint64(uint64(r.Uint32()))
+		this.MemLimitBytes = &v90
+	}
+	if r.Intn(10) != 0 {
+		v91 := uint32(r.Uint32())
+		this.CpusNrPeriods = &v91
+	}
+	if r.Intn(10) != 0 {
+		v92 := uint32(r.Uint32())
+		this.CpusNrThrottled = &v92
+	}
+	if r.Intn(10) != 0 {
+		v93 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v89 *= -1
+			v93 *= -1
 		}
-		this.CpusSystemTimeSecs = &v89
+		this.CpusThrottledTimeSecs = &v93
 	}
 	if r.Intn(10) != 0 {
-		v90 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v90 *= -1
-		}
-		this.CpusLimit = &v90
+		v94 := uint64(uint64(r.Uint32()))
+		this.MemFileBytes = &v94
 	}
 	if r.Intn(10) != 0 {
-		v91 := uint64(uint64(r.Uint32()))
-		this.MemRssBytes = &v91
-	}
-	if r.Intn(10) != 0 {
-		v92 := uint64(uint64(r.Uint32()))
-		this.MemLimitBytes = &v92
-	}
-	if r.Intn(10) != 0 {
-		v93 := uint32(r.Uint32())
-		this.CpusNrPeriods = &v93
-	}
-	if r.Intn(10) != 0 {
-		v94 := uint32(r.Uint32())
-		this.CpusNrThrottled = &v94
-	}
-	if r.Intn(10) != 0 {
-		v95 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v95 *= -1
-		}
-		this.CpusThrottledTimeSecs = &v95
+		v95 := uint64(uint64(r.Uint32()))
+		this.MemAnonBytes = &v95
 	}
 	if r.Intn(10) != 0 {
 		v96 := uint64(uint64(r.Uint32()))
-		this.MemFileBytes = &v96
-	}
-	if r.Intn(10) != 0 {
-		v97 := uint64(uint64(r.Uint32()))
-		this.MemAnonBytes = &v97
-	}
-	if r.Intn(10) != 0 {
-		v98 := uint64(uint64(r.Uint32()))
-		this.MemMappedFileBytes = &v98
+		this.MemMappedFileBytes = &v96
 	}
 	if r.Intn(10) != 0 {
 		this.Perf = NewPopulatedPerfStatistics(r, easy)
 	}
 	if r.Intn(10) != 0 {
+		v97 := uint64(uint64(r.Uint32()))
+		this.NetRxPackets = &v97
+	}
+	if r.Intn(10) != 0 {
+		v98 := uint64(uint64(r.Uint32()))
+		this.NetRxBytes = &v98
+	}
+	if r.Intn(10) != 0 {
 		v99 := uint64(uint64(r.Uint32()))
-		this.NetRxPackets = &v99
+		this.NetRxErrors = &v99
 	}
 	if r.Intn(10) != 0 {
 		v100 := uint64(uint64(r.Uint32()))
-		this.NetRxBytes = &v100
+		this.NetRxDropped = &v100
 	}
 	if r.Intn(10) != 0 {
 		v101 := uint64(uint64(r.Uint32()))
-		this.NetRxErrors = &v101
+		this.NetTxPackets = &v101
 	}
 	if r.Intn(10) != 0 {
 		v102 := uint64(uint64(r.Uint32()))
-		this.NetRxDropped = &v102
+		this.NetTxBytes = &v102
 	}
 	if r.Intn(10) != 0 {
 		v103 := uint64(uint64(r.Uint32()))
-		this.NetTxPackets = &v103
+		this.NetTxErrors = &v103
 	}
 	if r.Intn(10) != 0 {
 		v104 := uint64(uint64(r.Uint32()))
-		this.NetTxBytes = &v104
+		this.NetTxDropped = &v104
 	}
 	if r.Intn(10) != 0 {
-		v105 := uint64(uint64(r.Uint32()))
-		this.NetTxErrors = &v105
+		v105 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v105 *= -1
+		}
+		this.NetTcpRttMicrosecsP50 = &v105
 	}
 	if r.Intn(10) != 0 {
-		v106 := uint64(uint64(r.Uint32()))
-		this.NetTxDropped = &v106
+		v106 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v106 *= -1
+		}
+		this.NetTcpRttMicrosecsP90 = &v106
 	}
 	if r.Intn(10) != 0 {
 		v107 := float64(r.Float64())
 		if r.Intn(2) == 0 {
 			v107 *= -1
 		}
-		this.NetTcpRttMicrosecsP50 = &v107
+		this.NetTcpRttMicrosecsP95 = &v107
 	}
 	if r.Intn(10) != 0 {
 		v108 := float64(r.Float64())
 		if r.Intn(2) == 0 {
 			v108 *= -1
 		}
-		this.NetTcpRttMicrosecsP90 = &v108
+		this.NetTcpRttMicrosecsP99 = &v108
 	}
 	if r.Intn(10) != 0 {
-		v109 := float64(r.Float64())
+		v109 := uint64(uint64(r.Uint32()))
+		this.DiskLimitBytes = &v109
+	}
+	if r.Intn(10) != 0 {
+		v110 := uint64(uint64(r.Uint32()))
+		this.DiskUsedBytes = &v110
+	}
+	if r.Intn(10) != 0 {
+		v111 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v109 *= -1
+			v111 *= -1
 		}
-		this.NetTcpRttMicrosecsP95 = &v109
+		this.NetTcpActiveConnections = &v111
 	}
 	if r.Intn(10) != 0 {
-		v110 := float64(r.Float64())
+		v112 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v110 *= -1
+			v112 *= -1
 		}
-		this.NetTcpRttMicrosecsP99 = &v110
+		this.NetTcpTimeWaitConnections = &v112
 	}
 	if r.Intn(10) != 0 {
-		v111 := uint64(uint64(r.Uint32()))
-		this.DiskLimitBytes = &v111
+		v113 := uint32(r.Uint32())
+		this.Processes = &v113
 	}
 	if r.Intn(10) != 0 {
-		v112 := uint64(uint64(r.Uint32()))
-		this.DiskUsedBytes = &v112
+		v114 := uint32(r.Uint32())
+		this.Threads = &v114
 	}
 	if r.Intn(10) != 0 {
-		v113 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v113 *= -1
-		}
-		this.NetTcpActiveConnections = &v113
+		v115 := uint64(uint64(r.Uint32()))
+		this.MemLowPressureCounter = &v115
 	}
 	if r.Intn(10) != 0 {
-		v114 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v114 *= -1
-		}
-		this.NetTcpTimeWaitConnections = &v114
-	}
-	if r.Intn(10) != 0 {
-		v115 := uint32(r.Uint32())
-		this.Processes = &v115
-	}
-	if r.Intn(10) != 0 {
-		v116 := uint32(r.Uint32())
-		this.Threads = &v116
+		v116 := uint64(uint64(r.Uint32()))
+		this.MemMediumPressureCounter = &v116
 	}
 	if r.Intn(10) != 0 {
 		v117 := uint64(uint64(r.Uint32()))
-		this.MemLowPressureCounter = &v117
+		this.MemCriticalPressureCounter = &v117
 	}
 	if r.Intn(10) != 0 {
-		v118 := uint64(uint64(r.Uint32()))
-		this.MemMediumPressureCounter = &v118
-	}
-	if r.Intn(10) != 0 {
-		v119 := uint64(uint64(r.Uint32()))
-		this.MemCriticalPressureCounter = &v119
-	}
-	if r.Intn(10) != 0 {
-		v120 := r.Intn(10)
-		this.NetTrafficControlStatistics = make([]*TrafficControlStatistics, v120)
-		for i := 0; i < v120; i++ {
+		v118 := r.Intn(5)
+		this.NetTrafficControlStatistics = make([]*TrafficControlStatistics, v118)
+		for i := 0; i < v118; i++ {
 			this.NetTrafficControlStatistics[i] = NewPopulatedTrafficControlStatistics(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
+		v119 := uint64(uint64(r.Uint32()))
+		this.MemTotalBytes = &v119
+	}
+	if r.Intn(10) != 0 {
+		v120 := uint64(uint64(r.Uint32()))
+		this.MemTotalMemswBytes = &v120
+	}
+	if r.Intn(10) != 0 {
 		v121 := uint64(uint64(r.Uint32()))
-		this.MemTotalBytes = &v121
+		this.MemSoftLimitBytes = &v121
 	}
 	if r.Intn(10) != 0 {
 		v122 := uint64(uint64(r.Uint32()))
-		this.MemTotalMemswBytes = &v122
+		this.MemCacheBytes = &v122
 	}
 	if r.Intn(10) != 0 {
 		v123 := uint64(uint64(r.Uint32()))
-		this.MemSoftLimitBytes = &v123
+		this.MemSwapBytes = &v123
 	}
 	if r.Intn(10) != 0 {
 		v124 := uint64(uint64(r.Uint32()))
-		this.MemCacheBytes = &v124
-	}
-	if r.Intn(10) != 0 {
-		v125 := uint64(uint64(r.Uint32()))
-		this.MemSwapBytes = &v125
-	}
-	if r.Intn(10) != 0 {
-		v126 := uint64(uint64(r.Uint32()))
-		this.MemUnevictableBytes = &v126
+		this.MemUnevictableBytes = &v124
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 42)
@@ -21236,16 +22109,16 @@ func NewPopulatedResourceStatistics(r randyMesos, easy bool) *ResourceStatistics
 func NewPopulatedResourceUsage(r randyMesos, easy bool) *ResourceUsage {
 	this := &ResourceUsage{}
 	if r.Intn(10) != 0 {
-		v127 := r.Intn(10)
-		this.Executors = make([]*ResourceUsage_Executor, v127)
-		for i := 0; i < v127; i++ {
+		v125 := r.Intn(5)
+		this.Executors = make([]*ResourceUsage_Executor, v125)
+		for i := 0; i < v125; i++ {
 			this.Executors[i] = NewPopulatedResourceUsage_Executor(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v128 := r.Intn(10)
-		this.Total = make([]*Resource, v128)
-		for i := 0; i < v128; i++ {
+		v126 := r.Intn(5)
+		this.Total = make([]*Resource, v126)
+		for i := 0; i < v126; i++ {
 			this.Total[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -21259,9 +22132,9 @@ func NewPopulatedResourceUsage_Executor(r randyMesos, easy bool) *ResourceUsage_
 	this := &ResourceUsage_Executor{}
 	this.ExecutorInfo = NewPopulatedExecutorInfo(r, easy)
 	if r.Intn(10) != 0 {
-		v129 := r.Intn(10)
-		this.Allocated = make([]*Resource, v129)
-		for i := 0; i < v129; i++ {
+		v127 := r.Intn(5)
+		this.Allocated = make([]*Resource, v127)
+		for i := 0; i < v127; i++ {
 			this.Allocated[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -21277,225 +22150,225 @@ func NewPopulatedResourceUsage_Executor(r randyMesos, easy bool) *ResourceUsage_
 
 func NewPopulatedPerfStatistics(r randyMesos, easy bool) *PerfStatistics {
 	this := &PerfStatistics{}
-	v130 := float64(r.Float64())
+	v128 := float64(r.Float64())
 	if r.Intn(2) == 0 {
-		v130 *= -1
+		v128 *= -1
 	}
-	this.Timestamp = &v130
-	v131 := float64(r.Float64())
+	this.Timestamp = &v128
+	v129 := float64(r.Float64())
 	if r.Intn(2) == 0 {
-		v131 *= -1
+		v129 *= -1
 	}
-	this.Duration = &v131
+	this.Duration = &v129
+	if r.Intn(10) != 0 {
+		v130 := uint64(uint64(r.Uint32()))
+		this.Cycles = &v130
+	}
+	if r.Intn(10) != 0 {
+		v131 := uint64(uint64(r.Uint32()))
+		this.StalledCyclesFrontend = &v131
+	}
 	if r.Intn(10) != 0 {
 		v132 := uint64(uint64(r.Uint32()))
-		this.Cycles = &v132
+		this.StalledCyclesBackend = &v132
 	}
 	if r.Intn(10) != 0 {
 		v133 := uint64(uint64(r.Uint32()))
-		this.StalledCyclesFrontend = &v133
+		this.Instructions = &v133
 	}
 	if r.Intn(10) != 0 {
 		v134 := uint64(uint64(r.Uint32()))
-		this.StalledCyclesBackend = &v134
+		this.CacheReferences = &v134
 	}
 	if r.Intn(10) != 0 {
 		v135 := uint64(uint64(r.Uint32()))
-		this.Instructions = &v135
+		this.CacheMisses = &v135
 	}
 	if r.Intn(10) != 0 {
 		v136 := uint64(uint64(r.Uint32()))
-		this.CacheReferences = &v136
+		this.Branches = &v136
 	}
 	if r.Intn(10) != 0 {
 		v137 := uint64(uint64(r.Uint32()))
-		this.CacheMisses = &v137
+		this.BranchMisses = &v137
 	}
 	if r.Intn(10) != 0 {
 		v138 := uint64(uint64(r.Uint32()))
-		this.Branches = &v138
+		this.BusCycles = &v138
 	}
 	if r.Intn(10) != 0 {
 		v139 := uint64(uint64(r.Uint32()))
-		this.BranchMisses = &v139
+		this.RefCycles = &v139
 	}
 	if r.Intn(10) != 0 {
-		v140 := uint64(uint64(r.Uint32()))
-		this.BusCycles = &v140
-	}
-	if r.Intn(10) != 0 {
-		v141 := uint64(uint64(r.Uint32()))
-		this.RefCycles = &v141
-	}
-	if r.Intn(10) != 0 {
-		v142 := float64(r.Float64())
+		v140 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v142 *= -1
+			v140 *= -1
 		}
-		this.CpuClock = &v142
+		this.CpuClock = &v140
 	}
 	if r.Intn(10) != 0 {
-		v143 := float64(r.Float64())
+		v141 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v143 *= -1
+			v141 *= -1
 		}
-		this.TaskClock = &v143
+		this.TaskClock = &v141
+	}
+	if r.Intn(10) != 0 {
+		v142 := uint64(uint64(r.Uint32()))
+		this.PageFaults = &v142
+	}
+	if r.Intn(10) != 0 {
+		v143 := uint64(uint64(r.Uint32()))
+		this.MinorFaults = &v143
 	}
 	if r.Intn(10) != 0 {
 		v144 := uint64(uint64(r.Uint32()))
-		this.PageFaults = &v144
+		this.MajorFaults = &v144
 	}
 	if r.Intn(10) != 0 {
 		v145 := uint64(uint64(r.Uint32()))
-		this.MinorFaults = &v145
+		this.ContextSwitches = &v145
 	}
 	if r.Intn(10) != 0 {
 		v146 := uint64(uint64(r.Uint32()))
-		this.MajorFaults = &v146
+		this.CpuMigrations = &v146
 	}
 	if r.Intn(10) != 0 {
 		v147 := uint64(uint64(r.Uint32()))
-		this.ContextSwitches = &v147
+		this.AlignmentFaults = &v147
 	}
 	if r.Intn(10) != 0 {
 		v148 := uint64(uint64(r.Uint32()))
-		this.CpuMigrations = &v148
+		this.EmulationFaults = &v148
 	}
 	if r.Intn(10) != 0 {
 		v149 := uint64(uint64(r.Uint32()))
-		this.AlignmentFaults = &v149
+		this.L1DcacheLoads = &v149
 	}
 	if r.Intn(10) != 0 {
 		v150 := uint64(uint64(r.Uint32()))
-		this.EmulationFaults = &v150
+		this.L1DcacheLoadMisses = &v150
 	}
 	if r.Intn(10) != 0 {
 		v151 := uint64(uint64(r.Uint32()))
-		this.L1DcacheLoads = &v151
+		this.L1DcacheStores = &v151
 	}
 	if r.Intn(10) != 0 {
 		v152 := uint64(uint64(r.Uint32()))
-		this.L1DcacheLoadMisses = &v152
+		this.L1DcacheStoreMisses = &v152
 	}
 	if r.Intn(10) != 0 {
 		v153 := uint64(uint64(r.Uint32()))
-		this.L1DcacheStores = &v153
+		this.L1DcachePrefetches = &v153
 	}
 	if r.Intn(10) != 0 {
 		v154 := uint64(uint64(r.Uint32()))
-		this.L1DcacheStoreMisses = &v154
+		this.L1DcachePrefetchMisses = &v154
 	}
 	if r.Intn(10) != 0 {
 		v155 := uint64(uint64(r.Uint32()))
-		this.L1DcachePrefetches = &v155
+		this.L1IcacheLoads = &v155
 	}
 	if r.Intn(10) != 0 {
 		v156 := uint64(uint64(r.Uint32()))
-		this.L1DcachePrefetchMisses = &v156
+		this.L1IcacheLoadMisses = &v156
 	}
 	if r.Intn(10) != 0 {
 		v157 := uint64(uint64(r.Uint32()))
-		this.L1IcacheLoads = &v157
+		this.L1IcachePrefetches = &v157
 	}
 	if r.Intn(10) != 0 {
 		v158 := uint64(uint64(r.Uint32()))
-		this.L1IcacheLoadMisses = &v158
+		this.L1IcachePrefetchMisses = &v158
 	}
 	if r.Intn(10) != 0 {
 		v159 := uint64(uint64(r.Uint32()))
-		this.L1IcachePrefetches = &v159
+		this.LlcLoads = &v159
 	}
 	if r.Intn(10) != 0 {
 		v160 := uint64(uint64(r.Uint32()))
-		this.L1IcachePrefetchMisses = &v160
+		this.LlcLoadMisses = &v160
 	}
 	if r.Intn(10) != 0 {
 		v161 := uint64(uint64(r.Uint32()))
-		this.LlcLoads = &v161
+		this.LlcStores = &v161
 	}
 	if r.Intn(10) != 0 {
 		v162 := uint64(uint64(r.Uint32()))
-		this.LlcLoadMisses = &v162
+		this.LlcStoreMisses = &v162
 	}
 	if r.Intn(10) != 0 {
 		v163 := uint64(uint64(r.Uint32()))
-		this.LlcStores = &v163
+		this.LlcPrefetches = &v163
 	}
 	if r.Intn(10) != 0 {
 		v164 := uint64(uint64(r.Uint32()))
-		this.LlcStoreMisses = &v164
+		this.LlcPrefetchMisses = &v164
 	}
 	if r.Intn(10) != 0 {
 		v165 := uint64(uint64(r.Uint32()))
-		this.LlcPrefetches = &v165
+		this.DtlbLoads = &v165
 	}
 	if r.Intn(10) != 0 {
 		v166 := uint64(uint64(r.Uint32()))
-		this.LlcPrefetchMisses = &v166
+		this.DtlbLoadMisses = &v166
 	}
 	if r.Intn(10) != 0 {
 		v167 := uint64(uint64(r.Uint32()))
-		this.DtlbLoads = &v167
+		this.DtlbStores = &v167
 	}
 	if r.Intn(10) != 0 {
 		v168 := uint64(uint64(r.Uint32()))
-		this.DtlbLoadMisses = &v168
+		this.DtlbStoreMisses = &v168
 	}
 	if r.Intn(10) != 0 {
 		v169 := uint64(uint64(r.Uint32()))
-		this.DtlbStores = &v169
+		this.DtlbPrefetches = &v169
 	}
 	if r.Intn(10) != 0 {
 		v170 := uint64(uint64(r.Uint32()))
-		this.DtlbStoreMisses = &v170
+		this.DtlbPrefetchMisses = &v170
 	}
 	if r.Intn(10) != 0 {
 		v171 := uint64(uint64(r.Uint32()))
-		this.DtlbPrefetches = &v171
+		this.ItlbLoads = &v171
 	}
 	if r.Intn(10) != 0 {
 		v172 := uint64(uint64(r.Uint32()))
-		this.DtlbPrefetchMisses = &v172
+		this.ItlbLoadMisses = &v172
 	}
 	if r.Intn(10) != 0 {
 		v173 := uint64(uint64(r.Uint32()))
-		this.ItlbLoads = &v173
+		this.BranchLoads = &v173
 	}
 	if r.Intn(10) != 0 {
 		v174 := uint64(uint64(r.Uint32()))
-		this.ItlbLoadMisses = &v174
+		this.BranchLoadMisses = &v174
 	}
 	if r.Intn(10) != 0 {
 		v175 := uint64(uint64(r.Uint32()))
-		this.BranchLoads = &v175
+		this.NodeLoads = &v175
 	}
 	if r.Intn(10) != 0 {
 		v176 := uint64(uint64(r.Uint32()))
-		this.BranchLoadMisses = &v176
+		this.NodeLoadMisses = &v176
 	}
 	if r.Intn(10) != 0 {
 		v177 := uint64(uint64(r.Uint32()))
-		this.NodeLoads = &v177
+		this.NodeStores = &v177
 	}
 	if r.Intn(10) != 0 {
 		v178 := uint64(uint64(r.Uint32()))
-		this.NodeLoadMisses = &v178
+		this.NodeStoreMisses = &v178
 	}
 	if r.Intn(10) != 0 {
 		v179 := uint64(uint64(r.Uint32()))
-		this.NodeStores = &v179
+		this.NodePrefetches = &v179
 	}
 	if r.Intn(10) != 0 {
 		v180 := uint64(uint64(r.Uint32()))
-		this.NodeStoreMisses = &v180
-	}
-	if r.Intn(10) != 0 {
-		v181 := uint64(uint64(r.Uint32()))
-		this.NodePrefetches = &v181
-	}
-	if r.Intn(10) != 0 {
-		v182 := uint64(uint64(r.Uint32()))
-		this.NodePrefetchMisses = &v182
+		this.NodePrefetchMisses = &v180
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 54)
@@ -21509,9 +22382,9 @@ func NewPopulatedRequest(r randyMesos, easy bool) *Request {
 		this.SlaveId = NewPopulatedSlaveID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v183 := r.Intn(10)
-		this.Resources = make([]*Resource, v183)
-		for i := 0; i < v183; i++ {
+		v181 := r.Intn(5)
+		this.Resources = make([]*Resource, v181)
+		for i := 0; i < v181; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -21526,26 +22399,26 @@ func NewPopulatedOffer(r randyMesos, easy bool) *Offer {
 	this.Id = NewPopulatedOfferID(r, easy)
 	this.FrameworkId = NewPopulatedFrameworkID(r, easy)
 	this.SlaveId = NewPopulatedSlaveID(r, easy)
-	v184 := randStringMesos(r)
-	this.Hostname = &v184
+	v182 := randStringMesos(r)
+	this.Hostname = &v182
 	if r.Intn(10) != 0 {
-		v185 := r.Intn(10)
-		this.Resources = make([]*Resource, v185)
-		for i := 0; i < v185; i++ {
+		v183 := r.Intn(5)
+		this.Resources = make([]*Resource, v183)
+		for i := 0; i < v183; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v186 := r.Intn(10)
-		this.ExecutorIds = make([]*ExecutorID, v186)
-		for i := 0; i < v186; i++ {
+		v184 := r.Intn(5)
+		this.ExecutorIds = make([]*ExecutorID, v184)
+		for i := 0; i < v184; i++ {
 			this.ExecutorIds[i] = NewPopulatedExecutorID(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v187 := r.Intn(10)
-		this.Attributes = make([]*Attribute, v187)
-		for i := 0; i < v187; i++ {
+		v185 := r.Intn(5)
+		this.Attributes = make([]*Attribute, v185)
+		for i := 0; i < v185; i++ {
 			this.Attributes[i] = NewPopulatedAttribute(r, easy)
 		}
 	}
@@ -21563,8 +22436,8 @@ func NewPopulatedOffer(r randyMesos, easy bool) *Offer {
 
 func NewPopulatedOffer_Operation(r randyMesos, easy bool) *Offer_Operation {
 	this := &Offer_Operation{}
-	v188 := Offer_Operation_Type([]int32{1, 2, 3, 4, 5}[r.Intn(5)])
-	this.Type = &v188
+	v186 := Offer_Operation_Type([]int32{1, 2, 3, 4, 5}[r.Intn(5)])
+	this.Type = &v186
 	if r.Intn(10) != 0 {
 		this.Launch = NewPopulatedOffer_Operation_Launch(r, easy)
 	}
@@ -21589,9 +22462,9 @@ func NewPopulatedOffer_Operation(r randyMesos, easy bool) *Offer_Operation {
 func NewPopulatedOffer_Operation_Launch(r randyMesos, easy bool) *Offer_Operation_Launch {
 	this := &Offer_Operation_Launch{}
 	if r.Intn(10) != 0 {
-		v189 := r.Intn(10)
-		this.TaskInfos = make([]*TaskInfo, v189)
-		for i := 0; i < v189; i++ {
+		v187 := r.Intn(5)
+		this.TaskInfos = make([]*TaskInfo, v187)
+		for i := 0; i < v187; i++ {
 			this.TaskInfos[i] = NewPopulatedTaskInfo(r, easy)
 		}
 	}
@@ -21604,9 +22477,9 @@ func NewPopulatedOffer_Operation_Launch(r randyMesos, easy bool) *Offer_Operatio
 func NewPopulatedOffer_Operation_Reserve(r randyMesos, easy bool) *Offer_Operation_Reserve {
 	this := &Offer_Operation_Reserve{}
 	if r.Intn(10) != 0 {
-		v190 := r.Intn(10)
-		this.Resources = make([]*Resource, v190)
-		for i := 0; i < v190; i++ {
+		v188 := r.Intn(5)
+		this.Resources = make([]*Resource, v188)
+		for i := 0; i < v188; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -21619,9 +22492,9 @@ func NewPopulatedOffer_Operation_Reserve(r randyMesos, easy bool) *Offer_Operati
 func NewPopulatedOffer_Operation_Unreserve(r randyMesos, easy bool) *Offer_Operation_Unreserve {
 	this := &Offer_Operation_Unreserve{}
 	if r.Intn(10) != 0 {
-		v191 := r.Intn(10)
-		this.Resources = make([]*Resource, v191)
-		for i := 0; i < v191; i++ {
+		v189 := r.Intn(5)
+		this.Resources = make([]*Resource, v189)
+		for i := 0; i < v189; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -21634,9 +22507,9 @@ func NewPopulatedOffer_Operation_Unreserve(r randyMesos, easy bool) *Offer_Opera
 func NewPopulatedOffer_Operation_Create(r randyMesos, easy bool) *Offer_Operation_Create {
 	this := &Offer_Operation_Create{}
 	if r.Intn(10) != 0 {
-		v192 := r.Intn(10)
-		this.Volumes = make([]*Resource, v192)
-		for i := 0; i < v192; i++ {
+		v190 := r.Intn(5)
+		this.Volumes = make([]*Resource, v190)
+		for i := 0; i < v190; i++ {
 			this.Volumes[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -21649,9 +22522,9 @@ func NewPopulatedOffer_Operation_Create(r randyMesos, easy bool) *Offer_Operatio
 func NewPopulatedOffer_Operation_Destroy(r randyMesos, easy bool) *Offer_Operation_Destroy {
 	this := &Offer_Operation_Destroy{}
 	if r.Intn(10) != 0 {
-		v193 := r.Intn(10)
-		this.Volumes = make([]*Resource, v193)
-		for i := 0; i < v193; i++ {
+		v191 := r.Intn(5)
+		this.Volumes = make([]*Resource, v191)
+		for i := 0; i < v191; i++ {
 			this.Volumes[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -21673,9 +22546,9 @@ func NewPopulatedInverseOffer(r randyMesos, easy bool) *InverseOffer {
 	}
 	this.Unavailability = NewPopulatedUnavailability(r, easy)
 	if r.Intn(10) != 0 {
-		v194 := r.Intn(10)
-		this.Resources = make([]*Resource, v194)
-		for i := 0; i < v194; i++ {
+		v192 := r.Intn(5)
+		this.Resources = make([]*Resource, v192)
+		for i := 0; i < v192; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -21687,14 +22560,14 @@ func NewPopulatedInverseOffer(r randyMesos, easy bool) *InverseOffer {
 
 func NewPopulatedTaskInfo(r randyMesos, easy bool) *TaskInfo {
 	this := &TaskInfo{}
-	v195 := randStringMesos(r)
-	this.Name = &v195
+	v193 := randStringMesos(r)
+	this.Name = &v193
 	this.TaskId = NewPopulatedTaskID(r, easy)
 	this.SlaveId = NewPopulatedSlaveID(r, easy)
 	if r.Intn(10) != 0 {
-		v196 := r.Intn(10)
-		this.Resources = make([]*Resource, v196)
-		for i := 0; i < v196; i++ {
+		v194 := r.Intn(5)
+		this.Resources = make([]*Resource, v194)
+		for i := 0; i < v194; i++ {
 			this.Resources[i] = NewPopulatedResource(r, easy)
 		}
 	}
@@ -21702,9 +22575,9 @@ func NewPopulatedTaskInfo(r randyMesos, easy bool) *TaskInfo {
 		this.Executor = NewPopulatedExecutorInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v197 := r.Intn(100)
-		this.Data = make([]byte, v197)
-		for i := 0; i < v197; i++ {
+		v195 := r.Intn(100)
+		this.Data = make([]byte, v195)
+		for i := 0; i < v195; i++ {
 			this.Data[i] = byte(r.Intn(256))
 		}
 	}
@@ -21732,48 +22605,48 @@ func NewPopulatedTaskInfo(r randyMesos, easy bool) *TaskInfo {
 func NewPopulatedTaskStatus(r randyMesos, easy bool) *TaskStatus {
 	this := &TaskStatus{}
 	this.TaskId = NewPopulatedTaskID(r, easy)
-	v198 := TaskState([]int32{6, 0, 1, 2, 3, 4, 5, 7}[r.Intn(8)])
-	this.State = &v198
+	v196 := TaskState([]int32{6, 0, 1, 2, 3, 4, 5, 7, 8}[r.Intn(9)])
+	this.State = &v196
 	if r.Intn(10) != 0 {
-		v199 := r.Intn(100)
-		this.Data = make([]byte, v199)
-		for i := 0; i < v199; i++ {
+		v197 := r.Intn(100)
+		this.Data = make([]byte, v197)
+		for i := 0; i < v197; i++ {
 			this.Data[i] = byte(r.Intn(256))
 		}
 	}
 	if r.Intn(10) != 0 {
-		v200 := randStringMesos(r)
-		this.Message = &v200
+		v198 := randStringMesos(r)
+		this.Message = &v198
 	}
 	if r.Intn(10) != 0 {
 		this.SlaveId = NewPopulatedSlaveID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v201 := float64(r.Float64())
+		v199 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v201 *= -1
+			v199 *= -1
 		}
-		this.Timestamp = &v201
+		this.Timestamp = &v199
 	}
 	if r.Intn(10) != 0 {
 		this.ExecutorId = NewPopulatedExecutorID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v202 := bool(bool(r.Intn(2) == 0))
-		this.Healthy = &v202
+		v200 := bool(bool(r.Intn(2) == 0))
+		this.Healthy = &v200
 	}
 	if r.Intn(10) != 0 {
-		v203 := TaskStatus_Source([]int32{0, 1, 2}[r.Intn(3)])
-		this.Source = &v203
+		v201 := TaskStatus_Source([]int32{0, 1, 2}[r.Intn(3)])
+		this.Source = &v201
 	}
 	if r.Intn(10) != 0 {
-		v204 := TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 23, 24, 1, 2, 3, 4, 5, 6, 7, 9, 18, 10, 11, 12, 13, 14, 15, 16}[r.Intn(25)])
-		this.Reason = &v204
+		v202 := TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 23, 24, 1, 2, 3, 4, 5, 6, 7, 9, 18, 10, 11, 12, 13, 14, 15, 16}[r.Intn(25)])
+		this.Reason = &v202
 	}
 	if r.Intn(10) != 0 {
-		v205 := r.Intn(100)
-		this.Uuid = make([]byte, v205)
-		for i := 0; i < v205; i++ {
+		v203 := r.Intn(100)
+		this.Uuid = make([]byte, v203)
+		for i := 0; i < v203; i++ {
 			this.Uuid[i] = byte(r.Intn(256))
 		}
 	}
@@ -21792,11 +22665,11 @@ func NewPopulatedTaskStatus(r randyMesos, easy bool) *TaskStatus {
 func NewPopulatedFilters(r randyMesos, easy bool) *Filters {
 	this := &Filters{}
 	if r.Intn(10) != 0 {
-		v206 := float64(r.Float64())
+		v204 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v206 *= -1
+			v204 *= -1
 		}
-		this.RefuseSeconds = &v206
+		this.RefuseSeconds = &v204
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
@@ -21807,9 +22680,9 @@ func NewPopulatedFilters(r randyMesos, easy bool) *Filters {
 func NewPopulatedEnvironment(r randyMesos, easy bool) *Environment {
 	this := &Environment{}
 	if r.Intn(10) != 0 {
-		v207 := r.Intn(10)
-		this.Variables = make([]*Environment_Variable, v207)
-		for i := 0; i < v207; i++ {
+		v205 := r.Intn(5)
+		this.Variables = make([]*Environment_Variable, v205)
+		for i := 0; i < v205; i++ {
 			this.Variables[i] = NewPopulatedEnvironment_Variable(r, easy)
 		}
 	}
@@ -21821,10 +22694,10 @@ func NewPopulatedEnvironment(r randyMesos, easy bool) *Environment {
 
 func NewPopulatedEnvironment_Variable(r randyMesos, easy bool) *Environment_Variable {
 	this := &Environment_Variable{}
-	v208 := randStringMesos(r)
-	this.Name = &v208
-	v209 := randStringMesos(r)
-	this.Value = &v209
+	v206 := randStringMesos(r)
+	this.Name = &v206
+	v207 := randStringMesos(r)
+	this.Value = &v207
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
@@ -21833,10 +22706,10 @@ func NewPopulatedEnvironment_Variable(r randyMesos, easy bool) *Environment_Vari
 
 func NewPopulatedParameter(r randyMesos, easy bool) *Parameter {
 	this := &Parameter{}
-	v210 := randStringMesos(r)
-	this.Key = &v210
-	v211 := randStringMesos(r)
-	this.Value = &v211
+	v208 := randStringMesos(r)
+	this.Key = &v208
+	v209 := randStringMesos(r)
+	this.Value = &v209
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
@@ -21846,9 +22719,9 @@ func NewPopulatedParameter(r randyMesos, easy bool) *Parameter {
 func NewPopulatedParameters(r randyMesos, easy bool) *Parameters {
 	this := &Parameters{}
 	if r.Intn(10) != 0 {
-		v212 := r.Intn(10)
-		this.Parameter = make([]*Parameter, v212)
-		for i := 0; i < v212; i++ {
+		v210 := r.Intn(5)
+		this.Parameter = make([]*Parameter, v210)
+		for i := 0; i < v210; i++ {
 			this.Parameter[i] = NewPopulatedParameter(r, easy)
 		}
 	}
@@ -21860,11 +22733,11 @@ func NewPopulatedParameters(r randyMesos, easy bool) *Parameters {
 
 func NewPopulatedCredential(r randyMesos, easy bool) *Credential {
 	this := &Credential{}
-	v213 := randStringMesos(r)
-	this.Principal = &v213
+	v211 := randStringMesos(r)
+	this.Principal = &v211
 	if r.Intn(10) != 0 {
-		v214 := randStringMesos(r)
-		this.Secret = &v214
+		v212 := randStringMesos(r)
+		this.Secret = &v212
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
@@ -21875,9 +22748,9 @@ func NewPopulatedCredential(r randyMesos, easy bool) *Credential {
 func NewPopulatedCredentials(r randyMesos, easy bool) *Credentials {
 	this := &Credentials{}
 	if r.Intn(10) != 0 {
-		v215 := r.Intn(10)
-		this.Credentials = make([]*Credential, v215)
-		for i := 0; i < v215; i++ {
+		v213 := r.Intn(5)
+		this.Credentials = make([]*Credential, v213)
+		for i := 0; i < v213; i++ {
 			this.Credentials[i] = NewPopulatedCredential(r, easy)
 		}
 	}
@@ -21890,17 +22763,17 @@ func NewPopulatedCredentials(r randyMesos, easy bool) *Credentials {
 func NewPopulatedRateLimit(r randyMesos, easy bool) *RateLimit {
 	this := &RateLimit{}
 	if r.Intn(10) != 0 {
-		v216 := float64(r.Float64())
+		v214 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v216 *= -1
+			v214 *= -1
 		}
-		this.Qps = &v216
+		this.Qps = &v214
 	}
-	v217 := randStringMesos(r)
-	this.Principal = &v217
+	v215 := randStringMesos(r)
+	this.Principal = &v215
 	if r.Intn(10) != 0 {
-		v218 := uint64(uint64(r.Uint32()))
-		this.Capacity = &v218
+		v216 := uint64(uint64(r.Uint32()))
+		this.Capacity = &v216
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
@@ -21911,22 +22784,22 @@ func NewPopulatedRateLimit(r randyMesos, easy bool) *RateLimit {
 func NewPopulatedRateLimits(r randyMesos, easy bool) *RateLimits {
 	this := &RateLimits{}
 	if r.Intn(10) != 0 {
-		v219 := r.Intn(10)
-		this.Limits = make([]*RateLimit, v219)
-		for i := 0; i < v219; i++ {
+		v217 := r.Intn(5)
+		this.Limits = make([]*RateLimit, v217)
+		for i := 0; i < v217; i++ {
 			this.Limits[i] = NewPopulatedRateLimit(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v220 := float64(r.Float64())
+		v218 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v220 *= -1
+			v218 *= -1
 		}
-		this.AggregateDefaultQps = &v220
+		this.AggregateDefaultQps = &v218
 	}
 	if r.Intn(10) != 0 {
-		v221 := uint64(uint64(r.Uint32()))
-		this.AggregateDefaultCapacity = &v221
+		v219 := uint64(uint64(r.Uint32()))
+		this.AggregateDefaultCapacity = &v219
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
@@ -21936,8 +22809,8 @@ func NewPopulatedRateLimits(r randyMesos, easy bool) *RateLimits {
 
 func NewPopulatedImage(r randyMesos, easy bool) *Image {
 	this := &Image{}
-	v222 := Image_Type([]int32{1, 2}[r.Intn(2)])
-	this.Type = &v222
+	v220 := Image_Type([]int32{1, 2}[r.Intn(2)])
+	this.Type = &v220
 	if r.Intn(10) != 0 {
 		this.Appc = NewPopulatedImage_Appc(r, easy)
 	}
@@ -21952,11 +22825,11 @@ func NewPopulatedImage(r randyMesos, easy bool) *Image {
 
 func NewPopulatedImage_Appc(r randyMesos, easy bool) *Image_Appc {
 	this := &Image_Appc{}
-	v223 := randStringMesos(r)
-	this.Name = &v223
+	v221 := randStringMesos(r)
+	this.Name = &v221
 	if r.Intn(10) != 0 {
-		v224 := randStringMesos(r)
-		this.Id = &v224
+		v222 := randStringMesos(r)
+		this.Id = &v222
 	}
 	if r.Intn(10) != 0 {
 		this.Labels = NewPopulatedLabels(r, easy)
@@ -21969,8 +22842,8 @@ func NewPopulatedImage_Appc(r randyMesos, easy bool) *Image_Appc {
 
 func NewPopulatedImage_Docker(r randyMesos, easy bool) *Image_Docker {
 	this := &Image_Docker{}
-	v225 := randStringMesos(r)
-	this.Name = &v225
+	v223 := randStringMesos(r)
+	this.Name = &v223
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 2)
 	}
@@ -21979,14 +22852,14 @@ func NewPopulatedImage_Docker(r randyMesos, easy bool) *Image_Docker {
 
 func NewPopulatedVolume(r randyMesos, easy bool) *Volume {
 	this := &Volume{}
-	v226 := randStringMesos(r)
-	this.ContainerPath = &v226
+	v224 := randStringMesos(r)
+	this.ContainerPath = &v224
 	if r.Intn(10) != 0 {
-		v227 := randStringMesos(r)
-		this.HostPath = &v227
+		v225 := randStringMesos(r)
+		this.HostPath = &v225
 	}
-	v228 := Volume_Mode([]int32{1, 2}[r.Intn(2)])
-	this.Mode = &v228
+	v226 := Volume_Mode([]int32{1, 2}[r.Intn(2)])
+	this.Mode = &v226
 	if r.Intn(10) != 0 {
 		this.Image = NewPopulatedImage(r, easy)
 	}
@@ -21999,17 +22872,17 @@ func NewPopulatedVolume(r randyMesos, easy bool) *Volume {
 func NewPopulatedNetworkInfo(r randyMesos, easy bool) *NetworkInfo {
 	this := &NetworkInfo{}
 	if r.Intn(10) != 0 {
-		v229 := NetworkInfo_Protocol([]int32{1, 2}[r.Intn(2)])
-		this.Protocol = &v229
+		v227 := NetworkInfo_Protocol([]int32{1, 2}[r.Intn(2)])
+		this.Protocol = &v227
 	}
 	if r.Intn(10) != 0 {
-		v230 := randStringMesos(r)
-		this.IpAddress = &v230
+		v228 := randStringMesos(r)
+		this.IpAddress = &v228
 	}
 	if r.Intn(10) != 0 {
-		v231 := r.Intn(10)
-		this.Groups = make([]string, v231)
-		for i := 0; i < v231; i++ {
+		v229 := r.Intn(10)
+		this.Groups = make([]string, v229)
+		for i := 0; i < v229; i++ {
 			this.Groups[i] = randStringMesos(r)
 		}
 	}
@@ -22017,9 +22890,9 @@ func NewPopulatedNetworkInfo(r randyMesos, easy bool) *NetworkInfo {
 		this.Labels = NewPopulatedLabels(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v232 := r.Intn(10)
-		this.IpAddresses = make([]*NetworkInfo_IPAddress, v232)
-		for i := 0; i < v232; i++ {
+		v230 := r.Intn(5)
+		this.IpAddresses = make([]*NetworkInfo_IPAddress, v230)
+		for i := 0; i < v230; i++ {
 			this.IpAddresses[i] = NewPopulatedNetworkInfo_IPAddress(r, easy)
 		}
 	}
@@ -22032,12 +22905,12 @@ func NewPopulatedNetworkInfo(r randyMesos, easy bool) *NetworkInfo {
 func NewPopulatedNetworkInfo_IPAddress(r randyMesos, easy bool) *NetworkInfo_IPAddress {
 	this := &NetworkInfo_IPAddress{}
 	if r.Intn(10) != 0 {
-		v233 := NetworkInfo_Protocol([]int32{1, 2}[r.Intn(2)])
-		this.Protocol = &v233
+		v231 := NetworkInfo_Protocol([]int32{1, 2}[r.Intn(2)])
+		this.Protocol = &v231
 	}
 	if r.Intn(10) != 0 {
-		v234 := randStringMesos(r)
-		this.IpAddress = &v234
+		v232 := randStringMesos(r)
+		this.IpAddress = &v232
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
@@ -22047,12 +22920,12 @@ func NewPopulatedNetworkInfo_IPAddress(r randyMesos, easy bool) *NetworkInfo_IPA
 
 func NewPopulatedContainerInfo(r randyMesos, easy bool) *ContainerInfo {
 	this := &ContainerInfo{}
-	v235 := ContainerInfo_Type([]int32{1, 2}[r.Intn(2)])
-	this.Type = &v235
+	v233 := ContainerInfo_Type([]int32{1, 2}[r.Intn(2)])
+	this.Type = &v233
 	if r.Intn(10) != 0 {
-		v236 := r.Intn(10)
-		this.Volumes = make([]*Volume, v236)
-		for i := 0; i < v236; i++ {
+		v234 := r.Intn(5)
+		this.Volumes = make([]*Volume, v234)
+		for i := 0; i < v234; i++ {
 			this.Volumes[i] = NewPopulatedVolume(r, easy)
 		}
 	}
@@ -22060,16 +22933,16 @@ func NewPopulatedContainerInfo(r randyMesos, easy bool) *ContainerInfo {
 		this.Docker = NewPopulatedContainerInfo_DockerInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v237 := randStringMesos(r)
-		this.Hostname = &v237
+		v235 := randStringMesos(r)
+		this.Hostname = &v235
 	}
 	if r.Intn(10) != 0 {
 		this.Mesos = NewPopulatedContainerInfo_MesosInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v238 := r.Intn(10)
-		this.NetworkInfos = make([]*NetworkInfo, v238)
-		for i := 0; i < v238; i++ {
+		v236 := r.Intn(5)
+		this.NetworkInfos = make([]*NetworkInfo, v236)
+		for i := 0; i < v236; i++ {
 			this.NetworkInfos[i] = NewPopulatedNetworkInfo(r, easy)
 		}
 	}
@@ -22081,33 +22954,33 @@ func NewPopulatedContainerInfo(r randyMesos, easy bool) *ContainerInfo {
 
 func NewPopulatedContainerInfo_DockerInfo(r randyMesos, easy bool) *ContainerInfo_DockerInfo {
 	this := &ContainerInfo_DockerInfo{}
-	v239 := randStringMesos(r)
-	this.Image = &v239
+	v237 := randStringMesos(r)
+	this.Image = &v237
 	if r.Intn(10) != 0 {
-		v240 := ContainerInfo_DockerInfo_Network([]int32{1, 2, 3}[r.Intn(3)])
-		this.Network = &v240
+		v238 := ContainerInfo_DockerInfo_Network([]int32{1, 2, 3}[r.Intn(3)])
+		this.Network = &v238
 	}
 	if r.Intn(10) != 0 {
-		v241 := r.Intn(10)
-		this.PortMappings = make([]*ContainerInfo_DockerInfo_PortMapping, v241)
-		for i := 0; i < v241; i++ {
+		v239 := r.Intn(5)
+		this.PortMappings = make([]*ContainerInfo_DockerInfo_PortMapping, v239)
+		for i := 0; i < v239; i++ {
 			this.PortMappings[i] = NewPopulatedContainerInfo_DockerInfo_PortMapping(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v242 := bool(bool(r.Intn(2) == 0))
-		this.Privileged = &v242
+		v240 := bool(bool(r.Intn(2) == 0))
+		this.Privileged = &v240
 	}
 	if r.Intn(10) != 0 {
-		v243 := r.Intn(10)
-		this.Parameters = make([]*Parameter, v243)
-		for i := 0; i < v243; i++ {
+		v241 := r.Intn(5)
+		this.Parameters = make([]*Parameter, v241)
+		for i := 0; i < v241; i++ {
 			this.Parameters[i] = NewPopulatedParameter(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v244 := bool(bool(r.Intn(2) == 0))
-		this.ForcePullImage = &v244
+		v242 := bool(bool(r.Intn(2) == 0))
+		this.ForcePullImage = &v242
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 7)
@@ -22117,13 +22990,13 @@ func NewPopulatedContainerInfo_DockerInfo(r randyMesos, easy bool) *ContainerInf
 
 func NewPopulatedContainerInfo_DockerInfo_PortMapping(r randyMesos, easy bool) *ContainerInfo_DockerInfo_PortMapping {
 	this := &ContainerInfo_DockerInfo_PortMapping{}
-	v245 := uint32(r.Uint32())
-	this.HostPort = &v245
-	v246 := uint32(r.Uint32())
-	this.ContainerPort = &v246
+	v243 := uint32(r.Uint32())
+	this.HostPort = &v243
+	v244 := uint32(r.Uint32())
+	this.ContainerPort = &v244
 	if r.Intn(10) != 0 {
-		v247 := randStringMesos(r)
-		this.Protocol = &v247
+		v245 := randStringMesos(r)
+		this.Protocol = &v245
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 4)
@@ -22145,9 +23018,9 @@ func NewPopulatedContainerInfo_MesosInfo(r randyMesos, easy bool) *ContainerInfo
 func NewPopulatedContainerStatus(r randyMesos, easy bool) *ContainerStatus {
 	this := &ContainerStatus{}
 	if r.Intn(10) != 0 {
-		v248 := r.Intn(10)
-		this.NetworkInfos = make([]*NetworkInfo, v248)
-		for i := 0; i < v248; i++ {
+		v246 := r.Intn(5)
+		this.NetworkInfos = make([]*NetworkInfo, v246)
+		for i := 0; i < v246; i++ {
 			this.NetworkInfos[i] = NewPopulatedNetworkInfo(r, easy)
 		}
 	}
@@ -22160,9 +23033,9 @@ func NewPopulatedContainerStatus(r randyMesos, easy bool) *ContainerStatus {
 func NewPopulatedLabels(r randyMesos, easy bool) *Labels {
 	this := &Labels{}
 	if r.Intn(10) != 0 {
-		v249 := r.Intn(10)
-		this.Labels = make([]*Label, v249)
-		for i := 0; i < v249; i++ {
+		v247 := r.Intn(5)
+		this.Labels = make([]*Label, v247)
+		for i := 0; i < v247; i++ {
 			this.Labels[i] = NewPopulatedLabel(r, easy)
 		}
 	}
@@ -22174,11 +23047,11 @@ func NewPopulatedLabels(r randyMesos, easy bool) *Labels {
 
 func NewPopulatedLabel(r randyMesos, easy bool) *Label {
 	this := &Label{}
-	v250 := randStringMesos(r)
-	this.Key = &v250
+	v248 := randStringMesos(r)
+	this.Key = &v248
 	if r.Intn(10) != 0 {
-		v251 := randStringMesos(r)
-		this.Value = &v251
+		v249 := randStringMesos(r)
+		this.Value = &v249
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
@@ -22188,19 +23061,19 @@ func NewPopulatedLabel(r randyMesos, easy bool) *Label {
 
 func NewPopulatedPort(r randyMesos, easy bool) *Port {
 	this := &Port{}
-	v252 := uint32(r.Uint32())
-	this.Number = &v252
+	v250 := uint32(r.Uint32())
+	this.Number = &v250
 	if r.Intn(10) != 0 {
-		v253 := randStringMesos(r)
-		this.Name = &v253
+		v251 := randStringMesos(r)
+		this.Name = &v251
 	}
 	if r.Intn(10) != 0 {
-		v254 := randStringMesos(r)
-		this.Protocol = &v254
+		v252 := randStringMesos(r)
+		this.Protocol = &v252
 	}
 	if r.Intn(10) != 0 {
-		v255 := DiscoveryInfo_Visibility([]int32{0, 1, 2}[r.Intn(3)])
-		this.Visibility = &v255
+		v253 := DiscoveryInfo_Visibility([]int32{0, 1, 2}[r.Intn(3)])
+		this.Visibility = &v253
 	}
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 5)
@@ -22211,9 +23084,9 @@ func NewPopulatedPort(r randyMesos, easy bool) *Port {
 func NewPopulatedPorts(r randyMesos, easy bool) *Ports {
 	this := &Ports{}
 	if r.Intn(10) != 0 {
-		v256 := r.Intn(10)
-		this.Ports = make([]*Port, v256)
-		for i := 0; i < v256; i++ {
+		v254 := r.Intn(5)
+		this.Ports = make([]*Port, v254)
+		for i := 0; i < v254; i++ {
 			this.Ports[i] = NewPopulatedPort(r, easy)
 		}
 	}
@@ -22225,23 +23098,23 @@ func NewPopulatedPorts(r randyMesos, easy bool) *Ports {
 
 func NewPopulatedDiscoveryInfo(r randyMesos, easy bool) *DiscoveryInfo {
 	this := &DiscoveryInfo{}
-	v257 := DiscoveryInfo_Visibility([]int32{0, 1, 2}[r.Intn(3)])
-	this.Visibility = &v257
+	v255 := DiscoveryInfo_Visibility([]int32{0, 1, 2}[r.Intn(3)])
+	this.Visibility = &v255
+	if r.Intn(10) != 0 {
+		v256 := randStringMesos(r)
+		this.Name = &v256
+	}
+	if r.Intn(10) != 0 {
+		v257 := randStringMesos(r)
+		this.Environment = &v257
+	}
 	if r.Intn(10) != 0 {
 		v258 := randStringMesos(r)
-		this.Name = &v258
+		this.Location = &v258
 	}
 	if r.Intn(10) != 0 {
 		v259 := randStringMesos(r)
-		this.Environment = &v259
-	}
-	if r.Intn(10) != 0 {
-		v260 := randStringMesos(r)
-		this.Location = &v260
-	}
-	if r.Intn(10) != 0 {
-		v261 := randStringMesos(r)
-		this.Version = &v261
+		this.Version = &v259
 	}
 	if r.Intn(10) != 0 {
 		this.Ports = NewPopulatedPorts(r, easy)
@@ -22257,23 +23130,23 @@ func NewPopulatedDiscoveryInfo(r randyMesos, easy bool) *DiscoveryInfo {
 
 func NewPopulatedAppcImageManifest(r randyMesos, easy bool) *AppcImageManifest {
 	this := &AppcImageManifest{}
+	v260 := randStringMesos(r)
+	this.AcKind = &v260
+	v261 := randStringMesos(r)
+	this.AcVersion = &v261
 	v262 := randStringMesos(r)
-	this.AcKind = &v262
-	v263 := randStringMesos(r)
-	this.AcVersion = &v263
-	v264 := randStringMesos(r)
-	this.Name = &v264
+	this.Name = &v262
 	if r.Intn(10) != 0 {
-		v265 := r.Intn(10)
-		this.Labels = make([]*AppcImageManifest_Label, v265)
-		for i := 0; i < v265; i++ {
+		v263 := r.Intn(5)
+		this.Labels = make([]*AppcImageManifest_Label, v263)
+		for i := 0; i < v263; i++ {
 			this.Labels[i] = NewPopulatedAppcImageManifest_Label(r, easy)
 		}
 	}
 	if r.Intn(10) != 0 {
-		v266 := r.Intn(10)
-		this.Annotations = make([]*AppcImageManifest_Annotation, v266)
-		for i := 0; i < v266; i++ {
+		v264 := r.Intn(5)
+		this.Annotations = make([]*AppcImageManifest_Annotation, v264)
+		for i := 0; i < v264; i++ {
 			this.Annotations[i] = NewPopulatedAppcImageManifest_Annotation(r, easy)
 		}
 	}
@@ -22285,10 +23158,10 @@ func NewPopulatedAppcImageManifest(r randyMesos, easy bool) *AppcImageManifest {
 
 func NewPopulatedAppcImageManifest_Label(r randyMesos, easy bool) *AppcImageManifest_Label {
 	this := &AppcImageManifest_Label{}
-	v267 := randStringMesos(r)
-	this.Name = &v267
-	v268 := randStringMesos(r)
-	this.Value = &v268
+	v265 := randStringMesos(r)
+	this.Name = &v265
+	v266 := randStringMesos(r)
+	this.Value = &v266
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
@@ -22297,10 +23170,10 @@ func NewPopulatedAppcImageManifest_Label(r randyMesos, easy bool) *AppcImageMani
 
 func NewPopulatedAppcImageManifest_Annotation(r randyMesos, easy bool) *AppcImageManifest_Annotation {
 	this := &AppcImageManifest_Annotation{}
-	v269 := randStringMesos(r)
-	this.Name = &v269
-	v270 := randStringMesos(r)
-	this.Value = &v270
+	v267 := randStringMesos(r)
+	this.Name = &v267
+	v268 := randStringMesos(r)
+	this.Value = &v268
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedMesos(r, 3)
 	}
@@ -22326,9 +23199,9 @@ func randUTF8RuneMesos(r randyMesos) rune {
 	return rune(ru + 61)
 }
 func randStringMesos(r randyMesos) string {
-	v271 := r.Intn(100)
-	tmps := make([]rune, v271)
-	for i := 0; i < v271; i++ {
+	v269 := r.Intn(100)
+	tmps := make([]rune, v269)
+	for i := 0; i < v269; i++ {
 		tmps[i] = randUTF8RuneMesos(r)
 	}
 	return string(tmps)
@@ -22350,11 +23223,11 @@ func randFieldMesos(data []byte, r randyMesos, fieldNumber int, wire int) []byte
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateMesos(data, uint64(key))
-		v272 := r.Int63()
+		v270 := r.Int63()
 		if r.Intn(2) == 0 {
-			v272 *= -1
+			v270 *= -1
 		}
-		data = encodeVarintPopulateMesos(data, uint64(v272))
+		data = encodeVarintPopulateMesos(data, uint64(v270))
 	case 1:
 		data = encodeVarintPopulateMesos(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -22721,10 +23594,6 @@ func (m *CommandInfo) Size() (n int) {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.Container != nil {
-		l = m.Container.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
 	if m.User != nil {
 		l = len(*m.User)
 		n += 1 + l + sovMesos(uint64(l))
@@ -22759,25 +23628,6 @@ func (m *CommandInfo_URI) Size() (n int) {
 	}
 	if m.Cache != nil {
 		n += 2
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *CommandInfo_ContainerInfo) Size() (n int) {
-	var l int
-	_ = l
-	if m.Image != nil {
-		l = len(*m.Image)
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if len(m.Options) > 0 {
-		for _, s := range m.Options {
-			l = len(s)
-			n += 1 + l + sovMesos(uint64(l))
-		}
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -24643,7 +25493,6 @@ func (this *CommandInfo) String() string {
 		`Uris:` + strings.Replace(fmt.Sprintf("%v", this.Uris), "CommandInfo_URI", "CommandInfo_URI", 1) + `,`,
 		`Environment:` + strings.Replace(fmt.Sprintf("%v", this.Environment), "Environment", "Environment", 1) + `,`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
-		`Container:` + strings.Replace(fmt.Sprintf("%v", this.Container), "CommandInfo_ContainerInfo", "CommandInfo_ContainerInfo", 1) + `,`,
 		`User:` + valueToStringMesos(this.User) + `,`,
 		`Shell:` + valueToStringMesos(this.Shell) + `,`,
 		`Arguments:` + fmt.Sprintf("%v", this.Arguments) + `,`,
@@ -24661,18 +25510,6 @@ func (this *CommandInfo_URI) String() string {
 		`Executable:` + valueToStringMesos(this.Executable) + `,`,
 		`Extract:` + valueToStringMesos(this.Extract) + `,`,
 		`Cache:` + valueToStringMesos(this.Cache) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *CommandInfo_ContainerInfo) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&CommandInfo_ContainerInfo{`,
-		`Image:` + valueToStringMesos(this.Image) + `,`,
-		`Options:` + fmt.Sprintf("%v", this.Options) + `,`,
 		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`,
 		`}`,
 	}, "")
@@ -27873,39 +28710,6 @@ func (m *CommandInfo) Unmarshal(data []byte) error {
 			s := string(data[iNdEx:postIndex])
 			m.Value = &s
 			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Container", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMesos
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthMesos
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Container == nil {
-				m.Container = &CommandInfo_ContainerInfo{}
-			}
-			if err := m.Container.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field User", wireType)
@@ -28157,121 +28961,6 @@ func (m *CommandInfo_URI) Unmarshal(data []byte) error {
 	}
 	return nil
 }
-func (m *CommandInfo_ContainerInfo) Unmarshal(data []byte) error {
-	var hasFields [1]uint64
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowMesos
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ContainerInfo: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ContainerInfo: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Image", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMesos
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMesos
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			s := string(data[iNdEx:postIndex])
-			m.Image = &s
-			iNdEx = postIndex
-			hasFields[0] |= uint64(0x00000001)
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Options", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMesos
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMesos
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Options = append(m.Options, string(data[iNdEx:postIndex]))
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipMesos(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthMesos
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("image")
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *ExecutorInfo) Unmarshal(data []byte) error {
 	var hasFields [1]uint64
 	l := len(data)
@@ -28362,7 +29051,10 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Data = append([]byte{}, data[iNdEx:postIndex]...)
+			m.Data = append(m.Data[:0], data[iNdEx:postIndex]...)
+			if m.Data == nil {
+				m.Data = []byte{}
+			}
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
@@ -34821,7 +35513,10 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Data = append([]byte{}, data[iNdEx:postIndex]...)
+			m.Data = append(m.Data[:0], data[iNdEx:postIndex]...)
+			if m.Data == nil {
+				m.Data = []byte{}
+			}
 			iNdEx = postIndex
 		case 7:
 			if wireType != 2 {
@@ -35130,7 +35825,10 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Data = append([]byte{}, data[iNdEx:postIndex]...)
+			m.Data = append(m.Data[:0], data[iNdEx:postIndex]...)
+			if m.Data == nil {
+				m.Data = []byte{}
+			}
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -35334,7 +36032,10 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Uuid = append([]byte{}, data[iNdEx:postIndex]...)
+			m.Uuid = append(m.Uuid[:0], data[iNdEx:postIndex]...)
+			if m.Uuid == nil {
+				m.Uuid = []byte{}
+			}
 			iNdEx = postIndex
 		case 12:
 			if wireType != 2 {
@@ -39191,3 +39892,307 @@ var (
 	ErrInvalidLengthMesos = fmt.Errorf("proto: negative length found during unmarshaling")
 	ErrIntOverflowMesos   = fmt.Errorf("proto: integer overflow")
 )
+
+func init() { proto.RegisterFile("mesos.proto", fileDescriptorMesos) }
+
+var fileDescriptorMesos = []byte{
+	// 4765 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xcc, 0x3a, 0x4d, 0x6f, 0x1b, 0xc9,
+	0x72, 0x1e, 0x72, 0xf8, 0x55, 0x24, 0xa5, 0xd1, 0xc8, 0x92, 0x29, 0xda, 0x96, 0xe5, 0x91, 0xec,
+	0x95, 0xbd, 0xb6, 0xec, 0xd5, 0xae, 0xdf, 0xbe, 0x67, 0xe0, 0x05, 0xa0, 0xc5, 0xb1, 0xcd, 0x58,
+	0x22, 0x85, 0x21, 0xe5, 0xdd, 0x0d, 0x02, 0x10, 0xa3, 0x61, 0x53, 0x9a, 0x78, 0x38, 0xc3, 0x9d,
+	0x19, 0xca, 0xd6, 0x25, 0xd8, 0x1c, 0xdf, 0x21, 0xb9, 0x24, 0xa7, 0x00, 0x01, 0x92, 0xdb, 0xcb,
+	0x2d, 0x39, 0x3c, 0xe0, 0x1d, 0x02, 0xe4, 0xe5, 0x10, 0x24, 0xc7, 0x1c, 0x73, 0x09, 0xf2, 0xd6,
+	0xbf, 0x20, 0xc7, 0x7c, 0x5c, 0x82, 0xae, 0xee, 0x1e, 0xce, 0xf0, 0xcb, 0xca, 0x2d, 0x27, 0x72,
+	0xaa, 0xaa, 0xab, 0xab, 0xab, 0xaa, 0xab, 0xaa, 0xbb, 0x0b, 0x8a, 0x03, 0x12, 0x78, 0xc1, 0xde,
+	0xd0, 0xf7, 0x42, 0x4f, 0x05, 0xfc, 0xc0, 0xff, 0xd5, 0xc7, 0x67, 0x76, 0x78, 0x3e, 0x3a, 0xdd,
+	0xb3, 0xbc, 0xc1, 0x93, 0x33, 0xef, 0xcc, 0x7b, 0x82, 0xe0, 0xd3, 0x51, 0x1f, 0xbf, 0xf0, 0x03,
+	0xff, 0xb1, 0xa1, 0xda, 0x2d, 0x28, 0xbe, 0xf4, 0xcd, 0x01, 0x79, 0xef, 0xf9, 0xef, 0x1a, 0x75,
+	0xb5, 0x0c, 0x99, 0x0b, 0xd3, 0x19, 0x91, 0x8a, 0xb4, 0x95, 0xda, 0x2d, 0x68, 0x15, 0xc8, 0xb5,
+	0xfa, 0x7d, 0xe2, 0xcf, 0xc4, 0xb4, 0x1d, 0xf3, 0x82, 0x4c, 0x63, 0x6e, 0x40, 0xb6, 0x63, 0x06,
+	0x33, 0x98, 0xdd, 0x04, 0xd0, 0x3f, 0x10, 0x6b, 0x14, 0x7a, 0x33, 0xf8, 0xdd, 0x82, 0xe2, 0x81,
+	0xe7, 0x86, 0xa6, 0xed, 0xce, 0x9a, 0xed, 0x0e, 0xe4, 0x3b, 0xf6, 0x80, 0x34, 0xdc, 0xbe, 0xa7,
+	0xae, 0x42, 0xd1, 0x35, 0x5d, 0x2f, 0x20, 0x96, 0xe7, 0xf6, 0x02, 0x24, 0x48, 0x6b, 0xdb, 0x50,
+	0xaa, 0x8f, 0x7c, 0x33, 0xb4, 0x3d, 0x77, 0x3e, 0xd1, 0x33, 0xc8, 0xd5, 0x7a, 0x3d, 0x9f, 0x04,
+	0x81, 0xaa, 0x40, 0xfe, 0xdc, 0x0b, 0x42, 0xd7, 0x1c, 0xd0, 0x29, 0xa4, 0xdd, 0x82, 0x0a, 0x90,
+	0xb2, 0x87, 0x95, 0x14, 0xfe, 0x2f, 0x81, 0x3c, 0xf4, 0xfc, 0xb0, 0x92, 0xde, 0x4a, 0xed, 0x66,
+	0xb4, 0x3f, 0x92, 0x20, 0x7d, 0x62, 0x1c, 0xaa, 0x4b, 0x90, 0x0d, 0xac, 0x73, 0x32, 0xe0, 0x42,
+	0xa9, 0x3b, 0x90, 0x33, 0x19, 0xbb, 0x4a, 0x6a, 0x2b, 0xb5, 0x5b, 0xdc, 0x5f, 0xdd, 0x1b, 0xdb,
+	0x61, 0x4f, 0xcc, 0x44, 0x79, 0x99, 0xe1, 0x79, 0x25, 0x8d, 0x9c, 0x77, 0x20, 0xf3, 0xfd, 0x88,
+	0xf8, 0x97, 0x15, 0x79, 0x2b, 0xbd, 0x5b, 0xdc, 0x5f, 0x8b, 0x8f, 0x38, 0x36, 0xa9, 0x21, 0x42,
+	0xe2, 0x53, 0xe9, 0xfa, 0xbe, 0x79, 0x36, 0x20, 0x6e, 0x58, 0xc9, 0xd0, 0x71, 0x9a, 0x09, 0x4b,
+	0x27, 0xae, 0x79, 0x61, 0xda, 0x8e, 0x79, 0x6a, 0x3b, 0x76, 0x78, 0xa9, 0x6e, 0x43, 0x26, 0x08,
+	0x4d, 0x3f, 0x44, 0x61, 0x8a, 0xfb, 0xd7, 0xe3, 0x9c, 0x22, 0x5d, 0x3d, 0x84, 0x7c, 0x8f, 0xab,
+	0x05, 0x97, 0x56, 0xdc, 0xaf, 0xc4, 0xe9, 0xe2, 0x2a, 0xd3, 0x1e, 0x40, 0xe1, 0xc8, 0xb4, 0xce,
+	0x6d, 0x97, 0xda, 0x74, 0xa1, 0x7e, 0xb4, 0x5f, 0x4b, 0x50, 0x14, 0xb4, 0x74, 0x9a, 0xbb, 0x90,
+	0xb2, 0x7b, 0x5c, 0x90, 0xc4, 0x92, 0xc6, 0x0c, 0x1f, 0x82, 0x3c, 0xf0, 0x7a, 0x04, 0x19, 0x2c,
+	0xed, 0xdf, 0x9a, 0x45, 0xe4, 0xf6, 0xbd, 0xbd, 0x23, 0xaf, 0x47, 0xd4, 0x7d, 0x58, 0x1a, 0x25,
+	0x16, 0x8b, 0xca, 0x2b, 0xee, 0x57, 0xe3, 0xa3, 0x92, 0xea, 0xd0, 0xee, 0x83, 0x8c, 0x63, 0xb3,
+	0x90, 0x3a, 0x39, 0x56, 0x24, 0xb5, 0x04, 0xf9, 0xba, 0x51, 0x6b, 0x34, 0x1b, 0xcd, 0x57, 0x4a,
+	0x4a, 0xcd, 0x83, 0x5c, 0x6f, 0x7d, 0xd3, 0x54, 0xd2, 0xda, 0xdf, 0xa6, 0xa1, 0x3c, 0x76, 0x78,
+	0x2a, 0x7c, 0x09, 0xe4, 0x51, 0x40, 0x7c, 0x6e, 0xd4, 0x12, 0xc8, 0xb8, 0xe8, 0x14, 0x7e, 0x6d,
+	0xe3, 0xc2, 0xd8, 0xec, 0x37, 0xe2, 0xb3, 0xc7, 0xf7, 0xcc, 0x4d, 0x50, 0xfa, 0xa6, 0xed, 0x78,
+	0x17, 0xc4, 0xef, 0x86, 0xf6, 0x80, 0x78, 0xa3, 0xb0, 0x22, 0x6f, 0x49, 0xbb, 0xd2, 0x73, 0xe9,
+	0xa9, 0xba, 0x01, 0x60, 0x9d, 0x13, 0xeb, 0xdd, 0xd0, 0xb3, 0xb9, 0x31, 0xf3, 0xcf, 0x33, 0x7d,
+	0xd3, 0x09, 0x88, 0xba, 0x0c, 0xb2, 0xef, 0x39, 0xa4, 0x92, 0xa5, 0x3a, 0x7d, 0x2e, 0x3d, 0x4c,
+	0x28, 0x3d, 0x87, 0x4a, 0x5f, 0x81, 0xc2, 0xd0, 0xb7, 0x5d, 0xcb, 0x1e, 0x9a, 0x4e, 0x25, 0x2f,
+	0x40, 0xef, 0xc9, 0xe9, 0xc8, 0xee, 0x8e, 0x7c, 0xa7, 0x52, 0x40, 0xd0, 0x73, 0x28, 0x59, 0xe6,
+	0x90, 0x69, 0xc2, 0x26, 0x41, 0x05, 0xd0, 0xb7, 0x76, 0x66, 0xcb, 0x4b, 0xb5, 0x7c, 0x20, 0xa8,
+	0x2f, 0x55, 0x0d, 0xb2, 0x8e, 0x79, 0x4a, 0x9c, 0xa0, 0x52, 0xc4, 0x55, 0xaa, 0xf1, 0x51, 0x87,
+	0x88, 0xa9, 0xfe, 0x21, 0x40, 0x6c, 0xc4, 0xd7, 0x20, 0x87, 0x97, 0x43, 0xb6, 0x09, 0x96, 0xf6,
+	0x1f, 0x5c, 0x65, 0x96, 0xbd, 0xce, 0xe5, 0x90, 0x68, 0x5f, 0x83, 0x4c, 0x7f, 0xd5, 0x1b, 0xb0,
+	0x6a, 0xe8, 0x6f, 0x5b, 0x07, 0xb5, 0x17, 0x87, 0x7a, 0xd7, 0xd0, 0xdb, 0xad, 0x13, 0xe3, 0x40,
+	0x6f, 0x2b, 0x92, 0xba, 0x0e, 0x6a, 0xa7, 0xd6, 0x7e, 0xd3, 0x7d, 0xd3, 0x38, 0x3c, 0x6c, 0x34,
+	0x5f, 0x75, 0xdb, 0x9d, 0x5a, 0x47, 0x57, 0x52, 0xda, 0xaf, 0x52, 0x50, 0x7c, 0x4d, 0x4c, 0x27,
+	0x3c, 0x3f, 0xa0, 0xaa, 0xa4, 0xbe, 0x74, 0x1e, 0x86, 0x43, 0x74, 0xcc, 0x62, 0xd2, 0x97, 0x62,
+	0x64, 0x7b, 0xaf, 0x3b, 0x9d, 0x63, 0x75, 0x03, 0xca, 0x3d, 0xe2, 0x98, 0x97, 0x5d, 0x11, 0x0a,
+	0x52, 0x68, 0x99, 0xd4, 0x17, 0xcf, 0xd4, 0x5b, 0xa0, 0xd8, 0x6e, 0x48, 0xfc, 0x0b, 0xd3, 0x89,
+	0xb0, 0x69, 0x8e, 0x7d, 0xaa, 0xde, 0x84, 0x65, 0x6e, 0xcc, 0x08, 0xc9, 0x8c, 0x9a, 0xda, 0x7f,
+	0xaa, 0xde, 0x81, 0xeb, 0x96, 0xe7, 0x06, 0x34, 0x98, 0xd9, 0x17, 0xa4, 0x4b, 0xcd, 0x3f, 0xf2,
+	0x49, 0x80, 0xf6, 0x2d, 0x3f, 0x97, 0xbe, 0x54, 0xb7, 0xe0, 0xfa, 0x99, 0x6f, 0x5a, 0xa4, 0x3b,
+	0x24, 0xbe, 0xed, 0xf5, 0x22, 0x16, 0xd9, 0x88, 0xff, 0x2e, 0xe4, 0x2c, 0x6f, 0x30, 0x30, 0xdd,
+	0x1e, 0xda, 0x7a, 0xc2, 0xbf, 0x0e, 0x18, 0x8a, 0xea, 0xb1, 0xfa, 0x35, 0xc8, 0xb8, 0x14, 0x11,
+	0x95, 0xa8, 0xe2, 0xcb, 0xd4, 0x7b, 0x30, 0xae, 0xa4, 0x98, 0xf7, 0x3c, 0xa1, 0xde, 0x13, 0x84,
+	0x66, 0x38, 0x0a, 0x48, 0x80, 0xd1, 0xa5, 0xac, 0xfd, 0x8f, 0x44, 0x83, 0x6a, 0xc4, 0x48, 0x7d,
+	0x00, 0xf2, 0xc8, 0xb7, 0x69, 0x34, 0xa4, 0xfe, 0x71, 0x73, 0xce, 0x7c, 0x7b, 0x27, 0x46, 0x43,
+	0x7d, 0x04, 0x45, 0xe2, 0x5e, 0xd8, 0xbe, 0xe7, 0x62, 0x10, 0x4a, 0x4d, 0x4b, 0xa8, 0x8f, 0xd1,
+	0xe3, 0x68, 0x9d, 0x16, 0xe1, 0x13, 0x77, 0x14, 0x86, 0x2e, 0x75, 0x15, 0x32, 0xc1, 0x39, 0x71,
+	0x1c, 0x5c, 0x7b, 0xfe, 0xb9, 0x1c, 0xfa, 0x23, 0x42, 0xbd, 0xd8, 0xf4, 0xcf, 0x46, 0x74, 0x74,
+	0x50, 0xc9, 0x6d, 0xa5, 0x77, 0x0b, 0xd5, 0x26, 0x8d, 0xb2, 0x8d, 0x89, 0xc8, 0xaf, 0xaa, 0x00,
+	0x04, 0x93, 0x86, 0x79, 0xea, 0xb0, 0xe8, 0x91, 0x57, 0xd7, 0x20, 0x47, 0x3e, 0x84, 0xbe, 0x69,
+	0x85, 0x38, 0xa1, 0xe0, 0x59, 0x86, 0x8c, 0x65, 0x5a, 0xe7, 0x04, 0xed, 0x94, 0xd7, 0xfe, 0x31,
+	0x05, 0xa5, 0x28, 0xdf, 0xd0, 0xe5, 0x7f, 0x0e, 0x45, 0xc2, 0xbf, 0xbb, 0x51, 0xb8, 0x5a, 0x4f,
+	0xac, 0x69, 0x9c, 0x9e, 0x4a, 0x20, 0xf7, 0xcc, 0xd0, 0x44, 0x5e, 0x25, 0xf5, 0x33, 0x28, 0xf8,
+	0x24, 0xf0, 0x46, 0xbe, 0x85, 0x46, 0x4e, 0x4f, 0x06, 0x5c, 0x83, 0x23, 0x93, 0x56, 0x4d, 0x2d,
+	0xb0, 0xaa, 0xfa, 0x18, 0x4a, 0x7d, 0xb1, 0x5d, 0xa8, 0x38, 0xf9, 0xc5, 0x41, 0x46, 0xc4, 0x25,
+	0xb6, 0xe3, 0x69, 0x2a, 0xc2, 0x09, 0x2b, 0x80, 0xdf, 0x8f, 0xa0, 0x60, 0x89, 0xec, 0xc9, 0x37,
+	0xf2, 0x46, 0x72, 0x62, 0x91, 0x5a, 0xe9, 0xd4, 0x8f, 0xa0, 0xd0, 0xb3, 0x03, 0x8b, 0x06, 0xac,
+	0xcb, 0x4a, 0x69, 0x9a, 0xba, 0x2e, 0x90, 0x98, 0x17, 0xfe, 0x44, 0x02, 0x38, 0x32, 0x83, 0x90,
+	0x0f, 0x86, 0x28, 0xd6, 0x8f, 0x73, 0x02, 0xf5, 0x47, 0x35, 0x96, 0x33, 0xcb, 0xcf, 0xe5, 0x67,
+	0x4f, 0x9f, 0x3d, 0x55, 0x8b, 0x90, 0x1e, 0xda, 0x3d, 0xd4, 0x61, 0x21, 0x11, 0xdd, 0x98, 0x67,
+	0x2c, 0x43, 0xee, 0x82, 0xf8, 0x01, 0x4d, 0x4e, 0x59, 0x9e, 0x1d, 0xa3, 0x8c, 0xca, 0xf6, 0xc4,
+	0xac, 0x8c, 0xaa, 0xfd, 0x83, 0x04, 0x05, 0x56, 0x7b, 0x50, 0x79, 0x92, 0x99, 0x8a, 0x4a, 0x95,
+	0x30, 0x56, 0x7a, 0x81, 0xb1, 0x1e, 0x00, 0x98, 0x61, 0xe8, 0xdb, 0xa7, 0xa3, 0x30, 0x32, 0x6b,
+	0x22, 0x7d, 0xd5, 0x04, 0x56, 0xbd, 0x83, 0xab, 0xce, 0x4e, 0x0b, 0x25, 0x8a, 0xa0, 0x64, 0x9c,
+	0xcf, 0xc5, 0xe3, 0xbc, 0xd0, 0x0c, 0xb5, 0x70, 0x06, 0x35, 0xf3, 0x85, 0xf6, 0xe7, 0x69, 0xc8,
+	0xbc, 0xa5, 0x6e, 0xae, 0xee, 0x24, 0xc2, 0x69, 0xc2, 0x1d, 0x91, 0x00, 0x63, 0xa7, 0xba, 0x4b,
+	0x6b, 0x0f, 0xd3, 0x31, 0xfd, 0x59, 0x69, 0x9c, 0xd1, 0xb5, 0x11, 0x4f, 0x29, 0x7d, 0xd3, 0x3d,
+	0x23, 0x01, 0x4f, 0x5b, 0x33, 0x28, 0x0d, 0xc4, 0xab, 0x1a, 0xa4, 0x03, 0xc2, 0x52, 0xd5, 0xc4,
+	0xba, 0x39, 0x43, 0x12, 0xa2, 0x74, 0xe4, 0x03, 0x4b, 0x5c, 0xc5, 0x99, 0xd2, 0x91, 0x0f, 0x61,
+	0xf5, 0x06, 0x64, 0xf9, 0xec, 0x89, 0xdd, 0x2b, 0x55, 0xb7, 0x21, 0x83, 0x93, 0x51, 0xf8, 0x29,
+	0x39, 0xb3, 0x5d, 0x84, 0xcb, 0xd4, 0x31, 0x88, 0xdb, 0x43, 0xcf, 0x91, 0xab, 0x4f, 0x21, 0xcb,
+	0x25, 0xba, 0x0f, 0x19, 0x94, 0x9d, 0x47, 0xa8, 0x1b, 0x73, 0x44, 0xaf, 0xae, 0x42, 0x9a, 0x0a,
+	0x57, 0x02, 0xd9, 0x0e, 0xc9, 0x00, 0xa9, 0x0b, 0xd5, 0x35, 0x90, 0xa9, 0x30, 0x93, 0xa5, 0xe3,
+	0x17, 0x3c, 0xeb, 0x00, 0x64, 0xdb, 0x07, 0xb5, 0xc3, 0x9a, 0xa1, 0x5c, 0xa3, 0xff, 0x8d, 0x5a,
+	0xf3, 0x15, 0x26, 0x9d, 0x1c, 0xa4, 0xdb, 0x7a, 0x87, 0xd5, 0x08, 0x1d, 0xfd, 0xdb, 0x8e, 0x92,
+	0xd6, 0xfe, 0x4d, 0x82, 0xc2, 0xd8, 0xf4, 0x62, 0xe7, 0x89, 0xa2, 0x8f, 0x99, 0x2b, 0x75, 0x45,
+	0x73, 0xa5, 0xaf, 0x6c, 0x2e, 0xf9, 0x13, 0xe6, 0xba, 0x92, 0x29, 0x84, 0x51, 0xb3, 0x0b, 0x8c,
+	0xaa, 0xfd, 0xb5, 0x0c, 0xf9, 0x68, 0x13, 0xfc, 0x7f, 0x59, 0x1e, 0x17, 0x3c, 0xb3, 0xc8, 0x1b,
+	0xa7, 0x2a, 0xa6, 0xcf, 0x41, 0xee, 0xd9, 0xc1, 0x3b, 0x1e, 0x2d, 0x6e, 0xcf, 0xda, 0xe5, 0x34,
+	0x9a, 0xb1, 0x42, 0xef, 0x67, 0x50, 0xf4, 0x49, 0x40, 0xf3, 0x3d, 0xd6, 0xc3, 0x2c, 0xe0, 0xee,
+	0xcc, 0x1c, 0x63, 0x8c, 0xe9, 0x70, 0xe8, 0x33, 0x1a, 0x52, 0x2e, 0x3c, 0x0b, 0x93, 0x50, 0x01,
+	0x07, 0x6a, 0x73, 0x06, 0x72, 0x2a, 0xcc, 0xdc, 0x3b, 0xb0, 0x3c, 0xc9, 0x29, 0x51, 0xd1, 0xa1,
+	0xce, 0xab, 0xbf, 0x90, 0x20, 0x1f, 0x09, 0xf9, 0x3b, 0x50, 0x1c, 0xd2, 0x98, 0x18, 0x84, 0xc4,
+	0xb5, 0x08, 0x2f, 0x71, 0x1e, 0x2c, 0x5c, 0xd8, 0xde, 0xf1, 0x78, 0x00, 0xad, 0xe7, 0x2e, 0x3c,
+	0x67, 0x34, 0x20, 0x3c, 0x50, 0x24, 0xea, 0xb9, 0xb7, 0x88, 0xa9, 0x6e, 0x40, 0x31, 0x3e, 0x24,
+	0x16, 0xd1, 0xab, 0xcb, 0x50, 0x4e, 0x2c, 0x41, 0xfb, 0x3b, 0x09, 0x2a, 0x1d, 0xdf, 0xec, 0xf7,
+	0x6d, 0x8b, 0x26, 0x11, 0xdf, 0x73, 0xda, 0xa1, 0x19, 0xda, 0x41, 0x68, 0x5b, 0x41, 0x22, 0x17,
+	0x2c, 0x43, 0xee, 0xd4, 0xb4, 0xde, 0x39, 0xde, 0x19, 0xce, 0x2c, 0xe3, 0x96, 0xbf, 0x0c, 0x79,
+	0x1c, 0xc2, 0xcf, 0x9e, 0xef, 0x0d, 0x99, 0x23, 0xc8, 0x34, 0xaf, 0xd3, 0x14, 0xe3, 0xd8, 0x03,
+	0x3b, 0x64, 0x75, 0x93, 0x4c, 0x59, 0x0c, 0x4d, 0xeb, 0x1d, 0x09, 0x59, 0x9d, 0x24, 0x53, 0xdf,
+	0xfc, 0xde, 0x21, 0x2e, 0x9a, 0x17, 0xd1, 0xbe, 0x19, 0x92, 0xd3, 0x61, 0x80, 0xb6, 0x8b, 0x00,
+	0xc3, 0x61, 0x80, 0x36, 0x91, 0x69, 0x2e, 0xf0, 0xc9, 0xf7, 0x23, 0x32, 0xc2, 0x22, 0x58, 0xda,
+	0x95, 0xb5, 0xdf, 0x14, 0x40, 0x15, 0x0a, 0x8b, 0x09, 0xbe, 0x02, 0x05, 0x5a, 0xdc, 0x05, 0xa1,
+	0x39, 0x18, 0xb2, 0x50, 0xa5, 0xde, 0x84, 0x55, 0x6b, 0x38, 0x0a, 0xba, 0xb4, 0x72, 0xc1, 0x32,
+	0x9e, 0xd6, 0x6c, 0xbc, 0x5c, 0x54, 0x6f, 0xc3, 0x1a, 0x22, 0x83, 0xcb, 0x20, 0x24, 0x83, 0x18,
+	0x1a, 0xeb, 0x45, 0xba, 0x18, 0x44, 0xe3, 0x6a, 0x58, 0x99, 0xa8, 0xae, 0x41, 0x79, 0x40, 0x06,
+	0x5d, 0x3f, 0x08, 0xba, 0x4c, 0x0d, 0x6c, 0x8d, 0x37, 0x60, 0x99, 0x82, 0x91, 0x92, 0x23, 0xb2,
+	0x02, 0x81, 0x3c, 0x5c, 0x9f, 0xd7, 0x8c, 0x2c, 0x07, 0x96, 0xd5, 0x0d, 0x58, 0x11, 0x88, 0xf0,
+	0xdc, 0xf7, 0xc2, 0xd0, 0x21, 0xac, 0x5a, 0x28, 0xab, 0x5b, 0x50, 0x41, 0x54, 0x04, 0x8f, 0x49,
+	0x56, 0x40, 0x29, 0xd6, 0x61, 0x89, 0x4e, 0xd7, 0xb7, 0x1d, 0xc2, 0x67, 0x43, 0xbd, 0x08, 0xb8,
+	0xe9, 0x7a, 0x2e, 0x87, 0x17, 0x11, 0x7e, 0x1b, 0xd6, 0x28, 0x7c, 0x60, 0x0e, 0x87, 0xa4, 0x17,
+	0x1f, 0x56, 0x42, 0xf4, 0x2e, 0xc8, 0x43, 0xe2, 0xf7, 0x2b, 0xe5, 0xe9, 0xf3, 0xd8, 0x31, 0xf1,
+	0xfb, 0x31, 0x0d, 0xaf, 0xc3, 0x92, 0x4b, 0xc2, 0xae, 0xff, 0xa1, 0x2b, 0x4c, 0xba, 0x84, 0x1c,
+	0xae, 0x43, 0x89, 0xc3, 0x19, 0xdf, 0x65, 0x84, 0xae, 0x41, 0x99, 0x43, 0x89, 0xef, 0x7b, 0x7e,
+	0x50, 0x51, 0x84, 0x94, 0x1c, 0x4c, 0x5d, 0x67, 0x48, 0x7a, 0x95, 0x95, 0x38, 0x3c, 0x1c, 0x33,
+	0x57, 0xe3, 0xcc, 0x43, 0xc1, 0x7c, 0x35, 0xce, 0x3c, 0x8c, 0x98, 0x5f, 0x9f, 0x60, 0x22, 0x98,
+	0xaf, 0x21, 0xfc, 0x2e, 0x6c, 0x20, 0xdc, 0x1a, 0x76, 0xfd, 0x30, 0xec, 0x0e, 0x6c, 0xcb, 0xf7,
+	0xa8, 0x46, 0xbb, 0xc3, 0x67, 0x4f, 0x2b, 0xeb, 0xa8, 0xd5, 0xf9, 0x24, 0x3f, 0x7b, 0x5a, 0xb9,
+	0xf1, 0x29, 0x92, 0x67, 0x95, 0xca, 0xa7, 0x48, 0x7e, 0x56, 0xd9, 0x40, 0x92, 0x0a, 0x28, 0x34,
+	0xbe, 0x25, 0xdc, 0xa5, 0x2a, 0xdc, 0x05, 0x31, 0xa3, 0x80, 0xf4, 0x38, 0xe2, 0x26, 0x22, 0x34,
+	0xa8, 0x0a, 0xae, 0xa6, 0x85, 0xa7, 0x13, 0xcb, 0x73, 0x5d, 0x62, 0xd1, 0x08, 0x14, 0x54, 0x6e,
+	0x21, 0xdb, 0x7b, 0x70, 0x5b, 0xd0, 0xa0, 0xc3, 0xbc, 0x37, 0xed, 0x30, 0x41, 0x76, 0x1b, 0xc9,
+	0x30, 0x56, 0x79, 0x16, 0x09, 0xe8, 0x91, 0x62, 0x13, 0x3d, 0x6e, 0x19, 0x72, 0xe1, 0xb9, 0x4f,
+	0xcc, 0x5e, 0x50, 0xb9, 0x23, 0x5c, 0x10, 0xfd, 0xd9, 0x7b, 0xdf, 0x1d, 0xd2, 0xea, 0x6c, 0xe4,
+	0xd3, 0x09, 0x47, 0xf4, 0x5c, 0x55, 0xd9, 0x42, 0x81, 0xb6, 0xe1, 0x26, 0xba, 0x14, 0xe9, 0xd9,
+	0xa3, 0xc1, 0x34, 0xd1, 0x5d, 0x24, 0xba, 0x07, 0xb7, 0x29, 0x91, 0xe5, 0xdb, 0xa1, 0x6d, 0x99,
+	0xce, 0x34, 0x99, 0x86, 0x64, 0x87, 0xb0, 0x89, 0x82, 0xb3, 0x80, 0x44, 0x45, 0xa6, 0x11, 0xa9,
+	0x1b, 0x44, 0x7e, 0x57, 0xd9, 0x9e, 0x3e, 0xfb, 0xce, 0x0d, 0x5f, 0x7c, 0x2f, 0x86, 0x5e, 0x68,
+	0x3a, 0x5c, 0x87, 0x3b, 0xf1, 0x5d, 0xc0, 0x10, 0x03, 0x32, 0x08, 0xde, 0x73, 0xf4, 0x3d, 0x44,
+	0xdf, 0x82, 0xeb, 0x14, 0x1d, 0x78, 0xfd, 0x30, 0x61, 0x99, 0xfb, 0xf1, 0x1d, 0x8e, 0x47, 0x11,
+	0x8e, 0xf8, 0x2c, 0xbe, 0xe7, 0x82, 0xf7, 0xe6, 0x90, 0xc3, 0x77, 0xe3, 0xb3, 0x8d, 0x5c, 0x72,
+	0x61, 0x5b, 0x78, 0xce, 0xe1, 0xe8, 0x07, 0x18, 0xc2, 0x7e, 0x95, 0xa2, 0x31, 0x99, 0x85, 0xb0,
+	0x93, 0xc0, 0x3c, 0x23, 0x34, 0x1b, 0x89, 0x83, 0x8c, 0x38, 0xcc, 0xcd, 0xcc, 0x46, 0x48, 0x1d,
+	0x1d, 0x6a, 0xd4, 0x6d, 0xc8, 0xe0, 0x8a, 0x2a, 0xa9, 0xf9, 0x35, 0x71, 0xf5, 0x9f, 0x24, 0xc8,
+	0x47, 0x23, 0x9e, 0x40, 0x79, 0x7c, 0x62, 0x72, 0xfb, 0x1e, 0x3f, 0x33, 0x55, 0x66, 0x9e, 0x99,
+	0x68, 0xf6, 0xfa, 0x0c, 0x0a, 0xa6, 0xe3, 0x78, 0x96, 0x19, 0x92, 0xde, 0xa2, 0x69, 0xd4, 0x7d,
+	0x80, 0x98, 0xd1, 0x58, 0x15, 0xb1, 0x39, 0x8b, 0x32, 0x66, 0xae, 0xc7, 0x50, 0x8a, 0x0e, 0x39,
+	0x5d, 0x3c, 0x56, 0xcc, 0x38, 0x60, 0x45, 0x57, 0x88, 0xda, 0xdf, 0x00, 0x2c, 0x4d, 0x04, 0xa5,
+	0x19, 0x61, 0x5f, 0x49, 0xdc, 0x90, 0x51, 0xc8, 0x12, 0x64, 0xad, 0x4b, 0xcb, 0x89, 0x12, 0xd7,
+	0x1d, 0xb8, 0x11, 0x84, 0xa6, 0x43, 0xa3, 0x2b, 0x83, 0x77, 0xfb, 0xbe, 0xe7, 0x86, 0xb4, 0x7e,
+	0x65, 0xa9, 0x6c, 0x13, 0xd6, 0x27, 0x08, 0x68, 0x22, 0xa4, 0xf8, 0x8c, 0x88, 0x4a, 0xb6, 0x1b,
+	0x84, 0xfe, 0x88, 0x6f, 0x2e, 0x16, 0xef, 0x2b, 0xa0, 0x30, 0x17, 0xf1, 0x49, 0x9f, 0xf8, 0x34,
+	0x11, 0x07, 0x3c, 0xcf, 0x5d, 0x87, 0x12, 0xc3, 0x0c, 0x6c, 0xdc, 0x79, 0x79, 0x91, 0xdb, 0x4e,
+	0x7d, 0xd3, 0xb5, 0xce, 0x89, 0xc8, 0x76, 0x6b, 0x50, 0x66, 0x10, 0x41, 0x08, 0x22, 0xb3, 0x9e,
+	0x8e, 0x02, 0x2e, 0x0a, 0x0f, 0xeb, 0x2a, 0x80, 0x4f, 0xfa, 0x02, 0xc6, 0x62, 0xf9, 0x0a, 0x14,
+	0xac, 0xe1, 0xa8, 0x6b, 0x39, 0x9e, 0xf5, 0x0e, 0x03, 0x3a, 0xe6, 0xb1, 0xd0, 0x0c, 0xde, 0x71,
+	0xd8, 0x12, 0xc2, 0x56, 0xa1, 0x38, 0x34, 0xcf, 0x48, 0xb7, 0x6f, 0x8e, 0x9c, 0x50, 0xc4, 0xeb,
+	0xeb, 0x50, 0x1a, 0xd8, 0xae, 0xe7, 0x0b, 0xa8, 0x12, 0x41, 0xcd, 0x3f, 0x18, 0x43, 0x57, 0xa2,
+	0x85, 0x52, 0x7d, 0x7d, 0x08, 0xbb, 0xc1, 0x7b, 0x3b, 0xc4, 0x05, 0xa8, 0x62, 0x43, 0x50, 0x09,
+	0x06, 0xf6, 0x19, 0x33, 0x80, 0x08, 0xd8, 0x15, 0x50, 0x4c, 0xc7, 0x3e, 0xc3, 0xbb, 0x05, 0xc1,
+	0xeb, 0xba, 0xc0, 0x90, 0xc1, 0xc8, 0x41, 0x6a, 0x81, 0x59, 0x13, 0xbb, 0xce, 0xf9, 0xa2, 0xdb,
+	0x63, 0x8a, 0x73, 0x3c, 0x1a, 0xa0, 0xd6, 0xc5, 0xee, 0x4a, 0x22, 0x84, 0xb6, 0x6e, 0x08, 0x8e,
+	0x63, 0x74, 0x10, 0x7a, 0x3e, 0x09, 0x30, 0x3c, 0xa3, 0x59, 0x27, 0x30, 0x62, 0xe4, 0x86, 0x88,
+	0x02, 0x63, 0xfc, 0x90, 0x5a, 0x91, 0xad, 0xad, 0x2a, 0xb2, 0xc8, 0x34, 0x56, 0x30, 0xb8, 0x19,
+	0x13, 0xd9, 0x8e, 0x8b, 0x7c, 0x2b, 0x26, 0xb2, 0x3d, 0x2d, 0xf2, 0xed, 0xd8, 0xc4, 0xf6, 0xd4,
+	0xc4, 0x9b, 0xb1, 0x89, 0xed, 0xd9, 0x13, 0xdf, 0x11, 0x96, 0x77, 0x1c, 0x8b, 0x4f, 0xb9, 0x15,
+	0xc9, 0xc2, 0x41, 0x82, 0xf6, 0xae, 0xf0, 0x1c, 0x8a, 0xe0, 0x9a, 0xd1, 0x22, 0x9d, 0x09, 0x98,
+	0xa0, 0xde, 0x16, 0x16, 0xa5, 0x98, 0x98, 0x50, 0x2c, 0xa0, 0xde, 0x84, 0xd5, 0x38, 0x5c, 0x0c,
+	0xba, 0x27, 0xa6, 0xe8, 0x85, 0xce, 0x29, 0x97, 0xe7, 0xbe, 0x98, 0x22, 0x82, 0x09, 0x6a, 0x16,
+	0x45, 0x57, 0xa1, 0x88, 0x18, 0x2e, 0x11, 0x0b, 0xa1, 0x1b, 0xb0, 0x32, 0x06, 0x0a, 0xfa, 0x07,
+	0x51, 0xa2, 0xa4, 0xa8, 0x98, 0x4c, 0x0f, 0x85, 0x1a, 0x13, 0x08, 0x31, 0xec, 0x73, 0x21, 0x94,
+	0x3d, 0x16, 0xea, 0x91, 0x10, 0xca, 0x9e, 0x14, 0xea, 0xb1, 0xf0, 0x7c, 0xbe, 0x15, 0x19, 0xfd,
+	0x1e, 0x42, 0xab, 0xa0, 0xc6, 0xa0, 0x62, 0xc4, 0x13, 0xc1, 0xdf, 0xf5, 0x7a, 0xc2, 0xee, 0x4f,
+	0x05, 0xff, 0x08, 0x26, 0xa8, 0xbf, 0x10, 0x8b, 0x46, 0x0c, 0x5f, 0xf4, 0xbe, 0x58, 0xf4, 0x18,
+	0x28, 0xe8, 0xbf, 0x14, 0x8b, 0x46, 0x54, 0x6c, 0xd1, 0x5f, 0x89, 0x45, 0x27, 0x10, 0x62, 0xd8,
+	0x33, 0x4c, 0x35, 0xdf, 0x41, 0xce, 0xa0, 0xf5, 0x73, 0x10, 0xaa, 0xf7, 0x20, 0x1f, 0x38, 0xe6,
+	0x05, 0x61, 0x37, 0x65, 0x73, 0xaf, 0x3d, 0x12, 0x77, 0x2d, 0x0b, 0x02, 0xbe, 0xf6, 0xdf, 0x39,
+	0xc8, 0xe0, 0x53, 0x12, 0xbf, 0x4a, 0x91, 0xa6, 0x5f, 0x4c, 0xc4, 0x4b, 0xd3, 0xe4, 0xcd, 0x58,
+	0x6a, 0x3a, 0xce, 0xc7, 0x6f, 0xc6, 0xe2, 0x92, 0xa6, 0xa7, 0xb9, 0x0a, 0x49, 0xe3, 0xf7, 0x44,
+	0xf2, 0xf4, 0x3d, 0xd1, 0xa2, 0x4b, 0xbd, 0x47, 0x50, 0x8a, 0x5d, 0x1c, 0xd2, 0x00, 0x9e, 0x5e,
+	0x70, 0x73, 0x98, 0xbc, 0x55, 0xca, 0x2d, 0xba, 0x55, 0xba, 0x05, 0xe9, 0x91, 0xef, 0xf0, 0x93,
+	0xe8, 0x72, 0xe2, 0x75, 0xc3, 0x38, 0x9c, 0xf1, 0x0c, 0x52, 0xf8, 0xd4, 0x33, 0x48, 0xf5, 0x4f,
+	0x33, 0x50, 0x68, 0x0d, 0x09, 0x8b, 0xa7, 0xea, 0x5e, 0xe2, 0x6e, 0x69, 0x6b, 0x4a, 0xd9, 0x7b,
+	0x11, 0x29, 0x3b, 0xd7, 0xef, 0x43, 0xd6, 0x31, 0x47, 0xae, 0x75, 0xce, 0x0f, 0x8f, 0xda, 0xa2,
+	0x11, 0x87, 0x48, 0xa9, 0x7e, 0x05, 0x39, 0x76, 0xaa, 0x26, 0x3c, 0x8d, 0x6f, 0x2f, 0x1a, 0xc4,
+	0x8e, 0xc3, 0x44, 0xfd, 0x29, 0x14, 0x46, 0xae, 0x18, 0xc7, 0xae, 0x06, 0xee, 0x2d, 0x1a, 0x77,
+	0x22, 0x88, 0xa9, 0x8c, 0x96, 0x4f, 0xcc, 0x90, 0xf0, 0xab, 0x82, 0x85, 0x32, 0x1e, 0x20, 0x25,
+	0x95, 0xb1, 0x47, 0x82, 0xd0, 0xf7, 0x2e, 0xf9, 0xc5, 0xc8, 0x42, 0x19, 0xeb, 0x8c, 0xb4, 0xba,
+	0x0f, 0x59, 0xbe, 0xc6, 0x5d, 0x9e, 0x17, 0x69, 0x0d, 0x24, 0x2a, 0xae, 0xe4, 0x83, 0x9b, 0xc9,
+	0x8e, 0xe2, 0xd5, 0x7d, 0xba, 0x83, 0x98, 0xa0, 0x09, 0xf7, 0x92, 0x16, 0x94, 0x5c, 0x5f, 0x41,
+	0x61, 0xbc, 0xbc, 0x2b, 0x8f, 0x7a, 0x02, 0x59, 0xbe, 0xba, 0x7b, 0x90, 0x63, 0x47, 0xfe, 0xc5,
+	0x03, 0x9e, 0x42, 0x8e, 0xaf, 0xec, 0x8a, 0x23, 0xb4, 0x57, 0xe3, 0xab, 0xb3, 0xc3, 0xda, 0x49,
+	0xf3, 0xe0, 0xb5, 0x22, 0xa9, 0x45, 0xc8, 0x19, 0x7a, 0x5b, 0x37, 0xde, 0xea, 0x4a, 0x4a, 0x2d,
+	0x43, 0xe1, 0xa4, 0x29, 0x3e, 0xd3, 0x94, 0xee, 0xc0, 0xd0, 0x6b, 0x1d, 0x5d, 0x91, 0x29, 0x5d,
+	0x5d, 0x6f, 0x77, 0x8c, 0xd6, 0x77, 0x4a, 0x46, 0xfb, 0x21, 0x05, 0xa5, 0x86, 0x7b, 0x41, 0xfc,
+	0x80, 0x5c, 0x31, 0x06, 0xf0, 0x9d, 0x91, 0x9a, 0xbd, 0x33, 0x26, 0x23, 0x44, 0xfa, 0xea, 0x11,
+	0x42, 0x9e, 0x1f, 0xcb, 0xa6, 0xf7, 0x5b, 0x06, 0xf9, 0x2e, 0xd8, 0x6f, 0x49, 0x73, 0x65, 0x17,
+	0xe8, 0xf2, 0x2f, 0xd3, 0x90, 0x17, 0x5e, 0x32, 0x71, 0xe7, 0xb6, 0x0d, 0x39, 0xe6, 0x5d, 0x22,
+	0xd4, 0xa9, 0x53, 0xae, 0x75, 0xe5, 0x28, 0x97, 0x90, 0x47, 0x5e, 0x10, 0xd3, 0x1e, 0x42, 0x5e,
+	0xc4, 0x34, 0xbe, 0x91, 0xe6, 0x57, 0xf5, 0xe2, 0x2d, 0x24, 0x8b, 0x6f, 0x21, 0x57, 0x7e, 0xb8,
+	0xa2, 0x66, 0x3a, 0xc7, 0xf7, 0xb8, 0x2e, 0x5e, 0x8d, 0xcf, 0x7a, 0xe2, 0x88, 0x3f, 0xeb, 0x25,
+	0x1e, 0x31, 0x0a, 0x9f, 0x7a, 0xc4, 0x18, 0x3f, 0x5c, 0xc2, 0xbc, 0x87, 0xcb, 0xe4, 0x43, 0x47,
+	0xf1, 0x53, 0x0f, 0x1d, 0x7f, 0x01, 0x00, 0x54, 0xdb, 0x6d, 0x7c, 0x45, 0x8b, 0x9b, 0x45, 0x9a,
+	0x6b, 0x96, 0x1d, 0x7c, 0x85, 0x0f, 0xc5, 0x85, 0xe9, 0xda, 0x24, 0x09, 0xe5, 0x45, 0x22, 0x05,
+	0xa6, 0x51, 0x81, 0xcb, 0x90, 0x1b, 0x90, 0x80, 0x9e, 0xcd, 0xf8, 0xcb, 0x48, 0xdc, 0xb6, 0x99,
+	0xf9, 0xfe, 0x99, 0x38, 0xbd, 0xe0, 0x43, 0xe2, 0xe4, 0x93, 0x56, 0x6e, 0xfa, 0x6a, 0x38, 0x96,
+	0x98, 0x96, 0x21, 0xc7, 0xcc, 0x71, 0x89, 0x96, 0xc8, 0xab, 0x8f, 0xa3, 0x57, 0xa4, 0x02, 0xbe,
+	0xca, 0xdf, 0x9e, 0x25, 0xfd, 0x28, 0xd8, 0x6b, 0x33, 0x97, 0x79, 0x0c, 0x59, 0x9f, 0x98, 0x81,
+	0xe7, 0xa2, 0xc6, 0xe7, 0x93, 0x1b, 0x48, 0x84, 0xaf, 0x80, 0x23, 0xbb, 0x87, 0x7a, 0x2f, 0xc5,
+	0xcc, 0x55, 0x9a, 0x6b, 0xae, 0x67, 0xec, 0xa4, 0xc0, 0x0e, 0x78, 0xec, 0x2d, 0x93, 0xdf, 0x34,
+	0xdd, 0x9c, 0xe9, 0x07, 0x6c, 0x3e, 0xed, 0x05, 0x64, 0xb9, 0x84, 0x2b, 0x50, 0x66, 0xaf, 0xc9,
+	0xdd, 0xa3, 0x5a, 0xbb, 0xa3, 0x1b, 0xca, 0x35, 0x55, 0x81, 0x12, 0x07, 0xb5, 0x0f, 0x6b, 0x6f,
+	0x75, 0x85, 0x1e, 0x68, 0x96, 0x39, 0x44, 0xff, 0x56, 0x3f, 0x38, 0xe9, 0xb4, 0x0c, 0x25, 0xa5,
+	0xfd, 0x55, 0x16, 0xb2, 0x5c, 0x6e, 0x0d, 0x36, 0x0d, 0xbd, 0xd6, 0x6e, 0x35, 0xbb, 0x07, 0xad,
+	0xa3, 0xa3, 0x5a, 0xb3, 0x1e, 0xd1, 0x75, 0x5f, 0xd6, 0x1a, 0x87, 0x7a, 0x5d, 0xb9, 0x96, 0xa0,
+	0x69, 0x76, 0x6a, 0x8d, 0xa6, 0x6e, 0x74, 0x59, 0x88, 0x14, 0x34, 0x6b, 0xea, 0x1d, 0xb8, 0x39,
+	0x4d, 0xd3, 0x38, 0x6a, 0x74, 0x6a, 0x9d, 0x46, 0xab, 0xa9, 0xac, 0xaa, 0x3b, 0xb0, 0xb5, 0x80,
+	0xa0, 0x5b, 0x6f, 0xb4, 0xdf, 0x28, 0xd7, 0xd5, 0xfb, 0xa0, 0x2d, 0xa2, 0x3a, 0xd2, 0x8f, 0x5a,
+	0xc6, 0x77, 0x4a, 0x5e, 0xdd, 0x84, 0xea, 0x14, 0xdd, 0xb1, 0xa1, 0xeb, 0x47, 0xc7, 0x1d, 0xbd,
+	0xae, 0xac, 0xcc, 0x14, 0xf9, 0xe4, 0xb8, 0x5e, 0xeb, 0xe8, 0x42, 0xe4, 0x75, 0x75, 0x17, 0x76,
+	0x38, 0x4d, 0xb4, 0x64, 0x43, 0x7f, 0xd5, 0x68, 0x77, 0x0c, 0x36, 0x59, 0xa7, 0x71, 0xa4, 0xb7,
+	0x4e, 0x3a, 0xca, 0x0d, 0xf5, 0x21, 0xdc, 0x9f, 0xa6, 0x9c, 0x49, 0x5b, 0x89, 0x49, 0x16, 0xd1,
+	0x76, 0x74, 0xe3, 0xa8, 0xd1, 0xac, 0x51, 0xc9, 0x24, 0x75, 0x0b, 0x6e, 0x4d, 0xe2, 0x69, 0x56,
+	0xa1, 0xbc, 0x74, 0x43, 0xaf, 0x2b, 0x29, 0xf5, 0x16, 0x54, 0x38, 0xc5, 0x4b, 0xa3, 0x76, 0xa4,
+	0x7f, 0xd3, 0x32, 0xde, 0x74, 0x0d, 0xfd, 0xa8, 0xf5, 0x56, 0xaf, 0x2b, 0x69, 0x6a, 0x50, 0x8e,
+	0x7d, 0x75, 0xd0, 0xd5, 0x0d, 0xa3, 0x65, 0x28, 0x72, 0x6c, 0xd2, 0x46, 0xf3, 0x6d, 0xed, 0xb0,
+	0x51, 0x1f, 0x0f, 0x6d, 0xd4, 0x95, 0x8c, 0xba, 0x01, 0x6b, 0x13, 0xf8, 0xd6, 0xcb, 0x97, 0xba,
+	0xd1, 0x56, 0xb2, 0xb1, 0xa1, 0xcc, 0x8b, 0xa8, 0x25, 0x0e, 0x5a, 0xcd, 0xa6, 0x7e, 0x40, 0xe5,
+	0xcd, 0xc5, 0x86, 0x1a, 0xfa, 0x41, 0xab, 0x79, 0xd0, 0x38, 0x6c, 0x30, 0x93, 0x16, 0x62, 0x82,
+	0x46, 0x7d, 0x0d, 0xdd, 0x93, 0xe6, 0x9b, 0x66, 0xeb, 0x9b, 0xa6, 0xa2, 0xaa, 0xb7, 0x61, 0x83,
+	0x63, 0xd1, 0x17, 0x93, 0x7c, 0x41, 0xad, 0xc0, 0xf5, 0x04, 0x5a, 0xac, 0xb0, 0xa8, 0x56, 0x61,
+	0x7d, 0x02, 0xd3, 0xee, 0xd4, 0x0c, 0x3a, 0xaa, 0x34, 0x35, 0x4a, 0x4c, 0x57, 0x66, 0x7d, 0x16,
+	0x88, 0xc1, 0xae, 0x0a, 0xbe, 0x4e, 0x65, 0x29, 0x26, 0x25, 0x22, 0x4e, 0x9a, 0xb5, 0x93, 0xce,
+	0xeb, 0x96, 0xd1, 0xf8, 0x3d, 0xbd, 0xae, 0x2c, 0x4f, 0x0e, 0x13, 0xfc, 0x14, 0x6d, 0x07, 0x72,
+	0x2f, 0x6d, 0x27, 0x24, 0x7e, 0xa0, 0x6e, 0xc0, 0x92, 0x4f, 0xfa, 0xa3, 0x80, 0x74, 0xc7, 0x1d,
+	0x56, 0xd8, 0xf0, 0xf2, 0x4c, 0x7b, 0x07, 0xc5, 0x78, 0x6b, 0xc0, 0x97, 0x50, 0xb8, 0x30, 0x7d,
+	0xdb, 0x3c, 0x75, 0xa2, 0x62, 0x63, 0x6b, 0x4e, 0x1b, 0xc1, 0xde, 0x5b, 0x4e, 0x58, 0xfd, 0x0c,
+	0xf2, 0xe2, 0xff, 0x44, 0xae, 0x8c, 0x1e, 0xf7, 0xb0, 0x3f, 0x47, 0xfb, 0x0c, 0x0a, 0xe3, 0xae,
+	0xa9, 0x22, 0xa4, 0xdf, 0x91, 0xcb, 0xd9, 0x84, 0x3f, 0x01, 0x88, 0x08, 0x03, 0x75, 0x17, 0x0a,
+	0x43, 0xf1, 0xc5, 0x85, 0x9a, 0xdd, 0x89, 0xa5, 0x3d, 0x01, 0x38, 0xf0, 0x49, 0x8f, 0xb8, 0xa1,
+	0x6d, 0x3a, 0x33, 0x1e, 0x6f, 0xf0, 0x25, 0x9e, 0x58, 0x3e, 0x09, 0x79, 0x6b, 0xd4, 0x73, 0x28,
+	0x8e, 0x07, 0x04, 0x34, 0x40, 0x5b, 0xe3, 0x4f, 0x3e, 0x57, 0x22, 0x40, 0x8f, 0xa9, 0xb5, 0x9f,
+	0x43, 0xc1, 0x30, 0x43, 0x72, 0x68, 0x0f, 0xec, 0x90, 0xae, 0xe6, 0xfb, 0x21, 0xd7, 0x6b, 0x72,
+	0x62, 0xd6, 0x9a, 0xa4, 0x40, 0xde, 0x32, 0x87, 0xa6, 0x25, 0xda, 0xa3, 0x64, 0xed, 0x02, 0x20,
+	0x1a, 0x1e, 0xa8, 0xf7, 0x20, 0xcb, 0x1f, 0x57, 0x66, 0x2c, 0x70, 0x3c, 0xcd, 0x6d, 0x58, 0x33,
+	0xcf, 0xce, 0x7c, 0x72, 0x66, 0x86, 0xa4, 0xdb, 0x23, 0x78, 0xa7, 0xd2, 0xa5, 0x13, 0xb3, 0x87,
+	0x0f, 0x0d, 0xaa, 0xd3, 0xe8, 0x89, 0x79, 0xff, 0x4b, 0x82, 0x4c, 0x63, 0x60, 0x9e, 0x2d, 0x7c,
+	0xcb, 0x46, 0x02, 0x76, 0xca, 0xd8, 0x01, 0xd9, 0x1c, 0x0e, 0x2d, 0x5e, 0xdc, 0xcd, 0xa0, 0xaa,
+	0x0d, 0x87, 0x96, 0xba, 0x0b, 0xd9, 0x9e, 0x67, 0xbd, 0x23, 0x33, 0xdf, 0x18, 0x19, 0x5d, 0x1d,
+	0xf1, 0xd5, 0x3a, 0xc8, 0x38, 0x22, 0xe9, 0x29, 0xec, 0x6d, 0x8a, 0xf5, 0xf3, 0x8d, 0x93, 0x4f,
+	0x7a, 0x6e, 0x93, 0xd3, 0x3a, 0x64, 0x19, 0xbf, 0x24, 0x1f, 0xed, 0x16, 0x2f, 0x82, 0xf3, 0x20,
+	0xd7, 0x8e, 0x8f, 0x0f, 0x14, 0x89, 0x96, 0xb9, 0xf5, 0xd6, 0xc1, 0x1b, 0x9d, 0xe6, 0x8d, 0x3f,
+	0x93, 0x20, 0xcb, 0x5e, 0xd5, 0xf0, 0x36, 0x2b, 0xca, 0x5e, 0xd8, 0x9a, 0xc3, 0x04, 0x59, 0x81,
+	0x02, 0x3d, 0x78, 0x76, 0xc7, 0xdd, 0x3a, 0xea, 0x3d, 0xde, 0x0c, 0x97, 0x46, 0x3d, 0xdd, 0x98,
+	0x7e, 0xa2, 0x63, 0x7d, 0x70, 0x5b, 0x90, 0xb1, 0x07, 0xa2, 0x4c, 0x28, 0xee, 0xaf, 0x4c, 0x69,
+	0x40, 0x5b, 0x1f, 0x77, 0xbd, 0x19, 0xdf, 0x28, 0x12, 0xfe, 0xb6, 0x94, 0x94, 0xf6, 0xf7, 0x29,
+	0x28, 0x36, 0x49, 0x18, 0xf5, 0xb8, 0xfd, 0x04, 0xf2, 0x38, 0xcc, 0xf2, 0x1c, 0xf4, 0xa8, 0x89,
+	0xc3, 0x60, 0x8c, 0x74, 0xef, 0x98, 0xd3, 0xbd, 0x48, 0x55, 0x24, 0x75, 0x1d, 0xc0, 0x1e, 0x76,
+	0xc7, 0x5d, 0x8e, 0xd2, 0x6e, 0x01, 0xe1, 0x4b, 0x90, 0x3d, 0xf3, 0xbd, 0xd1, 0x90, 0xf5, 0x57,
+	0xc4, 0x15, 0x2c, 0xcf, 0xcd, 0xee, 0x5f, 0x43, 0x69, 0xcc, 0x2b, 0x3a, 0x71, 0xdf, 0x9d, 0x27,
+	0x47, 0xe3, 0x98, 0xf7, 0x7b, 0x54, 0xdb, 0x50, 0x88, 0x3e, 0xd4, 0xfd, 0xff, 0xfb, 0x4a, 0xf0,
+	0x2e, 0x67, 0x62, 0x15, 0xda, 0x26, 0xe4, 0x23, 0x7c, 0x1e, 0xe4, 0xc6, 0xf1, 0xc5, 0x57, 0x8a,
+	0xc4, 0xff, 0xfd, 0x44, 0x49, 0x69, 0xff, 0x9e, 0x81, 0xf2, 0x64, 0xd7, 0x4c, 0xdc, 0xb9, 0x37,
+	0xe7, 0x56, 0xa6, 0xcc, 0xc9, 0xb7, 0xc7, 0x47, 0x2c, 0x76, 0x2d, 0x32, 0xe3, 0x21, 0x56, 0xfd,
+	0x6a, 0xc2, 0xc7, 0x77, 0xe6, 0x33, 0x65, 0xbe, 0x39, 0xd5, 0xf1, 0xc2, 0x0a, 0xc8, 0x7d, 0xc8,
+	0xe0, 0x40, 0x5e, 0x3d, 0x6e, 0xcf, 0x67, 0x73, 0x44, 0x11, 0xc8, 0x65, 0x0f, 0x5f, 0xc5, 0xd8,
+	0x09, 0x0a, 0x8f, 0xb5, 0xb9, 0xe9, 0x9e, 0x8b, 0x98, 0x36, 0xab, 0x3f, 0xa4, 0x01, 0x62, 0x42,
+	0x94, 0x85, 0x6f, 0x32, 0x27, 0x3f, 0x80, 0x1c, 0xe7, 0xc6, 0x3b, 0x3c, 0x1f, 0x5d, 0x65, 0x29,
+	0x62, 0x82, 0xe7, 0xf2, 0xeb, 0x56, 0xbb, 0xa3, 0xbe, 0x82, 0xf2, 0xd0, 0xf3, 0x43, 0x7c, 0x7d,
+	0xb4, 0xdd, 0x33, 0xd1, 0xbc, 0xf3, 0xf4, 0x4a, 0xac, 0x8e, 0x3d, 0x3f, 0x3c, 0x62, 0x03, 0xd5,
+	0x0d, 0x80, 0xa1, 0x6f, 0x5f, 0xd8, 0x0e, 0x39, 0x23, 0xec, 0xc8, 0x17, 0x35, 0xe3, 0x3c, 0x00,
+	0x88, 0x42, 0xff, 0xcc, 0x9e, 0x9f, 0x71, 0x3e, 0xa9, 0x80, 0xd2, 0xf7, 0x7c, 0x8b, 0x74, 0x87,
+	0x23, 0xc7, 0xe9, 0xb2, 0xd5, 0x62, 0x0f, 0x5b, 0xf5, 0x77, 0xa1, 0x18, 0x9f, 0x2e, 0xda, 0xe1,
+	0xe3, 0xee, 0xbc, 0x64, 0x30, 0xa0, 0x70, 0xd6, 0x25, 0xa5, 0xc4, 0xdc, 0x17, 0x9b, 0xe5, 0xb4,
+	0x07, 0x90, 0xe3, 0x5a, 0xa0, 0xde, 0x47, 0xf5, 0xc0, 0x42, 0xcc, 0x0b, 0xa3, 0x51, 0x7f, 0xa5,
+	0xb3, 0xbe, 0x94, 0x66, 0xab, 0xa9, 0x2b, 0xe9, 0xea, 0x63, 0x28, 0x8c, 0xed, 0xb7, 0x35, 0x36,
+	0xc0, 0x9c, 0xe0, 0x70, 0x7b, 0x7c, 0x7c, 0xe7, 0xf1, 0x4a, 0x52, 0x0b, 0x90, 0x39, 0xd2, 0xdb,
+	0xad, 0xb6, 0x92, 0xd2, 0x6a, 0xb0, 0x3c, 0x51, 0x49, 0x4f, 0xfb, 0x84, 0xb4, 0xd0, 0x27, 0xb4,
+	0xcf, 0x21, 0xcb, 0x37, 0xf7, 0xdd, 0x28, 0x00, 0xb0, 0x21, 0x2b, 0x53, 0x01, 0x40, 0xdb, 0x86,
+	0x0c, 0xfe, 0x99, 0x9b, 0xa7, 0xa9, 0x36, 0x86, 0x20, 0x53, 0xcd, 0xd2, 0x00, 0xe3, 0x8e, 0x06,
+	0xa7, 0xbc, 0x2d, 0xb7, 0x1c, 0x6b, 0xcb, 0xe5, 0xad, 0x64, 0x49, 0x2d, 0xaa, 0x3f, 0x05, 0xb8,
+	0xb0, 0x03, 0x9b, 0x9f, 0xdb, 0x65, 0x74, 0xc1, 0x9d, 0xb9, 0x47, 0xbd, 0xbd, 0xb7, 0x11, 0xad,
+	0xb6, 0x0b, 0x19, 0x3a, 0x63, 0xa0, 0xde, 0x81, 0x0c, 0x35, 0x94, 0x58, 0x81, 0x92, 0x70, 0x0a,
+	0xcf, 0x0f, 0xb5, 0x3f, 0x4e, 0x41, 0x39, 0xc1, 0x66, 0x62, 0x56, 0x16, 0x18, 0xae, 0x34, 0xeb,
+	0xc4, 0x7a, 0x56, 0x93, 0xdd, 0x96, 0x69, 0xb1, 0x48, 0x7c, 0x49, 0xb3, 0x3d, 0x97, 0x6f, 0xf3,
+	0x58, 0xbf, 0x1c, 0x6b, 0xa0, 0xdb, 0x12, 0x22, 0x67, 0xa7, 0x7d, 0x80, 0x2d, 0x6a, 0x1c, 0x98,
+	0x73, 0xf3, 0x02, 0x33, 0xad, 0x8d, 0x62, 0x92, 0x95, 0xa1, 0x10, 0x55, 0xca, 0xca, 0x35, 0xb5,
+	0x08, 0xb9, 0x83, 0xc3, 0x13, 0x3c, 0x4c, 0x61, 0x53, 0xb5, 0xfe, 0x6d, 0x47, 0x37, 0x9a, 0xb5,
+	0x43, 0x25, 0xa5, 0xfd, 0x22, 0x05, 0x2b, 0x34, 0xf1, 0xa2, 0xb7, 0x1d, 0x99, 0xae, 0xdd, 0x27,
+	0x01, 0x5a, 0xce, 0xb4, 0xde, 0xd8, 0x6e, 0x6f, 0x9c, 0xfe, 0x4c, 0xeb, 0x2d, 0x17, 0x3b, 0x95,
+	0xe8, 0xb1, 0x4e, 0xe3, 0xd7, 0x97, 0xb1, 0xdc, 0x91, 0x9e, 0x8c, 0x5e, 0x53, 0xfc, 0x99, 0xd0,
+	0xea, 0xcf, 0xa1, 0x68, 0xba, 0xae, 0x17, 0xf2, 0x77, 0x23, 0xb6, 0x8f, 0x77, 0x17, 0x8f, 0xac,
+	0x45, 0x03, 0xaa, 0x3b, 0xc2, 0x17, 0x17, 0x55, 0x97, 0xd5, 0x07, 0x00, 0xe3, 0x31, 0x0b, 0x49,
+	0x1f, 0xfe, 0x3e, 0x64, 0xf9, 0x1e, 0x5a, 0x07, 0xb5, 0x6e, 0x34, 0xde, 0xea, 0x46, 0xb7, 0xd9,
+	0xea, 0x74, 0x45, 0x9d, 0x2e, 0xa9, 0x2a, 0x2c, 0x71, 0xb8, 0x71, 0xd2, 0xe4, 0x6d, 0xe9, 0x63,
+	0x58, 0xed, 0x45, 0x0b, 0xe9, 0xd2, 0x31, 0x58, 0xbb, 0xd3, 0x3a, 0x3e, 0xd6, 0xeb, 0x8a, 0xfc,
+	0xf0, 0x97, 0x12, 0x14, 0xc6, 0xb7, 0x09, 0x0a, 0x94, 0xb0, 0x32, 0x6f, 0x77, 0x6a, 0xaf, 0x28,
+	0x9f, 0x2c, 0x3d, 0xf7, 0x0a, 0x88, 0xd1, 0xa1, 0xa0, 0x6b, 0x11, 0x91, 0x98, 0x4c, 0x8a, 0x88,
+	0x5e, 0x36, 0x9a, 0x8d, 0xf6, 0x6b, 0x3c, 0x57, 0x2d, 0x43, 0x91, 0x81, 0xd8, 0x01, 0x30, 0x1d,
+	0x01, 0xde, 0x34, 0x0e, 0x29, 0x40, 0xa6, 0xde, 0x80, 0x80, 0x43, 0x1a, 0x97, 0x32, 0xea, 0x12,
+	0x00, 0x7e, 0xb2, 0x53, 0x56, 0x2e, 0x9a, 0x85, 0x77, 0x6c, 0x2b, 0xf9, 0x17, 0x8f, 0xfe, 0xf5,
+	0xc7, 0xcd, 0x6b, 0xbf, 0xfd, 0x71, 0x53, 0xfa, 0x8f, 0x1f, 0x37, 0xa5, 0xff, 0xfc, 0x71, 0x53,
+	0xfa, 0xe1, 0xe3, 0xa6, 0xf4, 0xcb, 0x8f, 0x9b, 0xd2, 0xaf, 0x3f, 0x6e, 0x4a, 0xbf, 0xf9, 0xb8,
+	0x29, 0xfd, 0xf3, 0xc7, 0x4d, 0xe9, 0x5f, 0x3e, 0x6e, 0x4a, 0xbf, 0xfd, 0xb8, 0x29, 0xfd, 0x6f,
+	0x00, 0x00, 0x00, 0xff, 0xff, 0x94, 0xc1, 0x02, 0x48, 0xc6, 0x32, 0x00, 0x00,
+}

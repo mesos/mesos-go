@@ -270,6 +270,11 @@ message FrameworkInfo {
       // message for details.
       // TODO(vinod): This is currently a no-op.
       REVOCABLE_RESOURCES = 1;
+
+      // Receive the TASK_KILLING TaskState when a task is being
+      // killed by an executor. The executor will examine this
+      // capability to determine whether it can send TASK_KILLING.
+      TASK_KILLING_STATE = 2;
     }
 
     required Type type = 1;
@@ -378,27 +383,6 @@ message CommandInfo {
     // "docs/fetcher-cache-internals.md".
     optional bool cache = 4;
   }
-
-  // Describes a container.
-  // Not all containerizers currently implement ContainerInfo, so it
-  // is possible that a launched task will fail due to supplying this
-  // attribute.
-  // NOTE: The containerizer API is currently in an early beta or
-  // even alpha state. Some details, like the exact semantics of an
-  // "image" or "options" are not yet hardened.
-  // TODO(tillt): Describe the exact scheme and semantics of "image"
-  // and "options".
-  message ContainerInfo {
-    // URI describing the container image name.
-    required string image = 1;
-
-    // Describes additional options passed to the containerizer.
-    repeated string options = 2;
-  }
-
-  // NOTE: MesosContainerizer does currently not support this
-  // attribute and tasks supplying a 'container' will fail.
-  optional ContainerInfo container = 4;
 
   repeated URI uris = 1;
 
@@ -1088,6 +1072,7 @@ enum TaskState {
   TASK_KILLED = 4; // TERMINAL. The task was killed by the executor.
   TASK_LOST = 5; // TERMINAL. The task failed but can be rescheduled.
   TASK_ERROR = 7; // TERMINAL. The task description contains an error.
+  TASK_KILLING = 8;  // The task is being killed by the executor.
 }
 
 

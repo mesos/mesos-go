@@ -78,6 +78,9 @@ message Task {
   // to use this information as needed and to handle tasks without
   // service discovery information.
   optional DiscoveryInfo discovery = 12;
+
+  // Container information for the task.
+  optional ContainerInfo container = 13;
 }
 
 

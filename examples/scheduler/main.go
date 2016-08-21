@@ -151,11 +151,25 @@ func (sched *ExampleScheduler) ResourceOffers(driver sched.SchedulerDriver, offe
 				Value: proto.String(strconv.Itoa(sched.tasksLaunched)),
 			}
 
+			dockerInfo := &mesos.ContainerInfo_DockerInfo{
+				Image: proto.String("ubuntu:14.04"),
+			}
+			containerInfo := &mesos.ContainerInfo{
+			    Type: mesos.ContainerInfo_DOCKER.Enum(),
+			    Docker: dockerInfo,
+			}
+			//Task should have at least one (but not both) of CommandInfo or ExecutorInfo present.
 			task := &mesos.TaskInfo{
 				Name:     proto.String("go-task-" + taskId.GetValue()),
 				TaskId:   taskId,
 				SlaveId:  offer.SlaveId,
-				Executor: sched.executor,
+				//Executor: sched.executor,
+				Command: &mesos.CommandInfo{
+					 Shell: proto.Bool(true),
+					 Value: proto.String("hostname -I; ping -c3 127.0.0.1"),
+					 User: proto.String("root"),
+				},
+				Container: containerInfo,
 				Resources: []*mesos.Resource{
 					util.NewScalarResource("cpus", CPUS_PER_TASK),
 					util.NewScalarResource("mem", MEM_PER_TASK),

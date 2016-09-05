@@ -51,16 +51,16 @@ const (
 	// ensure that if 'type' is not set, the default value
 	// is UNKNOWN. This enables enum values to be added
 	// in a backwards-compatible way. See: MESOS-4997.
-	UNKNOWN               Event_Type = 0
-	SUBSCRIBED            Event_Type = 1
-	OFFERS                Event_Type = 2
-	INVERSE_OFFERS        Event_Type = 9
-	RESCIND               Event_Type = 3
-	RESCIND_INVERSE_OFFER Event_Type = 10
-	UPDATE                Event_Type = 4
-	MESSAGE               Event_Type = 5
-	FAILURE               Event_Type = 6
-	ERROR                 Event_Type = 7
+	Event_UNKNOWN               Event_Type = 0
+	Event_SUBSCRIBED            Event_Type = 1
+	Event_OFFERS                Event_Type = 2
+	Event_INVERSE_OFFERS        Event_Type = 9
+	Event_RESCIND               Event_Type = 3
+	Event_RESCIND_INVERSE_OFFER Event_Type = 10
+	Event_UPDATE                Event_Type = 4
+	Event_MESSAGE               Event_Type = 5
+	Event_FAILURE               Event_Type = 6
+	Event_ERROR                 Event_Type = 7
 	// Periodic message sent by the Mesos master according to
 	// 'Subscribed.heartbeat_interval_seconds'. If the scheduler does
 	// not receive any events (including heartbeats) for an extended
@@ -222,7 +222,7 @@ func (m *Event) GetType() Event_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return UNKNOWN
+	return Event_UNKNOWN
 }
 
 func (m *Event) GetSubscribed() *Event_Subscribed {

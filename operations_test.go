@@ -3,7 +3,7 @@ package mesos_test
 import (
 	"testing"
 
-	"github.com/mesos/mesos-go"
+	"github.com/athlum/mesos-go"
 )
 
 func TestOpCreate(t *testing.T) {
@@ -85,7 +85,7 @@ func TestOpReserve(t *testing.T) {
 		unreservedCPU = resources(resource(name("cpus"), valueScalar(1)))
 		unreservedMem = resources(resource(name("mem"), valueScalar(512)))
 		unreserved    = unreservedCPU.Plus(unreservedMem...)
-		reservedCPU1  = unreservedCPU.Flatten(mesos.Role("role").Assign(), reservedBy("principal").Assign())
+		reservedCPU1  = unreservedCPU.Flatten(mesos.RoleName("role").Assign(), reservedBy("principal").Assign())
 	)
 
 	// test case 1: reserve an amount of CPU that's available

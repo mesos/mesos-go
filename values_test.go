@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/athlum/mesos-go"
 	"github.com/gogo/protobuf/proto"
-	"github.com/mesos/mesos-go"
 )
 
 func scalar(f float64) *mesos.Value_Scalar {

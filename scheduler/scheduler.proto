@@ -1,24 +1,22 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package mesos.scheduler;
 
-import "github.com/mesos/mesos-go/mesos.proto";
+import "github.com/athlum/mesos-go/mesos.proto";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 option go_package = "scheduler";
@@ -38,6 +36,7 @@ option (gogoproto.testgen_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
 
+
 /**
  * Scheduler event API.
  *
@@ -49,13 +48,21 @@ message Event {
   // Possible event types, followed by message definitions if
   // applicable.
   enum Type {
-    SUBSCRIBED = 1; // See 'Subscribed' below.
-    OFFERS = 2;     // See 'Offers' below.
-    RESCIND = 3;    // See 'Rescind' below.
-    UPDATE = 4;     // See 'Update' below.
-    MESSAGE = 5;    // See 'Message' below.
-    FAILURE = 6;    // See 'Failure' below.
-    ERROR = 7;      // See 'Error' below.
+    // This must be the first enum value in this list, to
+    // ensure that if 'type' is not set, the default value
+    // is UNKNOWN. This enables enum values to be added
+    // in a backwards-compatible way. See: MESOS-4997.
+    UNKNOWN = 0;
+
+    SUBSCRIBED = 1;             // See 'Subscribed' below.
+    OFFERS = 2;                 // See 'Offers' below.
+    INVERSE_OFFERS = 9;         // See 'InverseOffers' below.
+    RESCIND = 3;                // See 'Rescind' below.
+    RESCIND_INVERSE_OFFER = 10; // See 'RescindInverseOffer' below.
+    UPDATE = 4;                 // See 'Update' below.
+    MESSAGE = 5;                // See 'Message' below.
+    FAILURE = 6;                // See 'Failure' below.
+    ERROR = 7;                  // See 'Error' below.
 
     // Periodic message sent by the Mesos master according to
     // 'Subscribed.heartbeat_interval_seconds'. If the scheduler does
@@ -65,13 +72,11 @@ message Event {
     // close the existing subscription connection and resubscribe
     // using a backoff strategy.
     HEARTBEAT = 8;
-
-    option (gogoproto.goproto_enum_prefix) = true;
   }
 
   // First event received when the scheduler subscribes.
   message Subscribed {
-    required FrameworkID framework_id = 1 [(gogoproto.customname) = "FrameworkID"];
+    required FrameworkID framework_id = 1;
 
     // This value will be set if the master is sending heartbeats. See
     // the comment above on 'HEARTBEAT' for more details.
@@ -79,36 +84,52 @@ message Event {
   }
 
   // Received whenever there are new resources that are offered to the
-  // scheduler or resources requested back from the scheduler. Each
-  // offer corresponds to a set of resources on a slave. Until the
-  // scheduler accepts or declines an offer the resources are
-  // considered allocated to the scheduler. Accepting or Declining an
-  // inverse offer informs the allocator of the scheduler's ability to
-  // release the resources without violating an SLA.
+  // scheduler. Each offer corresponds to a set of resources on an
+  // agent. Until the scheduler accepts or declines an offer the
+  // resources are considered allocated to the scheduler.
   message Offers {
-    repeated Offer offers = 1 [(gogoproto.nullable) = false];
-    repeated InverseOffer inverse_offers = 2 [(gogoproto.nullable) = false];
+    repeated Offer offers = 1;
+  }
+
+  // Received whenever there are resources requested back from the
+  // scheduler. Each inverse offer specifies the agent, and
+  // optionally specific resources. Accepting or Declining an inverse
+  // offer informs the allocator of the scheduler's ability to release
+  // the specified resources without violating an SLA. If no resources
+  // are specified then all resources on the agent are requested to be
+  // released.
+  message InverseOffers {
+    repeated InverseOffer inverse_offers = 1;
   }
 
   // Received when a particular offer is no longer valid (e.g., the
-  // agent corresponding to the offer has been removed) and hence
+  // slave corresponding to the offer has been removed) and hence
   // needs to be rescinded. Any future calls ('Accept' / 'Decline') made
   // by the scheduler regarding this offer will be invalid.
   message Rescind {
-    required OfferID offer_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "OfferID"];
+    required OfferID offer_id = 1;
+  }
+
+  // Received when a particular inverse offer is no longer valid
+  // (e.g., the agent corresponding to the offer has been removed)
+  // and hence needs to be rescinded. Any future calls ('Accept' /
+  // 'Decline') made by the scheduler regarding this inverse offer
+  // will be invalid.
+  message RescindInverseOffer {
+    required OfferID inverse_offer_id = 1;
   }
 
   // Received whenever there is a status update that is generated by
-  // the executor or agent or master. Status updates should be used by
+  // the executor or slave or master. Status updates should be used by
   // executors to reliably communicate the status of the tasks that
   // they manage. It is crucial that a terminal update (see TaskState
-  // in v1/mesos.proto) is sent by the executor as soon as the task
+  // in mesos.proto) is sent by the executor as soon as the task
   // terminates, in order for Mesos to release the resources allocated
   // to the task. It is also the responsibility of the scheduler to
   // explicitly acknowledge the receipt of a status update. See
   // 'Acknowledge' in the 'Call' section below for the semantics.
   message Update {
-    required TaskStatus status = 1 [(gogoproto.nullable) = false];
+    required TaskStatus status = 1;
   }
 
   // Received when a custom message generated by the executor is
@@ -117,28 +138,28 @@ message Event {
   // guarantees) to the scheduler. It is up to the executor to retry
   // if the message is dropped for any reason.
   message Message {
-    required AgentID agent_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
-    required ExecutorID executor_id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "ExecutorID"];
+    required SlaveID slave_id = 1;
+    required ExecutorID executor_id = 2;
     required bytes data = 3;
   }
 
-  // Received when a agent is removed from the cluster (e.g., failed
+  // Received when a slave is removed from the cluster (e.g., failed
   // health checks) or when an executor is terminated. Note that, this
   // event coincides with receipt of terminal UPDATE events for any
-  // active tasks belonging to the agent or executor and receipt of
+  // active tasks belonging to the slave or executor and receipt of
   // 'Rescind' events for any outstanding offers belonging to the
-  // agent. Note that there is no guaranteed order between the
-  // 'Failure', 'Update' and 'Rescind' events when an agent or executor
+  // slave. Note that there is no guaranteed order between the
+  // 'Failure', 'Update' and 'Rescind' events when a slave or executor
   // is removed.
-  // TODO(vinod): Consider splitting the lost agent and terminated
+  // TODO(vinod): Consider splitting the lost slave and terminated
   // executor into separate events and ensure it's reliably generated.
   message Failure {
-    optional AgentID agent_id = 1 [(gogoproto.customname) = "AgentID"];
+    optional SlaveID slave_id = 1;
 
-    // If this was just a failure of an executor on an agent then
+    // If this was just a failure of an executor on a slave then
     // 'executor_id' will be set and possibly 'status' (if we were
     // able to determine the exit status).
-    optional ExecutorID executor_id = 2 [(gogoproto.customname) = "ExecutorID"];
+    optional ExecutorID executor_id = 2;
     optional int32 status = 3;
   }
 
@@ -146,16 +167,19 @@ message Event {
   // scheduler failed over, rate limiting, authorization errors etc.). The
   // scheduler should abort on receiving this event.
   message Error {
-    required string message = 1 [(gogoproto.nullable) = false];
+    required string message = 1;
   }
 
   // Type of the event, indicates which optional field below should be
   // present if that type has a nested message definition.
-  required Type type = 1;
+  // Enum fields should be optional, see: MESOS-4997.
+  optional Type type = 1;
 
   optional Subscribed subscribed = 2;
   optional Offers offers = 3;
+  optional InverseOffers inverse_offers = 9;
   optional Rescind rescind = 4;
+  optional RescindInverseOffer rescind_inverse_offer = 10;
   optional Update update = 5;
   optional Message message = 6;
   optional Failure failure = 7;
@@ -173,10 +197,15 @@ message Call {
   // Possible call types, followed by message definitions if
   // applicable.
   enum Type {
+    // See comments above on `Event::Type` for more details on this enum value.
+    UNKNOWN = 0;
+
     SUBSCRIBE = 1;   // See 'Subscribe' below.
     TEARDOWN = 2;    // Shuts down all tasks/executors and removes framework.
     ACCEPT = 3;      // See 'Accept' below.
     DECLINE = 4;     // See 'Decline' below.
+    ACCEPT_INVERSE_OFFERS = 13;  // See 'AcceptInverseOffers' below.
+    DECLINE_INVERSE_OFFERS = 14; // See 'DeclineInverseOffers' below.
     REVIVE = 5;      // Removes any previous filters set via ACCEPT or DECLINE.
     KILL = 6;        // See 'Kill' below.
     SHUTDOWN = 7;    // See 'Shutdown' below.
@@ -184,7 +213,7 @@ message Call {
     RECONCILE = 9;   // See 'Reconcile' below.
     MESSAGE = 10;    // See 'Message' below.
     REQUEST = 11;    // See 'Request' below.
-    SUPPRESS = 12;    // Inform master to stop sending offers to the framework.
+    SUPPRESS = 12;   // Inform master to stop sending offers to the framework.
 
     // TODO(benh): Consider adding an 'ACTIVATE' and 'DEACTIVATE' for
     // already subscribed frameworks as a way of stopping offers from
@@ -193,7 +222,6 @@ message Call {
     // SchedulerDriver::abort which was only necessary to handle
     // exceptions getting thrown from within Scheduler callbacks,
     // something that is not an issue with the Event/Call API.
-    option (gogoproto.goproto_enum_prefix) = true;
   }
 
   // Subscribes the scheduler with the master to receive events. A
@@ -211,7 +239,7 @@ message Call {
     // blip) will have 'force' set to false. This is important because master
     // uses this field to know when it needs to send FrameworkRegisteredMessage
     // vs FrameworkReregisteredMessage.
-    optional bool force = 2 [(gogoproto.nullable) = false];
+    optional bool force = 2;
   }
 
   // Accepts an offer, performing the specified operations
@@ -237,8 +265,8 @@ message Call {
   // cannot be used in more than one `Accept` call.
   // NOTE: All offers must belong to the same agent.
   message Accept {
-    repeated OfferID offer_ids = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "OfferIDs"];
-    repeated Offer.Operation operations = 2 [(gogoproto.nullable) = false];
+    repeated OfferID offer_ids = 1;
+    repeated Offer.Operation operations = 2;
     optional Filters filters = 3;
   }
 
@@ -247,7 +275,23 @@ message Call {
   // as sending an Accept call with no operations. See comments on
   // top of 'Accept' for semantics.
   message Decline {
-    repeated OfferID offer_ids = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "OfferIDs"];
+    repeated OfferID offer_ids = 1;
+    optional Filters filters = 2;
+  }
+
+  // Accepts an inverse offer. Inverse offers should only be accepted
+  // if the resources in the offer can be safely evacuated before the
+  // provided unavailability.
+  message AcceptInverseOffers {
+    repeated OfferID inverse_offer_ids = 1;
+    optional Filters filters = 2;
+  }
+
+  // Declines an inverse offer. Inverse offers should be declined if
+  // the resources in the offer might not be safely evacuated before
+  // the provided unavailability.
+  message DeclineInverseOffers {
+    repeated OfferID inverse_offer_ids = 1;
     optional Filters filters = 2;
   }
 
@@ -255,35 +299,40 @@ message Call {
   // the kill is forwarded to the executor and it is up to the
   // executor to kill the task and send a TASK_KILLED (or TASK_FAILED)
   // update. Note that Mesos releases the resources for a task once it
-  // receives a terminal update (See TaskState in v1/mesos.proto) for it.
+  // receives a terminal update (See TaskState in mesos.proto) for it.
   // If the task is unknown to the master, a TASK_LOST update is
   // generated.
   message Kill {
-    required TaskID task_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "TaskID"];
-    optional AgentID agent_id = 2 [(gogoproto.customname) = "AgentID"];
+    required TaskID task_id = 1;
+    optional SlaveID slave_id = 2;
+
+    // If set, overrides any previously specified kill policy for this task.
+    // This includes 'TaskInfo.kill_policy' and 'Executor.kill.kill_policy'.
+    // Can be used to forcefully kill a task which is already being killed.
+    optional KillPolicy kill_policy = 3;
   }
 
   // Shuts down a custom executor. When the executor gets a shutdown
   // event, it is expected to kill all its tasks (and send TASK_KILLED
   // updates) and terminate. If the executor doesn’t terminate within
   // a certain timeout (configurable via
-  // '--executor_shutdown_grace_period' agent flag), the agent will
+  // '--executor_shutdown_grace_period' slave flag), the slave will
   // forcefully destroy the container (executor and its tasks) and
   // transition its active tasks to TASK_LOST.
   message Shutdown {
-    required ExecutorID executor_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ExecutorID"];
-    required AgentID agent_id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
+    required ExecutorID executor_id = 1;
+    required SlaveID slave_id = 2;
   }
 
   // Acknowledges the receipt of status update. Schedulers are
   // responsible for explicitly acknowledging the receipt of status
   // updates that have 'Update.status().uuid()' field set. Such status
-  // updates are retried by the agent until they are acknowledged by
+  // updates are retried by the slave until they are acknowledged by
   // the scheduler.
   message Acknowledge {
-    required AgentID agent_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
-    required TaskID task_id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "TaskID"];
-    required bytes uuid = 3 [(gogoproto.customname) = "UUID"];
+    required SlaveID slave_id = 1;
+    required TaskID task_id = 2;
+    required bytes uuid = 3;
   }
 
   // Allows the scheduler to query the status for non-terminal tasks.
@@ -295,19 +344,19 @@ message Call {
   message Reconcile {
    // TODO(vinod): Support arbitrary queries than just state of tasks.
     message Task {
-      required TaskID task_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "TaskID"];
-      optional AgentID agent_id = 2 [(gogoproto.customname) = "AgentID"];
+      required TaskID task_id = 1;
+      optional SlaveID slave_id = 2;
     }
 
-    repeated Task tasks = 1 [(gogoproto.nullable) = false];
+    repeated Task tasks = 1;
   }
 
   // Sends arbitrary binary data to the executor. Note that Mesos
   // neither interprets this data nor makes any guarantees about the
   // delivery of this message to the executor.
   message Message {
-    required AgentID agent_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
-    required ExecutorID executor_id = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "ExecutorID"];
+    required SlaveID slave_id = 1;
+    required ExecutorID executor_id = 2;
     required bytes data = 3;
   }
 
@@ -318,7 +367,7 @@ message Call {
   // NOTE: The built-in hierarchical allocator doesn't have support
   // for this call and hence simply ignores it.
   message Request {
-    repeated mesos.Request requests = 1 [(gogoproto.nullable) = false];
+    repeated mesos.Request requests = 1;
   }
 
   // Identifies who generated this call. Master assigns a framework id
@@ -327,15 +376,18 @@ message Call {
   // FrameworkInfo (in any further 'Subscribe' calls). This allows the
   // master to identify a scheduler correctly across disconnections,
   // failovers, etc.
-  optional FrameworkID framework_id = 1 [(gogoproto.customname) = "FrameworkID"];
+  optional FrameworkID framework_id = 1;
 
   // Type of the call, indicates which optional field below should be
   // present if that type has a nested message definition.
-  required Type type = 2;
+  // See comments on `Event::Type` above on the reasoning behind this field being optional.
+  optional Type type = 2;
 
   optional Subscribe subscribe = 3;
   optional Accept accept = 4;
   optional Decline decline = 5;
+  optional AcceptInverseOffers accept_inverse_offers = 13;
+  optional DeclineInverseOffers decline_inverse_offers = 14;
   optional Kill kill = 6;
   optional Shutdown shutdown = 7;
   optional Acknowledge acknowledge = 8;

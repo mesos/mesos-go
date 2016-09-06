@@ -9,6 +9,7 @@ import (
 )
 
 type (
+	// Type name "Role" is onflict with mesos.Role in mesos proto. So I change this to RoleName as "mesos.Role.Name".
 	RoleName          string
 	Resources         []Resource
 	ResourceFilter    func(*Resource) bool

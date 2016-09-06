@@ -23,7 +23,7 @@ import fmt "fmt"
 import go_parser "go/parser"
 import proto "github.com/gogo/protobuf/proto"
 import math "math"
-import _ "github.com/athlum/mesos-go"
+import _ "github.com/mesos/mesos-go"
 import _ "github.com/gogo/protobuf/gogoproto"
 
 // Reference imports to suppress errors if they are not otherwise used.

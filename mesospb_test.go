@@ -2726,8 +2726,7 @@ func BenchmarkValue_RangeProtoUnmarshal(b *testing.B) {
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		p := NewPopulatedValue_Range(popr, false)
-		data, err := github_com_gogo_protobuf_proto.Marshal(p)
+		data, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedValue_Range(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -3237,8 +3236,7 @@ func BenchmarkResourceProtoUnmarshal(b *testing.B) {
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		p :=NewPopulatedResource(popr, false)
-		data, err := github_com_gogo_protobuf_proto.Marshal(p)
+		data, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedResource(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -16875,7 +16873,6 @@ func TestExecutorInfoGoString(t *testing.T) {
 	}
 	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		fmt.Println(s1)
 		panic(err)
 	}
 }

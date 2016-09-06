@@ -9,7 +9,8 @@ import (
 )
 
 type (
-	Role              string
+	// Type name "Role" is onflict with mesos.Role in mesos proto. So I change this to RoleName as "mesos.Role.Name".
+	RoleName          string
 	Resources         []Resource
 	ResourceFilter    func(*Resource) bool
 	ResourceFilters   []ResourceFilter
@@ -31,7 +32,7 @@ type (
 )
 
 const (
-	RoleDefault = Role("*")
+	RoleDefault = RoleName("*")
 
 	ResourceErrorTypeIllegalName ResourceErrorType = iota
 	ResourceErrorTypeIllegalType
@@ -103,17 +104,17 @@ func (err *ResourceError) Error() string {
 	return "resource error"
 }
 
-func (r Role) IsDefault() bool {
+func (r RoleName) IsDefault() bool {
 	return r == RoleDefault
 }
 
-func (r Role) Assign() FlattenOpt {
+func (r RoleName) Assign() FlattenOpt {
 	return func(fc *FlattenConfig) {
 		fc.Role = string(r)
 	}
 }
 
-func (r Role) Proto() *string {
+func (r RoleName) Proto() *string {
 	s := string(r)
 	return &s
 }
@@ -304,7 +305,7 @@ func (resources Resources) find(target Resource) Resources {
 			if flattened.ContainsAll(remaining) {
 				// target has been found, return the result
 				return found.Add(remaining.Flatten(
-					Role(filtered[i].GetRole()).Assign(),
+					RoleName(filtered[i].GetRole()).Assign(),
 					filtered[i].Reservation.Assign())...)
 			}
 			if remaining.ContainsAll(flattened) {

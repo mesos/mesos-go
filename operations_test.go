@@ -3,7 +3,7 @@ package mesos_test
 import (
 	"testing"
 
-	"github.com/athlum/mesos-go"
+	"github.com/mesos/mesos-go"
 )
 
 func TestOpCreate(t *testing.T) {

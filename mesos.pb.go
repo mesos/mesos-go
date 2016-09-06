@@ -854,7 +854,7 @@ func (DiscoveryInfo_Visibility) EnumDescriptor() ([]byte, []int) {
 // A unique ID assigned to a framework. A framework can reuse this ID
 // in order to do failover (see MesosSchedulerDriver).
 type FrameworkID struct {
-	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
+	Value string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *FrameworkID) Reset()                    { *m = FrameworkID{} }
@@ -862,8 +862,8 @@ func (*FrameworkID) ProtoMessage()               {}
 func (*FrameworkID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{0} }
 
 func (m *FrameworkID) GetValue() string {
-	if m != nil && m.Value != nil {
-		return *m.Value
+	if m != nil {
+		return m.Value
 	}
 	return ""
 }
@@ -871,7 +871,7 @@ func (m *FrameworkID) GetValue() string {
 // *
 // A unique ID assigned to an offer.
 type OfferID struct {
-	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
+	Value string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *OfferID) Reset()                    { *m = OfferID{} }
@@ -879,8 +879,8 @@ func (*OfferID) ProtoMessage()               {}
 func (*OfferID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{1} }
 
 func (m *OfferID) GetValue() string {
-	if m != nil && m.Value != nil {
-		return *m.Value
+	if m != nil {
+		return m.Value
 	}
 	return ""
 }
@@ -890,7 +890,7 @@ func (m *OfferID) GetValue() string {
 // whenever it (re)registers with Mesos. Framework writers shouldn't
 // assume any binding between a slave ID and and a hostname.
 type SlaveID struct {
-	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
+	Value string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *SlaveID) Reset()                    { *m = SlaveID{} }
@@ -898,8 +898,8 @@ func (*SlaveID) ProtoMessage()               {}
 func (*SlaveID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{2} }
 
 func (m *SlaveID) GetValue() string {
-	if m != nil && m.Value != nil {
-		return *m.Value
+	if m != nil {
+		return m.Value
 	}
 	return ""
 }
@@ -911,7 +911,7 @@ func (m *SlaveID) GetValue() string {
 // (e.g., TASK_FINISHED, TASK_LOST, TASK_KILLED, etc.). However,
 // reusing task IDs is strongly discouraged (MESOS-2198).
 type TaskID struct {
-	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
+	Value string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *TaskID) Reset()                    { *m = TaskID{} }
@@ -919,8 +919,8 @@ func (*TaskID) ProtoMessage()               {}
 func (*TaskID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{3} }
 
 func (m *TaskID) GetValue() string {
-	if m != nil && m.Value != nil {
-		return *m.Value
+	if m != nil {
+		return m.Value
 	}
 	return ""
 }
@@ -930,7 +930,7 @@ func (m *TaskID) GetValue() string {
 // executor with the same ID can be active on the same slave at a
 // time. However, reusing executor IDs is discouraged.
 type ExecutorID struct {
-	Value *string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
+	Value string `protobuf:"bytes,1,req,name=value" json:"value,omitempty"`
 }
 
 func (m *ExecutorID) Reset()                    { *m = ExecutorID{} }
@@ -938,8 +938,8 @@ func (*ExecutorID) ProtoMessage()               {}
 func (*ExecutorID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{4} }
 
 func (m *ExecutorID) GetValue() string {
-	if m != nil && m.Value != nil {
-		return *m.Value
+	if m != nil {
+		return m.Value
 	}
 	return ""
 }
@@ -1145,7 +1145,7 @@ func (m *MachineID) GetIp() string {
 // Holds information about a single machine, its `mode`, and any other
 // relevant information which may affect the behavior of the machine.
 type MachineInfo struct {
-	Id   *MachineID        `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	ID   *MachineID        `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
 	Mode *MachineInfo_Mode `protobuf:"varint,2,opt,name=mode,enum=mesos.MachineInfo_Mode" json:"mode,omitempty"`
 	// Signifies that the machine may be unavailable during the given interval.
 	// See comments in `Unavailability` and for the `unavailability` fields
@@ -1157,9 +1157,9 @@ func (m *MachineInfo) Reset()                    { *m = MachineInfo{} }
 func (*MachineInfo) ProtoMessage()               {}
 func (*MachineInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{12} }
 
-func (m *MachineInfo) GetId() *MachineID {
+func (m *MachineInfo) GetID() *MachineID {
 	if m != nil {
-		return m.Id
+		return m.ID
 	}
 	return nil
 }
@@ -1184,15 +1184,15 @@ type FrameworkInfo struct {
 	// Used to determine the Unix user that an executor or task should
 	// be launched as. If the user field is set to an empty string Mesos
 	// will automagically set it to the current user.
-	User *string `protobuf:"bytes,1,req,name=user" json:"user,omitempty"`
+	User string `protobuf:"bytes,1,req,name=user" json:"user,omitempty"`
 	// Name of the framework that shows up in the Mesos Web UI.
-	Name *string `protobuf:"bytes,2,req,name=name" json:"name,omitempty"`
+	Name string `protobuf:"bytes,2,req,name=name" json:"name,omitempty"`
 	// Note that 'id' is only available after a framework has
 	// registered, however, it is included here in order to facilitate
 	// scheduler failover (i.e., if it is set then the
 	// MesosSchedulerDriver expects the scheduler is performing
 	// failover).
-	Id *FrameworkID `protobuf:"bytes,3,opt,name=id" json:"id,omitempty"`
+	ID *FrameworkID `protobuf:"bytes,3,opt,name=id" json:"id,omitempty"`
 	// The amount of time (in seconds) that the master will wait for the
 	// scheduler to failover before it tears down the framework by
 	// killing all its tasks/executors. This should be non-zero if a
@@ -1244,22 +1244,22 @@ const Default_FrameworkInfo_Checkpoint bool = false
 const Default_FrameworkInfo_Role string = "*"
 
 func (m *FrameworkInfo) GetUser() string {
-	if m != nil && m.User != nil {
-		return *m.User
+	if m != nil {
+		return m.User
 	}
 	return ""
 }
 
 func (m *FrameworkInfo) GetName() string {
-	if m != nil && m.Name != nil {
-		return *m.Name
+	if m != nil {
+		return m.Name
 	}
 	return ""
 }
 
-func (m *FrameworkInfo) GetId() *FrameworkID {
+func (m *FrameworkInfo) GetID() *FrameworkID {
 	if m != nil {
-		return m.Id
+		return m.ID
 	}
 	return nil
 }
@@ -1651,9 +1651,9 @@ func (m *CommandInfo_URI) GetOutputFile() string {
 // Describes information about an executor. The 'data' field can be
 // used to pass arbitrary bytes to an executor.
 type ExecutorInfo struct {
-	ExecutorId  *ExecutorID  `protobuf:"bytes,1,req,name=executor_id" json:"executor_id,omitempty"`
-	FrameworkId *FrameworkID `protobuf:"bytes,8,opt,name=framework_id" json:"framework_id,omitempty"`
-	Command     *CommandInfo `protobuf:"bytes,7,req,name=command" json:"command,omitempty"`
+	ExecutorID  ExecutorID  `protobuf:"bytes,1,req,name=executor_id" json:"executor_id,omitempty"`
+	FrameworkID *FrameworkID `protobuf:"bytes,8,opt,name=framework_id" json:"framework_id,omitempty"`
+	Command     CommandInfo `protobuf:"bytes,7,req,name=command" json:"command,omitempty"`
 	// Executor provided with a container will launch the container
 	// with the executor's CommandInfo and we expect the container to
 	// act as a Mesos executor.
@@ -1697,25 +1697,25 @@ func (m *ExecutorInfo) Reset()                    { *m = ExecutorInfo{} }
 func (*ExecutorInfo) ProtoMessage()               {}
 func (*ExecutorInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{17} }
 
-func (m *ExecutorInfo) GetExecutorId() *ExecutorID {
+func (m *ExecutorInfo) GetExecutorID() ExecutorID {
 	if m != nil {
-		return m.ExecutorId
+		return m.ExecutorID
+	}
+	return ExecutorID{}
+}
+
+func (m *ExecutorInfo) GetFrameworkID() *FrameworkID {
+	if m != nil {
+		return m.FrameworkID
 	}
 	return nil
 }
 
-func (m *ExecutorInfo) GetFrameworkId() *FrameworkID {
-	if m != nil {
-		return m.FrameworkId
-	}
-	return nil
-}
-
-func (m *ExecutorInfo) GetCommand() *CommandInfo {
+func (m *ExecutorInfo) GetCommand() CommandInfo {
 	if m != nil {
 		return m.Command
 	}
-	return nil
+	return CommandInfo{}
 }
 
 func (m *ExecutorInfo) GetContainer() *ContainerInfo {
@@ -1779,10 +1779,10 @@ func (m *ExecutorInfo) GetLabels() *Labels {
 // future which might be used, for example, to link a framework webui
 // to a master webui.
 type MasterInfo struct {
-	Id *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	ID string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
 	// The IP address (only IPv4) as a packed 4-bytes integer,
 	// stored in network order.  Deprecated, use `address.ip` instead.
-	Ip *uint32 `protobuf:"varint,2,req,name=ip" json:"ip,omitempty"`
+	IP uint32 `protobuf:"varint,2,req,name=ip" json:"ip,omitempty"`
 	// The TCP port the Master is listening on for incoming
 	// HTTP requests; deprecated, use `address.port` instead.
 	Port *uint32 `protobuf:"varint,3,req,name=port,def=5050" json:"port,omitempty"`
@@ -1811,16 +1811,16 @@ func (*MasterInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []
 
 const Default_MasterInfo_Port uint32 = 5050
 
-func (m *MasterInfo) GetId() string {
-	if m != nil && m.Id != nil {
-		return *m.Id
+func (m *MasterInfo) GetID() string {
+	if m != nil {
+		return m.ID
 	}
 	return ""
 }
 
-func (m *MasterInfo) GetIp() uint32 {
-	if m != nil && m.Ip != nil {
-		return *m.Ip
+func (m *MasterInfo) GetIP() uint32 {
+	if m != nil {
+		return m.IP
 	}
 	return 0
 }
@@ -1869,7 +1869,7 @@ type SlaveInfo struct {
 	Port       *int32       `protobuf:"varint,8,opt,name=port,def=5051" json:"port,omitempty"`
 	Resources  []Resource  `protobuf:"bytes,3,rep,name=resources" json:"resources,omitempty"`
 	Attributes []*Attribute `protobuf:"bytes,5,rep,name=attributes" json:"attributes,omitempty"`
-	Id         *SlaveID     `protobuf:"bytes,6,opt,name=id" json:"id,omitempty"`
+	ID         *SlaveID     `protobuf:"bytes,6,opt,name=id" json:"id,omitempty"`
 	// Slave checkpointing is always enabled in recent Mesos versions;
 	// the value of this field is ignored.
 	// TODO(joerg84): Remove checkpoint field after deprecation cycle starting
@@ -1912,9 +1912,9 @@ func (m *SlaveInfo) GetAttributes() []*Attribute {
 	return nil
 }
 
-func (m *SlaveInfo) GetId() *SlaveID {
+func (m *SlaveInfo) GetID() *SlaveID {
 	if m != nil {
-		return m.Id
+		return m.ID
 	}
 	return nil
 }
@@ -2461,7 +2461,7 @@ func (*Resource_RevocableInfo) Descriptor() ([]byte, []int) { return fileDescrip
 // More information on the operation of Linux Traffic Control can be
 // found at http://www.lartc.org/lartc.html.
 type TrafficControlStatistics struct {
-	Id         *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	ID         *string `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
 	Backlog    *uint64 `protobuf:"varint,2,opt,name=backlog" json:"backlog,omitempty"`
 	Bytes      *uint64 `protobuf:"varint,3,opt,name=bytes" json:"bytes,omitempty"`
 	Drops      *uint64 `protobuf:"varint,4,opt,name=drops" json:"drops,omitempty"`
@@ -2477,9 +2477,9 @@ func (m *TrafficControlStatistics) Reset()                    { *m = TrafficCont
 func (*TrafficControlStatistics) ProtoMessage()               {}
 func (*TrafficControlStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{23} }
 
-func (m *TrafficControlStatistics) GetId() string {
-	if m != nil && m.Id != nil {
-		return *m.Id
+func (m *TrafficControlStatistics) GetID() string {
+	if m != nil && m.ID != nil {
+		return *m.ID
 	}
 	return ""
 }
@@ -3580,7 +3580,7 @@ type ResourceUsage_Executor struct {
 	// cannot provide resource usage.
 	Statistics *ResourceStatistics `protobuf:"bytes,3,opt,name=statistics" json:"statistics,omitempty"`
 	// The container id for the executor specified in the executor_info field.
-	ContainerId *ContainerID `protobuf:"bytes,4,req,name=container_id" json:"container_id,omitempty"`
+	ContainerID *ContainerID `protobuf:"bytes,4,req,name=container_id" json:"container_id,omitempty"`
 	// Non-terminal tasks.
 	Tasks []*ResourceUsage_Executor_Task `protobuf:"bytes,5,rep,name=tasks" json:"tasks,omitempty"`
 }
@@ -3610,9 +3610,9 @@ func (m *ResourceUsage_Executor) GetStatistics() *ResourceStatistics {
 	return nil
 }
 
-func (m *ResourceUsage_Executor) GetContainerId() *ContainerID {
+func (m *ResourceUsage_Executor) GetContainerID() *ContainerID {
 	if m != nil {
-		return m.ContainerId
+		return m.ContainerID
 	}
 	return nil
 }
@@ -3626,7 +3626,7 @@ func (m *ResourceUsage_Executor) GetTasks() []*ResourceUsage_Executor_Task {
 
 type ResourceUsage_Executor_Task struct {
 	Name      *string     `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
-	Id        *TaskID     `protobuf:"bytes,2,req,name=id" json:"id,omitempty"`
+	ID        *TaskID     `protobuf:"bytes,2,req,name=id" json:"id,omitempty"`
 	Resources []Resource `protobuf:"bytes,3,rep,name=resources" json:"resources,omitempty"`
 	Labels    *Labels     `protobuf:"bytes,4,opt,name=labels" json:"labels,omitempty"`
 }
@@ -3644,9 +3644,9 @@ func (m *ResourceUsage_Executor_Task) GetName() string {
 	return ""
 }
 
-func (m *ResourceUsage_Executor_Task) GetId() *TaskID {
+func (m *ResourceUsage_Executor_Task) GetID() *TaskID {
 	if m != nil {
-		return m.Id
+		return m.ID
 	}
 	return nil
 }
@@ -4116,7 +4116,7 @@ func (m *PerfStatistics) GetNodePrefetchMisses() uint64 {
 // then this request is assumed to only apply to resources on that
 // slave.
 type Request struct {
-	SlaveId   *SlaveID    `protobuf:"bytes,1,opt,name=slave_id" json:"slave_id,omitempty"`
+	SlaveID   *SlaveID    `protobuf:"bytes,1,opt,name=slave_id" json:"slave_id,omitempty"`
 	Resources []Resource `protobuf:"bytes,2,rep,name=resources" json:"resources,omitempty"`
 }
 
@@ -4124,9 +4124,9 @@ func (m *Request) Reset()                    { *m = Request{} }
 func (*Request) ProtoMessage()               {}
 func (*Request) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{32} }
 
-func (m *Request) GetSlaveId() *SlaveID {
+func (m *Request) GetSlaveID() *SlaveID {
 	if m != nil {
-		return m.SlaveId
+		return m.SlaveID
 	}
 	return nil
 }
@@ -4142,15 +4142,15 @@ func (m *Request) GetResources() []Resource {
 // Describes some resources available on a slave. An offer only
 // contains resources from a single slave.
 type Offer struct {
-	Id          *OfferID     `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
-	FrameworkId *FrameworkID `protobuf:"bytes,2,req,name=framework_id" json:"framework_id,omitempty"`
-	SlaveId     *SlaveID     `protobuf:"bytes,3,req,name=slave_id" json:"slave_id,omitempty"`
-	Hostname    *string      `protobuf:"bytes,4,req,name=hostname" json:"hostname,omitempty"`
+	ID          OfferID     `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	FrameworkID FrameworkID `protobuf:"bytes,2,req,name=framework_id" json:"framework_id,omitempty"`
+	SlaveID     SlaveID     `protobuf:"bytes,3,req,name=slave_id" json:"slave_id,omitempty"`
+	Hostname    string      `protobuf:"bytes,4,req,name=hostname" json:"hostname,omitempty"`
 	// URL for reaching the slave running on the host.
 	Url         *URL          `protobuf:"bytes,8,opt,name=url" json:"url,omitempty"`
 	Resources   []Resource   `protobuf:"bytes,5,rep,name=resources" json:"resources,omitempty"`
-	Attributes  []*Attribute  `protobuf:"bytes,7,rep,name=attributes" json:"attributes,omitempty"`
-	ExecutorIds []*ExecutorID `protobuf:"bytes,6,rep,name=executor_ids" json:"executor_ids,omitempty"`
+	Attributes  []Attribute  `protobuf:"bytes,7,rep,name=attributes" json:"attributes,omitempty"`
+	ExecutorIDs []ExecutorID `protobuf:"bytes,6,rep,name=executor_ids" json:"executor_ids,omitempty"`
 	// Signifies that the resources in this Offer may be unavailable during
 	// the given interval.  Any tasks launched using these resources may be
 	// killed when the interval arrives.  For example, these resources may be
@@ -4168,30 +4168,30 @@ func (m *Offer) Reset()                    { *m = Offer{} }
 func (*Offer) ProtoMessage()               {}
 func (*Offer) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{33} }
 
-func (m *Offer) GetId() *OfferID {
+func (m *Offer) GetID() OfferID {
 	if m != nil {
-		return m.Id
+		return m.ID
 	}
-	return nil
+	return OfferID{}
 }
 
-func (m *Offer) GetFrameworkId() *FrameworkID {
+func (m *Offer) GetFrameworkID() FrameworkID {
 	if m != nil {
-		return m.FrameworkId
+		return m.FrameworkID
 	}
-	return nil
+	return FrameworkID{}
 }
 
-func (m *Offer) GetSlaveId() *SlaveID {
+func (m *Offer) GetSlaveID() SlaveID {
 	if m != nil {
-		return m.SlaveId
+		return m.SlaveID
 	}
-	return nil
+	return SlaveID{}
 }
 
 func (m *Offer) GetHostname() string {
-	if m != nil && m.Hostname != nil {
-		return *m.Hostname
+	if m != nil {
+		return m.Hostname
 	}
 	return ""
 }
@@ -4210,16 +4210,16 @@ func (m *Offer) GetResources() []Resource {
 	return nil
 }
 
-func (m *Offer) GetAttributes() []*Attribute {
+func (m *Offer) GetAttributes() []Attribute {
 	if m != nil {
 		return m.Attributes
 	}
 	return nil
 }
 
-func (m *Offer) GetExecutorIds() []*ExecutorID {
+func (m *Offer) GetExecutorIDs() []ExecutorID {
 	if m != nil {
-		return m.ExecutorIds
+		return m.ExecutorIDs
 	}
 	return nil
 }
@@ -4377,7 +4377,7 @@ func (m *Offer_Operation_Destroy) GetVolumes() []Resource {
 type InverseOffer struct {
 	// This is the same OfferID as found in normal offers, which allows
 	// re-use of some of the OfferID-only messages.
-	Id *OfferID `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
+	ID OfferID `protobuf:"bytes,1,req,name=id" json:"id,omitempty"`
 	// URL for reaching the slave running on the host.  This enables some
 	// optimizations as described in MESOS-3012, such as allowing the
 	// scheduler driver to bypass the master and talk directly with a slave.
@@ -4385,11 +4385,11 @@ type InverseOffer struct {
 	// The framework that should release its resources.
 	// If no specifics are provided (i.e. which slave), all the framework's
 	// resources are requested back.
-	FrameworkId *FrameworkID `protobuf:"bytes,3,req,name=framework_id" json:"framework_id,omitempty"`
+	FrameworkID FrameworkID `protobuf:"bytes,3,req,name=framework_id" json:"framework_id,omitempty"`
 	// Specified if the resources need to be released from a particular slave.
 	// All the framework's resources on this slave are requested back,
 	// unless further qualified by the `resources` field.
-	SlaveId *SlaveID `protobuf:"bytes,4,opt,name=slave_id" json:"slave_id,omitempty"`
+	SlaveID SlaveID `protobuf:"bytes,4,opt,name=slave_id" json:"slave_id,omitempty"`
 	// This InverseOffer represents a planned unavailability event in the
 	// specified interval.  Any tasks running on the given framework or slave
 	// may be killed when the interval arrives.  Therefore, frameworks should
@@ -4417,11 +4417,11 @@ func (m *InverseOffer) Reset()                    { *m = InverseOffer{} }
 func (*InverseOffer) ProtoMessage()               {}
 func (*InverseOffer) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{34} }
 
-func (m *InverseOffer) GetId() *OfferID {
+func (m *InverseOffer) GetID() OfferID {
 	if m != nil {
-		return m.Id
+		return m.ID
 	}
-	return nil
+	return OfferID{}
 }
 
 func (m *InverseOffer) GetUrl() *URL {
@@ -4431,18 +4431,18 @@ func (m *InverseOffer) GetUrl() *URL {
 	return nil
 }
 
-func (m *InverseOffer) GetFrameworkId() *FrameworkID {
+func (m *InverseOffer) GetFrameworkID() FrameworkID {
 	if m != nil {
-		return m.FrameworkId
+		return m.FrameworkID
 	}
-	return nil
+	return FrameworkID{}
 }
 
-func (m *InverseOffer) GetSlaveId() *SlaveID {
+func (m *InverseOffer) GetSlaveID() SlaveID {
 	if m != nil {
-		return m.SlaveId
+		return m.SlaveID
 	}
-	return nil
+	return SlaveID{}
 }
 
 func (m *InverseOffer) GetUnavailability() *Unavailability {
@@ -4466,9 +4466,9 @@ func (m *InverseOffer) GetResources() []Resource {
 // A different executor can be used to launch this task, and subsequent tasks
 // meant for the same executor can reuse the same ExecutorInfo struct.
 type TaskInfo struct {
-	Name      *string       `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
-	TaskId    *TaskID       `protobuf:"bytes,2,req,name=task_id" json:"task_id,omitempty"`
-	SlaveId   *SlaveID      `protobuf:"bytes,3,req,name=slave_id" json:"slave_id,omitempty"`
+	Name      string       `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
+	TaskID    TaskID       `protobuf:"bytes,2,req,name=task_id" json:"task_id,omitempty"`
+	SlaveID   SlaveID      `protobuf:"bytes,3,req,name=slave_id" json:"slave_id,omitempty"`
 	Resources []Resource   `protobuf:"bytes,4,rep,name=resources" json:"resources,omitempty"`
 	Executor  *ExecutorInfo `protobuf:"bytes,5,opt,name=executor" json:"executor,omitempty"`
 	Command   *CommandInfo  `protobuf:"bytes,7,opt,name=command" json:"command,omitempty"`
@@ -4504,24 +4504,24 @@ func (*TaskInfo) ProtoMessage()               {}
 func (*TaskInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{35} }
 
 func (m *TaskInfo) GetName() string {
-	if m != nil && m.Name != nil {
-		return *m.Name
+	if m != nil {
+		return m.Name
 	}
 	return ""
 }
 
-func (m *TaskInfo) GetTaskId() *TaskID {
+func (m *TaskInfo) GetTaskID() TaskID {
 	if m != nil {
-		return m.TaskId
+		return m.TaskID
 	}
-	return nil
+	return TaskID{}
 }
 
-func (m *TaskInfo) GetSlaveId() *SlaveID {
+func (m *TaskInfo) GetSlaveID() SlaveID {
 	if m != nil {
-		return m.SlaveId
+		return m.SlaveID
 	}
-	return nil
+	return SlaveID{}
 }
 
 func (m *TaskInfo) GetResources() []Resource {
@@ -4600,11 +4600,11 @@ func (m *TaskInfo) GetDiscovery() *DiscoveryInfo {
 //
 // `Task` is generally constructed from a `TaskInfo`.  See protobuf::createTask.
 type Task struct {
-	Name        *string       `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
-	TaskId      *TaskID       `protobuf:"bytes,2,req,name=task_id" json:"task_id,omitempty"`
-	FrameworkId *FrameworkID  `protobuf:"bytes,3,req,name=framework_id" json:"framework_id,omitempty"`
-	ExecutorId  *ExecutorID   `protobuf:"bytes,4,opt,name=executor_id" json:"executor_id,omitempty"`
-	SlaveId     *SlaveID      `protobuf:"bytes,5,req,name=slave_id" json:"slave_id,omitempty"`
+	Name        string       `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
+	TaskID      TaskID       `protobuf:"bytes,2,req,name=task_id" json:"task_id,omitempty"`
+	FrameworkID *FrameworkID  `protobuf:"bytes,3,req,name=framework_id" json:"framework_id,omitempty"`
+	ExecutorID  *ExecutorID   `protobuf:"bytes,4,opt,name=executor_id" json:"executor_id,omitempty"`
+	SlaveID     SlaveID      `protobuf:"bytes,5,req,name=slave_id" json:"slave_id,omitempty"`
 	State       *TaskState    `protobuf:"varint,6,req,name=state,enum=mesos.TaskState" json:"state,omitempty"`
 	Resources   []Resource   `protobuf:"bytes,7,rep,name=resources" json:"resources,omitempty"`
 	Statuses    []*TaskStatus `protobuf:"bytes,8,rep,name=statuses" json:"statuses,omitempty"`
@@ -4630,38 +4630,38 @@ func (*Task) ProtoMessage()               {}
 func (*Task) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{36} }
 
 func (m *Task) GetName() string {
-	if m != nil && m.Name != nil {
-		return *m.Name
+	if m != nil {
+		return m.Name
 	}
 	return ""
 }
 
-func (m *Task) GetTaskId() *TaskID {
+func (m *Task) GetTaskID() TaskID {
 	if m != nil {
-		return m.TaskId
+		return m.TaskID
+	}
+	return TaskID{}
+}
+
+func (m *Task) GetFrameworkID() *FrameworkID {
+	if m != nil {
+		return m.FrameworkID
 	}
 	return nil
 }
 
-func (m *Task) GetFrameworkId() *FrameworkID {
+func (m *Task) GetExecutorID() *ExecutorID {
 	if m != nil {
-		return m.FrameworkId
+		return m.ExecutorID
 	}
 	return nil
 }
 
-func (m *Task) GetExecutorId() *ExecutorID {
+func (m *Task) GetSlaveID() SlaveID {
 	if m != nil {
-		return m.ExecutorId
+		return m.SlaveID
 	}
-	return nil
-}
-
-func (m *Task) GetSlaveId() *SlaveID {
-	if m != nil {
-		return m.SlaveId
-	}
-	return nil
+	return SlaveID{}
 }
 
 func (m *Task) GetState() TaskState {
@@ -4730,14 +4730,14 @@ func (m *Task) GetUser() string {
 // *
 // Describes the current status of a task.
 type TaskStatus struct {
-	TaskId     *TaskID            `protobuf:"bytes,1,req,name=task_id" json:"task_id,omitempty"`
+	TaskID     TaskID            `protobuf:"bytes,1,req,name=task_id" json:"task_id,omitempty"`
 	State      *TaskState         `protobuf:"varint,2,req,name=state,enum=mesos.TaskState" json:"state,omitempty"`
 	Message    *string            `protobuf:"bytes,4,opt,name=message" json:"message,omitempty"`
 	Source     *TaskStatus_Source `protobuf:"varint,9,opt,name=source,enum=mesos.TaskStatus_Source" json:"source,omitempty"`
 	Reason     *TaskStatus_Reason `protobuf:"varint,10,opt,name=reason,enum=mesos.TaskStatus_Reason" json:"reason,omitempty"`
 	Data       []byte             `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
-	SlaveId    *SlaveID           `protobuf:"bytes,5,opt,name=slave_id" json:"slave_id,omitempty"`
-	ExecutorId *ExecutorID        `protobuf:"bytes,7,opt,name=executor_id" json:"executor_id,omitempty"`
+	SlaveID    *SlaveID           `protobuf:"bytes,5,opt,name=slave_id" json:"slave_id,omitempty"`
+	ExecutorID *ExecutorID        `protobuf:"bytes,7,opt,name=executor_id" json:"executor_id,omitempty"`
 	Timestamp  *float64           `protobuf:"fixed64,6,opt,name=timestamp" json:"timestamp,omitempty"`
 	// Statuses that are delivered reliably to the scheduler will
 	// include a 'uuid'. The status is considered delivered once
@@ -4769,11 +4769,11 @@ func (m *TaskStatus) Reset()                    { *m = TaskStatus{} }
 func (*TaskStatus) ProtoMessage()               {}
 func (*TaskStatus) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{37} }
 
-func (m *TaskStatus) GetTaskId() *TaskID {
+func (m *TaskStatus) GetTaskID() TaskID {
 	if m != nil {
-		return m.TaskId
+		return m.TaskID
 	}
-	return nil
+	return TaskID{}
 }
 
 func (m *TaskStatus) GetState() TaskState {
@@ -4811,16 +4811,16 @@ func (m *TaskStatus) GetData() []byte {
 	return nil
 }
 
-func (m *TaskStatus) GetSlaveId() *SlaveID {
+func (m *TaskStatus) GetSlaveID() *SlaveID {
 	if m != nil {
-		return m.SlaveId
+		return m.SlaveID
 	}
 	return nil
 }
 
-func (m *TaskStatus) GetExecutorId() *ExecutorID {
+func (m *TaskStatus) GetExecutorID() *ExecutorID {
 	if m != nil {
-		return m.ExecutorId
+		return m.ExecutorID
 	}
 	return nil
 }
@@ -4931,8 +4931,8 @@ func (m *Environment_Variable) GetValue() string {
 // *
 // A generic (key, value) pair used in various places for parameters.
 type Parameter struct {
-	Key   *string `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
-	Value *string `protobuf:"bytes,2,req,name=value" json:"value,omitempty"`
+	Key   string `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
+	Value string `protobuf:"bytes,2,req,name=value" json:"value,omitempty"`
 }
 
 func (m *Parameter) Reset()                    { *m = Parameter{} }
@@ -4940,15 +4940,15 @@ func (*Parameter) ProtoMessage()               {}
 func (*Parameter) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{40} }
 
 func (m *Parameter) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
+	if m != nil {
+		return m.Key
 	}
 	return ""
 }
 
 func (m *Parameter) GetValue() string {
-	if m != nil && m.Value != nil {
-		return *m.Value
+	if m != nil {
+		return m.Value
 	}
 	return ""
 }
@@ -5164,7 +5164,7 @@ type Image_Appc struct {
 	// "hash" is the hash algorithm used and "value" is the hex
 	// encoded string of the digest. Currently the only permitted
 	// hash algorithm is sha512.
-	Id *string `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
+	ID *string `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
 	// Optional labels. Suggested labels: "version", "os", and "arch".
 	Labels *Labels `protobuf:"bytes,3,opt,name=labels" json:"labels,omitempty"`
 }
@@ -5180,9 +5180,9 @@ func (m *Image_Appc) GetName() string {
 	return ""
 }
 
-func (m *Image_Appc) GetId() string {
-	if m != nil && m.Id != nil {
-		return *m.Id
+func (m *Image_Appc) GetID() string {
+	if m != nil && m.ID != nil {
+		return *m.ID
 	}
 	return ""
 }
@@ -5727,14 +5727,14 @@ func (m *CgroupInfo_NetCls) GetClassid() uint32 {
 // Collection of labels. Labels should not contain duplicate key-value
 // pairs.
 type Labels struct {
-	Labels []*Label `protobuf:"bytes,1,rep,name=labels" json:"labels,omitempty"`
+	Labels []Label `protobuf:"bytes,1,rep,name=labels" json:"labels,omitempty"`
 }
 
 func (m *Labels) Reset()                    { *m = Labels{} }
 func (*Labels) ProtoMessage()               {}
 func (*Labels) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{52} }
 
-func (m *Labels) GetLabels() []*Label {
+func (m *Labels) GetLabels() []Label {
 	if m != nil {
 		return m.Labels
 	}
@@ -5744,7 +5744,7 @@ func (m *Labels) GetLabels() []*Label {
 // *
 // Key, value pair used to store free form user-data.
 type Label struct {
-	Key   *string `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
+	Key   string `protobuf:"bytes,1,req,name=key" json:"key,omitempty"`
 	Value *string `protobuf:"bytes,2,opt,name=value" json:"value,omitempty"`
 }
 
@@ -5753,8 +5753,8 @@ func (*Label) ProtoMessage()               {}
 func (*Label) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{53} }
 
 func (m *Label) GetKey() string {
-	if m != nil && m.Key != nil {
-		return *m.Key
+	if m != nil {
+		return m.Key
 	}
 	return ""
 }
@@ -6425,13 +6425,7 @@ func (this *FrameworkID) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *FrameworkID but is not nil && this == nil")
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return fmt.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
-		}
-	} else if this.Value != nil {
-		return fmt.Errorf("this.Value == nil && that.Value != nil")
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	return nil
@@ -6461,13 +6455,7 @@ func (this *FrameworkID) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return false
-		}
-	} else if this.Value != nil {
-		return false
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return false
 	}
 	return true
@@ -6497,13 +6485,7 @@ func (this *OfferID) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *OfferID but is not nil && this == nil")
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return fmt.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
-		}
-	} else if this.Value != nil {
-		return fmt.Errorf("this.Value == nil && that.Value != nil")
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	return nil
@@ -6533,13 +6515,7 @@ func (this *OfferID) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return false
-		}
-	} else if this.Value != nil {
-		return false
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return false
 	}
 	return true
@@ -6569,13 +6545,7 @@ func (this *SlaveID) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *SlaveID but is not nil && this == nil")
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return fmt.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
-		}
-	} else if this.Value != nil {
-		return fmt.Errorf("this.Value == nil && that.Value != nil")
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	return nil
@@ -6605,13 +6575,7 @@ func (this *SlaveID) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return false
-		}
-	} else if this.Value != nil {
-		return false
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return false
 	}
 	return true
@@ -6641,13 +6605,7 @@ func (this *TaskID) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *TaskID but is not nil && this == nil")
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return fmt.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
-		}
-	} else if this.Value != nil {
-		return fmt.Errorf("this.Value == nil && that.Value != nil")
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	return nil
@@ -6677,13 +6635,7 @@ func (this *TaskID) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return false
-		}
-	} else if this.Value != nil {
-		return false
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return false
 	}
 	return true
@@ -6713,13 +6665,7 @@ func (this *ExecutorID) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *ExecutorID but is not nil && this == nil")
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return fmt.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
-		}
-	} else if this.Value != nil {
-		return fmt.Errorf("this.Value == nil && that.Value != nil")
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	return nil
@@ -6749,13 +6695,7 @@ func (this *ExecutorID) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return false
-		}
-	} else if this.Value != nil {
-		return false
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return false
 	}
 	return true
@@ -7395,8 +7335,8 @@ func (this *MachineInfo) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *MachineInfo but is not nil && this == nil")
 	}
-	if !this.Id.Equal(that1.Id) {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	if !this.ID.Equal(that1.ID) {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
 	if this.Mode != nil && that1.Mode != nil {
 		if *this.Mode != *that1.Mode {
@@ -7437,7 +7377,7 @@ func (this *MachineInfo) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.Id.Equal(that1.Id) {
+	if !this.ID.Equal(that1.ID) {
 		return false
 	}
 	if this.Mode != nil && that1.Mode != nil {
@@ -7479,26 +7419,14 @@ func (this *FrameworkInfo) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *FrameworkInfo but is not nil && this == nil")
 	}
-	if this.User != nil && that1.User != nil {
-		if *this.User != *that1.User {
-			return fmt.Errorf("User this(%v) Not Equal that(%v)", *this.User, *that1.User)
-		}
-	} else if this.User != nil {
-		return fmt.Errorf("this.User == nil && that.User != nil")
-	} else if that1.User != nil {
+	if this.User != that1.User {
 		return fmt.Errorf("User this(%v) Not Equal that(%v)", this.User, that1.User)
 	}
-	if this.Name != nil && that1.Name != nil {
-		if *this.Name != *that1.Name {
-			return fmt.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
-		}
-	} else if this.Name != nil {
-		return fmt.Errorf("this.Name == nil && that.Name != nil")
-	} else if that1.Name != nil {
+	if this.Name != that1.Name {
 		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
-	if !this.Id.Equal(that1.Id) {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	if !this.ID.Equal(that1.ID) {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
 	if this.FailoverTimeout != nil && that1.FailoverTimeout != nil {
 		if *this.FailoverTimeout != *that1.FailoverTimeout {
@@ -7592,25 +7520,13 @@ func (this *FrameworkInfo) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.User != nil && that1.User != nil {
-		if *this.User != *that1.User {
-			return false
-		}
-	} else if this.User != nil {
-		return false
-	} else if that1.User != nil {
+	if this.User != that1.User {
 		return false
 	}
-	if this.Name != nil && that1.Name != nil {
-		if *this.Name != *that1.Name {
-			return false
-		}
-	} else if this.Name != nil {
-		return false
-	} else if that1.Name != nil {
+	if this.Name != that1.Name {
 		return false
 	}
-	if !this.Id.Equal(that1.Id) {
+	if !this.ID.Equal(that1.ID) {
 		return false
 	}
 	if this.FailoverTimeout != nil && that1.FailoverTimeout != nil {
@@ -8389,11 +8305,11 @@ func (this *ExecutorInfo) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *ExecutorInfo but is not nil && this == nil")
 	}
-	if !this.ExecutorId.Equal(that1.ExecutorId) {
-		return fmt.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
+	if !this.ExecutorID.Equal(that1.ExecutorID) {
+		return fmt.Errorf("ExecutorID this(%v) Not Equal that(%v)", this.ExecutorID, that1.ExecutorID)
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
-		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
+		return fmt.Errorf("FrameworkID this(%v) Not Equal that(%v)", this.FrameworkID, that1.FrameworkID)
 	}
 	if !this.Command.Equal(that1.Command) {
 		return fmt.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
@@ -8466,10 +8382,10 @@ func (this *ExecutorInfo) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.ExecutorId.Equal(that1.ExecutorId) {
+	if !this.ExecutorID.Equal(that1.ExecutorID) {
 		return false
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
 		return false
 	}
 	if !this.Command.Equal(that1.Command) {
@@ -8543,23 +8459,11 @@ func (this *MasterInfo) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *MasterInfo but is not nil && this == nil")
 	}
-	if this.Id != nil && that1.Id != nil {
-		if *this.Id != *that1.Id {
-			return fmt.Errorf("Id this(%v) Not Equal that(%v)", *this.Id, *that1.Id)
-		}
-	} else if this.Id != nil {
-		return fmt.Errorf("this.Id == nil && that.Id != nil")
-	} else if that1.Id != nil {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	if this.ID != that1.ID {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
-	if this.Ip != nil && that1.Ip != nil {
-		if *this.Ip != *that1.Ip {
-			return fmt.Errorf("Ip this(%v) Not Equal that(%v)", *this.Ip, *that1.Ip)
-		}
-	} else if this.Ip != nil {
-		return fmt.Errorf("this.Ip == nil && that.Ip != nil")
-	} else if that1.Ip != nil {
-		return fmt.Errorf("Ip this(%v) Not Equal that(%v)", this.Ip, that1.Ip)
+	if this.IP != that1.IP {
+		return fmt.Errorf("IP this(%v) Not Equal that(%v)", this.IP, that1.IP)
 	}
 	if this.Port != nil && that1.Port != nil {
 		if *this.Port != *that1.Port {
@@ -8627,22 +8531,10 @@ func (this *MasterInfo) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Id != nil && that1.Id != nil {
-		if *this.Id != *that1.Id {
-			return false
-		}
-	} else if this.Id != nil {
-		return false
-	} else if that1.Id != nil {
+	if this.ID != that1.ID {
 		return false
 	}
-	if this.Ip != nil && that1.Ip != nil {
-		if *this.Ip != *that1.Ip {
-			return false
-		}
-	} else if this.Ip != nil {
-		return false
-	} else if that1.Ip != nil {
+	if this.IP != that1.IP {
 		return false
 	}
 	if this.Port != nil && that1.Port != nil {
@@ -8745,8 +8637,8 @@ func (this *SlaveInfo) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Attributes this[%v](%v) Not Equal that[%v](%v)", i, this.Attributes[i], i, that1.Attributes[i])
 		}
 	}
-	if !this.Id.Equal(that1.Id) {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	if !this.ID.Equal(that1.ID) {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
 	if this.Checkpoint != nil && that1.Checkpoint != nil {
 		if *this.Checkpoint != *that1.Checkpoint {
@@ -8818,7 +8710,7 @@ func (this *SlaveInfo) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if !this.Id.Equal(that1.Id) {
+	if !this.ID.Equal(that1.ID) {
 		return false
 	}
 	if this.Checkpoint != nil && that1.Checkpoint != nil {
@@ -10042,14 +9934,14 @@ func (this *TrafficControlStatistics) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *TrafficControlStatistics but is not nil && this == nil")
 	}
-	if this.Id != nil && that1.Id != nil {
-		if *this.Id != *that1.Id {
-			return fmt.Errorf("Id this(%v) Not Equal that(%v)", *this.Id, *that1.Id)
+	if this.ID != nil && that1.ID != nil {
+		if *this.ID != *that1.ID {
+			return fmt.Errorf("ID this(%v) Not Equal that(%v)", *this.ID, *that1.ID)
 		}
-	} else if this.Id != nil {
-		return fmt.Errorf("this.Id == nil && that.Id != nil")
-	} else if that1.Id != nil {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	} else if this.ID != nil {
+		return fmt.Errorf("this.ID == nil && that.ID != nil")
+	} else if that1.ID != nil {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
 	if this.Backlog != nil && that1.Backlog != nil {
 		if *this.Backlog != *that1.Backlog {
@@ -10159,13 +10051,13 @@ func (this *TrafficControlStatistics) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Id != nil && that1.Id != nil {
-		if *this.Id != *that1.Id {
+	if this.ID != nil && that1.ID != nil {
+		if *this.ID != *that1.ID {
 			return false
 		}
-	} else if this.Id != nil {
+	} else if this.ID != nil {
 		return false
-	} else if that1.Id != nil {
+	} else if that1.ID != nil {
 		return false
 	}
 	if this.Backlog != nil && that1.Backlog != nil {
@@ -12696,8 +12588,8 @@ func (this *ResourceUsage_Executor) VerboseEqual(that interface{}) error {
 	if !this.Statistics.Equal(that1.Statistics) {
 		return fmt.Errorf("Statistics this(%v) Not Equal that(%v)", this.Statistics, that1.Statistics)
 	}
-	if !this.ContainerId.Equal(that1.ContainerId) {
-		return fmt.Errorf("ContainerId this(%v) Not Equal that(%v)", this.ContainerId, that1.ContainerId)
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return fmt.Errorf("ContainerID this(%v) Not Equal that(%v)", this.ContainerID, that1.ContainerID)
 	}
 	if len(this.Tasks) != len(that1.Tasks) {
 		return fmt.Errorf("Tasks this(%v) Not Equal that(%v)", len(this.Tasks), len(that1.Tasks))
@@ -12748,7 +12640,7 @@ func (this *ResourceUsage_Executor) Equal(that interface{}) bool {
 	if !this.Statistics.Equal(that1.Statistics) {
 		return false
 	}
-	if !this.ContainerId.Equal(that1.ContainerId) {
+	if !this.ContainerID.Equal(that1.ContainerID) {
 		return false
 	}
 	if len(this.Tasks) != len(that1.Tasks) {
@@ -12795,8 +12687,8 @@ func (this *ResourceUsage_Executor_Task) VerboseEqual(that interface{}) error {
 	} else if that1.Name != nil {
 		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
-	if !this.Id.Equal(that1.Id) {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	if !this.ID.Equal(that1.ID) {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
 	if len(this.Resources) != len(that1.Resources) {
 		return fmt.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
@@ -12845,7 +12737,7 @@ func (this *ResourceUsage_Executor_Task) Equal(that interface{}) bool {
 	} else if that1.Name != nil {
 		return false
 	}
-	if !this.Id.Equal(that1.Id) {
+	if !this.ID.Equal(that1.ID) {
 		return false
 	}
 	if len(this.Resources) != len(that1.Resources) {
@@ -13894,8 +13786,8 @@ func (this *Request) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Request but is not nil && this == nil")
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+	if !this.SlaveID.Equal(that1.SlaveID) {
+		return fmt.Errorf("SlaveID this(%v) Not Equal that(%v)", this.SlaveID, that1.SlaveID)
 	}
 	if len(this.Resources) != len(that1.Resources) {
 		return fmt.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
@@ -13932,7 +13824,7 @@ func (this *Request) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
+	if !this.SlaveID.Equal(that1.SlaveID) {
 		return false
 	}
 	if len(this.Resources) != len(that1.Resources) {
@@ -13970,22 +13862,16 @@ func (this *Offer) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Offer but is not nil && this == nil")
 	}
-	if !this.Id.Equal(that1.Id) {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	if !this.ID.Equal(that1.ID) {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
-		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
+		return fmt.Errorf("FrameworkID this(%v) Not Equal that(%v)", this.FrameworkID, that1.FrameworkID)
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+	if !this.SlaveID.Equal(that1.SlaveID) {
+		return fmt.Errorf("SlaveID this(%v) Not Equal that(%v)", this.SlaveID, that1.SlaveID)
 	}
-	if this.Hostname != nil && that1.Hostname != nil {
-		if *this.Hostname != *that1.Hostname {
-			return fmt.Errorf("Hostname this(%v) Not Equal that(%v)", *this.Hostname, *that1.Hostname)
-		}
-	} else if this.Hostname != nil {
-		return fmt.Errorf("this.Hostname == nil && that.Hostname != nil")
-	} else if that1.Hostname != nil {
+	if this.Hostname != that1.Hostname {
 		return fmt.Errorf("Hostname this(%v) Not Equal that(%v)", this.Hostname, that1.Hostname)
 	}
 	if !this.Url.Equal(that1.Url) {
@@ -14007,12 +13893,12 @@ func (this *Offer) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Attributes this[%v](%v) Not Equal that[%v](%v)", i, this.Attributes[i], i, that1.Attributes[i])
 		}
 	}
-	if len(this.ExecutorIds) != len(that1.ExecutorIds) {
-		return fmt.Errorf("ExecutorIds this(%v) Not Equal that(%v)", len(this.ExecutorIds), len(that1.ExecutorIds))
+	if len(this.ExecutorIDs) != len(that1.ExecutorIDs) {
+		return fmt.Errorf("ExecutorIDs this(%v) Not Equal that(%v)", len(this.ExecutorIDs), len(that1.ExecutorIDs))
 	}
-	for i := range this.ExecutorIds {
-		if !this.ExecutorIds[i].Equal(that1.ExecutorIds[i]) {
-			return fmt.Errorf("ExecutorIds this[%v](%v) Not Equal that[%v](%v)", i, this.ExecutorIds[i], i, that1.ExecutorIds[i])
+	for i := range this.ExecutorIDs {
+		if !this.ExecutorIDs[i].Equal(that1.ExecutorIDs[i]) {
+			return fmt.Errorf("ExecutorIDs this[%v](%v) Not Equal that[%v](%v)", i, this.ExecutorIDs[i], i, that1.ExecutorIDs[i])
 		}
 	}
 	if !this.Unavailability.Equal(that1.Unavailability) {
@@ -14045,22 +13931,16 @@ func (this *Offer) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.Id.Equal(that1.Id) {
+	if !this.ID.Equal(that1.ID) {
 		return false
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
 		return false
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
+	if !this.SlaveID.Equal(that1.SlaveID) {
 		return false
 	}
-	if this.Hostname != nil && that1.Hostname != nil {
-		if *this.Hostname != *that1.Hostname {
-			return false
-		}
-	} else if this.Hostname != nil {
-		return false
-	} else if that1.Hostname != nil {
+	if this.Hostname != that1.Hostname {
 		return false
 	}
 	if !this.Url.Equal(that1.Url) {
@@ -14082,11 +13962,11 @@ func (this *Offer) Equal(that interface{}) bool {
 			return false
 		}
 	}
-	if len(this.ExecutorIds) != len(that1.ExecutorIds) {
+	if len(this.ExecutorIDs) != len(that1.ExecutorIDs) {
 		return false
 	}
-	for i := range this.ExecutorIds {
-		if !this.ExecutorIds[i].Equal(that1.ExecutorIds[i]) {
+	for i := range this.ExecutorIDs {
+		if !this.ExecutorIDs[i].Equal(that1.ExecutorIDs[i]) {
 			return false
 		}
 	}
@@ -14572,17 +14452,17 @@ func (this *InverseOffer) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *InverseOffer but is not nil && this == nil")
 	}
-	if !this.Id.Equal(that1.Id) {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	if !this.ID.Equal(that1.ID) {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
 	if !this.Url.Equal(that1.Url) {
 		return fmt.Errorf("Url this(%v) Not Equal that(%v)", this.Url, that1.Url)
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
-		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
+		return fmt.Errorf("FrameworkID this(%v) Not Equal that(%v)", this.FrameworkID, that1.FrameworkID)
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+	if !this.SlaveID.Equal(that1.SlaveID) {
+		return fmt.Errorf("SlaveID this(%v) Not Equal that(%v)", this.SlaveID, that1.SlaveID)
 	}
 	if !this.Unavailability.Equal(that1.Unavailability) {
 		return fmt.Errorf("Unavailability this(%v) Not Equal that(%v)", this.Unavailability, that1.Unavailability)
@@ -14622,16 +14502,16 @@ func (this *InverseOffer) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.Id.Equal(that1.Id) {
+	if !this.ID.Equal(that1.ID) {
 		return false
 	}
 	if !this.Url.Equal(that1.Url) {
 		return false
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
 		return false
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
+	if !this.SlaveID.Equal(that1.SlaveID) {
 		return false
 	}
 	if !this.Unavailability.Equal(that1.Unavailability) {
@@ -14672,20 +14552,14 @@ func (this *TaskInfo) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *TaskInfo but is not nil && this == nil")
 	}
-	if this.Name != nil && that1.Name != nil {
-		if *this.Name != *that1.Name {
-			return fmt.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
-		}
-	} else if this.Name != nil {
-		return fmt.Errorf("this.Name == nil && that.Name != nil")
-	} else if that1.Name != nil {
+	if this.Name != that1.Name {
 		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
-	if !this.TaskId.Equal(that1.TaskId) {
-		return fmt.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
+	if !this.TaskID.Equal(that1.TaskID) {
+		return fmt.Errorf("TaskID this(%v) Not Equal that(%v)", this.TaskID, that1.TaskID)
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+	if !this.SlaveID.Equal(that1.SlaveID) {
+		return fmt.Errorf("SlaveID this(%v) Not Equal that(%v)", this.SlaveID, that1.SlaveID)
 	}
 	if len(this.Resources) != len(that1.Resources) {
 		return fmt.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
@@ -14746,19 +14620,13 @@ func (this *TaskInfo) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Name != nil && that1.Name != nil {
-		if *this.Name != *that1.Name {
-			return false
-		}
-	} else if this.Name != nil {
-		return false
-	} else if that1.Name != nil {
+	if this.Name != that1.Name {
 		return false
 	}
-	if !this.TaskId.Equal(that1.TaskId) {
+	if !this.TaskID.Equal(that1.TaskID) {
 		return false
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
+	if !this.SlaveID.Equal(that1.SlaveID) {
 		return false
 	}
 	if len(this.Resources) != len(that1.Resources) {
@@ -14820,26 +14688,20 @@ func (this *Task) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Task but is not nil && this == nil")
 	}
-	if this.Name != nil && that1.Name != nil {
-		if *this.Name != *that1.Name {
-			return fmt.Errorf("Name this(%v) Not Equal that(%v)", *this.Name, *that1.Name)
-		}
-	} else if this.Name != nil {
-		return fmt.Errorf("this.Name == nil && that.Name != nil")
-	} else if that1.Name != nil {
+	if this.Name != that1.Name {
 		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
-	if !this.TaskId.Equal(that1.TaskId) {
-		return fmt.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
+	if !this.TaskID.Equal(that1.TaskID) {
+		return fmt.Errorf("TaskID this(%v) Not Equal that(%v)", this.TaskID, that1.TaskID)
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
-		return fmt.Errorf("FrameworkId this(%v) Not Equal that(%v)", this.FrameworkId, that1.FrameworkId)
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
+		return fmt.Errorf("FrameworkID this(%v) Not Equal that(%v)", this.FrameworkID, that1.FrameworkID)
 	}
-	if !this.ExecutorId.Equal(that1.ExecutorId) {
-		return fmt.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
+	if !this.ExecutorID.Equal(that1.ExecutorID) {
+		return fmt.Errorf("ExecutorID this(%v) Not Equal that(%v)", this.ExecutorID, that1.ExecutorID)
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+	if !this.SlaveID.Equal(that1.SlaveID) {
+		return fmt.Errorf("SlaveID this(%v) Not Equal that(%v)", this.SlaveID, that1.SlaveID)
 	}
 	if this.State != nil && that1.State != nil {
 		if *this.State != *that1.State {
@@ -14923,25 +14785,19 @@ func (this *Task) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Name != nil && that1.Name != nil {
-		if *this.Name != *that1.Name {
-			return false
-		}
-	} else if this.Name != nil {
-		return false
-	} else if that1.Name != nil {
+	if this.Name != that1.Name {
 		return false
 	}
-	if !this.TaskId.Equal(that1.TaskId) {
+	if !this.TaskID.Equal(that1.TaskID) {
 		return false
 	}
-	if !this.FrameworkId.Equal(that1.FrameworkId) {
+	if !this.FrameworkID.Equal(that1.FrameworkID) {
 		return false
 	}
-	if !this.ExecutorId.Equal(that1.ExecutorId) {
+	if !this.ExecutorID.Equal(that1.ExecutorID) {
 		return false
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
+	if !this.SlaveID.Equal(that1.SlaveID) {
 		return false
 	}
 	if this.State != nil && that1.State != nil {
@@ -15026,8 +14882,8 @@ func (this *TaskStatus) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *TaskStatus but is not nil && this == nil")
 	}
-	if !this.TaskId.Equal(that1.TaskId) {
-		return fmt.Errorf("TaskId this(%v) Not Equal that(%v)", this.TaskId, that1.TaskId)
+	if !this.TaskID.Equal(that1.TaskID) {
+		return fmt.Errorf("TaskID this(%v) Not Equal that(%v)", this.TaskID, that1.TaskID)
 	}
 	if this.State != nil && that1.State != nil {
 		if *this.State != *that1.State {
@@ -15068,11 +14924,11 @@ func (this *TaskStatus) VerboseEqual(that interface{}) error {
 	if !bytes.Equal(this.Data, that1.Data) {
 		return fmt.Errorf("Data this(%v) Not Equal that(%v)", this.Data, that1.Data)
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
-		return fmt.Errorf("SlaveId this(%v) Not Equal that(%v)", this.SlaveId, that1.SlaveId)
+	if !this.SlaveID.Equal(that1.SlaveID) {
+		return fmt.Errorf("SlaveID this(%v) Not Equal that(%v)", this.SlaveID, that1.SlaveID)
 	}
-	if !this.ExecutorId.Equal(that1.ExecutorId) {
-		return fmt.Errorf("ExecutorId this(%v) Not Equal that(%v)", this.ExecutorId, that1.ExecutorId)
+	if !this.ExecutorID.Equal(that1.ExecutorID) {
+		return fmt.Errorf("ExecutorID this(%v) Not Equal that(%v)", this.ExecutorID, that1.ExecutorID)
 	}
 	if this.Timestamp != nil && that1.Timestamp != nil {
 		if *this.Timestamp != *that1.Timestamp {
@@ -15128,7 +14984,7 @@ func (this *TaskStatus) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.TaskId.Equal(that1.TaskId) {
+	if !this.TaskID.Equal(that1.TaskID) {
 		return false
 	}
 	if this.State != nil && that1.State != nil {
@@ -15170,10 +15026,10 @@ func (this *TaskStatus) Equal(that interface{}) bool {
 	if !bytes.Equal(this.Data, that1.Data) {
 		return false
 	}
-	if !this.SlaveId.Equal(that1.SlaveId) {
+	if !this.SlaveID.Equal(that1.SlaveID) {
 		return false
 	}
-	if !this.ExecutorId.Equal(that1.ExecutorId) {
+	if !this.ExecutorID.Equal(that1.ExecutorID) {
 		return false
 	}
 	if this.Timestamp != nil && that1.Timestamp != nil {
@@ -15462,22 +15318,10 @@ func (this *Parameter) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Parameter but is not nil && this == nil")
 	}
-	if this.Key != nil && that1.Key != nil {
-		if *this.Key != *that1.Key {
-			return fmt.Errorf("Key this(%v) Not Equal that(%v)", *this.Key, *that1.Key)
-		}
-	} else if this.Key != nil {
-		return fmt.Errorf("this.Key == nil && that.Key != nil")
-	} else if that1.Key != nil {
+	if this.Key != that1.Key {
 		return fmt.Errorf("Key this(%v) Not Equal that(%v)", this.Key, that1.Key)
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return fmt.Errorf("Value this(%v) Not Equal that(%v)", *this.Value, *that1.Value)
-		}
-	} else if this.Value != nil {
-		return fmt.Errorf("this.Value == nil && that.Value != nil")
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
 	}
 	return nil
@@ -15507,22 +15351,10 @@ func (this *Parameter) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Key != nil && that1.Key != nil {
-		if *this.Key != *that1.Key {
-			return false
-		}
-	} else if this.Key != nil {
-		return false
-	} else if that1.Key != nil {
+	if this.Key != that1.Key {
 		return false
 	}
-	if this.Value != nil && that1.Value != nil {
-		if *this.Value != *that1.Value {
-			return false
-		}
-	} else if this.Value != nil {
-		return false
-	} else if that1.Value != nil {
+	if this.Value != that1.Value {
 		return false
 	}
 	return true
@@ -16107,14 +15939,14 @@ func (this *Image_Appc) VerboseEqual(that interface{}) error {
 	} else if that1.Name != nil {
 		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
 	}
-	if this.Id != nil && that1.Id != nil {
-		if *this.Id != *that1.Id {
-			return fmt.Errorf("Id this(%v) Not Equal that(%v)", *this.Id, *that1.Id)
+	if this.ID != nil && that1.ID != nil {
+		if *this.ID != *that1.ID {
+			return fmt.Errorf("ID this(%v) Not Equal that(%v)", *this.ID, *that1.ID)
 		}
-	} else if this.Id != nil {
-		return fmt.Errorf("this.Id == nil && that.Id != nil")
-	} else if that1.Id != nil {
-		return fmt.Errorf("Id this(%v) Not Equal that(%v)", this.Id, that1.Id)
+	} else if this.ID != nil {
+		return fmt.Errorf("this.ID == nil && that.ID != nil")
+	} else if that1.ID != nil {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
 	}
 	if !this.Labels.Equal(that1.Labels) {
 		return fmt.Errorf("Labels this(%v) Not Equal that(%v)", this.Labels, that1.Labels)
@@ -16155,13 +15987,13 @@ func (this *Image_Appc) Equal(that interface{}) bool {
 	} else if that1.Name != nil {
 		return false
 	}
-	if this.Id != nil && that1.Id != nil {
-		if *this.Id != *that1.Id {
+	if this.ID != nil && that1.ID != nil {
+		if *this.ID != *that1.ID {
 			return false
 		}
-	} else if this.Id != nil {
+	} else if this.ID != nil {
 		return false
-	} else if that1.Id != nil {
+	} else if that1.ID != nil {
 		return false
 	}
 	if !this.Labels.Equal(that1.Labels) {
@@ -17528,13 +17360,7 @@ func (this *Label) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Label but is not nil && this == nil")
 	}
-	if this.Key != nil && that1.Key != nil {
-		if *this.Key != *that1.Key {
-			return fmt.Errorf("Key this(%v) Not Equal that(%v)", *this.Key, *that1.Key)
-		}
-	} else if this.Key != nil {
-		return fmt.Errorf("this.Key == nil && that.Key != nil")
-	} else if that1.Key != nil {
+	if this.Key != that1.Key {
 		return fmt.Errorf("Key this(%v) Not Equal that(%v)", this.Key, that1.Key)
 	}
 	if this.Value != nil && that1.Value != nil {
@@ -17573,13 +17399,7 @@ func (this *Label) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Key != nil && that1.Key != nil {
-		if *this.Key != *that1.Key {
-			return false
-		}
-	} else if this.Key != nil {
-		return false
-	} else if that1.Key != nil {
+	if this.Key != that1.Key {
 		return false
 	}
 	if this.Value != nil && that1.Value != nil {
@@ -18697,9 +18517,7 @@ func (this *FrameworkID) GoString() string {
 	}
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.FrameworkID{")
-	if this.Value != nil {
-		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
+	s = append(s, "Value: "+fmt.Sprintf("%#v", this.Value)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -18709,9 +18527,7 @@ func (this *OfferID) GoString() string {
 	}
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.OfferID{")
-	if this.Value != nil {
-		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
+	s = append(s, "Value: "+fmt.Sprintf("%#v", this.Value)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -18721,9 +18537,7 @@ func (this *SlaveID) GoString() string {
 	}
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.SlaveID{")
-	if this.Value != nil {
-		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
+	s = append(s, "Value: "+fmt.Sprintf("%#v", this.Value)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -18733,9 +18547,7 @@ func (this *TaskID) GoString() string {
 	}
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.TaskID{")
-	if this.Value != nil {
-		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
+	s = append(s, "Value: "+fmt.Sprintf("%#v", this.Value)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -18745,9 +18557,7 @@ func (this *ExecutorID) GoString() string {
 	}
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.ExecutorID{")
-	if this.Value != nil {
-		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
+	s = append(s, "Value: "+fmt.Sprintf("%#v", this.Value)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -18865,8 +18675,8 @@ func (this *MachineInfo) GoString() string {
 	}
 	s := make([]string, 0, 7)
 	s = append(s, "&mesos.MachineInfo{")
-	if this.Id != nil {
-		s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	if this.ID != nil {
+		s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
 	}
 	if this.Mode != nil {
 		s = append(s, "Mode: "+valueToGoStringMesos(this.Mode, "mesos.MachineInfo_Mode")+",\n")
@@ -18883,14 +18693,10 @@ func (this *FrameworkInfo) GoString() string {
 	}
 	s := make([]string, 0, 15)
 	s = append(s, "&mesos.FrameworkInfo{")
-	if this.User != nil {
-		s = append(s, "User: "+valueToGoStringMesos(this.User, "string")+",\n")
-	}
-	if this.Name != nil {
-		s = append(s, "Name: "+valueToGoStringMesos(this.Name, "string")+",\n")
-	}
-	if this.Id != nil {
-		s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "User: "+fmt.Sprintf("%#v", this.User)+",\n")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	if this.ID != nil {
+		s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
 	}
 	if this.FailoverTimeout != nil {
 		s = append(s, "FailoverTimeout: "+valueToGoStringMesos(this.FailoverTimeout, "float64")+",\n")
@@ -19048,15 +18854,11 @@ func (this *ExecutorInfo) GoString() string {
 	}
 	s := make([]string, 0, 15)
 	s = append(s, "&mesos.ExecutorInfo{")
-	if this.ExecutorId != nil {
-		s = append(s, "ExecutorId: "+fmt.Sprintf("%#v", this.ExecutorId)+",\n")
+	s = append(s, "ExecutorID: "+fmt.Sprintf("%#v", this.ExecutorID)+",\n")
+	if this.FrameworkID != nil {
+		s = append(s, "FrameworkID: "+fmt.Sprintf("%#v", this.FrameworkID)+",\n")
 	}
-	if this.FrameworkId != nil {
-		s = append(s, "FrameworkId: "+fmt.Sprintf("%#v", this.FrameworkId)+",\n")
-	}
-	if this.Command != nil {
-		s = append(s, "Command: "+fmt.Sprintf("%#v", this.Command)+",\n")
-	}
+	s = append(s, "Command: "+fmt.Sprintf("%#v", this.Command)+",\n")
 	if this.Container != nil {
 		s = append(s, "Container: "+fmt.Sprintf("%#v", this.Container)+",\n")
 	}
@@ -19090,12 +18892,8 @@ func (this *MasterInfo) GoString() string {
 	}
 	s := make([]string, 0, 11)
 	s = append(s, "&mesos.MasterInfo{")
-	if this.Id != nil {
-		s = append(s, "Id: "+valueToGoStringMesos(this.Id, "string")+",\n")
-	}
-	if this.Ip != nil {
-		s = append(s, "Ip: "+valueToGoStringMesos(this.Ip, "uint32")+",\n")
-	}
+	s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
+	s = append(s, "Ip: "+fmt.Sprintf("%#v", this.IP)+",\n")
 	if this.Port != nil {
 		s = append(s, "Port: "+valueToGoStringMesos(this.Port, "uint32")+",\n")
 	}
@@ -19132,8 +18930,8 @@ func (this *SlaveInfo) GoString() string {
 	if this.Attributes != nil {
 		s = append(s, "Attributes: "+fmt.Sprintf("%#v", this.Attributes)+",\n")
 	}
-	if this.Id != nil {
-		s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	if this.ID != nil {
+		s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
 	}
 	if this.Checkpoint != nil {
 		s = append(s, "Checkpoint: "+valueToGoStringMesos(this.Checkpoint, "bool")+",\n")
@@ -19386,8 +19184,8 @@ func (this *TrafficControlStatistics) GoString() string {
 	}
 	s := make([]string, 0, 14)
 	s = append(s, "&mesos.TrafficControlStatistics{")
-	if this.Id != nil {
-		s = append(s, "Id: "+valueToGoStringMesos(this.Id, "string")+",\n")
+	if this.ID != nil {
+		s = append(s, "ID: "+valueToGoStringMesos(this.ID, "string")+",\n")
 	}
 	if this.Backlog != nil {
 		s = append(s, "Backlog: "+valueToGoStringMesos(this.Backlog, "uint64")+",\n")
@@ -19848,8 +19646,8 @@ func (this *ResourceUsage_Executor) GoString() string {
 	if this.Statistics != nil {
 		s = append(s, "Statistics: "+fmt.Sprintf("%#v", this.Statistics)+",\n")
 	}
-	if this.ContainerId != nil {
-		s = append(s, "ContainerId: "+fmt.Sprintf("%#v", this.ContainerId)+",\n")
+	if this.ContainerID != nil {
+		s = append(s, "ContainerID: "+fmt.Sprintf("%#v", this.ContainerID)+",\n")
 	}
 	if this.Tasks != nil {
 		s = append(s, "Tasks: "+fmt.Sprintf("%#v", this.Tasks)+",\n")
@@ -19866,8 +19664,8 @@ func (this *ResourceUsage_Executor_Task) GoString() string {
 	if this.Name != nil {
 		s = append(s, "Name: "+valueToGoStringMesos(this.Name, "string")+",\n")
 	}
-	if this.Id != nil {
-		s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	if this.ID != nil {
+		s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
 	}
 	if this.Resources != nil {
 		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
@@ -20052,8 +19850,8 @@ func (this *Request) GoString() string {
 	}
 	s := make([]string, 0, 6)
 	s = append(s, "&mesos.Request{")
-	if this.SlaveId != nil {
-		s = append(s, "SlaveId: "+fmt.Sprintf("%#v", this.SlaveId)+",\n")
+	if this.SlaveID != nil {
+		s = append(s, "SlaveID: "+fmt.Sprintf("%#v", this.SlaveID)+",\n")
 	}
 	if this.Resources != nil {
 		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
@@ -20067,18 +19865,10 @@ func (this *Offer) GoString() string {
 	}
 	s := make([]string, 0, 13)
 	s = append(s, "&mesos.Offer{")
-	if this.Id != nil {
-		s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
-	}
-	if this.FrameworkId != nil {
-		s = append(s, "FrameworkId: "+fmt.Sprintf("%#v", this.FrameworkId)+",\n")
-	}
-	if this.SlaveId != nil {
-		s = append(s, "SlaveId: "+fmt.Sprintf("%#v", this.SlaveId)+",\n")
-	}
-	if this.Hostname != nil {
-		s = append(s, "Hostname: "+valueToGoStringMesos(this.Hostname, "string")+",\n")
-	}
+	s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
+	s = append(s, "FrameworkID: "+fmt.Sprintf("%#v", this.FrameworkID)+",\n")
+	s = append(s, "SlaveID: "+fmt.Sprintf("%#v", this.SlaveID)+",\n")
+	s = append(s, "Hostname: "+fmt.Sprintf("%#v", this.Hostname)+",\n")
 	if this.Url != nil {
 		s = append(s, "Url: "+fmt.Sprintf("%#v", this.Url)+",\n")
 	}
@@ -20088,8 +19878,8 @@ func (this *Offer) GoString() string {
 	if this.Attributes != nil {
 		s = append(s, "Attributes: "+fmt.Sprintf("%#v", this.Attributes)+",\n")
 	}
-	if this.ExecutorIds != nil {
-		s = append(s, "ExecutorIds: "+fmt.Sprintf("%#v", this.ExecutorIds)+",\n")
+	if this.ExecutorIDs != nil {
+		s = append(s, "ExecutorIDs: "+fmt.Sprintf("%#v", this.ExecutorIDs)+",\n")
 	}
 	if this.Unavailability != nil {
 		s = append(s, "Unavailability: "+fmt.Sprintf("%#v", this.Unavailability)+",\n")
@@ -20190,18 +19980,12 @@ func (this *InverseOffer) GoString() string {
 	}
 	s := make([]string, 0, 10)
 	s = append(s, "&mesos.InverseOffer{")
-	if this.Id != nil {
-		s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
-	}
+	s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
 	if this.Url != nil {
 		s = append(s, "Url: "+fmt.Sprintf("%#v", this.Url)+",\n")
 	}
-	if this.FrameworkId != nil {
-		s = append(s, "FrameworkId: "+fmt.Sprintf("%#v", this.FrameworkId)+",\n")
-	}
-	if this.SlaveId != nil {
-		s = append(s, "SlaveId: "+fmt.Sprintf("%#v", this.SlaveId)+",\n")
-	}
+	s = append(s, "FrameworkID: "+fmt.Sprintf("%#v", this.FrameworkID)+",\n")
+	s = append(s, "SlaveID: "+fmt.Sprintf("%#v", this.SlaveID)+",\n")
 	if this.Unavailability != nil {
 		s = append(s, "Unavailability: "+fmt.Sprintf("%#v", this.Unavailability)+",\n")
 	}
@@ -20217,15 +20001,9 @@ func (this *TaskInfo) GoString() string {
 	}
 	s := make([]string, 0, 16)
 	s = append(s, "&mesos.TaskInfo{")
-	if this.Name != nil {
-		s = append(s, "Name: "+valueToGoStringMesos(this.Name, "string")+",\n")
-	}
-	if this.TaskId != nil {
-		s = append(s, "TaskId: "+fmt.Sprintf("%#v", this.TaskId)+",\n")
-	}
-	if this.SlaveId != nil {
-		s = append(s, "SlaveId: "+fmt.Sprintf("%#v", this.SlaveId)+",\n")
-	}
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "TaskID: "+fmt.Sprintf("%#v", this.TaskID)+",\n")
+	s = append(s, "SlaveID: "+fmt.Sprintf("%#v", this.SlaveID)+",\n")
 	if this.Resources != nil {
 		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
@@ -20262,21 +20040,15 @@ func (this *Task) GoString() string {
 	}
 	s := make([]string, 0, 18)
 	s = append(s, "&mesos.Task{")
-	if this.Name != nil {
-		s = append(s, "Name: "+valueToGoStringMesos(this.Name, "string")+",\n")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "TaskID: "+fmt.Sprintf("%#v", this.TaskID)+",\n")
+	if this.FrameworkID != nil {
+		s = append(s, "FrameworkID: "+fmt.Sprintf("%#v", this.FrameworkID)+",\n")
 	}
-	if this.TaskId != nil {
-		s = append(s, "TaskId: "+fmt.Sprintf("%#v", this.TaskId)+",\n")
+	if this.ExecutorID != nil {
+		s = append(s, "ExecutorID: "+fmt.Sprintf("%#v", this.ExecutorID)+",\n")
 	}
-	if this.FrameworkId != nil {
-		s = append(s, "FrameworkId: "+fmt.Sprintf("%#v", this.FrameworkId)+",\n")
-	}
-	if this.ExecutorId != nil {
-		s = append(s, "ExecutorId: "+fmt.Sprintf("%#v", this.ExecutorId)+",\n")
-	}
-	if this.SlaveId != nil {
-		s = append(s, "SlaveId: "+fmt.Sprintf("%#v", this.SlaveId)+",\n")
-	}
+	s = append(s, "SlaveID: "+fmt.Sprintf("%#v", this.SlaveID)+",\n")
 	if this.State != nil {
 		s = append(s, "State: "+valueToGoStringMesos(this.State, "mesos.TaskState")+",\n")
 	}
@@ -20313,9 +20085,7 @@ func (this *TaskStatus) GoString() string {
 	}
 	s := make([]string, 0, 17)
 	s = append(s, "&mesos.TaskStatus{")
-	if this.TaskId != nil {
-		s = append(s, "TaskId: "+fmt.Sprintf("%#v", this.TaskId)+",\n")
-	}
+	s = append(s, "TaskID: "+fmt.Sprintf("%#v", this.TaskID)+",\n")
 	if this.State != nil {
 		s = append(s, "State: "+valueToGoStringMesos(this.State, "mesos.TaskState")+",\n")
 	}
@@ -20331,11 +20101,11 @@ func (this *TaskStatus) GoString() string {
 	if this.Data != nil {
 		s = append(s, "Data: "+valueToGoStringMesos(this.Data, "byte")+",\n")
 	}
-	if this.SlaveId != nil {
-		s = append(s, "SlaveId: "+fmt.Sprintf("%#v", this.SlaveId)+",\n")
+	if this.SlaveID != nil {
+		s = append(s, "SlaveID: "+fmt.Sprintf("%#v", this.SlaveID)+",\n")
 	}
-	if this.ExecutorId != nil {
-		s = append(s, "ExecutorId: "+fmt.Sprintf("%#v", this.ExecutorId)+",\n")
+	if this.ExecutorID != nil {
+		s = append(s, "ExecutorID: "+fmt.Sprintf("%#v", this.ExecutorID)+",\n")
 	}
 	if this.Timestamp != nil {
 		s = append(s, "Timestamp: "+valueToGoStringMesos(this.Timestamp, "float64")+",\n")
@@ -20400,12 +20170,8 @@ func (this *Parameter) GoString() string {
 	}
 	s := make([]string, 0, 6)
 	s = append(s, "&mesos.Parameter{")
-	if this.Key != nil {
-		s = append(s, "Key: "+valueToGoStringMesos(this.Key, "string")+",\n")
-	}
-	if this.Value != nil {
-		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
-	}
+	s = append(s, "Key: "+fmt.Sprintf("%#v", this.Key)+",\n")
+	s = append(s, "Value: "+fmt.Sprintf("%#v", this.Value)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -20514,8 +20280,8 @@ func (this *Image_Appc) GoString() string {
 	if this.Name != nil {
 		s = append(s, "Name: "+valueToGoStringMesos(this.Name, "string")+",\n")
 	}
-	if this.Id != nil {
-		s = append(s, "Id: "+valueToGoStringMesos(this.Id, "string")+",\n")
+	if this.ID != nil {
+		s = append(s, "ID: "+valueToGoStringMesos(this.ID, "string")+",\n")
 	}
 	if this.Labels != nil {
 		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
@@ -20776,9 +20542,7 @@ func (this *Label) GoString() string {
 	}
 	s := make([]string, 0, 6)
 	s = append(s, "&mesos.Label{")
-	if this.Key != nil {
-		s = append(s, "Key: "+valueToGoStringMesos(this.Key, "string")+",\n")
-	}
+	s = append(s, "Key: "+fmt.Sprintf("%#v", this.Key)+",\n")
 	if this.Value != nil {
 		s = append(s, "Value: "+valueToGoStringMesos(this.Value, "string")+",\n")
 	}
@@ -21018,14 +20782,10 @@ func (m *FrameworkID) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Value == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
-		i += copy(data[i:], *m.Value)
-	}
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Value)))
+	i += copy(data[i:], m.Value)
 	return i, nil
 }
 
@@ -21044,14 +20804,10 @@ func (m *OfferID) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Value == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
-		i += copy(data[i:], *m.Value)
-	}
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Value)))
+	i += copy(data[i:], m.Value)
 	return i, nil
 }
 
@@ -21070,14 +20826,10 @@ func (m *SlaveID) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Value == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
-		i += copy(data[i:], *m.Value)
-	}
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Value)))
+	i += copy(data[i:], m.Value)
 	return i, nil
 }
 
@@ -21096,14 +20848,10 @@ func (m *TaskID) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Value == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
-		i += copy(data[i:], *m.Value)
-	}
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Value)))
+	i += copy(data[i:], m.Value)
 	return i, nil
 }
 
@@ -21122,14 +20870,10 @@ func (m *ExecutorID) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Value == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
-		i += copy(data[i:], *m.Value)
-	}
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Value)))
+	i += copy(data[i:], m.Value)
 	return i, nil
 }
 
@@ -21393,13 +21137,13 @@ func (m *MachineInfo) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Id == nil {
+	if m.ID == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	} else {
 		data[i] = 0xa
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n4, err := m.Id.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.ID.Size()))
+		n4, err := m.ID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -21438,27 +21182,19 @@ func (m *FrameworkInfo) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.User == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("user")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.User)))
-		i += copy(data[i:], *m.User)
-	}
-	if m.Name == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
-	} else {
-		data[i] = 0x12
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Name)))
-		i += copy(data[i:], *m.Name)
-	}
-	if m.Id != nil {
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.User)))
+	i += copy(data[i:], m.User)
+	data[i] = 0x12
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Name)))
+	i += copy(data[i:], m.Name)
+	if m.ID != nil {
 		data[i] = 0x1a
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n6, err := m.Id.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.ID.Size()))
+		n6, err := m.ID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -21834,18 +21570,14 @@ func (m *ExecutorInfo) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.ExecutorId == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.ExecutorId.Size()))
-		n12, err := m.ExecutorId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n12
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.ExecutorID.Size()))
+	n12, err := m.ExecutorID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n12
 	if m.Data != nil {
 		data[i] = 0x22
 		i++
@@ -21864,23 +21596,19 @@ func (m *ExecutorInfo) MarshalTo(data []byte) (int, error) {
 			i += n
 		}
 	}
-	if m.Command == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("command")
-	} else {
-		data[i] = 0x3a
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.Command.Size()))
-		n13, err := m.Command.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n13
+	data[i] = 0x3a
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.Command.Size()))
+	n13, err := m.Command.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
-	if m.FrameworkId != nil {
+	i += n13
+	if m.FrameworkID != nil {
 		data[i] = 0x42
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.FrameworkId.Size()))
-		n14, err := m.FrameworkId.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.FrameworkID.Size()))
+		n14, err := m.FrameworkID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -21956,21 +21684,13 @@ func (m *MasterInfo) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Id == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
-	}
-	if m.Ip == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("ip")
-	} else {
-		data[i] = 0x10
-		i++
-		i = encodeVarintMesos(data, i, uint64(*m.Ip))
-	}
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.ID)))
+	i += copy(data[i:], m.ID)
+	data[i] = 0x10
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.IP))
 	if m.Port == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("port")
 	} else {
@@ -22056,11 +21776,11 @@ func (m *SlaveInfo) MarshalTo(data []byte) (int, error) {
 			i += n
 		}
 	}
-	if m.Id != nil {
+	if m.ID != nil {
 		data[i] = 0x32
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n20, err := m.Id.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.ID.Size()))
+		n20, err := m.ID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -22691,13 +22411,13 @@ func (m *TrafficControlStatistics) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Id == nil {
+	if m.ID == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	} else {
 		data[i] = 0xa
 		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMesos(data, i, uint64(len(*m.ID)))
+		i += copy(data[i:], *m.ID)
 	}
 	if m.Backlog != nil {
 		data[i] = 0x10
@@ -23646,13 +23366,13 @@ func (m *ResourceUsage_Executor) MarshalTo(data []byte) (int, error) {
 		}
 		i += n48
 	}
-	if m.ContainerId == nil {
+	if m.ContainerID == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
 	} else {
 		data[i] = 0x22
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.ContainerId.Size()))
-		n49, err := m.ContainerId.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.ContainerID.Size()))
+		n49, err := m.ContainerID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -23696,13 +23416,13 @@ func (m *ResourceUsage_Executor_Task) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Name)))
 		i += copy(data[i:], *m.Name)
 	}
-	if m.Id == nil {
+	if m.ID == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	} else {
 		data[i] = 0x12
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n50, err := m.Id.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.ID.Size()))
+		n50, err := m.ID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -24111,11 +23831,11 @@ func (m *Request) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.SlaveId != nil {
+	if m.SlaveID != nil {
 		data[i] = 0xa
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n52, err := m.SlaveId.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.SlaveID.Size()))
+		n52, err := m.SlaveID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -24151,50 +23871,34 @@ func (m *Offer) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Id == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n53, err := m.Id.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n53
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.ID.Size()))
+	n53, err := m.ID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
-	if m.FrameworkId == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
-	} else {
-		data[i] = 0x12
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.FrameworkId.Size()))
-		n54, err := m.FrameworkId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n54
+	i += n53
+	data[i] = 0x12
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.FrameworkID.Size()))
+	n54, err := m.FrameworkID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
-	if m.SlaveId == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("slave_id")
-	} else {
-		data[i] = 0x1a
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n55, err := m.SlaveId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n55
+	i += n54
+	data[i] = 0x1a
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.SlaveID.Size()))
+	n55, err := m.SlaveID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
-	if m.Hostname == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("hostname")
-	} else {
-		data[i] = 0x22
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Hostname)))
-		i += copy(data[i:], *m.Hostname)
-	}
+	i += n55
+	data[i] = 0x22
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Hostname)))
+	i += copy(data[i:], m.Hostname)
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
 			data[i] = 0x2a
@@ -24207,8 +23911,8 @@ func (m *Offer) MarshalTo(data []byte) (int, error) {
 			i += n
 		}
 	}
-	if len(m.ExecutorIds) > 0 {
-		for _, msg := range m.ExecutorIds {
+	if len(m.ExecutorIDs) > 0 {
+		for _, msg := range m.ExecutorIDs {
 			data[i] = 0x32
 			i++
 			i = encodeVarintMesos(data, i, uint64(msg.Size()))
@@ -24494,18 +24198,14 @@ func (m *InverseOffer) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Id == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.Id.Size()))
-		n63, err := m.Id.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n63
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.ID.Size()))
+	n63, err := m.ID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n63
 	if m.Url != nil {
 		data[i] = 0x12
 		i++
@@ -24516,28 +24216,22 @@ func (m *InverseOffer) MarshalTo(data []byte) (int, error) {
 		}
 		i += n64
 	}
-	if m.FrameworkId == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
-	} else {
-		data[i] = 0x1a
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.FrameworkId.Size()))
-		n65, err := m.FrameworkId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n65
+	data[i] = 0x1a
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.FrameworkID.Size()))
+	n65, err := m.FrameworkID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
-	if m.SlaveId != nil {
-		data[i] = 0x22
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n66, err := m.SlaveId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n66
+	i += n65
+	data[i] = 0x22
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.SlaveID.Size()))
+	n66, err := m.SlaveID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n66
 	if m.Unavailability == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("unavailability")
 	} else {
@@ -24580,38 +24274,26 @@ func (m *TaskInfo) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Name == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Name)))
-		i += copy(data[i:], *m.Name)
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Name)))
+	i += copy(data[i:], m.Name)
+	data[i] = 0x12
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.TaskID.Size()))
+	n68, err := m.TaskID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
-	if m.TaskId == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
-	} else {
-		data[i] = 0x12
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.TaskId.Size()))
-		n68, err := m.TaskId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n68
+	i += n68
+	data[i] = 0x1a
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.SlaveID.Size()))
+	n69, err := m.SlaveID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
-	if m.SlaveId == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("slave_id")
-	} else {
-		data[i] = 0x1a
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n69, err := m.SlaveId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n69
-	}
+	i += n69
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
 			data[i] = 0x22
@@ -24718,60 +24400,48 @@ func (m *Task) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Name == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Name)))
-		i += copy(data[i:], *m.Name)
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Name)))
+	i += copy(data[i:], m.Name)
+	data[i] = 0x12
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.TaskID.Size()))
+	n77, err := m.TaskID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
-	if m.TaskId == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
-	} else {
-		data[i] = 0x12
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.TaskId.Size()))
-		n77, err := m.TaskId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n77
-	}
-	if m.FrameworkId == nil {
+	i += n77
+	if m.FrameworkID == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
 	} else {
 		data[i] = 0x1a
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.FrameworkId.Size()))
-		n78, err := m.FrameworkId.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.FrameworkID.Size()))
+		n78, err := m.FrameworkID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n78
 	}
-	if m.ExecutorId != nil {
+	if m.ExecutorID != nil {
 		data[i] = 0x22
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.ExecutorId.Size()))
-		n79, err := m.ExecutorId.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.ExecutorID.Size()))
+		n79, err := m.ExecutorID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n79
 	}
-	if m.SlaveId == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("slave_id")
-	} else {
-		data[i] = 0x2a
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n80, err := m.SlaveId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n80
+	data[i] = 0x2a
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.SlaveID.Size()))
+	n80, err := m.SlaveID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n80
 	if m.State == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
 	} else {
@@ -24868,18 +24538,14 @@ func (m *TaskStatus) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.TaskId == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(m.TaskId.Size()))
-		n84, err := m.TaskId.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n84
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(m.TaskID.Size()))
+	n84, err := m.TaskID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n84
 	if m.State == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
 	} else {
@@ -24899,11 +24565,11 @@ func (m *TaskStatus) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Message)))
 		i += copy(data[i:], *m.Message)
 	}
-	if m.SlaveId != nil {
+	if m.SlaveID != nil {
 		data[i] = 0x2a
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.SlaveId.Size()))
-		n85, err := m.SlaveId.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.SlaveID.Size()))
+		n85, err := m.SlaveID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -24914,11 +24580,11 @@ func (m *TaskStatus) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeFixed64Mesos(data, i, uint64(math.Float64bits(float64(*m.Timestamp))))
 	}
-	if m.ExecutorId != nil {
+	if m.ExecutorID != nil {
 		data[i] = 0x3a
 		i++
-		i = encodeVarintMesos(data, i, uint64(m.ExecutorId.Size()))
-		n86, err := m.ExecutorId.MarshalTo(data[i:])
+		i = encodeVarintMesos(data, i, uint64(m.ExecutorID.Size()))
+		n86, err := m.ExecutorID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
@@ -25075,22 +24741,14 @@ func (m *Parameter) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Key == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("key")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Key)))
-		i += copy(data[i:], *m.Key)
-	}
-	if m.Value == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
-	} else {
-		data[i] = 0x12
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Value)))
-		i += copy(data[i:], *m.Value)
-	}
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Key)))
+	i += copy(data[i:], m.Key)
+	data[i] = 0x12
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Value)))
+	i += copy(data[i:], m.Value)
 	return i, nil
 }
 
@@ -25340,11 +24998,11 @@ func (m *Image_Appc) MarshalTo(data []byte) (int, error) {
 		i = encodeVarintMesos(data, i, uint64(len(*m.Name)))
 		i += copy(data[i:], *m.Name)
 	}
-	if m.Id != nil {
+	if m.ID != nil {
 		data[i] = 0x12
 		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Id)))
-		i += copy(data[i:], *m.Id)
+		i = encodeVarintMesos(data, i, uint64(len(*m.ID)))
+		i += copy(data[i:], *m.ID)
 	}
 	if m.Labels != nil {
 		data[i] = 0x1a
@@ -25978,14 +25636,10 @@ func (m *Label) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Key == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("key")
-	} else {
-		data[i] = 0xa
-		i++
-		i = encodeVarintMesos(data, i, uint64(len(*m.Key)))
-		i += copy(data[i:], *m.Key)
-	}
+	data[i] = 0xa
+	i++
+	i = encodeVarintMesos(data, i, uint64(len(m.Key)))
+	i += copy(data[i:], m.Key)
 	if m.Value != nil {
 		data[i] = 0x12
 		i++
@@ -26451,7 +26105,7 @@ func encodeVarintMesos(data []byte, offset int, v uint64) int {
 func NewPopulatedFrameworkID(r randyMesos, easy bool) *FrameworkID {
 	this := &FrameworkID{}
 	v1 := randStringMesos(r)
-	this.Value = &v1
+	this.Value = v1
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -26460,7 +26114,7 @@ func NewPopulatedFrameworkID(r randyMesos, easy bool) *FrameworkID {
 func NewPopulatedOfferID(r randyMesos, easy bool) *OfferID {
 	this := &OfferID{}
 	v2 := randStringMesos(r)
-	this.Value = &v2
+	this.Value = v2
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -26469,7 +26123,7 @@ func NewPopulatedOfferID(r randyMesos, easy bool) *OfferID {
 func NewPopulatedSlaveID(r randyMesos, easy bool) *SlaveID {
 	this := &SlaveID{}
 	v3 := randStringMesos(r)
-	this.Value = &v3
+	this.Value = v3
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -26478,7 +26132,7 @@ func NewPopulatedSlaveID(r randyMesos, easy bool) *SlaveID {
 func NewPopulatedTaskID(r randyMesos, easy bool) *TaskID {
 	this := &TaskID{}
 	v4 := randStringMesos(r)
-	this.Value = &v4
+	this.Value = v4
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -26487,7 +26141,7 @@ func NewPopulatedTaskID(r randyMesos, easy bool) *TaskID {
 func NewPopulatedExecutorID(r randyMesos, easy bool) *ExecutorID {
 	this := &ExecutorID{}
 	v5 := randStringMesos(r)
-	this.Value = &v5
+	this.Value = v5
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -26599,7 +26253,7 @@ func NewPopulatedMachineID(r randyMesos, easy bool) *MachineID {
 
 func NewPopulatedMachineInfo(r randyMesos, easy bool) *MachineInfo {
 	this := &MachineInfo{}
-	this.Id = NewPopulatedMachineID(r, easy)
+	this.ID = NewPopulatedMachineID(r, easy)
 	if r.Intn(10) != 0 {
 		v18 := MachineInfo_Mode([]int32{1, 2, 3}[r.Intn(3)])
 		this.Mode = &v18
@@ -26615,11 +26269,11 @@ func NewPopulatedMachineInfo(r randyMesos, easy bool) *MachineInfo {
 func NewPopulatedFrameworkInfo(r randyMesos, easy bool) *FrameworkInfo {
 	this := &FrameworkInfo{}
 	v19 := randStringMesos(r)
-	this.User = &v19
+	this.User = v19
 	v20 := randStringMesos(r)
-	this.Name = &v20
+	this.Name = v20
 	if r.Intn(10) != 0 {
-		this.Id = NewPopulatedFrameworkID(r, easy)
+		this.ID = NewPopulatedFrameworkID(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		v21 := float64(r.Float64())
@@ -26812,7 +26466,8 @@ func NewPopulatedCommandInfo_URI(r randyMesos, easy bool) *CommandInfo_URI {
 
 func NewPopulatedExecutorInfo(r randyMesos, easy bool) *ExecutorInfo {
 	this := &ExecutorInfo{}
-	this.ExecutorId = NewPopulatedExecutorID(r, easy)
+	v47a := NewPopulatedExecutorID(r, easy)
+	this.ExecutorID = *v47a
 	if r.Intn(10) != 0 {
 		v47 := r.Intn(100)
 		this.Data = make([]byte, v47)
@@ -26828,9 +26483,10 @@ func NewPopulatedExecutorInfo(r randyMesos, easy bool) *ExecutorInfo {
 			this.Resources[i] = *v48a
 		}
 	}
-	this.Command = NewPopulatedCommandInfo(r, easy)
+	v49a := NewPopulatedCommandInfo(r, easy)
+	this.Command = *v49a
 	if r.Intn(10) != 0 {
-		this.FrameworkId = NewPopulatedFrameworkID(r, easy)
+		this.FrameworkID = NewPopulatedFrameworkID(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		v49 := randStringMesos(r)
@@ -26860,9 +26516,9 @@ func NewPopulatedExecutorInfo(r randyMesos, easy bool) *ExecutorInfo {
 func NewPopulatedMasterInfo(r randyMesos, easy bool) *MasterInfo {
 	this := &MasterInfo{}
 	v51 := randStringMesos(r)
-	this.Id = &v51
+	this.ID = v51
 	v52 := uint32(r.Uint32())
-	this.Ip = &v52
+	this.IP = v52
 	v53 := uint32(r.Uint32())
 	this.Port = &v53
 	if r.Intn(10) != 0 {
@@ -26905,7 +26561,7 @@ func NewPopulatedSlaveInfo(r randyMesos, easy bool) *SlaveInfo {
 		}
 	}
 	if r.Intn(10) != 0 {
-		this.Id = NewPopulatedSlaveID(r, easy)
+		this.ID = NewPopulatedSlaveID(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		v60 := bool(bool(r.Intn(2) == 0))
@@ -27147,7 +26803,7 @@ func NewPopulatedResource_RevocableInfo(r randyMesos, easy bool) *Resource_Revoc
 func NewPopulatedTrafficControlStatistics(r randyMesos, easy bool) *TrafficControlStatistics {
 	this := &TrafficControlStatistics{}
 	v80 := randStringMesos(r)
-	this.Id = &v80
+	this.ID = &v80
 	if r.Intn(10) != 0 {
 		v81 := uint64(uint64(r.Uint32()))
 		this.Backlog = &v81
@@ -27962,7 +27618,7 @@ func NewPopulatedResourceUsage_Executor(r randyMesos, easy bool) *ResourceUsage_
 	if r.Intn(10) != 0 {
 		this.Statistics = NewPopulatedResourceStatistics(r, easy)
 	}
-	this.ContainerId = NewPopulatedContainerID(r, easy)
+	this.ContainerID = NewPopulatedContainerID(r, easy)
 	if r.Intn(10) != 0 {
 		v202 := r.Intn(5)
 		this.Tasks = make([]*ResourceUsage_Executor_Task, v202)
@@ -27979,7 +27635,7 @@ func NewPopulatedResourceUsage_Executor_Task(r randyMesos, easy bool) *ResourceU
 	this := &ResourceUsage_Executor_Task{}
 	v203 := randStringMesos(r)
 	this.Name = &v203
-	this.Id = NewPopulatedTaskID(r, easy)
+	this.ID = NewPopulatedTaskID(r, easy)
 	if r.Intn(10) != 0 {
 		v204 := r.Intn(5)
 		this.Resources = make([]Resource, v204)
@@ -28226,7 +27882,7 @@ func NewPopulatedPerfStatistics(r randyMesos, easy bool) *PerfStatistics {
 func NewPopulatedRequest(r randyMesos, easy bool) *Request {
 	this := &Request{}
 	if r.Intn(10) != 0 {
-		this.SlaveId = NewPopulatedSlaveID(r, easy)
+		this.SlaveID = NewPopulatedSlaveID(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		v258 := r.Intn(5)
@@ -28243,11 +27899,14 @@ func NewPopulatedRequest(r randyMesos, easy bool) *Request {
 
 func NewPopulatedOffer(r randyMesos, easy bool) *Offer {
 	this := &Offer{}
-	this.Id = NewPopulatedOfferID(r, easy)
-	this.FrameworkId = NewPopulatedFrameworkID(r, easy)
-	this.SlaveId = NewPopulatedSlaveID(r, easy)
+	v259a := NewPopulatedOfferID(r, easy)
+	this.ID = *v259a
+	v259b := NewPopulatedFrameworkID(r, easy)
+	this.FrameworkID = *v259b
+	v259c := NewPopulatedSlaveID(r, easy)
+	this.SlaveID = *v259c
 	v259 := randStringMesos(r)
-	this.Hostname = &v259
+	this.Hostname = v259
 	if r.Intn(10) != 0 {
 		v260 := r.Intn(5)
 		this.Resources = make([]Resource, v260)
@@ -28258,16 +27917,18 @@ func NewPopulatedOffer(r randyMesos, easy bool) *Offer {
 	}
 	if r.Intn(10) != 0 {
 		v261 := r.Intn(5)
-		this.ExecutorIds = make([]*ExecutorID, v261)
+		this.ExecutorIDs = make([]ExecutorID, v261)
 		for i := 0; i < v261; i++ {
-			this.ExecutorIds[i] = NewPopulatedExecutorID(r, easy)
+			v261a := NewPopulatedExecutorID(r, easy)
+			this.ExecutorIDs[i] = *v261a
 		}
 	}
 	if r.Intn(10) != 0 {
 		v262 := r.Intn(5)
-		this.Attributes = make([]*Attribute, v262)
+		this.Attributes = make([]Attribute, v262)
 		for i := 0; i < v262; i++ {
-			this.Attributes[i] = NewPopulatedAttribute(r, easy)
+			v262a := NewPopulatedAttribute(r, easy)
+			this.Attributes[i] = *v262a
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -28381,13 +28042,16 @@ func NewPopulatedOffer_Operation_Destroy(r randyMesos, easy bool) *Offer_Operati
 
 func NewPopulatedInverseOffer(r randyMesos, easy bool) *InverseOffer {
 	this := &InverseOffer{}
-	this.Id = NewPopulatedOfferID(r, easy)
+	v269a := NewPopulatedOfferID(r, easy)
+	this.ID = *v269a
 	if r.Intn(10) != 0 {
 		this.Url = NewPopulatedURL(r, easy)
 	}
-	this.FrameworkId = NewPopulatedFrameworkID(r, easy)
+	v269b := NewPopulatedFrameworkID(r, easy)
+	this.FrameworkID = *v269b
 	if r.Intn(10) != 0 {
-		this.SlaveId = NewPopulatedSlaveID(r, easy)
+		v269c := NewPopulatedSlaveID(r, easy)
+		this.SlaveID = *v269c
 	}
 	this.Unavailability = NewPopulatedUnavailability(r, easy)
 	if r.Intn(10) != 0 {
@@ -28406,9 +28070,11 @@ func NewPopulatedInverseOffer(r randyMesos, easy bool) *InverseOffer {
 func NewPopulatedTaskInfo(r randyMesos, easy bool) *TaskInfo {
 	this := &TaskInfo{}
 	v270 := randStringMesos(r)
-	this.Name = &v270
-	this.TaskId = NewPopulatedTaskID(r, easy)
-	this.SlaveId = NewPopulatedSlaveID(r, easy)
+	this.Name = v270
+	v270a := NewPopulatedTaskID(r, easy)
+	this.TaskID = *v270a
+	v270b := NewPopulatedSlaveID(r, easy)
+	this.SlaveID = *v270b
 	if r.Intn(10) != 0 {
 		v271 := r.Intn(5)
 		this.Resources = make([]Resource, v271)
@@ -28453,13 +28119,15 @@ func NewPopulatedTaskInfo(r randyMesos, easy bool) *TaskInfo {
 func NewPopulatedTask(r randyMesos, easy bool) *Task {
 	this := &Task{}
 	v273 := randStringMesos(r)
-	this.Name = &v273
-	this.TaskId = NewPopulatedTaskID(r, easy)
-	this.FrameworkId = NewPopulatedFrameworkID(r, easy)
+	this.Name = v273
+	v273a := NewPopulatedTaskID(r, easy)
+	this.TaskID = *v273a
+	this.FrameworkID = NewPopulatedFrameworkID(r, easy)
 	if r.Intn(10) != 0 {
-		this.ExecutorId = NewPopulatedExecutorID(r, easy)
+		this.ExecutorID = NewPopulatedExecutorID(r, easy)
 	}
-	this.SlaveId = NewPopulatedSlaveID(r, easy)
+	v273b := NewPopulatedSlaveID(r, easy)
+	this.SlaveID = *v273b
 	v274 := TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 5, 7}[r.Intn(9)])
 	this.State = &v274
 	if r.Intn(10) != 0 {
@@ -28508,7 +28176,8 @@ func NewPopulatedTask(r randyMesos, easy bool) *Task {
 
 func NewPopulatedTaskStatus(r randyMesos, easy bool) *TaskStatus {
 	this := &TaskStatus{}
-	this.TaskId = NewPopulatedTaskID(r, easy)
+	v280a := NewPopulatedTaskID(r, easy)
+	this.TaskID = *v280a
 	v280 := TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 5, 7}[r.Intn(9)])
 	this.State = &v280
 	if r.Intn(10) != 0 {
@@ -28523,7 +28192,7 @@ func NewPopulatedTaskStatus(r randyMesos, easy bool) *TaskStatus {
 		this.Message = &v282
 	}
 	if r.Intn(10) != 0 {
-		this.SlaveId = NewPopulatedSlaveID(r, easy)
+		this.SlaveID = NewPopulatedSlaveID(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		v283 := float64(r.Float64())
@@ -28533,7 +28202,7 @@ func NewPopulatedTaskStatus(r randyMesos, easy bool) *TaskStatus {
 		this.Timestamp = &v283
 	}
 	if r.Intn(10) != 0 {
-		this.ExecutorId = NewPopulatedExecutorID(r, easy)
+		this.ExecutorID = NewPopulatedExecutorID(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		v284 := bool(bool(r.Intn(2) == 0))
@@ -28607,9 +28276,9 @@ func NewPopulatedEnvironment_Variable(r randyMesos, easy bool) *Environment_Vari
 func NewPopulatedParameter(r randyMesos, easy bool) *Parameter {
 	this := &Parameter{}
 	v292 := randStringMesos(r)
-	this.Key = &v292
+	this.Key = v292
 	v293 := randStringMesos(r)
-	this.Value = &v293
+	this.Value = v293
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -28726,7 +28395,7 @@ func NewPopulatedImage_Appc(r randyMesos, easy bool) *Image_Appc {
 	this.Name = &v306
 	if r.Intn(10) != 0 {
 		v307 := randStringMesos(r)
-		this.Id = &v307
+		this.ID = &v307
 	}
 	if r.Intn(10) != 0 {
 		this.Labels = NewPopulatedLabels(r, easy)
@@ -28985,9 +28654,10 @@ func NewPopulatedLabels(r randyMesos, easy bool) *Labels {
 	this := &Labels{}
 	if r.Intn(10) != 0 {
 		v337 := r.Intn(5)
-		this.Labels = make([]*Label, v337)
+		this.Labels = make([]Label, v337)
 		for i := 0; i < v337; i++ {
-			this.Labels[i] = NewPopulatedLabel(r, easy)
+			v337a := NewPopulatedLabel(r, easy)
+			this.Labels[i] = *v337a
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -28998,7 +28668,7 @@ func NewPopulatedLabels(r randyMesos, easy bool) *Labels {
 func NewPopulatedLabel(r randyMesos, easy bool) *Label {
 	this := &Label{}
 	v338 := randStringMesos(r)
-	this.Key = &v338
+	this.Key = v338
 	if r.Intn(10) != 0 {
 		v339 := randStringMesos(r)
 		this.Value = &v339
@@ -29297,50 +28967,40 @@ func encodeVarintPopulateMesos(data []byte, v uint64) []byte {
 func (m *FrameworkID) Size() (n int) {
 	var l int
 	_ = l
-	if m.Value != nil {
-		l = len(*m.Value)
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = len(m.Value)
+	n += 1 + l + sovMesos(uint64(l))
 	return n
 }
 
 func (m *OfferID) Size() (n int) {
 	var l int
 	_ = l
-	if m.Value != nil {
-		l = len(*m.Value)
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = len(m.Value)
+	n += 1 + l + sovMesos(uint64(l))
 	return n
 }
 
 func (m *SlaveID) Size() (n int) {
 	var l int
 	_ = l
-	if m.Value != nil {
-		l = len(*m.Value)
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = len(m.Value)
+	n += 1 + l + sovMesos(uint64(l))
 	return n
 }
 
 func (m *TaskID) Size() (n int) {
 	var l int
 	_ = l
-	if m.Value != nil {
-		l = len(*m.Value)
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = len(m.Value)
+	n += 1 + l + sovMesos(uint64(l))
 	return n
 }
 
 func (m *ExecutorID) Size() (n int) {
 	var l int
 	_ = l
-	if m.Value != nil {
-		l = len(*m.Value)
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = len(m.Value)
+	n += 1 + l + sovMesos(uint64(l))
 	return n
 }
 
@@ -29448,8 +29108,8 @@ func (m *MachineID) Size() (n int) {
 func (m *MachineInfo) Size() (n int) {
 	var l int
 	_ = l
-	if m.Id != nil {
-		l = m.Id.Size()
+	if m.ID != nil {
+		l = m.ID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.Mode != nil {
@@ -29465,16 +29125,12 @@ func (m *MachineInfo) Size() (n int) {
 func (m *FrameworkInfo) Size() (n int) {
 	var l int
 	_ = l
-	if m.User != nil {
-		l = len(*m.User)
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.Name != nil {
-		l = len(*m.Name)
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.Id != nil {
-		l = m.Id.Size()
+	l = len(m.User)
+	n += 1 + l + sovMesos(uint64(l))
+	l = len(m.Name)
+	n += 1 + l + sovMesos(uint64(l))
+	if m.ID != nil {
+		l = m.ID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.FailoverTimeout != nil {
@@ -29637,10 +29293,8 @@ func (m *CommandInfo_URI) Size() (n int) {
 func (m *ExecutorInfo) Size() (n int) {
 	var l int
 	_ = l
-	if m.ExecutorId != nil {
-		l = m.ExecutorId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = m.ExecutorID.Size()
+	n += 1 + l + sovMesos(uint64(l))
 	if m.Data != nil {
 		l = len(m.Data)
 		n += 1 + l + sovMesos(uint64(l))
@@ -29651,12 +29305,10 @@ func (m *ExecutorInfo) Size() (n int) {
 			n += 1 + l + sovMesos(uint64(l))
 		}
 	}
-	if m.Command != nil {
-		l = m.Command.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.FrameworkId != nil {
-		l = m.FrameworkId.Size()
+	l = m.Command.Size()
+	n += 1 + l + sovMesos(uint64(l))
+	if m.FrameworkID != nil {
+		l = m.FrameworkID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.Name != nil {
@@ -29689,13 +29341,9 @@ func (m *ExecutorInfo) Size() (n int) {
 func (m *MasterInfo) Size() (n int) {
 	var l int
 	_ = l
-	if m.Id != nil {
-		l = len(*m.Id)
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.Ip != nil {
-		n += 1 + sovMesos(uint64(*m.Ip))
-	}
+	l = len(m.ID)
+	n += 1 + l + sovMesos(uint64(l))
+	n += 1 + sovMesos(uint64(m.IP))
 	if m.Port != nil {
 		n += 1 + sovMesos(uint64(*m.Port))
 	}
@@ -29737,8 +29385,8 @@ func (m *SlaveInfo) Size() (n int) {
 			n += 1 + l + sovMesos(uint64(l))
 		}
 	}
-	if m.Id != nil {
-		l = m.Id.Size()
+	if m.ID != nil {
+		l = m.ID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.Checkpoint != nil {
@@ -29982,8 +29630,8 @@ func (m *Resource_RevocableInfo) Size() (n int) {
 func (m *TrafficControlStatistics) Size() (n int) {
 	var l int
 	_ = l
-	if m.Id != nil {
-		l = len(*m.Id)
+	if m.ID != nil {
+		l = len(*m.ID)
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.Backlog != nil {
@@ -30441,8 +30089,8 @@ func (m *ResourceUsage_Executor) Size() (n int) {
 		l = m.Statistics.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.ContainerId != nil {
-		l = m.ContainerId.Size()
+	if m.ContainerID != nil {
+		l = m.ContainerID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if len(m.Tasks) > 0 {
@@ -30461,8 +30109,8 @@ func (m *ResourceUsage_Executor_Task) Size() (n int) {
 		l = len(*m.Name)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.Id != nil {
-		l = m.Id.Size()
+	if m.ID != nil {
+		l = m.ID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if len(m.Resources) > 0 {
@@ -30646,8 +30294,8 @@ func (m *PerfStatistics) Size() (n int) {
 func (m *Request) Size() (n int) {
 	var l int
 	_ = l
-	if m.SlaveId != nil {
-		l = m.SlaveId.Size()
+	if m.SlaveID != nil {
+		l = m.SlaveID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if len(m.Resources) > 0 {
@@ -30662,30 +30310,22 @@ func (m *Request) Size() (n int) {
 func (m *Offer) Size() (n int) {
 	var l int
 	_ = l
-	if m.Id != nil {
-		l = m.Id.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.FrameworkId != nil {
-		l = m.FrameworkId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.SlaveId != nil {
-		l = m.SlaveId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.Hostname != nil {
-		l = len(*m.Hostname)
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = m.ID.Size()
+	n += 1 + l + sovMesos(uint64(l))
+	l = m.FrameworkID.Size()
+	n += 1 + l + sovMesos(uint64(l))
+	l = m.SlaveID.Size()
+	n += 1 + l + sovMesos(uint64(l))
+	l = len(m.Hostname)
+	n += 1 + l + sovMesos(uint64(l))
 	if len(m.Resources) > 0 {
 		for _, e := range m.Resources {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
 	}
-	if len(m.ExecutorIds) > 0 {
-		for _, e := range m.ExecutorIds {
+	if len(m.ExecutorIDs) > 0 {
+		for _, e := range m.ExecutorIDs {
 			l = e.Size()
 			n += 1 + l + sovMesos(uint64(l))
 		}
@@ -30799,22 +30439,16 @@ func (m *Offer_Operation_Destroy) Size() (n int) {
 func (m *InverseOffer) Size() (n int) {
 	var l int
 	_ = l
-	if m.Id != nil {
-		l = m.Id.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = m.ID.Size()
+	n += 1 + l + sovMesos(uint64(l))
 	if m.Url != nil {
 		l = m.Url.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.FrameworkId != nil {
-		l = m.FrameworkId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.SlaveId != nil {
-		l = m.SlaveId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = m.FrameworkID.Size()
+	n += 1 + l + sovMesos(uint64(l))
+	l = m.SlaveID.Size()
+	n += 1 + l + sovMesos(uint64(l))
 	if m.Unavailability != nil {
 		l = m.Unavailability.Size()
 		n += 1 + l + sovMesos(uint64(l))
@@ -30831,18 +30465,12 @@ func (m *InverseOffer) Size() (n int) {
 func (m *TaskInfo) Size() (n int) {
 	var l int
 	_ = l
-	if m.Name != nil {
-		l = len(*m.Name)
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.TaskId != nil {
-		l = m.TaskId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.SlaveId != nil {
-		l = m.SlaveId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = len(m.Name)
+	n += 1 + l + sovMesos(uint64(l))
+	l = m.TaskID.Size()
+	n += 1 + l + sovMesos(uint64(l))
+	l = m.SlaveID.Size()
+	n += 1 + l + sovMesos(uint64(l))
 	if len(m.Resources) > 0 {
 		for _, e := range m.Resources {
 			l = e.Size()
@@ -30887,26 +30515,20 @@ func (m *TaskInfo) Size() (n int) {
 func (m *Task) Size() (n int) {
 	var l int
 	_ = l
-	if m.Name != nil {
-		l = len(*m.Name)
+	l = len(m.Name)
+	n += 1 + l + sovMesos(uint64(l))
+	l = m.TaskID.Size()
+	n += 1 + l + sovMesos(uint64(l))
+	if m.FrameworkID != nil {
+		l = m.FrameworkID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.TaskId != nil {
-		l = m.TaskId.Size()
+	if m.ExecutorID != nil {
+		l = m.ExecutorID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.FrameworkId != nil {
-		l = m.FrameworkId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.ExecutorId != nil {
-		l = m.ExecutorId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.SlaveId != nil {
-		l = m.SlaveId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = m.SlaveID.Size()
+	n += 1 + l + sovMesos(uint64(l))
 	if m.State != nil {
 		n += 1 + sovMesos(uint64(*m.State))
 	}
@@ -30951,10 +30573,8 @@ func (m *Task) Size() (n int) {
 func (m *TaskStatus) Size() (n int) {
 	var l int
 	_ = l
-	if m.TaskId != nil {
-		l = m.TaskId.Size()
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = m.TaskID.Size()
+	n += 1 + l + sovMesos(uint64(l))
 	if m.State != nil {
 		n += 1 + sovMesos(uint64(*m.State))
 	}
@@ -30966,15 +30586,15 @@ func (m *TaskStatus) Size() (n int) {
 		l = len(*m.Message)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.SlaveId != nil {
-		l = m.SlaveId.Size()
+	if m.SlaveID != nil {
+		l = m.SlaveID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.Timestamp != nil {
 		n += 9
 	}
-	if m.ExecutorId != nil {
-		l = m.ExecutorId.Size()
+	if m.ExecutorID != nil {
+		l = m.ExecutorID.Size()
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.Healthy != nil {
@@ -31039,14 +30659,10 @@ func (m *Environment_Variable) Size() (n int) {
 func (m *Parameter) Size() (n int) {
 	var l int
 	_ = l
-	if m.Key != nil {
-		l = len(*m.Key)
-		n += 1 + l + sovMesos(uint64(l))
-	}
-	if m.Value != nil {
-		l = len(*m.Value)
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = len(m.Key)
+	n += 1 + l + sovMesos(uint64(l))
+	l = len(m.Value)
+	n += 1 + l + sovMesos(uint64(l))
 	return n
 }
 
@@ -31149,8 +30765,8 @@ func (m *Image_Appc) Size() (n int) {
 		l = len(*m.Name)
 		n += 1 + l + sovMesos(uint64(l))
 	}
-	if m.Id != nil {
-		l = len(*m.Id)
+	if m.ID != nil {
+		l = len(*m.ID)
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	if m.Labels != nil {
@@ -31414,10 +31030,8 @@ func (m *Labels) Size() (n int) {
 func (m *Label) Size() (n int) {
 	var l int
 	_ = l
-	if m.Key != nil {
-		l = len(*m.Key)
-		n += 1 + l + sovMesos(uint64(l))
-	}
+	l = len(m.Key)
+	n += 1 + l + sovMesos(uint64(l))
 	if m.Value != nil {
 		l = len(*m.Value)
 		n += 1 + l + sovMesos(uint64(l))
@@ -31641,7 +31255,7 @@ func (this *FrameworkID) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FrameworkID{`,
-		`Value:` + valueToStringMesos(this.Value) + `,`,
+		`Value:` + fmt.Sprintf("%v", this.Value) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -31651,7 +31265,7 @@ func (this *OfferID) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&OfferID{`,
-		`Value:` + valueToStringMesos(this.Value) + `,`,
+		`Value:` + fmt.Sprintf("%v", this.Value) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -31661,7 +31275,7 @@ func (this *SlaveID) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&SlaveID{`,
-		`Value:` + valueToStringMesos(this.Value) + `,`,
+		`Value:` + fmt.Sprintf("%v", this.Value) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -31671,7 +31285,7 @@ func (this *TaskID) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&TaskID{`,
-		`Value:` + valueToStringMesos(this.Value) + `,`,
+		`Value:` + fmt.Sprintf("%v", this.Value) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -31681,7 +31295,7 @@ func (this *ExecutorID) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&ExecutorID{`,
-		`Value:` + valueToStringMesos(this.Value) + `,`,
+		`Value:` + fmt.Sprintf("%v", this.Value) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -31769,7 +31383,7 @@ func (this *MachineInfo) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&MachineInfo{`,
-		`Id:` + strings.Replace(fmt.Sprintf("%v", this.Id), "MachineID", "MachineID", 1) + `,`,
+		`ID:` + strings.Replace(fmt.Sprintf("%v", this.ID), "MachineID", "MachineID", 1) + `,`,
 		`Mode:` + valueToStringMesos(this.Mode) + `,`,
 		`Unavailability:` + strings.Replace(fmt.Sprintf("%v", this.Unavailability), "Unavailability", "Unavailability", 1) + `,`,
 		`}`,
@@ -31781,9 +31395,9 @@ func (this *FrameworkInfo) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FrameworkInfo{`,
-		`User:` + valueToStringMesos(this.User) + `,`,
-		`Name:` + valueToStringMesos(this.Name) + `,`,
-		`Id:` + strings.Replace(fmt.Sprintf("%v", this.Id), "FrameworkID", "FrameworkID", 1) + `,`,
+		`User:` + fmt.Sprintf("%v", this.User) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`ID:` + strings.Replace(fmt.Sprintf("%v", this.ID), "FrameworkID", "FrameworkID", 1) + `,`,
 		`FailoverTimeout:` + valueToStringMesos(this.FailoverTimeout) + `,`,
 		`Checkpoint:` + valueToStringMesos(this.Checkpoint) + `,`,
 		`Role:` + valueToStringMesos(this.Role) + `,`,
@@ -31878,11 +31492,11 @@ func (this *ExecutorInfo) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&ExecutorInfo{`,
-		`ExecutorId:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
+		`ExecutorID:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorID), "ExecutorID", "ExecutorID", 1) + `,`,
 		`Data:` + valueToStringMesos(this.Data) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
 		`Command:` + strings.Replace(fmt.Sprintf("%v", this.Command), "CommandInfo", "CommandInfo", 1) + `,`,
-		`FrameworkId:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
+		`FrameworkID:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkID), "FrameworkID", "FrameworkID", 1) + `,`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
 		`Source:` + valueToStringMesos(this.Source) + `,`,
 		`Container:` + strings.Replace(fmt.Sprintf("%v", this.Container), "ContainerInfo", "ContainerInfo", 1) + `,`,
@@ -31898,8 +31512,8 @@ func (this *MasterInfo) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&MasterInfo{`,
-		`Id:` + valueToStringMesos(this.Id) + `,`,
-		`Ip:` + valueToStringMesos(this.Ip) + `,`,
+		`ID:` + fmt.Sprintf("%v", this.ID) + `,`,
+		`IP:` + fmt.Sprintf("%v", this.IP) + `,`,
 		`Port:` + valueToStringMesos(this.Port) + `,`,
 		`Pid:` + valueToStringMesos(this.Pid) + `,`,
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
@@ -31917,7 +31531,7 @@ func (this *SlaveInfo) String() string {
 		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
 		`Attributes:` + strings.Replace(fmt.Sprintf("%v", this.Attributes), "Attribute", "Attribute", 1) + `,`,
-		`Id:` + strings.Replace(fmt.Sprintf("%v", this.Id), "SlaveID", "SlaveID", 1) + `,`,
+		`ID:` + strings.Replace(fmt.Sprintf("%v", this.ID), "SlaveID", "SlaveID", 1) + `,`,
 		`Checkpoint:` + valueToStringMesos(this.Checkpoint) + `,`,
 		`Port:` + valueToStringMesos(this.Port) + `,`,
 		`}`,
@@ -32102,7 +31716,7 @@ func (this *TrafficControlStatistics) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&TrafficControlStatistics{`,
-		`Id:` + valueToStringMesos(this.Id) + `,`,
+		`ID:` + valueToStringMesos(this.ID) + `,`,
 		`Backlog:` + valueToStringMesos(this.Backlog) + `,`,
 		`Bytes:` + valueToStringMesos(this.Bytes) + `,`,
 		`Drops:` + valueToStringMesos(this.Drops) + `,`,
@@ -32304,7 +31918,7 @@ func (this *ResourceUsage_Executor) String() string {
 		`ExecutorInfo:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorInfo), "ExecutorInfo", "ExecutorInfo", 1) + `,`,
 		`Allocated:` + strings.Replace(fmt.Sprintf("%v", this.Allocated), "Resource", "Resource", 1) + `,`,
 		`Statistics:` + strings.Replace(fmt.Sprintf("%v", this.Statistics), "ResourceStatistics", "ResourceStatistics", 1) + `,`,
-		`ContainerId:` + strings.Replace(fmt.Sprintf("%v", this.ContainerId), "ContainerID", "ContainerID", 1) + `,`,
+		`ContainerID:` + strings.Replace(fmt.Sprintf("%v", this.ContainerID), "ContainerID", "ContainerID", 1) + `,`,
 		`Tasks:` + strings.Replace(fmt.Sprintf("%v", this.Tasks), "ResourceUsage_Executor_Task", "ResourceUsage_Executor_Task", 1) + `,`,
 		`}`,
 	}, "")
@@ -32316,7 +31930,7 @@ func (this *ResourceUsage_Executor_Task) String() string {
 	}
 	s := strings.Join([]string{`&ResourceUsage_Executor_Task{`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
-		`Id:` + strings.Replace(fmt.Sprintf("%v", this.Id), "TaskID", "TaskID", 1) + `,`,
+		`ID:` + strings.Replace(fmt.Sprintf("%v", this.ID), "TaskID", "TaskID", 1) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
 		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Labels", "Labels", 1) + `,`,
 		`}`,
@@ -32390,7 +32004,7 @@ func (this *Request) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Request{`,
-		`SlaveId:` + strings.Replace(fmt.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`SlaveID:` + strings.Replace(fmt.Sprintf("%v", this.SlaveID), "SlaveID", "SlaveID", 1) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
 		`}`,
 	}, "")
@@ -32401,12 +32015,12 @@ func (this *Offer) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Offer{`,
-		`Id:` + strings.Replace(fmt.Sprintf("%v", this.Id), "OfferID", "OfferID", 1) + `,`,
-		`FrameworkId:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
-		`SlaveId:` + strings.Replace(fmt.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
-		`Hostname:` + valueToStringMesos(this.Hostname) + `,`,
+		`ID:` + strings.Replace(fmt.Sprintf("%v", this.ID), "OfferID", "OfferID", 1) + `,`,
+		`FrameworkID:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkID), "FrameworkID", "FrameworkID", 1) + `,`,
+		`SlaveID:` + strings.Replace(fmt.Sprintf("%v", this.SlaveID), "SlaveID", "SlaveID", 1) + `,`,
+		`Hostname:` + fmt.Sprintf("%v", this.Hostname) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
-		`ExecutorIds:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorIds), "ExecutorID", "ExecutorID", 1) + `,`,
+		`ExecutorIDs:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorIDs), "ExecutorID", "ExecutorID", 1) + `,`,
 		`Attributes:` + strings.Replace(fmt.Sprintf("%v", this.Attributes), "Attribute", "Attribute", 1) + `,`,
 		`Url:` + strings.Replace(fmt.Sprintf("%v", this.Url), "URL", "URL", 1) + `,`,
 		`Unavailability:` + strings.Replace(fmt.Sprintf("%v", this.Unavailability), "Unavailability", "Unavailability", 1) + `,`,
@@ -32484,10 +32098,10 @@ func (this *InverseOffer) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&InverseOffer{`,
-		`Id:` + strings.Replace(fmt.Sprintf("%v", this.Id), "OfferID", "OfferID", 1) + `,`,
+		`ID:` + strings.Replace(fmt.Sprintf("%v", this.ID), "OfferID", "OfferID", 1) + `,`,
 		`Url:` + strings.Replace(fmt.Sprintf("%v", this.Url), "URL", "URL", 1) + `,`,
-		`FrameworkId:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
-		`SlaveId:` + strings.Replace(fmt.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`FrameworkID:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkID), "FrameworkID", "FrameworkID", 1) + `,`,
+		`SlaveID:` + strings.Replace(fmt.Sprintf("%v", this.SlaveID), "SlaveID", "SlaveID", 1) + `,`,
 		`Unavailability:` + strings.Replace(fmt.Sprintf("%v", this.Unavailability), "Unavailability", "Unavailability", 1) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
 		`}`,
@@ -32499,9 +32113,9 @@ func (this *TaskInfo) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&TaskInfo{`,
-		`Name:` + valueToStringMesos(this.Name) + `,`,
-		`TaskId:` + strings.Replace(fmt.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
-		`SlaveId:` + strings.Replace(fmt.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`TaskID:` + strings.Replace(fmt.Sprintf("%v", this.TaskID), "TaskID", "TaskID", 1) + `,`,
+		`SlaveID:` + strings.Replace(fmt.Sprintf("%v", this.SlaveID), "SlaveID", "SlaveID", 1) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
 		`Executor:` + strings.Replace(fmt.Sprintf("%v", this.Executor), "ExecutorInfo", "ExecutorInfo", 1) + `,`,
 		`Data:` + valueToStringMesos(this.Data) + `,`,
@@ -32520,11 +32134,11 @@ func (this *Task) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Task{`,
-		`Name:` + valueToStringMesos(this.Name) + `,`,
-		`TaskId:` + strings.Replace(fmt.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
-		`FrameworkId:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkId), "FrameworkID", "FrameworkID", 1) + `,`,
-		`ExecutorId:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
-		`SlaveId:` + strings.Replace(fmt.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`TaskID:` + strings.Replace(fmt.Sprintf("%v", this.TaskID), "TaskID", "TaskID", 1) + `,`,
+		`FrameworkID:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkID), "FrameworkID", "FrameworkID", 1) + `,`,
+		`ExecutorID:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorID), "ExecutorID", "ExecutorID", 1) + `,`,
+		`SlaveID:` + strings.Replace(fmt.Sprintf("%v", this.SlaveID), "SlaveID", "SlaveID", 1) + `,`,
 		`State:` + valueToStringMesos(this.State) + `,`,
 		`Resources:` + strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1) + `,`,
 		`Statuses:` + strings.Replace(fmt.Sprintf("%v", this.Statuses), "TaskStatus", "TaskStatus", 1) + `,`,
@@ -32543,13 +32157,13 @@ func (this *TaskStatus) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&TaskStatus{`,
-		`TaskId:` + strings.Replace(fmt.Sprintf("%v", this.TaskId), "TaskID", "TaskID", 1) + `,`,
+		`TaskID:` + strings.Replace(fmt.Sprintf("%v", this.TaskID), "TaskID", "TaskID", 1) + `,`,
 		`State:` + valueToStringMesos(this.State) + `,`,
 		`Data:` + valueToStringMesos(this.Data) + `,`,
 		`Message:` + valueToStringMesos(this.Message) + `,`,
-		`SlaveId:` + strings.Replace(fmt.Sprintf("%v", this.SlaveId), "SlaveID", "SlaveID", 1) + `,`,
+		`SlaveID:` + strings.Replace(fmt.Sprintf("%v", this.SlaveID), "SlaveID", "SlaveID", 1) + `,`,
 		`Timestamp:` + valueToStringMesos(this.Timestamp) + `,`,
-		`ExecutorId:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorId), "ExecutorID", "ExecutorID", 1) + `,`,
+		`ExecutorID:` + strings.Replace(fmt.Sprintf("%v", this.ExecutorID), "ExecutorID", "ExecutorID", 1) + `,`,
 		`Healthy:` + valueToStringMesos(this.Healthy) + `,`,
 		`Source:` + valueToStringMesos(this.Source) + `,`,
 		`Reason:` + valueToStringMesos(this.Reason) + `,`,
@@ -32596,8 +32210,8 @@ func (this *Parameter) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Parameter{`,
-		`Key:` + valueToStringMesos(this.Key) + `,`,
-		`Value:` + valueToStringMesos(this.Value) + `,`,
+		`Key:` + fmt.Sprintf("%v", this.Key) + `,`,
+		`Value:` + fmt.Sprintf("%v", this.Value) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -32676,7 +32290,7 @@ func (this *Image_Appc) String() string {
 	}
 	s := strings.Join([]string{`&Image_Appc{`,
 		`Name:` + valueToStringMesos(this.Name) + `,`,
-		`Id:` + valueToStringMesos(this.Id) + `,`,
+		`ID:` + valueToStringMesos(this.ID) + `,`,
 		`Labels:` + strings.Replace(fmt.Sprintf("%v", this.Labels), "Labels", "Labels", 1) + `,`,
 		`}`,
 	}, "")
@@ -32854,7 +32468,7 @@ func (this *Label) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Label{`,
-		`Key:` + valueToStringMesos(this.Key) + `,`,
+		`Key:` + fmt.Sprintf("%v", this.Key) + `,`,
 		`Value:` + valueToStringMesos(this.Value) + `,`,
 		`}`,
 	}, "")
@@ -33044,7 +32658,7 @@ func (m *FrameworkID) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Value = &s
+			m.Value = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		default:
@@ -33129,7 +32743,7 @@ func (m *OfferID) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Value = &s
+			m.Value = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		default:
@@ -33214,7 +32828,7 @@ func (m *SlaveID) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Value = &s
+			m.Value = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		default:
@@ -33299,7 +32913,7 @@ func (m *TaskID) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Value = &s
+			m.Value = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		default:
@@ -33384,7 +32998,7 @@ func (m *ExecutorID) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Value = &s
+			m.Value = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		default:
@@ -34257,7 +33871,7 @@ func (m *MachineInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -34281,10 +33895,10 @@ func (m *MachineInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Id == nil {
-				m.Id = &MachineID{}
+			if m.ID == nil {
+				m.ID = &MachineID{}
 			}
-			if err := m.Id.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -34424,7 +34038,7 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.User = &s
+			m.User = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
@@ -34455,12 +34069,12 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Name = &s
+			m.Name = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000002)
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -34484,10 +34098,10 @@ func (m *FrameworkInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Id == nil {
-				m.Id = &FrameworkID{}
+			if m.ID == nil {
+				m.ID = &FrameworkID{}
 			}
-			if err := m.Id.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -35666,7 +35280,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExecutorId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExecutorID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -35690,10 +35304,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ExecutorId == nil {
-				m.ExecutorId = &ExecutorID{}
-			}
-			if err := m.ExecutorId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ExecutorID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -35786,9 +35397,6 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Command == nil {
-				m.Command = &CommandInfo{}
-			}
 			if err := m.Command.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -35796,7 +35404,7 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			hasFields[0] |= uint64(0x00000002)
 		case 8:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -35820,10 +35428,10 @@ func (m *ExecutorInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.FrameworkId == nil {
-				m.FrameworkId = &FrameworkID{}
+			if m.FrameworkID == nil {
+				m.FrameworkID = &FrameworkID{}
 			}
-			if err := m.FrameworkId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.FrameworkID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -36078,7 +35686,7 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -36104,7 +35712,7 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Id = &s
+			m.ID = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
@@ -36126,7 +35734,7 @@ func (m *MasterInfo) Unmarshal(data []byte) error {
 					break
 				}
 			}
-			m.Ip = &v
+			m.IP = v
 			hasFields[0] |= uint64(0x00000002)
 		case 3:
 			if wireType != 0 {
@@ -36427,7 +36035,7 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -36451,10 +36059,10 @@ func (m *SlaveInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Id == nil {
-				m.Id = &SlaveID{}
+			if m.ID == nil {
+				m.ID = &SlaveID{}
 			}
-			if err := m.Id.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -38020,7 +37628,7 @@ func (m *Resource_DiskInfo_Persistence) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -38496,7 +38104,7 @@ func (m *TrafficControlStatistics) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -38522,7 +38130,7 @@ func (m *TrafficControlStatistics) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Id = &s
+			m.ID = &s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
@@ -41654,7 +41262,7 @@ func (m *ResourceUsage_Executor) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ContainerId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ContainerID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -41678,10 +41286,10 @@ func (m *ResourceUsage_Executor) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ContainerId == nil {
-				m.ContainerId = &ContainerID{}
+			if m.ContainerID == nil {
+				m.ContainerID = &ContainerID{}
 			}
-			if err := m.ContainerId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ContainerID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -41807,7 +41415,7 @@ func (m *ResourceUsage_Executor_Task) Unmarshal(data []byte) error {
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -41831,10 +41439,10 @@ func (m *ResourceUsage_Executor_Task) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Id == nil {
-				m.Id = &TaskID{}
+			if m.ID == nil {
+				m.ID = &TaskID{}
 			}
-			if err := m.Id.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -43076,7 +42684,7 @@ func (m *Request) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SlaveID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -43100,10 +42708,10 @@ func (m *Request) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.SlaveId == nil {
-				m.SlaveId = &SlaveID{}
+			if m.SlaveID == nil {
+				m.SlaveID = &SlaveID{}
 			}
-			if err := m.SlaveId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.SlaveID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -43191,7 +42799,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -43215,17 +42823,14 @@ func (m *Offer) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Id == nil {
-				m.Id = &OfferID{}
-			}
-			if err := m.Id.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -43249,17 +42854,14 @@ func (m *Offer) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.FrameworkId == nil {
-				m.FrameworkId = &FrameworkID{}
-			}
-			if err := m.FrameworkId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.FrameworkID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000002)
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SlaveID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -43283,10 +42885,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.SlaveId == nil {
-				m.SlaveId = &SlaveID{}
-			}
-			if err := m.SlaveId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.SlaveID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -43319,7 +42918,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Hostname = &s
+			m.Hostname = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000008)
 		case 5:
@@ -43355,7 +42954,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExecutorIds", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExecutorIDs", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -43379,8 +42978,8 @@ func (m *Offer) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ExecutorIds = append(m.ExecutorIds, &ExecutorID{})
-			if err := m.ExecutorIds[len(m.ExecutorIds)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+			m.ExecutorIDs = append(m.ExecutorIDs, ExecutorID{})
+			if err := m.ExecutorIDs[len(m.ExecutorIDs)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -43410,7 +43009,7 @@ func (m *Offer) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Attributes = append(m.Attributes, &Attribute{})
+			m.Attributes = append(m.Attributes, Attribute{})
 			if err := m.Attributes[len(m.Attributes)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -44191,7 +43790,7 @@ func (m *InverseOffer) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -44215,10 +43814,7 @@ func (m *InverseOffer) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Id == nil {
-				m.Id = &OfferID{}
-			}
-			if err := m.Id.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -44258,7 +43854,7 @@ func (m *InverseOffer) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -44282,17 +43878,14 @@ func (m *InverseOffer) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.FrameworkId == nil {
-				m.FrameworkId = &FrameworkID{}
-			}
-			if err := m.FrameworkId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.FrameworkID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000002)
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SlaveID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -44316,10 +43909,7 @@ func (m *InverseOffer) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.SlaveId == nil {
-				m.SlaveId = &SlaveID{}
-			}
-			if err := m.SlaveId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.SlaveID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -44476,12 +44066,12 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Name = &s
+			m.Name = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TaskId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TaskID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -44505,17 +44095,14 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.TaskId == nil {
-				m.TaskId = &TaskID{}
-			}
-			if err := m.TaskId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.TaskID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000002)
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SlaveID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -44539,10 +44126,7 @@ func (m *TaskInfo) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.SlaveId == nil {
-				m.SlaveId = &SlaveID{}
-			}
-			if err := m.SlaveId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.SlaveID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -44928,12 +44512,12 @@ func (m *Task) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Name = &s
+			m.Name = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TaskId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TaskID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -44957,17 +44541,14 @@ func (m *Task) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.TaskId == nil {
-				m.TaskId = &TaskID{}
-			}
-			if err := m.TaskId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.TaskID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000002)
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -44991,17 +44572,17 @@ func (m *Task) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.FrameworkId == nil {
-				m.FrameworkId = &FrameworkID{}
+			if m.FrameworkID == nil {
+				m.FrameworkID = &FrameworkID{}
 			}
-			if err := m.FrameworkId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.FrameworkID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000004)
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExecutorId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExecutorID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -45025,16 +44606,16 @@ func (m *Task) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ExecutorId == nil {
-				m.ExecutorId = &ExecutorID{}
+			if m.ExecutorID == nil {
+				m.ExecutorID = &ExecutorID{}
 			}
-			if err := m.ExecutorId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ExecutorID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SlaveID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -45058,10 +44639,7 @@ func (m *Task) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.SlaveId == nil {
-				m.SlaveId = &SlaveID{}
-			}
-			if err := m.SlaveId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.SlaveID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -45397,7 +44975,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TaskId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TaskID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -45421,10 +44999,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.TaskId == nil {
-				m.TaskId = &TaskID{}
-			}
-			if err := m.TaskId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.TaskID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -45513,7 +45088,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlaveId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SlaveID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -45537,10 +45112,10 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.SlaveId == nil {
-				m.SlaveId = &SlaveID{}
+			if m.SlaveID == nil {
+				m.SlaveID = &SlaveID{}
 			}
-			if err := m.SlaveId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.SlaveID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -45565,7 +45140,7 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			m.Timestamp = &v2
 		case 7:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExecutorId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExecutorID", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -45589,10 +45164,10 @@ func (m *TaskStatus) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ExecutorId == nil {
-				m.ExecutorId = &ExecutorID{}
+			if m.ExecutorID == nil {
+				m.ExecutorID = &ExecutorID{}
 			}
-			if err := m.ExecutorId.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if err := m.ExecutorID.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -46108,7 +45683,7 @@ func (m *Parameter) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Key = &s
+			m.Key = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
@@ -46139,7 +45714,7 @@ func (m *Parameter) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Value = &s
+			m.Value = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000002)
 		default:
@@ -46915,7 +46490,7 @@ func (m *Image_Appc) Unmarshal(data []byte) error {
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -46941,7 +46516,7 @@ func (m *Image_Appc) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Id = &s
+			m.ID = &s
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
@@ -48873,7 +48448,7 @@ func (m *Labels) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Labels = append(m.Labels, &Label{})
+			m.Labels = append(m.Labels, Label{})
 			if err := m.Labels[len(m.Labels)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -48957,7 +48532,7 @@ func (m *Label) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			s := string(data[iNdEx:postIndex])
-			m.Key = &s
+			m.Key = s
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
 		case 2:

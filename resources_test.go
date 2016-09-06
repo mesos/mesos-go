@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/athlum/mesos-go"
+	"github.com/mesos/mesos-go"
 )
 
 func TestResources_PrecisionRounding(t *testing.T) {

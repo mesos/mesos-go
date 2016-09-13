@@ -42,24 +42,39 @@ var _ = math.Inf
 type Event_Type int32
 
 const (
+	// This must be the first enum value in this list, to
+	// ensure that if 'type' is not set, the default value
+	// is UNKNOWN. This enables enum values to be added
+	// in a backwards-compatible way. See: MESOS-4997.
+	Event_UNKNOWN      Event_Type = 0
 	Event_SUBSCRIBED   Event_Type = 1
 	Event_LAUNCH       Event_Type = 2
 	Event_KILL         Event_Type = 3
 	Event_ACKNOWLEDGED Event_Type = 4
 	Event_MESSAGE      Event_Type = 5
 	Event_ERROR        Event_Type = 6
-	// Received when the agent asks the executor to shutdown/kill itself. The
-	// executor is then required to kill all its active tasks, send
-	// 'TASK_KILLED' status updates and gracefully exit. If an
-	// executor does not terminate within a certain period
-	// `MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD` (an environment variable set by
-	// the agent upon executor startup), the agent  will forcefully destroy the
+	// Received when the agent asks the executor to shutdown/kill itself.
+	// The executor is then required to kill all its active tasks, send
+	// `TASK_KILLED` status updates and gracefully exit. The executor
+	// should terminate within a `MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD`
+	// (an environment variable set by the agent upon executor startup);
+	// it can be configured via `ExecutorInfo.shutdown_grace_period`. If
+	// the executor fails to do so, the agent will forcefully destroy the
 	// container where the executor is running. The agent would then send
-	// 'TASK_LOST' updates for any remaining active tasks of this executor.
+	// `TASK_LOST` updates for any remaining active tasks of this executor.
+	//
+	// NOTE: The executor must not assume that it will always be allotted
+	// the full grace period, as the agent may decide to allot a shorter
+	// period and failures / forcible terminations may occur.
+	//
+	// TODO(alexr): Consider adding a duration field into the `Shutdown`
+	// message so that the agent can communicate when a shorter period
+	// has been allotted.
 	Event_SHUTDOWN Event_Type = 7
 )
 
 var Event_Type_name = map[int32]string{
+	0: "UNKNOWN",
 	1: "SUBSCRIBED",
 	2: "LAUNCH",
 	3: "KILL",
@@ -69,6 +84,7 @@ var Event_Type_name = map[int32]string{
 	7: "SHUTDOWN",
 }
 var Event_Type_value = map[string]int32{
+	"UNKNOWN":      0,
 	"SUBSCRIBED":   1,
 	"LAUNCH":       2,
 	"KILL":         3,
@@ -100,17 +116,21 @@ func (x *Event_Type) UnmarshalJSON(data []byte) error {
 type Call_Type int32
 
 const (
+	// See comments above on `Event::Type` for more details on this enum value.
+	Call_UNKNOWN   Call_Type = 0
 	Call_SUBSCRIBE Call_Type = 1
 	Call_UPDATE    Call_Type = 2
 	Call_MESSAGE   Call_Type = 3
 )
 
 var Call_Type_name = map[int32]string{
+	0: "UNKNOWN",
 	1: "SUBSCRIBE",
 	2: "UPDATE",
 	3: "MESSAGE",
 }
 var Call_Type_value = map[string]int32{
+	"UNKNOWN":   0,
 	"SUBSCRIBE": 1,
 	"UPDATE":    2,
 	"MESSAGE":   3,
@@ -141,7 +161,8 @@ func (x *Call_Type) UnmarshalJSON(data []byte) error {
 type Event struct {
 	// Type of the event, indicates which optional field below should be
 	// present if that type has a nested message definition.
-	Type         *Event_Type         `protobuf:"varint,1,req,name=type,enum=mesos.executor.Event_Type" json:"type,omitempty"`
+	// Enum fields should be optional, see: MESOS-4997.
+	Type         *Event_Type         `protobuf:"varint,1,opt,name=type,enum=mesos.executor.Event_Type" json:"type,omitempty"`
 	Subscribed   *Event_Subscribed   `protobuf:"bytes,2,opt,name=subscribed" json:"subscribed,omitempty"`
 	Acknowledged *Event_Acknowledged `protobuf:"bytes,3,opt,name=acknowledged" json:"acknowledged,omitempty"`
 	Launch       *Event_Launch       `protobuf:"bytes,4,opt,name=launch" json:"launch,omitempty"`
@@ -157,7 +178,7 @@ func (m *Event) GetType() Event_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return Event_SUBSCRIBED
+	return Event_UNKNOWN
 }
 
 func (m *Event) GetSubscribed() *Event_Subscribed {
@@ -257,6 +278,10 @@ func (m *Event_Launch) GetTask() mesos.TaskInfo {
 // Mesos can release the resources associated with the task.
 type Event_Kill struct {
 	TaskID mesos.TaskID `protobuf:"bytes,1,req,name=task_id" json:"task_id"`
+	// If set, overrides any previously specified kill policy for this task.
+	// This includes 'TaskInfo.kill_policy' and 'Executor.kill.kill_policy'.
+	// Can be used to forcefully kill a task which is already being killed.
+	KillPolicy *mesos.KillPolicy `protobuf:"bytes,2,opt,name=kill_policy" json:"kill_policy,omitempty"`
 }
 
 func (m *Event_Kill) Reset()      { *m = Event_Kill{} }
@@ -267,6 +292,13 @@ func (m *Event_Kill) GetTaskID() mesos.TaskID {
 		return m.TaskID
 	}
 	return mesos.TaskID{}
+}
+
+func (m *Event_Kill) GetKillPolicy() *mesos.KillPolicy {
+	if m != nil {
+		return m.KillPolicy
+	}
+	return nil
 }
 
 // Received when the agent acknowledges the receipt of status
@@ -347,7 +379,8 @@ type Call struct {
 	// Type of the call, indicates which optional field below should be
 	// present if that type has a nested message definition.
 	// In case type is SUBSCRIBED, no message needs to be set.
-	Type      *Call_Type      `protobuf:"varint,3,req,name=type,enum=mesos.executor.Call_Type" json:"type,omitempty"`
+	// See comments on `Event::Type` above on the reasoning behind this field being optional.
+	Type      *Call_Type      `protobuf:"varint,3,opt,name=type,enum=mesos.executor.Call_Type" json:"type,omitempty"`
 	Subscribe *Call_Subscribe `protobuf:"bytes,4,opt,name=subscribe" json:"subscribe,omitempty"`
 	Update    *Call_Update    `protobuf:"bytes,5,opt,name=update" json:"update,omitempty"`
 	Message   *Call_Message   `protobuf:"bytes,6,opt,name=message" json:"message,omitempty"`
@@ -374,7 +407,7 @@ func (m *Call) GetType() Call_Type {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return Call_SUBSCRIBE
+	return Call_UNKNOWN
 }
 
 func (m *Call) GetSubscribe() *Call_Subscribe {
@@ -715,6 +748,9 @@ func (this *Event_Kill) VerboseEqual(that interface{}) error {
 	if !this.TaskID.Equal(&that1.TaskID) {
 		return fmt.Errorf("TaskID this(%v) Not Equal that(%v)", this.TaskID, that1.TaskID)
 	}
+	if !this.KillPolicy.Equal(that1.KillPolicy) {
+		return fmt.Errorf("KillPolicy this(%v) Not Equal that(%v)", this.KillPolicy, that1.KillPolicy)
+	}
 	return nil
 }
 func (this *Event_Kill) Equal(that interface{}) bool {
@@ -738,6 +774,9 @@ func (this *Event_Kill) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.TaskID.Equal(&that1.TaskID) {
+		return false
+	}
+	if !this.KillPolicy.Equal(that1.KillPolicy) {
 		return false
 	}
 	return true
@@ -1222,9 +1261,12 @@ func (this *Event_Kill) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 5)
+	s := make([]string, 0, 6)
 	s = append(s, "&executor.Event_Kill{")
 	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
+	if this.KillPolicy != nil {
+		s = append(s, "KillPolicy: "+fmt.Sprintf("%#v", this.KillPolicy)+",\n")
+	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -1363,9 +1405,7 @@ func (m *Event) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Type == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
-	} else {
+	if m.Type != nil {
 		data[i] = 0x8
 		i++
 		i = encodeVarintExecutor(data, i, uint64(*m.Type))
@@ -1524,6 +1564,16 @@ func (m *Event_Kill) MarshalTo(data []byte) (int, error) {
 		return 0, err
 	}
 	i += n11
+	if m.KillPolicy != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintExecutor(data, i, uint64(m.KillPolicy.Size()))
+		n12, err := m.KillPolicy.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n12
+	}
 	return i, nil
 }
 
@@ -1545,11 +1595,11 @@ func (m *Event_Acknowledged) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.TaskID.Size()))
-	n12, err := m.TaskID.MarshalTo(data[i:])
+	n13, err := m.TaskID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n12
+	i += n13
 	if m.UUID == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("uuid")
 	} else {
@@ -1627,22 +1677,20 @@ func (m *Call) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.ExecutorID.Size()))
-	n13, err := m.ExecutorID.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n13
-	data[i] = 0x12
-	i++
-	i = encodeVarintExecutor(data, i, uint64(m.FrameworkID.Size()))
-	n14, err := m.FrameworkID.MarshalTo(data[i:])
+	n14, err := m.ExecutorID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
 	i += n14
-	if m.Type == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
-	} else {
+	data[i] = 0x12
+	i++
+	i = encodeVarintExecutor(data, i, uint64(m.FrameworkID.Size()))
+	n15, err := m.FrameworkID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n15
+	if m.Type != nil {
 		data[i] = 0x18
 		i++
 		i = encodeVarintExecutor(data, i, uint64(*m.Type))
@@ -1651,31 +1699,31 @@ func (m *Call) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x22
 		i++
 		i = encodeVarintExecutor(data, i, uint64(m.Subscribe.Size()))
-		n15, err := m.Subscribe.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n15
-	}
-	if m.Update != nil {
-		data[i] = 0x2a
-		i++
-		i = encodeVarintExecutor(data, i, uint64(m.Update.Size()))
-		n16, err := m.Update.MarshalTo(data[i:])
+		n16, err := m.Subscribe.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n16
 	}
-	if m.Message != nil {
-		data[i] = 0x32
+	if m.Update != nil {
+		data[i] = 0x2a
 		i++
-		i = encodeVarintExecutor(data, i, uint64(m.Message.Size()))
-		n17, err := m.Message.MarshalTo(data[i:])
+		i = encodeVarintExecutor(data, i, uint64(m.Update.Size()))
+		n17, err := m.Update.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n17
+	}
+	if m.Message != nil {
+		data[i] = 0x32
+		i++
+		i = encodeVarintExecutor(data, i, uint64(m.Message.Size()))
+		n18, err := m.Message.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n18
 	}
 	return i, nil
 }
@@ -1740,11 +1788,11 @@ func (m *Call_Update) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.Status.Size()))
-	n18, err := m.Status.MarshalTo(data[i:])
+	n19, err := m.Status.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n18
+	i += n19
 	return i, nil
 }
 
@@ -1803,8 +1851,10 @@ func encodeVarintExecutor(data []byte, offset int, v uint64) int {
 }
 func NewPopulatedEvent(r randyExecutor, easy bool) *Event {
 	this := &Event{}
-	v1 := Event_Type([]int32{1, 2, 3, 4, 5, 6, 7}[r.Intn(7)])
-	this.Type = &v1
+	if r.Intn(10) != 0 {
+		v1 := Event_Type([]int32{0, 1, 2, 3, 4, 5, 6, 7}[r.Intn(8)])
+		this.Type = &v1
+	}
 	if r.Intn(10) != 0 {
 		this.Subscribed = NewPopulatedEvent_Subscribed(r, easy)
 	}
@@ -1854,6 +1904,9 @@ func NewPopulatedEvent_Kill(r randyExecutor, easy bool) *Event_Kill {
 	this := &Event_Kill{}
 	v6 := mesos.NewPopulatedTaskID(r, easy)
 	this.TaskID = *v6
+	if r.Intn(10) != 0 {
+		this.KillPolicy = mesos.NewPopulatedKillPolicy(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1899,8 +1952,10 @@ func NewPopulatedCall(r randyExecutor, easy bool) *Call {
 	this.ExecutorID = *v10
 	v11 := mesos.NewPopulatedFrameworkID(r, easy)
 	this.FrameworkID = *v11
-	v12 := Call_Type([]int32{1, 2, 3}[r.Intn(3)])
-	this.Type = &v12
+	if r.Intn(10) != 0 {
+		v12 := Call_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
+		this.Type = &v12
+	}
 	if r.Intn(10) != 0 {
 		this.Subscribe = NewPopulatedCall_Subscribe(r, easy)
 	}
@@ -2089,6 +2144,10 @@ func (m *Event_Kill) Size() (n int) {
 	_ = l
 	l = m.TaskID.Size()
 	n += 1 + l + sovExecutor(uint64(l))
+	if m.KillPolicy != nil {
+		l = m.KillPolicy.Size()
+		n += 1 + l + sovExecutor(uint64(l))
+	}
 	return n
 }
 
@@ -2240,6 +2299,7 @@ func (this *Event_Kill) String() string {
 	}
 	s := strings.Join([]string{`&Event_Kill{`,
 		`TaskID:` + strings.Replace(strings.Replace(this.TaskID.String(), "TaskID", "mesos.TaskID", 1), `&`, ``, 1) + `,`,
+		`KillPolicy:` + strings.Replace(fmt.Sprintf("%v", this.KillPolicy), "KillPolicy", "mesos.KillPolicy", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2330,7 +2390,6 @@ func valueToStringExecutor(v interface{}) string {
 	return fmt.Sprintf("*%v", pv)
 }
 func (m *Event) Unmarshal(data []byte) error {
-	var hasFields [1]uint64
 	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2379,7 +2438,6 @@ func (m *Event) Unmarshal(data []byte) error {
 				}
 			}
 			m.Type = &v
-			hasFields[0] |= uint64(0x00000001)
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Subscribed", wireType)
@@ -2592,9 +2650,6 @@ func (m *Event) Unmarshal(data []byte) error {
 			}
 			iNdEx += skippy
 		}
-	}
-	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
 	if iNdEx > l {
@@ -2901,6 +2956,39 @@ func (m *Event_Kill) Unmarshal(data []byte) error {
 			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000001)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KillPolicy", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowExecutor
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthExecutor
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.KillPolicy == nil {
+				m.KillPolicy = &mesos.KillPolicy{}
+			}
+			if err := m.KillPolicy.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipExecutor(data[iNdEx:])
@@ -3321,7 +3409,6 @@ func (m *Call) Unmarshal(data []byte) error {
 				}
 			}
 			m.Type = &v
-			hasFields[0] |= uint64(0x00000004)
 		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Subscribe", wireType)
@@ -3441,9 +3528,6 @@ func (m *Call) Unmarshal(data []byte) error {
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
-	}
-	if hasFields[0]&uint64(0x00000004) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
 	if iNdEx > l {

@@ -943,13 +943,13 @@ handle_UnacknowledgedTasks:
 			uj.UnacknowledgedTasks = nil
 		} else {
 
-			uj.UnacknowledgedTasks = make([]mesos.TaskInfo, 0)
+			uj.UnacknowledgedTasks = []mesos.TaskInfo{}
 
 			wantVal := true
 
 			for {
 
-				var v mesos.TaskInfo
+				var tmp_uj__UnacknowledgedTasks mesos.TaskInfo
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -970,7 +970,7 @@ handle_UnacknowledgedTasks:
 					wantVal = true
 				}
 
-				/* handler: v type=mesos.TaskInfo kind=struct quoted=false*/
+				/* handler: tmp_uj__UnacknowledgedTasks type=mesos.TaskInfo kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -979,14 +979,15 @@ handle_UnacknowledgedTasks:
 						goto mainparse
 					}
 
-					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					err = tmp_uj__UnacknowledgedTasks.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
 						return err
 					}
 					state = fflib.FFParse_after_value
 				}
 
-				uj.UnacknowledgedTasks = append(uj.UnacknowledgedTasks, v)
+				uj.UnacknowledgedTasks = append(uj.UnacknowledgedTasks, tmp_uj__UnacknowledgedTasks)
+
 				wantVal = false
 			}
 		}
@@ -1011,13 +1012,13 @@ handle_UnacknowledgedUpdates:
 			uj.UnacknowledgedUpdates = nil
 		} else {
 
-			uj.UnacknowledgedUpdates = make([]Call_Update, 0)
+			uj.UnacknowledgedUpdates = []Call_Update{}
 
 			wantVal := true
 
 			for {
 
-				var v Call_Update
+				var tmp_uj__UnacknowledgedUpdates Call_Update
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -1038,7 +1039,7 @@ handle_UnacknowledgedUpdates:
 					wantVal = true
 				}
 
-				/* handler: v type=executor.Call_Update kind=struct quoted=false*/
+				/* handler: tmp_uj__UnacknowledgedUpdates type=executor.Call_Update kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -1047,14 +1048,15 @@ handle_UnacknowledgedUpdates:
 						goto mainparse
 					}
 
-					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					err = tmp_uj__UnacknowledgedUpdates.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
 						return err
 					}
 					state = fflib.FFParse_after_value
 				}
 
-				uj.UnacknowledgedUpdates = append(uj.UnacknowledgedUpdates, v)
+				uj.UnacknowledgedUpdates = append(uj.UnacknowledgedUpdates, tmp_uj__UnacknowledgedUpdates)
+
 				wantVal = false
 			}
 		}
@@ -2327,7 +2329,7 @@ func (mj *Event_Kill) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{"task_id":`)
+	buf.WriteString(`{ "task_id":`)
 
 	{
 
@@ -2337,6 +2339,23 @@ func (mj *Event_Kill) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 		}
 
 	}
+	buf.WriteByte(',')
+	if mj.KillPolicy != nil {
+		if true {
+			buf.WriteString(`"kill_policy":`)
+
+			{
+
+				err = mj.KillPolicy.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -2346,9 +2365,13 @@ const (
 	ffj_t_Event_Killno_such_key
 
 	ffj_t_Event_Kill_TaskID
+
+	ffj_t_Event_Kill_KillPolicy
 )
 
 var ffj_key_Event_Kill_TaskID = []byte("task_id")
+
+var ffj_key_Event_Kill_KillPolicy = []byte("kill_policy")
 
 func (uj *Event_Kill) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -2409,6 +2432,14 @@ mainparse:
 			} else {
 				switch kn[0] {
 
+				case 'k':
+
+					if bytes.Equal(ffj_key_Event_Kill_KillPolicy, kn) {
+						currentKey = ffj_t_Event_Kill_KillPolicy
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 't':
 
 					if bytes.Equal(ffj_key_Event_Kill_TaskID, kn) {
@@ -2417,6 +2448,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_Kill_KillPolicy, kn) {
+					currentKey = ffj_t_Event_Kill_KillPolicy
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Event_Kill_TaskID, kn) {
@@ -2445,6 +2482,9 @@ mainparse:
 				case ffj_t_Event_Kill_TaskID:
 					goto handle_TaskID
 
+				case ffj_t_Event_Kill_KillPolicy:
+					goto handle_KillPolicy
+
 				case ffj_t_Event_Killno_such_key:
 					err = fs.SkipField(tok)
 					if err != nil {
@@ -2471,6 +2511,33 @@ handle_TaskID:
 		}
 
 		err = uj.TaskID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_KillPolicy:
+
+	/* handler: uj.KillPolicy type=mesos.KillPolicy kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.KillPolicy = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.KillPolicy == nil {
+			uj.KillPolicy = new(mesos.KillPolicy)
+		}
+
+		err = uj.KillPolicy.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

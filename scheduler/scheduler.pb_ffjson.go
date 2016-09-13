@@ -8,7 +8,6 @@ package scheduler
 import (
 	"bytes"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"github.com/mesos/mesos-go"
 	fflib "github.com/pquerna/ffjson/fflib/v1"
@@ -105,6 +104,36 @@ func (mj *Call) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			{
 
 				err = mj.Decline.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.AcceptInverseOffers != nil {
+		if true {
+			buf.WriteString(`"accept_inverse_offers":`)
+
+			{
+
+				err = mj.AcceptInverseOffers.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.DeclineInverseOffers != nil {
+		if true {
+			buf.WriteString(`"decline_inverse_offers":`)
+
+			{
+
+				err = mj.DeclineInverseOffers.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -222,6 +251,10 @@ const (
 
 	ffj_t_Call_Decline
 
+	ffj_t_Call_AcceptInverseOffers
+
+	ffj_t_Call_DeclineInverseOffers
+
 	ffj_t_Call_Kill
 
 	ffj_t_Call_Shutdown
@@ -244,6 +277,10 @@ var ffj_key_Call_Subscribe = []byte("subscribe")
 var ffj_key_Call_Accept = []byte("accept")
 
 var ffj_key_Call_Decline = []byte("decline")
+
+var ffj_key_Call_AcceptInverseOffers = []byte("accept_inverse_offers")
+
+var ffj_key_Call_DeclineInverseOffers = []byte("decline_inverse_offers")
 
 var ffj_key_Call_Kill = []byte("kill")
 
@@ -323,6 +360,11 @@ mainparse:
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
+					} else if bytes.Equal(ffj_key_Call_AcceptInverseOffers, kn) {
+						currentKey = ffj_t_Call_AcceptInverseOffers
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
 					} else if bytes.Equal(ffj_key_Call_Acknowledge, kn) {
 						currentKey = ffj_t_Call_Acknowledge
 						state = fflib.FFParse_want_colon
@@ -333,6 +375,11 @@ mainparse:
 
 					if bytes.Equal(ffj_key_Call_Decline, kn) {
 						currentKey = ffj_t_Call_Decline
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Call_DeclineInverseOffers, kn) {
+						currentKey = ffj_t_Call_DeclineInverseOffers
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -433,6 +480,18 @@ mainparse:
 					goto mainparse
 				}
 
+				if fflib.EqualFoldRight(ffj_key_Call_DeclineInverseOffers, kn) {
+					currentKey = ffj_t_Call_DeclineInverseOffers
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_AcceptInverseOffers, kn) {
+					currentKey = ffj_t_Call_AcceptInverseOffers
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
 				if fflib.SimpleLetterEqualFold(ffj_key_Call_Decline, kn) {
 					currentKey = ffj_t_Call_Decline
 					state = fflib.FFParse_want_colon
@@ -494,6 +553,12 @@ mainparse:
 
 				case ffj_t_Call_Decline:
 					goto handle_Decline
+
+				case ffj_t_Call_AcceptInverseOffers:
+					goto handle_AcceptInverseOffers
+
+				case ffj_t_Call_DeclineInverseOffers:
+					goto handle_DeclineInverseOffers
 
 				case ffj_t_Call_Kill:
 					goto handle_Kill
@@ -658,6 +723,60 @@ handle_Decline:
 		}
 
 		err = uj.Decline.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_AcceptInverseOffers:
+
+	/* handler: uj.AcceptInverseOffers type=scheduler.Call_AcceptInverseOffers kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.AcceptInverseOffers = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.AcceptInverseOffers == nil {
+			uj.AcceptInverseOffers = new(Call_AcceptInverseOffers)
+		}
+
+		err = uj.AcceptInverseOffers.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_DeclineInverseOffers:
+
+	/* handler: uj.DeclineInverseOffers type=scheduler.Call_DeclineInverseOffers kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.DeclineInverseOffers = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.DeclineInverseOffers == nil {
+			uj.DeclineInverseOffers = new(Call_DeclineInverseOffers)
+		}
+
+		err = uj.DeclineInverseOffers.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -1103,13 +1222,13 @@ handle_OfferIDs:
 			uj.OfferIDs = nil
 		} else {
 
-			uj.OfferIDs = make([]mesos.OfferID, 0)
+			uj.OfferIDs = []mesos.OfferID{}
 
 			wantVal := true
 
 			for {
 
-				var v mesos.OfferID
+				var tmp_uj__OfferIDs mesos.OfferID
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -1130,7 +1249,7 @@ handle_OfferIDs:
 					wantVal = true
 				}
 
-				/* handler: v type=mesos.OfferID kind=struct quoted=false*/
+				/* handler: tmp_uj__OfferIDs type=mesos.OfferID kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -1139,14 +1258,15 @@ handle_OfferIDs:
 						goto mainparse
 					}
 
-					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					err = tmp_uj__OfferIDs.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
 						return err
 					}
 					state = fflib.FFParse_after_value
 				}
 
-				uj.OfferIDs = append(uj.OfferIDs, v)
+				uj.OfferIDs = append(uj.OfferIDs, tmp_uj__OfferIDs)
+
 				wantVal = false
 			}
 		}
@@ -1171,13 +1291,13 @@ handle_Operations:
 			uj.Operations = nil
 		} else {
 
-			uj.Operations = make([]mesos.Offer_Operation, 0)
+			uj.Operations = []mesos.Offer_Operation{}
 
 			wantVal := true
 
 			for {
 
-				var v mesos.Offer_Operation
+				var tmp_uj__Operations mesos.Offer_Operation
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -1198,7 +1318,7 @@ handle_Operations:
 					wantVal = true
 				}
 
-				/* handler: v type=mesos.Offer_Operation kind=struct quoted=false*/
+				/* handler: tmp_uj__Operations type=mesos.Offer_Operation kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -1207,14 +1327,330 @@ handle_Operations:
 						goto mainparse
 					}
 
-					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					err = tmp_uj__Operations.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
 						return err
 					}
 					state = fflib.FFParse_after_value
 				}
 
-				uj.Operations = append(uj.Operations, v)
+				uj.Operations = append(uj.Operations, tmp_uj__Operations)
+
+				wantVal = false
+			}
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Filters:
+
+	/* handler: uj.Filters type=mesos.Filters kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.Filters = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.Filters == nil {
+			uj.Filters = new(mesos.Filters)
+		}
+
+		err = uj.Filters.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+	return nil
+}
+
+func (mj *Call_AcceptInverseOffers) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Call_AcceptInverseOffers) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{ "inverse_offer_ids":`)
+	if mj.InverseOfferIDs != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.InverseOfferIDs {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
+	buf.WriteByte(',')
+	if mj.Filters != nil {
+		if true {
+			buf.WriteString(`"filters":`)
+
+			{
+
+				err = mj.Filters.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	buf.Rewind(1)
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Call_AcceptInverseOffersbase = iota
+	ffj_t_Call_AcceptInverseOffersno_such_key
+
+	ffj_t_Call_AcceptInverseOffers_InverseOfferIDs
+
+	ffj_t_Call_AcceptInverseOffers_Filters
+)
+
+var ffj_key_Call_AcceptInverseOffers_InverseOfferIDs = []byte("inverse_offer_ids")
+
+var ffj_key_Call_AcceptInverseOffers_Filters = []byte("filters")
+
+func (uj *Call_AcceptInverseOffers) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Call_AcceptInverseOffers) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Call_AcceptInverseOffersbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Call_AcceptInverseOffersno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'f':
+
+					if bytes.Equal(ffj_key_Call_AcceptInverseOffers_Filters, kn) {
+						currentKey = ffj_t_Call_AcceptInverseOffers_Filters
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'i':
+
+					if bytes.Equal(ffj_key_Call_AcceptInverseOffers_InverseOfferIDs, kn) {
+						currentKey = ffj_t_Call_AcceptInverseOffers_InverseOfferIDs
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_AcceptInverseOffers_Filters, kn) {
+					currentKey = ffj_t_Call_AcceptInverseOffers_Filters
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_AcceptInverseOffers_InverseOfferIDs, kn) {
+					currentKey = ffj_t_Call_AcceptInverseOffers_InverseOfferIDs
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Call_AcceptInverseOffersno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Call_AcceptInverseOffers_InverseOfferIDs:
+					goto handle_InverseOfferIDs
+
+				case ffj_t_Call_AcceptInverseOffers_Filters:
+					goto handle_Filters
+
+				case ffj_t_Call_AcceptInverseOffersno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_InverseOfferIDs:
+
+	/* handler: uj.InverseOfferIDs type=[]mesos.OfferID kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.InverseOfferIDs = nil
+		} else {
+
+			uj.InverseOfferIDs = []mesos.OfferID{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__InverseOfferIDs mesos.OfferID
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__InverseOfferIDs type=mesos.OfferID kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__InverseOfferIDs.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.InverseOfferIDs = append(uj.InverseOfferIDs, tmp_uj__InverseOfferIDs)
+
 				wantVal = false
 			}
 		}
@@ -1796,13 +2232,13 @@ handle_OfferIDs:
 			uj.OfferIDs = nil
 		} else {
 
-			uj.OfferIDs = make([]mesos.OfferID, 0)
+			uj.OfferIDs = []mesos.OfferID{}
 
 			wantVal := true
 
 			for {
 
-				var v mesos.OfferID
+				var tmp_uj__OfferIDs mesos.OfferID
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -1823,7 +2259,7 @@ handle_OfferIDs:
 					wantVal = true
 				}
 
-				/* handler: v type=mesos.OfferID kind=struct quoted=false*/
+				/* handler: tmp_uj__OfferIDs type=mesos.OfferID kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -1832,14 +2268,330 @@ handle_OfferIDs:
 						goto mainparse
 					}
 
-					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					err = tmp_uj__OfferIDs.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
 						return err
 					}
 					state = fflib.FFParse_after_value
 				}
 
-				uj.OfferIDs = append(uj.OfferIDs, v)
+				uj.OfferIDs = append(uj.OfferIDs, tmp_uj__OfferIDs)
+
+				wantVal = false
+			}
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Filters:
+
+	/* handler: uj.Filters type=mesos.Filters kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.Filters = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.Filters == nil {
+			uj.Filters = new(mesos.Filters)
+		}
+
+		err = uj.Filters.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+	return nil
+}
+
+func (mj *Call_DeclineInverseOffers) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Call_DeclineInverseOffers) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{ "inverse_offer_ids":`)
+	if mj.InverseOfferIDs != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.InverseOfferIDs {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
+	buf.WriteByte(',')
+	if mj.Filters != nil {
+		if true {
+			buf.WriteString(`"filters":`)
+
+			{
+
+				err = mj.Filters.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	buf.Rewind(1)
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Call_DeclineInverseOffersbase = iota
+	ffj_t_Call_DeclineInverseOffersno_such_key
+
+	ffj_t_Call_DeclineInverseOffers_InverseOfferIDs
+
+	ffj_t_Call_DeclineInverseOffers_Filters
+)
+
+var ffj_key_Call_DeclineInverseOffers_InverseOfferIDs = []byte("inverse_offer_ids")
+
+var ffj_key_Call_DeclineInverseOffers_Filters = []byte("filters")
+
+func (uj *Call_DeclineInverseOffers) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Call_DeclineInverseOffers) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Call_DeclineInverseOffersbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Call_DeclineInverseOffersno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'f':
+
+					if bytes.Equal(ffj_key_Call_DeclineInverseOffers_Filters, kn) {
+						currentKey = ffj_t_Call_DeclineInverseOffers_Filters
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'i':
+
+					if bytes.Equal(ffj_key_Call_DeclineInverseOffers_InverseOfferIDs, kn) {
+						currentKey = ffj_t_Call_DeclineInverseOffers_InverseOfferIDs
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_DeclineInverseOffers_Filters, kn) {
+					currentKey = ffj_t_Call_DeclineInverseOffers_Filters
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_DeclineInverseOffers_InverseOfferIDs, kn) {
+					currentKey = ffj_t_Call_DeclineInverseOffers_InverseOfferIDs
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Call_DeclineInverseOffersno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Call_DeclineInverseOffers_InverseOfferIDs:
+					goto handle_InverseOfferIDs
+
+				case ffj_t_Call_DeclineInverseOffers_Filters:
+					goto handle_Filters
+
+				case ffj_t_Call_DeclineInverseOffersno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_InverseOfferIDs:
+
+	/* handler: uj.InverseOfferIDs type=[]mesos.OfferID kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.InverseOfferIDs = nil
+		} else {
+
+			uj.InverseOfferIDs = []mesos.OfferID{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__InverseOfferIDs mesos.OfferID
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__InverseOfferIDs type=mesos.OfferID kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__InverseOfferIDs.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.InverseOfferIDs = append(uj.InverseOfferIDs, tmp_uj__InverseOfferIDs)
+
 				wantVal = false
 			}
 		}
@@ -1939,6 +2691,21 @@ func (mj *Call_Kill) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.KillPolicy != nil {
+		if true {
+			buf.WriteString(`"kill_policy":`)
+
+			{
+
+				err = mj.KillPolicy.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -1951,11 +2718,15 @@ const (
 	ffj_t_Call_Kill_TaskID
 
 	ffj_t_Call_Kill_AgentID
+
+	ffj_t_Call_Kill_KillPolicy
 )
 
 var ffj_key_Call_Kill_TaskID = []byte("task_id")
 
 var ffj_key_Call_Kill_AgentID = []byte("agent_id")
+
+var ffj_key_Call_Kill_KillPolicy = []byte("kill_policy")
 
 func (uj *Call_Kill) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -2024,6 +2795,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'k':
+
+					if bytes.Equal(ffj_key_Call_Kill_KillPolicy, kn) {
+						currentKey = ffj_t_Call_Kill_KillPolicy
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 't':
 
 					if bytes.Equal(ffj_key_Call_Kill_TaskID, kn) {
@@ -2032,6 +2811,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_Kill_KillPolicy, kn) {
+					currentKey = ffj_t_Call_Kill_KillPolicy
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.AsciiEqualFold(ffj_key_Call_Kill_AgentID, kn) {
@@ -2068,6 +2853,9 @@ mainparse:
 
 				case ffj_t_Call_Kill_AgentID:
 					goto handle_AgentID
+
+				case ffj_t_Call_Kill_KillPolicy:
+					goto handle_KillPolicy
 
 				case ffj_t_Call_Killno_such_key:
 					err = fs.SkipField(tok)
@@ -2122,6 +2910,33 @@ handle_AgentID:
 		}
 
 		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_KillPolicy:
+
+	/* handler: uj.KillPolicy type=mesos.KillPolicy kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.KillPolicy = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.KillPolicy == nil {
+			uj.KillPolicy = new(mesos.KillPolicy)
+		}
+
+		err = uj.KillPolicy.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -2639,13 +3454,13 @@ handle_Tasks:
 			uj.Tasks = nil
 		} else {
 
-			uj.Tasks = make([]Call_Reconcile_Task, 0)
+			uj.Tasks = []Call_Reconcile_Task{}
 
 			wantVal := true
 
 			for {
 
-				var v Call_Reconcile_Task
+				var tmp_uj__Tasks Call_Reconcile_Task
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -2666,7 +3481,7 @@ handle_Tasks:
 					wantVal = true
 				}
 
-				/* handler: v type=scheduler.Call_Reconcile_Task kind=struct quoted=false*/
+				/* handler: tmp_uj__Tasks type=scheduler.Call_Reconcile_Task kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -2675,14 +3490,15 @@ handle_Tasks:
 						goto mainparse
 					}
 
-					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					err = tmp_uj__Tasks.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
 						return err
 					}
 					state = fflib.FFParse_after_value
 				}
 
-				uj.Tasks = append(uj.Tasks, v)
+				uj.Tasks = append(uj.Tasks, tmp_uj__Tasks)
+
 				wantVal = false
 			}
 		}
@@ -3144,13 +3960,13 @@ handle_Requests:
 			uj.Requests = nil
 		} else {
 
-			uj.Requests = make([]mesos.Request, 0)
+			uj.Requests = []mesos.Request{}
 
 			wantVal := true
 
 			for {
 
-				var v mesos.Request
+				var tmp_uj__Requests mesos.Request
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -3171,7 +3987,7 @@ handle_Requests:
 					wantVal = true
 				}
 
-				/* handler: v type=mesos.Request kind=struct quoted=false*/
+				/* handler: tmp_uj__Requests type=mesos.Request kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -3180,14 +3996,15 @@ handle_Requests:
 						goto mainparse
 					}
 
-					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					err = tmp_uj__Requests.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
 						return err
 					}
 					state = fflib.FFParse_after_value
 				}
 
-				uj.Requests = append(uj.Requests, v)
+				uj.Requests = append(uj.Requests, tmp_uj__Requests)
+
 				wantVal = false
 			}
 		}
@@ -3477,7 +4294,7 @@ func (mj *Call_Subscribe) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteByte('{')
+	buf.WriteString(`{ `)
 	if mj.FrameworkInfo != nil {
 		if true {
 			buf.WriteString(`"framework_info":`)
@@ -3493,11 +4310,7 @@ func (mj *Call_Subscribe) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Force {
-		buf.WriteString(`"force":true`)
-	} else {
-		buf.WriteString(`"force":false`)
-	}
+	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -3507,13 +4320,9 @@ const (
 	ffj_t_Call_Subscribeno_such_key
 
 	ffj_t_Call_Subscribe_FrameworkInfo
-
-	ffj_t_Call_Subscribe_Force
 )
 
 var ffj_key_Call_Subscribe_FrameworkInfo = []byte("framework_info")
-
-var ffj_key_Call_Subscribe_Force = []byte("force")
 
 func (uj *Call_Subscribe) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -3580,19 +4389,8 @@ mainparse:
 						currentKey = ffj_t_Call_Subscribe_FrameworkInfo
 						state = fflib.FFParse_want_colon
 						goto mainparse
-
-					} else if bytes.Equal(ffj_key_Call_Subscribe_Force, kn) {
-						currentKey = ffj_t_Call_Subscribe_Force
-						state = fflib.FFParse_want_colon
-						goto mainparse
 					}
 
-				}
-
-				if fflib.SimpleLetterEqualFold(ffj_key_Call_Subscribe_Force, kn) {
-					currentKey = ffj_t_Call_Subscribe_Force
-					state = fflib.FFParse_want_colon
-					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Call_Subscribe_FrameworkInfo, kn) {
@@ -3620,9 +4418,6 @@ mainparse:
 
 				case ffj_t_Call_Subscribe_FrameworkInfo:
 					goto handle_FrameworkInfo
-
-				case ffj_t_Call_Subscribe_Force:
-					goto handle_Force
 
 				case ffj_t_Call_Subscribeno_such_key:
 					err = fs.SkipField(tok)
@@ -3660,41 +4455,6 @@ handle_FrameworkInfo:
 			return err
 		}
 		state = fflib.FFParse_after_value
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_Force:
-
-	/* handler: uj.Force type=bool kind=bool quoted=false*/
-
-	{
-		if tok != fflib.FFTok_bool && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for bool", tok))
-		}
-	}
-
-	{
-		if tok == fflib.FFTok_null {
-
-		} else {
-			tmpb := fs.Output.Bytes()
-
-			if bytes.Compare([]byte{'t', 'r', 'u', 'e'}, tmpb) == 0 {
-
-				uj.Force = true
-
-			} else if bytes.Compare([]byte{'f', 'a', 'l', 's', 'e'}, tmpb) == 0 {
-
-				uj.Force = false
-
-			} else {
-				err = errors.New("unexpected bytes for true/false value")
-				return fs.WrapErr(err)
-			}
-
-		}
 	}
 
 	state = fflib.FFParse_after_value
@@ -3785,6 +4545,21 @@ func (mj *Event) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.InverseOffers != nil {
+		if true {
+			buf.WriteString(`"inverse_offers":`)
+
+			{
+
+				err = mj.InverseOffers.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	if mj.Rescind != nil {
 		if true {
 			buf.WriteString(`"rescind":`)
@@ -3792,6 +4567,21 @@ func (mj *Event) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			{
 
 				err = mj.Rescind.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.RescindInverseOffer != nil {
+		if true {
+			buf.WriteString(`"rescind_inverse_offer":`)
+
+			{
+
+				err = mj.RescindInverseOffer.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -3875,7 +4665,11 @@ const (
 
 	ffj_t_Event_Offers
 
+	ffj_t_Event_InverseOffers
+
 	ffj_t_Event_Rescind
+
+	ffj_t_Event_RescindInverseOffer
 
 	ffj_t_Event_Update
 
@@ -3892,7 +4686,11 @@ var ffj_key_Event_Subscribed = []byte("subscribed")
 
 var ffj_key_Event_Offers = []byte("offers")
 
+var ffj_key_Event_InverseOffers = []byte("inverse_offers")
+
 var ffj_key_Event_Rescind = []byte("rescind")
+
+var ffj_key_Event_RescindInverseOffer = []byte("rescind_inverse_offer")
 
 var ffj_key_Event_Update = []byte("update")
 
@@ -3977,6 +4775,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'i':
+
+					if bytes.Equal(ffj_key_Event_InverseOffers, kn) {
+						currentKey = ffj_t_Event_InverseOffers
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'm':
 
 					if bytes.Equal(ffj_key_Event_Message, kn) {
@@ -3997,6 +4803,11 @@ mainparse:
 
 					if bytes.Equal(ffj_key_Event_Rescind, kn) {
 						currentKey = ffj_t_Event_Rescind
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Event_RescindInverseOffer, kn) {
+						currentKey = ffj_t_Event_RescindInverseOffer
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -4051,8 +4862,20 @@ mainparse:
 					goto mainparse
 				}
 
+				if fflib.EqualFoldRight(ffj_key_Event_RescindInverseOffer, kn) {
+					currentKey = ffj_t_Event_RescindInverseOffer
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
 				if fflib.EqualFoldRight(ffj_key_Event_Rescind, kn) {
 					currentKey = ffj_t_Event_Rescind
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_InverseOffers, kn) {
+					currentKey = ffj_t_Event_InverseOffers
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -4101,8 +4924,14 @@ mainparse:
 				case ffj_t_Event_Offers:
 					goto handle_Offers
 
+				case ffj_t_Event_InverseOffers:
+					goto handle_InverseOffers
+
 				case ffj_t_Event_Rescind:
 					goto handle_Rescind
+
+				case ffj_t_Event_RescindInverseOffer:
+					goto handle_RescindInverseOffer
 
 				case ffj_t_Event_Update:
 					goto handle_Update
@@ -4216,6 +5045,33 @@ handle_Offers:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
+handle_InverseOffers:
+
+	/* handler: uj.InverseOffers type=scheduler.Event_InverseOffers kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.InverseOffers = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.InverseOffers == nil {
+			uj.InverseOffers = new(Event_InverseOffers)
+		}
+
+		err = uj.InverseOffers.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
 handle_Rescind:
 
 	/* handler: uj.Rescind type=scheduler.Event_Rescind kind=struct quoted=false*/
@@ -4234,6 +5090,33 @@ handle_Rescind:
 		}
 
 		err = uj.Rescind.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_RescindInverseOffer:
+
+	/* handler: uj.RescindInverseOffer type=scheduler.Event_RescindInverseOffer kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.RescindInverseOffer = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.RescindInverseOffer == nil {
+			uj.RescindInverseOffer = new(Event_RescindInverseOffer)
+		}
+
+		err = uj.RescindInverseOffer.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -4884,6 +5767,256 @@ done:
 	return nil
 }
 
+func (mj *Event_InverseOffers) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Event_InverseOffers) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"inverse_offers":`)
+	if mj.InverseOffers != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.InverseOffers {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Event_InverseOffersbase = iota
+	ffj_t_Event_InverseOffersno_such_key
+
+	ffj_t_Event_InverseOffers_InverseOffers
+)
+
+var ffj_key_Event_InverseOffers_InverseOffers = []byte("inverse_offers")
+
+func (uj *Event_InverseOffers) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Event_InverseOffers) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Event_InverseOffersbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Event_InverseOffersno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'i':
+
+					if bytes.Equal(ffj_key_Event_InverseOffers_InverseOffers, kn) {
+						currentKey = ffj_t_Event_InverseOffers_InverseOffers
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_InverseOffers_InverseOffers, kn) {
+					currentKey = ffj_t_Event_InverseOffers_InverseOffers
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Event_InverseOffersno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Event_InverseOffers_InverseOffers:
+					goto handle_InverseOffers
+
+				case ffj_t_Event_InverseOffersno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_InverseOffers:
+
+	/* handler: uj.InverseOffers type=[]mesos.InverseOffer kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.InverseOffers = nil
+		} else {
+
+			uj.InverseOffers = []mesos.InverseOffer{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__InverseOffers mesos.InverseOffer
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__InverseOffers type=mesos.InverseOffer kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__InverseOffers.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.InverseOffers = append(uj.InverseOffers, tmp_uj__InverseOffers)
+
+				wantVal = false
+			}
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+	return nil
+}
+
 func (mj *Event_Message) MarshalJSON() ([]byte, error) {
 	var buf fflib.Buffer
 	if mj == nil {
@@ -5237,27 +6370,6 @@ func (mj *Event_Offers) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	} else {
 		buf.WriteString(`null`)
 	}
-	buf.WriteString(`,"inverse_offers":`)
-	if mj.InverseOffers != nil {
-		buf.WriteString(`[`)
-		for i, v := range mj.InverseOffers {
-			if i != 0 {
-				buf.WriteString(`,`)
-			}
-
-			{
-
-				err = v.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-		}
-		buf.WriteString(`]`)
-	} else {
-		buf.WriteString(`null`)
-	}
 	buf.WriteByte('}')
 	return nil
 }
@@ -5267,13 +6379,9 @@ const (
 	ffj_t_Event_Offersno_such_key
 
 	ffj_t_Event_Offers_Offers
-
-	ffj_t_Event_Offers_InverseOffers
 )
 
 var ffj_key_Event_Offers_Offers = []byte("offers")
-
-var ffj_key_Event_Offers_InverseOffers = []byte("inverse_offers")
 
 func (uj *Event_Offers) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -5334,14 +6442,6 @@ mainparse:
 			} else {
 				switch kn[0] {
 
-				case 'i':
-
-					if bytes.Equal(ffj_key_Event_Offers_InverseOffers, kn) {
-						currentKey = ffj_t_Event_Offers_InverseOffers
-						state = fflib.FFParse_want_colon
-						goto mainparse
-					}
-
 				case 'o':
 
 					if bytes.Equal(ffj_key_Event_Offers_Offers, kn) {
@@ -5350,12 +6450,6 @@ mainparse:
 						goto mainparse
 					}
 
-				}
-
-				if fflib.EqualFoldRight(ffj_key_Event_Offers_InverseOffers, kn) {
-					currentKey = ffj_t_Event_Offers_InverseOffers
-					state = fflib.FFParse_want_colon
-					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Event_Offers_Offers, kn) {
@@ -5383,9 +6477,6 @@ mainparse:
 
 				case ffj_t_Event_Offers_Offers:
 					goto handle_Offers
-
-				case ffj_t_Event_Offers_InverseOffers:
-					goto handle_InverseOffers
 
 				case ffj_t_Event_Offersno_such_key:
 					err = fs.SkipField(tok)
@@ -5417,13 +6508,13 @@ handle_Offers:
 			uj.Offers = nil
 		} else {
 
-			uj.Offers = make([]mesos.Offer, 0)
+			uj.Offers = []mesos.Offer{}
 
 			wantVal := true
 
 			for {
 
-				var v mesos.Offer
+				var tmp_uj__Offers mesos.Offer
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -5444,7 +6535,7 @@ handle_Offers:
 					wantVal = true
 				}
 
-				/* handler: v type=mesos.Offer kind=struct quoted=false*/
+				/* handler: tmp_uj__Offers type=mesos.Offer kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -5453,82 +6544,15 @@ handle_Offers:
 						goto mainparse
 					}
 
-					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					err = tmp_uj__Offers.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
 						return err
 					}
 					state = fflib.FFParse_after_value
 				}
 
-				uj.Offers = append(uj.Offers, v)
-				wantVal = false
-			}
-		}
-	}
+				uj.Offers = append(uj.Offers, tmp_uj__Offers)
 
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_InverseOffers:
-
-	/* handler: uj.InverseOffers type=[]mesos.InverseOffer kind=slice quoted=false*/
-
-	{
-
-		{
-			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
-				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
-			}
-		}
-
-		if tok == fflib.FFTok_null {
-			uj.InverseOffers = nil
-		} else {
-
-			uj.InverseOffers = make([]mesos.InverseOffer, 0)
-
-			wantVal := true
-
-			for {
-
-				var v mesos.InverseOffer
-
-				tok = fs.Scan()
-				if tok == fflib.FFTok_error {
-					goto tokerror
-				}
-				if tok == fflib.FFTok_right_brace {
-					break
-				}
-
-				if tok == fflib.FFTok_comma {
-					if wantVal == true {
-						// TODO(pquerna): this isn't an ideal error message, this handles
-						// things like [,,,] as an array value.
-						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
-					}
-					continue
-				} else {
-					wantVal = true
-				}
-
-				/* handler: v type=mesos.InverseOffer kind=struct quoted=false*/
-
-				{
-					if tok == fflib.FFTok_null {
-
-						state = fflib.FFParse_after_value
-						goto mainparse
-					}
-
-					err = v.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
-					if err != nil {
-						return err
-					}
-					state = fflib.FFParse_after_value
-				}
-
-				uj.InverseOffers = append(uj.InverseOffers, v)
 				wantVal = false
 			}
 		}
@@ -5719,6 +6743,197 @@ handle_OfferID:
 		}
 
 		err = uj.OfferID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+	return nil
+}
+
+func (mj *Event_RescindInverseOffer) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Event_RescindInverseOffer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"inverse_offer_id":`)
+
+	{
+
+		err = mj.InverseOfferID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Event_RescindInverseOfferbase = iota
+	ffj_t_Event_RescindInverseOfferno_such_key
+
+	ffj_t_Event_RescindInverseOffer_InverseOfferID
+)
+
+var ffj_key_Event_RescindInverseOffer_InverseOfferID = []byte("inverse_offer_id")
+
+func (uj *Event_RescindInverseOffer) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Event_RescindInverseOffer) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Event_RescindInverseOfferbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Event_RescindInverseOfferno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'i':
+
+					if bytes.Equal(ffj_key_Event_RescindInverseOffer_InverseOfferID, kn) {
+						currentKey = ffj_t_Event_RescindInverseOffer_InverseOfferID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_RescindInverseOffer_InverseOfferID, kn) {
+					currentKey = ffj_t_Event_RescindInverseOffer_InverseOfferID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Event_RescindInverseOfferno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Event_RescindInverseOffer_InverseOfferID:
+					goto handle_InverseOfferID
+
+				case ffj_t_Event_RescindInverseOfferno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_InverseOfferID:
+
+	/* handler: uj.InverseOfferID type=mesos.OfferID kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.InverseOfferID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

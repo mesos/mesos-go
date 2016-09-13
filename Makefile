@@ -3,7 +3,7 @@ PROTO_PATH := ${PROTO_PATH}:./vendor/github.com/gogo/protobuf/protobuf
 PROTO_PATH := ${PROTO_PATH}:./vendor/github.com/gogo/protobuf/gogoproto
 
 PACKAGES ?= $(shell go list ./...|grep -v vendor)
-BINARIES ?= $(shell go list ./cmd/...|grep -v vendor)
+BINARIES ?= $(shell go list -f "{{.Name}} {{.ImportPath}}" ./cmd/...|grep -v -e vendor|grep -e ^main|cut -f2 -d' ')
 TEST_FLAGS ?= -v -race
 
 .PHONY: all

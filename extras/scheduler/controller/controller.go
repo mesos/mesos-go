@@ -74,7 +74,7 @@ func New() Controller {
 // that flow through the subscription. Upon disconnection, if the given Context reports !Done() then the
 // controller will attempt to re-register the framework and continue processing events.
 func (_ *controllerImpl) Run(config Config) (lastErr error) {
-	subscribe := calls.Subscribe(true, config.Framework)
+	subscribe := calls.Subscribe(config.Framework)
 	for !config.Context.Done() {
 		frameworkID := config.Context.FrameworkID()
 		if config.Framework.GetFailoverTimeout() > 0 && frameworkID != "" {

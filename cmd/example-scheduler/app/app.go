@@ -183,7 +183,7 @@ func resourceOffers(state *internalState, offers []mesos.Offer) {
 				TaskID:    mesos.TaskID{Value: strconv.Itoa(taskID)},
 				AgentID:   offers[i].AgentID,
 				Executor:  state.executor,
-				Resources: remaining.Find(state.wantsTaskResources.Flatten(mesos.Role(state.role).Assign())),
+				Resources: remaining.Find(state.wantsTaskResources.Flatten(mesos.RoleName(state.role).Assign())),
 			}
 			task.Name = "Task " + task.TaskID.Value
 

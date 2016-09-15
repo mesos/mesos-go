@@ -95,6 +95,8 @@ func Accept(ops ...AcceptOpt) *scheduler.Call {
 	}
 }
 
+// AcceptInverseOffers returns an accept-inverse-offers call for the given offer IDs.
+// Callers are expected to fill in the FrameworkID and Filters.
 func AcceptInverseOffers(offerIDs ...mesos.OfferID) *scheduler.Call {
 	return &scheduler.Call{
 		Type: scheduler.Call_ACCEPT_INVERSE_OFFERS.Enum(),
@@ -104,6 +106,8 @@ func AcceptInverseOffers(offerIDs ...mesos.OfferID) *scheduler.Call {
 	}
 }
 
+// DeclineInverseOffers returns a decline-inverse-offers call for the given offer IDs.
+// Callers are expected to fill in the FrameworkID and Filters.
 func DeclineInverseOffers(offerIDs ...mesos.OfferID) *scheduler.Call {
 	return &scheduler.Call{
 		Type: scheduler.Call_DECLINE_INVERSE_OFFERS.Enum(),

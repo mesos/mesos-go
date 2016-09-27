@@ -48,7 +48,7 @@ func (exec *exampleExecutor) Reregistered(driver exec.ExecutorDriver, slaveInfo 
 	fmt.Println("Re-registered Executor on slave ", slaveInfo.GetHostname())
 }
 
-func (exec *exampleExecutor) Disconnected(exec.ExecutorDriver) {
+func (exec *exampleExecutor) Disconnected(driver exec.ExecutorDriver) {
 	fmt.Println("Executor disconnected.")
 }
 
@@ -99,7 +99,7 @@ func (exec *exampleExecutor) LaunchTask(driver exec.ExecutorDriver, taskInfo *me
 	}
 }
 
-func (exec *exampleExecutor) KillTask(exec.ExecutorDriver, *mesos.TaskID) {
+func (exec *exampleExecutor) KillTask(driver exec.ExecutorDriver, taskID *mesos.TaskID) {
 	fmt.Println("Kill task")
 }
 
@@ -107,7 +107,7 @@ func (exec *exampleExecutor) FrameworkMessage(driver exec.ExecutorDriver, msg st
 	fmt.Println("Got framework message: ", msg)
 }
 
-func (exec *exampleExecutor) Shutdown(exec.ExecutorDriver) {
+func (exec *exampleExecutor) Shutdown(driver exec.ExecutorDriver) {
 	fmt.Println("Shutting down the executor")
 }
 

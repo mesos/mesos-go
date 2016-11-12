@@ -52,7 +52,7 @@ func (d *Decoder) Decode(m interface{}) error {
 		}
 
 		if eof {
-			return d.uf(d.buf[:readlen], m.(proto.Message))
+			return d.uf(d.buf[:readlen], m)
 		}
 
 		if len(buf) == nr {

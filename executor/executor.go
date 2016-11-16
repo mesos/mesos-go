@@ -515,6 +515,9 @@ func (driver *MesosExecutorDriver) frameworkError(_ context.Context, from *upid.
 
 // Start starts the executor driver
 func (driver *MesosExecutorDriver) Start() (mesosproto.Status, error) {
+	if driver == nil {
+		return mesosproto.Status_DRIVER_ABORTED, fmt.Errorf("Can't Start() driver because driver is nil!")
+	}
 	driver.lock.Lock()
 	defer driver.lock.Unlock()
 	return driver.start()

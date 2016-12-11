@@ -179,6 +179,14 @@ func Suppress() *scheduler.Call {
 	}
 }
 
+// Suppress returns a suppress call.
+// Callers are expected to fill in the FrameworkID.
+func Suppress() *scheduler.Call {
+	return &scheduler.Call{
+		Type: scheduler.Call_SUPPRESS.Enum(),
+	}
+}
+
 // Decline returns a decline call with the given parameters.
 // Callers are expected to fill in the FrameworkID and Filters.
 func Decline(offerIDs ...mesos.OfferID) *scheduler.Call {

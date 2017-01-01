@@ -2,8 +2,6 @@ package framing
 
 import (
 	"fmt"
-
-	"github.com/gogo/protobuf/proto"
 )
 
 type (

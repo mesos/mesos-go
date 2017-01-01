@@ -3,8 +3,9 @@ PROTO_PATH := ${PROTO_PATH}:./vendor/github.com/gogo/protobuf/protobuf
 PROTO_PATH := ${PROTO_PATH}:./vendor/github.com/gogo/protobuf/gogoproto
 
 PACKAGES ?= $(shell go list ./...|grep -v vendor)
+TEST_DIRS ?= $(sort $(dir $(shell find . -name '*_test.go' | grep -v vendor)))
 BINARIES ?= $(shell go list -f "{{.Name}} {{.ImportPath}}" ./cmd/...|grep -v -e vendor|grep -e ^main|cut -f2 -d' ')
-TEST_FLAGS ?= -v -race
+TEST_FLAGS ?= -race
 
 .PHONY: all
 all: test
@@ -15,7 +16,11 @@ install:
 
 .PHONY: test
 test:
-	go $@ $(TEST_FLAGS) $(PACKAGES)
+	go $@ $(TEST_FLAGS) $(TEST_DIRS)
+
+.PHONY: test-verbose
+test-verbose: TEST_FLAGS += -v
+test-verbose: test
 
 .PHONY: vet
 vet:

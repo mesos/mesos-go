@@ -158,35 +158,35 @@ func Decline(offerIDs ...mesos.OfferID) *scheduler.Call {
 
 // Kill returns a kill call with the given parameters.
 // Callers are expected to fill in the FrameworkID.
-func Kill(taskID, agentID string) *scheduler.Call {
+func Kill(taskID, slaveID string) *scheduler.Call {
 	return &scheduler.Call{
 		Type: scheduler.Call_KILL.Enum(),
 		Kill: &scheduler.Call_Kill{
 			TaskID:  mesos.TaskID{Value: taskID},
-			AgentID: optionalAgentID(agentID),
+			SlaveID: optionalSlaveID(slaveID),
 		},
 	}
 }
 
 // Shutdown returns a shutdown call with the given parameters.
 // Callers are expected to fill in the FrameworkID.
-func Shutdown(executorID, agentID string) *scheduler.Call {
+func Shutdown(executorID, slaveID string) *scheduler.Call {
 	return &scheduler.Call{
 		Type: scheduler.Call_SHUTDOWN.Enum(),
 		Shutdown: &scheduler.Call_Shutdown{
 			ExecutorID: mesos.ExecutorID{Value: executorID},
-			AgentID:    mesos.AgentID{Value: agentID},
+			SlaveID:    mesos.SlaveID{Value: slaveID},
 		},
 	}
 }
 
 // Acknowledge returns an acknowledge call with the given parameters.
 // Callers are expected to fill in the FrameworkID.
-func Acknowledge(agentID, taskID string, uuid []byte) *scheduler.Call {
+func Acknowledge(slaveID, taskID string, uuid []byte) *scheduler.Call {
 	return &scheduler.Call{
 		Type: scheduler.Call_ACKNOWLEDGE.Enum(),
 		Acknowledge: &scheduler.Call_Acknowledge{
-			AgentID: mesos.AgentID{Value: agentID},
+			SlaveID: mesos.SlaveID{Value: slaveID},
 			TaskID:  mesos.TaskID{Value: taskID},
 			UUID:    uuid,
 		},
@@ -194,8 +194,8 @@ func Acknowledge(agentID, taskID string, uuid []byte) *scheduler.Call {
 }
 
 // ReconcileTasks constructs a []Call_Reconcile_Task from the given mappings:
-//     map[string]string{taskID:agentID}
-// Map keys (taskID's) are required to be non-empty, but values (agentID's) *may* be empty.
+//     map[string]string{taskID:slaveID}
+// Map keys (taskID's) are required to be non-empty, but values (slaveID's) *may* be empty.
 func ReconcileTasks(tasks map[string]string) scheduler.ReconcileOpt {
 	return func(cr *scheduler.Call_Reconcile) {
 		if len(tasks) == 0 {
@@ -206,7 +206,7 @@ func ReconcileTasks(tasks map[string]string) scheduler.ReconcileOpt {
 		i := 0
 		for k, v := range tasks {
 			result[i].TaskID = mesos.TaskID{Value: k}
-			result[i].AgentID = optionalAgentID(v)
+			result[i].SlaveID = optionalSlaveID(v)
 			i++
 		}
 		cr.Tasks = result
@@ -225,11 +225,11 @@ func Reconcile(opts ...scheduler.ReconcileOpt) *scheduler.Call {
 
 // Message returns a message call with the given parameters.
 // Callers are expected to fill in the FrameworkID.
-func Message(agentID, executorID string, data []byte) *scheduler.Call {
+func Message(slaveID, executorID string, data []byte) *scheduler.Call {
 	return &scheduler.Call{
 		Type: scheduler.Call_MESSAGE.Enum(),
 		Message: &scheduler.Call_Message{
-			AgentID:    mesos.AgentID{Value: agentID},
+			SlaveID:    mesos.SlaveID{Value: slaveID},
 			ExecutorID: mesos.ExecutorID{Value: executorID},
 			Data:       data,
 		},
@@ -247,11 +247,11 @@ func Request(requests ...mesos.Request) *scheduler.Call {
 	}
 }
 
-func optionalAgentID(agentID string) *mesos.AgentID {
-	if agentID == "" {
+func optionalSlaveID(slaveID string) *mesos.SlaveID {
+	if slaveID == "" {
 		return nil
 	}
-	return &mesos.AgentID{Value: agentID}
+	return &mesos.SlaveID{Value: slaveID}
 }
 
 func errInvalidCall(reason string) error {

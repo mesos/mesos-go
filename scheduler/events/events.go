@@ -143,7 +143,7 @@ func AcknowledgeUpdates(callerGetter func() calls.Caller) Handler {
 		)
 		if len(uuid) > 0 {
 			ack := calls.Acknowledge(
-				s.GetAgentID().GetValue(),
+				s.GetSlaveID().GetValue(),
 				s.TaskID.Value,
 				uuid,
 			)

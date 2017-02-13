@@ -4,6 +4,7 @@
 *.DS_Store
 *.swp
 *.out
+*.bak
 
 # rails specific
 *.sqlite3
@@ -90,7 +91,7 @@ _testmain.go
 junit_*
 
 # mesos-go specific
-/examples/_output
+_output
 /vendor
 /example-scheduler
 

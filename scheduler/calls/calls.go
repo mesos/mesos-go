@@ -15,8 +15,12 @@ func Filters(fo ...mesos.FilterOpt) scheduler.CallOpt {
 		switch *c.Type {
 		case scheduler.Call_ACCEPT:
 			c.Accept.Filters = mesos.OptionalFilters(fo...)
+		case scheduler.Call_ACCEPT_INVERSE_OFFERS:
+			c.AcceptInverseOffers.Filters = mesos.OptionalFilters(fo...)
 		case scheduler.Call_DECLINE:
 			c.Decline.Filters = mesos.OptionalFilters(fo...)
+		case scheduler.Call_DECLINE_INVERSE_OFFERS:
+			c.DeclineInverseOffers.Filters = mesos.OptionalFilters(fo...)
 		default:
 			panic("filters not supported for type " + c.Type.String())
 		}
@@ -41,11 +45,11 @@ func Framework(id string) scheduler.CallOpt {
 
 // Subscribe returns a subscribe call with the given parameters.
 // The call's FrameworkID is automatically filled in from the info specification.
-func Subscribe(force bool, info *mesos.FrameworkInfo) *scheduler.Call {
+func Subscribe(info *mesos.FrameworkInfo) *scheduler.Call {
 	return &scheduler.Call{
 		Type:        scheduler.Call_SUBSCRIBE.Enum(),
 		FrameworkID: info.GetID(),
-		Subscribe:   &scheduler.Call_Subscribe{FrameworkInfo: info, Force: force},
+		Subscribe:   &scheduler.Call_Subscribe{FrameworkInfo: info},
 	}
 }
 
@@ -87,6 +91,28 @@ func Accept(ops ...AcceptOpt) *scheduler.Call {
 		Accept: &scheduler.Call_Accept{
 			OfferIDs:   offerIDs,
 			Operations: ab.operations,
+		},
+	}
+}
+
+// AcceptInverseOffers returns an accept-inverse-offers call for the given offer IDs.
+// Callers are expected to fill in the FrameworkID and Filters.
+func AcceptInverseOffers(offerIDs ...mesos.OfferID) *scheduler.Call {
+	return &scheduler.Call{
+		Type: scheduler.Call_ACCEPT_INVERSE_OFFERS.Enum(),
+		AcceptInverseOffers: &scheduler.Call_AcceptInverseOffers{
+			InverseOfferIDs: offerIDs,
+		},
+	}
+}
+
+// DeclineInverseOffers returns a decline-inverse-offers call for the given offer IDs.
+// Callers are expected to fill in the FrameworkID and Filters.
+func DeclineInverseOffers(offerIDs ...mesos.OfferID) *scheduler.Call {
+	return &scheduler.Call{
+		Type: scheduler.Call_DECLINE_INVERSE_OFFERS.Enum(),
+		DeclineInverseOffers: &scheduler.Call_DeclineInverseOffers{
+			InverseOfferIDs: offerIDs,
 		},
 	}
 }

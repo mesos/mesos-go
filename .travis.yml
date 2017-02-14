@@ -1,18 +1,19 @@
 sudo: false
 language: go
+# handle submodules ourselves
+git:
+  submodules: false
 go:
-  - 1.3
-  - 1.4.2
-  - 1.5.1
+  - 1.6.x
+  - 1.7.x
   - tip
 before_install:
    #these two lines help users who fork mesos-go. It's a noop when running from the mesos organization
   - RepoName=`basename $PWD`; SrcDir=`dirname $PWD`; DestDir="`dirname $SrcDir`/mesos"
   - if [[ "$SrcDir" != "$DestDir" ]]; then mv "$SrcDir" "$DestDir"; cd ../../mesos/$RepoName; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$RepoName; fi
+  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+  - git submodule update --init --recursive
 install:
-  - go get -t -d -v ./...
+  - make install
 script:
-  - ! gofmt -s -d . 2>&1 | read diff
-  - go install -v ./...
-  - flagcheck
-  - go test -timeout 120s -race ./...
+  - make test

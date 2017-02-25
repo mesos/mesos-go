@@ -1,6 +1,6 @@
 [submodule "api/v1/vendor/github.com/gogo/protobuf"]
 	path = api/v1/vendor/github.com/gogo/protobuf
-	url = git@github.com:gogo/protobuf.git
+	url = https://github.com/gogo/protobuf
 [submodule "api/v1/vendor/github.com/pquerna/ffjson"]
 	path = api/v1/vendor/github.com/pquerna/ffjson
 	url = https://github.com/pquerna/ffjson
@@ -27,4 +27,4 @@
 	url = https://github.com/matttproud/golang_protobuf_extensions
 [submodule "api/v1/cmd/vendor/github.com/beorn7/perks"]
 	path = api/v1/cmd/vendor/github.com/beorn7/perks
-	url = http://github.com/beorn7/perks
+	url = https://github.com/beorn7/perks

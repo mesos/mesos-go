@@ -18,9 +18,8 @@ type Encoder struct{ w io.Writer }
 // isn't a proto.Message, Encode will panic.
 func (e *Encoder) Encode(m interface{}) error {
 	bs, err := proto.Marshal(m.(proto.Message))
-	if err != nil {
-		return err
+	if err == nil {
+		_, err = e.w.Write(bs)
 	}
-	_, err = e.w.Write(bs)
 	return err
 }

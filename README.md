@@ -6,6 +6,7 @@ One of the objectives of this project is to provide an idiomatic Go API that mak
 
 [![Build Status](https://travis-ci.org/mesos/mesos-go.svg)](https://travis-ci.org/mesos/mesos-go)
 [![GoDoc] (https://godoc.org/github.com/mesos/mesos-go?status.png)](https://godoc.org/github.com/mesos/mesos-go)
+[![Coverage Status](https://coveralls.io/repos/github/mesos/mesos-go/badge.svg?branch=master)](https://coveralls.io/github/mesos/mesos-go?branch=master)
 
 ## Status
 New projects should use the Mesos v1 API bindings, located in `api/v1`.

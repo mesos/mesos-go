@@ -13,7 +13,8 @@ before_install:
   - if [[ "$SrcDir" != "$DestDir" ]]; then mv "$SrcDir" "$DestDir"; cd ../../mesos/$RepoName; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$RepoName; fi
   - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
   - git submodule update --init --recursive
+  - go get github.com/mattn/goveralls
 install:
   - make install
 script:
-  - make test
+  - rm -rf $HOME/gopath/pkg && make coverage && $HOME/gopath/bin/goveralls -service=travis-ci -coverprofile=_output/coverage.out

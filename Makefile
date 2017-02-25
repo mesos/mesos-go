@@ -10,6 +10,7 @@ PACKAGES ?= $(shell go list ${API_PKG}/...|grep -v vendor)
 TEST_DIRS ?= $(sort $(dir $(shell find ${API_PKG} -name '*_test.go' | grep -v vendor)))
 BINARIES ?= $(shell go list -f "{{.Name}} {{.ImportPath}}" ${CMD_PKG}/...|grep -v -e vendor|grep -e ^main|cut -f2 -d' ')
 TEST_FLAGS ?= -race
+COVERAGE_TARGETS = ${TEST_DIRS:%/=%.cover}
 
 .PHONY: all
 all: test
@@ -25,6 +26,13 @@ test:
 .PHONY: test-verbose
 test-verbose: TEST_FLAGS += -v
 test-verbose: test
+
+.PHONY: coverage $(COVERAGE_TARGETS)
+coverage: TEST_FLAGS = -v -cover -race
+coverage: $(COVERAGE_TARGETS)
+	cat _output/*.cover | sed -e '2,$$ s/^mode:.*$$//' -e '/^$$/d' >_output/coverage.out
+$(COVERAGE_TARGETS):
+	mkdir -p _output && go test ./$(@:%.cover=%) $(TEST_FLAGS) -coverprofile=_output/$(subst /,___,$@)
 
 .PHONY: vet
 vet:

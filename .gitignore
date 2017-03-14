@@ -3,3 +3,4 @@
 bin/
 pkg/
 /_output
+vendor

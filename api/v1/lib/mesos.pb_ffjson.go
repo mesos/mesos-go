@@ -1071,23 +1071,18 @@ func (mj *Attribute) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = err
 	buf.WriteString(`{ "name":`)
 	fflib.WriteJsonString(buf, string(mj.Name))
-	buf.WriteByte(',')
-	if mj.Type != nil {
-		if true {
-			buf.WriteString(`"type":`)
+	buf.WriteString(`,"type":`)
 
-			{
+	{
 
-				obj, err = mj.Type.MarshalJSON()
-				if err != nil {
-					return err
-				}
-				buf.Write(obj)
-
-			}
-			buf.WriteByte(',')
+		obj, err = mj.Type.MarshalJSON()
+		if err != nil {
+			return err
 		}
+		buf.Write(obj)
+
 	}
+	buf.WriteByte(',')
 	if mj.Scalar != nil {
 		if true {
 			buf.WriteString(`"scalar":`)
@@ -1403,8 +1398,6 @@ handle_Type:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Type = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
@@ -1412,10 +1405,6 @@ handle_Type:
 		tbuf, err := fs.CaptureField(tok)
 		if err != nil {
 			return fs.WrapErr(err)
-		}
-
-		if uj.Type == nil {
-			uj.Type = new(Value_Type)
 		}
 
 		err = uj.Type.UnmarshalJSON(tbuf)
@@ -9427,10 +9416,10 @@ func (mj *FrameworkInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.WebuiUrl != nil {
+	if mj.WebUiURL != nil {
 		if true {
 			buf.WriteString(`"webui_url":`)
-			fflib.WriteJsonString(buf, string(*mj.WebuiUrl))
+			fflib.WriteJsonString(buf, string(*mj.WebUiURL))
 			buf.WriteByte(',')
 		}
 	}
@@ -9496,7 +9485,7 @@ const (
 
 	ffj_t_FrameworkInfo_Principal
 
-	ffj_t_FrameworkInfo_WebuiUrl
+	ffj_t_FrameworkInfo_WebUiURL
 
 	ffj_t_FrameworkInfo_Capabilities
 
@@ -9519,7 +9508,7 @@ var ffj_key_FrameworkInfo_Hostname = []byte("hostname")
 
 var ffj_key_FrameworkInfo_Principal = []byte("principal")
 
-var ffj_key_FrameworkInfo_WebuiUrl = []byte("webui_url")
+var ffj_key_FrameworkInfo_WebUiURL = []byte("webui_url")
 
 var ffj_key_FrameworkInfo_Capabilities = []byte("capabilities")
 
@@ -9663,8 +9652,8 @@ mainparse:
 
 				case 'w':
 
-					if bytes.Equal(ffj_key_FrameworkInfo_WebuiUrl, kn) {
-						currentKey = ffj_t_FrameworkInfo_WebuiUrl
+					if bytes.Equal(ffj_key_FrameworkInfo_WebUiURL, kn) {
+						currentKey = ffj_t_FrameworkInfo_WebUiURL
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -9683,8 +9672,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.AsciiEqualFold(ffj_key_FrameworkInfo_WebuiUrl, kn) {
-					currentKey = ffj_t_FrameworkInfo_WebuiUrl
+				if fflib.AsciiEqualFold(ffj_key_FrameworkInfo_WebUiURL, kn) {
+					currentKey = ffj_t_FrameworkInfo_WebUiURL
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -9778,8 +9767,8 @@ mainparse:
 				case ffj_t_FrameworkInfo_Principal:
 					goto handle_Principal
 
-				case ffj_t_FrameworkInfo_WebuiUrl:
-					goto handle_WebuiUrl
+				case ffj_t_FrameworkInfo_WebUiURL:
+					goto handle_WebUiURL
 
 				case ffj_t_FrameworkInfo_Capabilities:
 					goto handle_Capabilities
@@ -10044,9 +10033,9 @@ handle_Principal:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_WebuiUrl:
+handle_WebUiURL:
 
-	/* handler: uj.WebuiUrl type=string kind=string quoted=false*/
+	/* handler: uj.WebUiURL type=string kind=string quoted=false*/
 
 	{
 
@@ -10058,7 +10047,7 @@ handle_WebuiUrl:
 
 		if tok == fflib.FFTok_null {
 
-			uj.WebuiUrl = nil
+			uj.WebUiURL = nil
 
 		} else {
 
@@ -10066,7 +10055,7 @@ handle_WebuiUrl:
 			outBuf := fs.Output.Bytes()
 
 			tval = string(string(outBuf))
-			uj.WebuiUrl = &tval
+			uj.WebUiURL = &tval
 
 		}
 	}
@@ -10406,13 +10395,13 @@ func (mj *HealthCheck) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Http != nil {
+	if mj.HTTP != nil {
 		if true {
 			buf.WriteString(`"http":`)
 
 			{
 
-				err = mj.Http.MarshalJSONBuf(buf)
+				err = mj.HTTP.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -10480,7 +10469,7 @@ const (
 	ffj_t_HealthCheckbase = iota
 	ffj_t_HealthCheckno_such_key
 
-	ffj_t_HealthCheck_Http
+	ffj_t_HealthCheck_HTTP
 
 	ffj_t_HealthCheck_DelaySeconds
 
@@ -10495,7 +10484,7 @@ const (
 	ffj_t_HealthCheck_Command
 )
 
-var ffj_key_HealthCheck_Http = []byte("http")
+var ffj_key_HealthCheck_HTTP = []byte("http")
 
 var ffj_key_HealthCheck_DelaySeconds = []byte("delay_seconds")
 
@@ -10599,8 +10588,8 @@ mainparse:
 
 				case 'h':
 
-					if bytes.Equal(ffj_key_HealthCheck_Http, kn) {
-						currentKey = ffj_t_HealthCheck_Http
+					if bytes.Equal(ffj_key_HealthCheck_HTTP, kn) {
+						currentKey = ffj_t_HealthCheck_HTTP
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -10659,8 +10648,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_HealthCheck_Http, kn) {
-					currentKey = ffj_t_HealthCheck_Http
+				if fflib.SimpleLetterEqualFold(ffj_key_HealthCheck_HTTP, kn) {
+					currentKey = ffj_t_HealthCheck_HTTP
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -10682,8 +10671,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_HealthCheck_Http:
-					goto handle_Http
+				case ffj_t_HealthCheck_HTTP:
+					goto handle_HTTP
 
 				case ffj_t_HealthCheck_DelaySeconds:
 					goto handle_DelaySeconds
@@ -10717,24 +10706,24 @@ mainparse:
 		}
 	}
 
-handle_Http:
+handle_HTTP:
 
-	/* handler: uj.Http type=mesos.HealthCheck_HTTP kind=struct quoted=false*/
+	/* handler: uj.HTTP type=mesos.HealthCheck_HTTP kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Http = nil
+			uj.HTTP = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.Http == nil {
-			uj.Http = new(HealthCheck_HTTP)
+		if uj.HTTP == nil {
+			uj.HTTP = new(HealthCheck_HTTP)
 		}
 
-		err = uj.Http.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.HTTP.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -14034,13 +14023,13 @@ func (mj *InverseOffer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 
 	}
 	buf.WriteByte(',')
-	if mj.Url != nil {
+	if mj.URL != nil {
 		if true {
 			buf.WriteString(`"url":`)
 
 			{
 
-				err = mj.Url.MarshalJSONBuf(buf)
+				err = mj.URL.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -14116,7 +14105,7 @@ const (
 
 	ffj_t_InverseOffer_OfferID
 
-	ffj_t_InverseOffer_Url
+	ffj_t_InverseOffer_URL
 
 	ffj_t_InverseOffer_FrameworkID
 
@@ -14129,7 +14118,7 @@ const (
 
 var ffj_key_InverseOffer_OfferID = []byte("id")
 
-var ffj_key_InverseOffer_Url = []byte("url")
+var ffj_key_InverseOffer_URL = []byte("url")
 
 var ffj_key_InverseOffer_FrameworkID = []byte("framework_id")
 
@@ -14232,8 +14221,8 @@ mainparse:
 
 				case 'u':
 
-					if bytes.Equal(ffj_key_InverseOffer_Url, kn) {
-						currentKey = ffj_t_InverseOffer_Url
+					if bytes.Equal(ffj_key_InverseOffer_URL, kn) {
+						currentKey = ffj_t_InverseOffer_URL
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
@@ -14269,8 +14258,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_InverseOffer_Url, kn) {
-					currentKey = ffj_t_InverseOffer_Url
+				if fflib.SimpleLetterEqualFold(ffj_key_InverseOffer_URL, kn) {
+					currentKey = ffj_t_InverseOffer_URL
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -14301,8 +14290,8 @@ mainparse:
 				case ffj_t_InverseOffer_OfferID:
 					goto handle_OfferID
 
-				case ffj_t_InverseOffer_Url:
-					goto handle_Url
+				case ffj_t_InverseOffer_URL:
+					goto handle_URL
 
 				case ffj_t_InverseOffer_FrameworkID:
 					goto handle_FrameworkID
@@ -14351,24 +14340,24 @@ handle_OfferID:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Url:
+handle_URL:
 
-	/* handler: uj.Url type=mesos.URL kind=struct quoted=false*/
+	/* handler: uj.URL type=mesos.URL kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Url = nil
+			uj.URL = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.Url == nil {
-			uj.Url = new(URL)
+		if uj.URL == nil {
+			uj.URL = new(URL)
 		}
 
-		err = uj.Url.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.URL.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -16522,10 +16511,10 @@ func (mj *MachineID) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Ip != nil {
+	if mj.IP != nil {
 		if true {
 			buf.WriteString(`"ip":`)
-			fflib.WriteJsonString(buf, string(*mj.Ip))
+			fflib.WriteJsonString(buf, string(*mj.IP))
 			buf.WriteByte(',')
 		}
 	}
@@ -16540,12 +16529,12 @@ const (
 
 	ffj_t_MachineID_Hostname
 
-	ffj_t_MachineID_Ip
+	ffj_t_MachineID_IP
 )
 
 var ffj_key_MachineID_Hostname = []byte("hostname")
 
-var ffj_key_MachineID_Ip = []byte("ip")
+var ffj_key_MachineID_IP = []byte("ip")
 
 func (uj *MachineID) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -16616,16 +16605,16 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_MachineID_Ip, kn) {
-						currentKey = ffj_t_MachineID_Ip
+					if bytes.Equal(ffj_key_MachineID_IP, kn) {
+						currentKey = ffj_t_MachineID_IP
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_MachineID_Ip, kn) {
-					currentKey = ffj_t_MachineID_Ip
+				if fflib.SimpleLetterEqualFold(ffj_key_MachineID_IP, kn) {
+					currentKey = ffj_t_MachineID_IP
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -16656,8 +16645,8 @@ mainparse:
 				case ffj_t_MachineID_Hostname:
 					goto handle_Hostname
 
-				case ffj_t_MachineID_Ip:
-					goto handle_Ip
+				case ffj_t_MachineID_IP:
+					goto handle_IP
 
 				case ffj_t_MachineIDno_such_key:
 					err = fs.SkipField(tok)
@@ -16703,9 +16692,9 @@ handle_Hostname:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Ip:
+handle_IP:
 
-	/* handler: uj.Ip type=string kind=string quoted=false*/
+	/* handler: uj.IP type=string kind=string quoted=false*/
 
 	{
 
@@ -16717,7 +16706,7 @@ handle_Ip:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Ip = nil
+			uj.IP = nil
 
 		} else {
 
@@ -16725,7 +16714,7 @@ handle_Ip:
 			outBuf := fs.Output.Bytes()
 
 			tval = string(string(outBuf))
-			uj.Ip = &tval
+			uj.IP = &tval
 
 		}
 	}
@@ -18667,13 +18656,13 @@ func (mj *Offer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	buf.WriteString(`,"hostname":`)
 	fflib.WriteJsonString(buf, string(mj.Hostname))
 	buf.WriteByte(',')
-	if mj.Url != nil {
+	if mj.URL != nil {
 		if true {
 			buf.WriteString(`"url":`)
 
 			{
 
-				err = mj.Url.MarshalJSONBuf(buf)
+				err = mj.URL.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -18778,7 +18767,7 @@ const (
 
 	ffj_t_Offer_Hostname
 
-	ffj_t_Offer_Url
+	ffj_t_Offer_URL
 
 	ffj_t_Offer_Resources
 
@@ -18797,7 +18786,7 @@ var ffj_key_Offer_AgentID = []byte("agent_id")
 
 var ffj_key_Offer_Hostname = []byte("hostname")
 
-var ffj_key_Offer_Url = []byte("url")
+var ffj_key_Offer_URL = []byte("url")
 
 var ffj_key_Offer_Resources = []byte("resources")
 
@@ -18921,8 +18910,8 @@ mainparse:
 
 				case 'u':
 
-					if bytes.Equal(ffj_key_Offer_Url, kn) {
-						currentKey = ffj_t_Offer_Url
+					if bytes.Equal(ffj_key_Offer_URL, kn) {
+						currentKey = ffj_t_Offer_URL
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
@@ -18958,8 +18947,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_Offer_Url, kn) {
-					currentKey = ffj_t_Offer_Url
+				if fflib.SimpleLetterEqualFold(ffj_key_Offer_URL, kn) {
+					currentKey = ffj_t_Offer_URL
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -19017,8 +19006,8 @@ mainparse:
 				case ffj_t_Offer_Hostname:
 					goto handle_Hostname
 
-				case ffj_t_Offer_Url:
-					goto handle_Url
+				case ffj_t_Offer_URL:
+					goto handle_URL
 
 				case ffj_t_Offer_Resources:
 					goto handle_Resources
@@ -19135,24 +19124,24 @@ handle_Hostname:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Url:
+handle_URL:
 
-	/* handler: uj.Url type=mesos.URL kind=struct quoted=false*/
+	/* handler: uj.URL type=mesos.URL kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Url = nil
+			uj.URL = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.Url == nil {
-			uj.Url = new(URL)
+		if uj.URL == nil {
+			uj.URL = new(URL)
 		}
 
-		err = uj.Url.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.URL.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -22092,101 +22081,101 @@ func (mj *PerfStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.LlcLoads != nil {
+	if mj.LLCLoads != nil {
 		if true {
 			buf.WriteString(`"llc_loads":`)
-			fflib.FormatBits2(buf, uint64(*mj.LlcLoads), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.LLCLoads), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.LlcLoadMisses != nil {
+	if mj.LLCLoadMisses != nil {
 		if true {
 			buf.WriteString(`"llc_load_misses":`)
-			fflib.FormatBits2(buf, uint64(*mj.LlcLoadMisses), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.LLCLoadMisses), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.LlcStores != nil {
+	if mj.LLCStores != nil {
 		if true {
 			buf.WriteString(`"llc_stores":`)
-			fflib.FormatBits2(buf, uint64(*mj.LlcStores), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.LLCStores), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.LlcStoreMisses != nil {
+	if mj.LLCStoreMisses != nil {
 		if true {
 			buf.WriteString(`"llc_store_misses":`)
-			fflib.FormatBits2(buf, uint64(*mj.LlcStoreMisses), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.LLCStoreMisses), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.LlcPrefetches != nil {
+	if mj.LLCPrefetches != nil {
 		if true {
 			buf.WriteString(`"llc_prefetches":`)
-			fflib.FormatBits2(buf, uint64(*mj.LlcPrefetches), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.LLCPrefetches), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.LlcPrefetchMisses != nil {
+	if mj.LLCPrefetchMisses != nil {
 		if true {
 			buf.WriteString(`"llc_prefetch_misses":`)
-			fflib.FormatBits2(buf, uint64(*mj.LlcPrefetchMisses), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.LLCPrefetchMisses), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.DtlbLoads != nil {
+	if mj.DTLBLoads != nil {
 		if true {
 			buf.WriteString(`"dtlb_loads":`)
-			fflib.FormatBits2(buf, uint64(*mj.DtlbLoads), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.DTLBLoads), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.DtlbLoadMisses != nil {
+	if mj.DTLBLoadMisses != nil {
 		if true {
 			buf.WriteString(`"dtlb_load_misses":`)
-			fflib.FormatBits2(buf, uint64(*mj.DtlbLoadMisses), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.DTLBLoadMisses), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.DtlbStores != nil {
+	if mj.DTLBStores != nil {
 		if true {
 			buf.WriteString(`"dtlb_stores":`)
-			fflib.FormatBits2(buf, uint64(*mj.DtlbStores), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.DTLBStores), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.DtlbStoreMisses != nil {
+	if mj.DTLBStoreMisses != nil {
 		if true {
 			buf.WriteString(`"dtlb_store_misses":`)
-			fflib.FormatBits2(buf, uint64(*mj.DtlbStoreMisses), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.DTLBStoreMisses), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.DtlbPrefetches != nil {
+	if mj.DTLBPrefetches != nil {
 		if true {
 			buf.WriteString(`"dtlb_prefetches":`)
-			fflib.FormatBits2(buf, uint64(*mj.DtlbPrefetches), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.DTLBPrefetches), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.DtlbPrefetchMisses != nil {
+	if mj.DTLBPrefetchMisses != nil {
 		if true {
 			buf.WriteString(`"dtlb_prefetch_misses":`)
-			fflib.FormatBits2(buf, uint64(*mj.DtlbPrefetchMisses), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.DTLBPrefetchMisses), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.ItlbLoads != nil {
+	if mj.ITLBLoads != nil {
 		if true {
 			buf.WriteString(`"itlb_loads":`)
-			fflib.FormatBits2(buf, uint64(*mj.ItlbLoads), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.ITLBLoads), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.ItlbLoadMisses != nil {
+	if mj.ITLBLoadMisses != nil {
 		if true {
 			buf.WriteString(`"itlb_load_misses":`)
-			fflib.FormatBits2(buf, uint64(*mj.ItlbLoadMisses), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.ITLBLoadMisses), 10, false)
 			buf.WriteByte(',')
 		}
 	}
@@ -22317,33 +22306,33 @@ const (
 
 	ffj_t_PerfStatistics_L1IcachePrefetchMisses
 
-	ffj_t_PerfStatistics_LlcLoads
+	ffj_t_PerfStatistics_LLCLoads
 
-	ffj_t_PerfStatistics_LlcLoadMisses
+	ffj_t_PerfStatistics_LLCLoadMisses
 
-	ffj_t_PerfStatistics_LlcStores
+	ffj_t_PerfStatistics_LLCStores
 
-	ffj_t_PerfStatistics_LlcStoreMisses
+	ffj_t_PerfStatistics_LLCStoreMisses
 
-	ffj_t_PerfStatistics_LlcPrefetches
+	ffj_t_PerfStatistics_LLCPrefetches
 
-	ffj_t_PerfStatistics_LlcPrefetchMisses
+	ffj_t_PerfStatistics_LLCPrefetchMisses
 
-	ffj_t_PerfStatistics_DtlbLoads
+	ffj_t_PerfStatistics_DTLBLoads
 
-	ffj_t_PerfStatistics_DtlbLoadMisses
+	ffj_t_PerfStatistics_DTLBLoadMisses
 
-	ffj_t_PerfStatistics_DtlbStores
+	ffj_t_PerfStatistics_DTLBStores
 
-	ffj_t_PerfStatistics_DtlbStoreMisses
+	ffj_t_PerfStatistics_DTLBStoreMisses
 
-	ffj_t_PerfStatistics_DtlbPrefetches
+	ffj_t_PerfStatistics_DTLBPrefetches
 
-	ffj_t_PerfStatistics_DtlbPrefetchMisses
+	ffj_t_PerfStatistics_DTLBPrefetchMisses
 
-	ffj_t_PerfStatistics_ItlbLoads
+	ffj_t_PerfStatistics_ITLBLoads
 
-	ffj_t_PerfStatistics_ItlbLoadMisses
+	ffj_t_PerfStatistics_ITLBLoadMisses
 
 	ffj_t_PerfStatistics_BranchLoads
 
@@ -22424,33 +22413,33 @@ var ffj_key_PerfStatistics_L1IcachePrefetches = []byte("l1_icache_prefetches")
 
 var ffj_key_PerfStatistics_L1IcachePrefetchMisses = []byte("l1_icache_prefetch_misses")
 
-var ffj_key_PerfStatistics_LlcLoads = []byte("llc_loads")
+var ffj_key_PerfStatistics_LLCLoads = []byte("llc_loads")
 
-var ffj_key_PerfStatistics_LlcLoadMisses = []byte("llc_load_misses")
+var ffj_key_PerfStatistics_LLCLoadMisses = []byte("llc_load_misses")
 
-var ffj_key_PerfStatistics_LlcStores = []byte("llc_stores")
+var ffj_key_PerfStatistics_LLCStores = []byte("llc_stores")
 
-var ffj_key_PerfStatistics_LlcStoreMisses = []byte("llc_store_misses")
+var ffj_key_PerfStatistics_LLCStoreMisses = []byte("llc_store_misses")
 
-var ffj_key_PerfStatistics_LlcPrefetches = []byte("llc_prefetches")
+var ffj_key_PerfStatistics_LLCPrefetches = []byte("llc_prefetches")
 
-var ffj_key_PerfStatistics_LlcPrefetchMisses = []byte("llc_prefetch_misses")
+var ffj_key_PerfStatistics_LLCPrefetchMisses = []byte("llc_prefetch_misses")
 
-var ffj_key_PerfStatistics_DtlbLoads = []byte("dtlb_loads")
+var ffj_key_PerfStatistics_DTLBLoads = []byte("dtlb_loads")
 
-var ffj_key_PerfStatistics_DtlbLoadMisses = []byte("dtlb_load_misses")
+var ffj_key_PerfStatistics_DTLBLoadMisses = []byte("dtlb_load_misses")
 
-var ffj_key_PerfStatistics_DtlbStores = []byte("dtlb_stores")
+var ffj_key_PerfStatistics_DTLBStores = []byte("dtlb_stores")
 
-var ffj_key_PerfStatistics_DtlbStoreMisses = []byte("dtlb_store_misses")
+var ffj_key_PerfStatistics_DTLBStoreMisses = []byte("dtlb_store_misses")
 
-var ffj_key_PerfStatistics_DtlbPrefetches = []byte("dtlb_prefetches")
+var ffj_key_PerfStatistics_DTLBPrefetches = []byte("dtlb_prefetches")
 
-var ffj_key_PerfStatistics_DtlbPrefetchMisses = []byte("dtlb_prefetch_misses")
+var ffj_key_PerfStatistics_DTLBPrefetchMisses = []byte("dtlb_prefetch_misses")
 
-var ffj_key_PerfStatistics_ItlbLoads = []byte("itlb_loads")
+var ffj_key_PerfStatistics_ITLBLoads = []byte("itlb_loads")
 
-var ffj_key_PerfStatistics_ItlbLoadMisses = []byte("itlb_load_misses")
+var ffj_key_PerfStatistics_ITLBLoadMisses = []byte("itlb_load_misses")
 
 var ffj_key_PerfStatistics_BranchLoads = []byte("branch_loads")
 
@@ -22603,33 +22592,33 @@ mainparse:
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_DtlbLoads, kn) {
-						currentKey = ffj_t_PerfStatistics_DtlbLoads
+					} else if bytes.Equal(ffj_key_PerfStatistics_DTLBLoads, kn) {
+						currentKey = ffj_t_PerfStatistics_DTLBLoads
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_DtlbLoadMisses, kn) {
-						currentKey = ffj_t_PerfStatistics_DtlbLoadMisses
+					} else if bytes.Equal(ffj_key_PerfStatistics_DTLBLoadMisses, kn) {
+						currentKey = ffj_t_PerfStatistics_DTLBLoadMisses
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_DtlbStores, kn) {
-						currentKey = ffj_t_PerfStatistics_DtlbStores
+					} else if bytes.Equal(ffj_key_PerfStatistics_DTLBStores, kn) {
+						currentKey = ffj_t_PerfStatistics_DTLBStores
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_DtlbStoreMisses, kn) {
-						currentKey = ffj_t_PerfStatistics_DtlbStoreMisses
+					} else if bytes.Equal(ffj_key_PerfStatistics_DTLBStoreMisses, kn) {
+						currentKey = ffj_t_PerfStatistics_DTLBStoreMisses
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_DtlbPrefetches, kn) {
-						currentKey = ffj_t_PerfStatistics_DtlbPrefetches
+					} else if bytes.Equal(ffj_key_PerfStatistics_DTLBPrefetches, kn) {
+						currentKey = ffj_t_PerfStatistics_DTLBPrefetches
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_DtlbPrefetchMisses, kn) {
-						currentKey = ffj_t_PerfStatistics_DtlbPrefetchMisses
+					} else if bytes.Equal(ffj_key_PerfStatistics_DTLBPrefetchMisses, kn) {
+						currentKey = ffj_t_PerfStatistics_DTLBPrefetchMisses
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -22649,13 +22638,13 @@ mainparse:
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_ItlbLoads, kn) {
-						currentKey = ffj_t_PerfStatistics_ItlbLoads
+					} else if bytes.Equal(ffj_key_PerfStatistics_ITLBLoads, kn) {
+						currentKey = ffj_t_PerfStatistics_ITLBLoads
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_ItlbLoadMisses, kn) {
-						currentKey = ffj_t_PerfStatistics_ItlbLoadMisses
+					} else if bytes.Equal(ffj_key_PerfStatistics_ITLBLoadMisses, kn) {
+						currentKey = ffj_t_PerfStatistics_ITLBLoadMisses
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -22712,33 +22701,33 @@ mainparse:
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_LlcLoads, kn) {
-						currentKey = ffj_t_PerfStatistics_LlcLoads
+					} else if bytes.Equal(ffj_key_PerfStatistics_LLCLoads, kn) {
+						currentKey = ffj_t_PerfStatistics_LLCLoads
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_LlcLoadMisses, kn) {
-						currentKey = ffj_t_PerfStatistics_LlcLoadMisses
+					} else if bytes.Equal(ffj_key_PerfStatistics_LLCLoadMisses, kn) {
+						currentKey = ffj_t_PerfStatistics_LLCLoadMisses
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_LlcStores, kn) {
-						currentKey = ffj_t_PerfStatistics_LlcStores
+					} else if bytes.Equal(ffj_key_PerfStatistics_LLCStores, kn) {
+						currentKey = ffj_t_PerfStatistics_LLCStores
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_LlcStoreMisses, kn) {
-						currentKey = ffj_t_PerfStatistics_LlcStoreMisses
+					} else if bytes.Equal(ffj_key_PerfStatistics_LLCStoreMisses, kn) {
+						currentKey = ffj_t_PerfStatistics_LLCStoreMisses
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_LlcPrefetches, kn) {
-						currentKey = ffj_t_PerfStatistics_LlcPrefetches
+					} else if bytes.Equal(ffj_key_PerfStatistics_LLCPrefetches, kn) {
+						currentKey = ffj_t_PerfStatistics_LLCPrefetches
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_PerfStatistics_LlcPrefetchMisses, kn) {
-						currentKey = ffj_t_PerfStatistics_LlcPrefetchMisses
+					} else if bytes.Equal(ffj_key_PerfStatistics_LLCPrefetchMisses, kn) {
+						currentKey = ffj_t_PerfStatistics_LLCPrefetchMisses
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -22881,86 +22870,86 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_ItlbLoadMisses, kn) {
-					currentKey = ffj_t_PerfStatistics_ItlbLoadMisses
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_ITLBLoadMisses, kn) {
+					currentKey = ffj_t_PerfStatistics_ITLBLoadMisses
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_ItlbLoads, kn) {
-					currentKey = ffj_t_PerfStatistics_ItlbLoads
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_ITLBLoads, kn) {
+					currentKey = ffj_t_PerfStatistics_ITLBLoads
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DtlbPrefetchMisses, kn) {
-					currentKey = ffj_t_PerfStatistics_DtlbPrefetchMisses
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DTLBPrefetchMisses, kn) {
+					currentKey = ffj_t_PerfStatistics_DTLBPrefetchMisses
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DtlbPrefetches, kn) {
-					currentKey = ffj_t_PerfStatistics_DtlbPrefetches
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DTLBPrefetches, kn) {
+					currentKey = ffj_t_PerfStatistics_DTLBPrefetches
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DtlbStoreMisses, kn) {
-					currentKey = ffj_t_PerfStatistics_DtlbStoreMisses
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DTLBStoreMisses, kn) {
+					currentKey = ffj_t_PerfStatistics_DTLBStoreMisses
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DtlbStores, kn) {
-					currentKey = ffj_t_PerfStatistics_DtlbStores
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DTLBStores, kn) {
+					currentKey = ffj_t_PerfStatistics_DTLBStores
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DtlbLoadMisses, kn) {
-					currentKey = ffj_t_PerfStatistics_DtlbLoadMisses
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DTLBLoadMisses, kn) {
+					currentKey = ffj_t_PerfStatistics_DTLBLoadMisses
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DtlbLoads, kn) {
-					currentKey = ffj_t_PerfStatistics_DtlbLoads
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_DTLBLoads, kn) {
+					currentKey = ffj_t_PerfStatistics_DTLBLoads
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LlcPrefetchMisses, kn) {
-					currentKey = ffj_t_PerfStatistics_LlcPrefetchMisses
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LLCPrefetchMisses, kn) {
+					currentKey = ffj_t_PerfStatistics_LLCPrefetchMisses
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LlcPrefetches, kn) {
-					currentKey = ffj_t_PerfStatistics_LlcPrefetches
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LLCPrefetches, kn) {
+					currentKey = ffj_t_PerfStatistics_LLCPrefetches
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LlcStoreMisses, kn) {
-					currentKey = ffj_t_PerfStatistics_LlcStoreMisses
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LLCStoreMisses, kn) {
+					currentKey = ffj_t_PerfStatistics_LLCStoreMisses
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LlcStores, kn) {
-					currentKey = ffj_t_PerfStatistics_LlcStores
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LLCStores, kn) {
+					currentKey = ffj_t_PerfStatistics_LLCStores
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LlcLoadMisses, kn) {
-					currentKey = ffj_t_PerfStatistics_LlcLoadMisses
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LLCLoadMisses, kn) {
+					currentKey = ffj_t_PerfStatistics_LLCLoadMisses
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LlcLoads, kn) {
-					currentKey = ffj_t_PerfStatistics_LlcLoads
+				if fflib.EqualFoldRight(ffj_key_PerfStatistics_LLCLoads, kn) {
+					currentKey = ffj_t_PerfStatistics_LLCLoads
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -23261,47 +23250,47 @@ mainparse:
 				case ffj_t_PerfStatistics_L1IcachePrefetchMisses:
 					goto handle_L1IcachePrefetchMisses
 
-				case ffj_t_PerfStatistics_LlcLoads:
-					goto handle_LlcLoads
+				case ffj_t_PerfStatistics_LLCLoads:
+					goto handle_LLCLoads
 
-				case ffj_t_PerfStatistics_LlcLoadMisses:
-					goto handle_LlcLoadMisses
+				case ffj_t_PerfStatistics_LLCLoadMisses:
+					goto handle_LLCLoadMisses
 
-				case ffj_t_PerfStatistics_LlcStores:
-					goto handle_LlcStores
+				case ffj_t_PerfStatistics_LLCStores:
+					goto handle_LLCStores
 
-				case ffj_t_PerfStatistics_LlcStoreMisses:
-					goto handle_LlcStoreMisses
+				case ffj_t_PerfStatistics_LLCStoreMisses:
+					goto handle_LLCStoreMisses
 
-				case ffj_t_PerfStatistics_LlcPrefetches:
-					goto handle_LlcPrefetches
+				case ffj_t_PerfStatistics_LLCPrefetches:
+					goto handle_LLCPrefetches
 
-				case ffj_t_PerfStatistics_LlcPrefetchMisses:
-					goto handle_LlcPrefetchMisses
+				case ffj_t_PerfStatistics_LLCPrefetchMisses:
+					goto handle_LLCPrefetchMisses
 
-				case ffj_t_PerfStatistics_DtlbLoads:
-					goto handle_DtlbLoads
+				case ffj_t_PerfStatistics_DTLBLoads:
+					goto handle_DTLBLoads
 
-				case ffj_t_PerfStatistics_DtlbLoadMisses:
-					goto handle_DtlbLoadMisses
+				case ffj_t_PerfStatistics_DTLBLoadMisses:
+					goto handle_DTLBLoadMisses
 
-				case ffj_t_PerfStatistics_DtlbStores:
-					goto handle_DtlbStores
+				case ffj_t_PerfStatistics_DTLBStores:
+					goto handle_DTLBStores
 
-				case ffj_t_PerfStatistics_DtlbStoreMisses:
-					goto handle_DtlbStoreMisses
+				case ffj_t_PerfStatistics_DTLBStoreMisses:
+					goto handle_DTLBStoreMisses
 
-				case ffj_t_PerfStatistics_DtlbPrefetches:
-					goto handle_DtlbPrefetches
+				case ffj_t_PerfStatistics_DTLBPrefetches:
+					goto handle_DTLBPrefetches
 
-				case ffj_t_PerfStatistics_DtlbPrefetchMisses:
-					goto handle_DtlbPrefetchMisses
+				case ffj_t_PerfStatistics_DTLBPrefetchMisses:
+					goto handle_DTLBPrefetchMisses
 
-				case ffj_t_PerfStatistics_ItlbLoads:
-					goto handle_ItlbLoads
+				case ffj_t_PerfStatistics_ITLBLoads:
+					goto handle_ITLBLoads
 
-				case ffj_t_PerfStatistics_ItlbLoadMisses:
-					goto handle_ItlbLoadMisses
+				case ffj_t_PerfStatistics_ITLBLoadMisses:
+					goto handle_ITLBLoadMisses
 
 				case ffj_t_PerfStatistics_BranchLoads:
 					goto handle_BranchLoads
@@ -24358,9 +24347,9 @@ handle_L1IcachePrefetchMisses:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_LlcLoads:
+handle_LLCLoads:
 
-	/* handler: uj.LlcLoads type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.LLCLoads type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24372,7 +24361,7 @@ handle_LlcLoads:
 
 		if tok == fflib.FFTok_null {
 
-			uj.LlcLoads = nil
+			uj.LLCLoads = nil
 
 		} else {
 
@@ -24383,7 +24372,7 @@ handle_LlcLoads:
 			}
 
 			ttypval := uint64(tval)
-			uj.LlcLoads = &ttypval
+			uj.LLCLoads = &ttypval
 
 		}
 	}
@@ -24391,9 +24380,9 @@ handle_LlcLoads:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_LlcLoadMisses:
+handle_LLCLoadMisses:
 
-	/* handler: uj.LlcLoadMisses type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.LLCLoadMisses type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24405,7 +24394,7 @@ handle_LlcLoadMisses:
 
 		if tok == fflib.FFTok_null {
 
-			uj.LlcLoadMisses = nil
+			uj.LLCLoadMisses = nil
 
 		} else {
 
@@ -24416,7 +24405,7 @@ handle_LlcLoadMisses:
 			}
 
 			ttypval := uint64(tval)
-			uj.LlcLoadMisses = &ttypval
+			uj.LLCLoadMisses = &ttypval
 
 		}
 	}
@@ -24424,9 +24413,9 @@ handle_LlcLoadMisses:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_LlcStores:
+handle_LLCStores:
 
-	/* handler: uj.LlcStores type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.LLCStores type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24438,7 +24427,7 @@ handle_LlcStores:
 
 		if tok == fflib.FFTok_null {
 
-			uj.LlcStores = nil
+			uj.LLCStores = nil
 
 		} else {
 
@@ -24449,7 +24438,7 @@ handle_LlcStores:
 			}
 
 			ttypval := uint64(tval)
-			uj.LlcStores = &ttypval
+			uj.LLCStores = &ttypval
 
 		}
 	}
@@ -24457,9 +24446,9 @@ handle_LlcStores:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_LlcStoreMisses:
+handle_LLCStoreMisses:
 
-	/* handler: uj.LlcStoreMisses type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.LLCStoreMisses type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24471,7 +24460,7 @@ handle_LlcStoreMisses:
 
 		if tok == fflib.FFTok_null {
 
-			uj.LlcStoreMisses = nil
+			uj.LLCStoreMisses = nil
 
 		} else {
 
@@ -24482,7 +24471,7 @@ handle_LlcStoreMisses:
 			}
 
 			ttypval := uint64(tval)
-			uj.LlcStoreMisses = &ttypval
+			uj.LLCStoreMisses = &ttypval
 
 		}
 	}
@@ -24490,9 +24479,9 @@ handle_LlcStoreMisses:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_LlcPrefetches:
+handle_LLCPrefetches:
 
-	/* handler: uj.LlcPrefetches type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.LLCPrefetches type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24504,7 +24493,7 @@ handle_LlcPrefetches:
 
 		if tok == fflib.FFTok_null {
 
-			uj.LlcPrefetches = nil
+			uj.LLCPrefetches = nil
 
 		} else {
 
@@ -24515,7 +24504,7 @@ handle_LlcPrefetches:
 			}
 
 			ttypval := uint64(tval)
-			uj.LlcPrefetches = &ttypval
+			uj.LLCPrefetches = &ttypval
 
 		}
 	}
@@ -24523,9 +24512,9 @@ handle_LlcPrefetches:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_LlcPrefetchMisses:
+handle_LLCPrefetchMisses:
 
-	/* handler: uj.LlcPrefetchMisses type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.LLCPrefetchMisses type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24537,7 +24526,7 @@ handle_LlcPrefetchMisses:
 
 		if tok == fflib.FFTok_null {
 
-			uj.LlcPrefetchMisses = nil
+			uj.LLCPrefetchMisses = nil
 
 		} else {
 
@@ -24548,7 +24537,7 @@ handle_LlcPrefetchMisses:
 			}
 
 			ttypval := uint64(tval)
-			uj.LlcPrefetchMisses = &ttypval
+			uj.LLCPrefetchMisses = &ttypval
 
 		}
 	}
@@ -24556,9 +24545,9 @@ handle_LlcPrefetchMisses:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_DtlbLoads:
+handle_DTLBLoads:
 
-	/* handler: uj.DtlbLoads type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.DTLBLoads type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24570,7 +24559,7 @@ handle_DtlbLoads:
 
 		if tok == fflib.FFTok_null {
 
-			uj.DtlbLoads = nil
+			uj.DTLBLoads = nil
 
 		} else {
 
@@ -24581,7 +24570,7 @@ handle_DtlbLoads:
 			}
 
 			ttypval := uint64(tval)
-			uj.DtlbLoads = &ttypval
+			uj.DTLBLoads = &ttypval
 
 		}
 	}
@@ -24589,9 +24578,9 @@ handle_DtlbLoads:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_DtlbLoadMisses:
+handle_DTLBLoadMisses:
 
-	/* handler: uj.DtlbLoadMisses type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.DTLBLoadMisses type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24603,7 +24592,7 @@ handle_DtlbLoadMisses:
 
 		if tok == fflib.FFTok_null {
 
-			uj.DtlbLoadMisses = nil
+			uj.DTLBLoadMisses = nil
 
 		} else {
 
@@ -24614,7 +24603,7 @@ handle_DtlbLoadMisses:
 			}
 
 			ttypval := uint64(tval)
-			uj.DtlbLoadMisses = &ttypval
+			uj.DTLBLoadMisses = &ttypval
 
 		}
 	}
@@ -24622,9 +24611,9 @@ handle_DtlbLoadMisses:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_DtlbStores:
+handle_DTLBStores:
 
-	/* handler: uj.DtlbStores type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.DTLBStores type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24636,7 +24625,7 @@ handle_DtlbStores:
 
 		if tok == fflib.FFTok_null {
 
-			uj.DtlbStores = nil
+			uj.DTLBStores = nil
 
 		} else {
 
@@ -24647,7 +24636,7 @@ handle_DtlbStores:
 			}
 
 			ttypval := uint64(tval)
-			uj.DtlbStores = &ttypval
+			uj.DTLBStores = &ttypval
 
 		}
 	}
@@ -24655,9 +24644,9 @@ handle_DtlbStores:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_DtlbStoreMisses:
+handle_DTLBStoreMisses:
 
-	/* handler: uj.DtlbStoreMisses type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.DTLBStoreMisses type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24669,7 +24658,7 @@ handle_DtlbStoreMisses:
 
 		if tok == fflib.FFTok_null {
 
-			uj.DtlbStoreMisses = nil
+			uj.DTLBStoreMisses = nil
 
 		} else {
 
@@ -24680,7 +24669,7 @@ handle_DtlbStoreMisses:
 			}
 
 			ttypval := uint64(tval)
-			uj.DtlbStoreMisses = &ttypval
+			uj.DTLBStoreMisses = &ttypval
 
 		}
 	}
@@ -24688,9 +24677,9 @@ handle_DtlbStoreMisses:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_DtlbPrefetches:
+handle_DTLBPrefetches:
 
-	/* handler: uj.DtlbPrefetches type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.DTLBPrefetches type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24702,7 +24691,7 @@ handle_DtlbPrefetches:
 
 		if tok == fflib.FFTok_null {
 
-			uj.DtlbPrefetches = nil
+			uj.DTLBPrefetches = nil
 
 		} else {
 
@@ -24713,7 +24702,7 @@ handle_DtlbPrefetches:
 			}
 
 			ttypval := uint64(tval)
-			uj.DtlbPrefetches = &ttypval
+			uj.DTLBPrefetches = &ttypval
 
 		}
 	}
@@ -24721,9 +24710,9 @@ handle_DtlbPrefetches:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_DtlbPrefetchMisses:
+handle_DTLBPrefetchMisses:
 
-	/* handler: uj.DtlbPrefetchMisses type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.DTLBPrefetchMisses type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24735,7 +24724,7 @@ handle_DtlbPrefetchMisses:
 
 		if tok == fflib.FFTok_null {
 
-			uj.DtlbPrefetchMisses = nil
+			uj.DTLBPrefetchMisses = nil
 
 		} else {
 
@@ -24746,7 +24735,7 @@ handle_DtlbPrefetchMisses:
 			}
 
 			ttypval := uint64(tval)
-			uj.DtlbPrefetchMisses = &ttypval
+			uj.DTLBPrefetchMisses = &ttypval
 
 		}
 	}
@@ -24754,9 +24743,9 @@ handle_DtlbPrefetchMisses:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_ItlbLoads:
+handle_ITLBLoads:
 
-	/* handler: uj.ItlbLoads type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.ITLBLoads type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24768,7 +24757,7 @@ handle_ItlbLoads:
 
 		if tok == fflib.FFTok_null {
 
-			uj.ItlbLoads = nil
+			uj.ITLBLoads = nil
 
 		} else {
 
@@ -24779,7 +24768,7 @@ handle_ItlbLoads:
 			}
 
 			ttypval := uint64(tval)
-			uj.ItlbLoads = &ttypval
+			uj.ITLBLoads = &ttypval
 
 		}
 	}
@@ -24787,9 +24776,9 @@ handle_ItlbLoads:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_ItlbLoadMisses:
+handle_ITLBLoadMisses:
 
-	/* handler: uj.ItlbLoadMisses type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.ITLBLoadMisses type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -24801,7 +24790,7 @@ handle_ItlbLoadMisses:
 
 		if tok == fflib.FFTok_null {
 
-			uj.ItlbLoadMisses = nil
+			uj.ITLBLoadMisses = nil
 
 		} else {
 
@@ -24812,7 +24801,7 @@ handle_ItlbLoadMisses:
 			}
 
 			ttypval := uint64(tval)
-			uj.ItlbLoadMisses = &ttypval
+			uj.ITLBLoadMisses = &ttypval
 
 		}
 	}
@@ -27509,17 +27498,17 @@ func (mj *ResourceStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.CpusUserTimeSecs != nil {
+	if mj.CPUsUserTimeSecs != nil {
 		if true {
 			buf.WriteString(`"cpus_user_time_secs":`)
-			fflib.AppendFloat(buf, float64(*mj.CpusUserTimeSecs), 'g', -1, 64)
+			fflib.AppendFloat(buf, float64(*mj.CPUsUserTimeSecs), 'g', -1, 64)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.CpusSystemTimeSecs != nil {
+	if mj.CPUsSystemTimeSecs != nil {
 		if true {
 			buf.WriteString(`"cpus_system_time_secs":`)
-			fflib.AppendFloat(buf, float64(*mj.CpusSystemTimeSecs), 'g', -1, 64)
+			fflib.AppendFloat(buf, float64(*mj.CPUsSystemTimeSecs), 'g', -1, 64)
 			buf.WriteByte(',')
 		}
 	}
@@ -27530,24 +27519,24 @@ func (mj *ResourceStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.CpusNrPeriods != nil {
+	if mj.CPUsNrPeriods != nil {
 		if true {
 			buf.WriteString(`"cpus_nr_periods":`)
-			fflib.FormatBits2(buf, uint64(*mj.CpusNrPeriods), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.CPUsNrPeriods), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.CpusNrThrottled != nil {
+	if mj.CPUsNrThrottled != nil {
 		if true {
 			buf.WriteString(`"cpus_nr_throttled":`)
-			fflib.FormatBits2(buf, uint64(*mj.CpusNrThrottled), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.CPUsNrThrottled), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.CpusThrottledTimeSecs != nil {
+	if mj.CPUsThrottledTimeSecs != nil {
 		if true {
 			buf.WriteString(`"cpus_throttled_time_secs":`)
-			fflib.AppendFloat(buf, float64(*mj.CpusThrottledTimeSecs), 'g', -1, 64)
+			fflib.AppendFloat(buf, float64(*mj.CPUsThrottledTimeSecs), 'g', -1, 64)
 			buf.WriteByte(',')
 		}
 	}
@@ -27734,45 +27723,45 @@ func (mj *ResourceStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.NetTcpRttMicrosecsP50 != nil {
+	if mj.NetTCPRttMicrosecsP50 != nil {
 		if true {
 			buf.WriteString(`"net_tcp_rtt_microsecs_p50":`)
-			fflib.AppendFloat(buf, float64(*mj.NetTcpRttMicrosecsP50), 'g', -1, 64)
+			fflib.AppendFloat(buf, float64(*mj.NetTCPRttMicrosecsP50), 'g', -1, 64)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.NetTcpRttMicrosecsP90 != nil {
+	if mj.NetTCPRttMicrosecsP90 != nil {
 		if true {
 			buf.WriteString(`"net_tcp_rtt_microsecs_p90":`)
-			fflib.AppendFloat(buf, float64(*mj.NetTcpRttMicrosecsP90), 'g', -1, 64)
+			fflib.AppendFloat(buf, float64(*mj.NetTCPRttMicrosecsP90), 'g', -1, 64)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.NetTcpRttMicrosecsP95 != nil {
+	if mj.NetTCPRttMicrosecsP95 != nil {
 		if true {
 			buf.WriteString(`"net_tcp_rtt_microsecs_p95":`)
-			fflib.AppendFloat(buf, float64(*mj.NetTcpRttMicrosecsP95), 'g', -1, 64)
+			fflib.AppendFloat(buf, float64(*mj.NetTCPRttMicrosecsP95), 'g', -1, 64)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.NetTcpRttMicrosecsP99 != nil {
+	if mj.NetTCPRttMicrosecsP99 != nil {
 		if true {
 			buf.WriteString(`"net_tcp_rtt_microsecs_p99":`)
-			fflib.AppendFloat(buf, float64(*mj.NetTcpRttMicrosecsP99), 'g', -1, 64)
+			fflib.AppendFloat(buf, float64(*mj.NetTCPRttMicrosecsP99), 'g', -1, 64)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.NetTcpActiveConnections != nil {
+	if mj.NetTCPActiveConnections != nil {
 		if true {
 			buf.WriteString(`"net_tcp_active_connections":`)
-			fflib.AppendFloat(buf, float64(*mj.NetTcpActiveConnections), 'g', -1, 64)
+			fflib.AppendFloat(buf, float64(*mj.NetTCPActiveConnections), 'g', -1, 64)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.NetTcpTimeWaitConnections != nil {
+	if mj.NetTCPTimeWaitConnections != nil {
 		if true {
 			buf.WriteString(`"net_tcp_time_wait_connections":`)
-			fflib.AppendFloat(buf, float64(*mj.NetTcpTimeWaitConnections), 'g', -1, 64)
+			fflib.AppendFloat(buf, float64(*mj.NetTCPTimeWaitConnections), 'g', -1, 64)
 			buf.WriteByte(',')
 		}
 	}
@@ -27798,13 +27787,13 @@ func (mj *ResourceStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 		buf.WriteString(`null`)
 	}
 	buf.WriteByte(',')
-	if mj.NetSnmpStatistics != nil {
+	if mj.NetSNMPStatistics != nil {
 		if true {
 			buf.WriteString(`"net_snmp_statistics":`)
 
 			{
 
-				err = mj.NetSnmpStatistics.MarshalJSONBuf(buf)
+				err = mj.NetSNMPStatistics.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -27828,17 +27817,17 @@ const (
 
 	ffj_t_ResourceStatistics_Threads
 
-	ffj_t_ResourceStatistics_CpusUserTimeSecs
+	ffj_t_ResourceStatistics_CPUsUserTimeSecs
 
-	ffj_t_ResourceStatistics_CpusSystemTimeSecs
+	ffj_t_ResourceStatistics_CPUsSystemTimeSecs
 
 	ffj_t_ResourceStatistics_CpusLimit
 
-	ffj_t_ResourceStatistics_CpusNrPeriods
+	ffj_t_ResourceStatistics_CPUsNrPeriods
 
-	ffj_t_ResourceStatistics_CpusNrThrottled
+	ffj_t_ResourceStatistics_CPUsNrThrottled
 
-	ffj_t_ResourceStatistics_CpusThrottledTimeSecs
+	ffj_t_ResourceStatistics_CPUsThrottledTimeSecs
 
 	ffj_t_ResourceStatistics_MemTotalBytes
 
@@ -27890,21 +27879,21 @@ const (
 
 	ffj_t_ResourceStatistics_NetTxDropped
 
-	ffj_t_ResourceStatistics_NetTcpRttMicrosecsP50
+	ffj_t_ResourceStatistics_NetTCPRttMicrosecsP50
 
-	ffj_t_ResourceStatistics_NetTcpRttMicrosecsP90
+	ffj_t_ResourceStatistics_NetTCPRttMicrosecsP90
 
-	ffj_t_ResourceStatistics_NetTcpRttMicrosecsP95
+	ffj_t_ResourceStatistics_NetTCPRttMicrosecsP95
 
-	ffj_t_ResourceStatistics_NetTcpRttMicrosecsP99
+	ffj_t_ResourceStatistics_NetTCPRttMicrosecsP99
 
-	ffj_t_ResourceStatistics_NetTcpActiveConnections
+	ffj_t_ResourceStatistics_NetTCPActiveConnections
 
-	ffj_t_ResourceStatistics_NetTcpTimeWaitConnections
+	ffj_t_ResourceStatistics_NetTCPTimeWaitConnections
 
 	ffj_t_ResourceStatistics_NetTrafficControlStatistics
 
-	ffj_t_ResourceStatistics_NetSnmpStatistics
+	ffj_t_ResourceStatistics_NetSNMPStatistics
 )
 
 var ffj_key_ResourceStatistics_Timestamp = []byte("timestamp")
@@ -27913,17 +27902,17 @@ var ffj_key_ResourceStatistics_Processes = []byte("processes")
 
 var ffj_key_ResourceStatistics_Threads = []byte("threads")
 
-var ffj_key_ResourceStatistics_CpusUserTimeSecs = []byte("cpus_user_time_secs")
+var ffj_key_ResourceStatistics_CPUsUserTimeSecs = []byte("cpus_user_time_secs")
 
-var ffj_key_ResourceStatistics_CpusSystemTimeSecs = []byte("cpus_system_time_secs")
+var ffj_key_ResourceStatistics_CPUsSystemTimeSecs = []byte("cpus_system_time_secs")
 
 var ffj_key_ResourceStatistics_CpusLimit = []byte("cpus_limit")
 
-var ffj_key_ResourceStatistics_CpusNrPeriods = []byte("cpus_nr_periods")
+var ffj_key_ResourceStatistics_CPUsNrPeriods = []byte("cpus_nr_periods")
 
-var ffj_key_ResourceStatistics_CpusNrThrottled = []byte("cpus_nr_throttled")
+var ffj_key_ResourceStatistics_CPUsNrThrottled = []byte("cpus_nr_throttled")
 
-var ffj_key_ResourceStatistics_CpusThrottledTimeSecs = []byte("cpus_throttled_time_secs")
+var ffj_key_ResourceStatistics_CPUsThrottledTimeSecs = []byte("cpus_throttled_time_secs")
 
 var ffj_key_ResourceStatistics_MemTotalBytes = []byte("mem_total_bytes")
 
@@ -27975,21 +27964,21 @@ var ffj_key_ResourceStatistics_NetTxErrors = []byte("net_tx_errors")
 
 var ffj_key_ResourceStatistics_NetTxDropped = []byte("net_tx_dropped")
 
-var ffj_key_ResourceStatistics_NetTcpRttMicrosecsP50 = []byte("net_tcp_rtt_microsecs_p50")
+var ffj_key_ResourceStatistics_NetTCPRttMicrosecsP50 = []byte("net_tcp_rtt_microsecs_p50")
 
-var ffj_key_ResourceStatistics_NetTcpRttMicrosecsP90 = []byte("net_tcp_rtt_microsecs_p90")
+var ffj_key_ResourceStatistics_NetTCPRttMicrosecsP90 = []byte("net_tcp_rtt_microsecs_p90")
 
-var ffj_key_ResourceStatistics_NetTcpRttMicrosecsP95 = []byte("net_tcp_rtt_microsecs_p95")
+var ffj_key_ResourceStatistics_NetTCPRttMicrosecsP95 = []byte("net_tcp_rtt_microsecs_p95")
 
-var ffj_key_ResourceStatistics_NetTcpRttMicrosecsP99 = []byte("net_tcp_rtt_microsecs_p99")
+var ffj_key_ResourceStatistics_NetTCPRttMicrosecsP99 = []byte("net_tcp_rtt_microsecs_p99")
 
-var ffj_key_ResourceStatistics_NetTcpActiveConnections = []byte("net_tcp_active_connections")
+var ffj_key_ResourceStatistics_NetTCPActiveConnections = []byte("net_tcp_active_connections")
 
-var ffj_key_ResourceStatistics_NetTcpTimeWaitConnections = []byte("net_tcp_time_wait_connections")
+var ffj_key_ResourceStatistics_NetTCPTimeWaitConnections = []byte("net_tcp_time_wait_connections")
 
 var ffj_key_ResourceStatistics_NetTrafficControlStatistics = []byte("net_traffic_control_statistics")
 
-var ffj_key_ResourceStatistics_NetSnmpStatistics = []byte("net_snmp_statistics")
+var ffj_key_ResourceStatistics_NetSNMPStatistics = []byte("net_snmp_statistics")
 
 func (uj *ResourceStatistics) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -28052,13 +28041,13 @@ mainparse:
 
 				case 'c':
 
-					if bytes.Equal(ffj_key_ResourceStatistics_CpusUserTimeSecs, kn) {
-						currentKey = ffj_t_ResourceStatistics_CpusUserTimeSecs
+					if bytes.Equal(ffj_key_ResourceStatistics_CPUsUserTimeSecs, kn) {
+						currentKey = ffj_t_ResourceStatistics_CPUsUserTimeSecs
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_CpusSystemTimeSecs, kn) {
-						currentKey = ffj_t_ResourceStatistics_CpusSystemTimeSecs
+					} else if bytes.Equal(ffj_key_ResourceStatistics_CPUsSystemTimeSecs, kn) {
+						currentKey = ffj_t_ResourceStatistics_CPUsSystemTimeSecs
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
@@ -28067,18 +28056,18 @@ mainparse:
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_CpusNrPeriods, kn) {
-						currentKey = ffj_t_ResourceStatistics_CpusNrPeriods
+					} else if bytes.Equal(ffj_key_ResourceStatistics_CPUsNrPeriods, kn) {
+						currentKey = ffj_t_ResourceStatistics_CPUsNrPeriods
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_CpusNrThrottled, kn) {
-						currentKey = ffj_t_ResourceStatistics_CpusNrThrottled
+					} else if bytes.Equal(ffj_key_ResourceStatistics_CPUsNrThrottled, kn) {
+						currentKey = ffj_t_ResourceStatistics_CPUsNrThrottled
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_CpusThrottledTimeSecs, kn) {
-						currentKey = ffj_t_ResourceStatistics_CpusThrottledTimeSecs
+					} else if bytes.Equal(ffj_key_ResourceStatistics_CPUsThrottledTimeSecs, kn) {
+						currentKey = ffj_t_ResourceStatistics_CPUsThrottledTimeSecs
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -28211,33 +28200,33 @@ mainparse:
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTcpRttMicrosecsP50, kn) {
-						currentKey = ffj_t_ResourceStatistics_NetTcpRttMicrosecsP50
+					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTCPRttMicrosecsP50, kn) {
+						currentKey = ffj_t_ResourceStatistics_NetTCPRttMicrosecsP50
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTcpRttMicrosecsP90, kn) {
-						currentKey = ffj_t_ResourceStatistics_NetTcpRttMicrosecsP90
+					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTCPRttMicrosecsP90, kn) {
+						currentKey = ffj_t_ResourceStatistics_NetTCPRttMicrosecsP90
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTcpRttMicrosecsP95, kn) {
-						currentKey = ffj_t_ResourceStatistics_NetTcpRttMicrosecsP95
+					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTCPRttMicrosecsP95, kn) {
+						currentKey = ffj_t_ResourceStatistics_NetTCPRttMicrosecsP95
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTcpRttMicrosecsP99, kn) {
-						currentKey = ffj_t_ResourceStatistics_NetTcpRttMicrosecsP99
+					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTCPRttMicrosecsP99, kn) {
+						currentKey = ffj_t_ResourceStatistics_NetTCPRttMicrosecsP99
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTcpActiveConnections, kn) {
-						currentKey = ffj_t_ResourceStatistics_NetTcpActiveConnections
+					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTCPActiveConnections, kn) {
+						currentKey = ffj_t_ResourceStatistics_NetTCPActiveConnections
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTcpTimeWaitConnections, kn) {
-						currentKey = ffj_t_ResourceStatistics_NetTcpTimeWaitConnections
+					} else if bytes.Equal(ffj_key_ResourceStatistics_NetTCPTimeWaitConnections, kn) {
+						currentKey = ffj_t_ResourceStatistics_NetTCPTimeWaitConnections
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
@@ -28246,8 +28235,8 @@ mainparse:
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_ResourceStatistics_NetSnmpStatistics, kn) {
-						currentKey = ffj_t_ResourceStatistics_NetSnmpStatistics
+					} else if bytes.Equal(ffj_key_ResourceStatistics_NetSNMPStatistics, kn) {
+						currentKey = ffj_t_ResourceStatistics_NetSNMPStatistics
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -28280,8 +28269,8 @@ mainparse:
 
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetSnmpStatistics, kn) {
-					currentKey = ffj_t_ResourceStatistics_NetSnmpStatistics
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetSNMPStatistics, kn) {
+					currentKey = ffj_t_ResourceStatistics_NetSNMPStatistics
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -28292,38 +28281,38 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTcpTimeWaitConnections, kn) {
-					currentKey = ffj_t_ResourceStatistics_NetTcpTimeWaitConnections
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTCPTimeWaitConnections, kn) {
+					currentKey = ffj_t_ResourceStatistics_NetTCPTimeWaitConnections
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTcpActiveConnections, kn) {
-					currentKey = ffj_t_ResourceStatistics_NetTcpActiveConnections
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTCPActiveConnections, kn) {
+					currentKey = ffj_t_ResourceStatistics_NetTCPActiveConnections
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTcpRttMicrosecsP99, kn) {
-					currentKey = ffj_t_ResourceStatistics_NetTcpRttMicrosecsP99
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTCPRttMicrosecsP99, kn) {
+					currentKey = ffj_t_ResourceStatistics_NetTCPRttMicrosecsP99
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTcpRttMicrosecsP95, kn) {
-					currentKey = ffj_t_ResourceStatistics_NetTcpRttMicrosecsP95
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTCPRttMicrosecsP95, kn) {
+					currentKey = ffj_t_ResourceStatistics_NetTCPRttMicrosecsP95
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTcpRttMicrosecsP90, kn) {
-					currentKey = ffj_t_ResourceStatistics_NetTcpRttMicrosecsP90
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTCPRttMicrosecsP90, kn) {
+					currentKey = ffj_t_ResourceStatistics_NetTCPRttMicrosecsP90
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTcpRttMicrosecsP50, kn) {
-					currentKey = ffj_t_ResourceStatistics_NetTcpRttMicrosecsP50
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_NetTCPRttMicrosecsP50, kn) {
+					currentKey = ffj_t_ResourceStatistics_NetTCPRttMicrosecsP50
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -28478,20 +28467,20 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CpusThrottledTimeSecs, kn) {
-					currentKey = ffj_t_ResourceStatistics_CpusThrottledTimeSecs
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CPUsThrottledTimeSecs, kn) {
+					currentKey = ffj_t_ResourceStatistics_CPUsThrottledTimeSecs
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CpusNrThrottled, kn) {
-					currentKey = ffj_t_ResourceStatistics_CpusNrThrottled
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CPUsNrThrottled, kn) {
+					currentKey = ffj_t_ResourceStatistics_CPUsNrThrottled
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CpusNrPeriods, kn) {
-					currentKey = ffj_t_ResourceStatistics_CpusNrPeriods
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CPUsNrPeriods, kn) {
+					currentKey = ffj_t_ResourceStatistics_CPUsNrPeriods
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -28502,14 +28491,14 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CpusSystemTimeSecs, kn) {
-					currentKey = ffj_t_ResourceStatistics_CpusSystemTimeSecs
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CPUsSystemTimeSecs, kn) {
+					currentKey = ffj_t_ResourceStatistics_CPUsSystemTimeSecs
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CpusUserTimeSecs, kn) {
-					currentKey = ffj_t_ResourceStatistics_CpusUserTimeSecs
+				if fflib.EqualFoldRight(ffj_key_ResourceStatistics_CPUsUserTimeSecs, kn) {
+					currentKey = ffj_t_ResourceStatistics_CPUsUserTimeSecs
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -28558,23 +28547,23 @@ mainparse:
 				case ffj_t_ResourceStatistics_Threads:
 					goto handle_Threads
 
-				case ffj_t_ResourceStatistics_CpusUserTimeSecs:
-					goto handle_CpusUserTimeSecs
+				case ffj_t_ResourceStatistics_CPUsUserTimeSecs:
+					goto handle_CPUsUserTimeSecs
 
-				case ffj_t_ResourceStatistics_CpusSystemTimeSecs:
-					goto handle_CpusSystemTimeSecs
+				case ffj_t_ResourceStatistics_CPUsSystemTimeSecs:
+					goto handle_CPUsSystemTimeSecs
 
 				case ffj_t_ResourceStatistics_CpusLimit:
 					goto handle_CpusLimit
 
-				case ffj_t_ResourceStatistics_CpusNrPeriods:
-					goto handle_CpusNrPeriods
+				case ffj_t_ResourceStatistics_CPUsNrPeriods:
+					goto handle_CPUsNrPeriods
 
-				case ffj_t_ResourceStatistics_CpusNrThrottled:
-					goto handle_CpusNrThrottled
+				case ffj_t_ResourceStatistics_CPUsNrThrottled:
+					goto handle_CPUsNrThrottled
 
-				case ffj_t_ResourceStatistics_CpusThrottledTimeSecs:
-					goto handle_CpusThrottledTimeSecs
+				case ffj_t_ResourceStatistics_CPUsThrottledTimeSecs:
+					goto handle_CPUsThrottledTimeSecs
 
 				case ffj_t_ResourceStatistics_MemTotalBytes:
 					goto handle_MemTotalBytes
@@ -28651,29 +28640,29 @@ mainparse:
 				case ffj_t_ResourceStatistics_NetTxDropped:
 					goto handle_NetTxDropped
 
-				case ffj_t_ResourceStatistics_NetTcpRttMicrosecsP50:
-					goto handle_NetTcpRttMicrosecsP50
+				case ffj_t_ResourceStatistics_NetTCPRttMicrosecsP50:
+					goto handle_NetTCPRttMicrosecsP50
 
-				case ffj_t_ResourceStatistics_NetTcpRttMicrosecsP90:
-					goto handle_NetTcpRttMicrosecsP90
+				case ffj_t_ResourceStatistics_NetTCPRttMicrosecsP90:
+					goto handle_NetTCPRttMicrosecsP90
 
-				case ffj_t_ResourceStatistics_NetTcpRttMicrosecsP95:
-					goto handle_NetTcpRttMicrosecsP95
+				case ffj_t_ResourceStatistics_NetTCPRttMicrosecsP95:
+					goto handle_NetTCPRttMicrosecsP95
 
-				case ffj_t_ResourceStatistics_NetTcpRttMicrosecsP99:
-					goto handle_NetTcpRttMicrosecsP99
+				case ffj_t_ResourceStatistics_NetTCPRttMicrosecsP99:
+					goto handle_NetTCPRttMicrosecsP99
 
-				case ffj_t_ResourceStatistics_NetTcpActiveConnections:
-					goto handle_NetTcpActiveConnections
+				case ffj_t_ResourceStatistics_NetTCPActiveConnections:
+					goto handle_NetTCPActiveConnections
 
-				case ffj_t_ResourceStatistics_NetTcpTimeWaitConnections:
-					goto handle_NetTcpTimeWaitConnections
+				case ffj_t_ResourceStatistics_NetTCPTimeWaitConnections:
+					goto handle_NetTCPTimeWaitConnections
 
 				case ffj_t_ResourceStatistics_NetTrafficControlStatistics:
 					goto handle_NetTrafficControlStatistics
 
-				case ffj_t_ResourceStatistics_NetSnmpStatistics:
-					goto handle_NetSnmpStatistics
+				case ffj_t_ResourceStatistics_NetSNMPStatistics:
+					goto handle_NetSNMPStatistics
 
 				case ffj_t_ResourceStatisticsno_such_key:
 					err = fs.SkipField(tok)
@@ -28785,9 +28774,9 @@ handle_Threads:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_CpusUserTimeSecs:
+handle_CPUsUserTimeSecs:
 
-	/* handler: uj.CpusUserTimeSecs type=float64 kind=float64 quoted=false*/
+	/* handler: uj.CPUsUserTimeSecs type=float64 kind=float64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -28799,7 +28788,7 @@ handle_CpusUserTimeSecs:
 
 		if tok == fflib.FFTok_null {
 
-			uj.CpusUserTimeSecs = nil
+			uj.CPUsUserTimeSecs = nil
 
 		} else {
 
@@ -28810,7 +28799,7 @@ handle_CpusUserTimeSecs:
 			}
 
 			ttypval := float64(tval)
-			uj.CpusUserTimeSecs = &ttypval
+			uj.CPUsUserTimeSecs = &ttypval
 
 		}
 	}
@@ -28818,9 +28807,9 @@ handle_CpusUserTimeSecs:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_CpusSystemTimeSecs:
+handle_CPUsSystemTimeSecs:
 
-	/* handler: uj.CpusSystemTimeSecs type=float64 kind=float64 quoted=false*/
+	/* handler: uj.CPUsSystemTimeSecs type=float64 kind=float64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -28832,7 +28821,7 @@ handle_CpusSystemTimeSecs:
 
 		if tok == fflib.FFTok_null {
 
-			uj.CpusSystemTimeSecs = nil
+			uj.CPUsSystemTimeSecs = nil
 
 		} else {
 
@@ -28843,7 +28832,7 @@ handle_CpusSystemTimeSecs:
 			}
 
 			ttypval := float64(tval)
-			uj.CpusSystemTimeSecs = &ttypval
+			uj.CPUsSystemTimeSecs = &ttypval
 
 		}
 	}
@@ -28884,42 +28873,9 @@ handle_CpusLimit:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_CpusNrPeriods:
+handle_CPUsNrPeriods:
 
-	/* handler: uj.CpusNrPeriods type=uint32 kind=uint32 quoted=false*/
-
-	{
-		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for uint32", tok))
-		}
-	}
-
-	{
-
-		if tok == fflib.FFTok_null {
-
-			uj.CpusNrPeriods = nil
-
-		} else {
-
-			tval, err := fflib.ParseUint(fs.Output.Bytes(), 10, 32)
-
-			if err != nil {
-				return fs.WrapErr(err)
-			}
-
-			ttypval := uint32(tval)
-			uj.CpusNrPeriods = &ttypval
-
-		}
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_CpusNrThrottled:
-
-	/* handler: uj.CpusNrThrottled type=uint32 kind=uint32 quoted=false*/
+	/* handler: uj.CPUsNrPeriods type=uint32 kind=uint32 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -28931,7 +28887,7 @@ handle_CpusNrThrottled:
 
 		if tok == fflib.FFTok_null {
 
-			uj.CpusNrThrottled = nil
+			uj.CPUsNrPeriods = nil
 
 		} else {
 
@@ -28942,7 +28898,7 @@ handle_CpusNrThrottled:
 			}
 
 			ttypval := uint32(tval)
-			uj.CpusNrThrottled = &ttypval
+			uj.CPUsNrPeriods = &ttypval
 
 		}
 	}
@@ -28950,9 +28906,42 @@ handle_CpusNrThrottled:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_CpusThrottledTimeSecs:
+handle_CPUsNrThrottled:
 
-	/* handler: uj.CpusThrottledTimeSecs type=float64 kind=float64 quoted=false*/
+	/* handler: uj.CPUsNrThrottled type=uint32 kind=uint32 quoted=false*/
+
+	{
+		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for uint32", tok))
+		}
+	}
+
+	{
+
+		if tok == fflib.FFTok_null {
+
+			uj.CPUsNrThrottled = nil
+
+		} else {
+
+			tval, err := fflib.ParseUint(fs.Output.Bytes(), 10, 32)
+
+			if err != nil {
+				return fs.WrapErr(err)
+			}
+
+			ttypval := uint32(tval)
+			uj.CPUsNrThrottled = &ttypval
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_CPUsThrottledTimeSecs:
+
+	/* handler: uj.CPUsThrottledTimeSecs type=float64 kind=float64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -28964,7 +28953,7 @@ handle_CpusThrottledTimeSecs:
 
 		if tok == fflib.FFTok_null {
 
-			uj.CpusThrottledTimeSecs = nil
+			uj.CPUsThrottledTimeSecs = nil
 
 		} else {
 
@@ -28975,7 +28964,7 @@ handle_CpusThrottledTimeSecs:
 			}
 
 			ttypval := float64(tval)
-			uj.CpusThrottledTimeSecs = &ttypval
+			uj.CPUsThrottledTimeSecs = &ttypval
 
 		}
 	}
@@ -29802,9 +29791,9 @@ handle_NetTxDropped:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_NetTcpRttMicrosecsP50:
+handle_NetTCPRttMicrosecsP50:
 
-	/* handler: uj.NetTcpRttMicrosecsP50 type=float64 kind=float64 quoted=false*/
+	/* handler: uj.NetTCPRttMicrosecsP50 type=float64 kind=float64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -29816,7 +29805,7 @@ handle_NetTcpRttMicrosecsP50:
 
 		if tok == fflib.FFTok_null {
 
-			uj.NetTcpRttMicrosecsP50 = nil
+			uj.NetTCPRttMicrosecsP50 = nil
 
 		} else {
 
@@ -29827,7 +29816,7 @@ handle_NetTcpRttMicrosecsP50:
 			}
 
 			ttypval := float64(tval)
-			uj.NetTcpRttMicrosecsP50 = &ttypval
+			uj.NetTCPRttMicrosecsP50 = &ttypval
 
 		}
 	}
@@ -29835,9 +29824,9 @@ handle_NetTcpRttMicrosecsP50:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_NetTcpRttMicrosecsP90:
+handle_NetTCPRttMicrosecsP90:
 
-	/* handler: uj.NetTcpRttMicrosecsP90 type=float64 kind=float64 quoted=false*/
+	/* handler: uj.NetTCPRttMicrosecsP90 type=float64 kind=float64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -29849,7 +29838,7 @@ handle_NetTcpRttMicrosecsP90:
 
 		if tok == fflib.FFTok_null {
 
-			uj.NetTcpRttMicrosecsP90 = nil
+			uj.NetTCPRttMicrosecsP90 = nil
 
 		} else {
 
@@ -29860,7 +29849,7 @@ handle_NetTcpRttMicrosecsP90:
 			}
 
 			ttypval := float64(tval)
-			uj.NetTcpRttMicrosecsP90 = &ttypval
+			uj.NetTCPRttMicrosecsP90 = &ttypval
 
 		}
 	}
@@ -29868,9 +29857,9 @@ handle_NetTcpRttMicrosecsP90:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_NetTcpRttMicrosecsP95:
+handle_NetTCPRttMicrosecsP95:
 
-	/* handler: uj.NetTcpRttMicrosecsP95 type=float64 kind=float64 quoted=false*/
+	/* handler: uj.NetTCPRttMicrosecsP95 type=float64 kind=float64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -29882,7 +29871,7 @@ handle_NetTcpRttMicrosecsP95:
 
 		if tok == fflib.FFTok_null {
 
-			uj.NetTcpRttMicrosecsP95 = nil
+			uj.NetTCPRttMicrosecsP95 = nil
 
 		} else {
 
@@ -29893,7 +29882,7 @@ handle_NetTcpRttMicrosecsP95:
 			}
 
 			ttypval := float64(tval)
-			uj.NetTcpRttMicrosecsP95 = &ttypval
+			uj.NetTCPRttMicrosecsP95 = &ttypval
 
 		}
 	}
@@ -29901,9 +29890,9 @@ handle_NetTcpRttMicrosecsP95:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_NetTcpRttMicrosecsP99:
+handle_NetTCPRttMicrosecsP99:
 
-	/* handler: uj.NetTcpRttMicrosecsP99 type=float64 kind=float64 quoted=false*/
+	/* handler: uj.NetTCPRttMicrosecsP99 type=float64 kind=float64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -29915,7 +29904,7 @@ handle_NetTcpRttMicrosecsP99:
 
 		if tok == fflib.FFTok_null {
 
-			uj.NetTcpRttMicrosecsP99 = nil
+			uj.NetTCPRttMicrosecsP99 = nil
 
 		} else {
 
@@ -29926,7 +29915,7 @@ handle_NetTcpRttMicrosecsP99:
 			}
 
 			ttypval := float64(tval)
-			uj.NetTcpRttMicrosecsP99 = &ttypval
+			uj.NetTCPRttMicrosecsP99 = &ttypval
 
 		}
 	}
@@ -29934,9 +29923,9 @@ handle_NetTcpRttMicrosecsP99:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_NetTcpActiveConnections:
+handle_NetTCPActiveConnections:
 
-	/* handler: uj.NetTcpActiveConnections type=float64 kind=float64 quoted=false*/
+	/* handler: uj.NetTCPActiveConnections type=float64 kind=float64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -29948,7 +29937,7 @@ handle_NetTcpActiveConnections:
 
 		if tok == fflib.FFTok_null {
 
-			uj.NetTcpActiveConnections = nil
+			uj.NetTCPActiveConnections = nil
 
 		} else {
 
@@ -29959,7 +29948,7 @@ handle_NetTcpActiveConnections:
 			}
 
 			ttypval := float64(tval)
-			uj.NetTcpActiveConnections = &ttypval
+			uj.NetTCPActiveConnections = &ttypval
 
 		}
 	}
@@ -29967,9 +29956,9 @@ handle_NetTcpActiveConnections:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_NetTcpTimeWaitConnections:
+handle_NetTCPTimeWaitConnections:
 
-	/* handler: uj.NetTcpTimeWaitConnections type=float64 kind=float64 quoted=false*/
+	/* handler: uj.NetTCPTimeWaitConnections type=float64 kind=float64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -29981,7 +29970,7 @@ handle_NetTcpTimeWaitConnections:
 
 		if tok == fflib.FFTok_null {
 
-			uj.NetTcpTimeWaitConnections = nil
+			uj.NetTCPTimeWaitConnections = nil
 
 		} else {
 
@@ -29992,7 +29981,7 @@ handle_NetTcpTimeWaitConnections:
 			}
 
 			ttypval := float64(tval)
-			uj.NetTcpTimeWaitConnections = &ttypval
+			uj.NetTCPTimeWaitConnections = &ttypval
 
 		}
 	}
@@ -30069,24 +30058,24 @@ handle_NetTrafficControlStatistics:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_NetSnmpStatistics:
+handle_NetSNMPStatistics:
 
-	/* handler: uj.NetSnmpStatistics type=mesos.SNMPStatistics kind=struct quoted=false*/
+	/* handler: uj.NetSNMPStatistics type=mesos.SNMPStatistics kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.NetSnmpStatistics = nil
+			uj.NetSNMPStatistics = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.NetSnmpStatistics == nil {
-			uj.NetSnmpStatistics = new(SNMPStatistics)
+		if uj.NetSNMPStatistics == nil {
+			uj.NetSNMPStatistics = new(SNMPStatistics)
 		}
 
-		err = uj.NetSnmpStatistics.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.NetSNMPStatistics.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -33595,13 +33584,13 @@ func (mj *SNMPStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.IpStats != nil {
+	if mj.IPStats != nil {
 		if true {
 			buf.WriteString(`"ip_stats":`)
 
 			{
 
-				err = mj.IpStats.MarshalJSONBuf(buf)
+				err = mj.IPStats.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -33610,13 +33599,13 @@ func (mj *SNMPStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.IcmpStats != nil {
+	if mj.ICMPStats != nil {
 		if true {
 			buf.WriteString(`"icmp_stats":`)
 
 			{
 
-				err = mj.IcmpStats.MarshalJSONBuf(buf)
+				err = mj.ICMPStats.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -33625,13 +33614,13 @@ func (mj *SNMPStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.TcpStats != nil {
+	if mj.TCPStats != nil {
 		if true {
 			buf.WriteString(`"tcp_stats":`)
 
 			{
 
-				err = mj.TcpStats.MarshalJSONBuf(buf)
+				err = mj.TCPStats.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -33640,13 +33629,13 @@ func (mj *SNMPStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.UdpStats != nil {
+	if mj.UDPStats != nil {
 		if true {
 			buf.WriteString(`"udp_stats":`)
 
 			{
 
-				err = mj.UdpStats.MarshalJSONBuf(buf)
+				err = mj.UDPStats.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -33664,22 +33653,22 @@ const (
 	ffj_t_SNMPStatisticsbase = iota
 	ffj_t_SNMPStatisticsno_such_key
 
-	ffj_t_SNMPStatistics_IpStats
+	ffj_t_SNMPStatistics_IPStats
 
-	ffj_t_SNMPStatistics_IcmpStats
+	ffj_t_SNMPStatistics_ICMPStats
 
-	ffj_t_SNMPStatistics_TcpStats
+	ffj_t_SNMPStatistics_TCPStats
 
-	ffj_t_SNMPStatistics_UdpStats
+	ffj_t_SNMPStatistics_UDPStats
 )
 
-var ffj_key_SNMPStatistics_IpStats = []byte("ip_stats")
+var ffj_key_SNMPStatistics_IPStats = []byte("ip_stats")
 
-var ffj_key_SNMPStatistics_IcmpStats = []byte("icmp_stats")
+var ffj_key_SNMPStatistics_ICMPStats = []byte("icmp_stats")
 
-var ffj_key_SNMPStatistics_TcpStats = []byte("tcp_stats")
+var ffj_key_SNMPStatistics_TCPStats = []byte("tcp_stats")
 
-var ffj_key_SNMPStatistics_UdpStats = []byte("udp_stats")
+var ffj_key_SNMPStatistics_UDPStats = []byte("udp_stats")
 
 func (uj *SNMPStatistics) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -33742,55 +33731,55 @@ mainparse:
 
 				case 'i':
 
-					if bytes.Equal(ffj_key_SNMPStatistics_IpStats, kn) {
-						currentKey = ffj_t_SNMPStatistics_IpStats
+					if bytes.Equal(ffj_key_SNMPStatistics_IPStats, kn) {
+						currentKey = ffj_t_SNMPStatistics_IPStats
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_SNMPStatistics_IcmpStats, kn) {
-						currentKey = ffj_t_SNMPStatistics_IcmpStats
+					} else if bytes.Equal(ffj_key_SNMPStatistics_ICMPStats, kn) {
+						currentKey = ffj_t_SNMPStatistics_ICMPStats
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				case 't':
 
-					if bytes.Equal(ffj_key_SNMPStatistics_TcpStats, kn) {
-						currentKey = ffj_t_SNMPStatistics_TcpStats
+					if bytes.Equal(ffj_key_SNMPStatistics_TCPStats, kn) {
+						currentKey = ffj_t_SNMPStatistics_TCPStats
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				case 'u':
 
-					if bytes.Equal(ffj_key_SNMPStatistics_UdpStats, kn) {
-						currentKey = ffj_t_SNMPStatistics_UdpStats
+					if bytes.Equal(ffj_key_SNMPStatistics_UDPStats, kn) {
+						currentKey = ffj_t_SNMPStatistics_UDPStats
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				}
 
-				if fflib.EqualFoldRight(ffj_key_SNMPStatistics_UdpStats, kn) {
-					currentKey = ffj_t_SNMPStatistics_UdpStats
+				if fflib.EqualFoldRight(ffj_key_SNMPStatistics_UDPStats, kn) {
+					currentKey = ffj_t_SNMPStatistics_UDPStats
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_SNMPStatistics_TcpStats, kn) {
-					currentKey = ffj_t_SNMPStatistics_TcpStats
+				if fflib.EqualFoldRight(ffj_key_SNMPStatistics_TCPStats, kn) {
+					currentKey = ffj_t_SNMPStatistics_TCPStats
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_SNMPStatistics_IcmpStats, kn) {
-					currentKey = ffj_t_SNMPStatistics_IcmpStats
+				if fflib.EqualFoldRight(ffj_key_SNMPStatistics_ICMPStats, kn) {
+					currentKey = ffj_t_SNMPStatistics_ICMPStats
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_SNMPStatistics_IpStats, kn) {
-					currentKey = ffj_t_SNMPStatistics_IpStats
+				if fflib.EqualFoldRight(ffj_key_SNMPStatistics_IPStats, kn) {
+					currentKey = ffj_t_SNMPStatistics_IPStats
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -33812,17 +33801,17 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_SNMPStatistics_IpStats:
-					goto handle_IpStats
+				case ffj_t_SNMPStatistics_IPStats:
+					goto handle_IPStats
 
-				case ffj_t_SNMPStatistics_IcmpStats:
-					goto handle_IcmpStats
+				case ffj_t_SNMPStatistics_ICMPStats:
+					goto handle_ICMPStats
 
-				case ffj_t_SNMPStatistics_TcpStats:
-					goto handle_TcpStats
+				case ffj_t_SNMPStatistics_TCPStats:
+					goto handle_TCPStats
 
-				case ffj_t_SNMPStatistics_UdpStats:
-					goto handle_UdpStats
+				case ffj_t_SNMPStatistics_UDPStats:
+					goto handle_UDPStats
 
 				case ffj_t_SNMPStatisticsno_such_key:
 					err = fs.SkipField(tok)
@@ -33838,24 +33827,24 @@ mainparse:
 		}
 	}
 
-handle_IpStats:
+handle_IPStats:
 
-	/* handler: uj.IpStats type=mesos.IpStatistics kind=struct quoted=false*/
+	/* handler: uj.IPStats type=mesos.IpStatistics kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.IpStats = nil
+			uj.IPStats = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.IpStats == nil {
-			uj.IpStats = new(IpStatistics)
+		if uj.IPStats == nil {
+			uj.IPStats = new(IpStatistics)
 		}
 
-		err = uj.IpStats.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.IPStats.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -33865,24 +33854,24 @@ handle_IpStats:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_IcmpStats:
+handle_ICMPStats:
 
-	/* handler: uj.IcmpStats type=mesos.IcmpStatistics kind=struct quoted=false*/
+	/* handler: uj.ICMPStats type=mesos.IcmpStatistics kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.IcmpStats = nil
+			uj.ICMPStats = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.IcmpStats == nil {
-			uj.IcmpStats = new(IcmpStatistics)
+		if uj.ICMPStats == nil {
+			uj.ICMPStats = new(IcmpStatistics)
 		}
 
-		err = uj.IcmpStats.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.ICMPStats.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -33892,24 +33881,24 @@ handle_IcmpStats:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_TcpStats:
+handle_TCPStats:
 
-	/* handler: uj.TcpStats type=mesos.TcpStatistics kind=struct quoted=false*/
+	/* handler: uj.TCPStats type=mesos.TcpStatistics kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.TcpStats = nil
+			uj.TCPStats = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.TcpStats == nil {
-			uj.TcpStats = new(TcpStatistics)
+		if uj.TCPStats == nil {
+			uj.TCPStats = new(TcpStatistics)
 		}
 
-		err = uj.TcpStats.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.TCPStats.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -33919,24 +33908,24 @@ handle_TcpStats:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_UdpStats:
+handle_UDPStats:
 
-	/* handler: uj.UdpStats type=mesos.UdpStatistics kind=struct quoted=false*/
+	/* handler: uj.UDPStats type=mesos.UdpStatistics kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.UdpStats = nil
+			uj.UDPStats = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.UdpStats == nil {
-			uj.UdpStats = new(UdpStatistics)
+		if uj.UDPStats == nil {
+			uj.UDPStats = new(UdpStatistics)
 		}
 
-		err = uj.UdpStats.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.UDPStats.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -38394,17 +38383,17 @@ func (mj *TrafficControlStatistics) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Ratebps != nil {
+	if mj.RateBPS != nil {
 		if true {
 			buf.WriteString(`"ratebps":`)
-			fflib.FormatBits2(buf, uint64(*mj.Ratebps), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.RateBPS), 10, false)
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Ratepps != nil {
+	if mj.RatePPS != nil {
 		if true {
 			buf.WriteString(`"ratepps":`)
-			fflib.FormatBits2(buf, uint64(*mj.Ratepps), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.RatePPS), 10, false)
 			buf.WriteByte(',')
 		}
 	}
@@ -38438,9 +38427,9 @@ const (
 
 	ffj_t_TrafficControlStatistics_Qlen
 
-	ffj_t_TrafficControlStatistics_Ratebps
+	ffj_t_TrafficControlStatistics_RateBPS
 
-	ffj_t_TrafficControlStatistics_Ratepps
+	ffj_t_TrafficControlStatistics_RatePPS
 
 	ffj_t_TrafficControlStatistics_Requeues
 )
@@ -38459,9 +38448,9 @@ var ffj_key_TrafficControlStatistics_Packets = []byte("packets")
 
 var ffj_key_TrafficControlStatistics_Qlen = []byte("qlen")
 
-var ffj_key_TrafficControlStatistics_Ratebps = []byte("ratebps")
+var ffj_key_TrafficControlStatistics_RateBPS = []byte("ratebps")
 
-var ffj_key_TrafficControlStatistics_Ratepps = []byte("ratepps")
+var ffj_key_TrafficControlStatistics_RatePPS = []byte("ratepps")
 
 var ffj_key_TrafficControlStatistics_Requeues = []byte("requeues")
 
@@ -38579,13 +38568,13 @@ mainparse:
 
 				case 'r':
 
-					if bytes.Equal(ffj_key_TrafficControlStatistics_Ratebps, kn) {
-						currentKey = ffj_t_TrafficControlStatistics_Ratebps
+					if bytes.Equal(ffj_key_TrafficControlStatistics_RateBPS, kn) {
+						currentKey = ffj_t_TrafficControlStatistics_RateBPS
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
-					} else if bytes.Equal(ffj_key_TrafficControlStatistics_Ratepps, kn) {
-						currentKey = ffj_t_TrafficControlStatistics_Ratepps
+					} else if bytes.Equal(ffj_key_TrafficControlStatistics_RatePPS, kn) {
+						currentKey = ffj_t_TrafficControlStatistics_RatePPS
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
@@ -38603,14 +38592,14 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_TrafficControlStatistics_Ratepps, kn) {
-					currentKey = ffj_t_TrafficControlStatistics_Ratepps
+				if fflib.EqualFoldRight(ffj_key_TrafficControlStatistics_RatePPS, kn) {
+					currentKey = ffj_t_TrafficControlStatistics_RatePPS
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_TrafficControlStatistics_Ratebps, kn) {
-					currentKey = ffj_t_TrafficControlStatistics_Ratebps
+				if fflib.EqualFoldRight(ffj_key_TrafficControlStatistics_RateBPS, kn) {
+					currentKey = ffj_t_TrafficControlStatistics_RateBPS
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -38695,11 +38684,11 @@ mainparse:
 				case ffj_t_TrafficControlStatistics_Qlen:
 					goto handle_Qlen
 
-				case ffj_t_TrafficControlStatistics_Ratebps:
-					goto handle_Ratebps
+				case ffj_t_TrafficControlStatistics_RateBPS:
+					goto handle_RateBPS
 
-				case ffj_t_TrafficControlStatistics_Ratepps:
-					goto handle_Ratepps
+				case ffj_t_TrafficControlStatistics_RatePPS:
+					goto handle_RatePPS
 
 				case ffj_t_TrafficControlStatistics_Requeues:
 					goto handle_Requeues
@@ -38942,9 +38931,9 @@ handle_Qlen:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Ratebps:
+handle_RateBPS:
 
-	/* handler: uj.Ratebps type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.RateBPS type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -38956,7 +38945,7 @@ handle_Ratebps:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Ratebps = nil
+			uj.RateBPS = nil
 
 		} else {
 
@@ -38967,7 +38956,7 @@ handle_Ratebps:
 			}
 
 			ttypval := uint64(tval)
-			uj.Ratebps = &ttypval
+			uj.RateBPS = &ttypval
 
 		}
 	}
@@ -38975,9 +38964,9 @@ handle_Ratebps:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Ratepps:
+handle_RatePPS:
 
-	/* handler: uj.Ratepps type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.RatePPS type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -38989,7 +38978,7 @@ handle_Ratepps:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Ratepps = nil
+			uj.RatePPS = nil
 
 		} else {
 
@@ -39000,7 +38989,7 @@ handle_Ratepps:
 			}
 
 			ttypval := uint64(tval)
-			uj.Ratepps = &ttypval
+			uj.RatePPS = &ttypval
 
 		}
 	}
@@ -40425,23 +40414,18 @@ func (mj *Value) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Type != nil {
-		if true {
-			buf.WriteString(`"type":`)
+	buf.WriteString(`{ "type":`)
 
-			{
+	{
 
-				obj, err = mj.Type.MarshalJSON()
-				if err != nil {
-					return err
-				}
-				buf.Write(obj)
-
-			}
-			buf.WriteByte(',')
+		obj, err = mj.Type.MarshalJSON()
+		if err != nil {
+			return err
 		}
+		buf.Write(obj)
+
 	}
+	buf.WriteByte(',')
 	if mj.Scalar != nil {
 		if true {
 			buf.WriteString(`"scalar":`)
@@ -40710,8 +40694,6 @@ handle_Type:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Type = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
@@ -40719,10 +40701,6 @@ handle_Type:
 		tbuf, err := fs.CaptureField(tok)
 		if err != nil {
 			return fs.WrapErr(err)
-		}
-
-		if uj.Type == nil {
-			uj.Type = new(Value_Type)
 		}
 
 		err = uj.Type.UnmarshalJSON(tbuf)
@@ -42981,23 +42959,18 @@ func (mj *Volume_Source) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.Type != nil {
-		if true {
-			buf.WriteString(`"type":`)
+	buf.WriteString(`{ "type":`)
 
-			{
+	{
 
-				obj, err = mj.Type.MarshalJSON()
-				if err != nil {
-					return err
-				}
-				buf.Write(obj)
-
-			}
-			buf.WriteByte(',')
+		obj, err = mj.Type.MarshalJSON()
+		if err != nil {
+			return err
 		}
+		buf.Write(obj)
+
 	}
+	buf.WriteByte(',')
 	if mj.DockerVolume != nil {
 		if true {
 			buf.WriteString(`"docker_volume":`)
@@ -43164,8 +43137,6 @@ handle_Type:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.Type = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
@@ -43173,10 +43144,6 @@ handle_Type:
 		tbuf, err := fs.CaptureField(tok)
 		if err != nil {
 			return fs.WrapErr(err)
-		}
-
-		if uj.Type == nil {
-			uj.Type = new(Volume_Source_Type)
 		}
 
 		err = uj.Type.UnmarshalJSON(tbuf)

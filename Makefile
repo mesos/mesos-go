@@ -1,10 +1,14 @@
+mkfile_path	:= $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir	:= $(patsubst %/,%,$(dir $(mkfile_path)))
+
 MESOS_API_VERSION := v1
 API_PKG    := ./api/${MESOS_API_VERSION}/lib
+API_VENDOR := ${current_dir}/api/${MESOS_API_VERSION}/vendor
 CMD_PKG    := ./api/${MESOS_API_VERSION}/cmd
 
-PROTO_PATH := ${GOPATH}/src/:${API_PKG}/vendor/:.
-PROTO_PATH := ${PROTO_PATH}:${API_PKG}/vendor/github.com/gogo/protobuf/protobuf
-PROTO_PATH := ${PROTO_PATH}:${API_PKG}/vendor/github.com/gogo/protobuf/gogoproto
+PROTO_PATH := ${GOPATH}/src/:${API_VENDOR}/:.
+PROTO_PATH := ${PROTO_PATH}:${API_VENDOR}/github.com/gogo/protobuf/protobuf
+PROTO_PATH := ${PROTO_PATH}:${API_VENDOR}/github.com/gogo/protobuf/gogoproto
 
 PACKAGES ?= $(shell go list ${API_PKG}/...|grep -v vendor)
 TEST_DIRS ?= $(sort $(dir $(shell find ${API_PKG} -name '*_test.go' | grep -v vendor)))
@@ -41,15 +45,20 @@ vet:
 .PHONY: codecs
 codecs: protobufs ffjson
 
+.PHONY: protobufs-requirements
+protobufs-requirements: REQUIRED_PROTOC_BINARIES = protoc-gen-gogo
+protobufs-requirements:
+	@for i in ${REQUIRED_PROTOC_BINARIES}; do which $$i || { echo "failed to locate binary: $$i"; exit 1; }; done
+
 .PHONY: protobufs
-protobufs: clean-protobufs
+protobufs: protobufs-requirements clean-protobufs
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. *.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./scheduler/*.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./executor/*.proto)
 
 .PHONY: clean-protobufs
 clean-protobufs:
-	(cd ${API_PKG}; -rm *.pb.go */*.pb.go)
+	(cd ${API_PKG}; rm -f *.pb.go */*.pb.go)
 
 .PHONY: ffjson
 ffjson: clean-ffjson

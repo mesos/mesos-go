@@ -49,6 +49,7 @@ const (
 	Event_UNKNOWN      Event_Type = 0
 	Event_SUBSCRIBED   Event_Type = 1
 	Event_LAUNCH       Event_Type = 2
+	Event_LAUNCH_GROUP Event_Type = 8
 	Event_KILL         Event_Type = 3
 	Event_ACKNOWLEDGED Event_Type = 4
 	Event_MESSAGE      Event_Type = 5
@@ -77,6 +78,7 @@ var Event_Type_name = map[int32]string{
 	0: "UNKNOWN",
 	1: "SUBSCRIBED",
 	2: "LAUNCH",
+	8: "LAUNCH_GROUP",
 	3: "KILL",
 	4: "ACKNOWLEDGED",
 	5: "MESSAGE",
@@ -87,6 +89,7 @@ var Event_Type_value = map[string]int32{
 	"UNKNOWN":      0,
 	"SUBSCRIBED":   1,
 	"LAUNCH":       2,
+	"LAUNCH_GROUP": 8,
 	"KILL":         3,
 	"ACKNOWLEDGED": 4,
 	"MESSAGE":      5,
@@ -166,6 +169,7 @@ type Event struct {
 	Subscribed   *Event_Subscribed   `protobuf:"bytes,2,opt,name=subscribed" json:"subscribed,omitempty"`
 	Acknowledged *Event_Acknowledged `protobuf:"bytes,3,opt,name=acknowledged" json:"acknowledged,omitempty"`
 	Launch       *Event_Launch       `protobuf:"bytes,4,opt,name=launch" json:"launch,omitempty"`
+	LaunchGroup  *Event_LaunchGroup  `protobuf:"bytes,8,opt,name=launch_group" json:"launch_group,omitempty"`
 	Kill         *Event_Kill         `protobuf:"bytes,5,opt,name=kill" json:"kill,omitempty"`
 	Message      *Event_Message      `protobuf:"bytes,6,opt,name=message" json:"message,omitempty"`
 	Error        *Event_Error        `protobuf:"bytes,7,opt,name=error" json:"error,omitempty"`
@@ -202,6 +206,13 @@ func (m *Event) GetLaunch() *Event_Launch {
 	return nil
 }
 
+func (m *Event) GetLaunchGroup() *Event_LaunchGroup {
+	if m != nil {
+		return m.LaunchGroup
+	}
+	return nil
+}
+
 func (m *Event) GetKill() *Event_Kill {
 	if m != nil {
 		return m.Kill
@@ -229,6 +240,8 @@ type Event_Subscribed struct {
 	ExecutorInfo  mesos.ExecutorInfo  `protobuf:"bytes,1,req,name=executor_info" json:"executor_info"`
 	FrameworkInfo mesos.FrameworkInfo `protobuf:"bytes,2,req,name=framework_info" json:"framework_info"`
 	AgentInfo     mesos.AgentInfo     `protobuf:"bytes,3,req,name=agent_info" json:"agent_info"`
+	// Uniquely identifies the container of an executor run.
+	ContainerID *mesos.ContainerID `protobuf:"bytes,4,opt,name=container_id" json:"container_id,omitempty"`
 }
 
 func (m *Event_Subscribed) Reset()      { *m = Event_Subscribed{} }
@@ -255,6 +268,13 @@ func (m *Event_Subscribed) GetAgentInfo() mesos.AgentInfo {
 	return mesos.AgentInfo{}
 }
 
+func (m *Event_Subscribed) GetContainerID() *mesos.ContainerID {
+	if m != nil {
+		return m.ContainerID
+	}
+	return nil
+}
+
 // Received when the framework attempts to launch a task. Once
 // the task is successfully launched, the executor must respond with
 // a TASK_RUNNING update (See TaskState in v1/mesos.proto).
@@ -270,6 +290,23 @@ func (m *Event_Launch) GetTask() mesos.TaskInfo {
 		return m.Task
 	}
 	return mesos.TaskInfo{}
+}
+
+// Received when the framework attempts to launch a group of tasks atomically.
+// Similar to `Launch` above the executor must send TASK_RUNNING updates for
+// tasks that are successfully launched.
+type Event_LaunchGroup struct {
+	TaskGroup mesos.TaskGroupInfo `protobuf:"bytes,1,req,name=task_group" json:"task_group"`
+}
+
+func (m *Event_LaunchGroup) Reset()      { *m = Event_LaunchGroup{} }
+func (*Event_LaunchGroup) ProtoMessage() {}
+
+func (m *Event_LaunchGroup) GetTaskGroup() mesos.TaskGroupInfo {
+	if m != nil {
+		return m.TaskGroup
+	}
+	return mesos.TaskGroupInfo{}
 }
 
 // Received when the scheduler wants to kill a specific task. Once
@@ -379,7 +416,8 @@ type Call struct {
 	// Type of the call, indicates which optional field below should be
 	// present if that type has a nested message definition.
 	// In case type is SUBSCRIBED, no message needs to be set.
-	// See comments on `Event::Type` above on the reasoning behind this field being optional.
+	// See comments on `Event::Type` above on the reasoning behind this
+	// field being optional.
 	Type      *Call_Type      `protobuf:"varint,3,opt,name=type,enum=mesos.executor.Call_Type" json:"type,omitempty"`
 	Subscribe *Call_Subscribe `protobuf:"bytes,4,opt,name=subscribe" json:"subscribe,omitempty"`
 	Update    *Call_Update    `protobuf:"bytes,5,opt,name=update" json:"update,omitempty"`
@@ -553,6 +591,9 @@ func (this *Event) VerboseEqual(that interface{}) error {
 	if !this.Launch.Equal(that1.Launch) {
 		return fmt.Errorf("Launch this(%v) Not Equal that(%v)", this.Launch, that1.Launch)
 	}
+	if !this.LaunchGroup.Equal(that1.LaunchGroup) {
+		return fmt.Errorf("LaunchGroup this(%v) Not Equal that(%v)", this.LaunchGroup, that1.LaunchGroup)
+	}
 	if !this.Kill.Equal(that1.Kill) {
 		return fmt.Errorf("Kill this(%v) Not Equal that(%v)", this.Kill, that1.Kill)
 	}
@@ -602,6 +643,9 @@ func (this *Event) Equal(that interface{}) bool {
 	if !this.Launch.Equal(that1.Launch) {
 		return false
 	}
+	if !this.LaunchGroup.Equal(that1.LaunchGroup) {
+		return false
+	}
 	if !this.Kill.Equal(that1.Kill) {
 		return false
 	}
@@ -642,6 +686,9 @@ func (this *Event_Subscribed) VerboseEqual(that interface{}) error {
 	if !this.AgentInfo.Equal(&that1.AgentInfo) {
 		return fmt.Errorf("AgentInfo this(%v) Not Equal that(%v)", this.AgentInfo, that1.AgentInfo)
 	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return fmt.Errorf("ContainerID this(%v) Not Equal that(%v)", this.ContainerID, that1.ContainerID)
+	}
 	return nil
 }
 func (this *Event_Subscribed) Equal(that interface{}) bool {
@@ -671,6 +718,9 @@ func (this *Event_Subscribed) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.AgentInfo.Equal(&that1.AgentInfo) {
+		return false
+	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
 		return false
 	}
 	return true
@@ -721,6 +771,56 @@ func (this *Event_Launch) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Task.Equal(&that1.Task) {
+		return false
+	}
+	return true
+}
+func (this *Event_LaunchGroup) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Event_LaunchGroup)
+	if !ok {
+		return fmt.Errorf("that is not of type *Event_LaunchGroup")
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Event_LaunchGroup but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Event_LaunchGroupbut is not nil && this == nil")
+	}
+	if !this.TaskGroup.Equal(&that1.TaskGroup) {
+		return fmt.Errorf("TaskGroup this(%v) Not Equal that(%v)", this.TaskGroup, that1.TaskGroup)
+	}
+	return nil
+}
+func (this *Event_LaunchGroup) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Event_LaunchGroup)
+	if !ok {
+		return false
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.TaskGroup.Equal(&that1.TaskGroup) {
 		return false
 	}
 	return true
@@ -1209,7 +1309,7 @@ func (this *Event) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 11)
+	s := make([]string, 0, 12)
 	s = append(s, "&executor.Event{")
 	if this.Type != nil {
 		s = append(s, "Type: "+valueToGoStringExecutor(this.Type, "executor.Event_Type")+",\n")
@@ -1222,6 +1322,9 @@ func (this *Event) GoString() string {
 	}
 	if this.Launch != nil {
 		s = append(s, "Launch: "+fmt.Sprintf("%#v", this.Launch)+",\n")
+	}
+	if this.LaunchGroup != nil {
+		s = append(s, "LaunchGroup: "+fmt.Sprintf("%#v", this.LaunchGroup)+",\n")
 	}
 	if this.Kill != nil {
 		s = append(s, "Kill: "+fmt.Sprintf("%#v", this.Kill)+",\n")
@@ -1239,11 +1342,14 @@ func (this *Event_Subscribed) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 7)
+	s := make([]string, 0, 8)
 	s = append(s, "&executor.Event_Subscribed{")
 	s = append(s, "ExecutorInfo: "+strings.Replace(this.ExecutorInfo.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "FrameworkInfo: "+strings.Replace(this.FrameworkInfo.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "AgentInfo: "+strings.Replace(this.AgentInfo.GoString(), `&`, ``, 1)+",\n")
+	if this.ContainerID != nil {
+		s = append(s, "ContainerID: "+fmt.Sprintf("%#v", this.ContainerID)+",\n")
+	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -1254,6 +1360,16 @@ func (this *Event_Launch) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&executor.Event_Launch{")
 	s = append(s, "Task: "+strings.Replace(this.Task.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_LaunchGroup) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&executor.Event_LaunchGroup{")
+	s = append(s, "TaskGroup: "+strings.Replace(this.TaskGroup.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -1470,6 +1586,16 @@ func (m *Event) MarshalTo(data []byte) (int, error) {
 		}
 		i += n6
 	}
+	if m.LaunchGroup != nil {
+		data[i] = 0x42
+		i++
+		i = encodeVarintExecutor(data, i, uint64(m.LaunchGroup.Size()))
+		n7, err := m.LaunchGroup.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n7
+	}
 	return i, nil
 }
 
@@ -1491,27 +1617,37 @@ func (m *Event_Subscribed) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.ExecutorInfo.Size()))
-	n7, err := m.ExecutorInfo.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n7
-	data[i] = 0x12
-	i++
-	i = encodeVarintExecutor(data, i, uint64(m.FrameworkInfo.Size()))
-	n8, err := m.FrameworkInfo.MarshalTo(data[i:])
+	n8, err := m.ExecutorInfo.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
 	i += n8
-	data[i] = 0x1a
+	data[i] = 0x12
 	i++
-	i = encodeVarintExecutor(data, i, uint64(m.AgentInfo.Size()))
-	n9, err := m.AgentInfo.MarshalTo(data[i:])
+	i = encodeVarintExecutor(data, i, uint64(m.FrameworkInfo.Size()))
+	n9, err := m.FrameworkInfo.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
 	i += n9
+	data[i] = 0x1a
+	i++
+	i = encodeVarintExecutor(data, i, uint64(m.AgentInfo.Size()))
+	n10, err := m.AgentInfo.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n10
+	if m.ContainerID != nil {
+		data[i] = 0x22
+		i++
+		i = encodeVarintExecutor(data, i, uint64(m.ContainerID.Size()))
+		n11, err := m.ContainerID.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n11
+	}
 	return i, nil
 }
 
@@ -1533,11 +1669,37 @@ func (m *Event_Launch) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.Task.Size()))
-	n10, err := m.Task.MarshalTo(data[i:])
+	n12, err := m.Task.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n10
+	i += n12
+	return i, nil
+}
+
+func (m *Event_LaunchGroup) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *Event_LaunchGroup) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintExecutor(data, i, uint64(m.TaskGroup.Size()))
+	n13, err := m.TaskGroup.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n13
 	return i, nil
 }
 
@@ -1559,20 +1721,20 @@ func (m *Event_Kill) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.TaskID.Size()))
-	n11, err := m.TaskID.MarshalTo(data[i:])
+	n14, err := m.TaskID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n11
+	i += n14
 	if m.KillPolicy != nil {
 		data[i] = 0x12
 		i++
 		i = encodeVarintExecutor(data, i, uint64(m.KillPolicy.Size()))
-		n12, err := m.KillPolicy.MarshalTo(data[i:])
+		n15, err := m.KillPolicy.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n12
+		i += n15
 	}
 	return i, nil
 }
@@ -1595,11 +1757,11 @@ func (m *Event_Acknowledged) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.TaskID.Size()))
-	n13, err := m.TaskID.MarshalTo(data[i:])
+	n16, err := m.TaskID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n13
+	i += n16
 	if m.UUID == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("uuid")
 	} else {
@@ -1677,19 +1839,19 @@ func (m *Call) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.ExecutorID.Size()))
-	n14, err := m.ExecutorID.MarshalTo(data[i:])
+	n17, err := m.ExecutorID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n14
+	i += n17
 	data[i] = 0x12
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.FrameworkID.Size()))
-	n15, err := m.FrameworkID.MarshalTo(data[i:])
+	n18, err := m.FrameworkID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n15
+	i += n18
 	if m.Type != nil {
 		data[i] = 0x18
 		i++
@@ -1699,31 +1861,31 @@ func (m *Call) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x22
 		i++
 		i = encodeVarintExecutor(data, i, uint64(m.Subscribe.Size()))
-		n16, err := m.Subscribe.MarshalTo(data[i:])
+		n19, err := m.Subscribe.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n16
+		i += n19
 	}
 	if m.Update != nil {
 		data[i] = 0x2a
 		i++
 		i = encodeVarintExecutor(data, i, uint64(m.Update.Size()))
-		n17, err := m.Update.MarshalTo(data[i:])
+		n20, err := m.Update.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n17
+		i += n20
 	}
 	if m.Message != nil {
 		data[i] = 0x32
 		i++
 		i = encodeVarintExecutor(data, i, uint64(m.Message.Size()))
-		n18, err := m.Message.MarshalTo(data[i:])
+		n21, err := m.Message.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n18
+		i += n21
 	}
 	return i, nil
 }
@@ -1788,11 +1950,11 @@ func (m *Call_Update) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintExecutor(data, i, uint64(m.Status.Size()))
-	n19, err := m.Status.MarshalTo(data[i:])
+	n22, err := m.Status.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n19
+	i += n22
 	return i, nil
 }
 
@@ -1852,7 +2014,7 @@ func encodeVarintExecutor(data []byte, offset int, v uint64) int {
 func NewPopulatedEvent(r randyExecutor, easy bool) *Event {
 	this := &Event{}
 	if r.Intn(10) != 0 {
-		v1 := Event_Type([]int32{0, 1, 2, 3, 4, 5, 6, 7}[r.Intn(8)])
+		v1 := Event_Type([]int32{0, 1, 2, 8, 3, 4, 5, 6, 7}[r.Intn(9)])
 		this.Type = &v1
 	}
 	if r.Intn(10) != 0 {
@@ -1873,6 +2035,9 @@ func NewPopulatedEvent(r randyExecutor, easy bool) *Event {
 	if r.Intn(10) != 0 {
 		this.Error = NewPopulatedEvent_Error(r, easy)
 	}
+	if r.Intn(10) != 0 {
+		this.LaunchGroup = NewPopulatedEvent_LaunchGroup(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1886,6 +2051,9 @@ func NewPopulatedEvent_Subscribed(r randyExecutor, easy bool) *Event_Subscribed 
 	this.FrameworkInfo = *v3
 	v4 := mesos.NewPopulatedAgentInfo(r, easy)
 	this.AgentInfo = *v4
+	if r.Intn(10) != 0 {
+		this.ContainerID = mesos.NewPopulatedContainerID(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1900,10 +2068,19 @@ func NewPopulatedEvent_Launch(r randyExecutor, easy bool) *Event_Launch {
 	return this
 }
 
+func NewPopulatedEvent_LaunchGroup(r randyExecutor, easy bool) *Event_LaunchGroup {
+	this := &Event_LaunchGroup{}
+	v6 := mesos.NewPopulatedTaskGroupInfo(r, easy)
+	this.TaskGroup = *v6
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
 func NewPopulatedEvent_Kill(r randyExecutor, easy bool) *Event_Kill {
 	this := &Event_Kill{}
-	v6 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v6
+	v7 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v7
 	if r.Intn(10) != 0 {
 		this.KillPolicy = mesos.NewPopulatedKillPolicy(r, easy)
 	}
@@ -1914,11 +2091,11 @@ func NewPopulatedEvent_Kill(r randyExecutor, easy bool) *Event_Kill {
 
 func NewPopulatedEvent_Acknowledged(r randyExecutor, easy bool) *Event_Acknowledged {
 	this := &Event_Acknowledged{}
-	v7 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v7
-	v8 := r.Intn(100)
-	this.UUID = make([]byte, v8)
-	for i := 0; i < v8; i++ {
+	v8 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v8
+	v9 := r.Intn(100)
+	this.UUID = make([]byte, v9)
+	for i := 0; i < v9; i++ {
 		this.UUID[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -1928,9 +2105,9 @@ func NewPopulatedEvent_Acknowledged(r randyExecutor, easy bool) *Event_Acknowled
 
 func NewPopulatedEvent_Message(r randyExecutor, easy bool) *Event_Message {
 	this := &Event_Message{}
-	v9 := r.Intn(100)
-	this.Data = make([]byte, v9)
-	for i := 0; i < v9; i++ {
+	v10 := r.Intn(100)
+	this.Data = make([]byte, v10)
+	for i := 0; i < v10; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -1948,13 +2125,13 @@ func NewPopulatedEvent_Error(r randyExecutor, easy bool) *Event_Error {
 
 func NewPopulatedCall(r randyExecutor, easy bool) *Call {
 	this := &Call{}
-	v10 := mesos.NewPopulatedExecutorID(r, easy)
-	this.ExecutorID = *v10
-	v11 := mesos.NewPopulatedFrameworkID(r, easy)
-	this.FrameworkID = *v11
+	v11 := mesos.NewPopulatedExecutorID(r, easy)
+	this.ExecutorID = *v11
+	v12 := mesos.NewPopulatedFrameworkID(r, easy)
+	this.FrameworkID = *v12
 	if r.Intn(10) != 0 {
-		v12 := Call_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
-		this.Type = &v12
+		v13 := Call_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
+		this.Type = &v13
 	}
 	if r.Intn(10) != 0 {
 		this.Subscribe = NewPopulatedCall_Subscribe(r, easy)
@@ -1973,19 +2150,19 @@ func NewPopulatedCall(r randyExecutor, easy bool) *Call {
 func NewPopulatedCall_Subscribe(r randyExecutor, easy bool) *Call_Subscribe {
 	this := &Call_Subscribe{}
 	if r.Intn(10) != 0 {
-		v13 := r.Intn(10)
-		this.UnacknowledgedTasks = make([]mesos.TaskInfo, v13)
-		for i := 0; i < v13; i++ {
-			v14 := mesos.NewPopulatedTaskInfo(r, easy)
-			this.UnacknowledgedTasks[i] = *v14
+		v14 := r.Intn(10)
+		this.UnacknowledgedTasks = make([]mesos.TaskInfo, v14)
+		for i := 0; i < v14; i++ {
+			v15 := mesos.NewPopulatedTaskInfo(r, easy)
+			this.UnacknowledgedTasks[i] = *v15
 		}
 	}
 	if r.Intn(10) != 0 {
-		v15 := r.Intn(10)
-		this.UnacknowledgedUpdates = make([]Call_Update, v15)
-		for i := 0; i < v15; i++ {
-			v16 := NewPopulatedCall_Update(r, easy)
-			this.UnacknowledgedUpdates[i] = *v16
+		v16 := r.Intn(10)
+		this.UnacknowledgedUpdates = make([]Call_Update, v16)
+		for i := 0; i < v16; i++ {
+			v17 := NewPopulatedCall_Update(r, easy)
+			this.UnacknowledgedUpdates[i] = *v17
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -1995,8 +2172,8 @@ func NewPopulatedCall_Subscribe(r randyExecutor, easy bool) *Call_Subscribe {
 
 func NewPopulatedCall_Update(r randyExecutor, easy bool) *Call_Update {
 	this := &Call_Update{}
-	v17 := mesos.NewPopulatedTaskStatus(r, easy)
-	this.Status = *v17
+	v18 := mesos.NewPopulatedTaskStatus(r, easy)
+	this.Status = *v18
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -2004,9 +2181,9 @@ func NewPopulatedCall_Update(r randyExecutor, easy bool) *Call_Update {
 
 func NewPopulatedCall_Message(r randyExecutor, easy bool) *Call_Message {
 	this := &Call_Message{}
-	v18 := r.Intn(100)
-	this.Data = make([]byte, v18)
-	for i := 0; i < v18; i++ {
+	v19 := r.Intn(100)
+	this.Data = make([]byte, v19)
+	for i := 0; i < v19; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -2033,9 +2210,9 @@ func randUTF8RuneExecutor(r randyExecutor) rune {
 	return rune(ru + 61)
 }
 func randStringExecutor(r randyExecutor) string {
-	v19 := r.Intn(100)
-	tmps := make([]rune, v19)
-	for i := 0; i < v19; i++ {
+	v20 := r.Intn(100)
+	tmps := make([]rune, v20)
+	for i := 0; i < v20; i++ {
 		tmps[i] = randUTF8RuneExecutor(r)
 	}
 	return string(tmps)
@@ -2057,11 +2234,11 @@ func randFieldExecutor(data []byte, r randyExecutor, fieldNumber int, wire int) 
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateExecutor(data, uint64(key))
-		v20 := r.Int63()
+		v21 := r.Int63()
 		if r.Intn(2) == 0 {
-			v20 *= -1
+			v21 *= -1
 		}
-		data = encodeVarintPopulateExecutor(data, uint64(v20))
+		data = encodeVarintPopulateExecutor(data, uint64(v21))
 	case 1:
 		data = encodeVarintPopulateExecutor(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -2116,6 +2293,10 @@ func (m *Event) Size() (n int) {
 		l = m.Error.Size()
 		n += 1 + l + sovExecutor(uint64(l))
 	}
+	if m.LaunchGroup != nil {
+		l = m.LaunchGroup.Size()
+		n += 1 + l + sovExecutor(uint64(l))
+	}
 	return n
 }
 
@@ -2128,6 +2309,10 @@ func (m *Event_Subscribed) Size() (n int) {
 	n += 1 + l + sovExecutor(uint64(l))
 	l = m.AgentInfo.Size()
 	n += 1 + l + sovExecutor(uint64(l))
+	if m.ContainerID != nil {
+		l = m.ContainerID.Size()
+		n += 1 + l + sovExecutor(uint64(l))
+	}
 	return n
 }
 
@@ -2135,6 +2320,14 @@ func (m *Event_Launch) Size() (n int) {
 	var l int
 	_ = l
 	l = m.Task.Size()
+	n += 1 + l + sovExecutor(uint64(l))
+	return n
+}
+
+func (m *Event_LaunchGroup) Size() (n int) {
+	var l int
+	_ = l
+	l = m.TaskGroup.Size()
 	n += 1 + l + sovExecutor(uint64(l))
 	return n
 }
@@ -2267,6 +2460,7 @@ func (this *Event) String() string {
 		`Kill:` + strings.Replace(fmt.Sprintf("%v", this.Kill), "Event_Kill", "Event_Kill", 1) + `,`,
 		`Message:` + strings.Replace(fmt.Sprintf("%v", this.Message), "Event_Message", "Event_Message", 1) + `,`,
 		`Error:` + strings.Replace(fmt.Sprintf("%v", this.Error), "Event_Error", "Event_Error", 1) + `,`,
+		`LaunchGroup:` + strings.Replace(fmt.Sprintf("%v", this.LaunchGroup), "Event_LaunchGroup", "Event_LaunchGroup", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2279,6 +2473,7 @@ func (this *Event_Subscribed) String() string {
 		`ExecutorInfo:` + strings.Replace(strings.Replace(this.ExecutorInfo.String(), "ExecutorInfo", "mesos.ExecutorInfo", 1), `&`, ``, 1) + `,`,
 		`FrameworkInfo:` + strings.Replace(strings.Replace(this.FrameworkInfo.String(), "FrameworkInfo", "mesos.FrameworkInfo", 1), `&`, ``, 1) + `,`,
 		`AgentInfo:` + strings.Replace(strings.Replace(this.AgentInfo.String(), "AgentInfo", "mesos.AgentInfo", 1), `&`, ``, 1) + `,`,
+		`ContainerID:` + strings.Replace(fmt.Sprintf("%v", this.ContainerID), "ContainerID", "mesos.ContainerID", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2289,6 +2484,16 @@ func (this *Event_Launch) String() string {
 	}
 	s := strings.Join([]string{`&Event_Launch{`,
 		`Task:` + strings.Replace(strings.Replace(this.Task.String(), "TaskInfo", "mesos.TaskInfo", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Event_LaunchGroup) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Event_LaunchGroup{`,
+		`TaskGroup:` + strings.Replace(strings.Replace(this.TaskGroup.String(), "TaskGroupInfo", "mesos.TaskGroupInfo", 1), `&`, ``, 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2636,6 +2841,39 @@ func (m *Event) Unmarshal(data []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LaunchGroup", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowExecutor
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthExecutor
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.LaunchGroup == nil {
+				m.LaunchGroup = &Event_LaunchGroup{}
+			}
+			if err := m.LaunchGroup.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipExecutor(data[iNdEx:])
@@ -2780,6 +3018,39 @@ func (m *Event_Subscribed) Unmarshal(data []byte) error {
 			}
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000004)
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ContainerID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowExecutor
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthExecutor
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ContainerID == nil {
+				m.ContainerID = &mesos.ContainerID{}
+			}
+			if err := m.ContainerID.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipExecutor(data[iNdEx:])
@@ -2888,6 +3159,91 @@ func (m *Event_Launch) Unmarshal(data []byte) error {
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Event_LaunchGroup) Unmarshal(data []byte) error {
+	var hasFields [1]uint64
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowExecutor
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LaunchGroup: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LaunchGroup: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TaskGroup", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowExecutor
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthExecutor
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.TaskGroup.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipExecutor(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthExecutor
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_group")
 	}
 
 	if iNdEx > l {

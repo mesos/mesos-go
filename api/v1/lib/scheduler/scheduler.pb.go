@@ -286,6 +286,8 @@ type Event_Subscribed struct {
 	// This value will be set if the master is sending heartbeats. See
 	// the comment above on 'HEARTBEAT' for more details.
 	HeartbeatIntervalSeconds *float64 `protobuf:"fixed64,2,opt,name=heartbeat_interval_seconds" json:"heartbeat_interval_seconds,omitempty"`
+	// Since Mesos 1.1.
+	MasterInfo *mesos.MasterInfo `protobuf:"bytes,3,opt,name=master_info" json:"master_info,omitempty"`
 }
 
 func (m *Event_Subscribed) Reset()      { *m = Event_Subscribed{} }
@@ -303,6 +305,13 @@ func (m *Event_Subscribed) GetHeartbeatIntervalSeconds() float64 {
 		return *m.HeartbeatIntervalSeconds
 	}
 	return 0
+}
+
+func (m *Event_Subscribed) GetMasterInfo() *mesos.MasterInfo {
+	if m != nil {
+		return m.MasterInfo
+	}
+	return nil
 }
 
 // Received whenever there are new resources that are offered to the
@@ -776,6 +785,13 @@ func (m *Call_DeclineInverseOffers) GetFilters() *mesos.Filters {
 // receives a terminal update (See TaskState in v1/mesos.proto) for
 // it. If the task is unknown to the master, a TASK_LOST update is
 // generated.
+//
+// If a task within a task group is killed before the group is
+// delivered to the executor, all tasks in the task group are
+// killed. When a task group has been delivered to the executor,
+// it is up to the executor to decide how to deal with the kill.
+// Note The default Mesos executor will currently kill all the
+// tasks in the task group if it gets a kill for any task.
 type Call_Kill struct {
 	TaskID  mesos.TaskID   `protobuf:"bytes,1,req,name=task_id" json:"task_id"`
 	AgentID *mesos.AgentID `protobuf:"bytes,2,opt,name=agent_id" json:"agent_id,omitempty"`
@@ -1135,6 +1151,9 @@ func (this *Event_Subscribed) VerboseEqual(that interface{}) error {
 	} else if that1.HeartbeatIntervalSeconds != nil {
 		return fmt.Errorf("HeartbeatIntervalSeconds this(%v) Not Equal that(%v)", this.HeartbeatIntervalSeconds, that1.HeartbeatIntervalSeconds)
 	}
+	if !this.MasterInfo.Equal(that1.MasterInfo) {
+		return fmt.Errorf("MasterInfo this(%v) Not Equal that(%v)", this.MasterInfo, that1.MasterInfo)
+	}
 	return nil
 }
 func (this *Event_Subscribed) Equal(that interface{}) bool {
@@ -1167,6 +1186,9 @@ func (this *Event_Subscribed) Equal(that interface{}) bool {
 	} else if this.HeartbeatIntervalSeconds != nil {
 		return false
 	} else if that1.HeartbeatIntervalSeconds != nil {
+		return false
+	}
+	if !this.MasterInfo.Equal(that1.MasterInfo) {
 		return false
 	}
 	return true
@@ -2552,13 +2574,16 @@ func (this *Event_Subscribed) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 6)
+	s := make([]string, 0, 7)
 	s = append(s, "&scheduler.Event_Subscribed{")
 	if this.FrameworkID != nil {
 		s = append(s, "FrameworkID: "+fmt.Sprintf("%#v", this.FrameworkID)+",\n")
 	}
 	if this.HeartbeatIntervalSeconds != nil {
 		s = append(s, "HeartbeatIntervalSeconds: "+valueToGoStringScheduler(this.HeartbeatIntervalSeconds, "float64")+",\n")
+	}
+	if this.MasterInfo != nil {
+		s = append(s, "MasterInfo: "+fmt.Sprintf("%#v", this.MasterInfo)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -3044,6 +3069,16 @@ func (m *Event_Subscribed) MarshalTo(data []byte) (int, error) {
 		i++
 		i = encodeFixed64Scheduler(data, i, uint64(math.Float64bits(*m.HeartbeatIntervalSeconds)))
 	}
+	if m.MasterInfo != nil {
+		data[i] = 0x1a
+		i++
+		i = encodeVarintScheduler(data, i, uint64(m.MasterInfo.Size()))
+		n11, err := m.MasterInfo.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n11
+	}
 	return i, nil
 }
 
@@ -3125,11 +3160,11 @@ func (m *Event_Rescind) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintScheduler(data, i, uint64(m.OfferID.Size()))
-	n11, err := m.OfferID.MarshalTo(data[i:])
+	n12, err := m.OfferID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n11
+	i += n12
 	return i, nil
 }
 
@@ -3151,11 +3186,11 @@ func (m *Event_RescindInverseOffer) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintScheduler(data, i, uint64(m.InverseOfferID.Size()))
-	n12, err := m.InverseOfferID.MarshalTo(data[i:])
+	n13, err := m.InverseOfferID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n12
+	i += n13
 	return i, nil
 }
 
@@ -3177,11 +3212,11 @@ func (m *Event_Update) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintScheduler(data, i, uint64(m.Status.Size()))
-	n13, err := m.Status.MarshalTo(data[i:])
+	n14, err := m.Status.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n13
+	i += n14
 	return i, nil
 }
 
@@ -3203,19 +3238,19 @@ func (m *Event_Message) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintScheduler(data, i, uint64(m.AgentID.Size()))
-	n14, err := m.AgentID.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n14
-	data[i] = 0x12
-	i++
-	i = encodeVarintScheduler(data, i, uint64(m.ExecutorID.Size()))
-	n15, err := m.ExecutorID.MarshalTo(data[i:])
+	n15, err := m.AgentID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
 	i += n15
+	data[i] = 0x12
+	i++
+	i = encodeVarintScheduler(data, i, uint64(m.ExecutorID.Size()))
+	n16, err := m.ExecutorID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n16
 	if m.Data == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
 	} else {
@@ -3246,21 +3281,21 @@ func (m *Event_Failure) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.AgentID.Size()))
-		n16, err := m.AgentID.MarshalTo(data[i:])
+		n17, err := m.AgentID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n16
+		i += n17
 	}
 	if m.ExecutorID != nil {
 		data[i] = 0x12
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.ExecutorID.Size()))
-		n17, err := m.ExecutorID.MarshalTo(data[i:])
+		n18, err := m.ExecutorID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n17
+		i += n18
 	}
 	if m.Status != nil {
 		data[i] = 0x18
@@ -3311,11 +3346,11 @@ func (m *Call) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.FrameworkID.Size()))
-		n18, err := m.FrameworkID.MarshalTo(data[i:])
+		n19, err := m.FrameworkID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n18
+		i += n19
 	}
 	if m.Type != nil {
 		data[i] = 0x10
@@ -3326,111 +3361,111 @@ func (m *Call) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.Subscribe.Size()))
-		n19, err := m.Subscribe.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n19
-	}
-	if m.Accept != nil {
-		data[i] = 0x22
-		i++
-		i = encodeVarintScheduler(data, i, uint64(m.Accept.Size()))
-		n20, err := m.Accept.MarshalTo(data[i:])
+		n20, err := m.Subscribe.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n20
 	}
-	if m.Decline != nil {
-		data[i] = 0x2a
+	if m.Accept != nil {
+		data[i] = 0x22
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.Decline.Size()))
-		n21, err := m.Decline.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.Accept.Size()))
+		n21, err := m.Accept.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n21
 	}
-	if m.Kill != nil {
-		data[i] = 0x32
+	if m.Decline != nil {
+		data[i] = 0x2a
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.Kill.Size()))
-		n22, err := m.Kill.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.Decline.Size()))
+		n22, err := m.Decline.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n22
 	}
-	if m.Shutdown != nil {
-		data[i] = 0x3a
+	if m.Kill != nil {
+		data[i] = 0x32
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.Shutdown.Size()))
-		n23, err := m.Shutdown.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.Kill.Size()))
+		n23, err := m.Kill.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n23
 	}
-	if m.Acknowledge != nil {
-		data[i] = 0x42
+	if m.Shutdown != nil {
+		data[i] = 0x3a
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.Acknowledge.Size()))
-		n24, err := m.Acknowledge.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.Shutdown.Size()))
+		n24, err := m.Shutdown.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n24
 	}
-	if m.Reconcile != nil {
-		data[i] = 0x4a
+	if m.Acknowledge != nil {
+		data[i] = 0x42
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.Reconcile.Size()))
-		n25, err := m.Reconcile.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.Acknowledge.Size()))
+		n25, err := m.Acknowledge.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n25
 	}
-	if m.Message != nil {
-		data[i] = 0x52
+	if m.Reconcile != nil {
+		data[i] = 0x4a
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.Message.Size()))
-		n26, err := m.Message.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.Reconcile.Size()))
+		n26, err := m.Reconcile.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n26
 	}
-	if m.Request != nil {
-		data[i] = 0x5a
+	if m.Message != nil {
+		data[i] = 0x52
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.Request.Size()))
-		n27, err := m.Request.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.Message.Size()))
+		n27, err := m.Message.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n27
 	}
-	if m.AcceptInverseOffers != nil {
-		data[i] = 0x6a
+	if m.Request != nil {
+		data[i] = 0x5a
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.AcceptInverseOffers.Size()))
-		n28, err := m.AcceptInverseOffers.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.Request.Size()))
+		n28, err := m.Request.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n28
 	}
-	if m.DeclineInverseOffers != nil {
-		data[i] = 0x72
+	if m.AcceptInverseOffers != nil {
+		data[i] = 0x6a
 		i++
-		i = encodeVarintScheduler(data, i, uint64(m.DeclineInverseOffers.Size()))
-		n29, err := m.DeclineInverseOffers.MarshalTo(data[i:])
+		i = encodeVarintScheduler(data, i, uint64(m.AcceptInverseOffers.Size()))
+		n29, err := m.AcceptInverseOffers.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n29
+	}
+	if m.DeclineInverseOffers != nil {
+		data[i] = 0x72
+		i++
+		i = encodeVarintScheduler(data, i, uint64(m.DeclineInverseOffers.Size()))
+		n30, err := m.DeclineInverseOffers.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n30
 	}
 	return i, nil
 }
@@ -3456,11 +3491,11 @@ func (m *Call_Subscribe) MarshalTo(data []byte) (int, error) {
 		data[i] = 0xa
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.FrameworkInfo.Size()))
-		n30, err := m.FrameworkInfo.MarshalTo(data[i:])
+		n31, err := m.FrameworkInfo.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n30
+		i += n31
 	}
 	return i, nil
 }
@@ -3508,11 +3543,11 @@ func (m *Call_Accept) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.Filters.Size()))
-		n31, err := m.Filters.MarshalTo(data[i:])
+		n32, err := m.Filters.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n31
+		i += n32
 	}
 	return i, nil
 }
@@ -3548,11 +3583,11 @@ func (m *Call_Decline) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.Filters.Size()))
-		n32, err := m.Filters.MarshalTo(data[i:])
+		n33, err := m.Filters.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n32
+		i += n33
 	}
 	return i, nil
 }
@@ -3588,11 +3623,11 @@ func (m *Call_AcceptInverseOffers) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.Filters.Size()))
-		n33, err := m.Filters.MarshalTo(data[i:])
+		n34, err := m.Filters.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n33
+		i += n34
 	}
 	return i, nil
 }
@@ -3628,11 +3663,11 @@ func (m *Call_DeclineInverseOffers) MarshalTo(data []byte) (int, error) {
 		data[i] = 0x12
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.Filters.Size()))
-		n34, err := m.Filters.MarshalTo(data[i:])
+		n35, err := m.Filters.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n34
+		i += n35
 	}
 	return i, nil
 }
@@ -3655,30 +3690,30 @@ func (m *Call_Kill) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintScheduler(data, i, uint64(m.TaskID.Size()))
-	n35, err := m.TaskID.MarshalTo(data[i:])
+	n36, err := m.TaskID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n35
+	i += n36
 	if m.AgentID != nil {
 		data[i] = 0x12
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.AgentID.Size()))
-		n36, err := m.AgentID.MarshalTo(data[i:])
+		n37, err := m.AgentID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n36
+		i += n37
 	}
 	if m.KillPolicy != nil {
 		data[i] = 0x1a
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.KillPolicy.Size()))
-		n37, err := m.KillPolicy.MarshalTo(data[i:])
+		n38, err := m.KillPolicy.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n37
+		i += n38
 	}
 	return i, nil
 }
@@ -3701,19 +3736,19 @@ func (m *Call_Shutdown) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintScheduler(data, i, uint64(m.ExecutorID.Size()))
-	n38, err := m.ExecutorID.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n38
-	data[i] = 0x12
-	i++
-	i = encodeVarintScheduler(data, i, uint64(m.AgentID.Size()))
-	n39, err := m.AgentID.MarshalTo(data[i:])
+	n39, err := m.ExecutorID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
 	i += n39
+	data[i] = 0x12
+	i++
+	i = encodeVarintScheduler(data, i, uint64(m.AgentID.Size()))
+	n40, err := m.AgentID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n40
 	return i, nil
 }
 
@@ -3735,19 +3770,19 @@ func (m *Call_Acknowledge) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintScheduler(data, i, uint64(m.AgentID.Size()))
-	n40, err := m.AgentID.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n40
-	data[i] = 0x12
-	i++
-	i = encodeVarintScheduler(data, i, uint64(m.TaskID.Size()))
-	n41, err := m.TaskID.MarshalTo(data[i:])
+	n41, err := m.AgentID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
 	i += n41
+	data[i] = 0x12
+	i++
+	i = encodeVarintScheduler(data, i, uint64(m.TaskID.Size()))
+	n42, err := m.TaskID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n42
 	if m.UUID == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("uuid")
 	} else {
@@ -3807,20 +3842,20 @@ func (m *Call_Reconcile_Task) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintScheduler(data, i, uint64(m.TaskID.Size()))
-	n42, err := m.TaskID.MarshalTo(data[i:])
+	n43, err := m.TaskID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n42
+	i += n43
 	if m.AgentID != nil {
 		data[i] = 0x12
 		i++
 		i = encodeVarintScheduler(data, i, uint64(m.AgentID.Size()))
-		n43, err := m.AgentID.MarshalTo(data[i:])
+		n44, err := m.AgentID.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n43
+		i += n44
 	}
 	return i, nil
 }
@@ -3843,19 +3878,19 @@ func (m *Call_Message) MarshalTo(data []byte) (int, error) {
 	data[i] = 0xa
 	i++
 	i = encodeVarintScheduler(data, i, uint64(m.AgentID.Size()))
-	n44, err := m.AgentID.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n44
-	data[i] = 0x12
-	i++
-	i = encodeVarintScheduler(data, i, uint64(m.ExecutorID.Size()))
-	n45, err := m.ExecutorID.MarshalTo(data[i:])
+	n45, err := m.AgentID.MarshalTo(data[i:])
 	if err != nil {
 		return 0, err
 	}
 	i += n45
+	data[i] = 0x12
+	i++
+	i = encodeVarintScheduler(data, i, uint64(m.ExecutorID.Size()))
+	n46, err := m.ExecutorID.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n46
 	if m.Data == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
 	} else {
@@ -3971,6 +4006,9 @@ func NewPopulatedEvent_Subscribed(r randyScheduler, easy bool) *Event_Subscribed
 			v2 *= -1
 		}
 		this.HeartbeatIntervalSeconds = &v2
+	}
+	if r.Intn(10) != 0 {
+		this.MasterInfo = mesos.NewPopulatedMasterInfo(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -4440,6 +4478,10 @@ func (m *Event_Subscribed) Size() (n int) {
 	if m.HeartbeatIntervalSeconds != nil {
 		n += 9
 	}
+	if m.MasterInfo != nil {
+		l = m.MasterInfo.Size()
+		n += 1 + l + sovScheduler(uint64(l))
+	}
 	return n
 }
 
@@ -4796,6 +4838,7 @@ func (this *Event_Subscribed) String() string {
 	s := strings.Join([]string{`&Event_Subscribed{`,
 		`FrameworkID:` + strings.Replace(fmt.Sprintf("%v", this.FrameworkID), "FrameworkID", "mesos.FrameworkID", 1) + `,`,
 		`HeartbeatIntervalSeconds:` + valueToStringScheduler(this.HeartbeatIntervalSeconds) + `,`,
+		`MasterInfo:` + strings.Replace(fmt.Sprintf("%v", this.MasterInfo), "MasterInfo", "mesos.MasterInfo", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -5497,6 +5540,39 @@ func (m *Event_Subscribed) Unmarshal(data []byte) error {
 			v |= uint64(data[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.HeartbeatIntervalSeconds = &v2
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MasterInfo", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.MasterInfo == nil {
+				m.MasterInfo = &mesos.MasterInfo{}
+			}
+			if err := m.MasterInfo.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipScheduler(data[iNdEx:])

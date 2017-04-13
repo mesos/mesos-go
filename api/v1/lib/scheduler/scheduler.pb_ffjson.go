@@ -7004,6 +7004,21 @@ func (mj *Event_Subscribed) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.MasterInfo != nil {
+		if true {
+			buf.WriteString(`"master_info":`)
+
+			{
+
+				err = mj.MasterInfo.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -7016,11 +7031,15 @@ const (
 	ffj_t_Event_Subscribed_FrameworkID
 
 	ffj_t_Event_Subscribed_HeartbeatIntervalSeconds
+
+	ffj_t_Event_Subscribed_MasterInfo
 )
 
 var ffj_key_Event_Subscribed_FrameworkID = []byte("framework_id")
 
 var ffj_key_Event_Subscribed_HeartbeatIntervalSeconds = []byte("heartbeat_interval_seconds")
+
+var ffj_key_Event_Subscribed_MasterInfo = []byte("master_info")
 
 func (uj *Event_Subscribed) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -7097,6 +7116,20 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'm':
+
+					if bytes.Equal(ffj_key_Event_Subscribed_MasterInfo, kn) {
+						currentKey = ffj_t_Event_Subscribed_MasterInfo
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_Subscribed_MasterInfo, kn) {
+					currentKey = ffj_t_Event_Subscribed_MasterInfo
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Event_Subscribed_HeartbeatIntervalSeconds, kn) {
@@ -7133,6 +7166,9 @@ mainparse:
 
 				case ffj_t_Event_Subscribed_HeartbeatIntervalSeconds:
 					goto handle_HeartbeatIntervalSeconds
+
+				case ffj_t_Event_Subscribed_MasterInfo:
+					goto handle_MasterInfo
 
 				case ffj_t_Event_Subscribedno_such_key:
 					err = fs.SkipField(tok)
@@ -7203,6 +7239,33 @@ handle_HeartbeatIntervalSeconds:
 			uj.HeartbeatIntervalSeconds = &ttypval
 
 		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_MasterInfo:
+
+	/* handler: uj.MasterInfo type=mesos.MasterInfo kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.MasterInfo = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.MasterInfo == nil {
+			uj.MasterInfo = new(mesos.MasterInfo)
+		}
+
+		err = uj.MasterInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value

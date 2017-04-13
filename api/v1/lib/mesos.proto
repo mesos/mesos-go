@@ -35,6 +35,14 @@ option (gogoproto.testgen_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
 
+// NOTES: (gogogo protobuf for idiomatic Golang)
+// - enum fields may be nullable if the default enum value is 0, otherwise the Golang zero-value of
+//   the enum isn't valid.
+// - required fields are generally marked nullable
+// - arrays of non-native types are generally marked nullable
+// - fields w/ acronyms are generally renamed (via customname) to be idiomatic w/ respect to Golang
+// - fields w/ glued acronyms are also renamed at the author's discretion w/ respect to legibility
+
 /**
  * Status is used to indicate the state of the scheduler and executor
  * driver after function calls.
@@ -177,7 +185,7 @@ message Unavailability {
  */
 message MachineID {
   optional string hostname = 1;
-  optional string ip = 2;
+  optional string ip = 2 [(gogoproto.customname) = "IP"];
 }
 
 
@@ -270,7 +278,7 @@ message FrameworkInfo {
   // This field allows a framework to advertise its web UI, so that
   // the Mesos web UI can link to it. It is expected to be a full URL,
   // for example http://my-scheduler.example.com:8080/.
-  optional string webui_url = 9;
+  optional string webui_url = 9 [(gogoproto.customname) = "WebUiURL"];
 
   message Capability {
     enum Type {
@@ -352,7 +360,7 @@ message HealthCheck {
   }
 
   // HTTP health check - not yet recommended for use, see MESOS-2533.
-  optional HTTP http = 1;
+  optional HTTP http = 1 [(gogoproto.customname) = "HTTP"];
 
   // TODO(benh): Consider adding a URL health check strategy which
   // allows doing something similar to the HTTP strategy but
@@ -632,7 +640,7 @@ message Value {
     required string value = 1 [(gogoproto.nullable) = false];
   }
 
-  required Type type = 1;
+  required Type type = 1 [(gogoproto.nullable) = false];
   optional Scalar scalar = 2;
   optional Ranges ranges = 3;
   optional Set set = 4;
@@ -647,7 +655,7 @@ message Value {
  */
 message Attribute {
   required string name = 1 [(gogoproto.nullable) = false];
-  required Value.Type type = 2;
+  required Value.Type type = 2 [(gogoproto.nullable) = false];
   optional Value.Scalar scalar = 3;
   optional Value.Ranges ranges = 4;
   optional Value.Set set = 6;
@@ -778,7 +786,7 @@ message Resource {
         required string root = 1 [(gogoproto.nullable) = false];
       }
 
-      required Type type = 1;
+      required Type type = 1; // nullable since default of PATH == 1
       optional Path path = 2;
       optional Mount mount = 3;
     }
@@ -832,8 +840,8 @@ message TrafficControlStatistics {
   optional uint64 overlimits = 5;
   optional uint64 packets = 6;
   optional uint64 qlen = 7;
-  optional uint64 ratebps = 8;
-  optional uint64 ratepps = 9;
+  optional uint64 ratebps = 8 [(gogoproto.customname) = "RateBPS"];
+  optional uint64 ratepps = 9 [(gogoproto.customname) = "RatePPS"];
   optional uint64 requeues = 10;
 }
 
@@ -924,10 +932,10 @@ message UdpStatistics {
 
 
 message SNMPStatistics {
-  optional IpStatistics ip_stats = 1;
-  optional IcmpStatistics icmp_stats = 2;
-  optional TcpStatistics tcp_stats = 3;
-  optional UdpStatistics udp_stats = 4;
+  optional IpStatistics ip_stats = 1 [(gogoproto.customname) = "IPStats"];
+  optional IcmpStatistics icmp_stats = 2 [(gogoproto.customname) = "ICMPStats"];
+  optional TcpStatistics tcp_stats = 3 [(gogoproto.customname) = "TCPStats"];
+  optional UdpStatistics udp_stats = 4 [(gogoproto.customname) = "UDPStats"];
 }
 
 
@@ -942,16 +950,16 @@ message ResourceStatistics {
 
   // CPU Usage Information:
   // Total CPU time spent in user mode, and kernel mode.
-  optional double cpus_user_time_secs = 2;
-  optional double cpus_system_time_secs = 3;
+  optional double cpus_user_time_secs = 2 [(gogoproto.customname) = "CPUsUserTimeSecs"];
+  optional double cpus_system_time_secs = 3 [(gogoproto.customname) = "CPUsSystemTimeSecs"];
 
   // Number of CPUs allocated.
   optional double cpus_limit = 4;
 
   // cpu.stat on process throttling (for contention issues).
-  optional uint32 cpus_nr_periods = 7;
-  optional uint32 cpus_nr_throttled = 8;
-  optional double cpus_throttled_time_secs = 9;
+  optional uint32 cpus_nr_periods = 7 [(gogoproto.customname) = "CPUsNrPeriods"];
+  optional uint32 cpus_nr_throttled = 8 [(gogoproto.customname) = "CPUsNrThrottled"];
+  optional double cpus_throttled_time_secs = 9 [(gogoproto.customname) = "CPUsThrottledTimeSecs"];
 
   // Memory Usage Information:
 
@@ -1020,13 +1028,13 @@ message ResourceStatistics {
 
   // The kernel keeps track of RTT (round-trip time) for its TCP
   // sockets. RTT is a way to tell the latency of a container.
-  optional double net_tcp_rtt_microsecs_p50 = 22;
-  optional double net_tcp_rtt_microsecs_p90 = 23;
-  optional double net_tcp_rtt_microsecs_p95 = 24;
-  optional double net_tcp_rtt_microsecs_p99 = 25;
+  optional double net_tcp_rtt_microsecs_p50 = 22 [(gogoproto.customname) = "NetTCPRttMicrosecsP50"];
+  optional double net_tcp_rtt_microsecs_p90 = 23 [(gogoproto.customname) = "NetTCPRttMicrosecsP90"];
+  optional double net_tcp_rtt_microsecs_p95 = 24 [(gogoproto.customname) = "NetTCPRttMicrosecsP95"];
+  optional double net_tcp_rtt_microsecs_p99 = 25 [(gogoproto.customname) = "NetTCPRttMicrosecsP99"];
 
-  optional double net_tcp_active_connections = 28;
-  optional double net_tcp_time_wait_connections = 29;
+  optional double net_tcp_active_connections = 28 [(gogoproto.customname) = "NetTCPActiveConnections"];
+  optional double net_tcp_time_wait_connections = 29 [(gogoproto.customname) = "NetTCPTimeWaitConnections"];
 
   // Network traffic flowing into or out of a container can be delayed
   // or dropped due to congestion or policy inside and outside the
@@ -1034,7 +1042,7 @@ message ResourceStatistics {
   repeated TrafficControlStatistics net_traffic_control_statistics = 35 [(gogoproto.nullable) = false];
 
   // Network SNMP statistics for each container.
-  optional SNMPStatistics net_snmp_statistics = 42;
+  optional SNMPStatistics net_snmp_statistics = 42 [(gogoproto.customname) = "NetSNMPStatistics"];
 }
 
 
@@ -1125,20 +1133,20 @@ message PerfStatistics {
   optional uint64 l1_icache_load_misses = 29;
   optional uint64 l1_icache_prefetches = 30;
   optional uint64 l1_icache_prefetch_misses = 31;
-  optional uint64 llc_loads = 32;
-  optional uint64 llc_load_misses = 33;
-  optional uint64 llc_stores = 34;
-  optional uint64 llc_store_misses = 35;
-  optional uint64 llc_prefetches = 36;
-  optional uint64 llc_prefetch_misses = 37;
-  optional uint64 dtlb_loads = 38;
-  optional uint64 dtlb_load_misses = 39;
-  optional uint64 dtlb_stores = 40;
-  optional uint64 dtlb_store_misses = 41;
-  optional uint64 dtlb_prefetches = 42;
-  optional uint64 dtlb_prefetch_misses = 43;
-  optional uint64 itlb_loads = 44;
-  optional uint64 itlb_load_misses = 45;
+  optional uint64 llc_loads = 32 [(gogoproto.customname) = "LLCLoads"];
+  optional uint64 llc_load_misses = 33 [(gogoproto.customname) = "LLCLoadMisses"];
+  optional uint64 llc_stores = 34 [(gogoproto.customname) = "LLCStores"];
+  optional uint64 llc_store_misses = 35 [(gogoproto.customname) = "LLCStoreMisses"];
+  optional uint64 llc_prefetches = 36 [(gogoproto.customname) = "LLCPrefetches"];
+  optional uint64 llc_prefetch_misses = 37 [(gogoproto.customname) = "LLCPrefetchMisses"];
+  optional uint64 dtlb_loads = 38 [(gogoproto.customname) = "DTLBLoads"];
+  optional uint64 dtlb_load_misses = 39 [(gogoproto.customname) = "DTLBLoadMisses"];
+  optional uint64 dtlb_stores = 40 [(gogoproto.customname) = "DTLBStores"];
+  optional uint64 dtlb_store_misses = 41 [(gogoproto.customname) = "DTLBStoreMisses"];
+  optional uint64 dtlb_prefetches = 42 [(gogoproto.customname) = "DTLBPrefetches"];
+  optional uint64 dtlb_prefetch_misses = 43 [(gogoproto.customname) = "DTLBPrefetchMisses"];
+  optional uint64 itlb_loads = 44 [(gogoproto.customname) = "ITLBLoads"];
+  optional uint64 itlb_load_misses = 45 [(gogoproto.customname) = "ITLBLoadMisses"];
   optional uint64 branch_loads = 46;
   optional uint64 branch_load_misses = 47;
   optional uint64 node_loads = 48;
@@ -1173,7 +1181,7 @@ message Offer {
   required string hostname = 4 [(gogoproto.nullable) = false];
 
   // URL for reaching the agent running on the host.
-  optional URL url = 8;
+  optional URL url = 8 [(gogoproto.customname) = "URL"];
 
   repeated Resource resources = 5 [(gogoproto.nullable) = false];
   repeated Attribute attributes = 7 [(gogoproto.nullable) = false];
@@ -1221,7 +1229,7 @@ message Offer {
       repeated Resource volumes = 1 [(gogoproto.nullable) = false];
     }
 
-    required Type type = 1;
+    required Type type = 1; // nullable since the default LAUNCH == 1
     optional Launch launch = 2;
     optional Reserve reserve = 3;
     optional Unreserve unreserve = 4;
@@ -1242,7 +1250,7 @@ message InverseOffer {
   // URL for reaching the agent running on the host.  This enables some
   // optimizations as described in MESOS-3012, such as allowing the
   // scheduler driver to bypass the master and talk directly with an agent.
-  optional URL url = 2;
+  optional URL url = 2 [(gogoproto.customname) = "URL"];
 
   // The framework that should release its resources.
   // If no specifics are provided (i.e. which agent), all the framework's
@@ -1646,7 +1654,7 @@ message Image {
     optional Credential credential = 2;
   }
 
-  required Type type = 1;
+  required Type type = 1; // nullable since the default APPC == 1
 
   // Only one of the following image messages should be set to match
   // the type.
@@ -1716,7 +1724,7 @@ message Volume {
     }
 
     // Enum fields should be optional, see: MESOS-4997.
-    optional Type type = 1;
+    optional Type type = 1 [(gogoproto.nullable) = false];
 
     // The following specifies the source of this volume. At most one of
     // the following should be set.
@@ -1862,7 +1870,7 @@ message ContainerInfo {
     optional Image image = 1;
   }
 
-  required Type type = 1;
+  required Type type = 1; // nullable since the default DOCKER == 1
   repeated Volume volumes = 2 [(gogoproto.nullable) = false];
   optional string hostname = 4;
 

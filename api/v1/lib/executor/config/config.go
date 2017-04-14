@@ -14,8 +14,13 @@ type Config struct {
 	FrameworkID string
 	// ExecutorID of the executor needed as part of the SUBSCRIBE call
 	ExecutorID string
-	// Directory is the path to the working directory for the executor
+	// Directory is the path to the working directory for the executor on the host filesystem (deprecated).
 	Directory string
+	// Sandbox is the path to the mapped sandbox inside of the container (determined by the agent flag
+	// `sandbox_directory`) for either mesos container with image or docker container. For the case of
+	// command task without image specified, it is the path to the sandbox on the host filesystem, which is
+	// identical to `MESOS_DIRECTORY`. `MESOS_DIRECTORY` is always the sandbox on the host filesystem.
+	Sandbox string
 	// AgentEndpoint is the endpoint i.e. ip:port to be used by the executor to connect
 	// to the agent
 	AgentEndpoint string
@@ -69,6 +74,7 @@ func fromEnv(getter func(string) string) (Config, error) {
 		FrameworkID:                 required("MESOS_FRAMEWORK_ID"),
 		ExecutorID:                  required("MESOS_EXECUTOR_ID"),
 		Directory:                   required("MESOS_DIRECTORY"),
+		Sandbox:                     required("MESOS_SANDBOX"),
 		AgentEndpoint:               required("MESOS_AGENT_ENDPOINT"),
 		ExecutorShutdownGracePeriod: requiredDuration("MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD"),
 	}

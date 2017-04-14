@@ -28,11 +28,12 @@ const (
 var (
 	opNoop             = func(_ Offer_Operation, _ Resources) (_ Resources, _ error) { return }
 	offerResourceOpMap = map[Offer_Operation_Type]offerResourceOp{
-		LAUNCH:    opNoop,
-		RESERVE:   handleOpErrors(invalidOp(RESERVE), validateOpTotals(opReserve)),
-		UNRESERVE: handleOpErrors(invalidOp(UNRESERVE), validateOpTotals(opUnreserve)),
-		CREATE:    handleOpErrors(invalidOp(CREATE), validateOpTotals(opCreate)),
-		DESTROY:   handleOpErrors(invalidOp(DESTROY), validateOpTotals(opDestroy)),
+		Offer_Operation_LAUNCH:       opNoop,
+		Offer_Operation_LAUNCH_GROUP: opNoop,
+		Offer_Operation_RESERVE:      handleOpErrors(invalidOp(Offer_Operation_RESERVE), validateOpTotals(opReserve)),
+		Offer_Operation_UNRESERVE:    handleOpErrors(invalidOp(Offer_Operation_UNRESERVE), validateOpTotals(opUnreserve)),
+		Offer_Operation_CREATE:       handleOpErrors(invalidOp(Offer_Operation_CREATE), validateOpTotals(opCreate)),
+		Offer_Operation_DESTROY:      handleOpErrors(invalidOp(Offer_Operation_DESTROY), validateOpTotals(opDestroy)),
 	}
 )
 

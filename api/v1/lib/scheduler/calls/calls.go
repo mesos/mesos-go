@@ -120,16 +120,28 @@ func DeclineInverseOffers(offerIDs ...mesos.OfferID) *scheduler.Call {
 // OpLaunch returns a launch operation builder for the given tasks
 func OpLaunch(ti ...mesos.TaskInfo) mesos.Offer_Operation {
 	return mesos.Offer_Operation{
-		Type: mesos.LAUNCH.Enum(),
+		Type: mesos.Offer_Operation_LAUNCH.Enum(),
 		Launch: &mesos.Offer_Operation_Launch{
 			TaskInfos: ti,
 		},
 	}
 }
 
+func OpLaunchGroup(ei mesos.ExecutorInfo, ti ...mesos.TaskInfo) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.Offer_Operation_LAUNCH_GROUP.Enum(),
+		LaunchGroup: &mesos.Offer_Operation_LaunchGroup{
+			Executor: ei,
+			TaskGroup: mesos.TaskGroupInfo{
+				Tasks: ti,
+			},
+		},
+	}
+}
+
 func OpReserve(rs ...mesos.Resource) mesos.Offer_Operation {
 	return mesos.Offer_Operation{
-		Type: mesos.RESERVE.Enum(),
+		Type: mesos.Offer_Operation_RESERVE.Enum(),
 		Reserve: &mesos.Offer_Operation_Reserve{
 			Resources: rs,
 		},
@@ -138,7 +150,7 @@ func OpReserve(rs ...mesos.Resource) mesos.Offer_Operation {
 
 func OpUnreserve(rs ...mesos.Resource) mesos.Offer_Operation {
 	return mesos.Offer_Operation{
-		Type: mesos.UNRESERVE.Enum(),
+		Type: mesos.Offer_Operation_UNRESERVE.Enum(),
 		Unreserve: &mesos.Offer_Operation_Unreserve{
 			Resources: rs,
 		},
@@ -147,7 +159,7 @@ func OpUnreserve(rs ...mesos.Resource) mesos.Offer_Operation {
 
 func OpCreate(rs ...mesos.Resource) mesos.Offer_Operation {
 	return mesos.Offer_Operation{
-		Type: mesos.CREATE.Enum(),
+		Type: mesos.Offer_Operation_CREATE.Enum(),
 		Create: &mesos.Offer_Operation_Create{
 			Volumes: rs,
 		},
@@ -156,7 +168,7 @@ func OpCreate(rs ...mesos.Resource) mesos.Offer_Operation {
 
 func OpDestroy(rs ...mesos.Resource) mesos.Offer_Operation {
 	return mesos.Offer_Operation{
-		Type: mesos.DESTROY.Enum(),
+		Type: mesos.Offer_Operation_DESTROY.Enum(),
 		Destroy: &mesos.Offer_Operation_Destroy{
 			Volumes: rs,
 		},

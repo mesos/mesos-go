@@ -7,7 +7,6 @@ go:
   - 1.6.x
   - 1.7.x
   - 1.8
-  - tip
 before_install:
    #these two lines help users who fork mesos-go. It's a noop when running from the mesos organization
   - RepoName=`basename $PWD`; SrcDir=`dirname $PWD`; DestDir="`dirname $SrcDir`/mesos"

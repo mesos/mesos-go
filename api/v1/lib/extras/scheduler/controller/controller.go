@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"fmt"
-
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
@@ -131,13 +129,19 @@ func (ca *ContextAdapter) Error(err error) {
 	}
 }
 
+type SchedulerError string
+
+func (e SchedulerError) Error() string {
+	return string(e)
+}
+
 // DefaultHandler provides the minimum implementation required for correct controller behavior.
 func DefaultHandler(e *scheduler.Event) (err error) {
 	if e.GetType() == scheduler.Event_ERROR {
 		// it's recommended that we abort and re-try subscribing; returning an
 		// error here will cause the event loop to terminate and the connection
 		// will be reset.
-		err = fmt.Errorf("ERROR: %q", e.GetError().GetMessage())
+		err = SchedulerError(e.GetError().GetMessage())
 	}
 	return
 }

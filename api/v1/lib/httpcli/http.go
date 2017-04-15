@@ -384,7 +384,8 @@ func With(opt ...ConfigOpt) DoFunc {
 	return config.client.Do
 }
 
-// Timeout returns an ConfigOpt that sets a Config's timeout and keep-alive timeout.
+// Timeout returns an ConfigOpt that sets a Config's response header timeout, tls handshake timeout,
+// and dialer timeout.
 func Timeout(d time.Duration) ConfigOpt {
 	return func(c *Config) {
 		c.transport.ResponseHeaderTimeout = d

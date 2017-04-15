@@ -24,6 +24,7 @@ var (
 )
 
 type (
+	// state implements calls.Caller and tracks connectivity with Mesos
 	state struct {
 		client *client // client is a handle to the original underlying HTTP client
 

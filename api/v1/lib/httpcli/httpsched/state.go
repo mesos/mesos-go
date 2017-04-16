@@ -45,7 +45,7 @@ func maybeLogged(f httpcli.DoFunc) httpcli.DoFunc {
 	if debug {
 		return func(req *http.Request) (*http.Response, error) {
 			if debug {
-				log.Println("wrapping request")
+				log.Println("wrapping request", *req)
 			}
 			resp, err := f(req)
 			if debug && err == nil {
@@ -99,8 +99,15 @@ func disconnectedFn(state *state) stateFn {
 	stateResp, stateErr := subscribeCaller.Call(state.call)
 	state.err = stateErr
 
+	// (d) if err != nil return disconnectedFn since we're unsubscribed
+	if stateErr != nil {
+		state.resp = nil
+		return disconnectedFn
+	}
+
 	// wrap the response: any errors processing the subscription stream should result in a
 	// transition to a disconnected state ASAP.
+	stateCaller := state.caller
 	state.resp = &mesos.ResponseWrapper{
 		Response: stateResp,
 		DecoderFunc: func() encoding.Decoder {
@@ -109,18 +116,14 @@ func disconnectedFn(state *state) stateFn {
 				err = decoder(u)
 				if err != nil {
 					state.m.Lock()
+					defer state.m.Unlock()
+					state.caller = stateCaller // restore the original caller
 					state.fn = disconnectedFn
-					state.m.Unlock()
 					_ = stateResp.Close() // swallow any error here
 				}
 				return
 			}
 		},
-	}
-
-	// (d) if err != nil return disconnectedFn since we're unsubscribed
-	if stateErr != nil {
-		return disconnectedFn
 	}
 
 	// (e) else prepare callerTemporary w/ special header, return connectedFn since we're now subscribed
@@ -151,5 +154,10 @@ func (state *state) Call(call *scheduler.Call) (resp mesos.Response, err error) 
 	defer state.m.Unlock()
 	state.call = call
 	state.fn = state.fn(state)
+
+	if debug && state.err != nil {
+		log.Print(*call, state.err)
+	}
+
 	return state.resp, state.err
 }

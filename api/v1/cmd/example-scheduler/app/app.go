@@ -125,6 +125,7 @@ func buildEventHandler(state *internalState, frameworkIDStore IDStore) events.Ha
 						state.done = true // TODO(jdef) not goroutine safe
 						return errors.New("mesos gave us an empty frameworkID")
 					}
+					log.Println("FrameworkID", frameworkID)
 					frameworkIDStore.Set(frameworkID)
 				}
 				return nil

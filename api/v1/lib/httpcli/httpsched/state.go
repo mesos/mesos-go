@@ -121,7 +121,6 @@ func disconnectedFn(state *state) stateFn {
 
 	// wrap the response: any errors processing the subscription stream should result in a
 	// transition to a disconnected state ASAP.
-	stateCaller := state.caller
 	state.resp = &mesos.ResponseWrapper{
 		Response: stateResp,
 		DecoderFunc: func() encoding.Decoder {
@@ -131,7 +130,6 @@ func disconnectedFn(state *state) stateFn {
 				if err != nil {
 					state.m.Lock()
 					defer state.m.Unlock()
-					state.caller = stateCaller // restore the original caller
 					state.fn = disconnectedFn
 					_ = stateResp.Close() // swallow any error here
 				}

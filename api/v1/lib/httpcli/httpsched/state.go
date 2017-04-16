@@ -2,7 +2,6 @@ package httpsched
 
 import (
 	"errors"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -83,18 +82,6 @@ func disconnectedFn(state *state) stateFn {
 						resp = nil
 						err = errMissingMesosStreamId
 					}
-				}
-				if err == nil && debug && resp.StatusCode >= 400 {
-					// capture any error message in the response entity
-					// TODO(jdef) we should be doing this work in httpcli and sending
-					// back an APIError to capture these details.
-					defer resp.Body.Close()
-					buf, _ := ioutil.ReadAll(resp.Body)
-					msg := string(buf)
-					if len(msg) > 80 {
-						msg = msg[:80]
-					}
-					log.Printf("ERROR(http,%d): %q", resp.StatusCode, msg)
 				}
 				return
 			}

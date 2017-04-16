@@ -21,6 +21,12 @@ var (
 	RegistrationMaxBackoff = 15 * time.Second
 )
 
+// StateError is returned when the system encounters an unresolvable state transition error and
+// should likely exit.
+type StateError string
+
+func (err StateError) Error() string { return string(err) }
+
 func Run(cfg Config) error {
 	log.Printf("scheduler running with configuration: %+v", cfg)
 	shutdown := make(chan struct{})
@@ -45,15 +51,19 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 	var (
 		frameworkIDStore = NewInMemoryIDStore()
 		controlContext   = &controller.ContextAdapter{
-			DoneFunc: func() bool { return state.done },
-			// not called concurrently w/ subscription events, don't worry about using the atomic
+			DoneFunc:        state.isDone,
 			FrameworkIDFunc: func() string { return frameworkIDStore.Get() },
 			ErrorFunc: func(err error) {
-				if err != nil && err != io.EOF {
-					log.Println(err)
-				} else {
-					log.Println("disconnected")
+				if err != nil {
+					if err != io.EOF {
+						log.Println(err)
+					}
+					if _, ok := err.(StateError); ok {
+						state.markDone()
+					}
+					return
 				}
+				log.Println("disconnected")
 			},
 		}
 	)
@@ -116,14 +126,11 @@ func buildEventHandler(state *internalState, frameworkIDStore IDStore) events.Ha
 				frameworkID := e.GetSubscribed().GetFrameworkID().GetValue()
 				if state.frameworkID == "" || state.frameworkID != frameworkID {
 					if state.frameworkID != "" && state.frameworkID != frameworkID && state.config.checkpoint {
-						state.done = true // TODO(jdef) not goroutine safe
-						return errors.New("frameworkID changed unexpectedly; failover may be broken")
+						return StateError("frameworkID changed unexpectedly; failover may be broken")
 					}
 					state.frameworkID = frameworkID
 					if state.frameworkID == "" {
-						// sanity check
-						state.done = true // TODO(jdef) not goroutine safe
-						return errors.New("mesos gave us an empty frameworkID")
+						return StateError("mesos gave us an empty frameworkID")
 					}
 					log.Println("FrameworkID", frameworkID)
 					frameworkIDStore.Set(frameworkID)
@@ -245,7 +252,7 @@ func statusUpdate(state *internalState, s mesos.TaskStatus) {
 
 		if state.tasksFinished == state.totalTasks {
 			log.Println("mission accomplished, terminating")
-			state.done = true
+			state.markDone()
 		} else {
 			tryReviveOffers(state)
 		}
@@ -256,7 +263,7 @@ func statusUpdate(state *internalState, s mesos.TaskStatus) {
 			" with reason " + s.GetReason().String() +
 			" from source " + s.GetSource().String() +
 			" with message '" + s.GetMessage() + "'")
-		state.done = true
+		state.markDone()
 	}
 }
 

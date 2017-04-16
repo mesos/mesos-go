@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	proto "github.com/gogo/protobuf/proto"
@@ -215,8 +216,24 @@ func newInternalState(cfg Config) (*internalState, error) {
 		metricsAPI:         metricsAPI,
 		cli:                buildHTTPSched(cfg, creds),
 		random:             rand.New(rand.NewSource(time.Now().Unix())),
+		done:               make(chan struct{}),
 	}
 	return state, nil
+}
+
+func (state *internalState) markDone() {
+	state.doneOnce.Do(func() {
+		close(state.done)
+	})
+}
+
+func (state *internalState) isDone() bool {
+	select {
+	case <-state.done:
+		return true
+	default:
+		return false
+	}
 }
 
 type internalState struct {
@@ -232,6 +249,7 @@ type internalState struct {
 	reviveTokens       <-chan struct{}
 	metricsAPI         *metricsAPI
 	err                error
-	done               bool
+	done               chan struct{}
+	doneOnce           sync.Once
 	random             *rand.Rand
 }

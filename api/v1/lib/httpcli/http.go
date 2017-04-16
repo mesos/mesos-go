@@ -128,7 +128,7 @@ type Client struct {
 func New(opts ...Opt) *Client {
 	c := &Client{
 		codec:       &encoding.ProtobufCodec,
-		do:          With(),
+		do:          With(DefaultConfigOpt...),
 		header:      http.Header{},
 		errorMapper: defaultErrorMapper,
 	}
@@ -351,6 +351,9 @@ type Config struct {
 }
 
 type ConfigOpt func(*Config)
+
+// DefaultConfigOpt represents the default client config options.
+var DefaultConfigOpt []ConfigOpt
 
 // With returns a DoFunc that executes HTTP round-trips.
 // The default implementation provides reasonable defaults for timeouts:

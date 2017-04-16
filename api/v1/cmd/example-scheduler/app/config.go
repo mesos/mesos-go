@@ -15,6 +15,7 @@ type Config struct {
 	url                 string
 	codec               codec
 	timeout             time.Duration
+	failoverTimeout     time.Duration
 	checkpoint          bool
 	principal           string
 	hostname            string
@@ -47,6 +48,7 @@ func (cfg *Config) AddFlags(fs *flag.FlagSet) {
 	fs.Var(&cfg.codec, "codec", "Codec to encode/decode scheduler API communications [protobuf, json]")
 	fs.StringVar(&cfg.url, "url", cfg.url, "Mesos scheduler API URL")
 	fs.DurationVar(&cfg.timeout, "timeout", cfg.timeout, "Mesos scheduler API connection timeout")
+	fs.DurationVar(&cfg.failoverTimeout, "failoverTimeout", cfg.failoverTimeout, "Framework failover timeout")
 	fs.BoolVar(&cfg.checkpoint, "checkpoint", cfg.checkpoint, "Enable/disable framework checkpointing")
 	fs.StringVar(&cfg.principal, "principal", cfg.principal, "Framework principal with which to authenticate")
 	fs.StringVar(&cfg.hostname, "hostname", cfg.hostname, "Framework hostname that is advertised to the master")
@@ -84,6 +86,7 @@ func NewConfig() Config {
 		url:              env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
 		codec:            codec{Codec: &encoding.ProtobufCodec},
 		timeout:          envDuration("MESOS_CONNECT_TIMEOUT", "20s"),
+		failoverTimeout:  envDuration("FRAMEWORK_FAILOVER_TIMEOUT", "1000h"),
 		checkpoint:       true,
 		server:           server{address: env("LIBPROCESS_IP", "127.0.0.1")},
 		tasks:            envInt("NUM_TASKS", "5"),

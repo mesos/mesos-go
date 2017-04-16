@@ -39,6 +39,7 @@ type Config struct {
 	compression         bool
 	credentials         credentials
 	authMode            string
+	gpuClusterCompat    bool
 }
 
 func (cfg *Config) AddFlags(fs *flag.FlagSet) {
@@ -75,6 +76,7 @@ func (cfg *Config) AddFlags(fs *flag.FlagSet) {
 	fs.StringVar(&cfg.credentials.username, "credentials.username", cfg.credentials.username, "Username for Mesos authentication")
 	fs.StringVar(&cfg.credentials.password, "credentials.passwordFile", cfg.credentials.password, "Path to file that contains the password for Mesos authentication")
 	fs.StringVar(&cfg.authMode, "authmode", cfg.authMode, "Method to use for Mesos authentication; specify '"+AuthModeBasic+"' for simple HTTP authentication")
+	fs.BoolVar(&cfg.gpuClusterCompat, "gpuClusterCompat", cfg.gpuClusterCompat, "When true the framework will receive offers from agents w/ GPU resources.")
 }
 
 const AuthModeBasic = "basic"

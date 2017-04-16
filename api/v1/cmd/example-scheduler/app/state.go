@@ -157,6 +157,11 @@ func buildFrameworkInfo(cfg Config) *mesos.FrameworkInfo {
 		log.Println("using labels:", cfg.labels)
 		frameworkInfo.Labels = &mesos.Labels{Labels: cfg.labels}
 	}
+	if cfg.gpuClusterCompat {
+		frameworkInfo.Capabilities = append(frameworkInfo.Capabilities,
+			mesos.FrameworkInfo_Capability{Type: mesos.FrameworkInfo_Capability_GPU_RESOURCES},
+		)
+	}
 	return frameworkInfo
 }
 

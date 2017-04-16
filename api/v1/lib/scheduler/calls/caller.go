@@ -91,8 +91,18 @@ func (ds Decorators) Combine() (result Decorator) {
 	return
 }
 
-// FrameworkCaller generates and returns a Decorator that applies the given frameworkID to all calls (except SUBSCRIBE).
-func FrameworkCaller(frameworkID func() string) Decorator {
+// FrameworkCaller generates and returns a Decorator that applies the given frameworkID to all calls.
+func FrameworkCaller(frameworkID string) Decorator {
+	return func(h Caller) Caller {
+		return CallerFunc(func(c *scheduler.Call) (mesos.Response, error) {
+			c.FrameworkID = &mesos.FrameworkID{Value: frameworkID}
+			return h.Call(c)
+		})
+	}
+}
+
+// DynamicFrameworkCaller generates and returns a Decorator that applies the given frameworkID to all calls (except SUBSCRIBE).
+func DynamicFrameworkCaller(frameworkID func() string) Decorator {
 	return func(h Caller) Caller {
 		return CallerFunc(func(c *scheduler.Call) (mesos.Response, error) {
 			// never overwrite framework ID for subscribe calls; the scheduler must do that part

@@ -2,6 +2,7 @@ package httpsched
 
 import (
 	"errors"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -44,11 +45,9 @@ type (
 func maybeLogged(f httpcli.DoFunc) httpcli.DoFunc {
 	if debug {
 		return func(req *http.Request) (*http.Response, error) {
-			if debug {
-				log.Println("wrapping request", *req)
-			}
+			log.Println("wrapping request", req.URL, req.Header)
 			resp, err := f(req)
-			if debug && err == nil {
+			if err == nil {
 				log.Printf("status %d", resp.StatusCode)
 				for k := range resp.Header {
 					log.Println("header " + k + ": " + resp.Header.Get(k))
@@ -85,6 +84,18 @@ func disconnectedFn(state *state) stateFn {
 						err = errMissingMesosStreamId
 					}
 				}
+				if err == nil && debug && resp.StatusCode >= 400 {
+					// capture any error message in the response entity
+					// TODO(jdef) we should be doing this work in httpcli and sending
+					// back an APIError to capture these details.
+					defer resp.Body.Close()
+					buf, _ := ioutil.ReadAll(resp.Body)
+					msg := string(buf)
+					if len(msg) > 80 {
+						msg = msg[:80]
+					}
+					log.Printf("ERROR(http,%d): %q", resp.StatusCode, msg)
+				}
 				return
 			}
 		})
@@ -101,6 +112,9 @@ func disconnectedFn(state *state) stateFn {
 
 	// (d) if err != nil return disconnectedFn since we're unsubscribed
 	if stateErr != nil {
+		if stateResp != nil {
+			stateResp.Close()
+		}
 		state.resp = nil
 		return disconnectedFn
 	}

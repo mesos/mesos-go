@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
@@ -95,14 +96,34 @@ func disconnectedFn(state *state) stateFn {
 	)
 
 	// (c) execute the call, save the result in resp, err
-	state.resp, state.err = subscribeCaller.Call(state.call)
+	stateResp, stateErr := subscribeCaller.Call(state.call)
+	state.err = stateErr
 
-	// (d) if err != nil return unsubscribedFn
-	if state.err != nil {
+	// wrap the response: any errors processing the subscription stream should result in a
+	// transition to a disconnected state ASAP.
+	state.resp = &mesos.ResponseWrapper{
+		Response: stateResp,
+		DecoderFunc: func() encoding.Decoder {
+			decoder := stateResp.Decoder()
+			return func(u encoding.Unmarshaler) (err error) {
+				err = decoder(u)
+				if err != nil {
+					state.m.Lock()
+					state.fn = disconnectedFn
+					state.m.Unlock()
+					_ = stateResp.Close() // swallow any error here
+				}
+				return
+			}
+		},
+	}
+
+	// (d) if err != nil return disconnectedFn since we're unsubscribed
+	if stateErr != nil {
 		return disconnectedFn
 	}
 
-	// (e) else prepare callerTemporary w/ special header, return subscribingFn
+	// (e) else prepare callerTemporary w/ special header, return connectedFn since we're now subscribed
 	state.caller = &callerTemporary{
 		opt:            httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID),
 		callerInternal: state.client,
@@ -121,7 +142,7 @@ func connectedFn(state *state) stateFn {
 	// (b) execute call, save the result in resp, err
 	state.resp, state.err = state.caller.Call(state.call)
 
-	// (c) return connectedFn; TODO(jdef) detect specific Mesos error codes as triggers -> disconnectedFn?
+	// stay connected, don't attempt to interpret errors here
 	return connectedFn
 }
 

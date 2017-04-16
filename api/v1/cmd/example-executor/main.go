@@ -36,6 +36,13 @@ func main() {
 	os.Exit(0)
 }
 
+func maybeReconnect(cfg config.Config) <-chan struct{} {
+	if cfg.Checkpoint {
+		return backoff.Notifier(1*time.Second, cfg.SubscriptionBackoffMax*4/3, nil)
+	}
+	return nil
+}
+
 func run(cfg config.Config) {
 	var (
 		apiURL = url.URL{
@@ -58,7 +65,7 @@ func run(cfg config.Config) {
 			failedTasks:    make(map[mesos.TaskID]mesos.TaskStatus),
 		}
 		subscribe       = calls.Subscribe(nil, nil).With(state.callOptions...)
-		shouldReconnect = backoff.Notifier(1*time.Second, cfg.SubscriptionBackoffMax*4/3, nil)
+		shouldReconnect = maybeReconnect(cfg)
 		disconnected    = time.Now()
 		handler         = buildEventHandler(state)
 	)

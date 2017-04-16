@@ -25,3 +25,27 @@ type Response interface {
 	io.Closer
 	Decoder() encoding.Decoder
 }
+
+// ResponseWrapper delegates to optional handler funcs for invocations of Response methods.
+type ResponseWrapper struct {
+	Response    Response
+	CloseFunc   func() error
+	DecoderFunc func() encoding.Decoder
+}
+
+func (wrapper *ResponseWrapper) Close() error {
+	if wrapper.CloseFunc != nil {
+		return wrapper.CloseFunc()
+	}
+	if wrapper.Response != nil {
+		return wrapper.Response.Close()
+	}
+	return nil
+}
+
+func (wrapper *ResponseWrapper) Decoder() encoding.Decoder {
+	if wrapper.DecoderFunc != nil {
+		return wrapper.DecoderFunc()
+	}
+	return wrapper.Response.Decoder()
+}

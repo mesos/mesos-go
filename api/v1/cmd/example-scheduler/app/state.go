@@ -135,10 +135,14 @@ func buildHTTPSched(cfg Config, creds credentials) calls.Caller {
 }
 
 func buildFrameworkInfo(cfg Config) *mesos.FrameworkInfo {
+	failoverTimeout := cfg.failoverTimeout.Seconds()
 	frameworkInfo := &mesos.FrameworkInfo{
 		User:       cfg.user,
 		Name:       cfg.name,
 		Checkpoint: &cfg.checkpoint,
+	}
+	if cfg.failoverTimeout > 0 {
+		frameworkInfo.FailoverTimeout = &failoverTimeout
 	}
 	if cfg.role != "" {
 		frameworkInfo.Role = &cfg.role

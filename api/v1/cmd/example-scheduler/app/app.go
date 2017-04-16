@@ -42,21 +42,28 @@ func Run(cfg Config) error {
 }
 
 func buildControllerConfig(state *internalState, shutdown <-chan struct{}) controller.Config {
-	controlContext := &controller.ContextAdapter{
-		DoneFunc:        func() bool { return state.done },
-		FrameworkIDFunc: func() string { return state.frameworkID },
-		ErrorFunc: func(err error) {
-			if err != nil && err != io.EOF {
-				log.Println(err)
-			} else {
-				log.Println("disconnected")
-			}
-		},
-	}
+	var (
+		frameworkIDStore = NewInMemoryIDStore()
+		controlContext   = &controller.ContextAdapter{
+			DoneFunc: func() bool { return state.done },
+			// not called concurrently w/ subscription events, don't worry about using the atomic
+			FrameworkIDFunc: func() string { return frameworkIDStore.Get() },
+			ErrorFunc: func(err error) {
+				if err != nil && err != io.EOF {
+					log.Println(err)
+				} else {
+					log.Println("disconnected")
+				}
+			},
+		}
+	)
 
 	state.cli = calls.Decorators{
 		callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
 		logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
+		// automatically set the frameworkID for all outgoing calls
+		calls.When(func() bool { return frameworkIDStore.Get() != "" },
+			calls.FrameworkCaller(func() string { return frameworkIDStore.Get() })),
 	}.Apply(state.cli)
 
 	return controller.Config{
@@ -68,12 +75,12 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 		Handler: events.Decorators{
 			eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
 			events.Decorator(logAllEvents).If(state.config.verbose),
-		}.Apply(buildEventHandler(state)),
+		}.Apply(buildEventHandler(state, frameworkIDStore)),
 	}
 }
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.
-func buildEventHandler(state *internalState) events.Handler {
+func buildEventHandler(state *internalState, frameworkIDStore IDStore) events.Handler {
 	// TODO(jdef) would be nice to merge this ack handler with the status update handler below; need to
 	// figure out appropriate error propagation among chained handlers.
 	ack := events.AcknowledgeUpdates(func() calls.Caller { return state.cli })
@@ -104,19 +111,23 @@ func buildEventHandler(state *internalState) events.Handler {
 				statusUpdate(state, e.GetUpdate().GetStatus())
 				return nil
 			},
-			scheduler.Event_SUBSCRIBED: func(e *scheduler.Event) (err error) {
+			scheduler.Event_SUBSCRIBED: func(e *scheduler.Event) error {
 				log.Println("received a SUBSCRIBED event")
-				if state.frameworkID == "" {
-					state.frameworkID = e.GetSubscribed().GetFrameworkID().GetValue()
+				frameworkID := e.GetSubscribed().GetFrameworkID().GetValue()
+				if state.frameworkID == "" || state.frameworkID != frameworkID {
+					if state.frameworkID != "" && state.frameworkID != frameworkID && state.config.checkpoint {
+						state.done = true // TODO(jdef) not goroutine safe
+						return errors.New("frameworkID changed unexpectedly; failover may be broken")
+					}
+					state.frameworkID = frameworkID
 					if state.frameworkID == "" {
 						// sanity check
-						err = errors.New("mesos gave us an empty frameworkID")
-					} else {
-						// automatically set the frameworkID for all outgoing calls
-						state.cli = calls.FrameworkCaller(state.frameworkID).Apply(state.cli)
+						state.done = true // TODO(jdef) not goroutine safe
+						return errors.New("mesos gave us an empty frameworkID")
 					}
+					frameworkIDStore.Set(frameworkID)
 				}
-				return
+				return nil
 			},
 		}),
 	)

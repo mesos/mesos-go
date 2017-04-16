@@ -38,7 +38,7 @@ type (
 		redirect RedirectSettings
 	}
 
-	// Caller is the public interface this framework scheduler's should consume
+	// Caller is the public interface a framework scheduler's should consume
 	Caller interface {
 		calls.Caller
 		// httpDo is intentionally package-private; clients of this package may extend a Caller

@@ -53,6 +53,23 @@ func Subscribe(info *mesos.FrameworkInfo) *scheduler.Call {
 	}
 }
 
+// SubscribeTo returns an option that configures a SUBSCRIBE call w/ a framework ID.
+// If frameworkID is "" then the SUBSCRIBE call is cleared of all framework ID references.
+// Panics if the call does not contain a non-nil Subscribe reference.
+func SubscribeTo(frameworkID string) scheduler.CallOpt {
+	return func(call *scheduler.Call) {
+		if call.Subscribe == nil {
+			panic("illegal call option: Call.Subscribe was unexpectedly nil")
+		}
+		var frameworkProto *mesos.FrameworkID
+		if frameworkID != "" {
+			frameworkProto = &mesos.FrameworkID{Value: frameworkID}
+		}
+		call.Subscribe.FrameworkInfo.ID = frameworkProto
+		call.FrameworkID = frameworkProto
+	}
+}
+
 type acceptBuilder struct {
 	offerIDs   map[mesos.OfferID]struct{}
 	operations []mesos.Offer_Operation

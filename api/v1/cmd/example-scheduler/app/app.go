@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"strconv"
@@ -124,16 +125,20 @@ func buildEventHandler(state *internalState, frameworkIDStore IDStore) events.Ha
 			scheduler.Event_SUBSCRIBED: func(e *scheduler.Event) error {
 				log.Println("received a SUBSCRIBED event")
 				frameworkID := e.GetSubscribed().GetFrameworkID().GetValue()
-				if state.frameworkID == "" || state.frameworkID != frameworkID {
-					if state.frameworkID != "" && state.frameworkID != frameworkID && state.config.checkpoint {
-						return StateError("frameworkID changed unexpectedly; failover may be broken")
-					}
+				// order of `if` statements are important: tread carefully w/ respect to future changes
+				if frameworkID == "" {
+					// sanity check, should **never** happen
+					return StateError("mesos gave us an empty frameworkID")
+				}
+				if state.frameworkID != "" && state.frameworkID != frameworkID && state.config.checkpoint {
+					return StateError(fmt.Sprintf(
+						"frameworkID changed unexpectedly; failover exceeded timeout? (%s).",
+						state.config.failoverTimeout))
+				}
+				if state.frameworkID != frameworkID {
 					state.frameworkID = frameworkID
-					if state.frameworkID == "" {
-						return StateError("mesos gave us an empty frameworkID")
-					}
-					log.Println("FrameworkID", frameworkID)
 					frameworkIDStore.Set(frameworkID)
+					log.Println("FrameworkID", frameworkID)
 				}
 				return nil
 			},

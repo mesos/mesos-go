@@ -11,7 +11,7 @@ func (c *Call) With(opts ...CallOpt) *Call {
 	return c
 }
 
-// A ReconcileOpt is a functional option type for Call_Reconcile
+// ReconcileOpt is a functional option type for Call_Reconcile
 type ReconcileOpt func(*Call_Reconcile)
 
 // With applies the given ReconcileOpt's to the receiving Call_Reconcile, returning it.

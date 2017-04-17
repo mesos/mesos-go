@@ -88,7 +88,7 @@ func NewConfig() Config {
 		url:              env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
 		codec:            codec{Codec: &encoding.ProtobufCodec},
 		timeout:          envDuration("MESOS_CONNECT_TIMEOUT", "20s"),
-		failoverTimeout:  envDuration("FRAMEWORK_FAILOVER_TIMEOUT", "1000h"),
+		failoverTimeout:  envDuration("SCHEDULER_FAILOVER_TIMEOUT", "1000h"),
 		checkpoint:       true,
 		server:           server{address: env("LIBPROCESS_IP", "127.0.0.1")},
 		tasks:            envInt("NUM_TASKS", "5"),

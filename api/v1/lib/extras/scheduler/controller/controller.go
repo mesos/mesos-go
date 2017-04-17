@@ -76,9 +76,7 @@ func (_ *controllerImpl) Run(config Config) (lastErr error) {
 	for !config.Context.Done() {
 		frameworkID := config.Context.FrameworkID()
 		if config.Framework.GetFailoverTimeout() > 0 && frameworkID != "" {
-			frameworkProto := &mesos.FrameworkID{Value: frameworkID}
-			subscribe.Subscribe.FrameworkInfo.ID = frameworkProto
-			subscribe.FrameworkID = frameworkProto
+			subscribe.With(calls.SubscribeTo(frameworkID))
 		}
 		<-config.RegistrationTokens
 		resp, err := config.Caller.Call(subscribe)

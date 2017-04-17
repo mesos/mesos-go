@@ -158,6 +158,14 @@ func (mre *mesosRedirectionError) Error() string {
 	return "mesos server sent redirect to: " + mre.newURL
 }
 
+func isErrNotLeader(err error) bool {
+	if err == nil {
+		return false
+	}
+	apiErr, ok := err.(*apierrors.Error)
+	return ok && apiErr.Code == apierrors.CodeNotLeader
+}
+
 // redirectHandler returns a config options that decorates the default response handling routine;
 // it transforms normal Mesos redirect "errors" into mesosRedirectionErrors by parsing the Location
 // header and computing the address of the next endpoint that should be used to replay the failed
@@ -165,7 +173,7 @@ func (mre *mesosRedirectionError) Error() string {
 func (cli *client) redirectHandler() httpcli.Opt {
 	return httpcli.HandleResponse(func(hres *http.Response, err error) (mesos.Response, error) {
 		resp, err := cli.HandleResponse(hres, err) // default response handler
-		if err == nil || (err != nil && !apierrors.IsErrNotLeader(err)) {
+		if err == nil || !isErrNotLeader(err) {
 			return resp, err
 		}
 		res, ok := resp.(*httpcli.Response)

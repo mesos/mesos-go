@@ -1,7 +1,6 @@
 package httpsched
 
 import (
-	"errors"
 	"log"
 	"net/http"
 	"net/url"
@@ -17,13 +16,13 @@ import (
 )
 
 var (
-	errNotHTTP     = errors.New("expected an HTTP object, found something else instead")
-	errBadLocation = errors.New("failed to build new Mesos service endpoint URL from Location header")
+	errNotHTTPCli  = httpcli.ProtocolError("expected an httpcli.Response object, found something else instead")
+	errBadLocation = httpcli.ProtocolError("failed to build new Mesos service endpoint URL from Location header")
 
 	DefaultRedirectSettings = RedirectSettings{
 		MaxAttempts:      9,
 		MaxBackoffPeriod: 13 * time.Second,
-		MinBackoffPeriod: 100 * time.Millisecond,
+		MinBackoffPeriod: 500 * time.Millisecond,
 	}
 )
 
@@ -176,12 +175,13 @@ func (cli *client) redirectHandler() httpcli.Opt {
 		if err == nil || !isErrNotLeader(err) {
 			return resp, err
 		}
+		// TODO(jdef) for now, we're tightly coupled to the httpcli package's Response type
 		res, ok := resp.(*httpcli.Response)
 		if !ok {
 			if resp != nil {
 				resp.Close()
 			}
-			return nil, errNotHTTP
+			return nil, errNotHTTPCli
 		}
 		log.Println("master changed?")
 		location, ok := buildNewEndpoint(res.Header.Get("Location"), cli.Endpoint())

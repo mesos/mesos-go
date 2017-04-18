@@ -5,6 +5,7 @@ MESOS_API_VERSION := v1
 API_PKG    := ./api/${MESOS_API_VERSION}/lib
 API_VENDOR := ${current_dir}/api/${MESOS_API_VERSION}/vendor
 CMD_PKG    := ./api/${MESOS_API_VERSION}/cmd
+CMD_VENDOR := ./api/${MESOS_API_VERSION}/cmd/vendor
 
 PROTO_PATH := ${GOPATH}/src/:${API_VENDOR}/:.
 PROTO_PATH := ${PROTO_PATH}:${API_VENDOR}/github.com/gogo/protobuf/protobuf
@@ -48,7 +49,7 @@ codecs: protobufs ffjson
 .PHONY: protobufs-requirements
 protobufs-requirements: REQUIRED_PROTOC_BINARIES = protoc-gen-gogo
 protobufs-requirements:
-	@for i in ${REQUIRED_PROTOC_BINARIES}; do which $$i || { echo "failed to locate binary: $$i"; exit 1; }; done
+	@for i in ${REQUIRED_PROTOC_BINARIES}; do which $$i >/dev/null || { echo "failed to locate binary: $$i"; exit 1; }; done
 
 .PHONY: protobufs
 protobufs: protobufs-requirements clean-protobufs
@@ -69,6 +70,12 @@ ffjson: clean-ffjson
 .PHONY: clean-ffjson
 clean-ffjson:
 	(cd ${API_PKG}; rm -f *ffjson.go */*ffjson.go)
+
+.PHONY: sync
+sync:
+	@which govendor >/dev/null || { echo "govendor not found in $$PATH"; exit 1; }
+	(cd ${API_VENDOR}; govendor sync)
+	(cd ${CMD_VENDOR}; govendor sync)
 
 GOPKG		:= github.com/mesos/mesos-go
 GOPKG_DIRNAME	:= $(shell dirname $(GOPKG))

@@ -11,9 +11,9 @@ before_install:
    #these two lines help users who fork mesos-go. It's a noop when running from the mesos organization
   - RepoName=`basename $PWD`; SrcDir=`dirname $PWD`; DestDir="`dirname $SrcDir`/mesos"
   - if [[ "$SrcDir" != "$DestDir" ]]; then mv "$SrcDir" "$DestDir"; cd ../../mesos/$RepoName; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$RepoName; fi
-  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
-  - git submodule update --init --recursive
   - go get github.com/mattn/goveralls
+  - go get github.com/kardianos/govendor
+  - make sync
 install:
   - make install
 script:

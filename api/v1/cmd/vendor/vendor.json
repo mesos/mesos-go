@@ -4,21 +4,18 @@
 	"package": [
 		{
 			"checksumSHA1": "Eq23SbWZL3Oze/qcWimQVZaKQPE=",
-			"origin": "github.com/mesos/mesos-go/api/v1/cmd/vendor/github.com/beorn7/perks/histogram",
 			"path": "github.com/beorn7/perks/histogram",
 			"revision": "3ac7bf7a47d159a033b107610db8a1b6575507a4",
 			"revisionTime": "2016-02-29T21:34:45Z"
 		},
 		{
 			"checksumSHA1": "4QnLdmB1kG3N+KlDd1N+G9TWAGQ=",
-			"origin": "github.com/mesos/mesos-go/api/v1/cmd/vendor/github.com/beorn7/perks/quantile",
 			"path": "github.com/beorn7/perks/quantile",
 			"revision": "3ac7bf7a47d159a033b107610db8a1b6575507a4",
 			"revisionTime": "2016-02-29T21:34:45Z"
 		},
 		{
 			"checksumSHA1": "mi8YK1PhxHsdglkWudoTQOZAF3A=",
-			"origin": "github.com/mesos/mesos-go/api/v1/cmd/vendor/github.com/beorn7/perks/topk",
 			"path": "github.com/beorn7/perks/topk",
 			"revision": "3ac7bf7a47d159a033b107610db8a1b6575507a4",
 			"revisionTime": "2016-02-29T21:34:45Z"

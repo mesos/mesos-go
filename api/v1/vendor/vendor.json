@@ -706,126 +706,108 @@
 		},
 		{
 			"checksumSHA1": "ANHyMfOc1XnqDnlxNipBdpFE1qw=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson",
 			"path": "github.com/pquerna/ffjson",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "sKfYQurIIt+ldKDDF7TRbg9w20I=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/ffjson",
 			"path": "github.com/pquerna/ffjson/ffjson",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "D1JbeyQhazKyXOokR5w7XrHWWw8=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/fflib/v1",
 			"path": "github.com/pquerna/ffjson/fflib/v1",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "iZHmHPBzKJiS6ROUaVOf4DVOhbA=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/fflib/v1/internal",
 			"path": "github.com/pquerna/ffjson/fflib/v1/internal",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "sMg/rF7FgETLcPfuY03W6HxxAxU=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/generator",
 			"path": "github.com/pquerna/ffjson/generator",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "pJXmT5p+K2OjK+EZLfDEi7Tlmqs=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/inception",
 			"path": "github.com/pquerna/ffjson/inception",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "B6BfB1HN0tWhL+lfxPCwPDmmGUY=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/shared",
 			"path": "github.com/pquerna/ffjson/shared",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "Hkgn6CB/rRe9Xv1iMo5oR8mu9qI=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests",
 			"path": "github.com/pquerna/ffjson/tests",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "9ds+F4SZZH38NonMOWwUZIfDplA=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/go.stripe",
 			"path": "github.com/pquerna/ffjson/tests/go.stripe",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "JBFCnQcKZZt155shF2Xl341sE28=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/go.stripe/base",
 			"path": "github.com/pquerna/ffjson/tests/go.stripe/base",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "Rtg8tJ3viF2y1ks/IW12iqOWsi8=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/go.stripe/ff",
 			"path": "github.com/pquerna/ffjson/tests/go.stripe/ff",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "5trMkk7DX5UlFS3FkhUX02q3fUI=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/goser",
 			"path": "github.com/pquerna/ffjson/tests/goser",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "BJiY26InB05iEXtkOCL9qRGu7Ks=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/goser/base",
 			"path": "github.com/pquerna/ffjson/tests/goser/base",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "MsQb4xLdf80D1o6TcmLzseK2ViY=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/goser/ff",
 			"path": "github.com/pquerna/ffjson/tests/goser/ff",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "T6wzPvHL1B7YSXfoY30Cp0whScU=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/number",
 			"path": "github.com/pquerna/ffjson/tests/number",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "BDSEuYCBRc25b41GkQdr7XFI96I=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/number/ff",
 			"path": "github.com/pquerna/ffjson/tests/number/ff",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "gOEYiC9BnKY1jsrEV7sRCphxZjU=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/types",
 			"path": "github.com/pquerna/ffjson/tests/types",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "BIW3h0fJN4y1nDVVv4PbZjxWA58=",
-			"origin": "github.com/mesos/mesos-go/api/v1/vendor/github.com/pquerna/ffjson/tests/types/ff",
 			"path": "github.com/pquerna/ffjson/tests/types/ff",
 			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
 			"revisionTime": "2016-08-11T18:35:19Z"

@@ -53,22 +53,6 @@ func (d Decorator) If(b bool) Decorator {
 	return result
 }
 
-// When applies the given decorator when the supplied bool func returns true. The supplied
-// condtional func `f` is evaluated upon every Caller invocation.
-func When(f func() bool, maybeDecorate Decorator) Decorator {
-	if f == nil {
-		return noopDecorator
-	}
-	return func(h Caller) Caller {
-		return CallerFunc(func(c *scheduler.Call) (mesos.Response, error) {
-			if f() {
-				return maybeDecorate(h).Call(c)
-			}
-			return h.Call(c)
-		})
-	}
-}
-
 // Apply applies the Decorators in the order they're listed such that the last Decorator invoked
 // generates the final (wrapping) Caller that is ultimately returned.
 func (ds Decorators) Combine() (result Decorator) {
@@ -102,13 +86,17 @@ func FrameworkCaller(frameworkID string) Decorator {
 	}
 }
 
-// SubscribedCaller generates and returns a Decorator that applies the given frameworkID to all calls (except SUBSCRIBE).
+// SubscribedCaller returns a Decorator that injects a framework ID to all calls, with the following exceptions:
+//   - SUBSCRIBE calls are never modified (schedulers should explicitly construct such calls)
+//   - calls are not modified when the generated framework ID is ""
 func SubscribedCaller(frameworkID func() string) Decorator {
 	return func(h Caller) Caller {
 		return CallerFunc(func(c *scheduler.Call) (mesos.Response, error) {
 			// never overwrite framework ID for subscribe calls; the scheduler must do that part
-			if c.Type == nil || *c.Type != scheduler.Call_SUBSCRIBE {
-				c.FrameworkID = &mesos.FrameworkID{Value: frameworkID()}
+			if c.GetType() != scheduler.Call_SUBSCRIBE {
+				if fid := frameworkID(); fid != "" {
+					c.FrameworkID = &mesos.FrameworkID{Value: fid}
+				}
 			}
 			return h.Call(c)
 		})

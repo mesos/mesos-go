@@ -73,8 +73,7 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 		callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
 		logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
 		// automatically set the frameworkID for all outgoing calls
-		calls.When(func() bool { return frameworkIDStore.Get() != "" },
-			calls.SubscribedCaller(func() string { return frameworkIDStore.Get() })),
+		calls.SubscribedCaller(frameworkIDStore.Get),
 	}.Apply(state.cli)
 
 	return controller.Config{

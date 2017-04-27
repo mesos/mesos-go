@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
@@ -173,15 +174,27 @@ func (cli *client) httpDo(ctx context.Context, m encoding.Marshaler, opt ...http
 	opt = append(opt, httpcli.Context(ctx))
 	for attempt := 0; ; attempt++ {
 		resp, err = cli.Client.Do(m, opt...)
-		redirectErr, ok := err.(*mesosRedirectionError)
-		if !ok {
-			return resp, err
+		if err == nil {
+			return
 		}
+		redirectErr, ok := err.(*mesosRedirectionError)
+
 		if attempt < cli.redirect.MaxAttempts {
-			if debug {
-				log.Println("redirecting to " + redirectErr.newURL)
+			var newURL string
+			if !ok {
+				candidates := strings.Split(cli.Candidates(), ",")
+				if len(candidates) <= 0 {
+					log.Printf("not found candidate urls, return directly")
+					return
+				}
+				newURL = candidates[attempt%len(candidates)]
+			} else {
+				newURL = redirectErr.newURL
 			}
-			cli.With(httpcli.Endpoint(redirectErr.newURL))
+			if debug {
+				log.Printf("redirecting to %v", newURL)
+			}
+			cli.With(httpcli.Endpoint(newURL))
 			select {
 			case <-getBackoff():
 			case <-ctx.Done():

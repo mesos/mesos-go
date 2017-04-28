@@ -76,32 +76,36 @@ func maybeLogged(f httpcli.DoFunc) httpcli.DoFunc {
 // state may cause subsequent Call operations to fail (without recourse).
 var DisconnectionDetector = func(resp mesos.Response, disconnect func()) mesos.Response {
 	return &mesos.ResponseWrapper{
-		Response: resp,
-		DecoderFunc: func() encoding.Decoder {
-			decoder := resp.Decoder()
-			return func(u encoding.Unmarshaler) (err error) {
-				err = decoder(u)
-				if err != nil {
-					disconnect()
-					return
-				}
-				switch e := u.(type) {
-				case (*scheduler.Event):
-					if e.GetType() == scheduler.Event_ERROR {
-						// the mesos scheduler API recommends that scheduler implementations
-						// resubscribe in this case. we initiate the disconnection here because
-						// it is assumed to be convenient for most framework implementations.
-						disconnect()
-					}
-				default:
-					// sanity check: this should never happen in practice.
-					err = httpcli.ProtocolError(
-						fmt.Sprintf("unexpected object on subscription event stream: %v", e))
-					disconnect()
-				}
+		Response:    resp,
+		DecoderFunc: disconnectionDecoder(resp.Decoder, disconnect),
+	}
+}
+
+func disconnectionDecoder(f func() encoding.Decoder, disconnect func()) func() encoding.Decoder {
+	return func() encoding.Decoder {
+		decoder := f()
+		return func(u encoding.Unmarshaler) (err error) {
+			err = decoder(u)
+			if err != nil {
+				disconnect()
 				return
 			}
-		},
+			switch e := u.(type) {
+			case (*scheduler.Event):
+				if e.GetType() == scheduler.Event_ERROR {
+					// the mesos scheduler API recommends that scheduler implementations
+					// resubscribe in this case. we initiate the disconnection here because
+					// it is assumed to be convenient for most framework implementations.
+					disconnect()
+				}
+			default:
+				// sanity check: this should never happen in practice.
+				err = httpcli.ProtocolError(
+					fmt.Sprintf("unexpected object on subscription event stream: %v", e))
+				disconnect()
+			}
+			return
+		}
 	}
 }
 

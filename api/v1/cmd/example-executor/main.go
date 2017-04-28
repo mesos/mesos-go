@@ -81,7 +81,7 @@ func run(cfg config.Config) {
 			}
 			if err == nil {
 				// we're officially connected, start decoding events
-				err = eventLoop(state, resp.Decoder(), handler)
+				err = eventLoop(state, resp, handler)
 				disconnected = time.Now()
 			}
 			if err != nil && err != io.EOF {
@@ -144,7 +144,7 @@ func eventLoop(state *internalState, decoder encoding.Decoder, h events.Handler)
 		sendFailedTasks(state)
 
 		var e executor.Event
-		if err = decoder.Invoke(&e); err == nil {
+		if err = decoder.Decode(&e); err == nil {
 			err = h.HandleEvent(&e)
 		}
 	}

@@ -62,29 +62,40 @@ type (
 		json.Unmarshaler
 	}
 	// An Encoder encodes a given Marshaler or returns an error in case of failure.
-	Encoder func(Marshaler) error
+	Encoder interface {
+		Encode(Marshaler) error
+	}
+
+	// EncoderFunc is the functional adapter for Encoder
+	EncoderFunc func(Marshaler) error
+
 	// A Decoder decodes a given Unmarshaler or returns an error in case of failure.
-	Decoder func(Unmarshaler) error
+	Decoder interface {
+		Decode(Unmarshaler) error
+	}
+
+	// DecoderFunc is the functional adapter for Decoder
+	DecoderFunc func(Unmarshaler) error
 )
 
-// Encode is an utility method that calls the Encoder itself.
-func (e Encoder) Invoke(m Marshaler) error { return e(m) }
+// Decode implements the Decoder interface
+func (f DecoderFunc) Decode(u Unmarshaler) error { return f(u) }
 
-// Decode is an utility method that calls the Decoder itself.
-func (d Decoder) Invoke(u Unmarshaler) error { return d(u) }
+// Encode implements the Encoder interface
+func (f EncoderFunc) Encode(m Marshaler) error { return f(m) }
 
 // NewProtobufEncoder returns a new Encoder of Calls to Protobuf messages written to
 // the given io.Writer.
 func NewProtobufEncoder(w io.Writer) Encoder {
 	enc := proto.NewEncoder(w)
-	return func(m Marshaler) error { return enc.Encode(m) }
+	return EncoderFunc(func(m Marshaler) error { return enc.Encode(m) })
 }
 
 // NewJSONEncoder returns a new Encoder of Calls to JSON messages written to
 // the given io.Writer.
 func NewJSONEncoder(w io.Writer) Encoder {
 	enc := json.NewEncoder(w)
-	return func(m Marshaler) error { return enc.Encode(m) }
+	return EncoderFunc(func(m Marshaler) error { return enc.Encode(m) })
 }
 
 // NewProtobufDecoder returns a new Decoder of Protobuf messages read from the
@@ -94,12 +105,12 @@ func NewProtobufDecoder(r framing.Reader) Decoder {
 		return pb.Unmarshal(b, m.(pb.Message))
 	}
 	dec := framing.NewDecoder(r, uf)
-	return func(u Unmarshaler) error { return dec.Decode(u) }
+	return DecoderFunc(func(u Unmarshaler) error { return dec.Decode(u) })
 }
 
 // NewJSONDecoder returns a new Decoder of JSON messages read from the
 // given io.Reader to Events.
 func NewJSONDecoder(r framing.Reader) Decoder {
 	dec := framing.NewDecoder(r, json.Unmarshal)
-	return func(u Unmarshaler) error { return dec.Decode(u) }
+	return DecoderFunc(func(u Unmarshaler) error { return dec.Decode(u) })
 }

@@ -55,13 +55,9 @@ type DoFunc func(*http.Request) (*http.Response, error)
 // Close when they're finished processing the response otherwise there may be connection leaks.
 type Response struct {
 	io.Closer
+	encoding.Decoder
 	Header http.Header
-
-	decoder encoding.Decoder
 }
-
-// implements mesos.Response
-func (r *Response) Decoder() encoding.Decoder { return r.decoder }
 
 // ErrorMapperFunc generates an error for the given response.
 type ErrorMapperFunc func(*http.Response) error
@@ -145,7 +141,7 @@ func (c *Client) Mesos(opts ...RequestOpt) mesos.Client {
 // given marshaler and request options.
 func (c *Client) BuildRequest(m encoding.Marshaler, opt ...RequestOpt) (*http.Request, error) {
 	var body bytes.Buffer //TODO(jdef): use a pool to allocate these (and reduce garbage)?
-	if err := c.codec.NewEncoder(&body).Invoke(m); err != nil {
+	if err := c.codec.NewEncoder(&body).Encode(m); err != nil {
 		return nil, err
 	}
 
@@ -191,7 +187,7 @@ func (c *Client) HandleResponse(res *http.Response, err error) (mesos.Response, 
 			res.Body.Close()
 			return nil, ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
 		}
-		result.decoder = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
+		result.Decoder = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
 
 	case http.StatusAccepted:
 		if debug {

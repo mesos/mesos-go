@@ -91,7 +91,7 @@ func processSubscription(config Config, resp mesos.Response, err error) error {
 		defer resp.Close()
 	}
 	if err == nil {
-		err = eventLoop(config, resp.Decoder())
+		err = eventLoop(config, resp)
 	}
 	return err
 }
@@ -105,7 +105,7 @@ func eventLoop(config Config, eventDecoder encoding.Decoder) (err error) {
 	}
 	for err == nil && !config.Context.Done() {
 		var e scheduler.Event
-		if err = eventDecoder.Invoke(&e); err == nil {
+		if err = eventDecoder.Decode(&e); err == nil {
 			err = h.HandleEvent(&e)
 		}
 	}

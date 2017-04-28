@@ -26,12 +26,11 @@ func TestDisconnectionDecoder(t *testing.T) {
 
 	// invoke disconnect upon decoder errors
 	expected := errors.New("unmarshaler error")
-	decoder := encoding.Decoder(func(_ encoding.Unmarshaler) error { return expected })
-	f := func() encoding.Decoder { return decoder }
+	decoder := encoding.DecoderFunc(func(_ encoding.Unmarshaler) error { return expected })
 	latch := newLatch()
 
-	d := disconnectionDecoder(f, latch.Close)
-	err := d().Invoke(nil)
+	d := disconnectionDecoder(decoder, latch.Close)
+	err := d.Decode(nil)
 	if err != expected {
 		t.Errorf("expected %v instead of %v", expected, err)
 	}
@@ -43,8 +42,9 @@ func TestDisconnectionDecoder(t *testing.T) {
 	latch.Reset()
 	errtype := scheduler.Event_ERROR
 	event := &scheduler.Event{Type: &errtype}
-	decoder = encoding.Decoder(func(um encoding.Unmarshaler) error { return nil })
-	_ = d().Invoke(event)
+	decoder = encoding.DecoderFunc(func(um encoding.Unmarshaler) error { return nil })
+	d = disconnectionDecoder(decoder, latch.Close)
+	_ = d.Decode(event)
 	if !latch.Closed() {
 		t.Error("disconnect func was not called")
 	}
@@ -52,7 +52,7 @@ func TestDisconnectionDecoder(t *testing.T) {
 	// sanity: non-ERROR event does not trigger disconnect
 	latch.Reset()
 	errtype = scheduler.Event_SUBSCRIBED
-	_ = d().Invoke(event)
+	_ = d.Decode(event)
 	if latch.Closed() {
 		t.Error("disconnect func was unexpectedly called")
 	}
@@ -60,7 +60,7 @@ func TestDisconnectionDecoder(t *testing.T) {
 	// non scheduler.Event objects trigger disconnect
 	latch.Reset()
 	nonEvent := &scheduler.Call{}
-	_ = d().Invoke(nonEvent)
+	_ = d.Decode(nonEvent)
 	if !latch.Closed() {
 		t.Error("disconnect func was not called")
 	}

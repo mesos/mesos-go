@@ -74,39 +74,38 @@ func maybeLogged(f httpcli.DoFunc) httpcli.DoFunc {
 // Consumers of this package may choose to override default behavior by overwriting the default
 // value of this var, but should exercise caution: failure to properly transition to a disconnected
 // state may cause subsequent Call operations to fail (without recourse).
-var DisconnectionDetector = func(resp mesos.Response, disconnect func()) mesos.Response {
-	return &mesos.ResponseWrapper{
-		Response:    resp,
-		DecoderFunc: disconnectionDecoder(resp.Decoder, disconnect),
-	}
+var DisconnectionDetector = func(disconnect func()) mesos.ResponseDecorator {
+	return mesos.ResponseDecoratorFunc(func(resp mesos.Response) mesos.Response {
+		return &mesos.ResponseWrapper{
+			Response: resp,
+			Decoder:  disconnectionDecoder(resp, disconnect),
+		}
+	})
 }
 
-func disconnectionDecoder(f func() encoding.Decoder, disconnect func()) func() encoding.Decoder {
-	return func() encoding.Decoder {
-		decoder := f()
-		return func(u encoding.Unmarshaler) (err error) {
-			err = decoder(u)
-			if err != nil {
-				disconnect()
-				return
-			}
-			switch e := u.(type) {
-			case (*scheduler.Event):
-				if e.GetType() == scheduler.Event_ERROR {
-					// the mesos scheduler API recommends that scheduler implementations
-					// resubscribe in this case. we initiate the disconnection here because
-					// it is assumed to be convenient for most framework implementations.
-					disconnect()
-				}
-			default:
-				// sanity check: this should never happen in practice.
-				err = httpcli.ProtocolError(
-					fmt.Sprintf("unexpected object on subscription event stream: %v", e))
-				disconnect()
-			}
+func disconnectionDecoder(decoder encoding.Decoder, disconnect func()) encoding.Decoder {
+	return encoding.DecoderFunc(func(u encoding.Unmarshaler) (err error) {
+		err = decoder.Decode(u)
+		if err != nil {
+			disconnect()
 			return
 		}
-	}
+		switch e := u.(type) {
+		case (*scheduler.Event):
+			if e.GetType() == scheduler.Event_ERROR {
+				// the mesos scheduler API recommends that scheduler implementations
+				// resubscribe in this case. we initiate the disconnection here because
+				// it is assumed to be convenient for most framework implementations.
+				disconnect()
+			}
+		default:
+			// sanity check: this should never happen in practice.
+			err = httpcli.ProtocolError(
+				fmt.Sprintf("unexpected object on subscription event stream: %v", e))
+			disconnect()
+		}
+		return
+	})
 }
 
 func disconnectedFn(state *state) stateFn {
@@ -166,7 +165,7 @@ func disconnectedFn(state *state) stateFn {
 
 	// wrap the response: any errors processing the subscription stream should result in a
 	// transition to a disconnected state ASAP.
-	state.resp = DisconnectionDetector(stateResp, transitionToDisconnected)
+	state.resp = DisconnectionDetector(transitionToDisconnected).Decorate(stateResp)
 
 	// (e) else prepare callerTemporary w/ special header, return connectedFn since we're now subscribed
 	state.caller = &callerTemporary{

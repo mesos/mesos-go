@@ -38,7 +38,7 @@ func main() {
 
 func maybeReconnect(cfg config.Config) <-chan struct{} {
 	if cfg.Checkpoint {
-		return backoff.Notifier(1*time.Second, cfg.SubscriptionBackoffMax*4/3, nil)
+		return backoff.Notifier(1*time.Second, cfg.SubscriptionBackoffMax*3/4, nil)
 	}
 	return nil
 }

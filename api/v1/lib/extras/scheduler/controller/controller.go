@@ -45,8 +45,8 @@ type (
 		Handler events.Handler
 
 		// RegistrationTokens (optional) limits the rate at which a framework (re)registers with Mesos.
-		// The returned chan should either be non-blocking (nil/closed), or should yield a struct{} in
-		// order to allow the framework registration process to continue. May be nil.
+		// The chan should either be non-blocking, or should yield a struct{} in order to allow the
+		// framework registration process to continue. May be nil.
 		RegistrationTokens <-chan struct{}
 	}
 
@@ -78,7 +78,9 @@ func (_ *controllerImpl) Run(config Config) (lastErr error) {
 		if config.Framework.GetFailoverTimeout() > 0 && frameworkID != "" {
 			subscribe.With(calls.SubscribeTo(frameworkID))
 		}
-		<-config.RegistrationTokens
+		if config.RegistrationTokens != nil {
+			<-config.RegistrationTokens
+		}
 		resp, err := config.Caller.Call(subscribe)
 		lastErr = processSubscription(config, resp, err)
 		config.Context.Error(lastErr)

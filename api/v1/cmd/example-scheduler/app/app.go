@@ -53,7 +53,7 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 		frameworkIDStore = NewInMemoryIDStore()
 		controlContext   = &controller.ContextAdapter{
 			DoneFunc:        state.isDone,
-			FrameworkIDFunc: func() string { return frameworkIDStore.Get() },
+			FrameworkIDFunc: frameworkIDStore.Get,
 			ErrorFunc: func(err error) {
 				if err != nil {
 					if err != io.EOF {

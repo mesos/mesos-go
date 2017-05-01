@@ -133,6 +133,13 @@ func DefaultHandler(eh Handler) Option {
 	}
 }
 
+type AckError struct {
+	Ack   *scheduler.Call
+	Cause error
+}
+
+func (err *AckError) Error() string { return err.Cause.Error() }
+
 // AcknowledgeUpdates generates a Handler that sends an Acknowledge call to Mesos for every
 // UPDATE event that's received.
 func AcknowledgeUpdates(callerGetter func() calls.Caller) Handler {
@@ -148,6 +155,9 @@ func AcknowledgeUpdates(callerGetter func() calls.Caller) Handler {
 				uuid,
 			)
 			err = calls.CallNoData(callerGetter(), ack)
+			if err != nil {
+				err = &AckError{ack, err}
+			}
 		}
 		return
 	})

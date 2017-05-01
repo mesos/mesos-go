@@ -41,7 +41,7 @@ $(COVERAGE_TARGETS):
 
 .PHONY: vet
 vet:
-	go $@ $(PACKAGES)
+	go $@ $(PACKAGES) $(BINARIES)
 
 .PHONY: codecs
 codecs: protobufs ffjson

@@ -7,6 +7,22 @@ type (
 	RangeBuilder struct{ Ranges }
 )
 
+func CPUs(value float64) ResourceBuilder {
+	return BuildResource().Name("cpus").Scalar(value)
+}
+
+func Memory(value float64) ResourceBuilder {
+	return BuildResource().Name("mem").Scalar(value)
+}
+
+func Disk(value float64) ResourceBuilder {
+	return BuildResource().Name("disk").Scalar(value)
+}
+
+func GPUs(value uint) ResourceBuilder {
+	return BuildResource().Name("gpus").Scalar(float64(value))
+}
+
 func BuildRanges() RangeBuilder {
 	return RangeBuilder{Ranges: Ranges(nil)}
 }

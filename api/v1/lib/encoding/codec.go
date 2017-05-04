@@ -50,6 +50,9 @@ type Codec struct {
 // String implements the fmt.Stringer interface.
 func (c *Codec) String() string { return c.Name }
 
+func (c *Codec) RequestContentType() string  { return c.MediaTypes[0] }
+func (c *Codec) ResponseContentType() string { return c.MediaTypes[1] }
+
 type (
 	// Marshaler composes the supported marshaling formats.
 	Marshaler interface {

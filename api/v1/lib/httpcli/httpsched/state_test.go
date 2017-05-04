@@ -5,29 +5,16 @@ import (
 	"testing"
 
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/latch"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 )
-
-type latch struct{ line chan struct{} }
-
-func newLatch() *latch  { return &latch{make(chan struct{})} }
-func (l *latch) Reset() { l.line = make(chan struct{}) }
-func (l *latch) Close() { close(l.line) }
-func (l *latch) Closed() (result bool) {
-	select {
-	case <-l.line:
-		result = true
-	default:
-	}
-	return
-}
 
 func TestDisconnectionDecoder(t *testing.T) {
 
 	// invoke disconnect upon decoder errors
 	expected := errors.New("unmarshaler error")
 	decoder := encoding.DecoderFunc(func(_ encoding.Unmarshaler) error { return expected })
-	latch := newLatch()
+	latch := new(latch.L).Reset()
 
 	d := disconnectionDecoder(decoder, latch.Close)
 	err := d.Decode(nil)

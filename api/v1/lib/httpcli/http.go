@@ -25,13 +25,8 @@ type ProtocolError string
 // Error implements error interface
 func (pe ProtocolError) Error() string { return string(pe) }
 
-var defaultErrorMapper = ErrorMapperFunc(apierrors.FromResponse)
-
 const (
 	debug = false // TODO(jdef) kill me at some point
-
-	indexRequestContentType  = 0 // index into Client.codec.MediaTypes for request content type
-	indexResponseContentType = 1 // index into Client.codec.MediaTypes for expected response content type
 )
 
 // DoFunc sends an HTTP request and returns an HTTP response.
@@ -77,15 +72,31 @@ type Client struct {
 	handleResponse ResponseHandler
 }
 
+var (
+	DefaultCodec   = &encoding.ProtobufCodec
+	DefaultHeaders = http.Header{}
+
+	// DefaultConfigOpt represents the default client config options.
+	DefaultConfigOpt = []ConfigOpt{
+		Transport(func(t *http.Transport) {
+			// all calls should be ack'd by the server within this interval.
+			t.ResponseHeaderTimeout = 15 * time.Second
+			t.MaxIdleConnsPerHost = 2 // don't depend on go's default
+		}),
+	}
+
+	DefaultErrorMapper = ErrorMapperFunc(apierrors.FromResponse)
+)
+
 // New returns a new Client with the given Opts applied.
 // Callers are expected to configure the URL, Do, and Codec options prior to
 // invoking Do.
 func New(opts ...Opt) *Client {
 	c := &Client{
-		codec:       &encoding.ProtobufCodec,
+		codec:       DefaultCodec,
 		do:          With(DefaultConfigOpt...),
-		header:      http.Header{},
-		errorMapper: defaultErrorMapper,
+		header:      DefaultHeaders,
+		errorMapper: DefaultErrorMapper,
 	}
 	c.buildRequest = c.BuildRequest
 	c.handleResponse = c.HandleResponse
@@ -154,8 +165,8 @@ func (c *Client) BuildRequest(m encoding.Marshaler, opt ...RequestOpt) (*http.Re
 	return helper.
 		withOptions(c.requestOpts, opt).
 		withHeaders(c.header).
-		withHeader("Content-Type", c.codec.MediaTypes[indexRequestContentType]).
-		withHeader("Accept", c.codec.MediaTypes[indexResponseContentType]).
+		withHeader("Content-Type", c.codec.RequestContentType()).
+		withHeader("Accept", c.codec.ResponseContentType()).
 		Request, nil
 }
 
@@ -183,7 +194,7 @@ func (c *Client) HandleResponse(res *http.Response, err error) (mesos.Response, 
 			log.Println("request OK, decoding response")
 		}
 		ct := res.Header.Get("Content-Type")
-		if ct != c.codec.MediaTypes[indexResponseContentType] {
+		if ct != c.codec.ResponseContentType() {
 			res.Body.Close()
 			return nil, ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
 		}
@@ -312,9 +323,6 @@ type Config struct {
 }
 
 type ConfigOpt func(*Config)
-
-// DefaultConfigOpt represents the default client config options.
-var DefaultConfigOpt []ConfigOpt
 
 // With returns a DoFunc that executes HTTP round-trips.
 // The default implementation provides reasonable defaults for timeouts:

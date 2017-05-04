@@ -12,6 +12,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	xmetrics "github.com/mesos/mesos-go/api/v1/lib/extras/metrics"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
@@ -50,7 +51,7 @@ func Run(cfg Config) error {
 
 func buildControllerConfig(state *internalState, shutdown <-chan struct{}) controller.Config {
 	var (
-		frameworkIDStore = NewInMemoryIDStore()
+		frameworkIDStore = store.NewInMemorySingleton()
 		controlContext   = &controller.ContextAdapter{
 			DoneFunc:        state.isDone,
 			FrameworkIDFunc: frameworkIDStore.Get,
@@ -90,7 +91,7 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 }
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.
-func buildEventHandler(state *internalState, frameworkIDStore IDStore) events.Handler {
+func buildEventHandler(state *internalState, frameworkIDStore store.Singleton) events.Handler {
 	// TODO(jdef) would be nice to merge this ack handler with the status update handler below; need to
 	// figure out appropriate error propagation among chained handlers.
 	ack := events.AcknowledgeUpdates(func() calls.Caller { return state.cli })

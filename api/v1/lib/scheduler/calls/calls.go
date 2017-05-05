@@ -38,7 +38,7 @@ func RefuseSecondsWithJitter(r *rand.Rand, d time.Duration) scheduler.CallOpt {
 
 // RefuseSeconds returns a calls.Filters option that sets RefuseSeconds to the given duration
 func RefuseSeconds(d time.Duration) scheduler.CallOpt {
-	asFloat := float64(d)
+	asFloat := d.Seconds()
 	return Filters(func(f *mesos.Filters) {
 		f.RefuseSeconds = &asFloat
 	})

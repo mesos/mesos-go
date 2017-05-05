@@ -53,7 +53,7 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 	var (
 		frameworkIDStore = store.NewInMemorySingleton()
 		controlContext   = &controller.ContextAdapter{
-			DoneFunc:        state.isDone,
+			DoneFunc:        state.done.Closed,
 			FrameworkIDFunc: frameworkIDStore.Get,
 			ErrorFunc: func(err error) {
 				if err != nil {
@@ -61,7 +61,7 @@ func buildControllerConfig(state *internalState, shutdown <-chan struct{}) contr
 						log.Println(err)
 					}
 					if _, ok := err.(StateError); ok {
-						state.markDone()
+						state.done.Close()
 					}
 					return
 				}
@@ -257,7 +257,7 @@ func statusUpdate(state *internalState, s mesos.TaskStatus) {
 
 		if state.tasksFinished == state.totalTasks {
 			log.Println("mission accomplished, terminating")
-			state.markDone()
+			state.done.Close()
 		} else {
 			tryReviveOffers(state)
 		}
@@ -268,7 +268,7 @@ func statusUpdate(state *internalState, s mesos.TaskStatus) {
 			" with reason " + s.GetReason().String() +
 			" from source " + s.GetSource().String() +
 			" with message '" + s.GetMessage() + "'")
-		state.markDone()
+		state.done.Close()
 	}
 }
 

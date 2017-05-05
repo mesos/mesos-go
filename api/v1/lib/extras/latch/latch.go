@@ -2,10 +2,20 @@ package latch
 
 import "sync"
 
+type Interface interface {
+	Done() <-chan struct{}
+	Close()
+	Closed() bool
+}
+
 // Latch is Closed by default and should be Reset() in order to be useful.
 type L struct {
 	sync.Once
 	line chan struct{}
+}
+
+func New() Interface {
+	return new(L).Reset()
 }
 
 func (l *L) Done() <-chan struct{} { return l.line }

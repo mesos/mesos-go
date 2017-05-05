@@ -45,7 +45,7 @@ var (
 
 	frameworkIDStore store.Singleton
 	shouldDecline    bool
-	refuseSeconds    = calls.RefuseSeconds(8 * time.Hour)
+	refuseSeconds    = calls.RefuseSeconds(5 * time.Second)
 	stop             func()
 	exitCode         int
 	wantsResources   mesos.Resources
@@ -94,7 +94,7 @@ func main() {
 
 func buildControllerConfig(user string) controller.Config {
 	var (
-		done   = new(latch.L).Reset()
+		done   = latch.New()
 		caller = calls.Decorators{
 			calls.SubscribedCaller(frameworkIDStore.Get),
 		}.Apply(buildClient())

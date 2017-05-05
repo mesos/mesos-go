@@ -8,12 +8,12 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/latch"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpsched"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
@@ -209,24 +209,9 @@ func newInternalState(cfg Config) (*internalState, error) {
 		metricsAPI:         metricsAPI,
 		cli:                buildHTTPSched(cfg, creds),
 		random:             rand.New(rand.NewSource(time.Now().Unix())),
-		done:               make(chan struct{}),
+		done:               latch.New(),
 	}
 	return state, nil
-}
-
-func (state *internalState) markDone() {
-	state.doneOnce.Do(func() {
-		close(state.done)
-	})
-}
-
-func (state *internalState) isDone() bool {
-	select {
-	case <-state.done:
-		return true
-	default:
-		return false
-	}
 }
 
 type internalState struct {
@@ -242,7 +227,6 @@ type internalState struct {
 	reviveTokens       <-chan struct{}
 	metricsAPI         *metricsAPI
 	err                error
-	done               chan struct{}
-	doneOnce           sync.Once
+	done               latch.Interface
 	random             *rand.Rand
 }

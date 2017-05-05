@@ -178,17 +178,22 @@ func (slice Slice) GroupBy(kf KeyFunc) map[interface{}]Slice {
 	return result
 }
 
-func (index Index) GroupBy(kf KeyFunc) map[interface{}]Slice {
+func (index Index) GroupBy(kf KeyFunc) map[interface{}]Index {
 	if kf == nil {
 		panic("keyFunc must not be nil")
 	}
 	if len(index) == 0 {
 		return nil
 	}
-	result := make(map[interface{}]Slice)
-	for _, offer := range index {
+	result := make(map[interface{}]Index)
+	for i, offer := range index {
 		groupKey := kf(offer)
-		result[groupKey] = append(result[groupKey], *offer)
+		group, ok := result[groupKey]
+		if !ok {
+			group = make(Index)
+			result[groupKey] = group
+		}
+		group[i] = offer
 	}
 	return result
 }
@@ -204,6 +209,28 @@ func (index Index) Partition(f Filter) (accepted, rejected Index) {
 				accepted[id] = offer
 			} else {
 				rejected[id] = offer
+			}
+		}
+	}
+	return
+}
+
+func (s Slice) Partition(f Filter) (accepted, rejected []int) {
+	if f == nil {
+		accepted = make([]int, len(s))
+		for i := range s {
+			accepted[i] = i
+		}
+		return
+	}
+	if sz := len(s); sz > 0 {
+		accepted, rejected = make([]int, 0, sz/2), make([]int, 0, sz/2)
+		for i := range s {
+			offer := &s[i]
+			if f.Accept(offer) {
+				accepted = append(accepted, i)
+			} else {
+				rejected = append(rejected, i)
 			}
 		}
 	}

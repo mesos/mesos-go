@@ -31,7 +31,8 @@ func (offers Index) IDs() []OfferID {
 	return ids
 }
 
-// Find returns the first Offer that passes the given filter function.
+// Find returns the first Offer that passes the given filter function, or else nil if
+// there are no passing offers.
 func (offers Slice) Find(filter Filter) *Offer {
 	for i := range offers {
 		offer := &offers[i]
@@ -42,7 +43,8 @@ func (offers Slice) Find(filter Filter) *Offer {
 	return nil
 }
 
-// Find returns the first Offer that passes the given filter function.
+// Find returns the first Offer that passes the given filter function, or else nil if
+// there are no passing offers.
 func (offers Index) Find(filter Filter) *Offer {
 	for _, offer := range offers {
 		if filter.Accept(offer) {

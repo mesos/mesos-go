@@ -86,14 +86,6 @@ func (offers Slice) FilterNot(filter Filter) Slice { return offers.Filter(not(fi
 // FilterNot returns the subset of the Index that does not match the given filter.
 func (offers Index) FilterNot(filter Filter) Index { return offers.Filter(not(filter)) }
 
-// ContainsResources returns a filter function that returns true if the Resources of an Offer
-// contain the wanted Resources.
-func ContainsResources(wanted Resources) Filter {
-	return FilterFunc(func(o *Offer) bool {
-		return Resources(o.Resources).Flatten().ContainsAll(wanted)
-	})
-}
-
 // DefaultKeyFunc indexes offers by their OfferID.
 var DefaultKeyFunc = KeyFunc(func(o *Offer) interface{} { return o.GetID() })
 

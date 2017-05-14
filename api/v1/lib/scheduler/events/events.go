@@ -141,13 +141,14 @@ type AckError struct {
 func (err *AckError) Error() string { return err.Cause.Error() }
 
 // AcknowledgeUpdates generates a Handler that sends an Acknowledge call to Mesos for every
-// UPDATE event that's received.
+// UPDATE event that's received (that requests an ACK).
 func AcknowledgeUpdates(callerGetter func() calls.Caller) Handler {
 	return WhenFunc(scheduler.Event_UPDATE, func(e *scheduler.Event) (err error) {
 		var (
 			s    = e.GetUpdate().GetStatus()
 			uuid = s.GetUUID()
 		)
+		// only ACK non-empty UUID's, as per mesos scheduler spec
 		if len(uuid) > 0 {
 			ack := calls.Acknowledge(
 				s.GetAgentID().GetValue(),

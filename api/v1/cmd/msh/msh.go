@@ -72,8 +72,8 @@ func main() {
 	}
 
 	wantsResources = mesos.Resources{
-		*mesos.CPUs(CPUs).Resource,
-		*mesos.Memory(Memory).Resource,
+		mesos.CPUs(CPUs).Resource,
+		mesos.Memory(Memory).Resource,
 	}
 	taskPrototype = mesos.TaskInfo{
 		Name: TaskName,

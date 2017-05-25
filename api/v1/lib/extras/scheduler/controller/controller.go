@@ -12,8 +12,7 @@ type (
 	// Option modifies a Config, returns an Option that acts as an "undo"
 	Option func(*Config) Option
 
-	// Config is a controller configuration. Public fields are REQUIRED. Optional properties are
-	// configured by applying Option funcs.
+	// Config is an opaque controller configuration. Properties are configured by applying Option funcs.
 	Config struct {
 		doneFunc               func() bool
 		frameworkIDFunc        func() string

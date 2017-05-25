@@ -1,6 +1,6 @@
 # Go bindings for Apache Mesos
 
-Very early version of a pure Go language bindings for Apache Mesos.
+Pure Go language bindings for Apache Mesos, under development.
 As with other pure implementations, mesos-go uses the HTTP wire protocol to communicate directly with a running Mesos master and its slave instances.
 One of the objectives of this project is to provide an idiomatic Go API that makes it super easy to create Mesos frameworks using Go. 
 
@@ -11,6 +11,8 @@ One of the objectives of this project is to provide an idiomatic Go API that mak
 ## Status
 New projects should use the Mesos v1 API bindings, located in `api/v1`.
 Unless otherwise indicated, the remainder of this README describes the Mesos v1 API implementation.
+
+Please **vendor** this library to avoid unpleasant surprises via `go get ...`.
 
 The Mesos v0 API version of the bindings, located in `api/v0`, are more mature but will not see any major development besides critical compatibility and bug fixes.
 

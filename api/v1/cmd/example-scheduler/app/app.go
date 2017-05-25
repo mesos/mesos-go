@@ -92,11 +92,7 @@ func Run(cfg Config) error {
 func buildEventHandler(state *internalState, frameworkIDStore store.Singleton) events.Handler {
 	logger := controller.LogEvents()
 	return controller.LiftErrors().Handle(events.HandlerSet{
-		scheduler.Event_FAILURE: logger.HandleF(func(e *scheduler.Event) error {
-			f := e.GetFailure()
-			failure(f.ExecutorID, f.AgentID, f.Status)
-			return nil
-		}),
+		scheduler.Event_FAILURE: logger.HandleF(failure),
 		scheduler.Event_OFFERS: trackOffersReceived(state).AndThen().HandleF(
 			func(e *scheduler.Event) error {
 				if state.config.verbose {
@@ -122,7 +118,11 @@ func trackOffersReceived(state *internalState) eventrules.Rule {
 	}
 }
 
-func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
+func failure(e *scheduler.Event) error {
+	var (
+		f              = e.GetFailure()
+		eid, aid, stat = f.ExecutorID, f.AgentID, f.Status
+	)
 	if eid != nil {
 		// executor failed..
 		msg := "executor '" + eid.Value + "' terminated"
@@ -137,6 +137,7 @@ func failure(eid *mesos.ExecutorID, aid *mesos.AgentID, stat *int32) {
 		// agent failed..
 		log.Println("agent '" + aid.Value + "' terminated")
 	}
+	return nil
 }
 
 func resourceOffers(state *internalState, offers []mesos.Offer) error {

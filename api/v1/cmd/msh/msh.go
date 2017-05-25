@@ -22,6 +22,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/extras/latch"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/offers"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpsched"
@@ -43,13 +44,11 @@ var (
 	CPUs          = float64(0.010)
 	Memory        = float64(64)
 
-	frameworkIDStore store.Singleton
-	shouldDecline    bool
-	refuseSeconds    = calls.RefuseSeconds(5 * time.Second)
-	stop             func()
-	exitCode         int
-	wantsResources   mesos.Resources
-	taskPrototype    mesos.TaskInfo
+	frameworkIDStore   store.Singleton
+	declineAndSuppress bool
+	refuseSeconds      = calls.RefuseSeconds(5 * time.Second)
+	wantsResources     mesos.Resources
+	taskPrototype      mesos.TaskInfo
 )
 
 func init() {
@@ -60,7 +59,12 @@ func init() {
 	flag.Float64Var(&CPUs, "cpus", CPUs, "CPU resources to allocate for the remote command")
 	flag.Float64Var(&Memory, "memory", Memory, "Memory resources to allocate for the remote command")
 
-	frameworkIDStore = store.NewInMemorySingleton()
+	frameworkIDStore = store.DecorateSingleton(
+		store.NewInMemorySingleton(),
+		store.DoSet().AndThen(func(_ store.Setter, v string, _ error) error {
+			log.Println("FrameworkID", v)
+			return nil
+		}))
 }
 
 func main() {
@@ -85,44 +89,40 @@ func main() {
 	if len(args) > 1 {
 		taskPrototype.Command.Arguments = args[1:]
 	}
-	err := controller.New().Run(buildControllerConfig(User))
-	if err != nil {
-		log.Fatal(err)
+	if err := run(); err != nil {
+		if exitErr, ok := err.(ExitError); ok {
+			if code := int(exitErr); code != 0 {
+				log.Println(exitErr)
+				os.Exit(code)
+			}
+			// else, code=0 indicates success, exit normally
+		} else {
+			panic(fmt.Sprintf("%#v", err))
+		}
 	}
-	os.Exit(exitCode)
 }
 
-func buildControllerConfig(user string) controller.Config {
+func run() error {
 	var (
 		done   = latch.New()
 		caller = calls.Decorators{
-			calls.SubscribedCaller(frameworkIDStore.Get),
+			calls.SubscribedCaller(store.GetIgnoreErrors(frameworkIDStore)),
 		}.Apply(buildClient())
 	)
-	stop = done.Close
-	return controller.Config{
-		Context: &controller.ContextAdapter{
-			DoneFunc:        done.Closed,
-			FrameworkIDFunc: frameworkIDStore.Get,
-			ErrorFunc: func(err error) {
-				defer stop()
-				if err != nil {
-					// don't overwrite an existing error code
-					if exitCode == 0 {
-						exitCode = 10
-					}
-					if err != io.EOF {
-						log.Printf("%#v", err)
-					}
-					return
-				}
+
+	return controller.Run(
+		&mesos.FrameworkInfo{User: User, Name: FrameworkName, Role: (*string)(&Role)},
+		caller,
+		controller.WithDone(done.Closed),
+		controller.WithEventHandler(buildEventHandler(caller)),
+		controller.WithFrameworkID(store.GetIgnoreErrors(frameworkIDStore)),
+		controller.WithSubscriptionTerminated(func(err error) {
+			defer done.Close()
+			if err == io.EOF {
 				log.Println("disconnected")
-			},
-		},
-		Framework: &mesos.FrameworkInfo{User: user, Name: FrameworkName, Role: (*string)(&Role)},
-		Caller:    caller,
-		Handler:   buildEventHandler(caller),
-	}
+			}
+		}),
+	)
 }
 
 func buildClient() calls.Caller {
@@ -132,80 +132,77 @@ func buildClient() calls.Caller {
 }
 
 func buildEventHandler(caller calls.Caller) events.Handler {
-	ack := events.AcknowledgeUpdates(func() calls.Caller { return caller })
-	return events.NewMux(
-		events.DefaultHandler(events.HandlerFunc(controller.DefaultHandler)),
-		events.MapFuncs(map[scheduler.Event_Type]events.HandlerFunc{
-			scheduler.Event_OFFERS: func(e *scheduler.Event) error {
-				return resourceOffers(caller, e.GetOffers().GetOffers())
-			},
-			scheduler.Event_UPDATE: func(e *scheduler.Event) error {
-				err := ack.HandleEvent(e)
-				if err != nil {
-					err = fmt.Errorf("failed to ack status update for task: %#v", err)
-				}
-				statusUpdate(e.GetUpdate().GetStatus())
-				return err
-			},
-			scheduler.Event_SUBSCRIBED: func(e *scheduler.Event) error {
-				log.Println("received a SUBSCRIBED event")
-				fid := e.GetSubscribed().GetFrameworkID().GetValue()
-				if fid == "" {
-					// sanity check, should **never** happen
-					return fmt.Errorf("mesos gave us an empty frameworkID")
-				}
-				if current := frameworkIDStore.Get(); current != fid {
-					err := frameworkIDStore.Set(fid)
-					if err != nil {
-						return err
-					}
-					log.Println("FrameworkID", fid)
-				}
-				return nil
-			},
-		}),
-	)
+	logger := controller.LogEvents()
+	return controller.LiftErrors().Handle(events.HandlerSet{
+		scheduler.Event_FAILURE:    logger,
+		scheduler.Event_SUBSCRIBED: eventrules.Rules{logger, controller.TrackSubscription(frameworkIDStore, 0)},
+		scheduler.Event_OFFERS:     maybeDeclineOffers(caller).AndThen().Handle(resourceOffers(caller)),
+		scheduler.Event_UPDATE:     controller.AckStatusUpdates(caller).AndThen().HandleF(statusUpdate),
+	})
 }
 
-func resourceOffers(caller calls.Caller, off []mesos.Offer) error {
-	if shouldDecline {
-		return calls.CallNoData(caller, calls.Suppress())
-	}
-	var (
-		index = offers.NewIndex(off, nil)
-		match = index.Find(offers.ContainsResources(wantsResources))
-	)
-	if match != nil {
-		task := taskPrototype
-		task.TaskID = mesos.TaskID{Value: time.Now().Format(RFC3339a)}
-		task.AgentID = match.AgentID
-		task.Resources = mesos.Resources(match.Resources).Find(wantsResources.Flatten(Role.Assign()))
-
-		if err := calls.CallNoData(caller, calls.Accept(
-			calls.OfferOperations{calls.OpLaunch(task)}.WithOffers(match.ID),
-		)); err != nil {
-			return err
+func maybeDeclineOffers(caller calls.Caller) eventrules.Rule {
+	return func(e *scheduler.Event, err error, chain eventrules.Chain) (*scheduler.Event, error) {
+		if err != nil {
+			return chain(e, err)
 		}
-
-		shouldDecline = true // safeguard and suppress future offers
-		if err := calls.CallNoData(caller, calls.Suppress()); err != nil {
-			return err
+		if e.GetType() != scheduler.Event_OFFERS || !declineAndSuppress {
+			return chain(e, err)
 		}
-	} else {
-		// insufficient offers
-		log.Println("rejected insufficient offers")
+		off := offers.Slice(e.GetOffers().GetOffers())
+		err = calls.CallNoData(caller, calls.Decline(off.IDs()...).With(refuseSeconds))
+		if err == nil {
+			// we shouldn't have received offers, maybe the prior suppress call failed?
+			err = calls.CallNoData(caller, calls.Suppress())
+		}
+		return nil, err // drop
 	}
-	// decline all but the possible match
-	delete(index, match.GetID())
-	return calls.CallNoData(caller, calls.Decline(index.IDs()...).With(refuseSeconds))
 }
 
-func statusUpdate(s mesos.TaskStatus) {
+func resourceOffers(caller calls.Caller) events.HandlerFunc {
+	return func(e *scheduler.Event) (err error) {
+		var (
+			off   = e.GetOffers().GetOffers()
+			index = offers.NewIndex(off, nil)
+			match = index.Find(offers.ContainsResources(wantsResources))
+		)
+		if match != nil {
+			task := taskPrototype
+			task.TaskID = mesos.TaskID{Value: time.Now().Format(RFC3339a)}
+			task.AgentID = match.AgentID
+			task.Resources = mesos.Resources(match.Resources).Find(wantsResources.Flatten(Role.Assign()))
+
+			err = calls.CallNoData(caller, calls.Accept(
+				calls.OfferOperations{calls.OpLaunch(task)}.WithOffers(match.ID),
+			))
+			if err != nil {
+				return
+			}
+
+			declineAndSuppress = true
+		} else {
+			log.Println("rejected insufficient offers")
+		}
+		// decline all but the possible match
+		delete(index, match.GetID())
+		err = calls.CallNoData(caller, calls.Decline(index.IDs()...).With(refuseSeconds))
+		if err != nil {
+			return
+		}
+		if declineAndSuppress {
+			err = calls.CallNoData(caller, calls.Suppress())
+		}
+		return
+	}
+}
+
+func statusUpdate(e *scheduler.Event) error {
+	s := e.GetUpdate().GetStatus()
 	switch st := s.GetState(); st {
 	case mesos.TASK_FINISHED, mesos.TASK_RUNNING, mesos.TASK_STAGING, mesos.TASK_STARTING:
-		log.Println("status update", st)
+		log.Printf("status update from agent %q: %v", s.GetAgentID().GetValue(), st)
 		if st != mesos.TASK_FINISHED {
-			return
+			return nil
 		}
 	case mesos.TASK_LOST, mesos.TASK_KILLED, mesos.TASK_FAILED, mesos.TASK_ERROR:
 		log.Println("Exiting because task " + s.GetTaskID().Value +
@@ -213,10 +210,14 @@ func statusUpdate(s mesos.TaskStatus) {
 			" with reason " + s.GetReason().String() +
 			" from source " + s.GetSource().String() +
 			" with message '" + s.GetMessage() + "'")
-		exitCode = 3
+		return ExitError(3)
 	default:
 		log.Println("unexpected task state, aborting", st)
-		exitCode = 4
+		return ExitError(4)
 	}
-	stop()
+	return ExitError(0) // kind of ugly, but better than os.Exit(0)
 }
+
+type ExitError int
+
+func (e ExitError) Error() string { return fmt.Sprintf("exit code %d", int(e)) }

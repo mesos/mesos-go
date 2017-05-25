@@ -218,7 +218,6 @@ type internalState struct {
 	tasksLaunched      int
 	tasksFinished      int
 	totalTasks         int
-	frameworkID        string
 	role               string
 	executor           *mesos.ExecutorInfo
 	cli                calls.Caller

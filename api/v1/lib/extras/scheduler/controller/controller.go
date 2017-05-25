@@ -9,81 +9,111 @@ import (
 )
 
 type (
-	Context interface {
-		// Done returns true when the controller should exit
-		Done() bool
+	// Option modifies a Config, returns an Option that acts as an "undo"
+	Option func(*Config) Option
 
-		// FrameworkID returns the current Mesos-assigned framework ID. Frameworks are expected to
-		// track this ID (that comes from Mesos, in a SUBSCRIBED event).
-		FrameworkID() string
-
-		// Error is an error handler that is invoked at the end of every subscription cycle; the given
-		// error may be nil (if no errors occurred).
-		Error(error)
-	}
-
-	ContextAdapter struct {
-		// FrameworkIDFunc is optional; nil tells the controller to always register as a new framework
-		// for each subscription attempt.
-		FrameworkIDFunc func() string
-
-		// Done is optional; nil equates to a func that always returns false
-		DoneFunc func() bool
-
-		// ErrorFunc is optional; if nil then errors are swallowed
-		ErrorFunc func(error)
-	}
-
+	// Config is a controller configuration. Public fields are REQUIRED. Optional properties are
+	// configured by applying Option funcs.
 	Config struct {
-		Context   Context              // Context is required
-		Framework *mesos.FrameworkInfo // FrameworkInfo is required
-		Caller    calls.Caller         // Caller  is required
-
-		// Handler (optional) processes scheduler events. The controller's internal event processing
-		// loop is aborted if a Handler returns a non-nil error, after which the controller may attempt
-		// to re-register (subscribe) with Mesos.
-		Handler events.Handler
-
-		// RegistrationTokens (optional) limits the rate at which a framework (re)registers with Mesos.
-		// The chan should either be non-blocking, or should yield a struct{} in order to allow the
-		// framework registration process to continue. May be nil.
-		RegistrationTokens <-chan struct{}
+		doneFunc               func() bool
+		frameworkIDFunc        func() string
+		handler                events.Handler
+		registrationTokens     <-chan struct{}
+		subscriptionTerminated func(error)
 	}
-
-	Controller interface {
-		// Run executes the controller using the given Config
-		Run(Config) error
-	}
-
-	// ControllerFunc is a functional adaptation of a Controller
-	ControllerFunc func(Config) error
-
-	controllerImpl int
 )
 
-// Run implements Controller for ControllerFunc
-func (cf ControllerFunc) Run(config Config) error { return cf(config) }
-
-func New() Controller {
-	return new(controllerImpl)
+// WithEventHandler sets the consumer of scheduler events. The controller's internal event processing
+// loop is aborted if a Handler returns a non-nil error, after which the controller may attempt
+// to re-register (subscribe) with Mesos.
+func WithEventHandler(handler events.Handler, ds ...events.Decorator) Option {
+	return func(c *Config) Option {
+		old := c.handler
+		c.handler = events.Decorators(ds).Apply(handler)
+		return WithEventHandler(old)
+	}
 }
 
+// WithFrameworkID sets a fetcher for the current Mesos-assigned framework ID. Frameworks are expected to
+// track this ID (that comes from Mesos, in a SUBSCRIBED event).
+// frameworkIDFunc is optional; nil tells the controller to always register as a new framework
+// for each subscription attempt.
+func WithFrameworkID(frameworkIDFunc func() string) Option {
+	return func(c *Config) Option {
+		old := c.frameworkIDFunc
+		c.frameworkIDFunc = frameworkIDFunc
+		return WithFrameworkID(old)
+	}
+}
+
+// WithDone sets a fetcher func that returns true when the controller should exit.
+// doneFunc is optional; nil equates to a func that always returns false.
+func WithDone(doneFunc func() bool) Option {
+	return func(c *Config) Option {
+		old := c.doneFunc
+		c.doneFunc = doneFunc
+		return WithDone(old)
+	}
+}
+
+// WithSubscriptionTerminated sets a handler that is invoked at the end of every subscription cycle; the
+// given error may be nil if no error occurred. subscriptionTerminated is optional; if nil then errors are
+// swallowed.
+func WithSubscriptionTerminated(handler func(error)) Option {
+	return func(c *Config) Option {
+		old := c.subscriptionTerminated
+		c.subscriptionTerminated = handler
+		return WithSubscriptionTerminated(old)
+	}
+}
+
+// WithRegistrationTokens limits the rate at which a framework (re)registers with Mesos.
+// The chan should either be non-blocking, or should yield a struct{} in order to allow the
+// framework registration process to continue. May be nil.
+func WithRegistrationTokens(registrationTokens <-chan struct{}) Option {
+	return func(c *Config) Option {
+		old := c.registrationTokens
+		c.registrationTokens = registrationTokens
+		return WithRegistrationTokens(old)
+	}
+}
+
+func (c *Config) tryFrameworkID() (result string) {
+	if c.frameworkIDFunc != nil {
+		result = c.frameworkIDFunc()
+	}
+	return
+}
+
+func (c *Config) tryDone() (result bool) { return c.doneFunc != nil && c.doneFunc() }
+
 // Run executes a control loop that registers a framework with Mesos and processes the scheduler events
-// that flow through the subscription. Upon disconnection, if the given Context reports !Done() then the
-// controller will attempt to re-register the framework and continue processing events.
-func (_ *controllerImpl) Run(config Config) (lastErr error) {
-	subscribe := calls.Subscribe(config.Framework)
-	for !config.Context.Done() {
-		frameworkID := config.Context.FrameworkID()
-		if config.Framework.GetFailoverTimeout() > 0 && frameworkID != "" {
+// that flow through the subscription. Upon disconnection, if the current configuration reports "not done"
+// then the controller will attempt to re-register the framework and continue processing events.
+func Run(framework *mesos.FrameworkInfo, caller calls.Caller, options ...Option) (lastErr error) {
+	var config Config
+	for _, opt := range options {
+		if opt != nil {
+			opt(&config)
+		}
+	}
+	if config.handler == nil {
+		config.handler = DefaultHandler
+	}
+	subscribe := calls.Subscribe(framework)
+	for !config.tryDone() {
+		frameworkID := config.tryFrameworkID()
+		if framework.GetFailoverTimeout() > 0 && frameworkID != "" {
 			subscribe.With(calls.SubscribeTo(frameworkID))
 		}
-		if config.RegistrationTokens != nil {
-			<-config.RegistrationTokens
+		if config.registrationTokens != nil {
+			<-config.registrationTokens
 		}
-		resp, err := config.Caller.Call(subscribe)
+		resp, err := caller.Call(subscribe)
 		lastErr = processSubscription(config, resp, err)
-		config.Context.Error(lastErr)
+		if config.subscriptionTerminated != nil {
+			config.subscriptionTerminated(lastErr)
+		}
 	}
 	return
 }
@@ -101,50 +131,14 @@ func processSubscription(config Config, resp mesos.Response, err error) error {
 // eventLoop returns the framework ID received by mesos (if any); callers should check for a
 // framework ID regardless of whether error != nil.
 func eventLoop(config Config, eventDecoder encoding.Decoder) (err error) {
-	h := config.Handler
-	if h == nil {
-		h = events.HandlerFunc(DefaultHandler)
-	}
-	for err == nil && !config.Context.Done() {
+	for err == nil && !config.tryDone() {
 		var e scheduler.Event
 		if err = eventDecoder.Decode(&e); err == nil {
-			err = h.HandleEvent(&e)
+			err = config.handler.HandleEvent(&e)
 		}
 	}
 	return err
 }
 
-var _ = Context(&ContextAdapter{}) // ContextAdapter implements Context
-
-func (ca *ContextAdapter) Done() bool {
-	return ca.DoneFunc != nil && ca.DoneFunc()
-}
-func (ca *ContextAdapter) FrameworkID() (id string) {
-	if ca.FrameworkIDFunc != nil {
-		id = ca.FrameworkIDFunc()
-	}
-	return
-}
-func (ca *ContextAdapter) Error(err error) {
-	if ca.ErrorFunc != nil {
-		ca.ErrorFunc(err)
-	}
-}
-
-// ErrEvent errors are generated by the DefaultHandler upon receiving an ERROR event from Mesos.
-type ErrEvent string
-
-func (e ErrEvent) Error() string {
-	return string(e)
-}
-
-// DefaultHandler provides the minimum implementation required for correct controller behavior.
-func DefaultHandler(e *scheduler.Event) (err error) {
-	if e.GetType() == scheduler.Event_ERROR {
-		// it's recommended that we abort and re-try subscribing; returning an
-		// error here will cause the event loop to terminate and the connection
-		// will be reset.
-		err = ErrEvent(e.GetError().GetMessage())
-	}
-	return
-}
+// DefaultHandler defaults to events.NoopHandler
+var DefaultHandler = events.NoopHandler()

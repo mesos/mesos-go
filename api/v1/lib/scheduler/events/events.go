@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
-	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 )
 
 type (
@@ -157,38 +156,6 @@ func DefaultHandler(eh Handler) Option {
 		m.defaultHandler = eh
 		return DefaultHandler(old)
 	}
-}
-
-// AckError wraps a caller-generated error and tracks the call that failed.
-type AckError struct {
-	Ack   *scheduler.Call
-	Cause error
-}
-
-func (err *AckError) Error() string { return err.Cause.Error() }
-
-// AcknowledgeUpdates generates a Handler that sends an Acknowledge call to Mesos for every
-// UPDATE event that's received (that requests an ACK).
-func AcknowledgeUpdates(callerLookup func() calls.Caller) Handler {
-	return WhenFunc(scheduler.Event_UPDATE, func(e *scheduler.Event) (err error) {
-		var (
-			s    = e.GetUpdate().GetStatus()
-			uuid = s.GetUUID()
-		)
-		// only ACK non-empty UUID's, as per mesos scheduler spec
-		if len(uuid) > 0 {
-			ack := calls.Acknowledge(
-				s.GetAgentID().GetValue(),
-				s.TaskID.Value,
-				uuid,
-			)
-			err = calls.CallNoData(callerLookup(), ack)
-			if err != nil {
-				err = &AckError{ack, err}
-			}
-		}
-		return
-	})
 }
 
 // When

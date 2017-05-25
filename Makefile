@@ -77,6 +77,10 @@ sync:
 	(cd ${API_VENDOR}; govendor sync)
 	(cd ${CMD_VENDOR}; govendor sync)
 
+.PHONY: generate
+generate:
+	go generate ./api/v1/lib/extras/scheduler/eventrules
+
 GOPKG		:= github.com/mesos/mesos-go
 GOPKG_DIRNAME	:= $(shell dirname $(GOPKG))
 UID		?= $(shell id -u $$USER)

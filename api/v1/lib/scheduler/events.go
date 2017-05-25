@@ -14,5 +14,5 @@ func (ep EventPredicate) Apply(e *Event) (result bool) {
 	return
 }
 
-// Happens implements scheduler/events.Happens
-func (t Event_Type) Happens() EventPredicate { return func(e *Event) bool { return e.GetType() == t } }
+// Predicate implements scheduler/events.Predicate
+func (t Event_Type) Predicate() EventPredicate { return func(e *Event) bool { return e.GetType() == t } }

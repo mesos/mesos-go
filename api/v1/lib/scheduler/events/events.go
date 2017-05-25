@@ -1,6 +1,8 @@
 package events
 
 import (
+	"sync"
+
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 )
@@ -15,11 +17,14 @@ type (
 	// HandlerFunc is a functional adaptation of the Handler interface
 	HandlerFunc func(*scheduler.Event) error
 
+	HandlerSet     map[scheduler.Event_Type]Handler
+	HandlerFuncSet map[scheduler.Event_Type]HandlerFunc
+
 	// Mux maps event types to Handlers (only one Handler for each type). A "default"
 	// Handler implementation may be provided to handle cases in which there is no
 	// registered Handler for specific event type.
 	Mux struct {
-		handlers       map[scheduler.Event_Type]Handler
+		handlers       HandlerSet
 		defaultHandler Handler
 	}
 
@@ -30,18 +35,20 @@ type (
 	// Handlers aggregates Handler things
 	Handlers []Handler
 
-	Happens interface {
-		Happens() scheduler.EventPredicate
+	Predicate interface {
+		Predicate() scheduler.EventPredicate
 	}
 )
 
 // HandleEvent implements Handler for HandlerFunc
 func (f HandlerFunc) HandleEvent(e *scheduler.Event) error { return f(e) }
 
+func NoopHandler() HandlerFunc { return func(_ *scheduler.Event) error { return nil } }
+
 // NewMux generates and returns a new, empty Mux instance.
 func NewMux(opts ...Option) *Mux {
 	m := &Mux{
-		handlers: make(map[scheduler.Event_Type]Handler),
+		handlers: make(HandlerSet),
 	}
 	m.With(opts...)
 	return m
@@ -62,15 +69,15 @@ func (m *Mux) With(opts ...Option) Option {
 }
 
 // HandleEvent implements Handler for Mux
-func (m *Mux) HandleEvent(e *scheduler.Event) (err error) {
-	h, found := m.handlers[e.GetType()]
-	if !found {
-		h = m.defaultHandler
+func (m *Mux) HandleEvent(e *scheduler.Event) error {
+	ok, err := m.handlers.tryHandleEvent(e)
+	if ok {
+		return err
 	}
-	if h != nil {
-		err = h.HandleEvent(e)
+	if m.defaultHandler != nil {
+		return m.defaultHandler.HandleEvent(e)
 	}
-	return
+	return nil
 }
 
 // Handle returns an option that configures a Handler to handle a specific event type.
@@ -88,8 +95,22 @@ func Handle(et scheduler.Event_Type, eh Handler) Option {
 	}
 }
 
+// HandleEvent implements Handler for HandlerSet
+func (hs HandlerSet) HandleEvent(e *scheduler.Event) (err error) {
+	_, err = hs.tryHandleEvent(e)
+	return
+}
+
+// tryHandleEvent returns true if the event was handled by a member of the HandlerSet
+func (hs HandlerSet) tryHandleEvent(e *scheduler.Event) (bool, error) {
+	if h := hs[e.GetType()]; h != nil {
+		return true, h.HandleEvent(e)
+	}
+	return false, nil
+}
+
 // Map returns an Option that configures multiple Handler objects.
-func Map(handlers map[scheduler.Event_Type]Handler) (option Option) {
+func (handlers HandlerSet) ToOption() (option Option) {
 	option = func(m *Mux) Option {
 		type history struct {
 			et scheduler.Event_Type
@@ -114,13 +135,18 @@ func Map(handlers map[scheduler.Event_Type]Handler) (option Option) {
 	return
 }
 
-// MapFuncs is the functional adaptation of Map
-func MapFuncs(handlers map[scheduler.Event_Type]HandlerFunc) (option Option) {
-	h := make(map[scheduler.Event_Type]Handler, len(handlers))
+// HandlerSet converts a HandlerFuncSet
+func (handlers HandlerFuncSet) HandlerSet() HandlerSet {
+	h := make(HandlerSet, len(handlers))
 	for k, v := range handlers {
 		h[k] = v
 	}
-	return Map(h)
+	return h
+}
+
+// ToOption converts a HandlerFuncSet
+func (hs HandlerFuncSet) ToOption() (option Option) {
+	return hs.HandlerSet().ToOption()
 }
 
 // DefaultHandler returns an option that configures the default handler that's invoked
@@ -133,6 +159,7 @@ func DefaultHandler(eh Handler) Option {
 	}
 }
 
+// AckError wraps a caller-generated error and tracks the call that failed.
 type AckError struct {
 	Ack   *scheduler.Call
 	Cause error
@@ -142,7 +169,7 @@ func (err *AckError) Error() string { return err.Cause.Error() }
 
 // AcknowledgeUpdates generates a Handler that sends an Acknowledge call to Mesos for every
 // UPDATE event that's received (that requests an ACK).
-func AcknowledgeUpdates(callerGetter func() calls.Caller) Handler {
+func AcknowledgeUpdates(callerLookup func() calls.Caller) Handler {
 	return WhenFunc(scheduler.Event_UPDATE, func(e *scheduler.Event) (err error) {
 		var (
 			s    = e.GetUpdate().GetStatus()
@@ -155,7 +182,7 @@ func AcknowledgeUpdates(callerGetter func() calls.Caller) Handler {
 				s.TaskID.Value,
 				uuid,
 			)
-			err = calls.CallNoData(callerGetter(), ack)
+			err = calls.CallNoData(callerLookup(), ack)
 			if err != nil {
 				err = &AckError{ack, err}
 			}
@@ -164,33 +191,39 @@ func AcknowledgeUpdates(callerGetter func() calls.Caller) Handler {
 	})
 }
 
+// When
+// Deprecated in favor of Rules.
 func Once(h Handler) Handler {
-	called := false
+	var once sync.Once
 	return HandlerFunc(func(e *scheduler.Event) (err error) {
-		if !called {
-			called = true
+		once.Do(func() {
 			err = h.HandleEvent(e)
-		}
+		})
 		return
 	})
 }
 
+// When
+// Deprecated in favor of Rules.
 func OnceFunc(h HandlerFunc) Handler { return Once(h) }
 
-func When(p Happens, h Handler) Handler {
+// When
+// Deprecated in favor of Rules.
+func When(p Predicate, h Handler) Handler {
 	return HandlerFunc(func(e *scheduler.Event) (err error) {
-		if p.Happens().Apply(e) {
+		if p.Predicate().Apply(e) {
 			err = h.HandleEvent(e)
 		}
 		return
 	})
 }
 
-func WhenFunc(p Happens, h HandlerFunc) Handler { return When(p, h) }
+// WhenFunc
+// Deprecated in favor of Rules.
+func WhenFunc(p Predicate, h HandlerFunc) Handler { return When(p, h) }
 
-var _ = Handler(Handlers{}) // Handlers implements Handler
-
-// HandleEvent implements Handler for Handlers
+// HandleEvent implements Handler for Handlers.
+// Deprecated in favor of Rules.
 func (hs Handlers) HandleEvent(e *scheduler.Event) (err error) {
 	for _, h := range hs {
 		if h != nil {
@@ -199,5 +232,5 @@ func (hs Handlers) HandleEvent(e *scheduler.Event) (err error) {
 			}
 		}
 	}
-	return err
+	return
 }

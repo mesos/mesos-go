@@ -6,6 +6,7 @@ import (
 
 type PredicateBool func() bool
 
-func (b PredicateBool) Happens() scheduler.EventPredicate {
+// Predicate implements scheduler.events.Predicate
+func (b PredicateBool) Predicate() scheduler.EventPredicate {
 	return func(_ *scheduler.Event) bool { return b() }
 }

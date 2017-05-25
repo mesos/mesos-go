@@ -14,6 +14,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/latch"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpsched"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
@@ -87,8 +88,8 @@ func prepareExecutorInfo(
 
 func buildWantsTaskResources(config Config) (r mesos.Resources) {
 	r.Add(
-		mesos.CPUs(config.taskCPU).Resource,
-		mesos.Memory(config.taskMemory).Resource,
+		resources.CPUs(config.taskCPU).Resource,
+		resources.Memory(config.taskMemory).Resource,
 	)
 	log.Println("wants-task-resources = " + r.String())
 	return
@@ -96,8 +97,8 @@ func buildWantsTaskResources(config Config) (r mesos.Resources) {
 
 func buildWantsExecutorResources(config Config) (r mesos.Resources) {
 	r.Add(
-		mesos.CPUs(config.execCPU).Resource,
-		mesos.Memory(config.execMemory).Resource,
+		resources.CPUs(config.execCPU).Resource,
+		resources.Memory(config.execMemory).Resource,
 	)
 	log.Println("wants-executor-resources = " + r.String())
 	return

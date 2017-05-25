@@ -21,6 +21,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/latch"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/offers"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
@@ -76,8 +77,8 @@ func main() {
 	}
 
 	wantsResources = mesos.Resources{
-		mesos.CPUs(CPUs).Resource,
-		mesos.Memory(Memory).Resource,
+		resources.CPUs(CPUs).Resource,
+		resources.Memory(Memory).Resource,
 	}
 	taskPrototype = mesos.TaskInfo{
 		Name: TaskName,

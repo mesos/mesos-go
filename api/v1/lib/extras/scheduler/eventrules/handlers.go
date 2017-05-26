@@ -42,7 +42,7 @@ func (r Rule) HandleEvent(e *scheduler.Event) (err error) {
 
 // HandleEvent implements events.Handler for Rules
 func (rs Rules) HandleEvent(e *scheduler.Event) error {
-	return rs.Rule().HandleEvent(e)
+	return Rule(rs.Eval).HandleEvent(e)
 }
 
 /*

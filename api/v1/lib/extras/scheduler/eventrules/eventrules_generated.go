@@ -16,6 +16,7 @@ type (
 	// Rule implementations should not modify the given event parameter (to avoid side effects).
 	// If changes to the event object are needed, the suggested approach is to make a copy,
 	// modify the copy, and pass the copy to the chain.
+	// A nil Rule is valid: it is processed as a noop.
 	Rule func(*scheduler.Event, error, Chain) (*scheduler.Event, error)
 
 	// Chain is invoked by a Rule to continue processing an event. If the chain is not invoked,
@@ -47,8 +48,8 @@ func (rs Rules) Eval(e *scheduler.Event, err error, ch Chain) (*scheduler.Event,
 	return ch(rs[0](e, err, NewChain(rs)))
 }
 
-// Rule adapts Rules to the Rule interface, for convenient call chaining.
-func (rs Rules) Rule() Rule { return rs.Eval }
+// It is the semantic equivalent of Rules{r1, r2, ..., rn}.Rule() and exists purely for convenience.
+func Concat(rs ...Rule) Rule { return Rules(rs).Eval }
 
 // Error implements error; returns the message of the first error in the list.
 func (es ErrorList) Error() string {
@@ -116,7 +117,23 @@ func Error(es ...error) error {
 	return result.Err()
 }
 
-// TODO(jdef): other ideas for Rule decorators: If(bool), When(func() bool), Unless(bool)
+// TODO(jdef): other ideas for Rule decorators: When(func() bool), WhenNot(func() bool)
+
+// If only executes the receiving rule if b is true; otherwise, the returned rule is a noop.
+func (r Rule) If(b bool) Rule {
+	if b {
+		return r
+	}
+	return nil
+}
+
+// Unless only executes the receiving rule if b is false; otherwise, the returned rule is a noop.
+func (r Rule) Unless(b bool) Rule {
+	if !b {
+		return r
+	}
+	return nil
+}
 
 // Once returns a Rule that executes the receiver only once.
 func (r Rule) Once() Rule {
@@ -132,10 +149,13 @@ func (r Rule) Once() Rule {
 // Poll invokes the receiving Rule if the chan is readable (may be closed), otherwise it drops the event.
 // A nil chan will drop all events. May be useful, for example, when rate-limiting logged events.
 func (r Rule) Poll(p <-chan struct{}) Rule {
+	// TODO(jdef): optimize for the case where p is nil (it always drops the events)
 	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
 		select {
 		case <-p:
 			// do something
+			// TODO(jdef): optimization: if we detect the chan is closed, affect a state change
+			// whereby this select is no longer invoked (and always pass control to r).
 			return r(e, err, ch)
 		default:
 			// drop
@@ -145,7 +165,7 @@ func (r Rule) Poll(p <-chan struct{}) Rule {
 }
 
 // EveryN invokes the receiving rule beginning with the first event seen and then every n'th
-// time after that. If nthTime is less then 2 then this is a noop.
+// time after that. If nthTime is less then 2 then this call is a noop (the receiver is returned).
 func (r Rule) EveryN(nthTime int) Rule {
 	if nthTime < 2 {
 		return r

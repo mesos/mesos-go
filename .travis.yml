@@ -17,4 +17,4 @@ before_install:
 install:
   - make install
 script:
-  - rm -rf $HOME/gopath/pkg && make coverage && $HOME/gopath/bin/goveralls -service=travis-ci -coverprofile=_output/coverage.out
+  - rm -rf $HOME/gopath/pkg && make coverage && $HOME/gopath/bin/goveralls -service=travis-ci -coverprofile=_output/coverage.out -ignore=$((tr '\n' , | sed -e 's/$,//g') < <(find api/v1/cmd -type f -name '*.go'|grep -v -e /vendor/ ; ls api/v1/lib{,/scheduler,/executor}/*.pb{,_ffjson}.go ; find api/v0 -type d))

@@ -87,7 +87,9 @@ func (offers Slice) FilterNot(filter Filter) Slice { return offers.Filter(not(fi
 func (offers Index) FilterNot(filter Filter) Index { return offers.Filter(not(filter)) }
 
 // DefaultKeyFunc indexes offers by their OfferID.
-var DefaultKeyFunc = KeyFunc(func(o *Offer) interface{} { return o.GetID() })
+var DefaultKeyFunc = KeyFunc(KeyFuncByOfferID)
+
+func KeyFuncByOfferID(o *Offer) interface{} { return o.GetID() }
 
 // NewIndex returns a new Index constructed from the list of mesos offers.
 // If the KeyFunc is nil then offers are indexed by DefaultKeyFunc.

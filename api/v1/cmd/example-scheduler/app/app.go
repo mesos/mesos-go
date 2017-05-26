@@ -91,15 +91,12 @@ func Run(cfg Config) error {
 // buildEventHandler generates and returns a handler to process events received from the subscription.
 func buildEventHandler(state *internalState, frameworkIDStore store.Singleton) events.Handler {
 	logger := controller.LogEvents()
-	return controller.LiftErrors().Handle(events.HandlerSet{
+	return controller.LiftErrors().DropOnError().Handle(events.HandlerSet{
 		scheduler.Event_FAILURE: logger.HandleF(failure),
-		scheduler.Event_OFFERS: trackOffersReceived(state).AndThen().HandleF(
-			func(e *scheduler.Event) error {
-				if state.config.verbose {
-					log.Println("received an OFFERS event")
-				}
-				return resourceOffers(state, e.GetOffers().GetOffers())
-			}),
+		scheduler.Event_OFFERS: eventrules.Concat(
+			trackOffersReceived(state),
+			logger.If(state.config.verbose),
+		).HandleF(resourceOffers(state)),
 		scheduler.Event_UPDATE: controller.AckStatusUpdates(state.cli).AndThen().HandleF(statusUpdate(state)),
 		scheduler.Event_SUBSCRIBED: eventrules.Rules{
 			logger,
@@ -140,83 +137,89 @@ func failure(e *scheduler.Event) error {
 	return nil
 }
 
-func resourceOffers(state *internalState, offers []mesos.Offer) error {
-	callOption := calls.RefuseSecondsWithJitter(state.random, state.config.maxRefuseSeconds)
-	tasksLaunchedThisCycle := 0
-	offersDeclined := 0
-	for i := range offers {
+func resourceOffers(state *internalState) events.HandlerFunc {
+	return func(e *scheduler.Event) error {
 		var (
-			remaining = mesos.Resources(offers[i].Resources)
-			tasks     = []mesos.TaskInfo{}
+			offers                 = e.GetOffers().GetOffers()
+			callOption             = calls.RefuseSecondsWithJitter(state.random, state.config.maxRefuseSeconds)
+			tasksLaunchedThisCycle = 0
+			offersDeclined         = 0
 		)
+		for i := range offers {
+			var (
+				remaining = mesos.Resources(offers[i].Resources)
+				tasks     = []mesos.TaskInfo{}
+			)
 
-		if state.config.verbose {
-			log.Println("received offer id '" + offers[i].ID.Value + "' with resources " + remaining.String())
-		}
+			if state.config.verbose {
+				log.Println("received offer id '" + offers[i].ID.Value +
+					"' with resources " + remaining.String())
+			}
 
-		var wantsExecutorResources mesos.Resources
-		if len(offers[i].ExecutorIDs) == 0 {
-			wantsExecutorResources = mesos.Resources(state.executor.Resources)
-		}
+			var wantsExecutorResources mesos.Resources
+			if len(offers[i].ExecutorIDs) == 0 {
+				wantsExecutorResources = mesos.Resources(state.executor.Resources)
+			}
 
-		flattened := remaining.Flatten()
+			flattened := remaining.Flatten()
 
-		// avoid the expense of computing these if we can...
-		if state.config.summaryMetrics && state.config.resourceTypeMetrics {
-			for name, restype := range flattened.Types() {
-				if restype == mesos.SCALAR {
-					sum := flattened.SumScalars(mesos.NamedResources(name))
-					state.metricsAPI.offeredResources(sum.GetValue(), name)
+			// avoid the expense of computing these if we can...
+			if state.config.summaryMetrics && state.config.resourceTypeMetrics {
+				for name, restype := range flattened.Types() {
+					if restype == mesos.SCALAR {
+						sum := flattened.SumScalars(mesos.NamedResources(name))
+						state.metricsAPI.offeredResources(sum.GetValue(), name)
+					}
+				}
+			}
+
+			taskWantsResources := state.wantsTaskResources.Plus(wantsExecutorResources...)
+			for state.tasksLaunched < state.totalTasks && flattened.ContainsAll(taskWantsResources) {
+				state.tasksLaunched++
+				taskID := state.tasksLaunched
+
+				if state.config.verbose {
+					log.Println("launching task " + strconv.Itoa(taskID) + " using offer " + offers[i].ID.Value)
+				}
+
+				task := mesos.TaskInfo{
+					TaskID:    mesos.TaskID{Value: strconv.Itoa(taskID)},
+					AgentID:   offers[i].AgentID,
+					Executor:  state.executor,
+					Resources: remaining.Find(state.wantsTaskResources.Flatten(mesos.RoleName(state.role).Assign())),
+				}
+				task.Name = "Task " + task.TaskID.Value
+
+				remaining.Subtract(task.Resources...)
+				tasks = append(tasks, task)
+
+				flattened = remaining.Flatten()
+			}
+
+			// build Accept call to launch all of the tasks we've assembled
+			accept := calls.Accept(
+				calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(offers[i].ID),
+			).With(callOption)
+
+			// send Accept call to mesos
+			err := calls.CallNoData(state.cli, accept)
+			if err != nil {
+				log.Printf("failed to launch tasks: %+v", err)
+			} else {
+				if n := len(tasks); n > 0 {
+					tasksLaunchedThisCycle += n
+				} else {
+					offersDeclined++
 				}
 			}
 		}
-
-		taskWantsResources := state.wantsTaskResources.Plus(wantsExecutorResources...)
-		for state.tasksLaunched < state.totalTasks && flattened.ContainsAll(taskWantsResources) {
-			state.tasksLaunched++
-			taskID := state.tasksLaunched
-
-			if state.config.verbose {
-				log.Println("launching task " + strconv.Itoa(taskID) + " using offer " + offers[i].ID.Value)
-			}
-
-			task := mesos.TaskInfo{
-				TaskID:    mesos.TaskID{Value: strconv.Itoa(taskID)},
-				AgentID:   offers[i].AgentID,
-				Executor:  state.executor,
-				Resources: remaining.Find(state.wantsTaskResources.Flatten(mesos.RoleName(state.role).Assign())),
-			}
-			task.Name = "Task " + task.TaskID.Value
-
-			remaining.Subtract(task.Resources...)
-			tasks = append(tasks, task)
-
-			flattened = remaining.Flatten()
+		state.metricsAPI.offersDeclined.Int(offersDeclined)
+		state.metricsAPI.tasksLaunched.Int(tasksLaunchedThisCycle)
+		if state.config.summaryMetrics {
+			state.metricsAPI.launchesPerOfferCycle(float64(tasksLaunchedThisCycle))
 		}
-
-		// build Accept call to launch all of the tasks we've assembled
-		accept := calls.Accept(
-			calls.OfferOperations{calls.OpLaunch(tasks...)}.WithOffers(offers[i].ID),
-		).With(callOption)
-
-		// send Accept call to mesos
-		err := calls.CallNoData(state.cli, accept)
-		if err != nil {
-			log.Printf("failed to launch tasks: %+v", err)
-		} else {
-			if n := len(tasks); n > 0 {
-				tasksLaunchedThisCycle += n
-			} else {
-				offersDeclined++
-			}
-		}
+		return nil
 	}
-	state.metricsAPI.offersDeclined.Int(offersDeclined)
-	state.metricsAPI.tasksLaunched.Int(tasksLaunchedThisCycle)
-	if state.config.summaryMetrics {
-		state.metricsAPI.launchesPerOfferCycle(float64(tasksLaunchedThisCycle))
-	}
-	return nil
 }
 
 func statusUpdate(state *internalState) events.HandlerFunc {

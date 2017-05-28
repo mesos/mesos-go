@@ -11,12 +11,18 @@ import (
 )
 
 type (
-	// Rule executes a filter, rule, or decorator function; if the returned event is nil then
-	// no additional Rule func should be processed for the event.
-	// Rule implementations should not modify the given event parameter (to avoid side effects).
-	// If changes to the event object are needed, the suggested approach is to make a copy,
-	// modify the copy, and pass the copy to the chain.
-	// A nil Rule is valid: it is processed as a noop.
+	iface interface {
+		// Eval executes a filter, rule, or decorator function; if the returned event is nil then
+		// no additional rule evaluation should be processed for the event.
+		// Eval implementations should not modify the given event parameter (to avoid side effects).
+		// If changes to the event object are needed, the suggested approach is to make a copy,
+		// modify the copy, and pass the copy to the chain.
+		// Eval implementations SHOULD be safe to execute concurrently.
+		Eval(*scheduler.Event, error, Chain) (*scheduler.Event, error)
+	}
+
+	// Rule is the functional adaptation of iface.
+	// A nil Rule is valid: it is Eval'd as a noop.
 	Rule func(*scheduler.Event, error, Chain) (*scheduler.Event, error)
 
 	// Chain is invoked by a Rule to continue processing an event. If the chain is not invoked,
@@ -32,20 +38,39 @@ type (
 	ErrorList []error
 )
 
-// chainIdentity is a Chain that returns the arguments as its results.
-var chainIdentity = func(e *scheduler.Event, err error) (*scheduler.Event, error) {
-	return e, err
+var (
+	_ = iface(Rule(nil))
+	_ = iface(Rules{})
+
+	// chainIdentity is a Chain that returns the arguments as its results.
+	chainIdentity = func(e *scheduler.Event, err error) (*scheduler.Event, error) {
+		return e, err
+	}
+)
+
+// Eval is a convenience func that processes a nil Rule as a noop.
+func (r Rule) Eval(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+	if r != nil {
+		return r(e, err, ch)
+	}
+	return ch(e, err)
 }
 
 // Eval is a Rule func that processes the set of all Rules. If there are no rules in the
 // set then control is simply passed to the Chain.
 func (rs Rules) Eval(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+	return ch(rs.Chain()(e, err))
+}
+
+// Chain returns a Chain that evaluates the given Rules, in order, propagating the (*scheduler.Event, error)
+// from Rule to Rule. Chain is safe to invoke concurrently.
+func (rs Rules) Chain() Chain {
 	if len(rs) == 0 {
-		return ch(e, err) // noop
+		return chainIdentity
 	}
-	// we know there's at least 1 rule in the initial list; start with it and let the chain
-	// handle the iteration.
-	return ch(rs[0](e, err, NewChain(rs)))
+	return func(e *scheduler.Event, err error) (*scheduler.Event, error) {
+		return rs[0].Eval(e, err, rs[1:].Chain())
+	}
 }
 
 // It is the semantic equivalent of Rules{r1, r2, ..., rn}.Rule() and exists purely for convenience.
@@ -53,14 +78,14 @@ func Concat(rs ...Rule) Rule { return Rules(rs).Eval }
 
 // Error implements error; returns the message of the first error in the list.
 func (es ErrorList) Error() string {
-        switch len(es) {
-        case 0:
-                return "no errors"
-        case 1:
-                return es[0].Error()
-        default:
-                return fmt.Sprintf("%s (and %d more errors)", es[0], len(es)-1)
-        }
+	switch len(es) {
+	case 0:
+		return "no errors"
+	case 1:
+		return es[0].Error()
+	default:
+		return fmt.Sprintf("%s (and %d more errors)", es[0], len(es)-1)
+	}
 }
 
 // Error2 aggregates the given error params, returning nil if both are nil.
@@ -70,9 +95,15 @@ func Error2(a, b error) error {
 		if b == nil {
 			return nil
 		}
+		if list, ok := b.(ErrorList); ok {
+			return flatten(list).Err()
+		}
 		return b
 	}
 	if b == nil {
+		if list, ok := a.(ErrorList); ok {
+			return flatten(list).Err()
+		}
 		return a
 	}
 	return Error(a, b)
@@ -98,26 +129,30 @@ func IsErrorList(err error) bool {
 	return false
 }
 
-// Error aggregates, and then (shallowly) flattens, a list of errors accrued during rule processing.
+// Error aggregates, and then flattens, a list of errors accrued during rule processing.
 // Returns nil if the given list of errors is empty or contains all nil errors.
 func Error(es ...error) error {
-	var result ErrorList
-	for _, err := range es {
+	return flatten(es).Err()
+}
+
+func flatten(errors []error) ErrorList {
+	if errors == nil || len(errors) == 0 {
+		return nil
+	}
+	result := make([]error, 0, len(errors))
+	for _, err := range errors {
 		if err != nil {
 			if multi, ok := err.(ErrorList); ok {
-				// flatten nested error lists
-				if len(multi) > 0 {
-					result = append(result, multi...)
-				}
+				result = append(result, flatten(multi)...)
 			} else {
 				result = append(result, err)
 			}
 		}
 	}
-	return result.Err()
+	return ErrorList(result)
 }
 
-// TODO(jdef): other ideas for Rule decorators: When(func() bool), WhenNot(func() bool)
+// TODO(jdef): other ideas for Rule decorators: When(func() bool), WhenNot(func() bool), OrElse(...Rule)
 
 // If only executes the receiving rule if b is true; otherwise, the returned rule is a noop.
 func (r Rule) If(b bool) Rule {
@@ -137,19 +172,29 @@ func (r Rule) Unless(b bool) Rule {
 
 // Once returns a Rule that executes the receiver only once.
 func (r Rule) Once() Rule {
+	if r == nil {
+		return nil
+	}
 	var once sync.Once
 	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+		ruleInvoked := false
 		once.Do(func() {
 			e, err = r(e, err, ch)
+			ruleInvoked = true
 		})
+		if !ruleInvoked {
+			e, err = ch(e, err)
+		}
 		return e, err
 	}
 }
 
-// Poll invokes the receiving Rule if the chan is readable (may be closed), otherwise it drops the event.
-// A nil chan will drop all events. May be useful, for example, when rate-limiting logged events.
+// Poll invokes the receiving Rule if the chan is readable (may be closed), otherwise it skips the rule.
+// A nil chan will always skip the rule. May be useful, for example, when rate-limiting logged events.
 func (r Rule) Poll(p <-chan struct{}) Rule {
-	// TODO(jdef): optimize for the case where p is nil (it always drops the events)
+	if p == nil || r == nil {
+		return nil
+	}
 	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
 		select {
 		case <-p:
@@ -158,8 +203,7 @@ func (r Rule) Poll(p <-chan struct{}) Rule {
 			// whereby this select is no longer invoked (and always pass control to r).
 			return r(e, err, ch)
 		default:
-			// drop
-			return ch(nil, err)
+			return ch(e, err)
 		}
 	}
 }
@@ -167,7 +211,7 @@ func (r Rule) Poll(p <-chan struct{}) Rule {
 // EveryN invokes the receiving rule beginning with the first event seen and then every n'th
 // time after that. If nthTime is less then 2 then this call is a noop (the receiver is returned).
 func (r Rule) EveryN(nthTime int) Rule {
-	if nthTime < 2 {
+	if nthTime < 2 || r == nil {
 		return r
 	}
 	var (
@@ -189,8 +233,19 @@ func (r Rule) EveryN(nthTime int) Rule {
 		if forward() {
 			return r(e, err, ch)
 		}
-		// else, drop
-		return ch(nil, err)
+		return ch(e, err)
+	}
+}
+
+// Drop aborts the Chain and returns the (*scheduler.Event, error) tuple as-is.
+func Drop() Rule {
+	return Rule(nil).ThenDrop()
+}
+
+// ThenDrop executes the receiving rule, but aborts the Chain, and returns the (*scheduler.Event, error) tuple as-is.
+func (r Rule) ThenDrop() Rule {
+	return func(e *scheduler.Event, err error, _ Chain) (*scheduler.Event, error) {
+		return r.Eval(e, err, chainIdentity)
 	}
 }
 
@@ -200,47 +255,14 @@ func DropOnError() Rule {
 }
 
 // DropOnError decorates a rule by pre-checking the error state: if the error state != nil then
-// the receiver is not invoked and (nil, err) is returned; otherwise control passes to the receiving
-// rule.
+// the receiver is not invoked and (e, err) is returned; otherwise control passes to the receiving rule.
 func (r Rule) DropOnError() Rule {
 	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
-		if err != nil || e == nil {
+		if err != nil {
 			return e, err
 		}
-		if r != nil {
-			return r(e, err, ch)
-		}
-		return ch(e, err)
+		return r.Eval(e, err, ch)
 	}
-}
-
-// NewChain returns a Chain that iterates through the given Rules, in order, stopping rule processing
-// for any of the following cases:
-//    - there are no more rules to process
-//    - the event has been zero'ed out (nil)
-// Any nil rules in the list are processed as skipped (noop's).
-func NewChain(rs Rules) Chain {
-	sz := len(rs)
-	if sz == 0 {
-		return chainIdentity
-	}
-	var (
-		i     = 0
-		chain Chain
-	)
-	chain = Chain(func(x *scheduler.Event, y error) (*scheduler.Event, error) {
-		i++
-		if i >= sz || x == nil {
-			// we're at the end, or DROP was issued (x==nil)
-			return x, y
-		} else if rs[i] != nil {
-			return rs[i](x, y, chain)
-		} else {
-			return chain(x, y)
-		}
-
-	})
-	return chain
 }
 
 // AndThen returns a list of rules, beginning with the receiver, followed by DropOnError, and then
@@ -256,14 +278,11 @@ func DropOnSuccess() Rule {
 
 func (r Rule) DropOnSuccess() Rule {
 	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
-		if e != nil && err == nil {
+		if err == nil {
 			// bypass remainder of chain
 			return e, err
 		}
-		if r != nil {
-			return r(e, err, ch)
-		}
-		return ch(e, err)
+		return r.Eval(e, err, ch)
 	}
 }
 

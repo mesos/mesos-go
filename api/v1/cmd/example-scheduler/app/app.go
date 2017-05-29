@@ -110,8 +110,7 @@ func trackOffersReceived(state *internalState) eventrules.Rule {
 		if err == nil {
 			state.metricsAPI.offersReceived.Int(len(e.GetOffers().GetOffers()))
 		}
-		return chain(e, nil)
-
+		return chain(e, err)
 	}
 }
 

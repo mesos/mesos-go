@@ -156,7 +156,7 @@ func maybeDeclineOffers(caller calls.Caller) eventrules.Rule {
 			// we shouldn't have received offers, maybe the prior suppress call failed?
 			err = calls.CallNoData(caller, calls.Suppress())
 		}
-		return nil, err // drop
+		return e, err // drop
 	}
 }
 

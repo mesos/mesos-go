@@ -152,7 +152,7 @@ func flatten(errors []error) ErrorList {
 	return ErrorList(result)
 }
 
-// TODO(jdef): other ideas for Rule decorators: When(func() bool), WhenNot(func() bool), OrElse(...Rule)
+// TODO(jdef): other ideas for Rule decorators: When(func() bool), WhenNot(func() bool)
 
 // If only executes the receiving rule if b is true; otherwise, the returned rule is a noop.
 func (r Rule) If(b bool) Rule {
@@ -246,6 +246,13 @@ func Drop() Rule {
 func (r Rule) ThenDrop() Rule {
 	return func(e *scheduler.Event, err error, _ Chain) (*scheduler.Event, error) {
 		return r.Eval(e, err, chainIdentity)
+	}
+}
+
+// Fail returns a Rule that injects the given error.
+func Fail(injected error) Rule {
+	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+		return ch(e, Error2(err, injected))
 	}
 }
 

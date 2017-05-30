@@ -244,7 +244,7 @@ func flatten(errors []error) ErrorList {
 	return ErrorList(result)
 }
 
-// TODO(jdef): other ideas for Rule decorators: When(func() bool), WhenNot(func() bool), OrElse(...Rule)
+// TODO(jdef): other ideas for Rule decorators: When(func() bool), WhenNot(func() bool)
 
 // If only executes the receiving rule if b is true; otherwise, the returned rule is a noop.
 func (r Rule) If(b bool) Rule {
@@ -338,6 +338,13 @@ func Drop() Rule {
 func (r Rule) ThenDrop() Rule {
 	return func(e {{.EventType}}, err error, _ Chain) ({{.EventType}}, error) {
 		return r.Eval(e, err, chainIdentity)
+	}
+}
+
+// Fail returns a Rule that injects the given error.
+func Fail(injected error) Rule {
+	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
+		return ch(e, Error2(err, injected))
 	}
 }
 
@@ -542,8 +549,6 @@ func TestAndThen(t *testing.T) {
 		r2   = Rule(nil).AndThen(counter(&i))
 		a    = errors.New("a")
 	)
-	// r1 should execute the counter rule
-	// r2 should NOT exexute the counter rule
 	for k, r := range []Rule{r1, r2} {
 		e, err := r(p, a, chainCounter(&j, chainIdentity))
 		if e != p {
@@ -554,6 +559,37 @@ func TestAndThen(t *testing.T) {
 		}
 		if i != 1 {
 			t.Errorf("expected count of 1 instead of %d", i)
+		}
+		if j != (k + 1) {
+			t.Errorf("expected chain count of %d instead of %d", (k + 1), j)
+		}
+	}
+}
+
+func TestOnFailure(t *testing.T) {
+	var (
+		i, j int
+		p    = prototype()
+		a    = errors.New("a")
+		r1   = counter(&i)
+		r2   = Fail(a).OnFailure(counter(&i))
+	)
+	for k, tc := range []struct {
+		r            Rule
+		initialError error
+	}{
+		{r1, a},
+		{r2, nil},
+	} {
+		e, err := tc.r(p, tc.initialError, chainCounter(&j, chainIdentity))
+		if e != p {
+			t.Errorf("expected event %q instead of %q", p, e)
+		}
+		if err != a {
+			t.Error("unexpected error", err)
+		}
+		if i != (k + 1) {
+			t.Errorf("expected count of %d instead of %d", (k + 1), i)
 		}
 		if j != (k + 1) {
 			t.Errorf("expected chain count of %d instead of %d", (k + 1), j)
@@ -586,6 +622,16 @@ func TestDropOnError(t *testing.T) {
 			t.Errorf("expected chain count of 1 instead of %d", j)
 		}
 	}
+	e, err := r2(p, nil, chainCounter(&j, chainIdentity))
+	if e != p {
+		t.Errorf("expected event %q instead of %q", p, e)
+	}
+	if err != nil {
+		t.Error("unexpected error", err)
+	}
+	if j != 2 {
+		t.Errorf("expected chain count of 2 instead of %d", j)
+	}
 }
 
 func TestDropOnSuccess(t *testing.T) {
@@ -611,6 +657,35 @@ func TestDropOnSuccess(t *testing.T) {
 		if j != 1 {
 			t.Errorf("expected chain count of 1 instead of %d", j)
 		}
+	}
+	a := errors.New("a")
+	e, err := r2(p, a, chainCounter(&j, chainIdentity))
+	if e != p {
+		t.Errorf("expected event %q instead of %q", p, e)
+	}
+	if err != a {
+		t.Error("unexpected error", err)
+	}
+	if i != 2 {
+		t.Errorf("expected count of 2 instead of %d", i)
+	}
+	if j != 2 {
+		t.Errorf("expected chain count of 2 instead of %d", j)
+	}
+
+	r3 := Rules{DropOnSuccess(), r1}.Eval
+	e, err = r3(p, nil, chainCounter(&j, chainIdentity))
+	if e != p {
+		t.Errorf("expected event %q instead of %q", p, e)
+	}
+	if err != nil {
+		t.Error("unexpected error", err)
+	}
+	if i != 2 {
+		t.Errorf("expected count of 2 instead of %d", i)
+	}
+	if j != 3 {
+		t.Errorf("expected chain count of 3 instead of %d", j)
 	}
 }
 

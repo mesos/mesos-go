@@ -1,6 +1,8 @@
 package calls
 
 import (
+	"context"
+
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 )
@@ -9,11 +11,11 @@ import (
 type (
 	Caller interface {
 		// Call issues a call to Mesos and properly manages call-specific HTTP response headers & data.
-		Call(*scheduler.Call) (mesos.Response, error)
+		Call(context.Context, *scheduler.Call) (mesos.Response, error)
 	}
 
 	// CallerFunc is the functional adaptation of the Caller interface
-	CallerFunc func(*scheduler.Call) (mesos.Response, error)
+	CallerFunc func(context.Context, *scheduler.Call) (mesos.Response, error)
 
 	// Decorator funcs usually return a Caller whose behavior has been somehow modified
 	Decorator func(Caller) Caller
@@ -23,7 +25,9 @@ type (
 )
 
 // Call implements the Caller interface for CallerFunc
-func (f CallerFunc) Call(c *scheduler.Call) (mesos.Response, error) { return f(c) }
+func (f CallerFunc) Call(ctx context.Context, c *scheduler.Call) (mesos.Response, error) {
+	return f(ctx, c)
+}
 
 // Apply is a convenient, nil-safe applicator that returns the result of d(c) iff d != nil; otherwise c
 func (d Decorator) Apply(c Caller) (result Caller) {
@@ -79,9 +83,9 @@ func (ds Decorators) Combine() (result Decorator) {
 // Deprecated in favor of SubscribedCaller; should remove after v0.0.3.
 func FrameworkCaller(frameworkID string) Decorator {
 	return func(h Caller) Caller {
-		return CallerFunc(func(c *scheduler.Call) (mesos.Response, error) {
+		return CallerFunc(func(ctx context.Context, c *scheduler.Call) (mesos.Response, error) {
 			c.FrameworkID = &mesos.FrameworkID{Value: frameworkID}
-			return h.Call(c)
+			return h.Call(ctx, c)
 		})
 	}
 }
@@ -91,14 +95,14 @@ func FrameworkCaller(frameworkID string) Decorator {
 //   - calls are not modified when the generated framework ID is ""
 func SubscribedCaller(frameworkID func() string) Decorator {
 	return func(h Caller) Caller {
-		return CallerFunc(func(c *scheduler.Call) (mesos.Response, error) {
+		return CallerFunc(func(ctx context.Context, c *scheduler.Call) (mesos.Response, error) {
 			// never overwrite framework ID for subscribe calls; the scheduler must do that part
 			if c.GetType() != scheduler.Call_SUBSCRIBE {
 				if fid := frameworkID(); fid != "" {
 					c.FrameworkID = &mesos.FrameworkID{Value: fid}
 				}
 			}
-			return h.Call(c)
+			return h.Call(ctx, c)
 		})
 	}
 }
@@ -107,8 +111,8 @@ var noopDecorator = Decorator(func(h Caller) Caller { return h })
 
 // CallNoData is a convenience func that executes the given Call using the provided Caller
 // and always drops the response data.
-func CallNoData(caller Caller, call *scheduler.Call) error {
-	resp, err := caller.Call(call)
+func CallNoData(ctx context.Context, caller Caller, call *scheduler.Call) error {
+	resp, err := caller.Call(ctx, call)
 	if resp != nil {
 		resp.Close()
 	}

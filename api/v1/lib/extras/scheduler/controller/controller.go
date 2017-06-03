@@ -111,7 +111,7 @@ func Run(ctx context.Context, framework *mesos.FrameworkInfo, caller calls.Calle
 				return ctx.Err()
 			}
 		}
-		resp, err := caller.Call(subscribe)
+		resp, err := caller.Call(ctx, subscribe)
 		lastErr = processSubscription(ctx, config, resp, err)
 		if config.subscriptionTerminated != nil {
 			config.subscriptionTerminated(lastErr)

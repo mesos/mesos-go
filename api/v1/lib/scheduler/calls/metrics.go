@@ -1,6 +1,9 @@
 package calls
 
+// TODO(jdef): move this code to the extras tree, it doesn't belong here
+
 import (
+	"context"
 	"strings"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
@@ -11,10 +14,10 @@ import (
 func CallerMetrics(harness xmetrics.Harness) Decorator {
 	return func(caller Caller) (metricsCaller Caller) {
 		if caller != nil {
-			metricsCaller = CallerFunc(func(c *scheduler.Call) (res mesos.Response, err error) {
+			metricsCaller = CallerFunc(func(ctx context.Context, c *scheduler.Call) (res mesos.Response, err error) {
 				typename := strings.ToLower(c.GetType().String())
 				harness(func() error {
-					res, err = caller.Call(c)
+					res, err = caller.Call(ctx, c)
 					return err // need to count these
 				}, typename)
 				return

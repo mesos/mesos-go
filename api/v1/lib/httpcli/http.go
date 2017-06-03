@@ -2,6 +2,7 @@ package httpcli
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -315,6 +316,14 @@ func Header(k, v string) RequestOpt { return func(r *http.Request) { r.Header.Ad
 
 // Close returns a RequestOpt that determines whether to close the underlying connection after sending the request.
 func Close(b bool) RequestOpt { return func(r *http.Request) { r.Close = b } }
+
+// Context returns a RequestOpt that sets the request's Context (ctx must be non-nil)
+func Context(ctx context.Context) RequestOpt {
+	return func(r *http.Request) {
+		r2 := r.WithContext(ctx)
+		*r = *r2
+	}
+}
 
 type Config struct {
 	client    *http.Client

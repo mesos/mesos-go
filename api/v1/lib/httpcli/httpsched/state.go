@@ -1,6 +1,7 @@
 package httpsched
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -42,7 +43,7 @@ type (
 		err  error           // err is the error from the most recently executed call
 	}
 
-	stateFn func(*state) stateFn
+	stateFn func(context.Context, *state) stateFn
 )
 
 func maybeLogged(f httpcli.DoFunc) httpcli.DoFunc {
@@ -108,7 +109,7 @@ func disconnectionDecoder(decoder encoding.Decoder, disconnect func()) encoding.
 	})
 }
 
-func disconnectedFn(state *state) stateFn {
+func disconnectedFn(ctx context.Context, state *state) stateFn {
 	// (a) validate call = SUBSCRIBE
 	if state.call.GetType() != scheduler.Call_SUBSCRIBE {
 		state.resp = nil
@@ -144,7 +145,7 @@ func disconnectedFn(state *state) stateFn {
 	)
 
 	// (c) execute the call, save the result in resp, err
-	stateResp, stateErr := subscribeCaller.Call(state.call)
+	stateResp, stateErr := subscribeCaller.Call(ctx, state.call)
 	state.err = stateErr
 
 	// (d) if err != nil return disconnectedFn since we're unsubscribed
@@ -198,7 +199,7 @@ func errorIndicatesSubscriptionLoss(err error) (result bool) {
 	return
 }
 
-func connectedFn(state *state) stateFn {
+func connectedFn(ctx context.Context, state *state) stateFn {
 	// (a) validate call != SUBSCRIBE
 	if state.call.GetType() == scheduler.Call_SUBSCRIBE {
 		state.resp = nil
@@ -216,7 +217,7 @@ func connectedFn(state *state) stateFn {
 	}
 
 	// (b) execute call, save the result in resp, err
-	state.resp, state.err = state.caller.Call(state.call)
+	state.resp, state.err = state.caller.Call(ctx, state.call)
 
 	if errorIndicatesSubscriptionLoss(state.err) {
 		// properly transition back to a disconnected state if mesos thinks that we're unsubscribed
@@ -227,11 +228,11 @@ func connectedFn(state *state) stateFn {
 	return connectedFn
 }
 
-func (state *state) Call(call *scheduler.Call) (resp mesos.Response, err error) {
+func (state *state) Call(ctx context.Context, call *scheduler.Call) (resp mesos.Response, err error) {
 	state.m.Lock()
 	defer state.m.Unlock()
 	state.call = call
-	state.fn = state.fn(state)
+	state.fn = state.fn(ctx, state)
 
 	if debug && state.err != nil {
 		log.Print(*call, state.err)

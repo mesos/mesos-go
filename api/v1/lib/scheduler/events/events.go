@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"sync"
 
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 )
@@ -31,13 +30,6 @@ type (
 	// Option is a functional configuration option that returns an "undo" option that
 	// reverts the change made by the option.
 	Option func(*Mux) Option
-
-	// Handlers aggregates Handler things
-	Handlers []Handler
-
-	Predicate interface {
-		Predicate() scheduler.EventPredicate
-	}
 )
 
 // HandleEvent implements Handler for HandlerFunc
@@ -159,48 +151,4 @@ func DefaultHandler(eh Handler) Option {
 		m.defaultHandler = eh
 		return DefaultHandler(old)
 	}
-}
-
-// When
-// Deprecated in favor of Rules.
-func Once(h Handler) Handler {
-	var once sync.Once
-	return HandlerFunc(func(ctx context.Context, e *scheduler.Event) (err error) {
-		once.Do(func() {
-			err = h.HandleEvent(ctx, e)
-		})
-		return
-	})
-}
-
-// When
-// Deprecated in favor of Rules.
-func OnceFunc(h HandlerFunc) Handler { return Once(h) }
-
-// When
-// Deprecated in favor of Rules.
-func When(p Predicate, h Handler) Handler {
-	return HandlerFunc(func(ctx context.Context, e *scheduler.Event) (err error) {
-		if p.Predicate().Apply(e) {
-			err = h.HandleEvent(ctx, e)
-		}
-		return
-	})
-}
-
-// WhenFunc
-// Deprecated in favor of Rules.
-func WhenFunc(p Predicate, h HandlerFunc) Handler { return When(p, h) }
-
-// HandleEvent implements Handler for Handlers.
-// Deprecated in favor of Rules.
-func (hs Handlers) HandleEvent(ctx context.Context, e *scheduler.Event) (err error) {
-	for _, h := range hs {
-		if h != nil {
-			if err = h.HandleEvent(ctx, e); err != nil {
-				break
-			}
-		}
-	}
-	return
 }

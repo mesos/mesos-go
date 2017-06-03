@@ -11,6 +11,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	xmetrics "github.com/mesos/mesos-go/api/v1/lib/extras/metrics"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/callrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
@@ -43,25 +44,25 @@ func Run(cfg Config) error {
 	// probably tolerate X number of subsequent subscribe failures before bailing. we'll need
 	// to track the lastCallAttempted along with subsequentSubscribeTimeouts.
 
-	frameworkIDStore := store.DecorateSingleton(
+	fidStore := store.DecorateSingleton(
 		store.NewInMemorySingleton(),
 		store.DoSet().AndThen(func(_ store.Setter, v string, _ error) error {
 			log.Println("FrameworkID", v)
 			return nil
 		}))
 
-	state.cli = calls.Decorators{
-		callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+	state.cli = callrules.Concat(
+		callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
 		logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
-		calls.SubscribedCaller(store.GetIgnoreErrors(frameworkIDStore)), // automatically set the frameworkID for all outgoing calls
-	}.Apply(state.cli)
+		callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+	).Caller(state.cli)
 
 	err = controller.Run(
 		ctx,
 		buildFrameworkInfo(state.config),
 		state.cli,
-		controller.WithEventHandler(buildEventHandler(state, frameworkIDStore)),
-		controller.WithFrameworkID(store.GetIgnoreErrors(frameworkIDStore)),
+		controller.WithEventHandler(buildEventHandler(state, fidStore)),
+		controller.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
 		controller.WithRegistrationTokens(
 			backoff.Notifier(RegistrationMinBackoff, RegistrationMaxBackoff, ctx.Done()),
 		),
@@ -85,12 +86,12 @@ func Run(cfg Config) error {
 }
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.
-func buildEventHandler(state *internalState, frameworkIDStore store.Singleton) events.Handler {
+func buildEventHandler(state *internalState, fidStore store.Singleton) events.Handler {
 	// disable brief logs when verbose logs are enabled (there's no sense logging twice!)
 	logger := controller.LogEvents().Unless(state.config.verbose)
 	return eventrules.Concat(
-		eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
 		logAllEvents().If(state.config.verbose),
+		eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
 		controller.LiftErrors().DropOnError(),
 	).Handle(events.HandlerSet{
 		scheduler.Event_FAILURE: logger.HandleF(failure),
@@ -98,7 +99,7 @@ func buildEventHandler(state *internalState, frameworkIDStore store.Singleton) e
 		scheduler.Event_UPDATE:  controller.AckStatusUpdates(state.cli).AndThen().HandleF(statusUpdate(state)),
 		scheduler.Event_SUBSCRIBED: eventrules.Concat(
 			logger,
-			controller.TrackSubscription(frameworkIDStore, state.config.failoverTimeout),
+			controller.TrackSubscription(fidStore, state.config.failoverTimeout),
 		),
 	})
 }
@@ -288,23 +289,21 @@ func eventMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics 
 }
 
 // callMetrics logs metrics for every outgoing Mesos call
-func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics bool) calls.Decorator {
+func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics bool) callrules.Rule {
 	timed := metricsAPI.callLatency
 	if !timingMetrics {
 		timed = nil
 	}
 	harness := xmetrics.NewHarness(metricsAPI.callCount, metricsAPI.callErrorCount, timed, clock)
-	return calls.CallerMetrics(harness)
+	return callrules.Metrics(harness)
 }
 
 // logCalls logs a specific message string when a particular call-type is observed
-func logCalls(messages map[scheduler.Call_Type]string) calls.Decorator {
-	return func(caller calls.Caller) calls.Caller {
-		return calls.CallerFunc(func(ctx context.Context, c *scheduler.Call) (mesos.Response, error) {
-			if message, ok := messages[c.GetType()]; ok {
-				log.Println(message)
-			}
-			return caller.Call(ctx, c)
-		})
+func logCalls(messages map[scheduler.Call_Type]string) callrules.Rule {
+	return func(ctx context.Context, c *scheduler.Call, r mesos.Response, err error, ch callrules.Chain) (context.Context, *scheduler.Call, mesos.Response, error) {
+		if message, ok := messages[c.GetType()]; ok {
+			log.Println(message)
+		}
+		return ch(ctx, c, r, err)
 	}
 }

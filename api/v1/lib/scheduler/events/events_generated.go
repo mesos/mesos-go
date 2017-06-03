@@ -1,5 +1,8 @@
 package events
 
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/scheduler -event_type *scheduler.Event
+// GENERATED CODE FOLLOWS; DO NOT EDIT.
+
 import (
 	"context"
 

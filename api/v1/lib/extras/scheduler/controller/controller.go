@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"context"
+
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
@@ -14,7 +16,6 @@ type (
 
 	// Config is an opaque controller configuration. Properties are configured by applying Option funcs.
 	Config struct {
-		doneFunc               func() bool
 		frameworkIDFunc        func() string
 		handler                events.Handler
 		registrationTokens     <-chan struct{}
@@ -42,16 +43,6 @@ func WithFrameworkID(frameworkIDFunc func() string) Option {
 		old := c.frameworkIDFunc
 		c.frameworkIDFunc = frameworkIDFunc
 		return WithFrameworkID(old)
-	}
-}
-
-// WithDone sets a fetcher func that returns true when the controller should exit.
-// doneFunc is optional; nil equates to a func that always returns false.
-func WithDone(doneFunc func() bool) Option {
-	return func(c *Config) Option {
-		old := c.doneFunc
-		c.doneFunc = doneFunc
-		return WithDone(old)
 	}
 }
 
@@ -84,12 +75,19 @@ func (c *Config) tryFrameworkID() (result string) {
 	return
 }
 
-func (c *Config) tryDone() (result bool) { return c.doneFunc != nil && c.doneFunc() }
+func isDone(ctx context.Context) (result bool) {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
+	}
+}
 
 // Run executes a control loop that registers a framework with Mesos and processes the scheduler events
 // that flow through the subscription. Upon disconnection, if the current configuration reports "not done"
 // then the controller will attempt to re-register the framework and continue processing events.
-func Run(framework *mesos.FrameworkInfo, caller calls.Caller, options ...Option) (lastErr error) {
+func Run(ctx context.Context, framework *mesos.FrameworkInfo, caller calls.Caller, options ...Option) (lastErr error) {
 	var config Config
 	for _, opt := range options {
 		if opt != nil {
@@ -100,16 +98,21 @@ func Run(framework *mesos.FrameworkInfo, caller calls.Caller, options ...Option)
 		config.handler = DefaultHandler
 	}
 	subscribe := calls.Subscribe(framework)
-	for !config.tryDone() {
+	for !isDone(ctx) {
 		frameworkID := config.tryFrameworkID()
 		if framework.GetFailoverTimeout() > 0 && frameworkID != "" {
 			subscribe.With(calls.SubscribeTo(frameworkID))
 		}
 		if config.registrationTokens != nil {
-			<-config.registrationTokens
+			select {
+			case <-config.registrationTokens:
+				// continue
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		}
 		resp, err := caller.Call(subscribe)
-		lastErr = processSubscription(config, resp, err)
+		lastErr = processSubscription(ctx, config, resp, err)
 		if config.subscriptionTerminated != nil {
 			config.subscriptionTerminated(lastErr)
 		}
@@ -117,23 +120,23 @@ func Run(framework *mesos.FrameworkInfo, caller calls.Caller, options ...Option)
 	return
 }
 
-func processSubscription(config Config, resp mesos.Response, err error) error {
+func processSubscription(ctx context.Context, config Config, resp mesos.Response, err error) error {
 	if resp != nil {
 		defer resp.Close()
 	}
 	if err == nil {
-		err = eventLoop(config, resp)
+		err = eventLoop(ctx, config, resp)
 	}
 	return err
 }
 
 // eventLoop returns the framework ID received by mesos (if any); callers should check for a
 // framework ID regardless of whether error != nil.
-func eventLoop(config Config, eventDecoder encoding.Decoder) (err error) {
-	for err == nil && !config.tryDone() {
+func eventLoop(ctx context.Context, config Config, eventDecoder encoding.Decoder) (err error) {
+	for err == nil && !isDone(ctx) {
 		var e scheduler.Event
 		if err = eventDecoder.Decode(&e); err == nil {
-			err = config.handler.HandleEvent(&e)
+			err = config.handler.HandleEvent(ctx, &e)
 		}
 	}
 	return err

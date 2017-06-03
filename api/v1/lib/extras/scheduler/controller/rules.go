@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -21,17 +22,17 @@ func (e ErrEvent) Error() string {
 // LiftErrors extract the error message from a scheduler error event and returns it as an ErrEvent
 // so that downstream rules/handlers may continue processing.
 func LiftErrors() Rule {
-	return func(e *scheduler.Event, err error, chain Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, chain Chain) (context.Context, *scheduler.Event, error) {
 		if err != nil {
-			return chain(e, err)
+			return chain(ctx, e, err)
 		}
 		if e.GetType() == scheduler.Event_ERROR {
 			// it's recommended that we abort and re-try subscribing; returning an
 			// error here will cause the event loop to terminate and the connection
 			// will be reset.
-			return chain(e, ErrEvent(e.GetError().GetMessage()))
+			return chain(ctx, e, ErrEvent(e.GetError().GetMessage()))
 		}
-		return chain(e, nil)
+		return chain(ctx, e, nil)
 	}
 }
 
@@ -42,9 +43,9 @@ type StateError string
 func (err StateError) Error() string { return string(err) }
 
 func TrackSubscription(frameworkIDStore store.Singleton, failoverTimeout time.Duration) Rule {
-	return func(e *scheduler.Event, err error, chain Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, chain Chain) (context.Context, *scheduler.Event, error) {
 		if err != nil {
-			return chain(e, err)
+			return chain(ctx, e, err)
 		}
 		if e.GetType() == scheduler.Event_SUBSCRIBED {
 			var (
@@ -52,22 +53,22 @@ func TrackSubscription(frameworkIDStore store.Singleton, failoverTimeout time.Du
 				frameworkID            = e.GetSubscribed().GetFrameworkID().GetValue()
 			)
 			if err != nil && err != store.ErrNotFound {
-				return chain(e, err)
+				return chain(ctx, e, err)
 			}
 			// order of `if` statements are important: tread carefully w/ respect to future changes
 			if frameworkID == "" {
 				// sanity check, should **never** happen
-				return chain(e, StateError("mesos sent an empty frameworkID?!"))
+				return chain(ctx, e, StateError("mesos sent an empty frameworkID?!"))
 			}
 			if storedFrameworkID != "" && storedFrameworkID != frameworkID && failoverTimeout > 0 {
-				return chain(e, StateError(fmt.Sprintf(
+				return chain(ctx, e, StateError(fmt.Sprintf(
 					"frameworkID changed unexpectedly; failover exceeded timeout? (%s).", failoverTimeout)))
 			}
 			if storedFrameworkID != frameworkID {
 				frameworkIDStore.Set(frameworkID)
 			}
 		}
-		return chain(e, nil)
+		return chain(ctx, e, nil)
 	}
 }
 
@@ -81,7 +82,7 @@ func AckStatusUpdates(caller calls.Caller) Rule {
 // AckStatusUpdatesF is a functional adapter for AckStatusUpdates, useful for cases where the caller may
 // change over time. An error that occurs while ack'ing the status update is returned as a calls.AckError.
 func AckStatusUpdatesF(callerLookup func() calls.Caller) Rule {
-	return func(e *scheduler.Event, err error, chain Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, chain Chain) (context.Context, *scheduler.Event, error) {
 		// aggressively attempt to ack updates: even if there's pre-existing error state attempt
 		// to acknowledge all status updates.
 		origErr := err
@@ -104,11 +105,11 @@ func AckStatusUpdatesF(callerLookup func() calls.Caller) Rule {
 					// Mesos will ask us to ACK anyway -- why pay special attention to these
 					// call failures vs others?
 					err = &calls.AckError{Ack: ack, Cause: err}
-					return nil, Error2(origErr, err) // drop
+					return ctx, e, Error2(origErr, err) // drop (do not propagate to chain)
 				}
 			}
 		}
-		return chain(e, origErr)
+		return chain(ctx, e, origErr)
 	}
 }
 
@@ -121,8 +122,8 @@ var (
 
 // LogEvents returns a rule that logs scheduler events to the EventLogger
 func LogEvents() Rule {
-	return Rule(func(e *scheduler.Event, err error, chain Chain) (*scheduler.Event, error) {
+	return Rule(func(ctx context.Context, e *scheduler.Event, err error, chain Chain) (context.Context, *scheduler.Event, error) {
 		EventLogger(e)
-		return chain(e, err)
+		return chain(ctx, e, err)
 	})
 }

@@ -4,6 +4,7 @@ package eventrules
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -11,23 +12,23 @@ import (
 )
 
 type (
-	iface interface {
+	evaler interface {
 		// Eval executes a filter, rule, or decorator function; if the returned event is nil then
 		// no additional rule evaluation should be processed for the event.
 		// Eval implementations should not modify the given event parameter (to avoid side effects).
 		// If changes to the event object are needed, the suggested approach is to make a copy,
 		// modify the copy, and pass the copy to the chain.
 		// Eval implementations SHOULD be safe to execute concurrently.
-		Eval(*scheduler.Event, error, Chain) (*scheduler.Event, error)
+		Eval(context.Context, *scheduler.Event, error, Chain) (context.Context, *scheduler.Event, error)
 	}
 
-	// Rule is the functional adaptation of iface.
+	// Rule is the functional adaptation of evaler.
 	// A nil Rule is valid: it is Eval'd as a noop.
-	Rule func(*scheduler.Event, error, Chain) (*scheduler.Event, error)
+	Rule func(context.Context, *scheduler.Event, error, Chain) (context.Context, *scheduler.Event, error)
 
 	// Chain is invoked by a Rule to continue processing an event. If the chain is not invoked,
 	// no additional rules are processed.
-	Chain func(*scheduler.Event, error) (*scheduler.Event, error)
+	Chain func(context.Context, *scheduler.Event, error) (context.Context, *scheduler.Event, error)
 
 	// Rules is a list of rules to be processed, in order.
 	Rules []Rule
@@ -39,37 +40,37 @@ type (
 )
 
 var (
-	_ = iface(Rule(nil))
-	_ = iface(Rules{})
+	_ = evaler(Rule(nil))
+	_ = evaler(Rules{})
 
 	// chainIdentity is a Chain that returns the arguments as its results.
-	chainIdentity = func(e *scheduler.Event, err error) (*scheduler.Event, error) {
-		return e, err
+	chainIdentity = func(ctx context.Context, e *scheduler.Event, err error) (context.Context, *scheduler.Event, error) {
+		return ctx, e, err
 	}
 )
 
 // Eval is a convenience func that processes a nil Rule as a noop.
-func (r Rule) Eval(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+func (r Rule) Eval(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
 	if r != nil {
-		return r(e, err, ch)
+		return r(ctx, e, err, ch)
 	}
-	return ch(e, err)
+	return ch(ctx, e, err)
 }
 
 // Eval is a Rule func that processes the set of all Rules. If there are no rules in the
 // set then control is simply passed to the Chain.
-func (rs Rules) Eval(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
-	return ch(rs.Chain()(e, err))
+func (rs Rules) Eval(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
+	return ch(rs.Chain()(ctx, e, err))
 }
 
-// Chain returns a Chain that evaluates the given Rules, in order, propagating the (*scheduler.Event, error)
+// Chain returns a Chain that evaluates the given Rules, in order, propagating the (context.Context, *scheduler.Event, error)
 // from Rule to Rule. Chain is safe to invoke concurrently.
 func (rs Rules) Chain() Chain {
 	if len(rs) == 0 {
 		return chainIdentity
 	}
-	return func(e *scheduler.Event, err error) (*scheduler.Event, error) {
-		return rs[0].Eval(e, err, rs[1:].Chain())
+	return func(ctx context.Context, e *scheduler.Event, err error) (context.Context, *scheduler.Event, error) {
+		return rs[0].Eval(ctx, e, err, rs[1:].Chain())
 	}
 }
 
@@ -176,16 +177,16 @@ func (r Rule) Once() Rule {
 		return nil
 	}
 	var once sync.Once
-	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
 		ruleInvoked := false
 		once.Do(func() {
-			e, err = r(e, err, ch)
+			ctx, e, err = r(ctx, e, err, ch)
 			ruleInvoked = true
 		})
 		if !ruleInvoked {
-			e, err = ch(e, err)
+			ctx, e, err = ch(ctx, e, err)
 		}
-		return e, err
+		return ctx, e, err
 	}
 }
 
@@ -195,15 +196,15 @@ func (r Rule) Poll(p <-chan struct{}) Rule {
 	if p == nil || r == nil {
 		return nil
 	}
-	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
 		select {
 		case <-p:
 			// do something
 			// TODO(jdef): optimization: if we detect the chan is closed, affect a state change
 			// whereby this select is no longer invoked (and always pass control to r).
-			return r(e, err, ch)
+			return r(ctx, e, err, ch)
 		default:
-			return ch(e, err)
+			return ch(ctx, e, err)
 		}
 	}
 }
@@ -229,30 +230,30 @@ func (r Rule) EveryN(nthTime int) Rule {
 			return false
 		}
 	)
-	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
 		if forward() {
-			return r(e, err, ch)
+			return r(ctx, e, err, ch)
 		}
-		return ch(e, err)
+		return ch(ctx, e, err)
 	}
 }
 
-// Drop aborts the Chain and returns the (*scheduler.Event, error) tuple as-is.
+// Drop aborts the Chain and returns the (context.Context, *scheduler.Event, error) tuple as-is.
 func Drop() Rule {
 	return Rule(nil).ThenDrop()
 }
 
-// ThenDrop executes the receiving rule, but aborts the Chain, and returns the (*scheduler.Event, error) tuple as-is.
+// ThenDrop executes the receiving rule, but aborts the Chain, and returns the (context.Context, *scheduler.Event, error) tuple as-is.
 func (r Rule) ThenDrop() Rule {
-	return func(e *scheduler.Event, err error, _ Chain) (*scheduler.Event, error) {
-		return r.Eval(e, err, chainIdentity)
+	return func(ctx context.Context, e *scheduler.Event, err error, _ Chain) (context.Context, *scheduler.Event, error) {
+		return r.Eval(ctx, e, err, chainIdentity)
 	}
 }
 
 // Fail returns a Rule that injects the given error.
 func Fail(injected error) Rule {
-	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
-		return ch(e, Error2(err, injected))
+	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
+		return ch(ctx, e, Error2(err, injected))
 	}
 }
 
@@ -264,11 +265,11 @@ func DropOnError() Rule {
 // DropOnError decorates a rule by pre-checking the error state: if the error state != nil then
 // the receiver is not invoked and (e, err) is returned; otherwise control passes to the receiving rule.
 func (r Rule) DropOnError() Rule {
-	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
 		if err != nil {
-			return e, err
+			return ctx, e, err
 		}
-		return r.Eval(e, err, ch)
+		return r.Eval(ctx, e, err, ch)
 	}
 }
 
@@ -284,12 +285,12 @@ func DropOnSuccess() Rule {
 }
 
 func (r Rule) DropOnSuccess() Rule {
-	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
 		if err == nil {
 			// bypass remainder of chain
-			return e, err
+			return ctx, e, err
 		}
-		return r.Eval(e, err, ch)
+		return r.Eval(ctx, e, err, ch)
 	}
 }
 

@@ -11,7 +11,7 @@ import (
 func Metrics(harness metrics.Harness) Rule {
 	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
 		typename := strings.ToLower(e.GetType().String())
-		err = harness(func() error {
+		harness(func() error {
 			ctx, e, err = ch(ctx, e, err)
 			return err
 		}, typename)

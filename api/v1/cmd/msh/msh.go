@@ -21,6 +21,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/callrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/offers"
@@ -45,7 +46,7 @@ var (
 	CPUs          = float64(0.010)
 	Memory        = float64(64)
 
-	frameworkIDStore   store.Singleton
+	fidStore           store.Singleton
 	declineAndSuppress bool
 	refuseSeconds      = calls.RefuseSeconds(5 * time.Second)
 	wantsResources     mesos.Resources
@@ -60,7 +61,7 @@ func init() {
 	flag.Float64Var(&CPUs, "cpus", CPUs, "CPU resources to allocate for the remote command")
 	flag.Float64Var(&Memory, "memory", Memory, "Memory resources to allocate for the remote command")
 
-	frameworkIDStore = store.DecorateSingleton(
+	fidStore = store.DecorateSingleton(
 		store.NewInMemorySingleton(),
 		store.DoSet().AndThen(func(_ store.Setter, v string, _ error) error {
 			log.Println("FrameworkID", v)
@@ -106,9 +107,7 @@ func main() {
 func run() error {
 	var (
 		ctx, cancel = context.WithCancel(context.Background())
-		caller      = calls.Decorators{
-			calls.SubscribedCaller(store.GetIgnoreErrors(frameworkIDStore)),
-		}.Apply(buildClient())
+		caller      = callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)).Caller(buildClient())
 	)
 
 	return controller.Run(
@@ -116,7 +115,7 @@ func run() error {
 		&mesos.FrameworkInfo{User: User, Name: FrameworkName, Role: (*string)(&Role)},
 		caller,
 		controller.WithEventHandler(buildEventHandler(caller)),
-		controller.WithFrameworkID(store.GetIgnoreErrors(frameworkIDStore)),
+		controller.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
 		controller.WithSubscriptionTerminated(func(err error) {
 			defer cancel()
 			if err == io.EOF {
@@ -136,7 +135,7 @@ func buildEventHandler(caller calls.Caller) events.Handler {
 	logger := controller.LogEvents()
 	return controller.LiftErrors().Handle(events.HandlerSet{
 		scheduler.Event_FAILURE:    logger,
-		scheduler.Event_SUBSCRIBED: eventrules.Rules{logger, controller.TrackSubscription(frameworkIDStore, 0)},
+		scheduler.Event_SUBSCRIBED: eventrules.Rules{logger, controller.TrackSubscription(fidStore, 0)},
 		scheduler.Event_OFFERS:     maybeDeclineOffers(caller).AndThen().Handle(resourceOffers(caller)),
 		scheduler.Event_UPDATE:     controller.AckStatusUpdates(caller).AndThen().HandleF(statusUpdate),
 	})

@@ -7,7 +7,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
 )
 
-// Handler generates a rule that executes the given handler.
+// Handle generates a rule that executes the given handler.
 func Handle(h events.Handler) Rule {
 	if h == nil {
 		return nil
@@ -19,11 +19,11 @@ func Handle(h events.Handler) Rule {
 }
 
 // HandleF is the functional equivalent of Handle
-func HandleF(ctx context.Context, h events.HandlerFunc) Rule {
+func HandleF(h events.HandlerFunc) Rule {
 	return Handle(events.Handler(h))
 }
 
-// Handler returns a rule that invokes the given Handler
+// Handle returns a Rule that invokes the receiver, then the given Handler
 func (r Rule) Handle(h events.Handler) Rule {
 	return Rules{r, Handle(h)}.Eval
 }

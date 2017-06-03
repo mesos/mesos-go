@@ -98,7 +98,7 @@ func AckStatusUpdatesF(callerLookup func() calls.Caller) Rule {
 					s.TaskID.Value,
 					uuid,
 				)
-				err = calls.CallNoData(callerLookup(), ack)
+				err = calls.CallNoData(ctx, callerLookup(), ack)
 				if err != nil {
 					// TODO(jdef): not sure how important this is; if there's an error ack'ing
 					// because we beacame disconnected, then we'll just reconnect later and

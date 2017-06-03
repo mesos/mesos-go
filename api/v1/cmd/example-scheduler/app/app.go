@@ -137,7 +137,7 @@ func failure(_ context.Context, e *scheduler.Event) error {
 }
 
 func resourceOffers(state *internalState) events.HandlerFunc {
-	return func(_ context.Context, e *scheduler.Event) error {
+	return func(ctx context.Context, e *scheduler.Event) error {
 		var (
 			offers                 = e.GetOffers().GetOffers()
 			callOption             = calls.RefuseSecondsWithJitter(state.random, state.config.maxRefuseSeconds)
@@ -201,7 +201,7 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 			).With(callOption)
 
 			// send Accept call to mesos
-			err := calls.CallNoData(state.cli, accept)
+			err := calls.CallNoData(ctx, state.cli, accept)
 			if err != nil {
 				log.Printf("failed to launch tasks: %+v", err)
 			} else {
@@ -222,7 +222,7 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 }
 
 func statusUpdate(state *internalState) events.HandlerFunc {
-	return func(_ context.Context, e *scheduler.Event) error {
+	return func(ctx context.Context, e *scheduler.Event) error {
 		s := e.GetUpdate().GetStatus()
 		if state.config.verbose {
 			msg := "Task " + s.TaskID.Value + " is in state " + s.GetState().String()
@@ -241,7 +241,7 @@ func statusUpdate(state *internalState) events.HandlerFunc {
 				log.Println("mission accomplished, terminating")
 				state.shutdown()
 			} else {
-				tryReviveOffers(state)
+				tryReviveOffers(ctx, state)
 			}
 
 		case mesos.TASK_LOST, mesos.TASK_KILLED, mesos.TASK_FAILED, mesos.TASK_ERROR:
@@ -256,12 +256,12 @@ func statusUpdate(state *internalState) events.HandlerFunc {
 	}
 }
 
-func tryReviveOffers(state *internalState) {
+func tryReviveOffers(ctx context.Context, state *internalState) {
 	// limit the rate at which we request offer revival
 	select {
 	case <-state.reviveTokens:
 		// not done yet, revive offers!
-		err := calls.CallNoData(state.cli, calls.Revive())
+		err := calls.CallNoData(ctx, state.cli, calls.Revive())
 		if err != nil {
 			log.Printf("failed to revive offers: %+v", err)
 			return
@@ -302,11 +302,11 @@ func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics b
 // logCalls logs a specific message string when a particular call-type is observed
 func logCalls(messages map[scheduler.Call_Type]string) calls.Decorator {
 	return func(caller calls.Caller) calls.Caller {
-		return calls.CallerFunc(func(c *scheduler.Call) (mesos.Response, error) {
+		return calls.CallerFunc(func(ctx context.Context, c *scheduler.Call) (mesos.Response, error) {
 			if message, ok := messages[c.GetType()]; ok {
 				log.Println(message)
 			}
-			return caller.Call(c)
+			return caller.Call(ctx, c)
 		})
 	}
 }

@@ -151,17 +151,17 @@ func maybeDeclineOffers(caller calls.Caller) eventrules.Rule {
 			return chain(ctx, e, err)
 		}
 		off := offers.Slice(e.GetOffers().GetOffers())
-		err = calls.CallNoData(caller, calls.Decline(off.IDs()...).With(refuseSeconds))
+		err = calls.CallNoData(ctx, caller, calls.Decline(off.IDs()...).With(refuseSeconds))
 		if err == nil {
 			// we shouldn't have received offers, maybe the prior suppress call failed?
-			err = calls.CallNoData(caller, calls.Suppress())
+			err = calls.CallNoData(ctx, caller, calls.Suppress())
 		}
 		return ctx, e, err // drop
 	}
 }
 
 func resourceOffers(caller calls.Caller) events.HandlerFunc {
-	return func(_ context.Context, e *scheduler.Event) (err error) {
+	return func(ctx context.Context, e *scheduler.Event) (err error) {
 		var (
 			off   = e.GetOffers().GetOffers()
 			index = offers.NewIndex(off, nil)
@@ -173,7 +173,7 @@ func resourceOffers(caller calls.Caller) events.HandlerFunc {
 			task.AgentID = match.AgentID
 			task.Resources = mesos.Resources(match.Resources).Find(wantsResources.Flatten(Role.Assign()))
 
-			err = calls.CallNoData(caller, calls.Accept(
+			err = calls.CallNoData(ctx, caller, calls.Accept(
 				calls.OfferOperations{calls.OpLaunch(task)}.WithOffers(match.ID),
 			))
 			if err != nil {
@@ -186,12 +186,12 @@ func resourceOffers(caller calls.Caller) events.HandlerFunc {
 		}
 		// decline all but the possible match
 		delete(index, match.GetID())
-		err = calls.CallNoData(caller, calls.Decline(index.IDs()...).With(refuseSeconds))
+		err = calls.CallNoData(ctx, caller, calls.Decline(index.IDs()...).With(refuseSeconds))
 		if err != nil {
 			return
 		}
 		if declineAndSuppress {
-			err = calls.CallNoData(caller, calls.Suppress())
+			err = calls.CallNoData(ctx, caller, calls.Suppress())
 		}
 		return
 	}

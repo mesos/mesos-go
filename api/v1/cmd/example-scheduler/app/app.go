@@ -93,7 +93,7 @@ func buildEventHandler(state *internalState, fidStore store.Singleton) events.Ha
 		logAllEvents().If(state.config.verbose),
 		eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
 		controller.LiftErrors().DropOnError(),
-	).Handle(events.HandlerSet{
+	).Handle(events.Handlers{
 		scheduler.Event_FAILURE: logger.HandleF(failure),
 		scheduler.Event_OFFERS:  trackOffersReceived(state).HandleF(resourceOffers(state)),
 		scheduler.Event_UPDATE:  controller.AckStatusUpdates(state.cli).AndThen().HandleF(statusUpdate(state)),
@@ -101,7 +101,7 @@ func buildEventHandler(state *internalState, fidStore store.Singleton) events.Ha
 			logger,
 			controller.TrackSubscription(fidStore, state.config.failoverTimeout),
 		),
-	})
+	}.Otherwise(logger.HandleEvent))
 }
 
 func trackOffersReceived(state *internalState) eventrules.Rule {

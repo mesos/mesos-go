@@ -1,6 +1,8 @@
 package events
 
 import (
+	"context"
+
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 )
 
@@ -37,12 +39,12 @@ func (d Decorator) When(f func() bool) Decorator {
 		// generates a new decorator every time the Decorator func is invoked.
 		// probably OK for now.
 		decorated := d(h)
-		return HandlerFunc(func(e *scheduler.Event) (err error) {
+		return HandlerFunc(func(ctx context.Context, e *scheduler.Event) (err error) {
 			if f() {
 				// let the decorated handler process this
-				err = decorated.HandleEvent(e)
+				err = decorated.HandleEvent(ctx, e)
 			} else {
-				err = h.HandleEvent(e)
+				err = h.HandleEvent(ctx, e)
 			}
 			return
 		})

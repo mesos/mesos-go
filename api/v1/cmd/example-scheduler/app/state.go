@@ -13,7 +13,6 @@ import (
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
-	"github.com/mesos/mesos-go/api/v1/lib/extras/latch"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpsched"
@@ -184,7 +183,7 @@ func loadCredentials(userConfig credentials) (result credentials, err error) {
 	return
 }
 
-func newInternalState(cfg Config) (*internalState, error) {
+func newInternalState(cfg Config, shutdown func()) (*internalState, error) {
 	metricsAPI := initMetrics(cfg)
 	executorInfo, err := prepareExecutorInfo(
 		cfg.executor,
@@ -210,7 +209,7 @@ func newInternalState(cfg Config) (*internalState, error) {
 		metricsAPI:         metricsAPI,
 		cli:                buildHTTPSched(cfg, creds),
 		random:             rand.New(rand.NewSource(time.Now().Unix())),
-		done:               latch.New(),
+		shutdown:           shutdown,
 	}
 	return state, nil
 }
@@ -227,6 +226,6 @@ type internalState struct {
 	reviveTokens       <-chan struct{}
 	metricsAPI         *metricsAPI
 	err                error
-	done               latch.Interface
+	shutdown           func()
 	random             *rand.Rand
 }

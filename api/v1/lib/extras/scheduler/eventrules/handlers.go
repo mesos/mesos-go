@@ -1,6 +1,8 @@
 package eventrules
 
 import (
+	"context"
+
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
 )
@@ -10,14 +12,14 @@ func Handle(h events.Handler) Rule {
 	if h == nil {
 		return nil
 	}
-	return func(e *scheduler.Event, err error, chain Chain) (*scheduler.Event, error) {
-		newErr := h.HandleEvent(e)
-		return chain(e, Error2(err, newErr))
+	return func(ctx context.Context, e *scheduler.Event, err error, chain Chain) (context.Context, *scheduler.Event, error) {
+		newErr := h.HandleEvent(ctx, e)
+		return chain(ctx, e, Error2(err, newErr))
 	}
 }
 
 // HandleF is the functional equivalent of Handle
-func HandleF(h events.HandlerFunc) Rule {
+func HandleF(ctx context.Context, h events.HandlerFunc) Rule {
 	return Handle(events.Handler(h))
 }
 
@@ -32,17 +34,17 @@ func (r Rule) HandleF(h events.HandlerFunc) Rule {
 }
 
 // HandleEvent implements events.Handler for Rule
-func (r Rule) HandleEvent(e *scheduler.Event) (err error) {
+func (r Rule) HandleEvent(ctx context.Context, e *scheduler.Event) (err error) {
 	if r == nil {
 		return nil
 	}
-	_, err = r(e, nil, chainIdentity)
+	_, _, err = r(ctx, e, nil, chainIdentity)
 	return
 }
 
 // HandleEvent implements events.Handler for Rules
-func (rs Rules) HandleEvent(e *scheduler.Event) error {
-	return Rule(rs.Eval).HandleEvent(e)
+func (rs Rules) HandleEvent(ctx context.Context, e *scheduler.Event) error {
+	return Rule(rs.Eval).HandleEvent(ctx, e)
 }
 
 /*

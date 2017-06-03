@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"sync"
 
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
@@ -10,11 +11,11 @@ type (
 	// Handler is invoked upon the occurrence of some scheduler event that is generated
 	// by some other component in the Mesos ecosystem (e.g. master, agent, executor, etc.)
 	Handler interface {
-		HandleEvent(*scheduler.Event) error
+		HandleEvent(context.Context, *scheduler.Event) error
 	}
 
 	// HandlerFunc is a functional adaptation of the Handler interface
-	HandlerFunc func(*scheduler.Event) error
+	HandlerFunc func(context.Context, *scheduler.Event) error
 
 	HandlerSet     map[scheduler.Event_Type]Handler
 	HandlerFuncSet map[scheduler.Event_Type]HandlerFunc
@@ -40,9 +41,11 @@ type (
 )
 
 // HandleEvent implements Handler for HandlerFunc
-func (f HandlerFunc) HandleEvent(e *scheduler.Event) error { return f(e) }
+func (f HandlerFunc) HandleEvent(ctx context.Context, e *scheduler.Event) error { return f(ctx, e) }
 
-func NoopHandler() HandlerFunc { return func(_ *scheduler.Event) error { return nil } }
+func NoopHandler() HandlerFunc {
+	return func(_ context.Context, _ *scheduler.Event) error { return nil }
+}
 
 // NewMux generates and returns a new, empty Mux instance.
 func NewMux(opts ...Option) *Mux {
@@ -68,13 +71,13 @@ func (m *Mux) With(opts ...Option) Option {
 }
 
 // HandleEvent implements Handler for Mux
-func (m *Mux) HandleEvent(e *scheduler.Event) error {
-	ok, err := m.handlers.tryHandleEvent(e)
+func (m *Mux) HandleEvent(ctx context.Context, e *scheduler.Event) error {
+	ok, err := m.handlers.tryHandleEvent(ctx, e)
 	if ok {
 		return err
 	}
 	if m.defaultHandler != nil {
-		return m.defaultHandler.HandleEvent(e)
+		return m.defaultHandler.HandleEvent(ctx, e)
 	}
 	return nil
 }
@@ -95,15 +98,15 @@ func Handle(et scheduler.Event_Type, eh Handler) Option {
 }
 
 // HandleEvent implements Handler for HandlerSet
-func (hs HandlerSet) HandleEvent(e *scheduler.Event) (err error) {
-	_, err = hs.tryHandleEvent(e)
+func (hs HandlerSet) HandleEvent(ctx context.Context, e *scheduler.Event) (err error) {
+	_, err = hs.tryHandleEvent(ctx, e)
 	return
 }
 
 // tryHandleEvent returns true if the event was handled by a member of the HandlerSet
-func (hs HandlerSet) tryHandleEvent(e *scheduler.Event) (bool, error) {
+func (hs HandlerSet) tryHandleEvent(ctx context.Context, e *scheduler.Event) (bool, error) {
 	if h := hs[e.GetType()]; h != nil {
-		return true, h.HandleEvent(e)
+		return true, h.HandleEvent(ctx, e)
 	}
 	return false, nil
 }
@@ -162,9 +165,9 @@ func DefaultHandler(eh Handler) Option {
 // Deprecated in favor of Rules.
 func Once(h Handler) Handler {
 	var once sync.Once
-	return HandlerFunc(func(e *scheduler.Event) (err error) {
+	return HandlerFunc(func(ctx context.Context, e *scheduler.Event) (err error) {
 		once.Do(func() {
-			err = h.HandleEvent(e)
+			err = h.HandleEvent(ctx, e)
 		})
 		return
 	})
@@ -177,9 +180,9 @@ func OnceFunc(h HandlerFunc) Handler { return Once(h) }
 // When
 // Deprecated in favor of Rules.
 func When(p Predicate, h Handler) Handler {
-	return HandlerFunc(func(e *scheduler.Event) (err error) {
+	return HandlerFunc(func(ctx context.Context, e *scheduler.Event) (err error) {
 		if p.Predicate().Apply(e) {
-			err = h.HandleEvent(e)
+			err = h.HandleEvent(ctx, e)
 		}
 		return
 	})
@@ -191,10 +194,10 @@ func WhenFunc(p Predicate, h HandlerFunc) Handler { return When(p, h) }
 
 // HandleEvent implements Handler for Handlers.
 // Deprecated in favor of Rules.
-func (hs Handlers) HandleEvent(e *scheduler.Event) (err error) {
+func (hs Handlers) HandleEvent(ctx context.Context, e *scheduler.Event) (err error) {
 	for _, h := range hs {
 		if h != nil {
-			if err = h.HandleEvent(e); err != nil {
+			if err = h.HandleEvent(ctx, e); err != nil {
 				break
 			}
 		}

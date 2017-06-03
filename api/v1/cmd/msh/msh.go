@@ -10,6 +10,7 @@ package main
 //
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -19,7 +20,6 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
-	"github.com/mesos/mesos-go/api/v1/lib/extras/latch"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
@@ -105,20 +105,20 @@ func main() {
 
 func run() error {
 	var (
-		done   = latch.New()
-		caller = calls.Decorators{
+		ctx, cancel = context.WithCancel(context.Background())
+		caller      = calls.Decorators{
 			calls.SubscribedCaller(store.GetIgnoreErrors(frameworkIDStore)),
 		}.Apply(buildClient())
 	)
 
 	return controller.Run(
+		ctx,
 		&mesos.FrameworkInfo{User: User, Name: FrameworkName, Role: (*string)(&Role)},
 		caller,
-		controller.WithDone(done.Closed),
 		controller.WithEventHandler(buildEventHandler(caller)),
 		controller.WithFrameworkID(store.GetIgnoreErrors(frameworkIDStore)),
 		controller.WithSubscriptionTerminated(func(err error) {
-			defer done.Close()
+			defer cancel()
 			if err == io.EOF {
 				log.Println("disconnected")
 			}
@@ -143,12 +143,12 @@ func buildEventHandler(caller calls.Caller) events.Handler {
 }
 
 func maybeDeclineOffers(caller calls.Caller) eventrules.Rule {
-	return func(e *scheduler.Event, err error, chain eventrules.Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, chain eventrules.Chain) (context.Context, *scheduler.Event, error) {
 		if err != nil {
-			return chain(e, err)
+			return chain(ctx, e, err)
 		}
 		if e.GetType() != scheduler.Event_OFFERS || !declineAndSuppress {
-			return chain(e, err)
+			return chain(ctx, e, err)
 		}
 		off := offers.Slice(e.GetOffers().GetOffers())
 		err = calls.CallNoData(caller, calls.Decline(off.IDs()...).With(refuseSeconds))
@@ -156,12 +156,12 @@ func maybeDeclineOffers(caller calls.Caller) eventrules.Rule {
 			// we shouldn't have received offers, maybe the prior suppress call failed?
 			err = calls.CallNoData(caller, calls.Suppress())
 		}
-		return e, err // drop
+		return ctx, e, err // drop
 	}
 }
 
 func resourceOffers(caller calls.Caller) events.HandlerFunc {
-	return func(e *scheduler.Event) (err error) {
+	return func(_ context.Context, e *scheduler.Event) (err error) {
 		var (
 			off   = e.GetOffers().GetOffers()
 			index = offers.NewIndex(off, nil)
@@ -197,7 +197,7 @@ func resourceOffers(caller calls.Caller) events.HandlerFunc {
 	}
 }
 
-func statusUpdate(e *scheduler.Event) error {
+func statusUpdate(_ context.Context, e *scheduler.Event) error {
 	s := e.GetUpdate().GetStatus()
 	switch st := s.GetState(); st {
 	case mesos.TASK_FINISHED, mesos.TASK_RUNNING, mesos.TASK_STAGING, mesos.TASK_STARTING:

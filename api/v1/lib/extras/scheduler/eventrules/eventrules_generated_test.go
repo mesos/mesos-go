@@ -4,6 +4,7 @@ package eventrules
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"testing"
@@ -14,29 +15,29 @@ import (
 func prototype() *scheduler.Event { return &scheduler.Event{} }
 
 func counter(i *int) Rule {
-	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
 		*i++
-		return ch(e, err)
+		return ch(ctx, e, err)
 	}
 }
 
 func tracer(r Rule, name string, t *testing.T) Rule {
-	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
 		t.Log("executing", name)
-		return r(e, err, ch)
+		return r(ctx, e, err, ch)
 	}
 }
 
 func returnError(re error) Rule {
-	return func(e *scheduler.Event, err error, ch Chain) (*scheduler.Event, error) {
-		return ch(e, Error2(err, re))
+	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
+		return ch(ctx, e, Error2(err, re))
 	}
 }
 
 func chainCounter(i *int, ch Chain) Chain {
-	return func(e *scheduler.Event, err error) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error) (context.Context, *scheduler.Event, error) {
 		*i++
-		return ch(e, err)
+		return ch(ctx, e, err)
 	}
 }
 
@@ -44,7 +45,7 @@ func TestChainIdentity(t *testing.T) {
 	var i int
 	counterRule := counter(&i)
 
-	e, err := Rules{counterRule}.Eval(nil, nil, chainIdentity)
+	_, e, err := Rules{counterRule}.Eval(context.Background(), nil, nil, chainIdentity)
 	if e != nil {
 		t.Error("expected nil event instead of", e)
 	}
@@ -58,8 +59,9 @@ func TestChainIdentity(t *testing.T) {
 
 func TestRules(t *testing.T) {
 	var (
-		p = prototype()
-		a = errors.New("a")
+		p   = prototype()
+		a   = errors.New("a")
+		ctx = context.Background()
 	)
 
 	// multiple rules in Rules should execute, dropping nil rules along the way
@@ -81,7 +83,7 @@ func TestRules(t *testing.T) {
 				tracer(counter(&i), "counter2", t),
 				nil,
 			)
-			e, err = rule(tc.e, tc.err, chainIdentity)
+			_, e, err = rule(ctx, tc.e, tc.err, chainIdentity)
 		)
 		if e != tc.e {
 			t.Errorf("expected prototype event %q instead of %q", tc.e, e)
@@ -94,7 +96,7 @@ func TestRules(t *testing.T) {
 		}
 
 		// empty Rules should not change event, err
-		e, err = Rules{}.Eval(tc.e, tc.err, chainIdentity)
+		_, e, err = Rules{}.Eval(ctx, tc.e, tc.err, chainIdentity)
 		if e != tc.e {
 			t.Errorf("expected prototype event %q instead of %q", tc.e, e)
 		}
@@ -152,12 +154,13 @@ func TestAndThen(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i)
 		r2   = Rule(nil).AndThen(counter(&i))
 		a    = errors.New("a")
 	)
 	for k, r := range []Rule{r1, r2} {
-		e, err := r(p, a, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, a, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -177,6 +180,7 @@ func TestOnFailure(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		a    = errors.New("a")
 		r1   = counter(&i)
 		r2   = Fail(a).OnFailure(counter(&i))
@@ -188,7 +192,7 @@ func TestOnFailure(t *testing.T) {
 		{r1, a},
 		{r2, nil},
 	} {
-		e, err := tc.r(p, tc.initialError, chainCounter(&j, chainIdentity))
+		_, e, err := tc.r(ctx, p, tc.initialError, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -208,6 +212,7 @@ func TestDropOnError(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i)
 		r2   = counter(&i).DropOnError()
 		a    = errors.New("a")
@@ -215,7 +220,7 @@ func TestDropOnError(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for _, r := range []Rule{r1, r2} {
-		e, err := r(p, a, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, a, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -229,7 +234,7 @@ func TestDropOnError(t *testing.T) {
 			t.Errorf("expected chain count of 1 instead of %d", j)
 		}
 	}
-	e, err := r2(p, nil, chainCounter(&j, chainIdentity))
+	_, e, err := r2(ctx, p, nil, chainCounter(&j, chainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -245,13 +250,14 @@ func TestDropOnSuccess(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i)
 		r2   = counter(&i).DropOnSuccess()
 	)
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for _, r := range []Rule{r1, r2} {
-		e, err := r(p, nil, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -266,7 +272,7 @@ func TestDropOnSuccess(t *testing.T) {
 		}
 	}
 	a := errors.New("a")
-	e, err := r2(p, a, chainCounter(&j, chainIdentity))
+	_, e, err := r2(ctx, p, a, chainCounter(&j, chainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -281,7 +287,7 @@ func TestDropOnSuccess(t *testing.T) {
 	}
 
 	r3 := Rules{DropOnSuccess(), r1}.Eval
-	e, err = r3(p, nil, chainCounter(&j, chainIdentity))
+	_, e, err = r3(ctx, p, nil, chainCounter(&j, chainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -301,12 +307,13 @@ func TestThenDrop(t *testing.T) {
 		var (
 			i, j int
 			p    = prototype()
+			ctx  = context.Background()
 			r1   = counter(&i)
 			r2   = counter(&i).ThenDrop()
 		)
 		// r1 and r2 should execute the counter rule
 		for k, r := range []Rule{r1, r2} {
-			e, err := r(p, anErr, chainCounter(&j, chainIdentity))
+			_, e, err := r(ctx, p, anErr, chainCounter(&j, chainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -328,13 +335,14 @@ func TestDrop(t *testing.T) {
 		var (
 			i, j int
 			p    = prototype()
+			ctx  = context.Background()
 			r1   = counter(&i)
 			r2   = Rules{Drop(), counter(&i)}.Eval
 		)
 		// r1 should execute the counter rule
 		// r2 should NOT exexute the counter rule
 		for k, r := range []Rule{r1, r2} {
-			e, err := r(p, anErr, chainCounter(&j, chainIdentity))
+			_, e, err := r(ctx, p, anErr, chainCounter(&j, chainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -355,13 +363,14 @@ func TestIf(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i).If(true).Eval
 		r2   = counter(&i).If(false).Eval
 	)
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for k, r := range []Rule{r1, r2} {
-		e, err := r(p, nil, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -381,13 +390,14 @@ func TestUnless(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i).Unless(false).Eval
 		r2   = counter(&i).Unless(true).Eval
 	)
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for k, r := range []Rule{r1, r2} {
-		e, err := r(p, nil, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -407,12 +417,13 @@ func TestOnce(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i).Once().Eval
 		r2   = Rule(nil).Once().Eval
 	)
 	for k, r := range []Rule{r1, r2} {
 		for x := 0; x < 5; x++ {
-			e, err := r(p, nil, chainCounter(&j, chainIdentity))
+			_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -450,12 +461,13 @@ func TestPoll(t *testing.T) {
 		var (
 			i, j int
 			p    = prototype()
+			ctx  = context.Background()
 			r1   = counter(&i).Poll(tc.ch).Eval
 			r2   = Rule(nil).Poll(tc.ch).Eval
 		)
 		for k, r := range []Rule{r1, r2} {
 			for x := 0; x < 2; x++ {
-				e, err := r(p, nil, chainCounter(&j, chainIdentity))
+				_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 				if e != p {
 					t.Errorf("test case %d failed: expected event %q instead of %q", ti, p, e)
 				}

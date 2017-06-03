@@ -95,6 +95,7 @@ var rulesTemplate = template.Must(template.New("").Parse(`package {{.Package}}
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
+	"context"
 	"fmt"
 	"sync"
 {{range .Imports}}
@@ -103,23 +104,23 @@ import (
 )
 
 type (
-	iface interface {
+	evaler interface {
 		// Eval executes a filter, rule, or decorator function; if the returned event is nil then
 		// no additional rule evaluation should be processed for the event.
 		// Eval implementations should not modify the given event parameter (to avoid side effects).
 		// If changes to the event object are needed, the suggested approach is to make a copy,
 		// modify the copy, and pass the copy to the chain.
 		// Eval implementations SHOULD be safe to execute concurrently.
-		Eval({{.EventType}}, error, Chain) ({{.EventType}}, error)
+		Eval(context.Context, {{.EventType}}, error, Chain) (context.Context, {{.EventType}}, error)
 	}
 
-	// Rule is the functional adaptation of iface.
+	// Rule is the functional adaptation of evaler.
 	// A nil Rule is valid: it is Eval'd as a noop.
-	Rule func({{.EventType}}, error, Chain) ({{.EventType}}, error)
+	Rule func(context.Context, {{.EventType}}, error, Chain) (context.Context, {{.EventType}}, error)
 
 	// Chain is invoked by a Rule to continue processing an event. If the chain is not invoked,
 	// no additional rules are processed.
-	Chain func({{.EventType}}, error) ({{.EventType}}, error)
+	Chain func(context.Context, {{.EventType}}, error) (context.Context, {{.EventType}}, error)
 
 	// Rules is a list of rules to be processed, in order.
 	Rules []Rule
@@ -131,37 +132,37 @@ type (
 )
 
 var (
-	_ = iface(Rule(nil))
-	_ = iface(Rules{})
+	_ = evaler(Rule(nil))
+	_ = evaler(Rules{})
 
 	// chainIdentity is a Chain that returns the arguments as its results.
-	chainIdentity = func(e {{.EventType}}, err error) ({{.EventType}}, error) {
-		return e, err
+	chainIdentity = func(ctx context.Context, e {{.EventType}}, err error) (context.Context, {{.EventType}}, error) {
+		return ctx, e, err
 	}
 )
 
 // Eval is a convenience func that processes a nil Rule as a noop.
-func (r Rule) Eval(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
+func (r Rule) Eval(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
 	if r != nil {
-		return r(e, err, ch)
+		return r(ctx, e, err, ch)
 	}
-	return ch(e, err)
+	return ch(ctx, e, err)
 }
 
 // Eval is a Rule func that processes the set of all Rules. If there are no rules in the
 // set then control is simply passed to the Chain.
-func (rs Rules) Eval(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
-	return ch(rs.Chain()(e, err))
+func (rs Rules) Eval(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
+	return ch(rs.Chain()(ctx, e, err))
 }
 
-// Chain returns a Chain that evaluates the given Rules, in order, propagating the ({{.EventType}}, error)
+// Chain returns a Chain that evaluates the given Rules, in order, propagating the (context.Context, {{.EventType}}, error)
 // from Rule to Rule. Chain is safe to invoke concurrently.
 func (rs Rules) Chain() Chain {
 	if len(rs) == 0 {
 		return chainIdentity
 	}
-	return func(e {{.EventType}}, err error) ({{.EventType}}, error) {
-		return rs[0].Eval(e, err, rs[1:].Chain())
+	return func(ctx context.Context, e {{.EventType}}, err error) (context.Context, {{.EventType}}, error) {
+		return rs[0].Eval(ctx, e, err, rs[1:].Chain())
 	}
 }
 
@@ -268,16 +269,16 @@ func (r Rule) Once() Rule {
 		return nil
 	}
 	var once sync.Once
-	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
+	return func(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
 		ruleInvoked := false
 		once.Do(func() {
-			e, err = r(e, err, ch)
+			ctx, e, err = r(ctx, e, err, ch)
 			ruleInvoked = true
 		})
 		if !ruleInvoked {
-			e, err = ch(e, err)
+			ctx, e, err = ch(ctx, e, err)
 		}
-		return e, err
+		return ctx, e, err
 	}
 }
 
@@ -287,15 +288,15 @@ func (r Rule) Poll(p <-chan struct{}) Rule {
 	if p == nil || r == nil {
 		return nil
 	}
-	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
+	return func(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
 		select {
 		case <-p:
 			// do something
 			// TODO(jdef): optimization: if we detect the chan is closed, affect a state change
 			// whereby this select is no longer invoked (and always pass control to r).
-			return r(e, err, ch)
+			return r(ctx, e, err, ch)
 		default:
-			return ch(e, err)
+			return ch(ctx, e, err)
 		}
 	}
 }
@@ -321,30 +322,30 @@ func (r Rule) EveryN(nthTime int) Rule {
 			return false
 		}
 	)
-	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
+	return func(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
 		if forward() {
-			return r(e, err, ch)
+			return r(ctx, e, err, ch)
 		}
-		return ch(e, err)
+		return ch(ctx, e, err)
 	}
 }
 
-// Drop aborts the Chain and returns the ({{.EventType}}, error) tuple as-is.
+// Drop aborts the Chain and returns the (context.Context, {{.EventType}}, error) tuple as-is.
 func Drop() Rule {
 	return Rule(nil).ThenDrop()
 }
 
-// ThenDrop executes the receiving rule, but aborts the Chain, and returns the ({{.EventType}}, error) tuple as-is.
+// ThenDrop executes the receiving rule, but aborts the Chain, and returns the (context.Context, {{.EventType}}, error) tuple as-is.
 func (r Rule) ThenDrop() Rule {
-	return func(e {{.EventType}}, err error, _ Chain) ({{.EventType}}, error) {
-		return r.Eval(e, err, chainIdentity)
+	return func(ctx context.Context, e {{.EventType}}, err error, _ Chain) (context.Context, {{.EventType}}, error) {
+		return r.Eval(ctx, e, err, chainIdentity)
 	}
 }
 
 // Fail returns a Rule that injects the given error.
 func Fail(injected error) Rule {
-	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
-		return ch(e, Error2(err, injected))
+	return func(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
+		return ch(ctx, e, Error2(err, injected))
 	}
 }
 
@@ -356,11 +357,11 @@ func DropOnError() Rule {
 // DropOnError decorates a rule by pre-checking the error state: if the error state != nil then
 // the receiver is not invoked and (e, err) is returned; otherwise control passes to the receiving rule.
 func (r Rule) DropOnError() Rule {
-	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
+	return func(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
 		if err != nil {
-			return e, err
+			return ctx, e, err
 		}
-		return r.Eval(e, err, ch)
+		return r.Eval(ctx, e, err, ch)
 	}
 }
 
@@ -376,12 +377,12 @@ func DropOnSuccess() Rule {
 }
 
 func (r Rule) DropOnSuccess() Rule {
-	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
+	return func(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
 		if err == nil {
 			// bypass remainder of chain
-			return e, err
+			return ctx, e, err
 		}
-		return r.Eval(e, err, ch)
+		return r.Eval(ctx, e, err, ch)
 	}
 }
 
@@ -396,6 +397,7 @@ var testTemplate = template.Must(template.New("").Parse(`package {{.Package}}
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"testing"
@@ -407,29 +409,29 @@ import (
 func prototype() {{.EventType}} { return {{.EventPrototype}} }
 
 func counter(i *int) Rule {
-	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
+	return func(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
 		*i++
-		return ch(e, err)
+		return ch(ctx, e, err)
 	}
 }
 
 func tracer(r Rule, name string, t *testing.T) Rule {
-	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
+	return func(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
 		t.Log("executing", name)
-		return r(e, err, ch)
+		return r(ctx, e, err, ch)
 	}
 }
 
 func returnError(re error) Rule {
-	return func(e {{.EventType}}, err error, ch Chain) ({{.EventType}}, error) {
-		return ch(e, Error2(err, re))
+	return func(ctx context.Context, e {{.EventType}}, err error, ch Chain) (context.Context, {{.EventType}}, error) {
+		return ch(ctx, e, Error2(err, re))
 	}
 }
 
 func chainCounter(i *int, ch Chain) Chain {
-	return func(e {{.EventType}}, err error) ({{.EventType}}, error) {
+	return func(ctx context.Context, e {{.EventType}}, err error) (context.Context, {{.EventType}}, error) {
 		*i++
-		return ch(e, err)
+		return ch(ctx, e, err)
 	}
 }
 
@@ -437,7 +439,7 @@ func TestChainIdentity(t *testing.T) {
 	var i int
 	counterRule := counter(&i)
 
-	e, err := Rules{counterRule}.Eval(nil, nil, chainIdentity)
+	_, e, err := Rules{counterRule}.Eval(context.Background(), nil, nil, chainIdentity)
 	if e != nil {
 		t.Error("expected nil event instead of", e)
 	}
@@ -451,8 +453,9 @@ func TestChainIdentity(t *testing.T) {
 
 func TestRules(t *testing.T) {
 	var (
-		p = prototype()
-		a = errors.New("a")
+		p   = prototype()
+		a   = errors.New("a")
+		ctx = context.Background()
 	)
 
 	// multiple rules in Rules should execute, dropping nil rules along the way
@@ -474,7 +477,7 @@ func TestRules(t *testing.T) {
 				tracer(counter(&i), "counter2", t),
 				nil,
 			)
-			e, err = rule(tc.e, tc.err, chainIdentity)
+			_, e, err = rule(ctx, tc.e, tc.err, chainIdentity)
 		)
 		if e != tc.e {
 			t.Errorf("expected prototype event %q instead of %q", tc.e, e)
@@ -487,7 +490,7 @@ func TestRules(t *testing.T) {
 		}
 
 		// empty Rules should not change event, err
-		e, err = Rules{}.Eval(tc.e, tc.err, chainIdentity)
+		_, e, err = Rules{}.Eval(ctx, tc.e, tc.err, chainIdentity)
 		if e != tc.e {
 			t.Errorf("expected prototype event %q instead of %q", tc.e, e)
 		}
@@ -545,12 +548,13 @@ func TestAndThen(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i)
 		r2   = Rule(nil).AndThen(counter(&i))
 		a    = errors.New("a")
 	)
 	for k, r := range []Rule{r1, r2} {
-		e, err := r(p, a, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, a, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -570,6 +574,7 @@ func TestOnFailure(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		a    = errors.New("a")
 		r1   = counter(&i)
 		r2   = Fail(a).OnFailure(counter(&i))
@@ -581,7 +586,7 @@ func TestOnFailure(t *testing.T) {
 		{r1, a},
 		{r2, nil},
 	} {
-		e, err := tc.r(p, tc.initialError, chainCounter(&j, chainIdentity))
+		_, e, err := tc.r(ctx, p, tc.initialError, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -601,6 +606,7 @@ func TestDropOnError(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i)
 		r2   = counter(&i).DropOnError()
 		a    = errors.New("a")
@@ -608,7 +614,7 @@ func TestDropOnError(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for _, r := range []Rule{r1, r2} {
-		e, err := r(p, a, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, a, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -622,7 +628,7 @@ func TestDropOnError(t *testing.T) {
 			t.Errorf("expected chain count of 1 instead of %d", j)
 		}
 	}
-	e, err := r2(p, nil, chainCounter(&j, chainIdentity))
+	_, e, err := r2(ctx, p, nil, chainCounter(&j, chainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -638,13 +644,14 @@ func TestDropOnSuccess(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i)
 		r2   = counter(&i).DropOnSuccess()
 	)
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for _, r := range []Rule{r1, r2} {
-		e, err := r(p, nil, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -659,7 +666,7 @@ func TestDropOnSuccess(t *testing.T) {
 		}
 	}
 	a := errors.New("a")
-	e, err := r2(p, a, chainCounter(&j, chainIdentity))
+	_, e, err := r2(ctx, p, a, chainCounter(&j, chainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -674,7 +681,7 @@ func TestDropOnSuccess(t *testing.T) {
 	}
 
 	r3 := Rules{DropOnSuccess(), r1}.Eval
-	e, err = r3(p, nil, chainCounter(&j, chainIdentity))
+	_, e, err = r3(ctx, p, nil, chainCounter(&j, chainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -694,12 +701,13 @@ func TestThenDrop(t *testing.T) {
 		var (
 			i, j int
 			p    = prototype()
+			ctx  = context.Background()
 			r1   = counter(&i)
 			r2   = counter(&i).ThenDrop()
 		)
 		// r1 and r2 should execute the counter rule
 		for k, r := range []Rule{r1, r2} {
-			e, err := r(p, anErr, chainCounter(&j, chainIdentity))
+			_, e, err := r(ctx, p, anErr, chainCounter(&j, chainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -721,13 +729,14 @@ func TestDrop(t *testing.T) {
 		var (
 			i, j int
 			p    = prototype()
+			ctx  = context.Background()
 			r1   = counter(&i)
 			r2   = Rules{Drop(), counter(&i)}.Eval
 		)
 		// r1 should execute the counter rule
 		// r2 should NOT exexute the counter rule
 		for k, r := range []Rule{r1, r2} {
-			e, err := r(p, anErr, chainCounter(&j, chainIdentity))
+			_, e, err := r(ctx, p, anErr, chainCounter(&j, chainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -748,13 +757,14 @@ func TestIf(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i).If(true).Eval
 		r2   = counter(&i).If(false).Eval
 	)
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for k, r := range []Rule{r1, r2} {
-		e, err := r(p, nil, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -774,13 +784,14 @@ func TestUnless(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i).Unless(false).Eval
 		r2   = counter(&i).Unless(true).Eval
 	)
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for k, r := range []Rule{r1, r2} {
-		e, err := r(p, nil, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -800,12 +811,13 @@ func TestOnce(t *testing.T) {
 	var (
 		i, j int
 		p    = prototype()
+		ctx  = context.Background()
 		r1   = counter(&i).Once().Eval
 		r2   = Rule(nil).Once().Eval
 	)
 	for k, r := range []Rule{r1, r2} {
 		for x := 0; x < 5; x++ {
-			e, err := r(p, nil, chainCounter(&j, chainIdentity))
+			_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -843,12 +855,13 @@ func TestPoll(t *testing.T) {
 		var (
 			i, j int
 			p    = prototype()
+			ctx  = context.Background()
 			r1   = counter(&i).Poll(tc.ch).Eval
 			r2   = Rule(nil).Poll(tc.ch).Eval
 		)
 		for k, r := range []Rule{r1, r2} {
 			for x := 0; x < 2; x++ {
-				e, err := r(p, nil, chainCounter(&j, chainIdentity))
+				_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
 				if e != p {
 					t.Errorf("test case %d failed: expected event %q instead of %q", ti, p, e)
 				}

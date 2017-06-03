@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"io"
 	"log"
@@ -31,10 +32,9 @@ func (err StateError) Error() string { return string(err) }
 
 func Run(cfg Config) error {
 	log.Printf("scheduler running with configuration: %+v", cfg)
-	shutdown := make(chan struct{})
-	defer close(shutdown)
+	ctx, cancel := context.WithCancel(context.Background())
 
-	state, err := newInternalState(cfg)
+	state, err := newInternalState(cfg, cancel)
 	if err != nil {
 		return err
 	}
@@ -57,9 +57,9 @@ func Run(cfg Config) error {
 	}.Apply(state.cli)
 
 	err = controller.Run(
+		ctx,
 		buildFrameworkInfo(state.config),
 		state.cli,
-		controller.WithDone(state.done.Closed),
 		controller.WithEventHandler(
 			buildEventHandler(state, frameworkIDStore),
 			eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
@@ -67,7 +67,7 @@ func Run(cfg Config) error {
 		),
 		controller.WithFrameworkID(store.GetIgnoreErrors(frameworkIDStore)),
 		controller.WithRegistrationTokens(
-			backoff.Notifier(RegistrationMinBackoff, RegistrationMaxBackoff, shutdown),
+			backoff.Notifier(RegistrationMinBackoff, RegistrationMaxBackoff, ctx.Done()),
 		),
 		controller.WithSubscriptionTerminated(func(err error) {
 			if err != nil {
@@ -75,7 +75,7 @@ func Run(cfg Config) error {
 					log.Println(err)
 				}
 				if _, ok := err.(StateError); ok {
-					state.done.Close()
+					state.shutdown()
 				}
 				return
 			}
@@ -106,15 +106,15 @@ func buildEventHandler(state *internalState, frameworkIDStore store.Singleton) e
 }
 
 func trackOffersReceived(state *internalState) eventrules.Rule {
-	return func(e *scheduler.Event, err error, chain eventrules.Chain) (*scheduler.Event, error) {
+	return func(ctx context.Context, e *scheduler.Event, err error, chain eventrules.Chain) (context.Context, *scheduler.Event, error) {
 		if err == nil {
 			state.metricsAPI.offersReceived.Int(len(e.GetOffers().GetOffers()))
 		}
-		return chain(e, err)
+		return chain(ctx, e, err)
 	}
 }
 
-func failure(e *scheduler.Event) error {
+func failure(_ context.Context, e *scheduler.Event) error {
 	var (
 		f              = e.GetFailure()
 		eid, aid, stat = f.ExecutorID, f.AgentID, f.Status
@@ -137,7 +137,7 @@ func failure(e *scheduler.Event) error {
 }
 
 func resourceOffers(state *internalState) events.HandlerFunc {
-	return func(e *scheduler.Event) error {
+	return func(_ context.Context, e *scheduler.Event) error {
 		var (
 			offers                 = e.GetOffers().GetOffers()
 			callOption             = calls.RefuseSecondsWithJitter(state.random, state.config.maxRefuseSeconds)
@@ -222,7 +222,7 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 }
 
 func statusUpdate(state *internalState) events.HandlerFunc {
-	return func(e *scheduler.Event) error {
+	return func(_ context.Context, e *scheduler.Event) error {
 		s := e.GetUpdate().GetStatus()
 		if state.config.verbose {
 			msg := "Task " + s.TaskID.Value + " is in state " + s.GetState().String()
@@ -239,7 +239,7 @@ func statusUpdate(state *internalState) events.HandlerFunc {
 
 			if state.tasksFinished == state.totalTasks {
 				log.Println("mission accomplished, terminating")
-				state.done.Close()
+				state.shutdown()
 			} else {
 				tryReviveOffers(state)
 			}
@@ -250,7 +250,7 @@ func statusUpdate(state *internalState) events.HandlerFunc {
 				" with reason " + s.GetReason().String() +
 				" from source " + s.GetSource().String() +
 				" with message '" + s.GetMessage() + "'")
-			state.done.Close()
+			state.shutdown()
 		}
 		return nil
 	}
@@ -273,9 +273,9 @@ func tryReviveOffers(state *internalState) {
 
 // logAllEvents logs every observed event; this is somewhat expensive to do
 func logAllEvents(h events.Handler) events.Handler {
-	return events.HandlerFunc(func(e *scheduler.Event) error {
+	return events.HandlerFunc(func(ctx context.Context, e *scheduler.Event) error {
 		log.Printf("%+v\n", *e)
-		return h.HandleEvent(e)
+		return h.HandleEvent(ctx, e)
 	})
 }
 

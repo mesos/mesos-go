@@ -26,7 +26,7 @@ The Mesos v0 API version of the bindings, located in `api/v0`, are more mature b
 - Modular design for easy readability/extensibility
 
 ### Pre-Requisites
-- Go 1.6 or higher
+- Go 1.7 or higher
 - A standard and working Go workspace setup
 - Apache Mesos 1.0 or newer
 

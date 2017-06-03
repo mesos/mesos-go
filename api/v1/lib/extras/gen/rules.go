@@ -3,142 +3,17 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"log"
 	"os"
-	"strings"
 	"text/template"
 )
 
-type (
-	config struct {
-		Package         string
-		Imports         []string
-		EventType       string
-		EventPrototype  string
-		ReturnType      string
-		ReturnPrototype string
-	}
-)
-
-func (c *config) String() string {
-	if c == nil {
-		return ""
-	}
-	return fmt.Sprintf("%#v", ([]string)(c.Imports))
-}
-
-func (c *config) Set(s string) error {
-	c.Imports = append(c.Imports, s)
-	return nil
-}
-
-func (c *config) ReturnVar(names ...string) string {
-	if c.ReturnType == "" || len(names) == 0 {
-		return ""
-	}
-	return "var " + strings.Join(names, ",") + " " + c.ReturnType
-}
-
-func (c *config) ReturnArg(name string) string {
-	if c.ReturnType == "" {
-		return ""
-	}
-	if name == "" {
-		return c.ReturnType
-	}
-	if strings.HasSuffix(name, ",") {
-		return strings.TrimSpace(name[:len(name)-1]+" "+c.ReturnType) + ", "
-	}
-	return name + " " + c.ReturnType
-}
-
-func (c *config) ReturnRef(name string) string {
-	if c.ReturnType == "" || name == "" {
-		return ""
-	}
-	if strings.HasSuffix(name, ",") {
-		if len(name) < 2 {
-			panic("expected ref name before comma")
-		}
-		return name[:len(name)-1] + ", "
-	}
-	return name
-}
-
 func main() {
-	var (
-		c = config{
-			Package:   os.Getenv("GOPACKAGE"),
-			EventType: "Event",
-		}
-		defaultOutput = "foo.go"
-	)
-	if c.Package != "" {
-		defaultOutput = c.Package + "_generated.go"
-	}
-
-	output := defaultOutput
-
-	flag.StringVar(&c.Package, "package", c.Package, "destination package")
-	flag.StringVar(&c.EventType, "event_type", c.EventType, "golang type of the event to be processed")
-	flag.StringVar(&c.ReturnType, "return_type", c.ReturnType, "golang type of a return arg")
-	flag.StringVar(&c.ReturnPrototype, "return_prototype", c.ReturnPrototype, "golang expression of a return obj prototype")
-	flag.StringVar(&output, "output", output, "path of the to-be-generated file")
-	flag.Var(&c, "import", "packages to import")
-	flag.Parse()
-
-	if c.Package == "" {
-		c.Package = "foo"
-	}
-	if c.EventType == "" {
-		c.EventType = "Event"
-		c.EventPrototype = "Event{}"
-	} else if strings.HasPrefix(c.EventType, "*") {
-		// TODO(jdef) don't assume that event type is a struct or *struct
-		c.EventPrototype = "&" + c.EventType[1:] + "{}"
-	} else {
-		c.EventPrototype = c.EventType[1:] + "{}"
-	}
-	if c.ReturnType != "" && c.ReturnPrototype == "" {
-		log.Fatal("return_prototype is required when return_type is set")
-	}
-
-	if output == "" {
-		output = defaultOutput
-	}
-
-	testOutput := output + "_test"
-	if strings.HasSuffix(output, ".go") {
-		testOutput = output[:len(output)-3] + "_test.go"
-	}
-
-	// main template
-	f, err := os.Create(output)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-	err = rulesTemplate.Execute(f, &c)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// unit test template
-	f, err = os.Create(testOutput)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = testTemplate.Execute(f, &c)
-	if err != nil {
-		log.Fatal(err)
-	}
+	Run(rulesTemplate, rulesTestTemplate, os.Args...)
 }
 
 var rulesTemplate = template.Must(template.New("").Parse(`package {{.Package}}
 
-// go generate
+// go generate {{.Args}}
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
@@ -440,9 +315,9 @@ func (r Rule) OnFailure(next ...Rule) Rule {
 }
 `))
 
-var testTemplate = template.Must(template.New("").Parse(`package {{.Package}}
+var rulesTestTemplate = template.Must(template.New("").Parse(`package {{.Package}}
 
-// go generate
+// go generate {{.Args}}
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (

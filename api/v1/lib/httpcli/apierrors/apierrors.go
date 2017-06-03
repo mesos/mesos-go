@@ -95,5 +95,5 @@ func FromResponse(res *http.Response) error {
 
 // Error implements error interface
 func (err *Error) Error() string {
-	return err.Message
+	return err.Message + ": " + err.Details
 }

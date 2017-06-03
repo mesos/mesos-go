@@ -60,11 +60,7 @@ func Run(cfg Config) error {
 		ctx,
 		buildFrameworkInfo(state.config),
 		state.cli,
-		controller.WithEventHandler(
-			buildEventHandler(state, frameworkIDStore),
-			eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
-			events.Decorator(logAllEvents).If(state.config.verbose),
-		),
+		controller.WithEventHandler(buildEventHandler(state, frameworkIDStore)),
 		controller.WithFrameworkID(store.GetIgnoreErrors(frameworkIDStore)),
 		controller.WithRegistrationTokens(
 			backoff.Notifier(RegistrationMinBackoff, RegistrationMaxBackoff, ctx.Done()),
@@ -90,18 +86,20 @@ func Run(cfg Config) error {
 
 // buildEventHandler generates and returns a handler to process events received from the subscription.
 func buildEventHandler(state *internalState, frameworkIDStore store.Singleton) events.Handler {
-	logger := controller.LogEvents()
-	return controller.LiftErrors().DropOnError().Handle(events.HandlerSet{
+	// disable brief logs when verbose logs are enabled (there's no sense logging twice!)
+	logger := controller.LogEvents().Unless(state.config.verbose)
+	return eventrules.Concat(
+		eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
+		logAllEvents().If(state.config.verbose),
+		controller.LiftErrors().DropOnError(),
+	).Handle(events.HandlerSet{
 		scheduler.Event_FAILURE: logger.HandleF(failure),
-		scheduler.Event_OFFERS: eventrules.Concat(
-			trackOffersReceived(state),
-			logger.If(state.config.verbose),
-		).HandleF(resourceOffers(state)),
-		scheduler.Event_UPDATE: controller.AckStatusUpdates(state.cli).AndThen().HandleF(statusUpdate(state)),
-		scheduler.Event_SUBSCRIBED: eventrules.Rules{
+		scheduler.Event_OFFERS:  trackOffersReceived(state).HandleF(resourceOffers(state)),
+		scheduler.Event_UPDATE:  controller.AckStatusUpdates(state.cli).AndThen().HandleF(statusUpdate(state)),
+		scheduler.Event_SUBSCRIBED: eventrules.Concat(
 			logger,
 			controller.TrackSubscription(frameworkIDStore, state.config.failoverTimeout),
-		},
+		),
 	})
 }
 
@@ -272,21 +270,21 @@ func tryReviveOffers(ctx context.Context, state *internalState) {
 }
 
 // logAllEvents logs every observed event; this is somewhat expensive to do
-func logAllEvents(h events.Handler) events.Handler {
-	return events.HandlerFunc(func(ctx context.Context, e *scheduler.Event) error {
+func logAllEvents() eventrules.Rule {
+	return func(ctx context.Context, e *scheduler.Event, err error, ch eventrules.Chain) (context.Context, *scheduler.Event, error) {
 		log.Printf("%+v\n", *e)
-		return h.HandleEvent(ctx, e)
-	})
+		return ch(ctx, e, err)
+	}
 }
 
 // eventMetrics logs metrics for every processed API event
-func eventMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics bool) events.Decorator {
+func eventMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics bool) eventrules.Rule {
 	timed := metricsAPI.eventReceivedLatency
 	if !timingMetrics {
 		timed = nil
 	}
 	harness := xmetrics.NewHarness(metricsAPI.eventReceivedCount, metricsAPI.eventErrorCount, timed, clock)
-	return events.Metrics(harness)
+	return eventrules.Metrics(harness)
 }
 
 // callMetrics logs metrics for every outgoing Mesos call

@@ -26,10 +26,10 @@ type (
 // WithEventHandler sets the consumer of scheduler events. The controller's internal event processing
 // loop is aborted if a Handler returns a non-nil error, after which the controller may attempt
 // to re-register (subscribe) with Mesos.
-func WithEventHandler(handler events.Handler, ds ...events.Decorator) Option {
+func WithEventHandler(handler events.Handler) Option {
 	return func(c *Config) Option {
 		old := c.handler
-		c.handler = events.Decorators(ds).Apply(handler)
+		c.handler = handler
 		return WithEventHandler(old)
 	}
 }

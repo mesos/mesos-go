@@ -134,7 +134,6 @@ func buildClient() calls.Caller {
 func buildEventHandler(caller calls.Caller) events.Handler {
 	logger := controller.LogEvents()
 	return controller.LiftErrors().Handle(events.Handlers{
-		scheduler.Event_FAILURE:    logger,
 		scheduler.Event_SUBSCRIBED: eventrules.Rules{logger, controller.TrackSubscription(fidStore, 0)},
 		scheduler.Event_OFFERS:     maybeDeclineOffers(caller).AndThen().Handle(resourceOffers(caller)),
 		scheduler.Event_UPDATE:     controller.AckStatusUpdates(caller).AndThen().HandleF(statusUpdate),

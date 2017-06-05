@@ -26,15 +26,15 @@ import (
 {{end}}
 )
 
-{{.RequireType "E" -}}{{/* TODO(jdef): should support an optional return arg for use w/ calls */ -}}
+{{.RequireType "E" -}}
 func Metrics(harness metrics.Harness) Rule {
-	return func(ctx context.Context, e {{.Type "E"}}, err error, ch Chain) (context.Context, {{.Type "E"}}, error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
 		typename := strings.ToLower(e.GetType().String())
 		harness(func() error {
-			ctx, e, err = ch(ctx, e, err)
+			ctx, e, {{.Ref "Z" "z," -}} err = ch(ctx, e, {{.Ref "Z" "z," -}} err)
 			return err
 		}, typename)
-		return ctx, e, err
+		return ctx, e, {{.Ref "Z" "z," -}} err
 	}
 }
 `))

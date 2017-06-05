@@ -24,8 +24,6 @@ type (
 	Config struct {
 		Package         string
 		Imports         []string
-		EventType       string // Deprecated in favor of Types
-		EventPrototype  string // Deprecated in favor of Types
 		ReturnType      string
 		ReturnPrototype string
 		Args            string // arguments that we were invoked with
@@ -107,6 +105,14 @@ func (c *Config) ReturnRef(name string) string {
 	return name
 }
 
+func (c *Config) RequireType(notation string) (string, error) {
+	_, ok := c.Types[notation]
+	if !ok {
+		return "", fmt.Errorf("type %q is required but not specified", notation)
+	}
+	return "", nil
+}
+
 func (c *Config) Type(notation string) string {
 	t, ok := c.Types[notation]
 	if !ok {
@@ -125,7 +131,6 @@ func (c *Config) Prototype(notation string) string {
 
 func (c *Config) AddFlags(fs *flag.FlagSet) {
 	fs.StringVar(&c.Package, "package", c.Package, "destination package")
-	fs.StringVar(&c.EventType, "event_type", c.EventType, "golang type of the event to be processed")
 	fs.StringVar(&c.ReturnType, "return_type", c.ReturnType, "golang type of a return arg")
 	fs.StringVar(&c.ReturnPrototype, "return_prototype", c.ReturnPrototype, "golang expression of a return obj prototype")
 	fs.Var(c, "import", "packages to import")
@@ -135,8 +140,7 @@ func (c *Config) AddFlags(fs *flag.FlagSet) {
 func NewConfig() *Config {
 	var (
 		c = Config{
-			Package:   os.Getenv("GOPACKAGE"),
-			EventType: "Event",
+			Package: os.Getenv("GOPACKAGE"),
 		}
 	)
 	return &c
@@ -170,15 +174,6 @@ func Run(src, test *template.Template, args ...string) {
 
 	if c.Package == "" {
 		c.Package = "foo"
-	}
-	if c.EventType == "" {
-		c.EventType = "Event"
-		c.EventPrototype = "Event{}"
-	} else if strings.HasPrefix(c.EventType, "*") {
-		// TODO(jdef) don't assume that event type is a struct or *struct
-		c.EventPrototype = "&" + c.EventType[1:] + "{}"
-	} else {
-		c.EventPrototype = c.EventType[1:] + "{}"
 	}
 	if c.ReturnType != "" && c.ReturnPrototype == "" {
 		panic(errors.New("return_prototype is required when return_type is set"))

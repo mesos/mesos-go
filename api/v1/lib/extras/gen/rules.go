@@ -25,6 +25,7 @@ import (
 {{end}}
 )
 
+{{.RequireType "E" -}}
 type (
 	evaler interface {
 		// Eval executes a filter, rule, or decorator function; if the returned event is nil then
@@ -33,16 +34,16 @@ type (
 		// If changes to the event object are needed, the suggested approach is to make a copy,
 		// modify the copy, and pass the copy to the chain.
 		// Eval implementations SHOULD be safe to execute concurrently.
-		Eval(context.Context, {{.EventType}}, {{.ReturnArg "," -}} error, Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error)
+		Eval(context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error, Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error)
 	}
 
 	// Rule is the functional adaptation of evaler.
 	// A nil Rule is valid: it is Eval'd as a noop.
-	Rule func(context.Context, {{.EventType}}, {{.ReturnArg "," -}} error, Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error)
+	Rule func(context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error, Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error)
 
 	// Chain is invoked by a Rule to continue processing an event. If the chain is not invoked,
 	// no additional rules are processed.
-	Chain func(context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error)
+	Chain func(context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error)
 
 	// Rules is a list of rules to be processed, in order.
 	Rules []Rule
@@ -58,13 +59,13 @@ var (
 	_ = evaler(Rules{})
 
 	// chainIdentity is a Chain that returns the arguments as its results.
-	chainIdentity = func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	chainIdentity = func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		return ctx, e, {{.ReturnRef "z," -}} err
 	}
 )
 
 // Eval is a convenience func that processes a nil Rule as a noop.
-func (r Rule) Eval(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+func (r Rule) Eval(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 	if r != nil {
 		return r(ctx, e, {{.ReturnRef "z," -}} err, ch)
 	}
@@ -73,17 +74,17 @@ func (r Rule) Eval(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} 
 
 // Eval is a Rule func that processes the set of all Rules. If there are no rules in the
 // set then control is simply passed to the Chain.
-func (rs Rules) Eval(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+func (rs Rules) Eval(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 	return ch(rs.Chain()(ctx, e, {{.ReturnRef "z," -}} err))
 }
 
-// Chain returns a Chain that evaluates the given Rules, in order, propagating the (context.Context, {{.EventType}}, error)
+// Chain returns a Chain that evaluates the given Rules, in order, propagating the (context.Context, {{.Type "E"}}, error)
 // from Rule to Rule. Chain is safe to invoke concurrently.
 func (rs Rules) Chain() Chain {
 	if len(rs) == 0 {
 		return chainIdentity
 	}
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		return rs[0].Eval(ctx, e, {{.ReturnRef "z," -}} err, rs[1:].Chain())
 	}
 }
@@ -191,7 +192,7 @@ func (r Rule) Once() Rule {
 		return nil
 	}
 	var once sync.Once
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		ruleInvoked := false
 		once.Do(func() {
 			ctx, e, {{.ReturnRef "z," -}} err = r(ctx, e, {{.ReturnRef "z," -}} err, ch)
@@ -210,7 +211,7 @@ func (r Rule) Poll(p <-chan struct{}) Rule {
 	if p == nil || r == nil {
 		return nil
 	}
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		select {
 		case <-p:
 			// do something
@@ -246,7 +247,7 @@ func (r Rule) EveryN(nthTime int) Rule {
 			return false
 		}
 	)
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		if forward() {
 			return r(ctx, e, {{.ReturnRef "z," -}} err, ch)
 		}
@@ -254,21 +255,21 @@ func (r Rule) EveryN(nthTime int) Rule {
 	}
 }
 
-// Drop aborts the Chain and returns the (context.Context, {{.EventType}}, error) tuple as-is.
+// Drop aborts the Chain and returns the (context.Context, {{.Type "E"}}, error) tuple as-is.
 func Drop() Rule {
 	return Rule(nil).ThenDrop()
 }
 
-// ThenDrop executes the receiving rule, but aborts the Chain, and returns the (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) tuple as-is.
+// ThenDrop executes the receiving rule, but aborts the Chain, and returns the (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) tuple as-is.
 func (r Rule) ThenDrop() Rule {
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, _ Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, _ Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		return r.Eval(ctx, e, {{.ReturnRef "z," -}} err, chainIdentity)
 	}
 }
 
 // Fail returns a Rule that injects the given error.
 func Fail(injected error) Rule {
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		return ch(ctx, e, {{.ReturnRef "z," -}} Error2(err, injected))
 	}
 }
@@ -281,7 +282,7 @@ func DropOnError() Rule {
 // DropOnError decorates a rule by pre-checking the error state: if the error state != nil then
 // the receiver is not invoked and (e, err) is returned; otherwise control passes to the receiving rule.
 func (r Rule) DropOnError() Rule {
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		if err != nil {
 			return ctx, e, {{.ReturnRef "z," -}} err
 		}
@@ -301,7 +302,7 @@ func DropOnSuccess() Rule {
 }
 
 func (r Rule) DropOnSuccess() Rule {
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		if err == nil {
 			// bypass remainder of chain
 			return ctx, e, {{.ReturnRef "z," -}} err
@@ -330,30 +331,30 @@ import (
 {{end}}
 )
 
-func prototype() {{.EventType}} { return {{.EventPrototype}} }
+func prototype() {{.Type "E"}} { return {{.Prototype "E"}} }
 
 func counter(i *int) Rule {
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		*i++
 		return ch(ctx, e, {{.ReturnRef "z," -}} err)
 	}
 }
 
 func tracer(r Rule, name string, t *testing.T) Rule {
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		t.Log("executing", name)
 		return r(ctx, e, {{.ReturnRef "z," -}} err, ch)
 	}
 }
 
 func returnError(re error) Rule {
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		return ch(ctx, e, {{.ReturnRef "z," -}} Error2(err, re))
 	}
 }
 
 func chainCounter(i *int, ch Chain) Chain {
-	return func(ctx context.Context, e {{.EventType}}, {{.ReturnArg "z," -}} err error) (context.Context, {{.EventType}}, {{.ReturnArg "," -}} error) {
+	return func(ctx context.Context, e {{.Type "E"}}, {{.ReturnArg "z," -}} err error) (context.Context, {{.Type "E"}}, {{.ReturnArg "," -}} error) {
 		*i++
 		return ch(ctx, e, {{.ReturnRef "z," -}} err)
 	}
@@ -391,7 +392,7 @@ func TestRules(t *testing.T) {
 
 	// multiple rules in Rules should execute, dropping nil rules along the way
 	for _, tc := range []struct {
-		e   {{.EventType}}
+		e   {{.Type "E"}}
 		{{if .ReturnType}}
 		{{- .ReturnArg "z  "}}
 		{{end -}}

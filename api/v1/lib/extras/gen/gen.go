@@ -22,12 +22,10 @@ type (
 	TypeMap map[string]Type
 
 	Config struct {
-		Package         string
-		Imports         []string
-		ReturnType      string
-		ReturnPrototype string
-		Args            string // arguments that we were invoked with
-		Types           TypeMap
+		Package string
+		Imports []string
+		Args    string // arguments that we were invoked with
+		Types   TypeMap
 	}
 )
 
@@ -57,8 +55,20 @@ func (tm *TypeMap) Set(s string) error {
 	t := (*tm)[tok[0]]
 	t.Notation, t.Spec = tok[0], tok[1]
 
+	if t.Notation == "" {
+		return fmt.Errorf("type notation in %q may not be an empty string", s)
+	}
+
+	if t.Spec == "" {
+		return fmt.Errorf("type specification in %q may not be an empty string", s)
+	}
+
 	if len(tok) == 3 {
 		t.Prototype = tok[2]
+
+		if t.Prototype == "" {
+			return fmt.Errorf("prototype specification in %q may not be an empty string", s)
+		}
 	}
 
 	(*tm)[tok[0]] = t
@@ -72,43 +82,58 @@ func (tm *TypeMap) String() string {
 	return fmt.Sprintf("%#v", *tm)
 }
 
-func (c *Config) ReturnVar(names ...string) string {
-	if c.ReturnType == "" || len(names) == 0 {
+func (c *Config) Var(notation string, names ...string) string {
+	t := c.Type(notation)
+	if t == "" || len(names) == 0 {
 		return ""
 	}
-	return "var " + strings.Join(names, ",") + " " + c.ReturnType
+	return "var " + strings.Join(names, ",") + " " + t
 }
 
-func (c *Config) ReturnArg(name string) string {
-	if c.ReturnType == "" {
+func (c *Config) Arg(notation, name string) string {
+	t := c.Type(notation)
+	if t == "" {
 		return ""
 	}
 	if name == "" {
-		return c.ReturnType
+		return t
 	}
 	if strings.HasSuffix(name, ",") {
-		return strings.TrimSpace(name[:len(name)-1]+" "+c.ReturnType) + ", "
+		return strings.TrimSpace(name[:len(name)-1]+" "+t) + ", "
 	}
-	return name + " " + c.ReturnType
+	return name + " " + t
 }
 
-func (c *Config) ReturnRef(name string) string {
-	if c.ReturnType == "" || name == "" {
-		return ""
+func (c *Config) Ref(notation, name string) (string, error) {
+	t := c.Type(notation)
+	if t == "" || name == "" {
+		return "", nil
 	}
 	if strings.HasSuffix(name, ",") {
 		if len(name) < 2 {
-			panic("expected ref name before comma")
+			return "", errors.New("expected ref name before comma")
 		}
-		return name[:len(name)-1] + ", "
+		return name[:len(name)-1] + ", ", nil
 	}
-	return name
+	return name, nil
 }
 
 func (c *Config) RequireType(notation string) (string, error) {
 	_, ok := c.Types[notation]
 	if !ok {
 		return "", fmt.Errorf("type %q is required but not specified", notation)
+	}
+	return "", nil
+}
+
+func (c *Config) RequirePrototype(notation string) (string, error) {
+	t, ok := c.Types[notation]
+	if !ok {
+		// needed for optional types: don't require the prototype if the optional type is not defined
+		return "", nil
+	}
+	if t.Prototype == "" {
+		return "", fmt.Errorf("prototype for type %q is required but not specified", notation)
 	}
 	return "", nil
 }
@@ -131,8 +156,6 @@ func (c *Config) Prototype(notation string) string {
 
 func (c *Config) AddFlags(fs *flag.FlagSet) {
 	fs.StringVar(&c.Package, "package", c.Package, "destination package")
-	fs.StringVar(&c.ReturnType, "return_type", c.ReturnType, "golang type of a return arg")
-	fs.StringVar(&c.ReturnPrototype, "return_prototype", c.ReturnPrototype, "golang expression of a return obj prototype")
 	fs.Var(c, "import", "packages to import")
 	fs.Var(&c.Types, "type", "auxilliary type mappings in {notation}:{type-spec}:{prototype-expr} format")
 }
@@ -174,9 +197,6 @@ func Run(src, test *template.Template, args ...string) {
 
 	if c.Package == "" {
 		c.Package = "foo"
-	}
-	if c.ReturnType != "" && c.ReturnPrototype == "" {
-		panic(errors.New("return_prototype is required when return_type is set"))
 	}
 
 	if output == "" {

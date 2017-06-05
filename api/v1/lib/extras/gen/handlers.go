@@ -23,6 +23,8 @@ import (
 {{end}}
 )
 
+{{.RequireType "E" -}}
+{{.RequireType "ET" -}}
 type (
 	// Handler is invoked upon the occurrence of some scheduler event that is generated
 	// by some other component in the Mesos ecosystem (e.g. master, agent, executor, etc.)

@@ -1,6 +1,6 @@
 package eventrules
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib/scheduler -event_type *scheduler.Event
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/scheduler -type E:*scheduler.Event:&scheduler.Event{}
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (

@@ -12,15 +12,26 @@ import (
 	"text/template"
 )
 
-type Config struct {
-	Package         string
-	Imports         []string
-	EventType       string
-	EventPrototype  string
-	ReturnType      string
-	ReturnPrototype string
-	Args            string // arguments that we were invoked with
-}
+type (
+	Type struct {
+		Notation  string
+		Spec      string
+		Prototype string
+	}
+
+	TypeMap map[string]Type
+
+	Config struct {
+		Package         string
+		Imports         []string
+		EventType       string // Deprecated in favor of Types
+		EventPrototype  string // Deprecated in favor of Types
+		ReturnType      string
+		ReturnPrototype string
+		Args            string // arguments that we were invoked with
+		Types           TypeMap
+	}
+)
 
 func (c *Config) String() string {
 	if c == nil {
@@ -32,6 +43,35 @@ func (c *Config) String() string {
 func (c *Config) Set(s string) error {
 	c.Imports = append(c.Imports, s)
 	return nil
+}
+
+func (tm *TypeMap) Set(s string) error {
+	tok := strings.SplitN(s, ":", 3)
+
+	if len(tok) < 2 {
+		return errors.New("expected {notation}:{type-spec} syntax, instead of " + s)
+	}
+
+	if *tm == nil {
+		*tm = make(TypeMap)
+	}
+
+	t := (*tm)[tok[0]]
+	t.Notation, t.Spec = tok[0], tok[1]
+
+	if len(tok) == 3 {
+		t.Prototype = tok[2]
+	}
+
+	(*tm)[tok[0]] = t
+	return nil
+}
+
+func (tm *TypeMap) String() string {
+	if tm == nil {
+		return ""
+	}
+	return fmt.Sprintf("%#v", *tm)
 }
 
 func (c *Config) ReturnVar(names ...string) string {
@@ -67,12 +107,29 @@ func (c *Config) ReturnRef(name string) string {
 	return name
 }
 
+func (c *Config) Type(notation string) string {
+	t, ok := c.Types[notation]
+	if !ok {
+		panic(fmt.Errorf("unknown type notation %q", notation))
+	}
+	return t.Spec
+}
+
+func (c *Config) Prototype(notation string) string {
+	t, ok := c.Types[notation]
+	if !ok {
+		panic(fmt.Errorf("unknown type notation %q", notation))
+	}
+	return t.Prototype
+}
+
 func (c *Config) AddFlags(fs *flag.FlagSet) {
 	fs.StringVar(&c.Package, "package", c.Package, "destination package")
 	fs.StringVar(&c.EventType, "event_type", c.EventType, "golang type of the event to be processed")
 	fs.StringVar(&c.ReturnType, "return_type", c.ReturnType, "golang type of a return arg")
 	fs.StringVar(&c.ReturnPrototype, "return_prototype", c.ReturnPrototype, "golang expression of a return obj prototype")
 	fs.Var(c, "import", "packages to import")
+	fs.Var(&c.Types, "type", "auxilliary type mappings in {notation}:{type-spec}:{prototype-expr} format")
 }
 
 func NewConfig() *Config {

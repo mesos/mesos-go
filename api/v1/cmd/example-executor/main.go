@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"io"
 	"log"
@@ -139,54 +140,58 @@ func unacknowledgedUpdates(state *internalState) executor.CallOpt {
 }
 
 func eventLoop(state *internalState, decoder encoding.Decoder, h events.Handler) (err error) {
+	ctx := context.TODO()
 	for err == nil && !state.shouldQuit {
 		// housekeeping
 		sendFailedTasks(state)
 
 		var e executor.Event
 		if err = decoder.Decode(&e); err == nil {
-			err = h.HandleEvent(&e)
+			err = h.HandleEvent(ctx, &e)
 		}
 	}
 	return err
 }
 
 func buildEventHandler(state *internalState) events.Handler {
-	return events.NewMux(
-		events.Handle(executor.Event_SUBSCRIBED, events.HandlerFunc(func(e *executor.Event) error {
+	return events.HandlerFuncs{
+		executor.Event_SUBSCRIBED: func(_ context.Context, e *executor.Event) error {
 			log.Println("SUBSCRIBED")
 			state.framework = e.Subscribed.FrameworkInfo
 			state.executor = e.Subscribed.ExecutorInfo
 			state.agent = e.Subscribed.AgentInfo
 			return nil
-		})),
-		events.Handle(executor.Event_LAUNCH, events.HandlerFunc(func(e *executor.Event) error {
+		},
+		executor.Event_LAUNCH: func(_ context.Context, e *executor.Event) error {
 			launch(state, e.Launch.Task)
 			return nil
-		})),
-		events.Handle(executor.Event_KILL, events.HandlerFunc(func(e *executor.Event) error {
+		},
+		executor.Event_KILL: func(_ context.Context, e *executor.Event) error {
 			log.Println("warning: KILL not implemented")
 			return nil
-		})),
-		events.Handle(executor.Event_ACKNOWLEDGED, events.HandlerFunc(func(e *executor.Event) error {
+		},
+		executor.Event_ACKNOWLEDGED: func(_ context.Context, e *executor.Event) error {
 			delete(state.unackedTasks, e.Acknowledged.TaskID)
 			delete(state.unackedUpdates, string(e.Acknowledged.UUID))
 			return nil
-		})),
-		events.Handle(executor.Event_MESSAGE, events.HandlerFunc(func(e *executor.Event) error {
+		},
+		executor.Event_MESSAGE: func(_ context.Context, e *executor.Event) error {
 			log.Printf("MESSAGE: received %d bytes of message data", len(e.Message.Data))
 			return nil
-		})),
-		events.Handle(executor.Event_SHUTDOWN, events.HandlerFunc(func(e *executor.Event) error {
+		},
+		executor.Event_SHUTDOWN: func(_ context.Context, e *executor.Event) error {
 			log.Println("SHUTDOWN received")
 			state.shouldQuit = true
 			return nil
-		})),
-		events.Handle(executor.Event_ERROR, events.HandlerFunc(func(e *executor.Event) error {
+		},
+		executor.Event_ERROR: func(_ context.Context, e *executor.Event) error {
 			log.Println("ERROR received")
 			return errMustAbort
-		})),
-	)
+		},
+	}.Otherwise(func(_ context.Context, e *executor.Event) error {
+		log.Fatal("unexpected event", e)
+		return nil
+	})
 }
 
 func sendFailedTasks(state *internalState) {

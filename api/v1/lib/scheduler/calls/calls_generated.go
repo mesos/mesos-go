@@ -1,14 +1,18 @@
 package calls
 
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/scheduler -type C:*scheduler.Call
+// GENERATED CODE FOLLOWS; DO NOT EDIT.
+
 import (
 	"context"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
+
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 )
 
-// Caller is the public interface this framework scheduler's should consume
 type (
+	// Caller is the public interface this framework scheduler's should consume
 	Caller interface {
 		// Call issues a call to Mesos and properly manages call-specific HTTP response headers & data.
 		Call(context.Context, *scheduler.Call) (mesos.Response, error)

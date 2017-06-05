@@ -81,6 +81,7 @@ sync:
 generate:
 	go generate -x ./api/v1/lib/extras/scheduler/eventrules
 	go generate -x ./api/v1/lib/extras/scheduler/callrules
+	go generate -x ./api/v1/lib/executor/events
 	go generate -x ./api/v1/lib/scheduler/events
 
 GOPKG		:= github.com/mesos/mesos-go

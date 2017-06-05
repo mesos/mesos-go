@@ -1,55 +1,41 @@
-// +build ignore
+package events
 
-package main
-
-import (
-	"os"
-	"text/template"
-)
-
-func main() {
-	Run(handlersTemplate, nil, os.Args...)
-}
-
-var handlersTemplate = template.Must(template.New("").Parse(`package {{.Package}}
-
-// go generate {{.Args}}
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -event_type *executor.Event -type ET:executor.Event_Type
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
 	"context"
-{{range .Imports}}
-	{{ printf "%q" . -}}
-{{end}}
+
+	"github.com/mesos/mesos-go/api/v1/lib/executor"
 )
 
 type (
 	// Handler is invoked upon the occurrence of some scheduler event that is generated
 	// by some other component in the Mesos ecosystem (e.g. master, agent, executor, etc.)
 	Handler interface {
-		HandleEvent(context.Context, {{.EventType}}) error
+		HandleEvent(context.Context, *executor.Event) error
 	}
 
 	// HandlerFunc is a functional adaptation of the Handler interface
-	HandlerFunc func(context.Context, {{.EventType}}) error
+	HandlerFunc func(context.Context, *executor.Event) error
 
 	// Handlers executes an event Handler according to the event's type
-	Handlers map[{{.Type "ET"}}]Handler
+	Handlers map[executor.Event_Type]Handler
 
 	// HandlerFuncs executes an event HandlerFunc according to the event's type
-	HandlerFuncs map[{{.Type "ET"}}]HandlerFunc
+	HandlerFuncs map[executor.Event_Type]HandlerFunc
 )
 
 // HandleEvent implements Handler for HandlerFunc
-func (f HandlerFunc) HandleEvent(ctx context.Context, e {{.EventType}}) error { return f(ctx, e) }
+func (f HandlerFunc) HandleEvent(ctx context.Context, e *executor.Event) error { return f(ctx, e) }
 
-var noopHandler = func(_ context.Context, _ {{.EventType}}) error { return nil }
+var noopHandler = func(_ context.Context, _ *executor.Event) error { return nil }
 
 // NoopHandler returns a HandlerFunc that does nothing and always returns nil
 func NoopHandler() HandlerFunc { return noopHandler }
 
 // HandleEvent implements Handler for Handlers
-func (hs Handlers) HandleEvent(ctx context.Context, e {{.EventType}}) (err error) {
+func (hs Handlers) HandleEvent(ctx context.Context, e *executor.Event) (err error) {
 	if h := hs[e.GetType()]; h != nil {
 		return h.HandleEvent(ctx, e)
 	}
@@ -57,7 +43,7 @@ func (hs Handlers) HandleEvent(ctx context.Context, e {{.EventType}}) (err error
 }
 
 // HandleEvent implements Handler for HandlerFuncs
-func (hs HandlerFuncs) HandleEvent(ctx context.Context, e {{.EventType}}) (err error) {
+func (hs HandlerFuncs) HandleEvent(ctx context.Context, e *executor.Event) (err error) {
 	if h := hs[e.GetType()]; h != nil {
 		return h.HandleEvent(ctx, e)
 	}
@@ -70,7 +56,7 @@ func (hs Handlers) Otherwise(f HandlerFunc) HandlerFunc {
 	if f == nil {
 		return hs.HandleEvent
 	}
-	return func(ctx context.Context, e {{.EventType}}) error {
+	return func(ctx context.Context, e *executor.Event) error {
 		if h := hs[e.GetType()]; h != nil {
 			return h.HandleEvent(ctx, e)
 		}
@@ -84,7 +70,7 @@ func (hs HandlerFuncs) Otherwise(f HandlerFunc) HandlerFunc {
 	if f == nil {
 		return hs.HandleEvent
 	}
-	return func(ctx context.Context, e {{.EventType}}) error {
+	return func(ctx context.Context, e *executor.Event) error {
 		if h := hs[e.GetType()]; h != nil {
 			return h.HandleEvent(ctx, e)
 		}
@@ -97,4 +83,3 @@ var (
 	_ = Handler(HandlerFunc(nil))
 	_ = Handler(HandlerFuncs(nil))
 )
-`))

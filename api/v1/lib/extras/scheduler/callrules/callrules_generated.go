@@ -5,6 +5,7 @@ package callrules
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -191,23 +192,65 @@ func (r Rule) Once() Rule {
 	}
 }
 
-// Poll invokes the receiving Rule if the chan is readable (may be closed), otherwise it skips the rule.
-// A nil chan will always skip the rule. May be useful, for example, when rate-limiting logged events.
-func (r Rule) Poll(p <-chan struct{}) Rule {
+type Overflow int
+
+const (
+	// OverflowDiscard aborts the rule chain and returns the current state
+	OverflowDiscard Overflow = iota
+	// OverflowDiscardWithError aborts the rule chain and returns the current state merged with ErrOverflow
+	OverflowDiscardWithError
+	// OverflowBackpressure waits until the rule may execute, or the context is canceled.
+	OverflowBackpressure
+	// OverflowSkipRule skips over the decorated rule and continues processing the rule chain
+	OverflowSkipRule
+	// OverflowSkipRuleWithError skips over the decorated rule and merges ErrOverflow upon executing the chain
+	OverflowSkipRuleWithError
+)
+
+var ErrOverflow = errors.New("overflow: rate limit exceeded")
+
+// RateLimit invokes the receiving Rule if the chan is readable (may be closed), otherwise it handles the "overflow"
+// according to the specified Overflow policy. May be useful, for example, when rate-limiting logged events.
+// A nil chan will always skip the rule.
+func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
 	if p == nil || r == nil {
 		return nil
 	}
 	return func(ctx context.Context, e *scheduler.Call, z mesos.Response, err error, ch Chain) (context.Context, *scheduler.Call, mesos.Response, error) {
+		checkTieBreaker := func() (context.Context, *scheduler.Call, mesos.Response, error) {
+			select {
+			case <-ctx.Done():
+				return ctx, e, z, Error2(err, ctx.Err())
+			default:
+				return r(ctx, e, z, err, ch)
+			}
+		}
 		select {
 		case <-p:
-			// do something
-			// TODO(jdef): optimization: if we detect the chan is closed, affect a state change
-			// whereby this select is no longer invoked (and always pass control to r).
-			return r(ctx, e, z, err, ch)
+			return checkTieBreaker()
 		case <-ctx.Done():
 			return ctx, e, z, Error2(err, ctx.Err())
 		default:
-			return ch(ctx, e, z, err)
+			// overflow
+			switch over {
+			case OverflowBackpressure:
+				select {
+				case <-p:
+					return checkTieBreaker()
+				case <-ctx.Done():
+					return ctx, e, z, Error2(err, ctx.Err())
+				}
+			case OverflowDiscardWithError:
+				return ctx, e, z, Error2(err, ErrOverflow)
+			case OverflowDiscard:
+				return ctx, e, z, err
+			case OverflowSkipRuleWithError:
+				return ch(ctx, e, z, Error2(err, ErrOverflow))
+			case OverflowSkipRule:
+				return ch(ctx, e, z, err)
+			default:
+				panic(fmt.Sprintf("unexpected Overflow type: %#v", over))
+			}
 		}
 	}
 }

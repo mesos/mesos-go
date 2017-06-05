@@ -440,7 +440,7 @@ func TestOnce(t *testing.T) {
 	}
 }
 
-func TestPoll(t *testing.T) {
+func TestRateLimit(t *testing.T) {
 	var (
 		ch1 <-chan struct{}          // always nil
 		ch2 = make(chan struct{})    // non-nil, blocking
@@ -462,8 +462,8 @@ func TestPoll(t *testing.T) {
 			i, j int
 			p    = prototype()
 			ctx  = context.Background()
-			r1   = counter(&i).Poll(tc.ch).Eval
-			r2   = Rule(nil).Poll(tc.ch).Eval
+			r1   = counter(&i).RateLimit(tc.ch, OverflowSkipRule).Eval
+			r2   = Rule(nil).RateLimit(tc.ch, OverflowSkipRule).Eval
 		)
 		for k, r := range []Rule{r1, r2} {
 			for x := 0; x < 2; x++ {

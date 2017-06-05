@@ -1,5 +1,8 @@
 package eventrules
 
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/scheduler -import github.com/mesos/mesos-go/api/v1/lib/scheduler/events -type E:*scheduler.Event -type H:events.Handler -type HF:events.HandlerFunc -output handlers_generated.go
+// GENERATED CODE FOLLOWS; DO NOT EDIT.
+
 import (
 	"context"
 
@@ -7,7 +10,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
 )
 
-// Handle generates a rule that executes the given handler.
+// Handle generates a rule that executes the given events.Handler.
 func Handle(h events.Handler) Rule {
 	if h == nil {
 		return nil
@@ -23,7 +26,7 @@ func HandleF(h events.HandlerFunc) Rule {
 	return Handle(events.Handler(h))
 }
 
-// Handle returns a Rule that invokes the receiver, then the given Handler
+// Handle returns a Rule that invokes the receiver, then the given events.Handler
 func (r Rule) Handle(h events.Handler) Rule {
 	return Rules{r, Handle(h)}.Eval
 }
@@ -46,18 +49,3 @@ func (r Rule) HandleEvent(ctx context.Context, e *scheduler.Event) (err error) {
 func (rs Rules) HandleEvent(ctx context.Context, e *scheduler.Event) error {
 	return Rule(rs.Eval).HandleEvent(ctx, e)
 }
-
-/*
-// Apply returns the result of a singleton rule set (the receiver) applied to the given event handler.
-func (r Rule) Apply(h events.Handler) events.HandlerFunc {
-	if r == nil {
-		return h.HandleEvent
-	}
-	return r.Handle(h).HandleEvent
-}
-
-// ApplyF is the functional equivalent of Apply
-func (r Rule) ApplyF(h events.HandlerFunc) events.HandlerFunc {
-	return r.Apply(events.Handler(h))
-}
-*/

@@ -1,9 +1,13 @@
 package callrules
 
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/scheduler -import github.com/mesos/mesos-go/api/v1/lib/scheduler/calls -type E:*scheduler.Call -type C:calls.Caller -type CF:calls.CallerFunc -output callers_generated.go
+// GENERATED CODE FOLLOWS; DO NOT EDIT.
+
 import (
 	"context"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
+
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 )

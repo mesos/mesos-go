@@ -78,12 +78,9 @@ sync:
 	(cd ${CMD_VENDOR}; govendor sync)
 
 .PHONY: generate
+generate: GENERATE_PACKAGES = ./api/v1/lib/extras/scheduler/eventrules ./api/v1/lib/extras/scheduler/callrules ./api/v1/lib/executor/events ./api/v1/lib/executor/calls ./api/v1/lib/scheduler/events ./api/v1/lib/scheduler/calls
 generate:
-	go generate -x ./api/v1/lib/extras/scheduler/eventrules
-	go generate -x ./api/v1/lib/extras/scheduler/callrules
-	go generate -x ./api/v1/lib/executor/events
-	go generate -x ./api/v1/lib/scheduler/events
-	go generate -x ./api/v1/lib/scheduler/calls
+	go generate -x ${GENERATE_PACKAGES}
 
 GOPKG		:= github.com/mesos/mesos-go
 GOPKG_DIRNAME	:= $(shell dirname $(GOPKG))

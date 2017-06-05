@@ -1,6 +1,6 @@
 package callrules
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib -import github.com/mesos/mesos-go/api/v1/lib/scheduler -type E:*scheduler.Call:&scheduler.Call{} -return_type mesos.Response -return_prototype &mesos.ResponseWrapper{}
+// go generate -import github.com/mesos/mesos-go/api/v1/lib -import github.com/mesos/mesos-go/api/v1/lib/scheduler -type E:*scheduler.Call:&scheduler.Call{} -type Z:mesos.Response:&mesos.ResponseWrapper{}
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (

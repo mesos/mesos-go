@@ -27,11 +27,11 @@ type (
 	// Handler is invoked upon the occurrence of some scheduler event that is generated
 	// by some other component in the Mesos ecosystem (e.g. master, agent, executor, etc.)
 	Handler interface {
-		HandleEvent(context.Context, {{.EventType}}) error
+		HandleEvent(context.Context, {{.Type "E"}}) error
 	}
 
 	// HandlerFunc is a functional adaptation of the Handler interface
-	HandlerFunc func(context.Context, {{.EventType}}) error
+	HandlerFunc func(context.Context, {{.Type "E"}}) error
 
 	// Handlers executes an event Handler according to the event's type
 	Handlers map[{{.Type "ET"}}]Handler
@@ -41,15 +41,15 @@ type (
 )
 
 // HandleEvent implements Handler for HandlerFunc
-func (f HandlerFunc) HandleEvent(ctx context.Context, e {{.EventType}}) error { return f(ctx, e) }
+func (f HandlerFunc) HandleEvent(ctx context.Context, e {{.Type "E"}}) error { return f(ctx, e) }
 
-var noopHandler = func(_ context.Context, _ {{.EventType}}) error { return nil }
+var noopHandler = func(_ context.Context, _ {{.Type "E"}}) error { return nil }
 
 // NoopHandler returns a HandlerFunc that does nothing and always returns nil
 func NoopHandler() HandlerFunc { return noopHandler }
 
 // HandleEvent implements Handler for Handlers
-func (hs Handlers) HandleEvent(ctx context.Context, e {{.EventType}}) (err error) {
+func (hs Handlers) HandleEvent(ctx context.Context, e {{.Type "E"}}) (err error) {
 	if h := hs[e.GetType()]; h != nil {
 		return h.HandleEvent(ctx, e)
 	}
@@ -57,7 +57,7 @@ func (hs Handlers) HandleEvent(ctx context.Context, e {{.EventType}}) (err error
 }
 
 // HandleEvent implements Handler for HandlerFuncs
-func (hs HandlerFuncs) HandleEvent(ctx context.Context, e {{.EventType}}) (err error) {
+func (hs HandlerFuncs) HandleEvent(ctx context.Context, e {{.Type "E"}}) (err error) {
 	if h := hs[e.GetType()]; h != nil {
 		return h.HandleEvent(ctx, e)
 	}
@@ -70,7 +70,7 @@ func (hs Handlers) Otherwise(f HandlerFunc) HandlerFunc {
 	if f == nil {
 		return hs.HandleEvent
 	}
-	return func(ctx context.Context, e {{.EventType}}) error {
+	return func(ctx context.Context, e {{.Type "E"}}) error {
 		if h := hs[e.GetType()]; h != nil {
 			return h.HandleEvent(ctx, e)
 		}
@@ -84,7 +84,7 @@ func (hs HandlerFuncs) Otherwise(f HandlerFunc) HandlerFunc {
 	if f == nil {
 		return hs.HandleEvent
 	}
-	return func(ctx context.Context, e {{.EventType}}) error {
+	return func(ctx context.Context, e {{.Type "E"}}) error {
 		if h := hs[e.GetType()]; h != nil {
 			return h.HandleEvent(ctx, e)
 		}

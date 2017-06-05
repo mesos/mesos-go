@@ -110,7 +110,7 @@ func (c *Config) ReturnRef(name string) string {
 func (c *Config) Type(notation string) string {
 	t, ok := c.Types[notation]
 	if !ok {
-		panic(fmt.Errorf("unknown type notation %q", notation))
+		return ""
 	}
 	return t.Spec
 }
@@ -118,7 +118,7 @@ func (c *Config) Type(notation string) string {
 func (c *Config) Prototype(notation string) string {
 	t, ok := c.Types[notation]
 	if !ok {
-		panic(fmt.Errorf("unknown type notation %q", notation))
+		return ""
 	}
 	return t.Prototype
 }

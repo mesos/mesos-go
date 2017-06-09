@@ -192,6 +192,23 @@ func (r Rule) Once() Rule {
 	}
 }
 
+// UnlessDone returns a decorated rule that checks context.Done: if the context has been canceled then the rule chain
+// is aborted and the context.Err is merged with the current error state.
+// Returns nil (noop) if the receiving Rule is nil.
+func (r Rule) UnlessDone() Rule {
+	if r == nil {
+		return nil
+	}
+	return func(ctx context.Context, e *executor.Call, z mesos.Response, err error, ch Chain) (context.Context, *executor.Call, mesos.Response, error) {
+		select {
+		case <-ctx.Done():
+			return ctx, e, z, Error2(err, ctx.Err())
+		default:
+			return r(ctx, e, z, err, ch)
+		}
+	}
+}
+
 type Overflow int
 
 const (
@@ -217,29 +234,14 @@ func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
 		return nil
 	}
 	return func(ctx context.Context, e *executor.Call, z mesos.Response, err error, ch Chain) (context.Context, *executor.Call, mesos.Response, error) {
-		checkTieBreaker := func() (context.Context, *executor.Call, mesos.Response, error) {
-			select {
-			case <-ctx.Done():
-				return ctx, e, z, Error2(err, ctx.Err())
-			default:
-				return r(ctx, e, z, err, ch)
-			}
-		}
 		select {
 		case <-p:
-			return checkTieBreaker()
-		case <-ctx.Done():
-			return ctx, e, z, Error2(err, ctx.Err())
+			// continue
 		default:
 			// overflow
 			switch over {
 			case OverflowBackpressure:
-				select {
-				case <-p:
-					return checkTieBreaker()
-				case <-ctx.Done():
-					return ctx, e, z, Error2(err, ctx.Err())
-				}
+				<-p
 			case OverflowDiscardWithError:
 				return ctx, e, z, Error2(err, ErrOverflow)
 			case OverflowDiscard:
@@ -252,6 +254,7 @@ func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
 				panic(fmt.Sprintf("unexpected Overflow type: %#v", over))
 			}
 		}
+		return r(ctx, e, z, err, ch)
 	}
 }
 

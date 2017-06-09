@@ -200,19 +200,19 @@ const (
 	OverflowDiscardWithError
 	// OverflowBackpressure waits until the rule may execute, or the context is canceled.
 	OverflowBackpressure
-	// OverflowSkipRule skips over the decorated rule and continues processing the rule chain
-	OverflowSkipRule
-	// OverflowSkipRuleWithError skips over the decorated rule and merges ErrOverflow upon executing the chain
-	OverflowSkipRuleWithError
+	// OverflowSkip skips over the decorated rule and continues processing the rule chain
+	OverflowSkip
+	// OverflowSkipWithError skips over the decorated rule and merges ErrOverflow upon executing the chain
+	OverflowSkipWithError
 )
 
 var ErrOverflow = errors.New("overflow: rate limit exceeded")
 
 // RateLimit invokes the receiving Rule if the chan is readable (may be closed), otherwise it handles the "overflow"
 // according to the specified Overflow policy. May be useful, for example, when rate-limiting logged events.
-// A nil chan will always skip the rule.
+// Returns nil (noop) if the receiver is nil, otherwise a nil chan will always trigger an overflow.
 func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
-	if p == nil || r == nil {
+	if r == nil {
 		return nil
 	}
 	return func(ctx context.Context, e *scheduler.Event, err error, ch Chain) (context.Context, *scheduler.Event, error) {
@@ -243,9 +243,9 @@ func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
 				return ctx, e, Error2(err, ErrOverflow)
 			case OverflowDiscard:
 				return ctx, e, err
-			case OverflowSkipRuleWithError:
+			case OverflowSkipWithError:
 				return ch(ctx, e, Error2(err, ErrOverflow))
-			case OverflowSkipRule:
+			case OverflowSkip:
 				return ch(ctx, e, err)
 			default:
 				panic(fmt.Sprintf("unexpected Overflow type: %#v", over))

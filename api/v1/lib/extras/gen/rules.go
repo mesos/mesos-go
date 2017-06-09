@@ -208,6 +208,23 @@ func (r Rule) Once() Rule {
 	}
 }
 
+// UnlessDone returns a decorated rule that checks context.Done: if the context has been canceled then the rule chain
+// is aborted and the context.Err is merged with the current error state.
+// Returns nil (noop) if the receiving Rule is nil.
+func (r Rule) UnlessDone() Rule {
+	if r == nil {
+		return nil
+	}
+	return func(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
+		select {
+		case <-ctx.Done():
+			return ctx, e, {{.Ref "Z" "z," -}} Error2(err, ctx.Err())
+		default:
+			return r(ctx, e, {{.Ref "Z" "z," -}} err, ch)
+		}
+	}
+}
+
 type Overflow int
 
 const (
@@ -233,29 +250,14 @@ func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
 		return nil
 	}
 	return func(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
-		checkTieBreaker := func() (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
-			select {
-			case <-ctx.Done():
-				return ctx, e, {{.Ref "Z" "z," -}} Error2(err, ctx.Err())
-			default:
-				return r(ctx, e, {{.Ref "Z" "z," -}} err, ch)
-			}
-		}
 		select {
 		case <-p:
-			return checkTieBreaker()
-		case <-ctx.Done():
-			return ctx, e, {{.Ref "Z" "z," -}} Error2(err, ctx.Err())
+			// continue
 		default:
 			// overflow
 			switch over {
 			case OverflowBackpressure:
-				select {
-				case <-p:
-					return checkTieBreaker()
-				case <-ctx.Done():
-					return ctx, e, {{.Ref "Z" "z," -}} Error2(err, ctx.Err())
-				}
+				<-p
 			case OverflowDiscardWithError:
 				return ctx, e, {{.Ref "Z" "z," -}} Error2(err, ErrOverflow)
 			case OverflowDiscard:
@@ -268,6 +270,7 @@ func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
 				panic(fmt.Sprintf("unexpected Overflow type: %#v", over))
 			}
 		}
+		return r(ctx, e, {{.Ref "Z" "z," -}} err, ch)
 	}
 }
 
@@ -536,6 +539,60 @@ func TestError2(t *testing.T) {
 			t.Fatalf("test case %d failed, expected message %q instead of %q",
 				i, tc.wantsMessage, result.Error())
 		}
+	}
+}
+
+func TestUnlessDone(t *testing.T) {
+	var (
+		p   = prototype()
+		ctx = context.Background()
+		fin = func() context.Context {
+			c, cancel := context.WithCancel(context.Background())
+			cancel()
+			return c
+		}()
+	)
+	{{if .Type "Z" -}}
+	var zp = {{.Prototype "Z"}}
+	{{end -}}
+	for ti, tc := range []struct {
+		ctx             context.Context
+		wantsError      []error
+		wantsRuleCount  []int
+		wantsChainCount []int
+	}{
+		{ctx, []error{nil, nil}, []int{1, 2}, []int{1, 2}},
+		{fin, []error{nil, context.Canceled}, []int{1, 1}, []int{1, 1}},
+	} {
+		var (
+			i, j int
+			r1   = counter(&i)
+			r2   = r1.UnlessDone()
+		)
+		for k, r := range []Rule{r1, r2} {
+			_, e, {{.Ref "Z" "zz," -}} err := r(tc.ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+			if e != p {
+				t.Errorf("test case %d failed: expected event %q instead of %q", ti, p, e)
+			}
+			{{if .Type "Z" -}}
+			if zz != zp {
+				t.Errorf("test case %d failed: expected return object %q instead of %q", ti, zp, zz)
+			}
+			{{end -}}
+			if err != tc.wantsError[k] {
+				t.Errorf("test case %d failed: unexpected error %v", ti, err)
+			}
+			if i != tc.wantsRuleCount[k] {
+				t.Errorf("test case %d failed: expected count of %d instead of %d", ti, tc.wantsRuleCount[k], i)
+			}
+			if j != tc.wantsChainCount[k] {
+				t.Errorf("test case %d failed: expected chain count of %d instead of %d", ti, tc.wantsRuleCount[k], j)
+			}
+		}
+	}
+	r := Rule(nil).UnlessDone()
+	if r != nil {
+		t.Error("expected nil result from UnlessDone")
 	}
 }
 
@@ -928,14 +985,8 @@ func TestRateLimit(t *testing.T) {
 		ch2 = make(chan struct{}) // non-nil, blocking
 		ch4 = make(chan struct{}) // non-nil, closed
 		ctx = context.Background()
-		fin = func() context.Context {
-			c, cancel := context.WithCancel(context.Background())
-			cancel()
-			return c
-		}()
 	)
 	close(ch4)
-	// TODO(jdef): unit test for OverflowBackpressure
 	for ti, tc := range []struct {
 		ctx             context.Context
 		ch              <-chan struct{}
@@ -945,28 +996,27 @@ func TestRateLimit(t *testing.T) {
 		wantsChainCount []int
 	}{
 		{ctx, ch1, OverflowSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{fin, ch1, OverflowSkip, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, ch2, OverflowSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
 		{ctx, o(), OverflowSkip, 0x0, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
 		{ctx, ch4, OverflowSkip, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
 		{ctx, ch1, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{fin, ch1, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, ch2, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
 		{ctx, o(), OverflowSkipWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
 		{ctx, ch4, OverflowSkipWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
 		{ctx, ch1, OverflowDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{fin, ch1, OverflowDiscard, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, ch2, OverflowDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, o(), OverflowDiscard, 0x0, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
 		{ctx, ch4, OverflowDiscard, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
 		{ctx, ch1, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{fin, ch1, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, ch2, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, o(), OverflowDiscardWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
 		{ctx, ch4, OverflowDiscardWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+
+		// TODO(jdef): test OverflowBackpressure (blocking)
+		{ctx, ch4, OverflowBackpressure, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 	} {
 		var (
 			i, j int

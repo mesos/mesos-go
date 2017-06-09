@@ -217,19 +217,19 @@ const (
 	OverflowDiscardWithError
 	// OverflowBackpressure waits until the rule may execute, or the context is canceled.
 	OverflowBackpressure
-	// OverflowSkipRule skips over the decorated rule and continues processing the rule chain
-	OverflowSkipRule
-	// OverflowSkipRuleWithError skips over the decorated rule and merges ErrOverflow upon executing the chain
-	OverflowSkipRuleWithError
+	// OverflowSkip skips over the decorated rule and continues processing the rule chain
+	OverflowSkip
+	// OverflowSkipWithError skips over the decorated rule and merges ErrOverflow upon executing the chain
+	OverflowSkipWithError
 )
 
 var ErrOverflow = errors.New("overflow: rate limit exceeded")
 
 // RateLimit invokes the receiving Rule if the chan is readable (may be closed), otherwise it handles the "overflow"
 // according to the specified Overflow policy. May be useful, for example, when rate-limiting logged events.
-// A nil chan will always skip the rule.
+// Returns nil (noop) if the receiver is nil, otherwise a nil chan will always trigger an overflow.
 func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
-	if p == nil || r == nil {
+	if r == nil {
 		return nil
 	}
 	return func(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
@@ -260,9 +260,9 @@ func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
 				return ctx, e, {{.Ref "Z" "z," -}} Error2(err, ErrOverflow)
 			case OverflowDiscard:
 				return ctx, e, {{.Ref "Z" "z," -}} err
-			case OverflowSkipRuleWithError:
+			case OverflowSkipWithError:
 				return ch(ctx, e, {{.Ref "Z" "z," -}} Error2(err, ErrOverflow))
-			case OverflowSkipRule:
+			case OverflowSkip:
 				return ch(ctx, e, {{.Ref "Z" "z," -}} err)
 			default:
 				panic(fmt.Sprintf("unexpected Overflow type: %#v", over))
@@ -917,36 +917,70 @@ func TestOnce(t *testing.T) {
 }
 
 func TestRateLimit(t *testing.T) {
+	// non-blocking, then blocking
+	o := func() <-chan struct{} {
+		x := make(chan struct{}, 1)
+		x <- struct{}{}
+		return x
+	}
 	var (
-		ch1 <-chan struct{}          // always nil
-		ch2 = make(chan struct{})    // non-nil, blocking
-		ch3 = make(chan struct{}, 1) // non-nil, non-blocking then blocking
-		ch4 = make(chan struct{})    // non-nil, closed
+		ch1 <-chan struct{}       // always nil, blocking
+		ch2 = make(chan struct{}) // non-nil, blocking
+		ch4 = make(chan struct{}) // non-nil, closed
+		ctx = context.Background()
+		fin = func() context.Context {
+			c, cancel := context.WithCancel(context.Background())
+			cancel()
+			return c
+		}()
 	)
-	ch3 <- struct{}{}
 	close(ch4)
+	// TODO(jdef): unit test for OverflowBackpressure
 	for ti, tc := range []struct {
-		ch             <-chan struct{}
-		wantsRuleCount []int
+		ctx             context.Context
+		ch              <-chan struct{}
+		over            Overflow
+		wantsError      int // bitmask: lower 4 bits, one for each case; first case = highest bit
+		wantsRuleCount  []int
+		wantsChainCount []int
 	}{
-		{ch1, []int{0, 0, 0, 0}},
-		{ch2, []int{0, 0, 0, 0}},
-		{ch3, []int{1, 1, 1, 1}},
-		{ch4, []int{1, 2, 2, 2}},
+		{ctx, ch1, OverflowSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{fin, ch1, OverflowSkip, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, ch2, OverflowSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, o(), OverflowSkip, 0x0, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
+		{ctx, ch4, OverflowSkip, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+
+		{ctx, ch1, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{fin, ch1, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, ch2, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, o(), OverflowSkipWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
+		{ctx, ch4, OverflowSkipWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+
+		{ctx, ch1, OverflowDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{fin, ch1, OverflowDiscard, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, ch2, OverflowDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, o(), OverflowDiscard, 0x0, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
+		{ctx, ch4, OverflowDiscard, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+
+		{ctx, ch1, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{fin, ch1, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, ch2, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, o(), OverflowDiscardWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
+		{ctx, ch4, OverflowDiscardWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 	} {
 		var (
 			i, j int
 			p    = prototype()
-			ctx  = context.Background()
-			r1   = counter(&i).RateLimit(tc.ch, OverflowSkipRule).Eval
-			r2   = Rule(nil).RateLimit(tc.ch, OverflowSkipRule).Eval
+			r1   = counter(&i).RateLimit(tc.ch, tc.over).Eval
+			r2   = Rule(nil).RateLimit(tc.ch, tc.over).Eval // a nil rule still invokes the chain
 		)
 		{{if .Type "Z" -}}
 		var zp = {{.Prototype "Z"}}
 		{{end -}}
 		for k, r := range []Rule{r1, r2} {
+			// execute each rule twice
 			for x := 0; x < 2; x++ {
-				_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+				_, e, {{.Ref "Z" "zz," -}} err := r(tc.ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
 				if e != p {
 					t.Errorf("test case %d failed: expected event %q instead of %q", ti, p, e)
 				}
@@ -955,16 +989,16 @@ func TestRateLimit(t *testing.T) {
 					t.Errorf("expected return object %q instead of %q", zp, zz)
 				}
 				{{end -}}
-				if err != nil {
-					t.Errorf("test case %d failed: unexpected error %v", ti, err)
+				if b := 8 >> uint(k*2+x); ((b & tc.wantsError) != 0) != (err != nil) {
+					t.Errorf("test case (%d,%d,%d) failed: unexpected error %v", ti, k, x, err)
 				}
 				if y := tc.wantsRuleCount[k*2+x]; i != y {
 					t.Errorf("test case (%d,%d,%d) failed: expected count of %d instead of %d",
 						ti, k, x, y, i)
 				}
-				if y := (k * 2) + x + 1; j != y {
-					t.Errorf("test case %d failed: expected chain count of %d instead of %d",
-						ti, y, j)
+				if y := tc.wantsChainCount[k*2+x]; j != y {
+					t.Errorf("test case (%d,%d,%d) failed: expected chain count of %d instead of %d",
+						ti, k, x, y, j)
 				}
 			}
 		}

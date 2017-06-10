@@ -41,7 +41,7 @@ func (r Rule) HandleEvent(ctx context.Context, e *scheduler.Event) (err error) {
 	if r == nil {
 		return nil
 	}
-	_, _, err = r(ctx, e, nil, chainIdentity)
+	_, _, err = r(ctx, e, nil, ChainIdentity)
 	return
 }
 

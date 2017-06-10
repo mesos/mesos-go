@@ -57,7 +57,7 @@ func (r Rule) HandleEvent(ctx context.Context, e {{.Type "E"}}) (err error) {
 	if r == nil {
 		return nil
 	}
-	_, _, err = r(ctx, e, nil, chainIdentity)
+	_, _, err = r(ctx, e, nil, ChainIdentity)
 	return
 }
 

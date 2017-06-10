@@ -24,7 +24,7 @@ type (
 	Config struct {
 		Package string
 		Imports []string
-		Args    string // arguments that we were invoked with
+		Args    string // arguments that we were invoked with; TODO(jdef) rename this to Flags?
 		Types   TypeMap
 	}
 )
@@ -37,6 +37,7 @@ func (c *Config) String() string {
 }
 
 func (c *Config) Set(s string) error {
+	// TODO(jdef) this is gnarly, *Config shouldn't actually implement Set or String; define a new type for imports
 	c.Imports = append(c.Imports, s)
 	return nil
 }

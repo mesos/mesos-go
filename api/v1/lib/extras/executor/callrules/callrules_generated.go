@@ -5,7 +5,6 @@ package callrules
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -44,12 +43,12 @@ type (
 var (
 	_ = evaler(Rule(nil))
 	_ = evaler(Rules{})
-
-	// chainIdentity is a Chain that returns the arguments as its results.
-	chainIdentity = func(ctx context.Context, e *executor.Call, z mesos.Response, err error) (context.Context, *executor.Call, mesos.Response, error) {
-		return ctx, e, z, err
-	}
 )
+
+// ChainIdentity is a Chain that returns the arguments as its results.
+func ChainIdentity(ctx context.Context, e *executor.Call, z mesos.Response, err error) (context.Context, *executor.Call, mesos.Response, error) {
+	return ctx, e, z, err
+}
 
 // Eval is a convenience func that processes a nil Rule as a noop.
 func (r Rule) Eval(ctx context.Context, e *executor.Call, z mesos.Response, err error, ch Chain) (context.Context, *executor.Call, mesos.Response, error) {
@@ -69,7 +68,7 @@ func (rs Rules) Eval(ctx context.Context, e *executor.Call, z mesos.Response, er
 // from Rule to Rule. Chain is safe to invoke concurrently.
 func (rs Rules) Chain() Chain {
 	if len(rs) == 0 {
-		return chainIdentity
+		return ChainIdentity
 	}
 	return func(ctx context.Context, e *executor.Call, z mesos.Response, err error) (context.Context, *executor.Call, mesos.Response, error) {
 		return rs[0].Eval(ctx, e, z, err, rs[1:].Chain())
@@ -212,44 +211,65 @@ func (r Rule) UnlessDone() Rule {
 type Overflow int
 
 const (
-	// OverflowDiscard aborts the rule chain and returns the current state
-	OverflowDiscard Overflow = iota
-	// OverflowDiscardWithError aborts the rule chain and returns the current state merged with ErrOverflow
-	OverflowDiscardWithError
-	// OverflowBackpressure waits until the rule may execute, or the context is canceled.
-	OverflowBackpressure
-	// OverflowSkip skips over the decorated rule and continues processing the rule chain
-	OverflowSkip
-	// OverflowSkipWithError skips over the decorated rule and merges ErrOverflow upon executing the chain
-	OverflowSkipWithError
+	// OverflowWait waits until the rule may execute, or the context is canceled.
+	OverflowWait Overflow = iota
+	// OverflowOtherwise skips over the decorated rule and invoke an alternative instead.
+	OverflowOtherwise
 )
 
-var ErrOverflow = errors.New("overflow: rate limit exceeded")
-
-// RateLimit invokes the receiving Rule if the chan is readable (may be closed), otherwise it handles the "overflow"
+// RateLimit invokes the receiving Rule if a read of chan "p" succeeds (may be closed), otherwise proceeds
 // according to the specified Overflow policy. May be useful, for example, when rate-limiting logged events.
-// Returns nil (noop) if the receiver is nil, otherwise a nil chan will always trigger an overflow.
-func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
+// Returns nil (noop) if the receiver is nil, otherwise a nil chan will trigger an overflow.
+// Panics when OverflowWait is specified with a nil chan, in order to prevent deadlock.
+func (r Rule) RateLimit(p <-chan struct{}, over Overflow, otherwise Rule) Rule {
+	if r != nil && p == nil && over == OverflowWait {
+		panic("deadlock detected: reads from token chan will permanently block rule processing")
+	}
+	return rateLimit(r, acquireFunc(p), over, otherwise)
+}
+
+// acquireFunc wraps a signal chan with a func that can be used with rateLimit.
+// should only be called by RateLimit (because it implements deadlock detection).
+func acquireFunc(tokenCh <-chan struct{}) func(bool) bool {
+	if tokenCh == nil {
+		// always false/blocked: acquire never succeeds
+		return func(block bool) bool {
+			if block {
+				panic("deadlock detected: block should never be true when the token chan is nil")
+			}
+			return false
+		}
+	}
+	return func(block bool) bool {
+		if block {
+			<-tokenCh
+			return true
+		}
+		select {
+		case <-tokenCh:
+			return true
+		default:
+			return false
+		}
+	}
+}
+
+// rateLimit is more easily unit tested than RateLimit.
+func rateLimit(r Rule, acquire func(block bool) bool, over Overflow, otherwise Rule) Rule {
 	if r == nil {
 		return nil
 	}
+	if acquire == nil {
+		panic("acquire func is not allowed to be nil")
+	}
 	return func(ctx context.Context, e *executor.Call, z mesos.Response, err error, ch Chain) (context.Context, *executor.Call, mesos.Response, error) {
-		select {
-		case <-p:
-			// continue
-		default:
-			// overflow
+		if !acquire(false) {
+			// non-blocking acquire failed, check overflow policy
 			switch over {
-			case OverflowBackpressure:
-				<-p
-			case OverflowDiscardWithError:
-				return ctx, e, z, Error2(err, ErrOverflow)
-			case OverflowDiscard:
-				return ctx, e, z, err
-			case OverflowSkipWithError:
-				return ch(ctx, e, z, Error2(err, ErrOverflow))
-			case OverflowSkip:
-				return ch(ctx, e, z, err)
+			case OverflowWait:
+				_ = acquire(true) // block until there's a signal
+			case OverflowOtherwise:
+				return otherwise.Eval(ctx, e, z, err, ch)
 			default:
 				panic(fmt.Sprintf("unexpected Overflow type: %#v", over))
 			}
@@ -259,8 +279,9 @@ func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
 }
 
 // EveryN invokes the receiving rule beginning with the first event seen and then every n'th
-// time after that. If nthTime is less then 2 then this call is a noop (the receiver is returned).
-func (r Rule) EveryN(nthTime int) Rule {
+// time after that. If nthTime is less then 2 then the receiver is returned, undecorated.
+// The "otherwise" Rule (may be null) is invoked for every event in between the n'th invocations.
+func (r Rule) EveryN(nthTime int, otherwise Rule) Rule {
 	if nthTime < 2 || r == nil {
 		return r
 	}
@@ -283,7 +304,7 @@ func (r Rule) EveryN(nthTime int) Rule {
 		if forward() {
 			return r(ctx, e, z, err, ch)
 		}
-		return ch(ctx, e, z, err)
+		return otherwise.Eval(ctx, e, z, err, ch)
 	}
 }
 
@@ -295,7 +316,7 @@ func Drop() Rule {
 // ThenDrop executes the receiving rule, but aborts the Chain, and returns the (context.Context, *executor.Call, mesos.Response, error) tuple as-is.
 func (r Rule) ThenDrop() Rule {
 	return func(ctx context.Context, e *executor.Call, z mesos.Response, err error, _ Chain) (context.Context, *executor.Call, mesos.Response, error) {
-		return r.Eval(ctx, e, z, err, chainIdentity)
+		return r.Eval(ctx, e, z, err, ChainIdentity)
 	}
 }
 

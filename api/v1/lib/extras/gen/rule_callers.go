@@ -59,7 +59,7 @@ func (r Rule) Call(ctx context.Context, c {{.Type "E"}}) (mesos.Response, error)
 	if r == nil {
 		return nil, nil
 	}
-	_, _, resp, err := r(ctx, c, nil, nil, chainIdentity)
+	_, _, resp, err := r(ctx, c, nil, nil, ChainIdentity)
 	return resp, err
 }
 

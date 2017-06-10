@@ -43,7 +43,7 @@ func (r Rule) Call(ctx context.Context, c *scheduler.Call) (mesos.Response, erro
 	if r == nil {
 		return nil, nil
 	}
-	_, _, resp, err := r(ctx, c, nil, nil, chainIdentity)
+	_, _, resp, err := r(ctx, c, nil, nil, ChainIdentity)
 	return resp, err
 }
 

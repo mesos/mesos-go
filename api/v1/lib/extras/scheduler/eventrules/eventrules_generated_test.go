@@ -41,11 +41,17 @@ func chainCounter(i *int, ch Chain) Chain {
 	}
 }
 
+func chainPanic(x interface{}) Chain {
+	return func(_ context.Context, _ *scheduler.Event, _ error) (context.Context, *scheduler.Event, error) {
+		panic(x)
+	}
+}
+
 func TestChainIdentity(t *testing.T) {
 	var i int
 	counterRule := counter(&i)
 
-	_, e, err := Rules{counterRule}.Eval(context.Background(), nil, nil, chainIdentity)
+	_, e, err := Rules{counterRule}.Eval(context.Background(), nil, nil, ChainIdentity)
 	if e != nil {
 		t.Error("expected nil event instead of", e)
 	}
@@ -83,7 +89,7 @@ func TestRules(t *testing.T) {
 				tracer(counter(&i), "counter2", t),
 				nil,
 			)
-			_, e, err = rule(ctx, tc.e, tc.err, chainIdentity)
+			_, e, err = rule(ctx, tc.e, tc.err, ChainIdentity)
 		)
 		if e != tc.e {
 			t.Errorf("expected prototype event %q instead of %q", tc.e, e)
@@ -96,7 +102,7 @@ func TestRules(t *testing.T) {
 		}
 
 		// empty Rules should not change event, err
-		_, e, err = Rules{}.Eval(ctx, tc.e, tc.err, chainIdentity)
+		_, e, err = Rules{}.Eval(ctx, tc.e, tc.err, ChainIdentity)
 		if e != tc.e {
 			t.Errorf("expected prototype event %q instead of %q", tc.e, e)
 		}
@@ -175,7 +181,7 @@ func TestUnlessDone(t *testing.T) {
 			r2   = r1.UnlessDone()
 		)
 		for k, r := range []Rule{r1, r2} {
-			_, e, err := r(tc.ctx, p, nil, chainCounter(&j, chainIdentity))
+			_, e, err := r(tc.ctx, p, nil, chainCounter(&j, ChainIdentity))
 			if e != p {
 				t.Errorf("test case %d failed: expected event %q instead of %q", ti, p, e)
 			}
@@ -206,7 +212,7 @@ func TestAndThen(t *testing.T) {
 		a    = errors.New("a")
 	)
 	for k, r := range []Rule{r1, r2} {
-		_, e, err := r(ctx, p, a, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, a, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -238,7 +244,7 @@ func TestOnFailure(t *testing.T) {
 		{r1, a},
 		{r2, nil},
 	} {
-		_, e, err := tc.r(ctx, p, tc.initialError, chainCounter(&j, chainIdentity))
+		_, e, err := tc.r(ctx, p, tc.initialError, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -266,7 +272,7 @@ func TestDropOnError(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for _, r := range []Rule{r1, r2} {
-		_, e, err := r(ctx, p, a, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, a, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -280,7 +286,7 @@ func TestDropOnError(t *testing.T) {
 			t.Errorf("expected chain count of 1 instead of %d", j)
 		}
 	}
-	_, e, err := r2(ctx, p, nil, chainCounter(&j, chainIdentity))
+	_, e, err := r2(ctx, p, nil, chainCounter(&j, ChainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -303,7 +309,7 @@ func TestDropOnSuccess(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for _, r := range []Rule{r1, r2} {
-		_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, nil, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -318,7 +324,7 @@ func TestDropOnSuccess(t *testing.T) {
 		}
 	}
 	a := errors.New("a")
-	_, e, err := r2(ctx, p, a, chainCounter(&j, chainIdentity))
+	_, e, err := r2(ctx, p, a, chainCounter(&j, ChainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -333,7 +339,7 @@ func TestDropOnSuccess(t *testing.T) {
 	}
 
 	r3 := Rules{DropOnSuccess(), r1}.Eval
-	_, e, err = r3(ctx, p, nil, chainCounter(&j, chainIdentity))
+	_, e, err = r3(ctx, p, nil, chainCounter(&j, ChainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -359,7 +365,7 @@ func TestThenDrop(t *testing.T) {
 		)
 		// r1 and r2 should execute the counter rule
 		for k, r := range []Rule{r1, r2} {
-			_, e, err := r(ctx, p, anErr, chainCounter(&j, chainIdentity))
+			_, e, err := r(ctx, p, anErr, chainCounter(&j, ChainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -388,7 +394,7 @@ func TestDrop(t *testing.T) {
 		// r1 should execute the counter rule
 		// r2 should NOT exexute the counter rule
 		for k, r := range []Rule{r1, r2} {
-			_, e, err := r(ctx, p, anErr, chainCounter(&j, chainIdentity))
+			_, e, err := r(ctx, p, anErr, chainCounter(&j, ChainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -416,7 +422,7 @@ func TestIf(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for k, r := range []Rule{r1, r2} {
-		_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, nil, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -443,7 +449,7 @@ func TestUnless(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for k, r := range []Rule{r1, r2} {
-		_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
+		_, e, err := r(ctx, p, nil, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -469,7 +475,7 @@ func TestOnce(t *testing.T) {
 	)
 	for k, r := range []Rule{r1, r2} {
 		for x := 0; x < 5; x++ {
-			_, e, err := r(ctx, p, nil, chainCounter(&j, chainIdentity))
+			_, e, err := r(ctx, p, nil, chainCounter(&j, ChainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -498,49 +504,55 @@ func TestRateLimit(t *testing.T) {
 		ch2 = make(chan struct{}) // non-nil, blocking
 		ch4 = make(chan struct{}) // non-nil, closed
 		ctx = context.Background()
+		p   = prototype()
+
+		errOverflow               = errors.New("overflow")
+		otherwiseSkip             = Rule(nil)
+		otherwiseSkipWithError    = Fail(errOverflow)
+		otherwiseDiscard          = Drop()
+		otherwiseDiscardWithError = Fail(errOverflow).ThenDrop()
 	)
 	close(ch4)
 	for ti, tc := range []struct {
 		ctx             context.Context
 		ch              <-chan struct{}
 		over            Overflow
+		otherwise       Rule
 		wantsError      int // bitmask: lower 4 bits, one for each case; first case = highest bit
 		wantsRuleCount  []int
 		wantsChainCount []int
 	}{
-		{ctx, ch1, OverflowSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{ctx, ch2, OverflowSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{ctx, o(), OverflowSkip, 0x0, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
-		{ctx, ch4, OverflowSkip, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch1, OverflowOtherwise, otherwiseSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, ch2, OverflowOtherwise, otherwiseSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, o(), OverflowOtherwise, otherwiseSkip, 0x0, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
+		{ctx, ch4, OverflowOtherwise, otherwiseSkip, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
-		{ctx, ch1, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{ctx, ch2, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{ctx, o(), OverflowSkipWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
-		{ctx, ch4, OverflowSkipWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch1, OverflowOtherwise, otherwiseSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, ch2, OverflowOtherwise, otherwiseSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, o(), OverflowOtherwise, otherwiseSkipWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
+		{ctx, ch4, OverflowOtherwise, otherwiseSkipWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
-		{ctx, ch1, OverflowDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{ctx, ch2, OverflowDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{ctx, o(), OverflowDiscard, 0x0, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
-		{ctx, ch4, OverflowDiscard, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch1, OverflowOtherwise, otherwiseDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, ch2, OverflowOtherwise, otherwiseDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, o(), OverflowOtherwise, otherwiseDiscard, 0x0, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
+		{ctx, ch4, OverflowOtherwise, otherwiseDiscard, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
-		{ctx, ch1, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{ctx, ch2, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{ctx, o(), OverflowDiscardWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
-		{ctx, ch4, OverflowDiscardWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch1, OverflowOtherwise, otherwiseDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, ch2, OverflowOtherwise, otherwiseDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, o(), OverflowOtherwise, otherwiseDiscardWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
+		{ctx, ch4, OverflowOtherwise, otherwiseDiscardWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
-		// TODO(jdef): test OverflowBackpressure (blocking)
-		{ctx, ch4, OverflowBackpressure, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch4, OverflowWait, nil, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 	} {
 		var (
 			i, j int
-			p    = prototype()
-			r1   = counter(&i).RateLimit(tc.ch, tc.over).Eval
-			r2   = Rule(nil).RateLimit(tc.ch, tc.over).Eval // a nil rule still invokes the chain
+			r1   = counter(&i).RateLimit(tc.ch, tc.over, tc.otherwise).Eval
+			r2   = Rule(nil).RateLimit(tc.ch, tc.over, tc.otherwise).Eval // a nil rule still invokes the chain
 		)
 		for k, r := range []Rule{r1, r2} {
 			// execute each rule twice
 			for x := 0; x < 2; x++ {
-				_, e, err := r(tc.ctx, p, nil, chainCounter(&j, chainIdentity))
+				_, e, err := r(tc.ctx, p, nil, chainCounter(&j, ChainIdentity))
 				if e != p {
 					t.Errorf("test case %d failed: expected event %q instead of %q", ti, p, e)
 				}
@@ -557,5 +569,27 @@ func TestRateLimit(t *testing.T) {
 				}
 			}
 		}
+	}
+	// test blocking capability via rateLimit
+	blocked := false
+	r := rateLimit(Rule(nil).Eval, func(b bool) bool { blocked = b; return false }, OverflowWait, nil)
+	_, e, err := r(ctx, p, nil, ChainIdentity)
+	if e != p {
+		t.Errorf("expected event %q instead of %q", p, e)
+	}
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+	if !blocked {
+		t.Error("expected OverflowWait to block rule execution")
+	}
+	// test RateLimit deadlock detector
+	didPanic := false
+	func() {
+		defer func() { didPanic = recover() != nil }()
+		Rule(Rule(nil).Eval).RateLimit(nil, OverflowWait, nil)
+	}()
+	if !didPanic {
+		t.Error("expected panic because we configured a rule to deadlock")
 	}
 }

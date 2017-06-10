@@ -18,7 +18,6 @@ var rulesTemplate = template.Must(template.New("").Parse(`package {{.Package}}
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 {{range .Imports}}
@@ -28,7 +27,7 @@ import (
 
 {{.RequireType "E" -}}
 {{.RequirePrototype "E" -}}
-{{.RequirePrototype "Z" -}}
+{{.RequirePrototype "Z" -}}{{/* Z is an optional type, but if it's specified then it needs a prototype */ -}}
 type (
 	evaler interface {
 		// Eval executes a filter, rule, or decorator function; if the returned event is nil then
@@ -60,12 +59,12 @@ type (
 var (
 	_ = evaler(Rule(nil))
 	_ = evaler(Rules{})
-
-	// chainIdentity is a Chain that returns the arguments as its results.
-	chainIdentity = func(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
-		return ctx, e, {{.Ref "Z" "z," -}} err
-	}
 )
+
+// ChainIdentity is a Chain that returns the arguments as its results.
+func ChainIdentity(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
+	return ctx, e, {{.Ref "Z" "z," -}} err
+}
 
 // Eval is a convenience func that processes a nil Rule as a noop.
 func (r Rule) Eval(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
@@ -85,7 +84,7 @@ func (rs Rules) Eval(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} e
 // from Rule to Rule. Chain is safe to invoke concurrently.
 func (rs Rules) Chain() Chain {
 	if len(rs) == 0 {
-		return chainIdentity
+		return ChainIdentity
 	}
 	return func(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
 		return rs[0].Eval(ctx, e, {{.Ref "Z" "z," -}} err, rs[1:].Chain())
@@ -228,44 +227,65 @@ func (r Rule) UnlessDone() Rule {
 type Overflow int
 
 const (
-	// OverflowDiscard aborts the rule chain and returns the current state
-	OverflowDiscard Overflow = iota
-	// OverflowDiscardWithError aborts the rule chain and returns the current state merged with ErrOverflow
-	OverflowDiscardWithError
-	// OverflowBackpressure waits until the rule may execute, or the context is canceled.
-	OverflowBackpressure
-	// OverflowSkip skips over the decorated rule and continues processing the rule chain
-	OverflowSkip
-	// OverflowSkipWithError skips over the decorated rule and merges ErrOverflow upon executing the chain
-	OverflowSkipWithError
+	// OverflowWait waits until the rule may execute, or the context is canceled.
+	OverflowWait Overflow = iota
+	// OverflowOtherwise skips over the decorated rule and invoke an alternative instead.
+	OverflowOtherwise
 )
 
-var ErrOverflow = errors.New("overflow: rate limit exceeded")
-
-// RateLimit invokes the receiving Rule if the chan is readable (may be closed), otherwise it handles the "overflow"
+// RateLimit invokes the receiving Rule if a read of chan "p" succeeds (may be closed), otherwise proceeds
 // according to the specified Overflow policy. May be useful, for example, when rate-limiting logged events.
-// Returns nil (noop) if the receiver is nil, otherwise a nil chan will always trigger an overflow.
-func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
+// Returns nil (noop) if the receiver is nil, otherwise a nil chan will trigger an overflow.
+// Panics when OverflowWait is specified with a nil chan, in order to prevent deadlock.
+func (r Rule) RateLimit(p <-chan struct{}, over Overflow, otherwise Rule) Rule {
+	if r != nil && p == nil && over == OverflowWait {
+		panic("deadlock detected: reads from token chan will permanently block rule processing")
+	}
+	return rateLimit(r, acquireFunc(p), over, otherwise)
+}
+
+// acquireFunc wraps a signal chan with a func that can be used with rateLimit.
+// should only be called by RateLimit (because it implements deadlock detection).
+func acquireFunc(tokenCh <-chan struct{}) func(bool) bool {
+	if tokenCh == nil {
+		// always false/blocked: acquire never succeeds
+		return func(block bool) bool {
+			if block {
+				panic("deadlock detected: block should never be true when the token chan is nil")
+			}
+			return false
+		}
+	}
+	return func(block bool) bool {
+		if block {
+			<-tokenCh
+			return true
+		}
+		select {
+		case <-tokenCh:
+			return true
+		default:
+			return false
+		}
+	}
+}
+
+// rateLimit is more easily unit tested than RateLimit.
+func rateLimit(r Rule, acquire func(block bool) bool, over Overflow, otherwise Rule) Rule {
 	if r == nil {
 		return nil
 	}
+	if acquire == nil {
+		panic("acquire func is not allowed to be nil")
+	}
 	return func(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error, ch Chain) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
-		select {
-		case <-p:
-			// continue
-		default:
-			// overflow
+		if !acquire(false) {
+			// non-blocking acquire failed, check overflow policy
 			switch over {
-			case OverflowBackpressure:
-				<-p
-			case OverflowDiscardWithError:
-				return ctx, e, {{.Ref "Z" "z," -}} Error2(err, ErrOverflow)
-			case OverflowDiscard:
-				return ctx, e, {{.Ref "Z" "z," -}} err
-			case OverflowSkipWithError:
-				return ch(ctx, e, {{.Ref "Z" "z," -}} Error2(err, ErrOverflow))
-			case OverflowSkip:
-				return ch(ctx, e, {{.Ref "Z" "z," -}} err)
+			case OverflowWait:
+				_ = acquire(true) // block until there's a signal
+			case OverflowOtherwise:
+				return otherwise.Eval(ctx, e, {{.Ref "Z" "z," -}} err, ch)
 			default:
 				panic(fmt.Sprintf("unexpected Overflow type: %#v", over))
 			}
@@ -275,8 +295,9 @@ func (r Rule) RateLimit(p <-chan struct{}, over Overflow) Rule {
 }
 
 // EveryN invokes the receiving rule beginning with the first event seen and then every n'th
-// time after that. If nthTime is less then 2 then this call is a noop (the receiver is returned).
-func (r Rule) EveryN(nthTime int) Rule {
+// time after that. If nthTime is less then 2 then the receiver is returned, undecorated.
+// The "otherwise" Rule (may be null) is invoked for every event in between the n'th invocations.
+func (r Rule) EveryN(nthTime int, otherwise Rule) Rule {
 	if nthTime < 2 || r == nil {
 		return r
 	}
@@ -299,7 +320,7 @@ func (r Rule) EveryN(nthTime int) Rule {
 		if forward() {
 			return r(ctx, e, {{.Ref "Z" "z," -}} err, ch)
 		}
-		return ch(ctx, e, {{.Ref "Z" "z," -}} err)
+		return otherwise.Eval(ctx, e, {{.Ref "Z" "z," -}} err, ch)
 	}
 }
 
@@ -311,7 +332,7 @@ func Drop() Rule {
 // ThenDrop executes the receiving rule, but aborts the Chain, and returns the (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) tuple as-is.
 func (r Rule) ThenDrop() Rule {
 	return func(ctx context.Context, e {{.Type "E"}}, {{.Arg "Z" "z," -}} err error, _ Chain) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
-		return r.Eval(ctx, e, {{.Ref "Z" "z," -}} err, chainIdentity)
+		return r.Eval(ctx, e, {{.Ref "Z" "z," -}} err, ChainIdentity)
 	}
 }
 
@@ -408,13 +429,19 @@ func chainCounter(i *int, ch Chain) Chain {
 	}
 }
 
+func chainPanic(x interface{}) Chain {
+	return func(_ context.Context, _ {{.Type "E"}}, {{.Arg "Z" "_," -}} _ error) (context.Context, {{.Type "E"}}, {{.Arg "Z" "," -}} error) {
+		panic(x)
+	}
+}
+
 func TestChainIdentity(t *testing.T) {
 	var i int
 	counterRule := counter(&i)
 {{if .Type "Z"}}
 	{{.Var "Z" "z0"}}
 {{end}}
-	_, e, {{.Ref "Z" "_," -}} err := Rules{counterRule}.Eval(context.Background(), nil, {{.Ref "Z" "z0," -}} nil, chainIdentity)
+	_, e, {{.Ref "Z" "_," -}} err := Rules{counterRule}.Eval(context.Background(), nil, {{.Ref "Z" "z0," -}} nil, ChainIdentity)
 	if e != nil {
 		t.Error("expected nil event instead of", e)
 	}
@@ -465,7 +492,7 @@ func TestRules(t *testing.T) {
 				tracer(counter(&i), "counter2", t),
 				nil,
 			)
-			_, e, {{.Ref "Z" "zz," -}} err = rule(ctx, tc.e, {{.Ref "Z" "tc.z," -}} tc.err, chainIdentity)
+			_, e, {{.Ref "Z" "zz," -}} err = rule(ctx, tc.e, {{.Ref "Z" "tc.z," -}} tc.err, ChainIdentity)
 		)
 		if e != tc.e {
 			t.Errorf("expected prototype event %q instead of %q", tc.e, e)
@@ -483,7 +510,7 @@ func TestRules(t *testing.T) {
 		}
 
 		// empty Rules should not change event, {{.Ref "Z" "z," -}} err
-		_, e, {{.Ref "Z" "zz," -}} err = Rules{}.Eval(ctx, tc.e, {{.Ref "Z" "tc.z," -}} tc.err, chainIdentity)
+		_, e, {{.Ref "Z" "zz," -}} err = Rules{}.Eval(ctx, tc.e, {{.Ref "Z" "tc.z," -}} tc.err, ChainIdentity)
 		if e != tc.e {
 			t.Errorf("expected prototype event %q instead of %q", tc.e, e)
 		}
@@ -570,7 +597,7 @@ func TestUnlessDone(t *testing.T) {
 			r2   = r1.UnlessDone()
 		)
 		for k, r := range []Rule{r1, r2} {
-			_, e, {{.Ref "Z" "zz," -}} err := r(tc.ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+			_, e, {{.Ref "Z" "zz," -}} err := r(tc.ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, ChainIdentity))
 			if e != p {
 				t.Errorf("test case %d failed: expected event %q instead of %q", ti, p, e)
 			}
@@ -609,7 +636,7 @@ func TestAndThen(t *testing.T) {
 	var zp = {{.Prototype "Z"}}
 	{{end -}}
 	for k, r := range []Rule{r1, r2} {
-		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} a, chainCounter(&j, chainIdentity))
+		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} a, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -649,7 +676,7 @@ func TestOnFailure(t *testing.T) {
 		{r1, a},
 		{r2, nil},
 	} {
-		_, e, {{.Ref "Z" "zz," -}} err := tc.r(ctx, p, {{.Ref "Z" "zp," -}} tc.initialError, chainCounter(&j, chainIdentity))
+		_, e, {{.Ref "Z" "zz," -}} err := tc.r(ctx, p, {{.Ref "Z" "zp," -}} tc.initialError, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -685,7 +712,7 @@ func TestDropOnError(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for _, r := range []Rule{r1, r2} {
-		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} a, chainCounter(&j, chainIdentity))
+		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} a, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -704,7 +731,7 @@ func TestDropOnError(t *testing.T) {
 			t.Errorf("expected chain count of 1 instead of %d", j)
 		}
 	}
-	_, e, {{.Ref "Z" "zz," -}} err := r2(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+	_, e, {{.Ref "Z" "zz," -}} err := r2(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, ChainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -735,7 +762,7 @@ func TestDropOnSuccess(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for _, r := range []Rule{r1, r2} {
-		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -755,7 +782,7 @@ func TestDropOnSuccess(t *testing.T) {
 		}
 	}
 	a := errors.New("a")
-	_, e, {{.Ref "Z" "zz," -}} err := r2(ctx, p, {{.Ref "Z" "zp," -}} a, chainCounter(&j, chainIdentity))
+	_, e, {{.Ref "Z" "zz," -}} err := r2(ctx, p, {{.Ref "Z" "zp," -}} a, chainCounter(&j, ChainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -775,7 +802,7 @@ func TestDropOnSuccess(t *testing.T) {
 	}
 
 	r3 := Rules{DropOnSuccess(), r1}.Eval
-	_, e, {{.Ref "Z" "zz," -}} err = r3(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+	_, e, {{.Ref "Z" "zz," -}} err = r3(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, ChainIdentity))
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)
 	}
@@ -809,7 +836,7 @@ func TestThenDrop(t *testing.T) {
 		{{end -}}
 		// r1 and r2 should execute the counter rule
 		for k, r := range []Rule{r1, r2} {
-			_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} anErr, chainCounter(&j, chainIdentity))
+			_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} anErr, chainCounter(&j, ChainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -846,7 +873,7 @@ func TestDrop(t *testing.T) {
 		// r1 should execute the counter rule
 		// r2 should NOT exexute the counter rule
 		for k, r := range []Rule{r1, r2} {
-			_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} anErr, chainCounter(&j, chainIdentity))
+			_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} anErr, chainCounter(&j, ChainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -882,7 +909,7 @@ func TestIf(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for k, r := range []Rule{r1, r2} {
-		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -917,7 +944,7 @@ func TestUnless(t *testing.T) {
 	// r1 should execute the counter rule
 	// r2 should NOT exexute the counter rule
 	for k, r := range []Rule{r1, r2} {
-		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+		_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, ChainIdentity))
 		if e != p {
 			t.Errorf("expected event %q instead of %q", p, e)
 		}
@@ -951,7 +978,7 @@ func TestOnce(t *testing.T) {
 	{{end -}}
 	for k, r := range []Rule{r1, r2} {
 		for x := 0; x < 5; x++ {
-			_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+			_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, ChainIdentity))
 			if e != p {
 				t.Errorf("expected event %q instead of %q", p, e)
 			}
@@ -985,52 +1012,58 @@ func TestRateLimit(t *testing.T) {
 		ch2 = make(chan struct{}) // non-nil, blocking
 		ch4 = make(chan struct{}) // non-nil, closed
 		ctx = context.Background()
+		p   = prototype()
+
+		errOverflow               = errors.New("overflow")
+		otherwiseSkip             = Rule(nil)
+		otherwiseSkipWithError    = Fail(errOverflow)
+		otherwiseDiscard          = Drop()
+		otherwiseDiscardWithError = Fail(errOverflow).ThenDrop()
 	)
+	{{if .Type "Z" -}}
+	var zp = {{.Prototype "Z"}}
+	{{end -}}
 	close(ch4)
 	for ti, tc := range []struct {
 		ctx             context.Context
 		ch              <-chan struct{}
 		over            Overflow
+		otherwise       Rule
 		wantsError      int // bitmask: lower 4 bits, one for each case; first case = highest bit
 		wantsRuleCount  []int
 		wantsChainCount []int
 	}{
-		{ctx, ch1, OverflowSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{ctx, ch2, OverflowSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{ctx, o(), OverflowSkip, 0x0, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
-		{ctx, ch4, OverflowSkip, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch1, OverflowOtherwise, otherwiseSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, ch2, OverflowOtherwise, otherwiseSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, o(), OverflowOtherwise, otherwiseSkip, 0x0, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
+		{ctx, ch4, OverflowOtherwise, otherwiseSkip, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
-		{ctx, ch1, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{ctx, ch2, OverflowSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
-		{ctx, o(), OverflowSkipWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
-		{ctx, ch4, OverflowSkipWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch1, OverflowOtherwise, otherwiseSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, ch2, OverflowOtherwise, otherwiseSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{ctx, o(), OverflowOtherwise, otherwiseSkipWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
+		{ctx, ch4, OverflowOtherwise, otherwiseSkipWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
-		{ctx, ch1, OverflowDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{ctx, ch2, OverflowDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{ctx, o(), OverflowDiscard, 0x0, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
-		{ctx, ch4, OverflowDiscard, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch1, OverflowOtherwise, otherwiseDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, ch2, OverflowOtherwise, otherwiseDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, o(), OverflowOtherwise, otherwiseDiscard, 0x0, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
+		{ctx, ch4, OverflowOtherwise, otherwiseDiscard, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
-		{ctx, ch1, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{ctx, ch2, OverflowDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
-		{ctx, o(), OverflowDiscardWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
-		{ctx, ch4, OverflowDiscardWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch1, OverflowOtherwise, otherwiseDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, ch2, OverflowOtherwise, otherwiseDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{ctx, o(), OverflowOtherwise, otherwiseDiscardWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
+		{ctx, ch4, OverflowOtherwise, otherwiseDiscardWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
-		// TODO(jdef): test OverflowBackpressure (blocking)
-		{ctx, ch4, OverflowBackpressure, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+		{ctx, ch4, OverflowWait, nil, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 	} {
 		var (
 			i, j int
-			p    = prototype()
-			r1   = counter(&i).RateLimit(tc.ch, tc.over).Eval
-			r2   = Rule(nil).RateLimit(tc.ch, tc.over).Eval // a nil rule still invokes the chain
+			r1   = counter(&i).RateLimit(tc.ch, tc.over, tc.otherwise).Eval
+			r2   = Rule(nil).RateLimit(tc.ch, tc.over, tc.otherwise).Eval // a nil rule still invokes the chain
 		)
-		{{if .Type "Z" -}}
-		var zp = {{.Prototype "Z"}}
-		{{end -}}
 		for k, r := range []Rule{r1, r2} {
 			// execute each rule twice
 			for x := 0; x < 2; x++ {
-				_, e, {{.Ref "Z" "zz," -}} err := r(tc.ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, chainIdentity))
+				_, e, {{.Ref "Z" "zz," -}} err := r(tc.ctx, p, {{.Ref "Z" "zp," -}} nil, chainCounter(&j, ChainIdentity))
 				if e != p {
 					t.Errorf("test case %d failed: expected event %q instead of %q", ti, p, e)
 				}
@@ -1052,6 +1085,33 @@ func TestRateLimit(t *testing.T) {
 				}
 			}
 		}
+	}
+	// test blocking capability via rateLimit
+	blocked := false
+	r := rateLimit(Rule(nil).Eval, func(b bool) bool { blocked = b; return false }, OverflowWait, nil)
+	_, e, {{.Ref "Z" "zz," -}} err := r(ctx, p, {{.Ref "Z" "zp," -}} nil, ChainIdentity)
+	if e != p {
+		t.Errorf("expected event %q instead of %q", p, e)
+	}
+	{{if .Type "Z" -}}
+	if zz != zp {
+		t.Errorf("expected return object %q instead of %q", zp, zz)
+	}
+	{{end -}}
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+	if !blocked {
+		t.Error("expected OverflowWait to block rule execution")
+	}
+	// test RateLimit deadlock detector
+	didPanic := false
+	func() {
+		defer func() { didPanic = recover() != nil }()
+		Rule(Rule(nil).Eval).RateLimit(nil, OverflowWait, nil)
+	}()
+	if !didPanic {
+		t.Error("expected panic because we configured a rule to deadlock")
 	}
 }
 `))

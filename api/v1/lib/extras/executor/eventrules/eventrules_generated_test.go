@@ -502,9 +502,15 @@ func TestRateLimit(t *testing.T) {
 	var (
 		ch1 <-chan struct{}       // always nil, blocking
 		ch2 = make(chan struct{}) // non-nil, blocking
+		// ch3 is o()
 		ch4 = make(chan struct{}) // non-nil, closed
-		ctx = context.Background()
 		p   = prototype()
+		ctx = context.Background()
+		fin = func() context.Context {
+			c, cancel := context.WithCancel(context.Background())
+			cancel()
+			return c
+		}()
 
 		errOverflow               = errors.New("overflow")
 		otherwiseSkip             = Rule(nil)
@@ -514,6 +520,7 @@ func TestRateLimit(t *testing.T) {
 	)
 	close(ch4)
 	for ti, tc := range []struct {
+		// each set of inputs is executed 4 times: twice for r1, twice for r2
 		ctx             context.Context
 		ch              <-chan struct{}
 		over            Overflow
@@ -527,21 +534,45 @@ func TestRateLimit(t *testing.T) {
 		{ctx, o(), OverflowOtherwise, otherwiseSkip, 0x0, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
 		{ctx, ch4, OverflowOtherwise, otherwiseSkip, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
+		{fin, ch1, OverflowOtherwise, otherwiseSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{fin, ch2, OverflowOtherwise, otherwiseSkip, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{fin, o(), OverflowOtherwise, otherwiseSkip, 0x0, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
+		{fin, ch4, OverflowOtherwise, otherwiseSkip, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+
 		{ctx, ch1, OverflowOtherwise, otherwiseSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
 		{ctx, ch2, OverflowOtherwise, otherwiseSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
 		{ctx, o(), OverflowOtherwise, otherwiseSkipWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
 		{ctx, ch4, OverflowOtherwise, otherwiseSkipWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+
+		{fin, ch1, OverflowOtherwise, otherwiseSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{fin, ch2, OverflowOtherwise, otherwiseSkipWithError, 0xC, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{fin, o(), OverflowOtherwise, otherwiseSkipWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 2, 3, 4}},
+		{fin, ch4, OverflowOtherwise, otherwiseSkipWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
 		{ctx, ch1, OverflowOtherwise, otherwiseDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, ch2, OverflowOtherwise, otherwiseDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, o(), OverflowOtherwise, otherwiseDiscard, 0x0, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
 		{ctx, ch4, OverflowOtherwise, otherwiseDiscard, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
+		{fin, ch1, OverflowOtherwise, otherwiseDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{fin, ch2, OverflowOtherwise, otherwiseDiscard, 0x0, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{fin, o(), OverflowOtherwise, otherwiseDiscard, 0x0, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
+		{fin, ch4, OverflowOtherwise, otherwiseDiscard, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+
 		{ctx, ch1, OverflowOtherwise, otherwiseDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, ch2, OverflowOtherwise, otherwiseDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
 		{ctx, o(), OverflowOtherwise, otherwiseDiscardWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
 		{ctx, ch4, OverflowOtherwise, otherwiseDiscardWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 
+		{fin, ch1, OverflowOtherwise, otherwiseDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{fin, ch2, OverflowOtherwise, otherwiseDiscardWithError, 0xC, []int{0, 0, 0, 0}, []int{0, 0, 1, 2}},
+		{fin, o(), OverflowOtherwise, otherwiseDiscardWithError, 0x4, []int{1, 1, 1, 1}, []int{1, 1, 2, 3}},
+		{fin, ch4, OverflowOtherwise, otherwiseDiscardWithError, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
+
+		{fin, ch1, OverflowWait, nil, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{fin, ch2, OverflowWait, nil, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{fin, o(), OverflowWait, nil, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
+		{fin, ch4, OverflowWait, nil, 0x0, []int{0, 0, 0, 0}, []int{1, 2, 3, 4}},
 		{ctx, ch4, OverflowWait, nil, 0x0, []int{1, 2, 2, 2}, []int{1, 2, 3, 4}},
 	} {
 		var (
@@ -587,7 +618,7 @@ func TestRateLimit(t *testing.T) {
 	didPanic := false
 	func() {
 		defer func() { didPanic = recover() != nil }()
-		Rule(Rule(nil).Eval).RateLimit(nil, OverflowWait, nil)
+		Rule(Rule(nil).Eval).RateLimit(nil, OverflowWait, nil).Eval(ctx, p, nil, ChainIdentity)
 	}()
 	if !didPanic {
 		t.Error("expected panic because we configured a rule to deadlock")

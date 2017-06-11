@@ -221,10 +221,8 @@ const (
 // according to the specified Overflow policy. May be useful, for example, when rate-limiting logged events.
 // Returns nil (noop) if the receiver is nil, otherwise a nil chan will normally trigger an overflow.
 // Panics when OverflowWait is specified with a nil chan, in order to prevent deadlock.
+// A cancelled context will trigger the "otherwise" rule.
 func (r Rule) RateLimit(p <-chan struct{}, over Overflow, otherwise Rule) Rule {
-	if r != nil && p == nil && over == OverflowWait {
-		panic("deadlock detected: reads from token chan will permanently block rule processing")
-	}
 	return limit(r, acquireChan(p), over, otherwise)
 }
 
@@ -248,10 +246,15 @@ func acquireChan(tokenCh <-chan struct{}) func(context.Context, bool) bool {
 		if block {
 			select {
 			case <-tokenCh:
-				return true
+				// tie breaker prefers Done
+				select {
+				case <-ctx.Done():
+				default:
+					return true
+				}
 			case <-ctx.Done():
-				return false
 			}
+			return false
 		}
 		select {
 		case <-tokenCh:
@@ -273,21 +276,19 @@ func limit(r Rule, acquire func(_ context.Context, block bool) bool, over Overfl
 	if acquire == nil {
 		panic("acquire func is not allowed to be nil")
 	}
+	blocking := false
 	switch over {
-	case OverflowWait:
-		return func(ctx context.Context, e *executor.Call, z mesos.Response, err error, ch Chain) (context.Context, *executor.Call, mesos.Response, error) {
-			_ = acquire(ctx, true) // block until there's a signal
-			return r(ctx, e, z, err, ch)
-		}
 	case OverflowOtherwise:
-		return func(ctx context.Context, e *executor.Call, z mesos.Response, err error, ch Chain) (context.Context, *executor.Call, mesos.Response, error) {
-			if !acquire(ctx, false) {
-				return otherwise.Eval(ctx, e, z, err, ch)
-			}
-			return r(ctx, e, z, err, ch)
-		}
+	case OverflowWait:
+		blocking = true
 	default:
 		panic(fmt.Sprintf("unexpected Overflow type: %#v", over))
+	}
+	return func(ctx context.Context, e *executor.Call, z mesos.Response, err error, ch Chain) (context.Context, *executor.Call, mesos.Response, error) {
+		if !acquire(ctx, blocking) {
+			return otherwise.Eval(ctx, e, z, err, ch)
+		}
+		return r(ctx, e, z, err, ch)
 	}
 }
 
@@ -296,6 +297,7 @@ func limit(r Rule, acquire func(_ context.Context, block bool) bool, over Overfl
 // EveryN invokes the receiving rule beginning with the first event seen and then every n'th
 // time after that. If nthTime is less then 2 then the receiver is returned, undecorated.
 // The "otherwise" Rule (may be null) is invoked for every event in between the n'th invocations.
+// A cancelled context will trigger the "otherwise" rule.
 func (r Rule) EveryN(nthTime int, otherwise Rule) Rule {
 	if nthTime < 2 || r == nil {
 		return r

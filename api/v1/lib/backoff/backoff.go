@@ -27,6 +27,7 @@ func BurstNotifier(burst int, minWait, maxWait time.Duration, until <-chan struc
 	// listen for tokens emitted by child buckets and forward them to the tokens chan
 	tokens := make(chan struct{})
 	go func() {
+		defer close(tokens)
 		for {
 			i, _, _ := reflect.Select(cases)
 			if i == burst {

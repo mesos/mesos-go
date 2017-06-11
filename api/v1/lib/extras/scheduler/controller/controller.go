@@ -58,8 +58,9 @@ func WithSubscriptionTerminated(handler func(error)) Option {
 }
 
 // WithRegistrationTokens limits the rate at which a framework (re)registers with Mesos.
-// The chan should either be non-blocking, or should yield a struct{} in order to allow the
-// framework registration process to continue. May be nil.
+// A non-nil chan should yield a struct{} in order to allow the framework registration process to continue.
+// When nil, there is no backoff delay between re-subscription attempts.
+// A closed chan disables re-registration and terminates the Run control loop.
 func WithRegistrationTokens(registrationTokens <-chan struct{}) Option {
 	return func(c *Config) Option {
 		old := c.registrationTokens
@@ -105,8 +106,11 @@ func Run(ctx context.Context, framework *mesos.FrameworkInfo, caller calls.Calle
 		}
 		if config.registrationTokens != nil {
 			select {
-			case <-config.registrationTokens:
-				// continue
+			case _, ok := <-config.registrationTokens:
+				if !ok {
+					// re-registration canceled, exit Run loop
+					return
+				}
 			case <-ctx.Done():
 				return ctx.Err()
 			}

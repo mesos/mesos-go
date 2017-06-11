@@ -572,7 +572,7 @@ func TestRateLimit(t *testing.T) {
 	}
 	// test blocking capability via rateLimit
 	blocked := false
-	r := rateLimit(Rule(nil).Eval, func(b bool) bool { blocked = b; return false }, OverflowWait, nil)
+	r := limit(Rule(nil).Eval, func(_ context.Context, b bool) bool { blocked = b; return false }, OverflowWait, nil)
 	_, e, err := r(ctx, p, nil, ChainIdentity)
 	if e != p {
 		t.Errorf("expected event %q instead of %q", p, e)

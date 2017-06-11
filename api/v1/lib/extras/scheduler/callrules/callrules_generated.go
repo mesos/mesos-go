@@ -217,33 +217,41 @@ const (
 	OverflowOtherwise
 )
 
-// RateLimit invokes the receiving Rule if a read of chan "p" succeeds (may be closed), otherwise proceeds
+// RateLimit invokes the receiving Rule if a read of chan "p" succeeds (closed chan = no rate limit), otherwise proceeds
 // according to the specified Overflow policy. May be useful, for example, when rate-limiting logged events.
-// Returns nil (noop) if the receiver is nil, otherwise a nil chan will trigger an overflow.
+// Returns nil (noop) if the receiver is nil, otherwise a nil chan will normally trigger an overflow.
 // Panics when OverflowWait is specified with a nil chan, in order to prevent deadlock.
 func (r Rule) RateLimit(p <-chan struct{}, over Overflow, otherwise Rule) Rule {
 	if r != nil && p == nil && over == OverflowWait {
 		panic("deadlock detected: reads from token chan will permanently block rule processing")
 	}
-	return rateLimit(r, acquireFunc(p), over, otherwise)
+	return limit(r, acquireChan(p), over, otherwise)
 }
 
-// acquireFunc wraps a signal chan with a func that can be used with rateLimit.
-// should only be called by RateLimit (because it implements deadlock detection).
-func acquireFunc(tokenCh <-chan struct{}) func(bool) bool {
+// acquireChan wraps a signal chan with a func that can be used with rateLimit.
+// should only be called by rate limiting funcs (that implement deadlock avoidance).
+func acquireChan(tokenCh <-chan struct{}) func(context.Context, bool) bool {
 	if tokenCh == nil {
-		// always false/blocked: acquire never succeeds
-		return func(block bool) bool {
+		// always false: acquire never succeeds; panic if told to block (to avoid deadlock)
+		return func(ctx context.Context, block bool) bool {
 			if block {
-				panic("deadlock detected: block should never be true when the token chan is nil")
+				select {
+				case <-ctx.Done():
+				default:
+					panic("deadlock detected: block should never be true when the token chan is nil")
+				}
 			}
 			return false
 		}
 	}
-	return func(block bool) bool {
+	return func(ctx context.Context, block bool) bool {
 		if block {
-			<-tokenCh
-			return true
+			select {
+			case <-tokenCh:
+				return true
+			case <-ctx.Done():
+				return false
+			}
 		}
 		select {
 		case <-tokenCh:
@@ -254,29 +262,36 @@ func acquireFunc(tokenCh <-chan struct{}) func(bool) bool {
 	}
 }
 
-// rateLimit is more easily unit tested than RateLimit.
-func rateLimit(r Rule, acquire func(block bool) bool, over Overflow, otherwise Rule) Rule {
+// limit is a generic Rule decorator that limits invocations of said Rule.
+// The "acquire" func SHOULD NOT block if the supplied Context is Done.
+// MUST only invoke "acquire" once per event.
+// TODO(jdef): leaving this as internal for now because the interface still feels too messy.
+func limit(r Rule, acquire func(_ context.Context, block bool) bool, over Overflow, otherwise Rule) Rule {
 	if r == nil {
 		return nil
 	}
 	if acquire == nil {
 		panic("acquire func is not allowed to be nil")
 	}
-	return func(ctx context.Context, e *scheduler.Call, z mesos.Response, err error, ch Chain) (context.Context, *scheduler.Call, mesos.Response, error) {
-		if !acquire(false) {
-			// non-blocking acquire failed, check overflow policy
-			switch over {
-			case OverflowWait:
-				_ = acquire(true) // block until there's a signal
-			case OverflowOtherwise:
-				return otherwise.Eval(ctx, e, z, err, ch)
-			default:
-				panic(fmt.Sprintf("unexpected Overflow type: %#v", over))
-			}
+	switch over {
+	case OverflowWait:
+		return func(ctx context.Context, e *scheduler.Call, z mesos.Response, err error, ch Chain) (context.Context, *scheduler.Call, mesos.Response, error) {
+			_ = acquire(ctx, true) // block until there's a signal
+			return r(ctx, e, z, err, ch)
 		}
-		return r(ctx, e, z, err, ch)
+	case OverflowOtherwise:
+		return func(ctx context.Context, e *scheduler.Call, z mesos.Response, err error, ch Chain) (context.Context, *scheduler.Call, mesos.Response, error) {
+			if !acquire(ctx, false) {
+				return otherwise.Eval(ctx, e, z, err, ch)
+			}
+			return r(ctx, e, z, err, ch)
+		}
+	default:
+		panic(fmt.Sprintf("unexpected Overflow type: %#v", over))
 	}
 }
+
+/* TODO(jdef) not sure that this is very useful, leaving out for now...
 
 // EveryN invokes the receiving rule beginning with the first event seen and then every n'th
 // time after that. If nthTime is less then 2 then the receiver is returned, undecorated.
@@ -285,28 +300,37 @@ func (r Rule) EveryN(nthTime int, otherwise Rule) Rule {
 	if nthTime < 2 || r == nil {
 		return r
 	}
+	return limit(r, acquireEveryN(nthTime), OverflowOtherwise, otherwise)
+}
+
+// acquireEveryN returns an "acquire" func (for use w/ rate-limiting) that returns true every N'th invocation.
+// the returned func MUST NOT be used with a potentially blocking Overflow policy (or else it panics).
+// nthTime SHOULD be greater than math.MinInt32, values less than 2 probably don't make sense in practice.
+func acquireEveryN(nthTime int) func(context.Context, bool) bool {
 	var (
 		i       = 1 // begin with the first event seen
 		m       sync.Mutex
-		forward = func() bool {
+	)
+	return func(ctx context.Context, block bool) (result bool) {
+		if block {
+			panic("acquireEveryN should never be asked to block")
+		}
+		select {
+		case <-ctx.Done():
+		default:
 			m.Lock()
 			i--
-			if i == 0 {
+			if i <= 0 {
 				i = nthTime
-				m.Unlock()
-				return true
+				result = true
 			}
 			m.Unlock()
-			return false
 		}
-	)
-	return func(ctx context.Context, e *scheduler.Call, z mesos.Response, err error, ch Chain) (context.Context, *scheduler.Call, mesos.Response, error) {
-		if forward() {
-			return r(ctx, e, z, err, ch)
-		}
-		return otherwise.Eval(ctx, e, z, err, ch)
+		return
 	}
 }
+
+*/
 
 // Drop aborts the Chain and returns the (context.Context, *scheduler.Call, error) tuple as-is.
 func Drop() Rule {

@@ -78,11 +78,15 @@ func (rs Rules) Chain() Chain {
 // It is the semantic equivalent of Rules{r1, r2, ..., rn}.Rule() and exists purely for convenience.
 func Concat(rs ...Rule) Rule { return Rules(rs).Eval }
 
+const (
+	MsgNoErrors = "no errors"
+)
+
 // Error implements error; returns the message of the first error in the list.
 func (es ErrorList) Error() string {
 	switch len(es) {
 	case 0:
-		return "no errors"
+		return MsgNoErrors
 	case 1:
 		return es[0].Error()
 	default:
@@ -113,13 +117,14 @@ func Error2(a, b error) error {
 
 // Err reduces an empty or singleton error list
 func (es ErrorList) Err() error {
-	if len(es) == 0 {
+	switch len(es) {
+	case 0:
 		return nil
-	}
-	if len(es) == 1 {
+	case 1:
 		return es[0]
+	default:
+		return es
 	}
-	return es
 }
 
 // IsErrorList returns true if err is a non-nil error list

@@ -112,6 +112,26 @@ func TestRules(t *testing.T) {
 	}
 }
 
+func TestError(t *testing.T) {
+	a := errors.New("a")
+	list := ErrorList{a}
+
+	msg := list.Error()
+	if msg != a.Error() {
+		t.Errorf("expected %q instead of %q", a.Error(), msg)
+	}
+
+	msg = ErrorList{}.Error()
+	if msg != MsgNoErrors {
+		t.Errorf("expected %q instead of %q", MsgNoErrors, msg)
+	}
+
+	msg = ErrorList(nil).Error()
+	if msg != MsgNoErrors {
+		t.Errorf("expected %q instead of %q", MsgNoErrors, msg)
+	}
+}
+
 func TestError2(t *testing.T) {
 	var (
 		a = errors.New("a")

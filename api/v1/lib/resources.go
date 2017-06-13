@@ -13,10 +13,10 @@ type (
 	Resources         []Resource
 	ResourceFilter    func(*Resource) bool
 	ResourceFilters   []ResourceFilter
-	ResourceErrorType int
+	resourceErrorType int
 
-	ResourceError struct {
-		errorType ResourceErrorType
+	resourceError struct {
+		errorType resourceErrorType
 		reason    string
 		spec      Resource
 	}
@@ -33,14 +33,14 @@ type (
 const (
 	RoleDefault = RoleName("*")
 
-	ResourceErrorTypeIllegalName ResourceErrorType = iota
-	ResourceErrorTypeIllegalType
-	ResourceErrorTypeUnsupportedType
-	ResourceErrorTypeIllegalScalar
-	ResourceErrorTypeIllegalRanges
-	ResourceErrorTypeIllegalSet
-	ResourceErrorTypeIllegalDisk
-	ResourceErrorTypeIllegalReservation
+	resourceErrorTypeIllegalName resourceErrorType = iota
+	resourceErrorTypeIllegalType
+	resourceErrorTypeUnsupportedType
+	resourceErrorTypeIllegalScalar
+	resourceErrorTypeIllegalRanges
+	resourceErrorTypeIllegalSet
+	resourceErrorTypeIllegalDisk
+	resourceErrorTypeIllegalReservation
 
 	noReason = "" // make error generation code more readable
 )
@@ -68,19 +68,19 @@ var (
 		return r.GetType() == SET
 	})
 
-	resourceErrorMessages = map[ResourceErrorType]string{
-		ResourceErrorTypeIllegalName:        "missing or illegal resource name",
-		ResourceErrorTypeIllegalType:        "missing or illegal resource type",
-		ResourceErrorTypeUnsupportedType:    "unsupported resource type",
-		ResourceErrorTypeIllegalScalar:      "illegal scalar resource",
-		ResourceErrorTypeIllegalRanges:      "illegal ranges resource",
-		ResourceErrorTypeIllegalSet:         "illegal set resource",
-		ResourceErrorTypeIllegalDisk:        "illegal disk resource",
-		ResourceErrorTypeIllegalReservation: "illegal resource reservation",
+	resourceErrorMessages = map[resourceErrorType]string{
+		resourceErrorTypeIllegalName:        "missing or illegal resource name",
+		resourceErrorTypeIllegalType:        "missing or illegal resource type",
+		resourceErrorTypeUnsupportedType:    "unsupported resource type",
+		resourceErrorTypeIllegalScalar:      "illegal scalar resource",
+		resourceErrorTypeIllegalRanges:      "illegal ranges resource",
+		resourceErrorTypeIllegalSet:         "illegal set resource",
+		resourceErrorTypeIllegalDisk:        "illegal disk resource",
+		resourceErrorTypeIllegalReservation: "illegal resource reservation",
 	}
 )
 
-func (t ResourceErrorType) Generate(reason string) error {
+func (t resourceErrorType) Generate(reason string) error {
 	msg := resourceErrorMessages[t]
 	if reason != noReason {
 		if msg != "" {
@@ -89,14 +89,15 @@ func (t ResourceErrorType) Generate(reason string) error {
 			msg = reason
 		}
 	}
-	return &ResourceError{errorType: t, reason: msg}
+	return &resourceError{errorType: t, reason: msg}
 }
 
-func (err *ResourceError) Type() ResourceErrorType { return err.errorType }
-func (err *ResourceError) Reason() string          { return err.reason }
-func (err *ResourceError) Resource() Resource      { return err.spec }
+func (err *resourceError) Type() resourceErrorType { return err.errorType }
+func (err *resourceError) Reason() string          { return err.reason }
+func (err *resourceError) Resource() Resource      { return err.spec }
 
-func (err *ResourceError) Error() string {
+func (err *resourceError) Error() string {
+	// TODO(jdef) include additional context here? (type, resource)
 	if err.reason != "" {
 		return "resource error: " + err.reason
 	}
@@ -345,8 +346,8 @@ func (resources Resources) Validate() error {
 	for i := range resources {
 		err := resources[i].Validate()
 		if err != nil {
-			// augment ResourceError's with the resource that failed to validate
-			if resourceError, ok := err.(*ResourceError); ok {
+			// augment resourceError's with the resource that failed to validate
+			if resourceError, ok := err.(*resourceError); ok {
 				r := proto.Clone(&resources[i]).(*Resource)
 				resourceError.spec = *r
 			}
@@ -588,60 +589,60 @@ func (resources Resources) String() string {
 
 func (left *Resource) Validate() error {
 	if left.GetName() == "" {
-		return ResourceErrorTypeIllegalName.Generate(noReason)
+		return resourceErrorTypeIllegalName.Generate(noReason)
 	}
 	if _, ok := Value_Type_name[int32(left.GetType())]; !ok {
-		return ResourceErrorTypeIllegalType.Generate(noReason)
+		return resourceErrorTypeIllegalType.Generate(noReason)
 	}
 	switch left.GetType() {
 	case SCALAR:
 		if s := left.GetScalar(); s == nil || left.GetRanges() != nil || left.GetSet() != nil {
-			return ResourceErrorTypeIllegalScalar.Generate(noReason)
+			return resourceErrorTypeIllegalScalar.Generate(noReason)
 		} else if s.GetValue() < 0 {
-			return ResourceErrorTypeIllegalScalar.Generate("value < 0")
+			return resourceErrorTypeIllegalScalar.Generate("value < 0")
 		}
 	case RANGES:
 		if r := left.GetRanges(); left.GetScalar() != nil || r == nil || left.GetSet() != nil {
-			return ResourceErrorTypeIllegalRanges.Generate(noReason)
+			return resourceErrorTypeIllegalRanges.Generate(noReason)
 		} else {
 			for i, rr := range r.GetRange() {
 				// ensure that ranges are not inverted
 				if rr.Begin > rr.End {
-					return ResourceErrorTypeIllegalRanges.Generate("begin > end")
+					return resourceErrorTypeIllegalRanges.Generate("begin > end")
 				}
 				// ensure that ranges don't overlap (but not necessarily squashed)
 				for j := i + 1; j < len(r.GetRange()); j++ {
 					r2 := r.GetRange()[j]
 					if rr.Begin <= r2.Begin && r2.Begin <= rr.End {
-						return ResourceErrorTypeIllegalRanges.Generate("overlapping ranges")
+						return resourceErrorTypeIllegalRanges.Generate("overlapping ranges")
 					}
 				}
 			}
 		}
 	case SET:
 		if s := left.GetSet(); left.GetScalar() != nil || left.GetRanges() != nil || s == nil {
-			return ResourceErrorTypeIllegalSet.Generate(noReason)
+			return resourceErrorTypeIllegalSet.Generate(noReason)
 		} else {
 			unique := make(map[string]struct{}, len(s.GetItem()))
 			for _, x := range s.GetItem() {
 				if _, found := unique[x]; found {
-					return ResourceErrorTypeIllegalSet.Generate("duplicated elements")
+					return resourceErrorTypeIllegalSet.Generate("duplicated elements")
 				}
 				unique[x] = struct{}{}
 			}
 		}
 	default:
-		return ResourceErrorTypeUnsupportedType.Generate(noReason)
+		return resourceErrorTypeUnsupportedType.Generate(noReason)
 	}
 
 	// check for disk resource
 	if left.GetDisk() != nil && left.GetName() != "disk" {
-		return ResourceErrorTypeIllegalDisk.Generate("DiskInfo should not be set for \"" + left.GetName() + "\" resource")
+		return resourceErrorTypeIllegalDisk.Generate("DiskInfo should not be set for \"" + left.GetName() + "\" resource")
 	}
 
 	// check for invalid state of (role,reservation) pair
 	if left.GetRole() == string(RoleDefault) && left.GetReservation() != nil {
-		return ResourceErrorTypeIllegalReservation.Generate("default role cannot be dynamically assigned")
+		return resourceErrorTypeIllegalReservation.Generate("default role cannot be dynamically assigned")
 	}
 
 	return nil

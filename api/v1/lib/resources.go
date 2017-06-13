@@ -11,8 +11,6 @@ import (
 type (
 	RoleName          string
 	Resources         []Resource
-	ResourceFilter    func(*Resource) bool
-	ResourceFilters   []ResourceFilter
 	resourceErrorType int
 
 	resourceError struct {
@@ -46,28 +44,6 @@ const (
 )
 
 var (
-	AnyResources = ResourceFilter(func(r *Resource) bool {
-		return r != nil && !r.IsEmpty()
-	})
-	UnreservedResources = ResourceFilter(func(r *Resource) bool {
-		return r.IsUnreserved()
-	})
-	PersistentVolumes = ResourceFilter(func(r *Resource) bool {
-		return r.IsPersistentVolume()
-	})
-	RevocableResources = ResourceFilter(func(r *Resource) bool {
-		return r.IsRevocable()
-	})
-	ScalarResources = ResourceFilter(func(r *Resource) bool {
-		return r.GetType() == SCALAR
-	})
-	RangeResources = ResourceFilter(func(r *Resource) bool {
-		return r.GetType() == RANGES
-	})
-	SetResources = ResourceFilter(func(r *Resource) bool {
-		return r.GetType() == SET
-	})
-
 	resourceErrorMessages = map[resourceErrorType]string{
 		resourceErrorTypeIllegalName:        "missing or illegal resource name",
 		resourceErrorTypeIllegalType:        "missing or illegal resource type",
@@ -104,6 +80,11 @@ func (err *resourceError) Error() string {
 	return "resource error"
 }
 
+func IsResourceError(err error) (ok bool) {
+	_, ok = err.(*resourceError)
+	return
+}
+
 func (r RoleName) IsDefault() bool {
 	return r == RoleDefault
 }
@@ -117,206 +98,6 @@ func (r RoleName) Assign() FlattenOpt {
 func (r RoleName) Proto() *string {
 	s := string(r)
 	return &s
-}
-
-func (rf ResourceFilter) Or(f ResourceFilter) ResourceFilter {
-	return ResourceFilter(func(r *Resource) bool {
-		return rf(r) || f(r)
-	})
-}
-
-func (rf ResourceFilter) And(f ResourceFilter) ResourceFilter {
-	return ResourceFilters{rf, f}.Predicate()
-}
-
-func (rf ResourceFilter) Select(resources Resources) (result Resources) {
-	for i := range resources {
-		if rf(&resources[i]) {
-			result.add(resources[i])
-		}
-	}
-	return
-}
-
-func (rf ResourceFilters) Predicate() ResourceFilter {
-	return ResourceFilter(func(r *Resource) bool {
-		for _, f := range rf {
-			if !f(r) {
-				return false
-			}
-		}
-		return true
-	})
-}
-
-func ReservedResources(role string) ResourceFilter {
-	return ResourceFilter(func(r *Resource) bool {
-		return r.IsReserved(role)
-	})
-}
-
-func NamedResources(name string) ResourceFilter {
-	return ResourceFilter(func(r *Resource) bool {
-		return r.GetName() == name
-	})
-}
-
-func (resources Resources) CPUs() (float64, bool) {
-	v := resources.SumScalars(NamedResources("cpus"))
-	if v != nil {
-		return v.Value, true
-	}
-	return 0, false
-}
-
-func (resources Resources) Memory() (uint64, bool) {
-	v := resources.SumScalars(NamedResources("mem"))
-	if v != nil {
-		return uint64(v.Value), true
-	}
-	return 0, false
-}
-
-func (resources Resources) Disk() (uint64, bool) {
-	v := resources.SumScalars(NamedResources("disk"))
-	if v != nil {
-		return uint64(v.Value), true
-	}
-	return 0, false
-}
-
-func (resources Resources) Ports() (Ranges, bool) {
-	v := resources.SumRanges(NamedResources("ports"))
-	if v != nil {
-		return Ranges(v.Range), true
-	}
-	return nil, false
-}
-
-func (resources Resources) SumScalars(rf ResourceFilter) *Value_Scalar {
-	predicate := ResourceFilters{rf, ScalarResources}.Predicate()
-	var x *Value_Scalar
-	for i := range resources {
-		if !predicate(&resources[i]) {
-			continue
-		}
-		x = x.Add(resources[i].GetScalar())
-	}
-	return x
-}
-
-func (resources Resources) SumRanges(rf ResourceFilter) *Value_Ranges {
-	predicate := ResourceFilters{rf, RangeResources}.Predicate()
-	var x *Value_Ranges
-	for i := range resources {
-		if !predicate(&resources[i]) {
-			continue
-		}
-		x = x.Add(resources[i].GetRanges())
-	}
-	return x
-}
-
-func (resources Resources) SumSets(rf ResourceFilter) *Value_Set {
-	predicate := ResourceFilters{rf, SetResources}.Predicate()
-	var x *Value_Set
-	for i := range resources {
-		if !predicate(&resources[i]) {
-			continue
-		}
-		x = x.Add(resources[i].GetSet())
-	}
-	return x
-}
-
-func (resources Resources) Types() map[string]Value_Type {
-	m := map[string]Value_Type{}
-	for i := range resources {
-		m[resources[i].GetName()] = resources[i].GetType()
-	}
-	return m
-}
-
-func (resources Resources) Names() (names []string) {
-	m := map[string]struct{}{}
-	for i := range resources {
-		n := resources[i].GetName()
-		if _, ok := m[n]; !ok {
-			m[n] = struct{}{}
-			names = append(names, n)
-		}
-	}
-	return
-}
-
-func (resources Resources) sameTotals(result Resources) bool {
-	// from: https://github.com/apache/mesos/blob/master/src/common/resources.cpp
-	// This is a sanity check to ensure the amount of each type of
-	// resource does not change.
-	// TODO(jieyu): Currently, we only check known resource types like
-	// cpus, mem, disk, ports, etc. We should generalize this.
-	var (
-		c1, c2 = result.CPUs()
-		m1, m2 = result.Memory()
-		d1, d2 = result.Disk()
-		p1, p2 = result.Ports()
-
-		c3, c4 = resources.CPUs()
-		m3, m4 = resources.Memory()
-		d3, d4 = resources.Disk()
-		p3, p4 = resources.Ports()
-	)
-	return c1 == c3 && c2 == c4 &&
-		m1 == m3 && m2 == m4 &&
-		d1 == d3 && d2 == d4 &&
-		p1.Equivalent(p3) && p2 == p4
-}
-
-func (resources Resources) Find(targets Resources) (total Resources) {
-	for i := range targets {
-		found := resources.find(targets[i])
-
-		// each target *must* be found
-		if len(found) == 0 {
-			return nil
-		}
-
-		total.Add(found...)
-	}
-	return total
-}
-
-func (resources Resources) find(target Resource) Resources {
-	var (
-		total      = resources.Clone()
-		remaining  = Resources{target}.Flatten()
-		found      Resources
-		predicates = ResourceFilters{
-			ReservedResources(target.GetRole()),
-			UnreservedResources,
-			AnyResources,
-		}
-	)
-	for _, predicate := range predicates {
-		filtered := predicate.Select(total)
-		for i := range filtered {
-			// need to flatten to ignore the roles in ContainsAll()
-			flattened := Resources{filtered[i]}.Flatten()
-			if flattened.ContainsAll(remaining) {
-				// target has been found, return the result
-				return found.Add(remaining.Flatten(
-					RoleName(filtered[i].GetRole()).Assign(),
-					filtered[i].Reservation.Assign())...)
-			}
-			if remaining.ContainsAll(flattened) {
-				found.add(filtered[i])
-				total.subtract(filtered[i])
-				remaining.Subtract(flattened...)
-				break
-			}
-		}
-	}
-	return nil
 }
 
 func (ri *Resource_ReservationInfo) Assign() FlattenOpt {
@@ -337,7 +118,7 @@ func (resources Resources) Flatten(opts ...FlattenOpt) (flattened Resources) {
 	for _, r := range resources {
 		r.Role = &fc.Role
 		r.Reservation = fc.Reservation
-		flattened.add(r)
+		flattened.Add1(r)
 	}
 	return
 }
@@ -399,7 +180,7 @@ func (resources Resources) ContainsAll(that Resources) bool {
 		if !remaining.contains(that[i]) {
 			return false
 		}
-		remaining.subtract(that[i])
+		remaining.Subtract1(that[i])
 	}
 	return true
 }
@@ -421,7 +202,7 @@ func (resources *Resources) Subtract(that ...Resource) (rs Resources) {
 			that = x
 
 			for i := range that {
-				resources.subtract(that[i])
+				resources.Subtract1(that[i])
 			}
 		}
 		rs = *resources
@@ -451,9 +232,9 @@ func (resources *Resources) Add(that ...Resource) (rs Resources) {
 	return
 }
 
-// add adds `that` to the receiving `resources` and returns the result (the modified
+// Add1 adds `that` to the receiving `resources` and returns the result (the modified
 // `resources` receiver).
-func (resources *Resources) add(that Resource) (rs Resources) {
+func (resources *Resources) Add1(that Resource) (rs Resources) {
 	if resources != nil {
 		rs = *resources
 	}
@@ -484,12 +265,12 @@ func (resources Resources) _add(that Resource) Resources {
 // the receiving `resources` or `that`.
 func (resources *Resources) minus(that Resource) Resources {
 	x := resources.Clone()
-	return x.subtract(that)
+	return x.Subtract1(that)
 }
 
-// subtract subtracts `that` from the receiving `resources` and returns the result (the modified
+// Subtract1 subtracts `that` from the receiving `resources` and returns the result (the modified
 // `resources` receiver).
-func (resources *Resources) subtract(that Resource) Resources {
+func (resources *Resources) Subtract1(that Resource) Resources {
 	if resources == nil {
 		return nil
 	}

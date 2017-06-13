@@ -11,20 +11,20 @@ type (
 	RangeBuilder struct{ mesos.Ranges }
 )
 
-func CPUs(value float64) *Builder {
-	return Build().Name("cpus").Scalar(value)
+func NewCPUs(value float64) *Builder {
+	return Build().Name(ResourceNameCPUs).Scalar(value)
 }
 
-func Memory(value float64) *Builder {
-	return Build().Name("mem").Scalar(value)
+func NewMemory(value float64) *Builder {
+	return Build().Name(ResourceNameMem).Scalar(value)
 }
 
-func Disk(value float64) *Builder {
-	return Build().Name("disk").Scalar(value)
+func NewDisk(value float64) *Builder {
+	return Build().Name(ResourceNameDisk).Scalar(value)
 }
 
-func GPUs(value uint) *Builder {
-	return Build().Name("gpus").Scalar(float64(value))
+func NewGPUs(value uint) *Builder {
+	return Build().Name(ResourceNameGPUs).Scalar(float64(value))
 }
 
 func BuildRanges() *RangeBuilder {

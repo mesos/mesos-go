@@ -113,17 +113,24 @@ func AckStatusUpdatesF(callerLookup func() calls.Caller) Rule {
 	}
 }
 
-var (
-	// EventLabel is, by default, logged as the first argument by EventLogger
-	EventLabel = "event"
-	// EventLogger is the logger used by the LogEvents rule generator
-	EventLogger = func(e *scheduler.Event) { log.Println(EventLabel, e) }
-)
+// DefaultEventLabel is, by default, logged as the first argument by DefaultEventLogger
+const DefaultEventLabel = "event"
+
+// DefaultEventLogger logs the event via the `log` package.
+func DefaultEventLogger(eventLabel string) func(*scheduler.Event) {
+	if eventLabel == "" {
+		return func(e *scheduler.Event) { log.Println(e) }
+	}
+	return func(e *scheduler.Event) { log.Println(eventLabel, e) }
+}
 
 // LogEvents returns a rule that logs scheduler events to the EventLogger
-func LogEvents() Rule {
+func LogEvents(f func(*scheduler.Event)) Rule {
+	if f == nil {
+		f = DefaultEventLogger(DefaultEventLabel)
+	}
 	return Rule(func(ctx context.Context, e *scheduler.Event, err error, chain Chain) (context.Context, *scheduler.Event, error) {
-		EventLogger(e)
+		f(e)
 		return chain(ctx, e, err)
 	})
 }

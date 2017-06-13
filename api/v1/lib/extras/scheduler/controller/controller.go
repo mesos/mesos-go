@@ -146,5 +146,7 @@ func eventLoop(ctx context.Context, config Config, eventDecoder encoding.Decoder
 	return err
 }
 
-// DefaultHandler defaults to events.NoopHandler
-var DefaultHandler = events.NoopHandler()
+// DefaultHandler is invoked when no other handlers have been defined for the controller.
+// The current implementation does nothing.
+// TODO(jdef) a smarter default impl would decline all offers so as to avoid resource hoarding.
+const DefaultHandler = events.NoopHandler

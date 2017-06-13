@@ -132,7 +132,7 @@ func buildClient() calls.Caller {
 }
 
 func buildEventHandler(caller calls.Caller) events.Handler {
-	logger := controller.LogEvents()
+	logger := controller.LogEvents(nil)
 	return controller.LiftErrors().Handle(events.Handlers{
 		scheduler.Event_SUBSCRIBED: eventrules.Rules{logger, controller.TrackSubscription(fidStore, 0)},
 		scheduler.Event_OFFERS:     maybeDeclineOffers(caller).AndThen().Handle(resourceOffers(caller)),

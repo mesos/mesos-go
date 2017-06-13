@@ -45,10 +45,12 @@ type (
 // HandleEvent implements Handler for HandlerFunc
 func (f HandlerFunc) HandleEvent(ctx context.Context, e {{.Type "E"}}) error { return f(ctx, e) }
 
-var noopHandler = func(_ context.Context, _ {{.Type "E"}}) error { return nil }
+type noopHandler int
 
-// NoopHandler returns a HandlerFunc that does nothing and always returns nil
-func NoopHandler() HandlerFunc { return noopHandler }
+func (_ noopHandler) HandleEvent(_ context.Context, _ {{.Type "E"}}) error { return nil }
+
+// NoopHandler is a Handler that does nothing and always returns nil
+const NoopHandler = noopHandler(0)
 
 // HandleEvent implements Handler for Handlers
 func (hs Handlers) HandleEvent(ctx context.Context, e {{.Type "E"}}) (err error) {

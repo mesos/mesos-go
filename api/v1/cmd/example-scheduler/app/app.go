@@ -88,7 +88,7 @@ func Run(cfg Config) error {
 // buildEventHandler generates and returns a handler to process events received from the subscription.
 func buildEventHandler(state *internalState, fidStore store.Singleton) events.Handler {
 	// disable brief logs when verbose logs are enabled (there's no sense logging twice!)
-	logger := controller.LogEvents().Unless(state.config.verbose)
+	logger := controller.LogEvents(nil).Unless(state.config.verbose)
 	return eventrules.Concat(
 		logAllEvents().If(state.config.verbose),
 		eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),

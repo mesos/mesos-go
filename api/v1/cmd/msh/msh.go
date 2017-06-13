@@ -78,8 +78,8 @@ func main() {
 	}
 
 	wantsResources = mesos.Resources{
-		resources.CPUs(CPUs).Resource,
-		resources.Memory(Memory).Resource,
+		resources.NewCPUs(CPUs).Resource,
+		resources.NewMemory(Memory).Resource,
 	}
 	taskPrototype = mesos.TaskInfo{
 		Name: TaskName,
@@ -169,7 +169,7 @@ func resourceOffers(caller calls.Caller) events.HandlerFunc {
 			task := taskPrototype
 			task.TaskID = mesos.TaskID{Value: time.Now().Format(RFC3339a)}
 			task.AgentID = match.AgentID
-			task.Resources = mesos.Resources(match.Resources).Find(wantsResources.Flatten(Role.Assign()))
+			task.Resources = resources.Find(wantsResources.Flatten(Role.Assign()), match.Resources...)
 
 			err = calls.CallNoData(ctx, caller, calls.Accept(
 				calls.OfferOperations{calls.OpLaunch(task)}.WithOffers(match.ID),

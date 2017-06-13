@@ -11,10 +11,12 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	xmetrics "github.com/mesos/mesos-go/api/v1/lib/extras/metrics"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/callrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
+	"github.com/mesos/mesos-go/api/v1/lib/resourcefilters"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
@@ -163,9 +165,9 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 
 			// avoid the expense of computing these if we can...
 			if state.config.summaryMetrics && state.config.resourceTypeMetrics {
-				for name, restype := range flattened.Types() {
+				for name, restype := range resources.Types(flattened...) {
 					if restype == mesos.SCALAR {
-						sum := flattened.SumScalars(mesos.NamedResources(name))
+						sum := resources.SumScalars(resourcefilters.Named(name), flattened...)
 						state.metricsAPI.offeredResources(sum.GetValue(), name)
 					}
 				}
@@ -184,7 +186,7 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 					TaskID:    mesos.TaskID{Value: strconv.Itoa(taskID)},
 					AgentID:   offers[i].AgentID,
 					Executor:  state.executor,
-					Resources: remaining.Find(state.wantsTaskResources.Flatten(mesos.RoleName(state.role).Assign())),
+					Resources: resources.Find(state.wantsTaskResources.Flatten(mesos.RoleName(state.role).Assign()), remaining...),
 				}
 				task.Name = "Task " + task.TaskID.Value
 

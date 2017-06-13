@@ -87,8 +87,8 @@ func prepareExecutorInfo(
 
 func buildWantsTaskResources(config Config) (r mesos.Resources) {
 	r.Add(
-		resources.CPUs(config.taskCPU).Resource,
-		resources.Memory(config.taskMemory).Resource,
+		resources.NewCPUs(config.taskCPU).Resource,
+		resources.NewMemory(config.taskMemory).Resource,
 	)
 	log.Println("wants-task-resources = " + r.String())
 	return
@@ -96,8 +96,8 @@ func buildWantsTaskResources(config Config) (r mesos.Resources) {
 
 func buildWantsExecutorResources(config Config) (r mesos.Resources) {
 	r.Add(
-		resources.CPUs(config.execCPU).Resource,
-		resources.Memory(config.execMemory).Resource,
+		resources.NewCPUs(config.execCPU).Resource,
+		resources.NewMemory(config.execMemory).Resource,
 	)
 	log.Println("wants-executor-resources = " + r.String())
 	return

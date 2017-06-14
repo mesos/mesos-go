@@ -1,6 +1,6 @@
 package eventrules
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type E:*executor.Event:&executor.Event{} -output metrics_generated.go
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type E:*executor.Event:&executor.Event{} -type ET:executor.Event_Type -output metrics_generated.go
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
@@ -22,7 +22,7 @@ func TestMetrics(t *testing.T) {
 			i++
 			return f()
 		}
-		r = Metrics(h)
+		r = Metrics(h, func(_ context.Context, _ *executor.Event) []string { return nil })
 	)
 	for ti, tc := range []struct {
 		ctx context.Context

@@ -287,7 +287,7 @@ func eventMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics 
 		timed = nil
 	}
 	harness := xmetrics.NewHarness(metricsAPI.eventReceivedCount, metricsAPI.eventErrorCount, timed, clock)
-	return eventrules.Metrics(harness)
+	return eventrules.Metrics(harness, nil)
 }
 
 // callMetrics logs metrics for every outgoing Mesos call
@@ -297,7 +297,7 @@ func callMetrics(metricsAPI *metricsAPI, clock func() time.Time, timingMetrics b
 		timed = nil
 	}
 	harness := xmetrics.NewHarness(metricsAPI.callCount, metricsAPI.callErrorCount, timed, clock)
-	return callrules.Metrics(harness)
+	return callrules.Metrics(harness, nil)
 }
 
 // logCalls logs a specific message string when a particular call-type is observed

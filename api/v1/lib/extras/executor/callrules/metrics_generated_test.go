@@ -1,6 +1,6 @@
 package callrules
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib -import github.com/mesos/mesos-go/api/v1/lib/executor -type E:*executor.Call:&executor.Call{} -type Z:mesos.Response:&mesos.ResponseWrapper{} -output metrics_generated.go
+// go generate -import github.com/mesos/mesos-go/api/v1/lib -import github.com/mesos/mesos-go/api/v1/lib/executor -type E:*executor.Call:&executor.Call{} -type ET:executor.Call_Type -type Z:mesos.Response:&mesos.ResponseWrapper{} -output metrics_generated.go
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
@@ -23,7 +23,7 @@ func TestMetrics(t *testing.T) {
 			i++
 			return f()
 		}
-		r = Metrics(h)
+		r = Metrics(h, func(_ context.Context, _ *executor.Call) []string { return nil })
 	)
 	var zp = &mesos.ResponseWrapper{}
 	for ti, tc := range []struct {

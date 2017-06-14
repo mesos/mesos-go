@@ -1,8 +1,6 @@
 package mesos_test
 
 import (
-	"reflect"
-	"sort"
 	"testing"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
@@ -94,38 +92,6 @@ func TestResources_PrecisionSimple(t *testing.T) {
 	}
 }
 
-func TestResources_Types(t *testing.T) {
-	rs := Resources(
-		Resource(Name("cpus"), ValueScalar(2), Role("role1")),
-		Resource(Name("cpus"), ValueScalar(4)),
-		Resource(Name("ports"), ValueRange(Span(1, 10)), Role("role1")),
-		Resource(Name("ports"), ValueRange(Span(11, 20))),
-	)
-	types := rez.Types(rs...)
-	expected := map[string]mesos.Value_Type{
-		"cpus":  mesos.SCALAR,
-		"ports": mesos.RANGES,
-	}
-	if !reflect.DeepEqual(types, expected) {
-		t.Fatalf("expected %v instead of %v", expected, types)
-	}
-}
-
-func TestResources_Names(t *testing.T) {
-	rs := Resources(
-		Resource(Name("cpus"), ValueScalar(2), Role("role1")),
-		Resource(Name("cpus"), ValueScalar(4)),
-		Resource(Name("mem"), ValueScalar(10), Role("role1")),
-		Resource(Name("mem"), ValueScalar(10)),
-	)
-	names := rez.Names(rs...)
-	sort.Strings(names)
-	expected := []string{"cpus", "mem"}
-	if !reflect.DeepEqual(names, expected) {
-		t.Fatalf("expected %v instead of %v", expected, names)
-	}
-}
-
 func TestResource_RevocableResources(t *testing.T) {
 	rs := mesos.Resources{
 		Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable()),
@@ -211,86 +177,6 @@ func TestResources_Validation(t *testing.T) {
 	}
 }
 
-func TestResources_Find(t *testing.T) {
-	for i, tc := range []struct {
-		r1, targets, wants mesos.Resources
-	}{
-		{nil, nil, nil},
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(2), Role("role1")),
-				Resource(Name("mem"), ValueScalar(10), Role("role1")),
-				Resource(Name("cpus"), ValueScalar(4), Role("*")),
-				Resource(Name("mem"), ValueScalar(20), Role("*")),
-			),
-			targets: Resources(
-				Resource(Name("cpus"), ValueScalar(3), Role("role1")),
-				Resource(Name("mem"), ValueScalar(15), Role("role1")),
-			),
-			wants: Resources(
-				Resource(Name("cpus"), ValueScalar(2), Role("role1")),
-				Resource(Name("mem"), ValueScalar(10), Role("role1")),
-				Resource(Name("cpus"), ValueScalar(1), Role("*")),
-				Resource(Name("mem"), ValueScalar(5), Role("*")),
-			),
-		},
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(1), Role("role1")),
-				Resource(Name("mem"), ValueScalar(5), Role("role1")),
-				Resource(Name("cpus"), ValueScalar(2), Role("role2")),
-				Resource(Name("mem"), ValueScalar(8), Role("role2")),
-				Resource(Name("cpus"), ValueScalar(1), Role("*")),
-				Resource(Name("mem"), ValueScalar(7), Role("*")),
-			),
-			targets: Resources(
-				Resource(Name("cpus"), ValueScalar(3), Role("role1")),
-				Resource(Name("mem"), ValueScalar(15), Role("role1")),
-			),
-			wants: Resources(
-				Resource(Name("cpus"), ValueScalar(1), Role("role1")),
-				Resource(Name("mem"), ValueScalar(5), Role("role1")),
-				Resource(Name("cpus"), ValueScalar(1), Role("*")),
-				Resource(Name("mem"), ValueScalar(7), Role("*")),
-				Resource(Name("cpus"), ValueScalar(1), Role("role2")),
-				Resource(Name("mem"), ValueScalar(3), Role("role2")),
-			),
-		},
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(5), Role("role1")),
-				Resource(Name("mem"), ValueScalar(5), Role("role1")),
-				Resource(Name("cpus"), ValueScalar(5), Role("*")),
-				Resource(Name("mem"), ValueScalar(5), Role("*")),
-			),
-			targets: Resources(
-				Resource(Name("cpus"), ValueScalar(6)),
-				Resource(Name("mem"), ValueScalar(6)),
-			),
-			wants: Resources(
-				Resource(Name("cpus"), ValueScalar(5), Role("*")),
-				Resource(Name("mem"), ValueScalar(5), Role("*")),
-				Resource(Name("cpus"), ValueScalar(1), Role("role1")),
-				Resource(Name("mem"), ValueScalar(1), Role("role1")),
-			),
-		},
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(1), Role("role1")),
-				Resource(Name("mem"), ValueScalar(1), Role("role1")),
-			),
-			targets: Resources(
-				Resource(Name("cpus"), ValueScalar(2), Role("role1")),
-				Resource(Name("mem"), ValueScalar(2), Role("role1")),
-			),
-			wants: nil,
-		},
-	} {
-		r := rez.Find(tc.targets, tc.r1...)
-		expect(t, r.Equivalent(tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
-	}
-}
-
 func TestResources_Flatten(t *testing.T) {
 	for i, tc := range []struct {
 		r1, wants mesos.Resources
@@ -319,7 +205,7 @@ func TestResources_Flatten(t *testing.T) {
 		},
 	} {
 		r := tc.r1.Flatten()
-		expect(t, r.Equivalent(tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
+		Expect(t, r.Equivalent(tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
 	}
 }
 
@@ -390,7 +276,7 @@ func TestResources_Equivalent(t *testing.T) {
 		},
 	} {
 		actual := tc.r1.Equivalent(tc.r2)
-		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
+		Expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 	}
 
 	possiblyReserved := mesos.Resources{
@@ -547,7 +433,7 @@ func TestResources_ContainsAll(t *testing.T) {
 		{r1: sumPossiblyReserved, r2: sumPossiblyReserved, wants: true},
 	} {
 		actual := tc.r1.ContainsAll(tc.r2)
-		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
+		Expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 	}
 }
 
@@ -566,7 +452,7 @@ func TestResource_IsEmpty(t *testing.T) {
 		{Resource(ValueRange(Span(0, 0))), false},
 	} {
 		actual := tc.r.IsEmpty()
-		expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
+		Expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 	}
 }
 
@@ -932,11 +818,4 @@ func TestResources_Plus(t *testing.T) {
 			t.Errorf("test case %d failed: wants mem (%v) != r1 mem (%v)", i, tc.wantsMemory, mem)
 		}
 	}
-}
-
-func expect(t *testing.T, cond bool, msgformat string, args ...interface{}) bool {
-	if !cond {
-		t.Errorf(msgformat, args...)
-	}
-	return cond
 }

@@ -3,6 +3,8 @@ package resourcetest
 // maybe this could eventually be a resourcedsl package, but resource construction rules aren't that strict here yet
 
 import (
+	"testing"
+
 	"github.com/mesos/mesos-go/api/v1/lib"
 )
 
@@ -115,4 +117,11 @@ func Create(r mesos.Resources) *mesos.Offer_Operation {
 			Volumes: r,
 		},
 	}
+}
+
+func Expect(t *testing.T, cond bool, msgformat string, args ...interface{}) bool {
+	if !cond {
+		t.Errorf(msgformat, args...)
+	}
+	return cond
 }

@@ -1,6 +1,6 @@
 package callrules
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib -import github.com/mesos/mesos-go/api/v1/lib/executor -type E:*executor.Call -type Z:mesos.Response -output metrics_generated.go
+// go generate -import github.com/mesos/mesos-go/api/v1/lib -import github.com/mesos/mesos-go/api/v1/lib/executor -type E:*executor.Call:&executor.Call{} -type Z:mesos.Response:&mesos.ResponseWrapper{} -output metrics_generated.go
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (

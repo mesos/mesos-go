@@ -1,6 +1,6 @@
 package eventrules
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type E:*executor.Event -output metrics_generated.go
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type E:*executor.Event:&executor.Event{} -output metrics_generated.go
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (

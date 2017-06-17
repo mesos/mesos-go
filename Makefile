@@ -33,11 +33,14 @@ test-verbose: TEST_FLAGS += -v
 test-verbose: test
 
 .PHONY: coverage $(COVERAGE_TARGETS)
-coverage: TEST_FLAGS = -v -cover -race
+coverage: REPORT=_output/coverage.out
+coverage: COVER_PACKAGE = $(shell go list ${API_PKG}/...|egrep -v 'vendor|cmd'|tr '\n' ','|sed -e 's/,$$//')
+coverage: TEST_FLAGS = -v -cover -coverpkg=$(COVER_PACKAGE)
 coverage: $(COVERAGE_TARGETS)
-	cat _output/*.cover | sed -e '2,$$ s/^mode:.*$$//' -e '/^$$/d' >_output/coverage.out
-$(COVERAGE_TARGETS):
-	mkdir -p _output && go test ./$(@:%.cover=%) $(TEST_FLAGS) -coverprofile=_output/$(subst /,___,$@)
+	echo "mode: set" >$(REPORT) && cat _output/*.cover | grep -v mode: | sort -r | \
+		awk '{if($$1 != last) {print $$0;last=$$1}}' >> $(REPORT)
+$(COVERAGE_TARGETS): %.cover :
+	mkdir -p _output && go test ./$* $(TEST_FLAGS) -coverprofile=_output/$(subst /,___,$@)
 
 .PHONY: vet
 vet:

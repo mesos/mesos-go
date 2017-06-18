@@ -2,6 +2,7 @@ package framing
 
 import (
 	"fmt"
+	"io"
 )
 
 type (
@@ -34,33 +35,14 @@ var (
 // Decode reads the next Protobuf-encoded message from its input and stores it
 // in the value pointed to by m. If m isn't a proto.Message, Decode will panic.
 func (d *Decoder) Decode(m interface{}) error {
-	var (
-		buf     = d.buf
-		readlen = 0
-	)
-	for {
-		eof, nr, err := d.r.ReadFrame(buf)
-		if err != nil {
-			return err
-		}
-
-		readlen += nr
-		if readlen > MaxSize {
-			return ErrSize
-		}
-
-		if eof {
-			return d.uf(d.buf[:readlen], m)
-		}
-
-		if len(buf) == nr {
-			// readlen and len(d.buf) are the same here
-			newbuf := make([]byte, readlen+4096)
-			copy(newbuf, d.buf)
-			d.buf = newbuf
-			buf = d.buf[readlen:]
-		} else {
-			buf = buf[nr:]
+	// Note: the buf returned by ReadFrame will change over time, it can't be sub-sliced
+	// and then those sub-slices retained. Examination of generated proto code seems to indicate
+	// that byte buffers are copied vs. referenced by sub-slice (gogo protoc).
+	frame, err := d.r.ReadFrame()
+	if err == nil || err == io.EOF {
+		if err2 := d.uf(frame, m); err2 != nil {
+			err = err2
 		}
 	}
+	return err
 }

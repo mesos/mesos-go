@@ -1,61 +1,87 @@
-package recordio
+package recordio_test
 
 import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
+	"github.com/mesos/mesos-go/api/v1/lib/recordio"
 )
 
 func Example() {
-	r := NewReader(strings.NewReader("6\nhello 0\n6\nworld!"))
-	records, err := ioutil.ReadAll(r)
-	fmt.Println(string(records), err)
+	var (
+		r     = recordio.NewReader(strings.NewReader("6\nhello 0\n6\nworld!"))
+		lines []string
+	)
+	for {
+		fr, err := r.ReadFrame()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			panic(err)
+		}
+		lines = append(lines, string(fr))
+	}
+	fmt.Println(lines)
 	// Output:
-	// hello world! <nil>
+	// [hello  world!]
 }
 
-func TestReader(t *testing.T) {
-	for i, tt := range []struct {
+func TestReadFrame(t *testing.T) {
+	list := func(v ...string) []string { return v }
+	for ti, tc := range []struct {
 		in     string
-		out    []byte
-		fwd, n int
+		frames []string
 		err    error
 	}{
-		{"1\na0\n1\nb", []byte("a"), 0, 1, nil},
-		{"1\na0\n1\nb", []byte("b"), 1, 1, nil},
-		{"1\na", []byte{}, 0, 0, nil},
-		{"2\nab", []byte("a"), 0, 1, nil},
-		{"2\nab", []byte("ab"), 0, 2, nil},
-		{"2\nab", []byte("b"), 1, 1, nil},
-		{"2\nab", []byte{'b', 0}, 1, 1, nil},
-		{"2\nab", []byte{0}, 2, 0, io.EOF},
-		{ // size = (2 << 63) + 1
-			"18446744073709551616\n", []byte{0}, 0, 0, &strconv.NumError{
-				Func: "ParseUint",
-				Num:  "18446744073709551616",
-				Err:  strconv.ErrRange,
-			},
-		},
+		{"", nil, nil},
+		{"a", nil, framing.ErrorUnderrun},
+		{"aaaaaaaaaaaaaaaaaaaaa", nil, framing.ErrorBadSize}, // 21 digits is too large for frame size
+		{"111111111111111111111", nil, framing.ErrorBadSize},
+		{"a\n", nil, framing.ErrorBadSize},
+		{"0\n", nil, nil},
+		{"00000000000000000000\n", nil, nil},
+		{"000000000000000000000\n", nil, framing.ErrorBadSize},
+		{"0\n0\n0\n", nil, nil},
+		{"1\n", nil, framing.ErrorUnderrun},
+		{"1\na", list("a"), nil},
+		{"2\na", nil, framing.ErrorUnderrun},
+		{"1\na1\nb1\nc", list("a", "b", "c"), nil},
+		{"5\nabcde", list("abcde"), nil},
+		{"5\nabcde3\nfgh", list("abcde", "fgh"), nil},
+		{"5\nabcde5\nfgh", list("abcde"), framing.ErrorUnderrun},
+		{"23\n", nil, framing.ErrorOversizedFrame}, // 23 exceeds max of 22
 	} {
-		type expect struct {
-			p   []byte
-			n   int
-			err error
+		var (
+			r       = recordio.NewReader(strings.NewReader(tc.in), recordio.MaxMessageSize(22))
+			frames  []string
+			lastErr error
+		)
+		for lastErr == nil {
+			fr, err := r.ReadFrame()
+			if err == nil || err == io.EOF {
+				if fr != nil {
+					println("read frame " + string(fr))
+					frames = append(frames, string(fr))
+				}
+			}
+			lastErr = err
 		}
-		r := NewReader(strings.NewReader(tt.in))
-		if n, err := r.Read(make([]byte, tt.fwd)); err != nil || n != tt.fwd {
-			t.Fatalf("test #%d: failed to read forward %d bytes: %v", i, n, err)
+		if tc.err == nil && lastErr != io.EOF {
+			t.Fatalf("test case %d failed: unexpected error %q", ti, lastErr)
 		}
-		want := expect{[]byte(tt.out), tt.n, tt.err}
-		got := expect{p: make([]byte, len(tt.out))}
-		if got.n, got.err = r.Read(got.p); !reflect.DeepEqual(got, want) {
-			t.Errorf("test #%d: got: %+v, want: %+v", i, got, want)
+		if tc.err != nil && lastErr != tc.err {
+			t.Fatalf("test case %d failed: expected error %q instead of error %q", ti, tc.err, lastErr)
+		}
+		if !reflect.DeepEqual(tc.frames, frames) {
+			t.Fatalf("test case %d failed: expected frames %#v instead of frames %#v", ti, tc.frames, frames)
 		}
 	}
 }
@@ -64,18 +90,17 @@ func BenchmarkReader(b *testing.B) {
 	var buf bytes.Buffer
 	genRecords(b, &buf)
 
-	r := NewReader(&buf)
-	p := make([]byte, 256)
+	r := recordio.NewReader(&buf)
 
 	b.StopTimer()
 	b.ResetTimer()
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		if n, err := r.Read(p); err != nil && err != io.EOF {
+		if tok, err := r.ReadFrame(); err != nil && err != io.EOF {
 			b.Fatal(err)
 		} else {
-			b.SetBytes(int64(n))
+			b.SetBytes(int64(len(tok)))
 		}
 	}
 }

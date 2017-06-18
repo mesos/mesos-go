@@ -199,7 +199,7 @@ func (c *Client) HandleResponse(res *http.Response, err error) (mesos.Response, 
 			res.Body.Close()
 			return nil, ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
 		}
-		result.Decoder = c.codec.NewDecoder(recordio.NewFrameReader(res.Body))
+		result.Decoder = c.codec.NewDecoder(recordio.NewReader(res.Body))
 
 	case http.StatusAccepted:
 		if debug {

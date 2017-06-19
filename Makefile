@@ -113,6 +113,7 @@ docker:
 
 .PHONY: coveralls
 coveralls: IGNORE_FILES = $(shell { find api/v1/cmd -type d ; ls api/v1/lib{,/scheduler,/executor}/*.pb{,_ffjson}.go ; find api/v0 -type d; } | tr '\n' ,)
+coveralls: SHELL := /bin/bash
 coveralls:
 	test "$(TRAVIS)" = "" || rm -rf $$HOME/gopath/pkg
 	$(MAKE) coverage

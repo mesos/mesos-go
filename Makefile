@@ -110,3 +110,10 @@ docker:
 	test -n "$(GID)" || (echo 'ERROR: $$GID is undefined'; exit 1)
 	docker run --rm -v "$$PWD":/src -w /go/src/$(GOPKG_DIRNAME) golang:1.6.1-alpine sh -c $(BUILD_STEP)' && '$(COPY_STEP)
 	make -C api/${MESOS_API_VERSION}/docker
+
+.PHONY: coveralls
+coveralls: IGNORE_FILES = $(shell { find api/v1/cmd -type d ; ls api/v1/lib{,/scheduler,/executor}/*.pb{,_ffjson}.go ; find api/v0 -type d; } | tr '\n' ,)
+coveralls:
+	test "$(TRAVIS)" = "" || rm -rf $$HOME/gopath/pkg
+	$(MAKE) coverage
+	$$HOME/gopath/bin/goveralls -service=travis-ci -coverprofile=_output/coverage.out -ignore=$(IGNORE_FILES)

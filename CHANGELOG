@@ -1,3 +1,8 @@
+2016-06-19: v0.0.3
+  Initial support for Mesos v1 HTTP API
+  Mesos 1.1.1 protos (v1 API only)
+  Shuffled packaging to accommodate both Mesos v0 and v1 APIs
+
 2015-09-20: v0.0.2
   Fixed a bunch of race conditions and most test flakes (#185, #189)
   Updated Protobufs to Mesos 0.24.0 (#192)

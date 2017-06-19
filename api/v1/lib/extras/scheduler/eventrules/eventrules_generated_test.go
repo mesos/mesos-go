@@ -82,7 +82,7 @@ func TestRules(t *testing.T) {
 	} {
 		var (
 			i    int
-			rule = Concat(
+			rule = New(
 				nil,
 				tracer(counter(&i), "counter1", t),
 				nil,

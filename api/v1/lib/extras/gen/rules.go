@@ -92,7 +92,7 @@ func (rs Rules) Chain() Chain {
 }
 
 // It is the semantic equivalent of Rules{r1, r2, ..., rn}.Rule() and exists purely for convenience.
-func Concat(rs ...Rule) Rule { return Rules(rs).Eval }
+func New(rs ...Rule) Rule { return Rules(rs).Eval }
 
 const (
 	MsgNoErrors = "no errors"
@@ -516,7 +516,7 @@ func TestRules(t *testing.T) {
 {{end}}	} {
 		var (
 			i    int
-			rule = Concat(
+			rule = New(
 				nil,
 				tracer(counter(&i), "counter1", t),
 				nil,

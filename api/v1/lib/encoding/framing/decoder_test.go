@@ -55,7 +55,7 @@ func TestNewDecoder(t *testing.T) {
 			t.Errorf("test case %d failed: expected error %q instead of %q", ti, tc.wantsErr, err)
 		}
 		if !reflect.DeepEqual(buf, tc.wants) {
-			t.Errorf("test case %d failed: expected %#v instead of %#v", tc.wants, buf)
+			t.Errorf("test case %d failed: expected %#v instead of %#v", ti, tc.wants, buf)
 		}
 	}
 }

@@ -9,7 +9,7 @@ type (
 		Accepts(*mesos.Resource) bool
 	}
 	Filter  func(*mesos.Resource) bool
-	Filters []Interface
+	Filters []Filter
 )
 
 var _ = Interface(Filter(nil))
@@ -21,75 +21,33 @@ func (f Filter) Accepts(r *mesos.Resource) bool {
 	return true
 }
 
-type any int
-
-const Any = any(0)
-
-func (_ any) Accepts(r *mesos.Resource) bool {
+func Any(r *mesos.Resource) bool {
 	return r != nil && !r.IsEmpty()
 }
 
-var _ = Interface(Any)
-
-type unreserved int
-
-const Unreserved = unreserved(0)
-
-func (_ unreserved) Accepts(r *mesos.Resource) bool {
+func Unreserved(r *mesos.Resource) bool {
 	return r.IsUnreserved()
 }
 
-var _ = Interface(Unreserved)
-
-type persistentVolumes int
-
-func (_ persistentVolumes) Accepts(r *mesos.Resource) bool {
+func PersistentVolumes(r *mesos.Resource) bool {
 	return r.IsPersistentVolume()
 }
 
-const PersistentVolumes = persistentVolumes(0)
-
-var _ = Interface(PersistentVolumes)
-
-type revocable int
-
-func (_ revocable) Accepts(r *mesos.Resource) bool {
+func Revocable(r *mesos.Resource) bool {
 	return r.IsRevocable()
 }
 
-const Revocable = revocable(0)
-
-var _ = Interface(Revocable)
-
-type scalar int
-
-func (_ scalar) Accepts(r *mesos.Resource) bool {
+func Scalar(r *mesos.Resource) bool {
 	return r.GetType() == mesos.SCALAR
 }
 
-const Scalar = scalar(0)
-
-var _ = Interface(Scalar)
-
-type rrange int
-
-func (_ rrange) Accepts(r *mesos.Resource) bool {
+func Range(r *mesos.Resource) bool {
 	return r.GetType() == mesos.RANGES
 }
 
-const Range = rrange(0)
-
-var _ = Interface(Range)
-
-type set int
-
-func (_ set) Accepts(r *mesos.Resource) bool {
+func Set(r *mesos.Resource) bool {
 	return r.GetType() == mesos.SET
 }
-
-const Set = set(0)
-
-var _ = Interface(Set)
 
 func (rf Filter) Or(f Filter) Filter {
 	return Filter(func(r *mesos.Resource) bool {
@@ -128,3 +86,6 @@ func Named(name string) Filter {
 		return r.GetName() == name
 	})
 }
+
+// New concatenates the given filters
+func New(filters ...Filter) Filters { return Filters(filters) }

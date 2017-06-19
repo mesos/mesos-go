@@ -261,9 +261,9 @@ func (resources Resources) _add(that Resource) Resources {
 	return append(resources, *r)
 }
 
-// minus calculates and returns the result of `resources - that` without modifying either
+// Minus1 calculates and returns the result of `resources - that` without modifying either
 // the receiving `resources` or `that`.
-func (resources *Resources) minus(that Resource) Resources {
+func (resources *Resources) Minus1(that Resource) Resources {
 	x := resources.Clone()
 	return x.Subtract1(that)
 }

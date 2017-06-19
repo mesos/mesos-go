@@ -104,7 +104,7 @@ func TestResource_RevocableResources(t *testing.T) {
 		{Resources(rs[1]), Resources()},
 		{Resources(rs[0], rs[1]), Resources(rs[0])},
 	} {
-		x := resourcefilters.Select(resourcefilters.Revocable, tc.r1...)
+		x := resourcefilters.Select(resourcefilters.New(resourcefilters.Revocable), tc.r1...)
 		if !tc.wants.Equivalent(x) {
 			t.Errorf("test case %d failed: expected %v instead of %v", i, tc.wants, x)
 		}
@@ -124,7 +124,7 @@ func TestResources_PersistentVolumes(t *testing.T) {
 		}
 	)
 	rs.Add(disk...)
-	pv := resourcefilters.Select(resourcefilters.PersistentVolumes, rs...)
+	pv := resourcefilters.Select(resourcefilters.New(resourcefilters.PersistentVolumes), rs...)
 	if !Resources(disk[0]).Equivalent(pv) {
 		t.Fatalf("expected %v instead of %v", Resources(disk[0]), pv)
 	}

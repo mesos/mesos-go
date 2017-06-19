@@ -113,7 +113,7 @@ func disconnectedFn(ctx context.Context, state *state) stateFn {
 	// (a) validate call = SUBSCRIBE
 	if state.call.GetType() != scheduler.Call_SUBSCRIBE {
 		state.resp = nil
-		state.err = &apierrors.Error{Code: apierrors.CodeUnsubscribed}
+		state.err = apierrors.CodeUnsubscribed.Error("")
 		return disconnectedFn
 	}
 
@@ -193,7 +193,7 @@ var CodesIndicatingSubscriptionLoss = func(codes ...apierrors.Code) map[apierror
 
 func errorIndicatesSubscriptionLoss(err error) (result bool) {
 	if apiError, ok := err.(*apierrors.Error); ok {
-		_, result = CodesIndicatingSubscriptionLoss[apiError.Code]
+		_, result = CodesIndicatingSubscriptionLoss[apiError.Code()]
 	}
 	// TODO(jdef) should other error types be considered here as well?
 	return

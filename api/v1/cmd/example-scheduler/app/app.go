@@ -53,7 +53,7 @@ func Run(cfg Config) error {
 			return nil
 		}))
 
-	state.cli = callrules.Concat(
+	state.cli = callrules.New(
 		callrules.WithFrameworkID(store.GetIgnoreErrors(fidStore)),
 		logCalls(map[scheduler.Call_Type]string{scheduler.Call_SUBSCRIBE: "connecting..."}),
 		callMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
@@ -91,7 +91,7 @@ func Run(cfg Config) error {
 func buildEventHandler(state *internalState, fidStore store.Singleton) events.Handler {
 	// disable brief logs when verbose logs are enabled (there's no sense logging twice!)
 	logger := controller.LogEvents(nil).Unless(state.config.verbose)
-	return eventrules.Concat(
+	return eventrules.New(
 		logAllEvents().If(state.config.verbose),
 		eventMetrics(state.metricsAPI, time.Now, state.config.summaryMetrics),
 		controller.LiftErrors().DropOnError(),
@@ -99,7 +99,7 @@ func buildEventHandler(state *internalState, fidStore store.Singleton) events.Ha
 		scheduler.Event_FAILURE: logger.HandleF(failure),
 		scheduler.Event_OFFERS:  trackOffersReceived(state).HandleF(resourceOffers(state)),
 		scheduler.Event_UPDATE:  controller.AckStatusUpdates(state.cli).AndThen().HandleF(statusUpdate(state)),
-		scheduler.Event_SUBSCRIBED: eventrules.Concat(
+		scheduler.Event_SUBSCRIBED: eventrules.New(
 			logger,
 			controller.TrackSubscription(fidStore, state.config.failoverTimeout),
 		),

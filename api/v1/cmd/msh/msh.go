@@ -99,7 +99,7 @@ func main() {
 			}
 			// else, code=0 indicates success, exit normally
 		} else {
-			panic(fmt.Sprintf("%#v", err))
+			log.Fatalf("%#v", err)
 		}
 	}
 }

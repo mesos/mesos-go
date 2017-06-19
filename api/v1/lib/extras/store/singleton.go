@@ -1,7 +1,6 @@
 package store
 
 import (
-	"errors"
 	"sync/atomic"
 )
 
@@ -32,12 +31,16 @@ type (
 	SingletonDecorator interface {
 		Decorate(Singleton) Singleton
 	}
+
+	Error string
 )
+
+func (err Error) Error() string { return string(err) }
+
+const ErrNotFound = Error("value not found in store")
 
 func (f GetFunc) Get() (string, error) { return f() }
 func (f SetFunc) Set(s string) error   { return f(s) }
-
-var ErrNotFound = errors.New("value not found in store")
 
 func NewInMemorySingleton() Singleton {
 	var value atomic.Value

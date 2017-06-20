@@ -24,6 +24,10 @@ func TestNewDecoder(t *testing.T) {
 			*v = append((*v)[:0], b...)
 			return nil
 		})
+		fakeError        = errors.New("fake unmarshal error")
+		errorUnmarshaler = UnmarshalFunc(func(_ []byte, _ interface{}) error {
+			return fakeError
+		})
 		singletonReader = func(b []byte) ReaderFunc {
 			eof := false
 			return func() ([]byte, error) {
@@ -40,15 +44,17 @@ func TestNewDecoder(t *testing.T) {
 	)
 	for ti, tc := range []struct {
 		r        Reader
+		uf       UnmarshalFunc
 		wants    []byte
 		wantsErr error
 	}{
-		{errorReader(ErrorBadSize), nil, ErrorBadSize},
-		{singletonReader(([]byte)("james")), ([]byte)("james"), io.EOF},
+		{errorReader(ErrorBadSize), byteCopy, nil, ErrorBadSize},
+		{singletonReader(([]byte)("james")), byteCopy, ([]byte)("james"), io.EOF},
+		{singletonReader(([]byte)("james")), errorUnmarshaler, nil, fakeError},
 	} {
 		var (
 			buf []byte
-			d   = NewDecoder(tc.r, byteCopy)
+			d   = NewDecoder(tc.r, tc.uf)
 			err = d.Decode(&buf)
 		)
 		if err != tc.wantsErr {

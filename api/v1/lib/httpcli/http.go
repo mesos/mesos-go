@@ -66,7 +66,7 @@ type Client struct {
 	url            string
 	do             DoFunc
 	header         http.Header
-	codec          *encoding.Codec
+	codec          encoding.Codec
 	errorMapper    ErrorMapperFunc
 	requestOpts    []RequestOpt
 	buildRequest   func(encoding.Marshaler, ...RequestOpt) (*http.Request, error)
@@ -74,7 +74,7 @@ type Client struct {
 }
 
 var (
-	DefaultCodec   = &encoding.ProtobufCodec
+	DefaultCodec   = encoding.MediaTypeProtobuf.Codec()
 	DefaultHeaders = http.Header{}
 
 	// DefaultConfigOpt represents the default client config options.
@@ -166,8 +166,8 @@ func (c *Client) BuildRequest(m encoding.Marshaler, opt ...RequestOpt) (*http.Re
 	return helper.
 		withOptions(c.requestOpts, opt).
 		withHeaders(c.header).
-		withHeader("Content-Type", c.codec.RequestContentType()).
-		withHeader("Accept", c.codec.ResponseContentType()).
+		withHeader("Content-Type", c.codec.RequestType().ContentType()).
+		withHeader("Accept", c.codec.ResponseType().ContentType()).
 		Request, nil
 }
 
@@ -195,7 +195,7 @@ func (c *Client) HandleResponse(res *http.Response, err error) (mesos.Response, 
 			log.Println("request OK, decoding response")
 		}
 		ct := res.Header.Get("Content-Type")
-		if ct != c.codec.ResponseContentType() {
+		if ct != c.codec.ResponseType().ContentType() {
 			res.Body.Close()
 			return nil, ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
 		}
@@ -265,7 +265,7 @@ func Do(do DoFunc) Opt {
 }
 
 // Codec returns an Opt that sets a Client's Codec.
-func Codec(codec *encoding.Codec) Opt {
+func Codec(codec encoding.Codec) Opt {
 	return func(c *Client) Opt {
 		old := c.codec
 		c.codec = codec

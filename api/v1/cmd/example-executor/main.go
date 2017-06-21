@@ -54,7 +54,7 @@ func run(cfg config.Config) {
 		state = &internalState{
 			cli: httpcli.New(
 				httpcli.Endpoint(apiURL.String()),
-				httpcli.Codec(&encoding.ProtobufCodec),
+				httpcli.Codec(encoding.MediaTypeProtobuf.Codec()),
 				httpcli.Do(httpcli.With(httpcli.Timeout(httpTimeout))),
 			),
 			callOptions: executor.CallOptions{

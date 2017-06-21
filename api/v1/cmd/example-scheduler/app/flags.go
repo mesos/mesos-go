@@ -25,18 +25,17 @@ func (u *URL) Set(value string) error {
 	return nil
 }
 
-type codec struct{ *encoding.Codec }
+type codec struct{ encoding.Codec }
 
-func (c *codec) Set(value string) (err error) {
-	switch strings.ToLower(value) {
-	case "protobuf":
-		c.Codec = &encoding.ProtobufCodec
-	case "json":
-		c.Codec = &encoding.JSONCodec
-	default:
-		err = fmt.Errorf("bad codec %q", value)
+func (c *codec) Set(value string) error {
+	v := strings.ToLower(value)
+	for _, codec := range encoding.DefaultCodecs {
+		if v == codec.Name() {
+			c.Codec = codec
+			return nil
+		}
 	}
-	return
+	return fmt.Errorf("bad codec %q", value)
 }
 
 type Labels []mesos.Label

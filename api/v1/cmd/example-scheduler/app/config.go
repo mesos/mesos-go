@@ -86,7 +86,7 @@ func NewConfig() Config {
 		user:             env("FRAMEWORK_USER", "root"),
 		name:             env("FRAMEWORK_NAME", "example"),
 		url:              env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
-		codec:            codec{Codec: &encoding.ProtobufCodec},
+		codec:            codec{Codec: encoding.MediaTypeProtobuf.Codec()},
 		timeout:          envDuration("MESOS_CONNECT_TIMEOUT", "20s"),
 		failoverTimeout:  envDuration("SCHEDULER_FAILOVER_TIMEOUT", "1000h"),
 		checkpoint:       true,

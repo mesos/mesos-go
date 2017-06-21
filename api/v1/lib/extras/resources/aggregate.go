@@ -112,14 +112,17 @@ func SumAndCompare(expected mesos.Resources, resources ...mesos.Resource) bool {
 		m1, m2 = Memory(expected...)
 		d1, d2 = Disk(expected...)
 		p1, p2 = Ports(expected...)
+		g1, g2 = GPUs(expected...)
 
 		c3, c4 = CPUs(resources...)
 		m3, m4 = Memory(resources...)
 		d3, d4 = Disk(resources...)
 		p3, p4 = Ports(resources...)
+		g3, g4 = GPUs(resources...)
 	)
 	return c1 == c3 && c2 == c4 &&
 		m1 == m3 && m2 == m4 &&
 		d1 == d3 && d2 == d4 &&
+		g1 == g3 && g2 == g4 &&
 		p1.Equivalent(p3) && p2 == p4
 }

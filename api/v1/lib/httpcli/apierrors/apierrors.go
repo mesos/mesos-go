@@ -37,7 +37,7 @@ const (
 	CodeIncompatibleVersion  = Code(http.StatusConflict)
 	CodeMalformedRequest     = Code(http.StatusBadRequest)
 	CodeUnsupportedMediaType = Code(http.StatusNotAcceptable)
-	CodeRateLimitExceded     = Code(http.StatusTooManyRequests)
+	CodeRateLimitExceeded    = Code(http.StatusTooManyRequests)
 	CodeMesosUnavailable     = Code(http.StatusServiceUnavailable)
 	CodeNotFound             = Code(http.StatusNotFound)
 
@@ -55,7 +55,7 @@ var (
 		CodeUnsupportedMediaType: MsgMediaType,
 		CodeNotFound:             MsgNotFound,
 		CodeMesosUnavailable:     MsgUnavailable,
-		CodeRateLimitExceded:     MsgRateLimit,
+		CodeRateLimitExceeded:    MsgRateLimit,
 	}
 )
 
@@ -112,15 +112,50 @@ func (code Code) Error(details string) error {
 }
 
 // Error implements error interface
-func (err *Error) Error() string { return err.message }
+func (e *Error) Error() string { return e.message }
 
-func (err *Error) Code() Code { return err.code }
-
-// IsNotLeader returns true if the given error is an apierror for CodeNotLeader
-func IsNotLeader(err error) bool {
-	if err == nil {
+// Temporary returns true if the error is a temporary condition that should eventually clear.
+func (e *Error) Temporary() bool {
+	switch e.code {
+	// TODO(jdef): NotFound **could** be a temporary error because there's a race at mesos startup in which the
+	// HTTP server responds before the internal listeners have been initialized. But it could also be reported
+	// because the client is accessing an invalid endpoint; as of right now, a client cannot distinguish between
+	// these cases.
+	// https://issues.apache.org/jira/browse/MESOS-7697
+	case CodeRateLimitExceeded, CodeMesosUnavailable:
+		return true
+	default:
 		return false
 	}
+}
+
+// CodesIndicatingSubscriptionLoss is a set of apierror.Code entries which each indicate that
+// the event subscription stream has been severed between the scheduler and mesos. It's respresented
+// as a public map variable so that clients can program additional error codes (if such are discovered)
+// without hacking the code of the mesos-go library directly.
+var CodesIndicatingSubscriptionLoss = func(codes ...Code) map[Code]struct{} {
+	result := make(map[Code]struct{}, len(codes))
+	for _, code := range codes {
+		result[code] = struct{}{}
+	}
+	return result
+}(
+	// expand this list as we discover other errors that guarantee we've lost our event subscription.
+	CodeUnsubscribed,
+)
+
+// SubscriptionLoss returns true if the error indicates that the event subscription stream has been severed
+// between mesos and a mesos client.
+func (e *Error) SubscriptionLoss() (result bool) {
+	_, result = CodesIndicatingSubscriptionLoss[e.code]
+	return
+}
+
+// Matches returns true if the given error is an API error with a matching error code
+func (code Code) Matches(err error) bool {
+	if err == nil {
+		return !code.IsError()
+	}
 	apiErr, ok := err.(*Error)
-	return ok && apiErr.code == CodeNotLeader
+	return ok && apiErr.code == code
 }

@@ -32,21 +32,35 @@ func TestFromResponse(t *testing.T) {
 
 func TestError(t *testing.T) {
 	for _, tt := range []struct {
-		code         Code
-		isErr        bool
-		details      string
-		wantsMessage string
+		code             Code
+		isErr            bool
+		details          string
+		wantsMessage     string
+		temporary        bool
+		subscriptionLoss bool
 	}{
-		{200, false, "", ""},
-		{400, true, "", "malformed request"},
-		{400, true, "foo", "malformed request: foo"},
+		{200, false, "", "", false, false},
+		{400, true, "", "malformed request", false, false},
+		{400, true, "foo", "malformed request: foo", false, false},
 	} {
 		err := tt.code.Error(tt.details)
+		if !tt.code.Matches(err) {
+			t.Errorf("expected expected code %v to match that of the error %q", tt.code, err)
+		}
 		if tt.isErr != (err != nil) {
 			t.Errorf("expected isErr %v but error was %q", tt.isErr, err)
 		}
-		if err != nil && err.Error() != tt.wantsMessage {
-			t.Errorf("Expected: %s, got: %s", tt.wantsMessage, err.Error())
+		if err != nil {
+			if err.Error() != tt.wantsMessage {
+				t.Errorf("Expected: %s, got: %s", tt.wantsMessage, err.Error())
+			}
+			apierr := err.(*Error)
+			if apierr.Temporary() != tt.temporary {
+				t.Errorf("expected temporary to be %v instead of %v", tt.temporary, apierr.Temporary())
+			}
+			if apierr.SubscriptionLoss() != tt.subscriptionLoss {
+				t.Errorf("expected subscription-loss to be %v instead of %v", tt.subscriptionLoss, apierr.SubscriptionLoss())
+			}
 		}
 	}
 }

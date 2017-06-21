@@ -176,26 +176,13 @@ func disconnectedFn(ctx context.Context, state *state) stateFn {
 	return connectedFn
 }
 
-// CodesIndicatingSubscriptionLoss is a set of apierror.Code entries which each indicate that
-// the event subscription stream has been severed between the scheduler and mesos. It's respresented
-// as a public map variable so that clients can program additional error codes (if such are discovered)
-// without hacking the code of the mesos-go library directly.
-var CodesIndicatingSubscriptionLoss = func(codes ...apierrors.Code) map[apierrors.Code]struct{} {
-	result := make(map[apierrors.Code]struct{}, len(codes))
-	for _, code := range codes {
-		result[code] = struct{}{}
-	}
-	return result
-}(
-	// expand this list as we discover other errors that guarantee we've lost our event subscription.
-	apierrors.CodeUnsubscribed,
-)
-
 func errorIndicatesSubscriptionLoss(err error) (result bool) {
-	if apiError, ok := err.(*apierrors.Error); ok {
-		_, result = CodesIndicatingSubscriptionLoss[apiError.Code()]
+	type lossy interface {
+		SubscriptionLoss() bool
 	}
-	// TODO(jdef) should other error types be considered here as well?
+	if lossyErr, ok := err.(lossy); ok {
+		result = lossyErr.SubscriptionLoss()
+	}
 	return
 }
 

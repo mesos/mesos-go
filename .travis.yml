@@ -16,4 +16,4 @@ before_install:
 install:
   - make test install
 script:
-  - make coveralls
+  - if [[ "$TRAVIS_EVENT_TYPE" = "pull_request" ]]; then make coveralls; fi

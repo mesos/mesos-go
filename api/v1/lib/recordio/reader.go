@@ -4,38 +4,17 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"io/ioutil"
-	"log"
 
+	logger "github.com/mesos/mesos-go/api/v1/lib/debug"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
 )
 
-type Debugger bool
-
-const Debug = Debugger(false)
-
-func (d Debugger) Log(v ...interface{}) {
-	if d {
-		log.Print(v...)
-	}
-}
-
-func (d Debugger) Logf(s string, v ...interface{}) {
-	if d {
-		log.Printf(s, v...)
-	}
-}
+const debug = logger.Logger(false)
 
 type (
-	Reader interface {
-		framing.Reader
-		io.Closer
-	}
-
 	Opt func(*reader)
 
 	reader struct {
-		io.Closer
 		*bufio.Scanner
 		pend   int
 		splitf func(data []byte, atEOF bool) (int, []byte, error)
@@ -44,13 +23,9 @@ type (
 )
 
 // NewReader returns a reader that parses frames from a recordio stream.
-func NewReader(read io.Reader, opt ...Opt) Reader {
-	Debug.Log("new frame reader")
-	rc, ok := read.(io.ReadCloser)
-	if !ok {
-		rc = ioutil.NopCloser(read)
-	}
-	r := &reader{Scanner: bufio.NewScanner(rc)}
+func NewReader(read io.Reader, opt ...Opt) framing.Reader {
+	debug.Log("new frame reader")
+	r := &reader{Scanner: bufio.NewScanner(read)}
 	r.Split(func(data []byte, atEOF bool) (int, []byte, error) {
 		// Scanner panics if we invoke Split after scanning has started,
 		// use this proxy func as a work-around.
@@ -59,7 +34,6 @@ func NewReader(read io.Reader, opt ...Opt) Reader {
 	buf := make([]byte, 16*1024)
 	r.Buffer(buf, 1<<22) // 1<<22 == max protobuf size
 	r.splitf = r.splitSize
-	r.Closer = rc
 	// apply options
 	for _, f := range opt {
 		if f != nil {
@@ -85,36 +59,36 @@ func (r *reader) splitSize(data []byte, atEOF bool) (int, []byte, error) {
 		x := len(data)
 		switch {
 		case x == 0:
-			Debug.Log("EOF and empty frame, returning io.EOF")
+			debug.Log("EOF and empty frame, returning io.EOF")
 			return 0, nil, io.EOF
 		case x < 2: // min frame size
-			Debug.Log("remaining data less than min total frame length")
+			debug.Log("remaining data less than min total frame length")
 			return 0, nil, framing.ErrorUnderrun
 		}
 		// otherwise, we may have a valid frame...
 	}
-	Debug.Log("len(data)=", len(data))
+	debug.Log("len(data)=", len(data))
 	adv := 0
 	for {
 		i := 0
 		for ; i < maxTokenLength && i < len(data) && data[i] != '\n'; i++ {
 		}
-		Debug.Log("i=", i)
+		debug.Log("i=", i)
 		if i == len(data) {
-			Debug.Log("need more input")
+			debug.Log("need more input")
 			return 0, nil, nil // need more input
 		}
 		if i == maxTokenLength && data[i] != '\n' {
-			Debug.Log("frame size: max token length exceeded")
+			debug.Log("frame size: max token length exceeded")
 			return 0, nil, framing.ErrorBadSize
 		}
 		n, err := ParseUintBytes(bytes.TrimSpace(data[:i]), 10, 64)
 		if err != nil {
-			Debug.Log("failed to parse frame size field:", err)
+			debug.Log("failed to parse frame size field:", err)
 			return 0, nil, framing.ErrorBadSize
 		}
 		if r.maxf != 0 && int(n) > r.maxf {
-			Debug.Log("frame size max length exceeded:", n)
+			debug.Log("frame size max length exceeded:", n)
 			return 0, nil, framing.ErrorOversizedFrame
 		}
 		if n == 0 {
@@ -125,14 +99,14 @@ func (r *reader) splitSize(data []byte, atEOF bool) (int, []byte, error) {
 		}
 		r.pend = int(n)
 		r.splitf = r.splitFrame
-		Debug.Logf("split next frame: %d, %d", n, adv+i+1)
+		debug.Logf("split next frame: %d, %d", n, adv+i+1)
 		return adv + i + 1, data[:0], nil // returning a nil token screws up the Scanner, so return empty
 	}
 }
 
 func (r *reader) splitFrame(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	x := len(data)
-	Debug.Log("splitFrame:x=", x, ",eof=", atEOF)
+	debug.Log("splitFrame:x=", x, ",eof=", atEOF)
 	if atEOF {
 		if x < r.pend {
 			return 0, nil, framing.ErrorUnderrun
@@ -159,7 +133,7 @@ func (r *reader) ReadFrame() (tok []byte, err error) {
 			continue
 		}
 		tok = b
-		Debug.Log("len(tok)", len(tok))
+		debug.Log("len(tok)", len(tok))
 		break
 	}
 	// either scan failed, or it succeeded and we have a token...

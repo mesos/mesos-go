@@ -20,23 +20,21 @@ const (
 	MediaTypeJSON = MediaType("application/json")
 )
 
-var DefaultCodecs = func() map[MediaType]Codec {
-	m := make(map[MediaType]Codec)
-	m[MediaTypeProtobuf] = Codec(&codec{
+// DefaultCodecs are pre-configured default Codecs, ready to use OOTB
+var DefaultCodecs = map[MediaType]Codec{
+	MediaTypeProtobuf: Codec(&codec{
 		name:       "protobuf",
 		mediaTypes: [2]MediaType{MediaTypeProtobuf, MediaTypeProtobuf},
 		newEncoder: NewProtobufEncoder,
 		newDecoder: NewProtobufDecoder,
-	})
-	m[MediaTypeJSON] = Codec(&codec{
+	}),
+	MediaTypeJSON: Codec(&codec{
 		name:       "json",
 		mediaTypes: [2]MediaType{MediaTypeJSON, MediaTypeJSON},
 		newEncoder: NewJSONEncoder,
 		newDecoder: NewJSONDecoder,
-	})
-
-	return m
-}()
+	}),
+}
 
 // Codec returns the configured Codec for the media type, or nil if no such Codec has been configured.
 func (m MediaType) Codec() Codec { return DefaultCodecs[m] }

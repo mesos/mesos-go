@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -44,7 +45,7 @@ type EnvError struct {
 	Message string
 }
 
-func (ee *EnvError) Error() string { return ee.Message }
+func (ee *EnvError) Error() string { return fmt.Sprintf("%s: %v", ee.Message, ee.Reasons) }
 
 // FromEnv returns a configuration generated from MESOS_xyz environment variables.
 func FromEnv() (Config, error) { return fromEnv(os.Getenv) }

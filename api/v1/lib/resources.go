@@ -57,7 +57,6 @@ func (t resourceErrorType) Generate(reason string) error {
 	return &resourceError{errorType: t, reason: msg}
 }
 
-func (err *resourceError) Type() resourceErrorType { return err.errorType }
 func (err *resourceError) Reason() string          { return err.reason }
 func (err *resourceError) Resource() Resource      { return err.spec }
 func (err *resourceError) WithResource(r Resource) { err.spec = r }

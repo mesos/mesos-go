@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -230,12 +231,33 @@ func Generate(items map[string]*template.Template, data interface{}, eh func(err
 				eh(err)
 				return
 			}
-			defer f.Close()
+			closer := safeClose(f)
+			defer closer()
+
 			log.Println("generating file", filename)
 			err = t.Execute(f, data)
 			if err != nil {
 				eh(err)
 			}
+			err = f.Sync()
+			if err != nil {
+				eh(err)
+			}
+			err = closer()
+			if err != nil {
+				eh(err)
+			}
 		}()
+	}
+}
+
+func safeClose(c io.Closer) func() error {
+	var s bool
+	return func() error {
+		if s {
+			return nil
+		}
+		s = true
+		return c.Close()
 	}
 }

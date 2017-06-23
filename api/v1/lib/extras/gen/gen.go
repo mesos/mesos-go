@@ -22,24 +22,25 @@ type (
 
 	TypeMap map[string]Type
 
+	Imports []string
+
 	Config struct {
 		Package string
-		Imports []string
+		Imports Imports
 		Args    string // arguments that we were invoked with; TODO(jdef) rename this to Flags?
 		Types   TypeMap
 	}
 )
 
-func (c *Config) String() string {
-	if c == nil {
+func (i *Imports) String() string {
+	if i == nil {
 		return ""
 	}
-	return fmt.Sprintf("%#v", ([]string)(c.Imports))
+	return fmt.Sprintf("%#v", ([]string)(*i))
 }
 
-func (c *Config) Set(s string) error {
-	// TODO(jdef) this is gnarly, *Config shouldn't actually implement Set or String; define a new type for imports
-	c.Imports = append(c.Imports, s)
+func (i *Imports) Set(s string) error {
+	*i = append(*i, s)
 	return nil
 }
 
@@ -158,7 +159,7 @@ func (c *Config) Prototype(notation string) string {
 
 func (c *Config) AddFlags(fs *flag.FlagSet) {
 	fs.StringVar(&c.Package, "package", c.Package, "destination package")
-	fs.Var(c, "import", "packages to import")
+	fs.Var(&c.Imports, "import", "packages to import")
 	fs.Var(&c.Types, "type", "auxilliary type mappings in {notation}:{type-spec}:{prototype-expr} format")
 }
 

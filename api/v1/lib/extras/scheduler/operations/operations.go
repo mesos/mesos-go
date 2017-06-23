@@ -188,7 +188,7 @@ func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources) (mes
 	return result, nil
 }
 
-func Apply(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
+func Apply(operation *mesos.Offer_Operation, resources []mesos.Resource) ([]mesos.Resource, error) {
 	f, ok := offerResourceOpMap[operation.GetType()]
 	if !ok {
 		return nil, &operationError{

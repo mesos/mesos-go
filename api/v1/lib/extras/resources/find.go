@@ -22,7 +22,7 @@ func Find(wants mesos.Resources, from ...mesos.Resource) (total mesos.Resources)
 func find(want mesos.Resource, from ...mesos.Resource) mesos.Resources {
 	var (
 		total      = mesos.Resources(from).Clone()
-		remaining  = mesos.Resources{want}.Flatten()
+		remaining  = Flatten(mesos.Resources{want})
 		found      mesos.Resources
 		predicates = resourcefilters.Filters{
 			resourcefilters.ReservedByRole(want.GetRole()),
@@ -34,14 +34,16 @@ func find(want mesos.Resource, from ...mesos.Resource) mesos.Resources {
 		filtered := resourcefilters.Select(predicate, total...)
 		for i := range filtered {
 			// need to flatten to ignore the roles in ContainsAll()
-			flattened := mesos.Resources{filtered[i]}.Flatten()
-			if flattened.ContainsAll(remaining) {
+			flattened := Flatten(mesos.Resources{filtered[i]})
+			if ContainsAll(flattened, remaining) {
 				// want has been found, return the result
-				return found.Add(remaining.Flatten(
-					mesos.RoleName(filtered[i].GetRole()).Assign(),
-					filtered[i].Reservation.Assign())...)
+				return found.Add(Flatten(
+					remaining,
+					Role(filtered[i].GetRole()).Assign(),
+					filtered[i].Reservation.Assign())...,
+				)
 			}
-			if remaining.ContainsAll(flattened) {
+			if ContainsAll(remaining, flattened) {
 				found.Add1(filtered[i])
 				total.Subtract1(filtered[i])
 				remaining.Subtract(flattened...)

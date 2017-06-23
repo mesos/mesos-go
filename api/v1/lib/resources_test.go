@@ -14,7 +14,7 @@ func TestResources_PrecisionRounding(t *testing.T) {
 		cpu = Resources(Resource(Name("cpus"), ValueScalar(1.5015)))
 		r1  = cpu.Plus(cpu...).Plus(cpu...).Minus(cpu...).Minus(cpu...)
 	)
-	if !cpu.Equivalent(r1) {
+	if !rez.Equivalent(cpu, r1) {
 		t.Fatalf("expected %v instead of %v", cpu, r1)
 	}
 	actual, ok := rez.CPUs(r1...)
@@ -28,7 +28,7 @@ func TestResources_PrecisionLost(t *testing.T) {
 		cpu = Resources(Resource(Name("cpus"), ValueScalar(1.5011)))
 		r1  = cpu.Plus(cpu...).Plus(cpu...).Minus(cpu...).Minus(cpu...)
 	)
-	if !cpu.Equivalent(r1) {
+	if !rez.Equivalent(cpu, r1) {
 		t.Fatalf("expected %v instead of %v", cpu, r1)
 	}
 	actual, ok := rez.CPUs(r1...)
@@ -49,7 +49,7 @@ func TestResources_PrecisionManyConsecutiveOps(t *testing.T) {
 	for i := 0; i < 100000; i++ {
 		current.Subtract(increment...)
 	}
-	if !start.Equivalent(current) {
+	if !rez.Equivalent(start, current) {
 		t.Fatalf("expected start %v == current %v", start, current)
 	}
 }
@@ -66,10 +66,10 @@ func TestResources_PrecisionManyOps(t *testing.T) {
 		if !(ok && actual == 1.001) {
 			t.Fatalf("expected 1.001 cpus instead of %v", next)
 		}
-		if !current.Equivalent(next) {
+		if !rez.Equivalent(current, next) {
 			t.Fatalf("expected current %v == next %v", current, next)
 		}
-		if !start.Equivalent(next) {
+		if !rez.Equivalent(start, next) {
 			t.Fatalf("expected start %v == next %v", start, next)
 		}
 	}
@@ -84,10 +84,10 @@ func TestResources_PrecisionSimple(t *testing.T) {
 	if !(ok && actual == 1.001) {
 		t.Errorf("expected 1.001 instead of %f", actual)
 	}
-	if x := cpu.Plus(zero...); !x.Equivalent(cpu) {
+	if x := cpu.Plus(zero...); !rez.Equivalent(x, cpu) {
 		t.Errorf("adding zero failed, expected '%v' instead of '%v'", cpu, x)
 	}
-	if y := cpu.Minus(zero...); !y.Equivalent(cpu) {
+	if y := cpu.Minus(zero...); !rez.Equivalent(y, cpu) {
 		t.Errorf("subtracting zero failed, expected '%v' instead of '%v'", cpu, y)
 	}
 }
@@ -105,7 +105,7 @@ func TestResource_RevocableResources(t *testing.T) {
 		{Resources(rs[0], rs[1]), Resources(rs[0])},
 	} {
 		x := resourcefilters.Select(resourcefilters.New(resourcefilters.Revocable), tc.r1...)
-		if !tc.wants.Equivalent(x) {
+		if !rez.Equivalent(tc.wants, x) {
 			t.Errorf("test case %d failed: expected %v instead of %v", i, tc.wants, x)
 		}
 	}
@@ -125,315 +125,8 @@ func TestResources_PersistentVolumes(t *testing.T) {
 	)
 	rs.Add(disk...)
 	pv := resourcefilters.Select(resourcefilters.New(resourcefilters.PersistentVolumes), rs...)
-	if !Resources(disk[0]).Equivalent(pv) {
+	if !rez.Equivalent(Resources(disk[0]), pv) {
 		t.Fatalf("expected %v instead of %v", Resources(disk[0]), pv)
-	}
-}
-
-func TestResources_Validation(t *testing.T) {
-	// don't use Resources(...) because that implicitly validates and skips invalid resources
-	rs := mesos.Resources{
-		Resource(Name("cpus"), ValueScalar(2), Role("*"), Disk("1", "path")),
-	}
-	err := rs.Validate()
-	if !mesos.IsResourceError(err) {
-		t.Fatalf("expected error because cpu resources can't contain disk info")
-	}
-
-	err = mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path"))}.Validate()
-	if err != nil {
-		t.Fatalf("unexpected error: %+v", err)
-	}
-
-	err = mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path"))}.Validate()
-	if err != nil {
-		t.Fatalf("unexpected error: %+v", err)
-	}
-
-	// reserved resources
-
-	// unreserved:
-	err = mesos.Resources{Resource(Name("cpus"), ValueScalar(8), Role("*"))}.Validate()
-	if err != nil {
-		t.Fatalf("unexpected error validating unreserved resource: %+v", err)
-	}
-
-	// statically role reserved:
-	err = mesos.Resources{Resource(Name("cpus"), ValueScalar(8), Role("role"))}.Validate()
-	if err != nil {
-		t.Fatalf("unexpected error validating statically role reserved resource: %+v", err)
-	}
-
-	// dynamically role reserved:
-	err = mesos.Resources{Resource(Name("cpus"), ValueScalar(8), Role("role"), Reservation(ReservedBy("principal2")))}.Validate()
-	if err != nil {
-		t.Fatalf("unexpected error validating dynamically role reserved resource: %+v", err)
-	}
-
-	// invalid
-	err = mesos.Resources{Resource(Name("cpus"), ValueScalar(8), Role("*"), Reservation(ReservedBy("principal1")))}.Validate()
-	if err == nil {
-		t.Fatalf("expected error for invalid reserved resource")
-	}
-}
-
-func TestResources_Flatten(t *testing.T) {
-	for i, tc := range []struct {
-		r1, wants mesos.Resources
-	}{
-		{nil, nil},
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(1), Role("role1")),
-				Resource(Name("cpus"), ValueScalar(2), Role("role2")),
-				Resource(Name("mem"), ValueScalar(5), Role("role1")),
-			),
-			wants: Resources(
-				Resource(Name("cpus"), ValueScalar(3)),
-				Resource(Name("mem"), ValueScalar(5)),
-			),
-		},
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(3), Role("role1")),
-				Resource(Name("mem"), ValueScalar(15), Role("role1")),
-			),
-			wants: Resources(
-				Resource(Name("cpus"), ValueScalar(3), Role("*")),
-				Resource(Name("mem"), ValueScalar(15), Role("*")),
-			),
-		},
-	} {
-		r := tc.r1.Flatten()
-		Expect(t, r.Equivalent(tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
-	}
-}
-
-func TestResources_Equivalent(t *testing.T) {
-	disks := mesos.Resources{
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "")),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path1")),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path2")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path2")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path1")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path2")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2")),
-	}
-	for i, tc := range []struct {
-		r1, r2 mesos.Resources
-		wants  bool
-	}{
-		{r1: nil, r2: nil, wants: true},
-		{ // 1
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("*")),
-				Resource(Name("mem"), ValueScalar(4096), Role("*")),
-			),
-			r2: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("*")),
-				Resource(Name("mem"), ValueScalar(4096), Role("*")),
-			),
-			wants: true,
-		},
-		{ // 2
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("role1")),
-			),
-			r2: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("role2")),
-			),
-			wants: false,
-		},
-		{ // 3
-			r1:    Resources(Resource(Name("ports"), ValueRange(Span(20, 40)), Role("*"))),
-			r2:    Resources(Resource(Name("ports"), ValueRange(Span(20, 30), Span(31, 39), Span(40, 40)), Role("*"))),
-			wants: true,
-		},
-		{ // 4
-			r1:    Resources(Resource(Name("disks"), ValueSet("sda1"), Role("*"))),
-			r2:    Resources(Resource(Name("disks"), ValueSet("sda1"), Role("*"))),
-			wants: true,
-		},
-		{ // 5
-			r1:    Resources(Resource(Name("disks"), ValueSet("sda1"), Role("*"))),
-			r2:    Resources(Resource(Name("disks"), ValueSet("sda2"), Role("*"))),
-			wants: false,
-		},
-		{Resources(disks[0]), Resources(disks[1]), true},  // 6
-		{Resources(disks[1]), Resources(disks[2]), true},  // 7
-		{Resources(disks[4]), Resources(disks[5]), true},  // 8
-		{Resources(disks[5]), Resources(disks[6]), false}, // 9
-		{Resources(disks[3]), Resources(disks[6]), false}, // 10
-		{ // 11
-			r1:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
-			r2:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
-			wants: true,
-		},
-		{ // 12
-			r1:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
-			r2:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"))),
-			wants: false,
-		},
-	} {
-		actual := tc.r1.Equivalent(tc.r2)
-		Expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
-	}
-
-	possiblyReserved := mesos.Resources{
-		// unreserved
-		Resource(Name("cpus"), ValueScalar(8), Role("*")),
-		// statically role reserved
-		Resource(Name("cpus"), ValueScalar(8), Role("role1")),
-		Resource(Name("cpus"), ValueScalar(8), Role("role2")),
-		// dynamically role reserved:
-		Resource(Name("cpus"), ValueScalar(8), Role("role1"), Reservation(ReservedBy("principal1"))),
-		Resource(Name("cpus"), ValueScalar(8), Role("role2"), Reservation(ReservedBy("principal2"))),
-	}
-	for i := 0; i < len(possiblyReserved); i++ {
-		for j := 0; j < len(possiblyReserved); j++ {
-			if i == j {
-				continue
-			}
-			if Resources(possiblyReserved[i]).Equivalent(Resources(possiblyReserved[j])) {
-				t.Errorf("unexpected equivalence between %v and %v", possiblyReserved[i], possiblyReserved[j])
-			}
-		}
-	}
-}
-
-func TestResources_ContainsAll(t *testing.T) {
-	var (
-		ports1 = Resources(Resource(Name("ports"), ValueRange(Span(2, 2), Span(4, 5)), Role("*")))
-		ports2 = Resources(Resource(Name("ports"), ValueRange(Span(1, 10)), Role("*")))
-		ports3 = Resources(Resource(Name("ports"), ValueRange(Span(2, 3)), Role("*")))
-		ports4 = Resources(Resource(Name("ports"), ValueRange(Span(1, 2), Span(4, 6)), Role("*")))
-		ports5 = Resources(Resource(Name("ports"), ValueRange(Span(1, 4), Span(5, 5)), Role("*")))
-
-		disks1 = Resources(Resource(Name("disks"), ValueSet("sda1", "sda2"), Role("*")))
-		disks2 = Resources(Resource(Name("disks"), ValueSet("sda1", "sda3", "sda4", "sda2"), Role("*")))
-
-		disks = mesos.Resources{
-			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path")),
-			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path")),
-			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("1", "path")),
-			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("", "path")),
-			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("2", "path")),
-		}
-		summedDisks  = Resources(disks[0]).Plus(disks[1])
-		summedDisks2 = Resources(disks[0]).Plus(disks[4])
-
-		revocables = mesos.Resources{
-			Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable()),
-			Resource(Name("cpus"), ValueScalar(1), Role("*")),
-			Resource(Name("cpus"), ValueScalar(2), Role("*")),
-			Resource(Name("cpus"), ValueScalar(2), Role("*"), Revocable()),
-		}
-		summedRevocables  = Resources(revocables[0]).Plus(revocables[1])
-		summedRevocables2 = Resources(revocables[0]).Plus(revocables[0])
-
-		possiblyReserved = mesos.Resources{
-			Resource(Name("cpus"), ValueScalar(8), Role("role")),
-			Resource(Name("cpus"), ValueScalar(12), Role("role"), Reservation(ReservedBy("principal"))),
-		}
-		sumPossiblyReserved = Resources(possiblyReserved...)
-	)
-	for i, tc := range []struct {
-		r1, r2 mesos.Resources
-		wants  bool
-	}{
-		// test case 0
-		{r1: nil, r2: nil, wants: true},
-		// test case 1
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("*")),
-				Resource(Name("mem"), ValueScalar(4096), Role("*")),
-			),
-			r2: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("*")),
-				Resource(Name("mem"), ValueScalar(4096), Role("*")),
-			),
-			wants: true,
-		},
-		// test case 2
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("role1")),
-			),
-			r2: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("role2")),
-			),
-			wants: false,
-		},
-		// test case 3
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("*")),
-				Resource(Name("mem"), ValueScalar(3072), Role("*")),
-			),
-			r2: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("*")),
-				Resource(Name("mem"), ValueScalar(4096), Role("*")),
-			),
-			wants: false,
-		},
-		// test case 4
-		{
-			r1: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("*")),
-				Resource(Name("mem"), ValueScalar(4096), Role("*")),
-			),
-			r2: Resources(
-				Resource(Name("cpus"), ValueScalar(50), Role("*")),
-				Resource(Name("mem"), ValueScalar(3072), Role("*")),
-			),
-			wants: true,
-		},
-		// test case 5
-		{ports2, ports1, true},
-		// test case 6
-		{ports1, ports2, false},
-		// test case 7
-		{ports3, ports1, false},
-		// test case 8
-		{ports1, ports3, false},
-		// test case 9
-		{ports2, ports3, true},
-		// test case 10
-		{ports3, ports2, false},
-		// test case 11
-		{ports4, ports1, true},
-		// test case 12
-		{ports2, ports4, true},
-		// test case 13
-		{ports5, ports1, true},
-		// test case 14
-		{ports1, ports5, false},
-		// test case 15
-		{disks1, disks2, false},
-		// test case 16
-		{disks2, disks1, true},
-		{r1: summedDisks, r2: Resources(disks[0]), wants: true},
-		{r1: summedDisks, r2: Resources(disks[1]), wants: true},
-		{r1: summedDisks, r2: Resources(disks[2]), wants: false},
-		{r1: summedDisks, r2: Resources(disks[3]), wants: false},
-		{r1: Resources(disks[0]), r2: summedDisks, wants: false},
-		{r1: Resources(disks[1]), r2: summedDisks, wants: false},
-		{r1: summedDisks2, r2: Resources(disks[0]), wants: true},
-		{r1: summedDisks2, r2: Resources(disks[4]), wants: true},
-		{r1: summedRevocables, r2: Resources(revocables[0]), wants: true},
-		{r1: summedRevocables, r2: Resources(revocables[1]), wants: true},
-		{r1: summedRevocables, r2: Resources(revocables[2]), wants: false},
-		{r1: summedRevocables, r2: Resources(revocables[3]), wants: false},
-		{r1: Resources(revocables[0]), r2: summedRevocables2, wants: false},
-		{r1: summedRevocables2, r2: Resources(revocables[0]), wants: true},
-		{r1: summedRevocables2, r2: summedRevocables2, wants: true},
-		{r1: Resources(possiblyReserved[0]), r2: sumPossiblyReserved, wants: false},
-		{r1: Resources(possiblyReserved[1]), r2: sumPossiblyReserved, wants: false},
-		{r1: sumPossiblyReserved, r2: sumPossiblyReserved, wants: true},
-	} {
-		actual := tc.r1.ContainsAll(tc.r2)
-		Expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 	}
 }
 
@@ -623,16 +316,16 @@ func TestResources_Minus(t *testing.T) {
 
 		// Minus preserves the left operand
 		actual := tc.r1.Minus(tc.r2...)
-		if !tc.wants.Equivalent(actual) {
+		if !rez.Equivalent(tc.wants, actual) {
 			t.Errorf("test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 		}
-		if !backup.Equivalent(tc.r1) {
+		if !rez.Equivalent(backup, tc.r1) {
 			t.Errorf("test case %d failed: backup (%v) != r1 (%v)", i, backup, tc.r1)
 		}
 
 		// SubtractAll mutates the left operand
 		tc.r1.Subtract(tc.r2...)
-		if !tc.wants.Equivalent(tc.r1) {
+		if !rez.Equivalent(tc.wants, tc.r1) {
 			t.Errorf("test case %d failed: wants (%v) != r1 (%v)", i, tc.wants, tc.r1)
 		}
 
@@ -791,16 +484,16 @@ func TestResources_Plus(t *testing.T) {
 
 		// Plus preserves the left operand
 		actual := tc.r1.Plus(tc.r2...)
-		if !tc.wants.Equivalent(actual) {
+		if !rez.Equivalent(tc.wants, actual) {
 			t.Errorf("test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 		}
-		if !backup.Equivalent(tc.r1) {
+		if !rez.Equivalent(backup, tc.r1) {
 			t.Errorf("test case %d failed: backup (%v) != r1 (%v)", i, backup, tc.r1)
 		}
 
 		// Add mutates the left operand
 		tc.r1.Add(tc.r2...)
-		if !tc.wants.Equivalent(tc.r1) {
+		if !rez.Equivalent(tc.wants, tc.r1) {
 			t.Errorf("test case %d failed: wants (%v) != r1 (%v)", i, tc.wants, tc.r1)
 		}
 

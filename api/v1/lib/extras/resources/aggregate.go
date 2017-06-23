@@ -126,3 +126,34 @@ func SumAndCompare(expected mesos.Resources, resources ...mesos.Resource) bool {
 		g1 == g3 && g2 == g4 &&
 		p1.Equivalent(p3) && p2 == p4
 }
+
+type (
+	// functional option for resource flattening, via Flatten. Implementations are expected to type-narrow
+	// the given interface, matching against WithRole, WithReservation or both methods (see Role.Assign).
+	FlattenOpt func(interface{})
+
+	flattenConfig struct {
+		role        string
+		reservation *mesos.Resource_ReservationInfo
+	}
+)
+
+func (fc *flattenConfig) WithRole(role string)                              { fc.role = role }
+func (fc *flattenConfig) WithReservation(r *mesos.Resource_ReservationInfo) { fc.reservation = r }
+
+func Flatten(resources []mesos.Resource, opts ...FlattenOpt) (flattened mesos.Resources) {
+	fc := &flattenConfig{}
+	for _, f := range opts {
+		f(fc)
+	}
+	if fc.role == "" {
+		fc.role = string(RoleDefault)
+	}
+	// we intentionally manipulate a copy 'r' of the item in resources
+	for _, r := range resources {
+		r.Role = &fc.role
+		r.Reservation = fc.reservation
+		flattened.Add1(r)
+	}
+	return
+}

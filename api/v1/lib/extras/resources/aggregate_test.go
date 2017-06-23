@@ -41,3 +41,35 @@ func TestResources_Names(t *testing.T) {
 		t.Fatalf("expected %v instead of %v", expected, names)
 	}
 }
+
+func TestResources_Flatten(t *testing.T) {
+	for i, tc := range []struct {
+		r1, wants mesos.Resources
+	}{
+		{nil, nil},
+		{
+			r1: Resources(
+				Resource(Name("cpus"), ValueScalar(1), Role("role1")),
+				Resource(Name("cpus"), ValueScalar(2), Role("role2")),
+				Resource(Name("mem"), ValueScalar(5), Role("role1")),
+			),
+			wants: Resources(
+				Resource(Name("cpus"), ValueScalar(3)),
+				Resource(Name("mem"), ValueScalar(5)),
+			),
+		},
+		{
+			r1: Resources(
+				Resource(Name("cpus"), ValueScalar(3), Role("role1")),
+				Resource(Name("mem"), ValueScalar(15), Role("role1")),
+			),
+			wants: Resources(
+				Resource(Name("cpus"), ValueScalar(3), Role("*")),
+				Resource(Name("mem"), ValueScalar(15), Role("*")),
+			),
+		},
+	} {
+		r := rez.Flatten(tc.r1)
+		Expect(t, rez.Equivalent(r, tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
+	}
+}

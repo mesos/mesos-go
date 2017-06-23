@@ -1,6 +1,9 @@
 package offers
 
-import . "github.com/mesos/mesos-go/api/v1/lib"
+import (
+	. "github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
+)
 
 type (
 	// Filter accepts or rejects a mesos Offer
@@ -60,10 +63,10 @@ func ByUnavailability(f func(u *Unavailability) bool) Filter {
 	})
 }
 
-// ContainsResources returns a filter function that returns true if the Resources of an Offer
+// ContainsResources returns a filter that returns true if the Resources of an Offer
 // contain the wanted Resources.
 func ContainsResources(wanted Resources) Filter {
 	return FilterFunc(func(o *Offer) bool {
-		return Resources(o.Resources).Flatten().ContainsAll(wanted)
+		return resources.ContainsAll(resources.Flatten(Resources(o.Resources)), wanted)
 	})
 }

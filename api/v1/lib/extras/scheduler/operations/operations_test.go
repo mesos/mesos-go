@@ -3,7 +3,7 @@ package operations_test
 import (
 	"testing"
 
-	"github.com/mesos/mesos-go/api/v1/lib"
+	rez "github.com/mesos/mesos-go/api/v1/lib/extras/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/operations"
 	. "github.com/mesos/mesos-go/api/v1/lib/resourcetest"
 )
@@ -29,7 +29,7 @@ func TestOpCreate(t *testing.T) {
 		Resource(Name("disk"), ValueScalar(800), Role("role")),
 		volume1,
 	)
-	if !expected.Equivalent(rs) {
+	if !rez.Equivalent(expected, rs) {
 		t.Fatalf("expected %v instead of %v", expected, rs)
 	}
 
@@ -57,7 +57,7 @@ func TestOpUnreserve(t *testing.T) {
 	)
 
 	// test case 1: unreserve some amount of CPU that's already been reserved
-	unreservedCPU := reservedCPU.Flatten()
+	unreservedCPU := rez.Flatten(reservedCPU)
 	t.Log("unreservedCPU=" + unreservedCPU.String())
 
 	wantsUnreserved := reservedMem.Plus(unreservedCPU...)
@@ -65,7 +65,7 @@ func TestOpUnreserve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !wantsUnreserved.Equivalent(actualUnreserved) {
+	if !rez.Equivalent(wantsUnreserved, actualUnreserved) {
 		t.Errorf("expected resources %+v instead of %+v", wantsUnreserved, actualUnreserved)
 	}
 
@@ -87,7 +87,7 @@ func TestOpReserve(t *testing.T) {
 		unreservedCPU = Resources(Resource(Name("cpus"), ValueScalar(1)))
 		unreservedMem = Resources(Resource(Name("mem"), ValueScalar(512)))
 		unreserved    = unreservedCPU.Plus(unreservedMem...)
-		reservedCPU1  = unreservedCPU.Flatten(mesos.RoleName("role").Assign(), ReservedBy("principal").Assign())
+		reservedCPU1  = rez.Flatten(unreservedCPU, rez.Role("role").Assign(), ReservedBy("principal").Assign())
 	)
 
 	// test case 1: reserve an amount of CPU that's available
@@ -96,7 +96,7 @@ func TestOpReserve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !wantsReserved.Equivalent(actualReserved) {
+	if !rez.Equivalent(wantsReserved, actualReserved) {
 		t.Errorf("expected resources %+v instead of %+v", wantsReserved, actualReserved)
 	}
 

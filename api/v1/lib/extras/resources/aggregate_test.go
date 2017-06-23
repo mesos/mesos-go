@@ -9,14 +9,14 @@ import (
 	. "github.com/mesos/mesos-go/api/v1/lib/resourcetest"
 )
 
-func TestResources_Types(t *testing.T) {
+func TestTypesOf(t *testing.T) {
 	rs := Resources(
 		Resource(Name("cpus"), ValueScalar(2), Role("role1")),
 		Resource(Name("cpus"), ValueScalar(4)),
 		Resource(Name("ports"), ValueRange(Span(1, 10)), Role("role1")),
 		Resource(Name("ports"), ValueRange(Span(11, 20))),
 	)
-	types := rez.Types(rs...)
+	types := rez.TypesOf(rs...)
 	expected := map[rez.Name]mesos.Value_Type{
 		rez.NameCPUs:  mesos.SCALAR,
 		rez.NamePorts: mesos.RANGES,
@@ -26,22 +26,22 @@ func TestResources_Types(t *testing.T) {
 	}
 }
 
-func TestResources_Names(t *testing.T) {
+func TestNamesOf(t *testing.T) {
 	rs := Resources(
 		Resource(Name("cpus"), ValueScalar(2), Role("role1")),
 		Resource(Name("cpus"), ValueScalar(4)),
 		Resource(Name("mem"), ValueScalar(10), Role("role1")),
 		Resource(Name("mem"), ValueScalar(10)),
 	)
-	names := rez.Names(rs...)
-	rez.NameSlice(names).Sort()
+	names := rez.NamesOf(rs...)
+	rez.Names(names).Sort()
 	expected := []rez.Name{rez.NameCPUs, rez.NameMem}
 	if !reflect.DeepEqual(names, expected) {
 		t.Fatalf("expected %v instead of %v", expected, names)
 	}
 }
 
-func TestResources_Flatten(t *testing.T) {
+func TestFlatten(t *testing.T) {
 	for i, tc := range []struct {
 		r1, wants mesos.Resources
 	}{

@@ -37,7 +37,7 @@ func Ports(resources ...mesos.Resource) (mesos.Ranges, bool) {
 	return mesos.Ranges(v.GetRanges().GetRange()), ok
 }
 
-func Types(resources ...mesos.Resource) map[Name]mesos.Value_Type {
+func TypesOf(resources ...mesos.Resource) map[Name]mesos.Value_Type {
 	m := map[Name]mesos.Value_Type{}
 	for i := range resources {
 		name := Name(resources[i].GetName())
@@ -46,7 +46,7 @@ func Types(resources ...mesos.Resource) map[Name]mesos.Value_Type {
 	return m
 }
 
-func Names(resources ...mesos.Resource) (names []Name) {
+func NamesOf(resources ...mesos.Resource) (names []Name) {
 	m := map[Name]struct{}{}
 	for i := range resources {
 		n := Name(resources[i].GetName())
@@ -69,7 +69,7 @@ func SumAndCompare(expected []mesos.Resource, resources ...mesos.Resource) bool 
 	}
 	calcTotals := func(r []mesos.Resource) (m map[Name]total) {
 		m = make(map[Name]total)
-		for n, t := range Types(expected...) {
+		for n, t := range TypesOf(expected...) {
 			v, ok := n.Sum(expected...)
 			m[n] = total{v, t, ok}
 		}

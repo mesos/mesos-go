@@ -7,8 +7,8 @@ import (
 )
 
 type (
-	Name      string
-	NameSlice []Name
+	Name  string
+	Names []Name
 )
 
 const (
@@ -23,8 +23,8 @@ const (
 func (n Name) String() string                { return string(n) }
 func (n Name) Filter(r *mesos.Resource) bool { return r != nil && r.Name == string(n) }
 
-func (ns NameSlice) Len() int           { return len(ns) }
-func (ns NameSlice) Less(i, j int) bool { return ns[i] < ns[j] }
-func (ns NameSlice) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
+func (ns Names) Len() int           { return len(ns) }
+func (ns Names) Less(i, j int) bool { return ns[i] < ns[j] }
+func (ns Names) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
 
-func (ns NameSlice) Sort() { sort.Stable(ns) }
+func (ns Names) Sort() { sort.Stable(ns) }

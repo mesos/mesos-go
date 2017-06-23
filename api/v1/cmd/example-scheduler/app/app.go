@@ -164,7 +164,7 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 
 			// avoid the expense of computing these if we can...
 			if state.config.summaryMetrics && state.config.resourceTypeMetrics {
-				for name, restype := range resources.Types(flattened...) {
+				for name, restype := range resources.TypesOf(flattened...) {
 					if restype == mesos.SCALAR {
 						sum, _ := name.Sum(flattened...)
 						state.metricsAPI.offeredResources(sum.GetScalar().GetValue(), name.String())

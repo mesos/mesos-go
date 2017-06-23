@@ -84,6 +84,6 @@ func TestResources_Find(t *testing.T) {
 		},
 	} {
 		r := rez.Find(tc.targets, tc.r1...)
-		Expect(t, r.Equivalent(tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
+		Expect(t, rez.Equivalent(r, tc.wants), "test case %d failed: expected %+v instead of %+v", i, tc.wants, r)
 	}
 }

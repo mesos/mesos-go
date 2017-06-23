@@ -9,7 +9,6 @@ import (
 )
 
 type (
-	RoleName          string
 	Resources         []Resource
 	resourceErrorType int
 
@@ -18,19 +17,9 @@ type (
 		reason    string
 		spec      Resource
 	}
-
-	// functional option for resource flattening, via Flatten
-	FlattenOpt func(*FlattenConfig)
-
-	FlattenConfig struct {
-		Role        string
-		Reservation *Resource_ReservationInfo
-	}
 )
 
 const (
-	RoleDefault = RoleName("*")
-
 	resourceErrorTypeIllegalName resourceErrorType = iota
 	resourceErrorTypeIllegalType
 	resourceErrorTypeUnsupportedType
@@ -71,6 +60,7 @@ func (t resourceErrorType) Generate(reason string) error {
 func (err *resourceError) Type() resourceErrorType { return err.errorType }
 func (err *resourceError) Reason() string          { return err.reason }
 func (err *resourceError) Resource() Resource      { return err.spec }
+func (err *resourceError) WithResource(r Resource) { err.spec = r }
 
 func (err *resourceError) Error() string {
 	// TODO(jdef) include additional context here? (type, resource)
@@ -85,77 +75,15 @@ func IsResourceError(err error) (ok bool) {
 	return
 }
 
-func (r RoleName) IsDefault() bool {
-	return r == RoleDefault
-}
-
-func (r RoleName) Assign() FlattenOpt {
-	return func(fc *FlattenConfig) {
-		fc.Role = string(r)
-	}
-}
-
-func (r RoleName) Proto() *string {
-	s := string(r)
-	return &s
-}
-
-func (ri *Resource_ReservationInfo) Assign() FlattenOpt {
-	return func(fc *FlattenConfig) {
-		fc.Reservation = ri
-	}
-}
-
-func (resources Resources) Flatten(opts ...FlattenOpt) (flattened Resources) {
-	fc := &FlattenConfig{}
-	for _, f := range opts {
-		f(fc)
-	}
-	if fc.Role == "" {
-		fc.Role = string(RoleDefault)
-	}
-	// we intentionally manipulate a copy 'r' of the item in resources
-	for _, r := range resources {
-		r.Role = &fc.Role
-		r.Reservation = fc.Reservation
-		flattened.Add1(r)
-	}
-	return
-}
-
-func (resources Resources) Validate() error {
-	for i := range resources {
-		err := resources[i].Validate()
-		if err != nil {
-			// augment resourceError's with the resource that failed to validate
-			if resourceError, ok := err.(*resourceError); ok {
-				r := proto.Clone(&resources[i]).(*Resource)
-				resourceError.spec = *r
-			}
-			return err
+func (r *Resource_ReservationInfo) Assign() func(interface{}) {
+	return func(v interface{}) {
+		type reserver interface {
+			WithReservation(*Resource_ReservationInfo)
+		}
+		if ri, ok := v.(reserver); ok {
+			ri.WithReservation(r)
 		}
 	}
-	return nil
-}
-
-func (resources Resources) contains(that Resource) bool {
-	for i := range resources {
-		if resources[i].Contains(that) {
-			return true
-		}
-	}
-	return false
-}
-
-func (resources Resources) Equivalent(that Resources) bool {
-	return resources.ContainsAll(that) && that.ContainsAll(resources)
-}
-
-func (resources Resources) Contains(that Resource) bool {
-	// NOTE: We must validate 'that' because invalid resources can lead
-	// to false positives here (e.g., "cpus:-1" will return true). This
-	// is because 'contains' assumes resources are valid.
-	return that.Validate() == nil && resources.contains(that)
 }
 
 func (resources Resources) Clone() Resources {
@@ -168,21 +96,6 @@ func (resources Resources) Clone() Resources {
 		clone = append(clone, *rr)
 	}
 	return clone
-}
-
-// ContainsAll returns true if this set of Resources contains that set of (presumably pre-validated) Resources.
-func (resources Resources) ContainsAll(that Resources) bool {
-	remaining := resources.Clone()
-	for i := range that {
-		// NOTE: We use contains() because Resources only contain valid
-		// Resource objects, and we don't want the performance hit of the
-		// validity check.
-		if !remaining.contains(that[i]) {
-			return false
-		}
-		remaining.Subtract1(that[i])
-	}
-	return true
 }
 
 // Minus calculates and returns the result of `resources - that` without modifying either
@@ -422,7 +335,7 @@ func (left *Resource) Validate() error {
 	}
 
 	// check for invalid state of (role,reservation) pair
-	if left.GetRole() == string(RoleDefault) && left.GetReservation() != nil {
+	if left.GetRole() == "*" && left.GetReservation() != nil {
 		return resourceErrorTypeIllegalReservation.Generate("default role cannot be dynamically assigned")
 	}
 
@@ -620,7 +533,7 @@ func (left *Resource) IsUnreserved() bool {
 	// role != RoleDefault     -> static reservation
 	// GetReservation() != nil -> dynamic reservation
 	// return {no-static-reservation} && {no-dynamic-reservation}
-	return left.GetRole() == string(RoleDefault) && left.GetReservation() == nil
+	return left.GetRole() == "*" && left.GetReservation() == nil
 }
 
 // IsReserved returns true if this resource has been reserved for the given role.

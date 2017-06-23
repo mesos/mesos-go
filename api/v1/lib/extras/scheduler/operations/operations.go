@@ -85,8 +85,8 @@ func validateOpTotals(f offerResourceOp) offerResourceOp {
 
 func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
 	result := resources.Clone()
-	opRes := mesos.Resources(operation.GetReserve().GetResources())
-	err := opRes.Validate()
+	opRes := operation.GetReserve().GetResources()
+	err := rez.Validate(opRes...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +97,8 @@ func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources) (mes
 		if opRes[i].GetReservation() == nil {
 			return nil, errors.New("missing 'reservation'")
 		}
-		unreserved := mesos.Resources{opRes[i]}.Flatten()
-		if !result.ContainsAll(unreserved) {
+		unreserved := rez.Flatten(mesos.Resources{opRes[i]})
+		if !rez.ContainsAll(result, unreserved) {
 			return nil, fmt.Errorf("%+v does not contain %+v", result, unreserved)
 		}
 		result.Subtract(unreserved...)
@@ -109,8 +109,8 @@ func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources) (mes
 
 func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
 	result := resources.Clone()
-	opRes := mesos.Resources(operation.GetUnreserve().GetResources())
-	err := opRes.Validate()
+	opRes := operation.GetUnreserve().GetResources()
+	err := rez.Validate(opRes...)
 	if err != nil {
 		return nil, err
 	}
@@ -121,10 +121,10 @@ func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources) (m
 		if opRes[i].GetReservation() == nil {
 			return nil, errors.New("missing 'reservation'")
 		}
-		if !result.Contains(opRes[i]) {
+		if !rez.Contains(result, opRes[i]) {
 			return nil, errors.New("resources do not contain unreserve amount") //TODO(jdef) should output nicely formatted resource quantities here
 		}
-		unreserved := mesos.Resources{opRes[i]}.Flatten()
+		unreserved := rez.Flatten(mesos.Resources{opRes[i]})
 		result.Subtract1(opRes[i])
 		result.Add(unreserved...)
 	}
@@ -133,8 +133,8 @@ func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources) (m
 
 func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
 	result := resources.Clone()
-	volumes := mesos.Resources(operation.GetCreate().GetVolumes())
-	err := volumes.Validate()
+	volumes := operation.GetCreate().GetVolumes()
+	err := rez.Validate(volumes...)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources) (meso
 		// non-persistent volumes.
 		stripped := proto.Clone(&volumes[i]).(*mesos.Resource)
 		stripped.Disk = nil
-		if !result.Contains(*stripped) {
+		if !rez.Contains(result, *stripped) {
 			return nil, errors.New("invalid CREATE operation: insufficient disk resources")
 		}
 		result.Subtract1(*stripped)
@@ -165,8 +165,8 @@ func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources) (meso
 
 func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
 	result := resources.Clone()
-	volumes := mesos.Resources(operation.GetDestroy().GetVolumes())
-	err := volumes.Validate()
+	volumes := operation.GetDestroy().GetVolumes()
+	err := rez.Validate(volumes...)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources) (mes
 		if volumes[i].GetDisk().GetPersistence() == nil {
 			return nil, errors.New("missing 'persistence'")
 		}
-		if !result.Contains(volumes[i]) {
+		if !rez.Contains(result, volumes[i]) {
 			return nil, errors.New("persistent volume does not exist")
 		}
 		stripped := proto.Clone(&volumes[i]).(*mesos.Resource)

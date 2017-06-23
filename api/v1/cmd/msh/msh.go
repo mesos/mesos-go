@@ -42,7 +42,7 @@ var (
 	TaskName      = "msh"
 	MesosMaster   = "127.0.0.1:5050"
 	User          = "root"
-	Role          = mesos.RoleName("*")
+	Role          = resources.Role("*")
 	CPUs          = float64(0.010)
 	Memory        = float64(64)
 
@@ -169,7 +169,10 @@ func resourceOffers(caller calls.Caller) events.HandlerFunc {
 			task := taskPrototype
 			task.TaskID = mesos.TaskID{Value: time.Now().Format(RFC3339a)}
 			task.AgentID = match.AgentID
-			task.Resources = resources.Find(wantsResources.Flatten(Role.Assign()), match.Resources...)
+			task.Resources = resources.Find(
+				resources.Flatten(wantsResources, Role.Assign()),
+				match.Resources...,
+			)
 
 			err = calls.CallNoData(ctx, caller, calls.Accept(
 				calls.OfferOperations{calls.OpLaunch(task)}.WithOffers(match.ID),

@@ -161,7 +161,7 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 				wantsExecutorResources = mesos.Resources(state.executor.Resources)
 			}
 
-			flattened := remaining.Flatten()
+			flattened := resources.Flatten(remaining)
 
 			// avoid the expense of computing these if we can...
 			if state.config.summaryMetrics && state.config.resourceTypeMetrics {
@@ -174,7 +174,7 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 			}
 
 			taskWantsResources := state.wantsTaskResources.Plus(wantsExecutorResources...)
-			for state.tasksLaunched < state.totalTasks && flattened.ContainsAll(taskWantsResources) {
+			for state.tasksLaunched < state.totalTasks && resources.ContainsAll(flattened, taskWantsResources) {
 				state.tasksLaunched++
 				taskID := state.tasksLaunched
 
@@ -183,17 +183,20 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 				}
 
 				task := mesos.TaskInfo{
-					TaskID:    mesos.TaskID{Value: strconv.Itoa(taskID)},
-					AgentID:   offers[i].AgentID,
-					Executor:  state.executor,
-					Resources: resources.Find(state.wantsTaskResources.Flatten(mesos.RoleName(state.role).Assign()), remaining...),
+					TaskID:   mesos.TaskID{Value: strconv.Itoa(taskID)},
+					AgentID:  offers[i].AgentID,
+					Executor: state.executor,
+					Resources: resources.Find(
+						resources.Flatten(state.wantsTaskResources, resources.Role(state.role).Assign()),
+						remaining...,
+					),
 				}
 				task.Name = "Task " + task.TaskID.Value
 
 				remaining.Subtract(task.Resources...)
 				tasks = append(tasks, task)
 
-				flattened = remaining.Flatten()
+				flattened = resources.Flatten(remaining)
 			}
 
 			// build Accept call to launch all of the tasks we've assembled

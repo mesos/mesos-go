@@ -121,40 +121,32 @@ func (s Index) ToSlice() (slice Slice) {
 	return
 }
 
-type (
-	Reducer interface {
-		Reduce(_, _ *Offer) *Offer
+/*
+
+type Reducer func(_, _ *Offer) *Offer
+
+func (slice Slice) Reduce(r Reducer) (result Offer) {
+	if r == nil {
+		return
 	}
-
-	ReduceFunc func(_, _ *Offer) *Offer
-)
-
-func (f ReduceFunc) Reduce(a, b *Offer) *Offer { return f(a, b) }
-
-var _ = Reducer(ReduceFunc(func(_, _ *Offer) *Offer { return nil })) // sanity check
-
-func (slice Slice) Reduce(def Offer, r Reducer) (result Offer) {
-	result = def
-	if r != nil {
-		acc := &result
-		for i := range slice {
-			acc = r.Reduce(&result, &slice[i])
-		}
-		if acc == nil {
-			result = Offer{}
-		} else {
-			result = *acc
-		}
+	acc := &result
+	for i := range slice {
+		acc = r(&result, &slice[i])
+	}
+	if acc == nil {
+		result = Offer{}
+	} else {
+		result = *acc
 	}
 	return
 }
 
-func (index Index) Reduce(def *Offer, r Reducer) (result *Offer) {
-	result = def
-	if r != nil {
-		for i := range index {
-			result = r.Reduce(result, index[i])
-		}
+func (index Index) Reduce(r Reducer) (result *Offer) {
+	if r == nil {
+		return
+	}
+	for i := range index {
+		result = r(result, index[i])
 	}
 	return
 }
@@ -245,3 +237,4 @@ func (index Index) Reindex(kf KeyFunc) Index {
 	}
 	return result
 }
+*/

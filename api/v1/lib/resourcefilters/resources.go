@@ -55,6 +55,21 @@ func (rf Filter) Or(f Filter) Filter {
 	})
 }
 
+func (rf Filter) And(f Filter) Filter {
+	if rf == nil {
+		if f == nil {
+			return nil
+		}
+		return f
+	}
+	if f == nil {
+		return rf
+	}
+	return Filter(func(r *mesos.Resource) bool {
+		return rf(r) && f(r)
+	})
+}
+
 func Select(rf Interface, resources ...mesos.Resource) (result mesos.Resources) {
 	for i := range resources {
 		if rf.Accepts(&resources[i]) {
@@ -78,12 +93,6 @@ var _ = Interface(Filters(nil))
 func ReservedByRole(role string) Filter {
 	return Filter(func(r *mesos.Resource) bool {
 		return r.IsReserved(role)
-	})
-}
-
-func Named(name string) Filter {
-	return Filter(func(r *mesos.Resource) bool {
-		return r.GetName() == name
 	})
 }
 

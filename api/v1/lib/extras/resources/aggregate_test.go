@@ -2,7 +2,6 @@ package resources_test
 
 import (
 	"reflect"
-	"sort"
 	"testing"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
@@ -18,9 +17,9 @@ func TestResources_Types(t *testing.T) {
 		Resource(Name("ports"), ValueRange(Span(11, 20))),
 	)
 	types := rez.Types(rs...)
-	expected := map[string]mesos.Value_Type{
-		"cpus":  mesos.SCALAR,
-		"ports": mesos.RANGES,
+	expected := map[rez.Name]mesos.Value_Type{
+		rez.NameCPUs:  mesos.SCALAR,
+		rez.NamePorts: mesos.RANGES,
 	}
 	if !reflect.DeepEqual(types, expected) {
 		t.Fatalf("expected %v instead of %v", expected, types)
@@ -35,8 +34,8 @@ func TestResources_Names(t *testing.T) {
 		Resource(Name("mem"), ValueScalar(10)),
 	)
 	names := rez.Names(rs...)
-	sort.Strings(names)
-	expected := []string{"cpus", "mem"}
+	rez.NameSlice(names).Sort()
+	expected := []rez.Name{rez.NameCPUs, rez.NameMem}
 	if !reflect.DeepEqual(names, expected) {
 		t.Fatalf("expected %v instead of %v", expected, names)
 	}

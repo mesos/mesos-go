@@ -220,6 +220,9 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 		if state.config.summaryMetrics {
 			state.metricsAPI.launchesPerOfferCycle(float64(tasksLaunchedThisCycle))
 		}
+		if tasksLaunchedThisCycle == 0 && state.config.verbose {
+			log.Println("zero tasks launched this cycle")
+		}
 		return nil
 	}
 }

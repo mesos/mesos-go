@@ -16,7 +16,6 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
-	"github.com/mesos/mesos-go/api/v1/lib/resourcefilters"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
@@ -167,8 +166,8 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 			if state.config.summaryMetrics && state.config.resourceTypeMetrics {
 				for name, restype := range resources.Types(flattened...) {
 					if restype == mesos.SCALAR {
-						sum := resources.SumScalars(resourcefilters.Named(name), flattened...)
-						state.metricsAPI.offeredResources(sum.GetValue(), name)
+						sum, _ := name.Sum(flattened...)
+						state.metricsAPI.offeredResources(sum.GetScalar().GetValue(), name.String())
 					}
 				}
 			}

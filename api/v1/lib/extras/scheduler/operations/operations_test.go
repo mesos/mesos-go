@@ -3,6 +3,7 @@ package operations_test
 import (
 	"testing"
 
+	"github.com/mesos/mesos-go/api/v1/lib"
 	rez "github.com/mesos/mesos-go/api/v1/lib/extras/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/operations"
 	. "github.com/mesos/mesos-go/api/v1/lib/resourcetest"
@@ -58,7 +59,7 @@ func TestOpUnreserve(t *testing.T) {
 
 	// test case 1: unreserve some amount of CPU that's already been reserved
 	unreservedCPU := rez.Flatten(reservedCPU)
-	t.Log("unreservedCPU=" + unreservedCPU.String())
+	t.Log("unreservedCPU=" + mesos.Resources(unreservedCPU).String())
 
 	wantsUnreserved := reservedMem.Plus(unreservedCPU...)
 	actualUnreserved, err := operations.Apply(Unreserve(reservedCPU), reserved)

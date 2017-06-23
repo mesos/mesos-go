@@ -22,7 +22,7 @@ func Find(wants mesos.Resources, from ...mesos.Resource) (total mesos.Resources)
 func find(want mesos.Resource, from ...mesos.Resource) mesos.Resources {
 	var (
 		total      = mesos.Resources(from).Clone()
-		remaining  = Flatten(mesos.Resources{want})
+		remaining  = mesos.Resources(Flatten(mesos.Resources{want}))
 		found      mesos.Resources
 		predicates = resourcefilters.Filters{
 			resourcefilters.ReservedByRole(want.GetRole()),

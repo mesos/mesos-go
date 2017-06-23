@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"fmt"
+
 	"github.com/mesos/mesos-go/api/v1/lib"
 )
 
@@ -12,19 +14,19 @@ type (
 )
 
 func NewCPUs(value float64) *Builder {
-	return Build().Name(ResourceNameCPUs).Scalar(value)
+	return Build().Name(NameCPUs).Scalar(value)
 }
 
 func NewMemory(value float64) *Builder {
-	return Build().Name(ResourceNameMem).Scalar(value)
+	return Build().Name(NameMem).Scalar(value)
 }
 
 func NewDisk(value float64) *Builder {
-	return Build().Name(ResourceNameDisk).Scalar(value)
+	return Build().Name(NameDisk).Scalar(value)
 }
 
 func NewGPUs(value uint) *Builder {
-	return Build().Name(ResourceNameGPUs).Scalar(float64(value))
+	return Build().Name(NameGPUs).Scalar(float64(value))
 }
 
 func BuildRanges() *RangeBuilder {
@@ -41,8 +43,8 @@ func (rb *RangeBuilder) Span(bp, ep uint64) *RangeBuilder {
 func Build() *Builder {
 	return &Builder{}
 }
-func (rb *Builder) Name(name string) *Builder {
-	rb.Resource.Name = name
+func (rb *Builder) Name(name fmt.Stringer) *Builder {
+	rb.Resource.Name = name.String()
 	return rb
 }
 func (rb *Builder) Role(role string) *Builder {

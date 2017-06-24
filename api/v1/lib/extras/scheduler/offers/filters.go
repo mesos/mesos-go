@@ -2,7 +2,7 @@ package offers
 
 import (
 	"github.com/mesos/mesos-go/api/v1/lib"
-	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
+	"github.com/mesos/mesos-go/api/v1/lib/resources"
 )
 
 type (

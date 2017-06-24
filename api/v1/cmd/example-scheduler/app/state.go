@@ -13,9 +13,9 @@ import (
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
-	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpsched"
+	"github.com/mesos/mesos-go/api/v1/lib/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 )
 

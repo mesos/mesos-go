@@ -1,21 +1,21 @@
 package offers
 
-import . "github.com/mesos/mesos-go/api/v1/lib"
+import "github.com/mesos/mesos-go/api/v1/lib"
 
 type (
 	// Slice is a convenience type wrapper for a slice of mesos Offer messages
-	Slice []Offer
+	Slice []mesos.Offer
 
 	// Index is a convenience type wrapper for a dictionary of Offer messages
-	Index map[interface{}]*Offer
+	Index map[interface{}]*mesos.Offer
 
 	// KeyFunc generates a key used for indexing offers
-	KeyFunc func(*Offer) interface{}
+	KeyFunc func(*mesos.Offer) interface{}
 )
 
 // IDs extracts the ID field from a Slice of offers
-func (offers Slice) IDs() []OfferID {
-	ids := make([]OfferID, len(offers))
+func (offers Slice) IDs() []mesos.OfferID {
+	ids := make([]mesos.OfferID, len(offers))
 	for i := range offers {
 		ids[i] = offers[i].ID
 	}
@@ -23,8 +23,8 @@ func (offers Slice) IDs() []OfferID {
 }
 
 // IDs extracts the ID field from a Index of offers
-func (offers Index) IDs() []OfferID {
-	ids := make([]OfferID, 0, len(offers))
+func (offers Index) IDs() []mesos.OfferID {
+	ids := make([]mesos.OfferID, 0, len(offers))
 	for _, offer := range offers {
 		ids = append(ids, offer.GetID())
 	}
@@ -33,7 +33,7 @@ func (offers Index) IDs() []OfferID {
 
 // Find returns the first Offer that passes the given filter function, or else nil if
 // there are no passing offers.
-func (offers Slice) Find(filter Filter) *Offer {
+func (offers Slice) Find(filter Filter) *mesos.Offer {
 	for i := range offers {
 		offer := &offers[i]
 		if filter.Accept(offer) {
@@ -45,7 +45,7 @@ func (offers Slice) Find(filter Filter) *Offer {
 
 // Find returns the first Offer that passes the given filter function, or else nil if
 // there are no passing offers.
-func (offers Index) Find(filter Filter) *Offer {
+func (offers Index) Find(filter Filter) *mesos.Offer {
 	for _, offer := range offers {
 		if filter.Accept(offer) {
 			return offer
@@ -89,12 +89,12 @@ func (offers Index) FilterNot(filter Filter) Index { return offers.Filter(not(fi
 // DefaultKeyFunc indexes offers by their OfferID.
 var DefaultKeyFunc = KeyFunc(KeyFuncByOfferID)
 
-func KeyFuncByOfferID(o *Offer) interface{} { return o.GetID() }
+func KeyFuncByOfferID(o *mesos.Offer) interface{} { return o.GetID() }
 
 // NewIndex returns a new Index constructed from the list of mesos offers.
 // If the KeyFunc is nil then offers are indexed by DefaultKeyFunc.
 // The values of the returned Index are pointers to (not copies of) the offers of the slice receiver.
-func NewIndex(slice []Offer, kf KeyFunc) Index {
+func NewIndex(slice []mesos.Offer, kf KeyFunc) Index {
 	if slice == nil {
 		return nil
 	}
@@ -111,10 +111,10 @@ func NewIndex(slice []Offer, kf KeyFunc) Index {
 
 // ToSlice returns a Slice from the offers in the Index.
 // The returned slice will contain shallow copies of the offers from the Index.
-func (s Index) ToSlice() (slice Slice) {
-	if sz := len(s); sz > 0 {
+func (offers Index) ToSlice() (slice Slice) {
+	if sz := len(offers); sz > 0 {
 		slice = make(Slice, 0, sz)
-		for _, offer := range s {
+		for _, offer := range offers {
 			slice = append(slice, *offer)
 		}
 	}

@@ -170,9 +170,9 @@ func (rs Ranges) Remove(removal Value_Range) Ranges {
 }
 
 // Compare assumes that both Ranges are already in sort-order.
-// Returns 0 if left and right are equivalent, -1 if left is a subset of right, or else 1
-func (left Ranges) Compare(right Ranges) int {
-	x, y, result := left.equiv(right)
+// Returns 0 if rs and right are equivalent, -1 if rs is a subset of right, or else 1
+func (rs Ranges) Compare(right Ranges) int {
+	x, y, result := rs.equiv(right)
 	if result {
 		return 0
 	}
@@ -193,20 +193,20 @@ func (left Ranges) Compare(right Ranges) int {
 }
 
 // Equivalent assumes that both Ranges are already in sort-order.
-func (left Ranges) Equivalent(right Ranges) (result bool) {
-	_, _, result = left.equiv(right)
+func (rs Ranges) Equivalent(right Ranges) (result bool) {
+	_, _, result = rs.equiv(right)
 	return
 }
 
 // Equivalent assumes that both Ranges are already in sort-order.
-func (left Ranges) equiv(right Ranges) (_, _ Ranges, _ bool) {
-	// we need to squash left and right but don't want to change the originals
-	switch len(left) {
+func (rs Ranges) equiv(right Ranges) (_, _ Ranges, _ bool) {
+	// we need to squash rs and right but don't want to change the originals
+	switch len(rs) {
 	case 0:
 	case 1:
-		left = Ranges{left[0]}
+		rs = Ranges{rs[0]}
 	default:
-		left = Ranges(append([]Value_Range{left[0], left[1]}, left[2:]...)).Sort().Squash()
+		rs = Ranges(append([]Value_Range{rs[0], rs[1]}, rs[2:]...)).Sort().Squash()
 	}
 	switch len(right) {
 	case 0:
@@ -215,7 +215,7 @@ func (left Ranges) equiv(right Ranges) (_, _ Ranges, _ bool) {
 	default:
 		right = Ranges(append([]Value_Range{right[0], right[1]}, right[2:]...)).Sort().Squash()
 	}
-	return left, right, (&Value_Ranges{Range: left}).Equal(&Value_Ranges{Range: right})
+	return rs, right, (&Value_Ranges{Range: rs}).Equal(&Value_Ranges{Range: right})
 }
 
 func (rs Ranges) Clone() Ranges {

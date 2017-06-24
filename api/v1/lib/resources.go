@@ -295,34 +295,34 @@ func (left *Resource) Validate() error {
 			return resourceErrorTypeIllegalScalar.Generate("value < 0")
 		}
 	case RANGES:
-		if r := left.GetRanges(); left.GetScalar() != nil || r == nil || left.GetSet() != nil {
+		r := left.GetRanges()
+		if left.GetScalar() != nil || r == nil || left.GetSet() != nil {
 			return resourceErrorTypeIllegalRanges.Generate(noReason)
-		} else {
-			for i, rr := range r.GetRange() {
-				// ensure that ranges are not inverted
-				if rr.Begin > rr.End {
-					return resourceErrorTypeIllegalRanges.Generate("begin > end")
-				}
-				// ensure that ranges don't overlap (but not necessarily squashed)
-				for j := i + 1; j < len(r.GetRange()); j++ {
-					r2 := r.GetRange()[j]
-					if rr.Begin <= r2.Begin && r2.Begin <= rr.End {
-						return resourceErrorTypeIllegalRanges.Generate("overlapping ranges")
-					}
+		}
+		for i, rr := range r.GetRange() {
+			// ensure that ranges are not inverted
+			if rr.Begin > rr.End {
+				return resourceErrorTypeIllegalRanges.Generate("begin > end")
+			}
+			// ensure that ranges don't overlap (but not necessarily squashed)
+			for j := i + 1; j < len(r.GetRange()); j++ {
+				r2 := r.GetRange()[j]
+				if rr.Begin <= r2.Begin && r2.Begin <= rr.End {
+					return resourceErrorTypeIllegalRanges.Generate("overlapping ranges")
 				}
 			}
 		}
 	case SET:
-		if s := left.GetSet(); left.GetScalar() != nil || left.GetRanges() != nil || s == nil {
+		s := left.GetSet()
+		if left.GetScalar() != nil || left.GetRanges() != nil || s == nil {
 			return resourceErrorTypeIllegalSet.Generate(noReason)
-		} else {
-			unique := make(map[string]struct{}, len(s.GetItem()))
-			for _, x := range s.GetItem() {
-				if _, found := unique[x]; found {
-					return resourceErrorTypeIllegalSet.Generate("duplicated elements")
-				}
-				unique[x] = struct{}{}
+		}
+		unique := make(map[string]struct{}, len(s.GetItem()))
+		for _, x := range s.GetItem() {
+			if _, found := unique[x]; found {
+				return resourceErrorTypeIllegalSet.Generate("duplicated elements")
 			}
+			unique[x] = struct{}{}
 		}
 	default:
 		return resourceErrorTypeUnsupportedType.Generate(noReason)
@@ -341,11 +341,11 @@ func (left *Resource) Validate() error {
 	return nil
 }
 
-func (left *Resource_ReservationInfo) Equivalent(right *Resource_ReservationInfo) bool {
-	if (left == nil) != (right == nil) {
+func (r *Resource_ReservationInfo) Equivalent(right *Resource_ReservationInfo) bool {
+	if (r == nil) != (right == nil) {
 		return false
 	}
-	return left.GetPrincipal() == right.GetPrincipal()
+	return r.GetPrincipal() == right.GetPrincipal()
 }
 
 func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
@@ -541,9 +541,8 @@ func (left *Resource) IsUnreserved() bool {
 func (left *Resource) IsReserved(role string) bool {
 	if role != "" {
 		return !left.IsUnreserved() && role == left.GetRole()
-	} else {
-		return !left.IsUnreserved()
 	}
+	return !left.IsUnreserved()
 }
 
 // IsDynamicallyReserved returns true if this resource has a non-nil reservation descriptor

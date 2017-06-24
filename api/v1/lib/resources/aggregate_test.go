@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
-	rez "github.com/mesos/mesos-go/api/v1/lib/extras/resources"
+	rez "github.com/mesos/mesos-go/api/v1/lib/resources"
 	. "github.com/mesos/mesos-go/api/v1/lib/resourcetest"
 )
 

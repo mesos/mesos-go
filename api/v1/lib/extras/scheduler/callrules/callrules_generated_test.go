@@ -139,13 +139,13 @@ func TestError(t *testing.T) {
 	}
 
 	msg = ErrorList{}.Error()
-	if msg != MsgNoErrors {
-		t.Errorf("expected %q instead of %q", MsgNoErrors, msg)
+	if msg != msgNoErrors {
+		t.Errorf("expected %q instead of %q", msgNoErrors, msg)
 	}
 
 	msg = ErrorList(nil).Error()
-	if msg != MsgNoErrors {
-		t.Errorf("expected %q instead of %q", MsgNoErrors, msg)
+	if msg != msgNoErrors {
+		t.Errorf("expected %q instead of %q", msgNoErrors, msg)
 	}
 }
 

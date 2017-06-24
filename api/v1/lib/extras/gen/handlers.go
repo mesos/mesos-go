@@ -47,7 +47,7 @@ func (f HandlerFunc) HandleEvent(ctx context.Context, e {{.Type "E"}}) error { r
 
 type noopHandler int
 
-func (_ noopHandler) HandleEvent(_ context.Context, _ {{.Type "E"}}) error { return nil }
+func (noopHandler) HandleEvent(_ context.Context, _ {{.Type "E"}}) error { return nil }
 
 // NoopHandler is a Handler that does nothing and always returns nil
 const NoopHandler = noopHandler(0)

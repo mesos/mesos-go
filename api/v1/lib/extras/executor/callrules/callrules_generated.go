@@ -75,18 +75,16 @@ func (rs Rules) Chain() Chain {
 	}
 }
 
-// It is the semantic equivalent of Rules{r1, r2, ..., rn}.Rule() and exists purely for convenience.
+// New is the semantic equivalent of Rules{r1, r2, ..., rn}.Eval and exists purely for convenience.
 func New(rs ...Rule) Rule { return Rules(rs).Eval }
 
-const (
-	MsgNoErrors = "no errors"
-)
+const msgNoErrors = "no errors"
 
 // Error implements error; returns the message of the first error in the list.
 func (es ErrorList) Error() string {
 	switch len(es) {
 	case 0:
-		return MsgNoErrors
+		return msgNoErrors
 	case 1:
 		return es[0].Error()
 	default:

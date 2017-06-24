@@ -1,72 +1,75 @@
 package offers
 
 import (
-	. "github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/resources"
 )
 
 type (
 	// Filter accepts or rejects a mesos Offer
 	Filter interface {
-		Accept(*Offer) bool
+		Accept(*mesos.Offer) bool
 	}
 
 	// FilterFunc returns true if the given Offer passes the filter
-	FilterFunc func(*Offer) bool
+	FilterFunc func(*mesos.Offer) bool
 )
 
 // Accept implements Filter for FilterFunc
-func (f FilterFunc) Accept(o *Offer) bool { return f(o) }
-
-func nilFilter(_ *Offer) bool { return true }
+func (f FilterFunc) Accept(o *mesos.Offer) bool {
+	if f == nil {
+		return true
+	}
+	return f(o)
+}
 
 func not(f Filter) Filter {
-	return FilterFunc(func(offer *Offer) bool { return !f.Accept(offer) })
+	return FilterFunc(func(offer *mesos.Offer) bool { return !f.Accept(offer) })
 }
 
 // ByHostname returns a Filter that accepts offers with a matching Hostname
 func ByHostname(hostname string) Filter {
 	if hostname == "" {
-		return FilterFunc(nilFilter)
+		return FilterFunc(nil)
 	}
-	return FilterFunc(func(o *Offer) bool {
+	return FilterFunc(func(o *mesos.Offer) bool {
 		return o.Hostname == hostname
 	})
 }
 
 // ByAttributes returns a Filter that accepts offers with an attribute set accepted by
 // the provided Attribute filter func.
-func ByAttributes(f func(attr []Attribute) bool) Filter {
+func ByAttributes(f func(attr []mesos.Attribute) bool) Filter {
 	if f == nil {
-		return FilterFunc(nilFilter)
+		return FilterFunc(nil)
 	}
-	return FilterFunc(func(o *Offer) bool {
+	return FilterFunc(func(o *mesos.Offer) bool {
 		return f(o.Attributes)
 	})
 }
 
-func ByExecutors(f func(exec []ExecutorID) bool) Filter {
+func ByExecutors(f func(exec []mesos.ExecutorID) bool) Filter {
 	if f == nil {
-		return FilterFunc(nilFilter)
+		return FilterFunc(nil)
 	}
-	return FilterFunc(func(o *Offer) bool {
+	return FilterFunc(func(o *mesos.Offer) bool {
 		return f(o.ExecutorIDs)
 	})
 }
 
-func ByUnavailability(f func(u *Unavailability) bool) Filter {
+func ByUnavailability(f func(u *mesos.Unavailability) bool) Filter {
 	if f == nil {
-		return FilterFunc(nilFilter)
+		return FilterFunc(nil)
 	}
-	return FilterFunc(func(o *Offer) bool {
+	return FilterFunc(func(o *mesos.Offer) bool {
 		return f(o.Unavailability)
 	})
 }
 
 // ContainsResources returns a filter that returns true if the Resources of an Offer
 // contain the wanted Resources.
-func ContainsResources(wanted Resources) Filter {
-	return FilterFunc(func(o *Offer) bool {
-		return resources.ContainsAll(resources.Flatten(Resources(o.Resources)), wanted)
+func ContainsResources(wanted mesos.Resources) Filter {
+	return FilterFunc(func(o *mesos.Offer) bool {
+		return resources.ContainsAll(resources.Flatten(mesos.Resources(o.Resources)), wanted)
 	})
 }

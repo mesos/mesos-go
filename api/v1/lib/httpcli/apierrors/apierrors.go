@@ -65,7 +65,7 @@ type Error struct {
 	message string // message briefly summarizes the nature of the error, possibly includes details from Mesos
 }
 
-// IsErrorCode returns true for all HTTP status codes that are not considered informational or successful.
+// IsError returns true for all HTTP status codes that are not considered informational or successful.
 func (code Code) IsError() bool {
 	return code >= 300
 }

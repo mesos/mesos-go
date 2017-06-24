@@ -18,7 +18,7 @@ func (o Opt) Apply(c *Client) (result Opt) {
 	return
 }
 
-// Merge generates a single Opt that applies all the functional options, in-order
+// Merged generates a single Opt that applies all the functional options, in-order
 func (opts Opts) Merged() Opt {
 	if len(opts) == 0 {
 		return nil

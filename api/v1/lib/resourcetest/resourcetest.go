@@ -8,7 +8,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib"
 )
 
-// functional resource modifier
+// Opt is a functional resource modifier
 type Opt func(*mesos.Resource)
 
 func Resource(opt ...Opt) (r mesos.Resource) {
@@ -44,7 +44,7 @@ func ValueSet(x ...string) Opt {
 
 type RangeOpt func(*mesos.Ranges)
 
-// "range" is a keyword, so I called this func "span": it naively appends a range to a Ranges collection
+// Span naively appends a range to a Ranges collection ("range" is a keyword, so I called this func "Span")
 func Span(bp, ep uint64) RangeOpt {
 	return func(rs *mesos.Ranges) {
 		*rs = append(*rs, mesos.Value_Range{Begin: bp, End: ep})

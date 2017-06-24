@@ -49,24 +49,24 @@ func Set(r *mesos.Resource) bool {
 	return r.GetType() == mesos.SET
 }
 
-func (rf Filter) Or(f Filter) Filter {
+func (f Filter) OrElse(other Filter) Filter {
 	return Filter(func(r *mesos.Resource) bool {
-		return rf(r) || f(r)
+		return f.Accepts(r) || other.Accepts(r)
 	})
 }
 
-func (rf Filter) And(f Filter) Filter {
-	if rf == nil {
-		if f == nil {
+func (f Filter) And(other Filter) Filter {
+	if f == nil {
+		if other == nil {
 			return nil
 		}
+		return other
+	}
+	if other == nil {
 		return f
 	}
-	if f == nil {
-		return rf
-	}
 	return Filter(func(r *mesos.Resource) bool {
-		return rf(r) && f(r)
+		return f.Accepts(r) && other.Accepts(r)
 	})
 }
 

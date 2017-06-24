@@ -25,8 +25,8 @@ type StateError string
 func (err StateError) Error() string { return string(err) }
 
 var (
-	errMissingMesosStreamId = httpcli.ProtocolError("missing Mesos-Stream-Id header expected with successful SUBSCRIBE")
-	errAlreadySubscribed    = StateError("already subscribed, cannot re-issue a SUBSCRIBE call")
+	errMissingStreamID   = httpcli.ProtocolError("missing Mesos-Stream-Id header expected with successful SUBSCRIBE")
+	errAlreadySubscribed = StateError("already subscribed, cannot re-issue a SUBSCRIBE call")
 )
 
 type (
@@ -131,7 +131,7 @@ func disconnectedFn(ctx context.Context, state *state) stateFn {
 					if mesosStreamID == "" {
 						resp.Body.Close()
 						resp = nil
-						err = errMissingMesosStreamId
+						err = errMissingStreamID
 					}
 				}
 				return

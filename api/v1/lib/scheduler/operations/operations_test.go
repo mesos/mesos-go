@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
-	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/operations"
 	rez "github.com/mesos/mesos-go/api/v1/lib/resources"
 	. "github.com/mesos/mesos-go/api/v1/lib/resourcetest"
+	"github.com/mesos/mesos-go/api/v1/lib/scheduler/operations"
 )
 
 func TestOpCreate(t *testing.T) {

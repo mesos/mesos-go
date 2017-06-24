@@ -105,7 +105,7 @@ func New(opts ...Opt) *Client {
 	return c
 }
 
-// URL returns the current Mesos API endpoint URL that the caller is set to invoke
+// Endpoint returns the current Mesos API endpoint URL that the caller is set to invoke
 func (c *Client) Endpoint() string {
 	return c.url
 }
@@ -237,7 +237,7 @@ func ErrorMapper(em ErrorMapperFunc) Opt {
 	}
 }
 
-// URL returns an Opt that sets a Client's URL.
+// Endpoint returns an Opt that sets a Client's URL.
 func Endpoint(rawurl string) Opt {
 	return func(c *Client) Opt {
 		old := c.url

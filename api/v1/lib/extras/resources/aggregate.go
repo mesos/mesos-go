@@ -110,8 +110,8 @@ func SumAndCompare(expected []mesos.Resource, resources ...mesos.Resource) bool 
 }
 
 type (
-	// functional option for resource flattening, via Flatten. Implementations are expected to type-narrow
-	// the given interface, matching against WithRole, WithReservation or both methods (see Role.Assign).
+	// FlattenOpt is a functional option for resource flattening, via Flatten. Implementations are expected to
+	// type-narrow the given interface, matching against WithRole, WithReservation or both methods (see Role.Assign)
 	FlattenOpt func(interface{})
 
 	flattenConfig struct {

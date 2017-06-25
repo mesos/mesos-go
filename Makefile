@@ -108,7 +108,7 @@ docker:
 	mkdir -p _output
 	test -n "$(UID)" || (echo 'ERROR: $$UID is undefined'; exit 1)
 	test -n "$(GID)" || (echo 'ERROR: $$GID is undefined'; exit 1)
-	docker run --rm -v "$$PWD":/src -w /go/src/$(GOPKG_DIRNAME) golang:1.6.1-alpine sh -c $(BUILD_STEP)' && '$(COPY_STEP)
+	docker run --rm -v "$$PWD":/src -w /go/src/$(GOPKG_DIRNAME) golang:1.8.1-alpine sh -c $(BUILD_STEP)' && '$(COPY_STEP)
 	make -C api/${MESOS_API_VERSION}/docker
 
 .PHONY: coveralls

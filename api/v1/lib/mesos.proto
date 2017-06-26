@@ -268,9 +268,19 @@ message FrameworkInfo {
   // the cost of a (usually small) increase in disk I/O.
   optional bool checkpoint = 5 [default = false];
 
-  // Used to group frameworks for allocation decisions, depending on
-  // the allocation policy being used.
+  // Roles are the entities to which allocations are made.
+  // The framework must have at least one role in order to
+  // be offered resources. Note that `role` is deprecated
+  // in favor of `roles` and only one of these fields must
+  // be used. Since we cannot distinguish between empty
+  // `roles` and the default unset `role`, we require that
+  // frameworks set the `MULTI_ROLE` capability if
+  // setting the `roles` field.
+  //
+  // NOTE: The implmentation for supporting `roles`
+  // is not complete, DO NOT USE the `roles` field.
   optional string role = 6 [default = "*"];
+  repeated string roles = 12; // EXPERIMENTAL.
 
   // Used to indicate the current host from which the scheduler is
   // registered in the Mesos Web UI. If set to an empty string Mesos
@@ -342,6 +352,18 @@ message FrameworkInfo {
       // failed over).
       PARTITION_AWARE = 5;
 
+      // This expresses the ability for the framework to be
+      // "multi-tenant" via using the newly introduced `roles`
+      // field, and examining `Offer.allocation_info` to determine
+      // which role the offers are being made to. We also
+      // expect that "single-tenant" schedulers eventually
+      // provide this and move away from the deprecated
+      // `role` field.
+      //
+      // NOTE: The implementation for supporting multiple
+      // roles is not complete, DO NOT USE THIS.
+      MULTI_ROLE = 6; // EXPERIMENTAL.
+
       option (gogoproto.goproto_enum_prefix) = true;
     }
 
@@ -359,6 +381,82 @@ message FrameworkInfo {
   // the framework). These labels are not interpreted by Mesos itself.
   // Labels should not contain duplicate key-value pairs.
   optional Labels labels = 11;
+}
+
+
+/**
+ * Describes a general non-interpreting non-killing check for a task or
+ * executor (or any arbitrary process/command). A type is picked by
+ * specifying one of the optional fields. Specifying more than one type
+ * is an error.
+ *
+ * NOTE: This API is unstable and the related feature is experimental.
+ */
+message CheckInfo {
+  enum Type {
+    UNKNOWN = 0;
+    COMMAND = 1;
+    HTTP = 2;
+
+    // TODO(alexr): Consider supporting TCP checks and custom user checks.
+    // The latter should probably be paired with a `data` field and
+    // complemented by a `data` response in `CheckStatusInfo`.
+
+    option (gogoproto.goproto_enum_prefix) = true;
+  }
+
+  // Describes a command check. If applicable, enters mount and/or network
+  // namespaces of the task.
+  message Command {
+    required CommandInfo command = 1 [(gogoproto.nullable) = false];
+  }
+
+  // Describes an HTTP check. Sends a GET request to
+  // http://<host>:port/path. Note that <host> is not configurable and is
+  // resolved automatically to 127.0.0.1.
+  message Http {
+    // Port to send the HTTP request.
+    required uint32 port = 1 [(gogoproto.nullable) = false];
+
+    // HTTP request path.
+    optional string path = 2;
+
+    // TODO(alexr): Add support for HTTP method. While adding POST
+    // and PUT is simple, supporting payload is more involved.
+
+    // TODO(alexr): Add support for custom HTTP headers.
+
+    // TODO(alexr): Consider adding an optional message to describe TLS
+    // options and thus enabling https. Such message might contain certificate
+    // validation, TLS version.
+  }
+
+  // The type of the check.
+  optional Type type = 1 [(gogoproto.nullable) = false];
+
+  // Command check.
+  optional Command command = 2;
+
+  // HTTP check.
+  optional Http http = 3 [(gogoproto.customname) = "HTTP"];
+
+  // Amount of time to wait to start checking the task after it
+  // transitions to `TASK_RUNNING` or `TASK_STARTING` if the latter
+  // is used by the executor.
+  optional double delay_seconds = 4 [default = 15.0];
+
+  // Interval between check attempts, i.e., amount of time to wait after
+  // the previous check finished or timed out to start the next check.
+  optional double interval_seconds = 5 [default = 10.0];
+
+  // Amount of time to wait for the check to complete. Zero means infinite
+  // timeout.
+  //
+  // After this timeout, the check attempt is aborted and no result is
+  // reported. Note that this may be considered a state change and hence
+  // may trigger a check status change delivery to the corresponding
+  // scheduler. See `CheckStatusInfo` for more details.
+  optional double timeout_seconds = 6 [default = 20.0];
 }
 
 
@@ -426,26 +524,36 @@ message HealthCheck {
   // allows doing something similar to the HTTP strategy but
   // encapsulates all the details in a single string field.
 
-  // Amount of time to wait until starting the health checks.
+  // Amount of time to wait to start health checking the task after it
+  // transitions to `TASK_RUNNING` or `TASK_STATING` if the latter is
+  // used by the executor.
   optional double delay_seconds = 2 [default = 15.0];
 
-  // Interval between health checks.
+  // Interval between health checks, i.e., amount of time to wait after
+  // the previous health check finished or timed out to start the next
+  // health check.
   optional double interval_seconds = 3 [default = 10.0];
 
-  // Amount of time to wait for the health check to complete.
+  // Amount of time to wait for the health check to complete. After this
+  // timeout, the health check is aborted and treated as a failure. Zero
+  // means infinite timeout.
   optional double timeout_seconds = 4 [default = 20.0];
 
-  // Number of consecutive failures until signaling kill task.
+  // Number of consecutive failures until the task is killed by the executor.
   optional uint32 consecutive_failures = 5 [default = 3];
 
-  // Amount of time to allow failed health checks since launch.
+  // Amount of time after the task is launched during which health check
+  // failures are ignored. Once the a check succeeds for the first time,
+  // the grace period does not apply anymore. Note that it includes
+  // `delay_seconds`, i.e., setting `grace_period_seconds` < `delay_seconds`
+  // has no effect.
   optional double grace_period_seconds = 6 [default = 10.0];
 
   // TODO(alexr): Add an optional `KillPolicy` that should be used
   // if the task is killed because of a health check failure.
 
   // The type of health check.
-  optional Type type = 8;
+  optional Type type = 8 [(gogoproto.nullable) = false];
 
   // Command health check.
   optional CommandInfo command = 7;
@@ -573,6 +681,9 @@ message ExecutorInfo {
     //
     // 2) Default executor only accepts a *single* `LAUNCH` or `LAUNCH_GROUP`
     //    offer operation.
+    //
+    // 3) If `container` is set, `container.type` must be `MESOS`
+    //    and `container.mesos.image` must not be set.
     DEFAULT = 1;
 
     // For frameworks that need custom functionality to run tasks, a `CUSTOM`
@@ -590,7 +701,7 @@ message ExecutorInfo {
   //
   // TODO(vinod): Add support for explicitly setting `type` to `DEFAULT `
   // in `LAUNCH` offer operation.
-  optional Type type = 15;
+  optional Type type = 15 [(gogoproto.nullable) = false];
 
   required ExecutorID executor_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ExecutorID"];
   optional FrameworkID framework_id = 8 [(gogoproto.customname) = "FrameworkID"]; // TODO(benh): Make this required.
@@ -693,6 +804,28 @@ message AgentInfo {
   repeated Resource resources = 3 [(gogoproto.nullable) = false];
   repeated Attribute attributes = 5 [(gogoproto.nullable) = false];
   optional AgentID id = 6 [(gogoproto.customname) = "ID"];
+
+  message Capability {
+    enum Type {
+      // This must be the first enum value in this list, to
+      // ensure that if 'type' is not set, the default value
+      // is UNKNOWN. This enables enum values to be added
+      // in a backwards-compatible way. See: MESOS-4997.
+      UNKNOWN = 0;
+
+      // This expresses the ability for the agent to be able
+      // to launch tasks of a 'multi-role' framework.
+      //
+      // NOTE: The implementation for supporting multiple
+      // roles is not complete, DO NOT USE THIS.
+      MULTI_ROLE = 1; // EXPERIMENTAL.
+
+      option (gogoproto.goproto_enum_prefix) = true;
+    }
+
+    // Enum fields should be optional, see: MESOS-4997.
+    optional Type type = 1 [(gogoproto.nullable) = false];
+  }
 }
 
 
@@ -784,6 +917,24 @@ message Resource {
   // that the resource is unreserved. Otherwise, the resource will only
   // be offered to frameworks that belong to this role.
   optional string role = 6 [default = "*"];
+
+  // This was initially introduced to support MULTI_ROLE capable
+  // frameworks. Frameworks that are not MULTI_ROLE capable can
+  // continue to assume that the offered resources are allocated
+  // to their role.
+  //
+  // NOTE: Implementation of this is in-progress, DO NOT USE!
+  message AllocationInfo {
+    // If set, this resource is allocated to a role. Note that in the
+    // future, this may be unset and the scheduler may be responsible
+    // for allocating to one of its roles.
+    optional string role = 1;
+
+    // In the future, we may add additional fields here, e.g. priority
+    // tier, type of allocation (quota / fair share).
+  }
+
+  optional AllocationInfo allocation_info = 11;
 
   message ReservationInfo {
     // Describes a dynamic reservation. A dynamic reservation is
@@ -883,7 +1034,7 @@ message Resource {
         required string root = 1 [(gogoproto.nullable) = false];
       }
 
-      required Type type = 1; // nullable since default of PATH == 1
+      required Type type = 1;
       optional Path path = 2;
       optional Mount mount = 3;
     }
@@ -1305,6 +1456,14 @@ message Offer {
   // `Unavailability` for more details.
   optional Unavailability unavailability = 9;
 
+  // An offer represents resources allocated to *one* of the
+  // roles managed by the scheduler. (Therefore, each
+  // `Offer.resources[i].allocation_info` will match the
+  // top level `Offer.allocation_info`).
+  //
+  // NOTE: Implementation of this is in-progress, DO NOT USE!
+  optional Resource.AllocationInfo allocation_info = 10;
+
   // Defines an operation that can be performed against offers.
   message Operation {
     enum Type {
@@ -1352,7 +1511,7 @@ message Offer {
       repeated Resource volumes = 1 [(gogoproto.nullable) = false];
     }
 
-    optional Type type = 1;
+    optional Type type = 1 [(gogoproto.nullable) = false];
     optional Launch launch = 2;
     optional LaunchGroup launch_group = 7;
     optional Reserve reserve = 3;
@@ -1438,8 +1597,18 @@ message TaskInfo {
   // the executor's responsibility to implement the health checking.
   optional HealthCheck health_check = 8;
 
+  // A general check for the task. Implemented for all built-in executors.
+  // For tasks that specify an executor, it is the executor's responsibility
+  // to implement checking support. Executors should (all built-in executors
+  // will) neither interpret nor act on the check's result.
+  //
+  // NOTE: Check support in built-in executors is experimental.
+  //
+  // TODO(alexr): Consider supporting multiple checks per task.
+  optional CheckInfo check = 13;
+
   // A kill policy for the task. Implemented for executor-less
-  // command-based and docker tasks. For tasks that specify other
+  // command-based and docker tasks. For tasks that specify an
   // executor, it is the executor's responsibility to implement
   // the kill policy.
   optional KillPolicy kill_policy = 12;
@@ -1547,7 +1716,7 @@ enum TaskState {
   TASK_KILLED = 4;   // TERMINAL: The task was killed by the executor.
   TASK_ERROR = 7;    // TERMINAL: The task description contains an error.
 
-  // In Mesos 1.2, this will only be sent when the framework does NOT
+  // In Mesos 1.3, this will only be sent when the framework does NOT
   // opt-in to the PARTITION_AWARE capability.
   TASK_LOST = 5;     // TERMINAL: The task failed but can be rescheduled.
 
@@ -1565,10 +1734,12 @@ enum TaskState {
   // may or may not still be running.
   TASK_UNREACHABLE = 10;
 
-  // The task was running on an agent that has been shutdown (e.g.,
-  // the agent become partitioned, rebooted, and then reconnected to
-  // the master; any tasks running before the reboot will transition
-  // from UNREACHABLE to GONE). The task is no longer running.
+  // The task is no longer running. This can occur if the agent has
+  // been terminated along with all of its tasks (e.g., the host that
+  // was running the agent was rebooted). It might also occur if the
+  // task was terminated due to an agent or containerizer error, or if
+  // the task was preempted by the QoS controller in an
+  // oversubscription scenario.
   TASK_GONE = 11;    // TERMINAL.
 
   // The task was running on an agent that the master cannot contact;
@@ -1585,6 +1756,49 @@ enum TaskState {
   // its metadata about the task. The task may or may not still be
   // running.
   TASK_UNKNOWN = 13;
+}
+
+
+/**
+* Describes the status of a check. Type and the corresponding field, i.e.,
+* `command` or `http` must be set. If the result of the check is not available
+* (e.g., the check timed out), these fields must contain empty messages, i.e.,
+* `exit_code` or `status_code` will be unset.
+*
+* NOTE: This API is unstable and the related feature is experimental.
+*/
+message CheckStatusInfo {
+  message Command {
+    // Exit code of a command check.
+    optional int32 exit_code = 1;
+  }
+
+  message Http {
+    // HTTP status code of an HTTP check.
+    optional uint32 status_code = 1;
+  }
+
+  // TODO(alexr): Consider adding a `data` field, which can contain, e.g.,
+  // truncated stdout/stderr output for command checks or HTTP response body
+  // for HTTP checks. Alternatively, it can be an even shorter `message` field
+  // containing the last line of stdout or Reason-Phrase of the status line of
+  // the HTTP response.
+
+  // The type of the check this status corresponds to.
+  optional CheckInfo.Type type = 1;
+
+  // Status of a command check.
+  optional Command command = 2;
+
+  // Status of an HTTP check.
+  optional Http http = 3 [(gogoproto.customname) = "HTTP"];
+
+  // TODO(alexr): Consider introducing a "last changed at" timestamp, since
+  // task status update's timestamp may not correspond to the last check's
+  // state, e.g., for reconciliation.
+
+  // TODO(alexr): Consider introducing a `reason` enum here to explicitly
+  // distinguish between completed, delayed, and timed out checks.
 }
 
 
@@ -1623,6 +1837,7 @@ message TaskStatus {
     REASON_GC_ERROR = 4;
     REASON_INVALID_FRAMEWORKID = 5;
     REASON_INVALID_OFFERS = 6;
+    REASON_IO_SWITCHBOARD_EXITED = 27;
     REASON_MASTER_DISCONNECTED = 7;
     REASON_RECONCILIATION = 9;
     REASON_RESOURCES_UNKNOWN = 18;
@@ -1630,6 +1845,7 @@ message TaskStatus {
     REASON_AGENT_REMOVED = 11;
     REASON_AGENT_RESTARTED = 12;
     REASON_AGENT_UNKNOWN = 13;
+    REASON_TASK_CHECK_STATUS_UPDATED = 28;
     REASON_TASK_GROUP_INVALID = 25;
     REASON_TASK_GROUP_UNAUTHORIZED = 26;
     REASON_TASK_INVALID = 14;
@@ -1658,10 +1874,22 @@ message TaskStatus {
   // to a valid RFC-4122 UUID if using the HTTP API.
   optional bytes uuid = 11 [(gogoproto.customname) = "UUID"];
 
-  // Describes whether the task has been determined to be healthy
-  // (true) or unhealthy (false) according to the HealthCheck field in
-  // the command info.
+  // Describes whether the task has been determined to be healthy (true) or
+  // unhealthy (false) according to the `health_check` field in `TaskInfo`.
   optional bool healthy = 8;
+
+  // Contains check status for the check specified in the corresponding
+  // `TaskInfo`. If no check has been specified, this field must be
+  // absent, otherwise it must be present even if the check status is
+  // not available yet. If the status update is triggered for a different
+  // reason than `REASON_TASK_CHECK_STATUS_UPDATED`, this field will contain
+  // the last known value.
+  //
+  // NOTE: A check-related task status update is triggered if and only if
+  // the value or presence of any field in `CheckStatusInfo` changes.
+  //
+  // NOTE: Check support in built-in executors is experimental.
+  optional CheckStatusInfo check_status = 15;
 
   // Labels are free-form key value pairs which are exposed through
   // master and agent endpoints. Labels will not be interpreted or
@@ -1706,7 +1934,10 @@ message Filters {
 message Environment {
   message Variable {
     required string name = 1 [(gogoproto.nullable) = false];
-    required string value = 2 [(gogoproto.nullable) = false];
+    // NOTE: The `value` field was made optional in Mesos 1.2 but it
+    // is currently enforced to be set. This constraint will be
+    // removed in a future version.
+    optional string value = 2;
   }
 
   repeated Variable variables = 1 [(gogoproto.nullable) = false];
@@ -1839,7 +2070,7 @@ message Image {
     optional Credential credential = 2;
   }
 
-  required Type type = 1; // nullable since the default APPC == 1
+  required Type type = 1;
 
   // Only one of the following image messages should be set to match
   // the type.
@@ -1922,7 +2153,7 @@ message Volume {
         option (gogoproto.goproto_enum_prefix) = true;
       }
 
-      optional Type type = 1;
+      optional Type type = 1 [(gogoproto.nullable) = false];
 
       // A path relative to the corresponding container's sandbox.
       // Note that upwards traversal (i.e. ../../abc) is not allowed.
@@ -2099,8 +2330,71 @@ message LinuxInfo {
 
 
 /**
+* Encapsulation for POSIX rlimits, see
+* http://pubs.opengroup.org/onlinepubs/009695399/functions/getrlimit.html.
+* Note that some types might only be defined for Linux.
+* We use a custom prefix to avoid conflict with existing system macros
+* (e.g., `RLIMIT_CPU` or `NOFILE`).
+*/
+message RLimitInfo {
+  message RLimit {
+    enum Type {
+      UNKNOWN = 0;
+      RLMT_AS = 1;
+      RLMT_CORE = 2;
+      RLMT_CPU = 3;
+      RLMT_DATA = 4;
+      RLMT_FSIZE = 5;
+      RLMT_LOCKS = 6;
+      RLMT_MEMLOCK = 7;
+      RLMT_MSGQUEUE = 8;
+      RLMT_NICE = 9;
+      RLMT_NOFILE = 10;
+      RLMT_NPROC = 11;
+      RLMT_RSS = 12;
+      RLMT_RTPRIO = 13;
+      RLMT_RTTIME = 14;
+      RLMT_SIGPENDING = 15;
+      RLMT_STACK = 16;
+      option (gogoproto.goproto_enum_prefix) = true;
+    }
+    optional Type type = 1 [(gogoproto.nullable) = false];
+
+    // Either both are set or both are not set.
+    // If both are not set, it represents unlimited.
+    // If both are set, we require `soft` <= `hard`.
+    optional uint64 hard = 2;
+    optional uint64 soft = 3;
+  }
+
+  repeated RLimit rlimits = 1 [(gogoproto.nullable) = false];
+}
+
+
+/**
+ * Describes the information about (pseudo) TTY that can
+ * be attached to a process running in a container.
+ */
+message TTYInfo {
+  message WindowSize {
+    required uint32 rows = 1 [(gogoproto.nullable) = false];
+    required uint32 columns = 2 [(gogoproto.nullable) = false];
+  }
+
+  optional WindowSize window_size = 1;
+}
+
+
+/**
  * Describes a container configuration and allows extensible
  * configurations for different container implementations.
+ *
+ * NOTE: `ContainerInfo` may be specified, e.g., by a task, even if no
+ * container image is provided. In this case neither `MesosInfo` nor
+ * `DockerInfo` is set, the required `type` must be `MESOS`. This is to
+ * address a case when a task without an image, e.g., a shell script
+ * with URIs, wants to use features originally designed for containers,
+ * for example custom network isolation via `NetworkInfo`.
  */
 message ContainerInfo {
   // All container implementation types.
@@ -2155,7 +2449,7 @@ message ContainerInfo {
     optional Image image = 1;
   }
 
-  required Type type = 1; // nullable since the default DOCKER == 1
+  required Type type = 1;
   repeated Volume volumes = 2 [(gogoproto.nullable) = false];
   optional string hostname = 4;
 
@@ -2170,6 +2464,12 @@ message ContainerInfo {
 
   // Linux specific information for the container.
   optional LinuxInfo linux_info = 8;
+
+  // (POSIX only) rlimits of the container.
+  optional RLimitInfo rlimit_info = 9;
+
+  // If specified a tty will be attached to the container entrypoint.
+  optional TTYInfo tty_info = 10 [(gogoproto.customname) = "TTYInfo"];
 }
 
 
@@ -2179,6 +2479,8 @@ message ContainerInfo {
  * TaskStatus message.
  */
 message ContainerStatus {
+  optional ContainerID container_id = 4 [(gogoproto.customname) = "ContainerID"];
+
   // This field can be reliably used to identify the container IP address.
   repeated NetworkInfo network_infos = 1 [(gogoproto.nullable) = false];
 

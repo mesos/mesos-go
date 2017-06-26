@@ -28,7 +28,7 @@ func TestDisconnectionDecoder(t *testing.T) {
 	// ERROR event triggers disconnect
 	latch.Reset()
 	errtype := scheduler.Event_ERROR
-	event := &scheduler.Event{Type: &errtype}
+	event := &scheduler.Event{Type: errtype}
 	decoder = encoding.DecoderFunc(func(um encoding.Unmarshaler) error { return nil })
 	d = disconnectionDecoder(decoder, latch.Close)
 	_ = d.Decode(event)
@@ -39,6 +39,7 @@ func TestDisconnectionDecoder(t *testing.T) {
 	// sanity: non-ERROR event does not trigger disconnect
 	latch.Reset()
 	errtype = scheduler.Event_SUBSCRIBED
+	event = &scheduler.Event{Type: errtype}
 	_ = d.Decode(event)
 	if latch.Closed() {
 		t.Error("disconnect func was unexpectedly called")

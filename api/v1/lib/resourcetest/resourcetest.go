@@ -94,7 +94,7 @@ func ReservedBy(principal string) *mesos.Resource_ReservationInfo {
 
 func Reserve(r mesos.Resources) *mesos.Offer_Operation {
 	return &mesos.Offer_Operation{
-		Type: mesos.Offer_Operation_RESERVE.Enum(),
+		Type: mesos.Offer_Operation_RESERVE,
 		Reserve: &mesos.Offer_Operation_Reserve{
 			Resources: r,
 		},
@@ -103,7 +103,7 @@ func Reserve(r mesos.Resources) *mesos.Offer_Operation {
 
 func Unreserve(r mesos.Resources) *mesos.Offer_Operation {
 	return &mesos.Offer_Operation{
-		Type: mesos.Offer_Operation_UNRESERVE.Enum(),
+		Type: mesos.Offer_Operation_UNRESERVE,
 		Unreserve: &mesos.Offer_Operation_Unreserve{
 			Resources: r,
 		},
@@ -112,7 +112,7 @@ func Unreserve(r mesos.Resources) *mesos.Offer_Operation {
 
 func Create(r mesos.Resources) *mesos.Offer_Operation {
 	return &mesos.Offer_Operation{
-		Type: mesos.Offer_Operation_CREATE.Enum(),
+		Type: mesos.Offer_Operation_CREATE,
 		Create: &mesos.Offer_Operation_Create{
 			Volumes: r,
 		},

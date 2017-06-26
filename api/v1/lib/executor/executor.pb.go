@@ -165,7 +165,7 @@ type Event struct {
 	// Type of the event, indicates which optional field below should be
 	// present if that type has a nested message definition.
 	// Enum fields should be optional, see: MESOS-4997.
-	Type         *Event_Type         `protobuf:"varint,1,opt,name=type,enum=mesos.executor.Event_Type" json:"type,omitempty"`
+	Type         Event_Type          `protobuf:"varint,1,opt,name=type,enum=mesos.executor.Event_Type" json:"type"`
 	Subscribed   *Event_Subscribed   `protobuf:"bytes,2,opt,name=subscribed" json:"subscribed,omitempty"`
 	Acknowledged *Event_Acknowledged `protobuf:"bytes,3,opt,name=acknowledged" json:"acknowledged,omitempty"`
 	Launch       *Event_Launch       `protobuf:"bytes,4,opt,name=launch" json:"launch,omitempty"`
@@ -179,8 +179,8 @@ func (m *Event) Reset()      { *m = Event{} }
 func (*Event) ProtoMessage() {}
 
 func (m *Event) GetType() Event_Type {
-	if m != nil && m.Type != nil {
-		return *m.Type
+	if m != nil {
+		return m.Type
 	}
 	return Event_UNKNOWN
 }
@@ -418,7 +418,7 @@ type Call struct {
 	// In case type is SUBSCRIBED, no message needs to be set.
 	// See comments on `Event::Type` above on the reasoning behind this
 	// field being optional.
-	Type      *Call_Type      `protobuf:"varint,3,opt,name=type,enum=mesos.executor.Call_Type" json:"type,omitempty"`
+	Type      Call_Type       `protobuf:"varint,3,opt,name=type,enum=mesos.executor.Call_Type" json:"type"`
 	Subscribe *Call_Subscribe `protobuf:"bytes,4,opt,name=subscribe" json:"subscribe,omitempty"`
 	Update    *Call_Update    `protobuf:"bytes,5,opt,name=update" json:"update,omitempty"`
 	Message   *Call_Message   `protobuf:"bytes,6,opt,name=message" json:"message,omitempty"`
@@ -442,8 +442,8 @@ func (m *Call) GetFrameworkID() mesos.FrameworkID {
 }
 
 func (m *Call) GetType() Call_Type {
-	if m != nil && m.Type != nil {
-		return *m.Type
+	if m != nil {
+		return m.Type
 	}
 	return Call_UNKNOWN
 }
@@ -573,13 +573,7 @@ func (this *Event) VerboseEqual(that interface{}) error {
 	} else if this == nil {
 		return fmt.Errorf("that is type *Eventbut is not nil && this == nil")
 	}
-	if this.Type != nil && that1.Type != nil {
-		if *this.Type != *that1.Type {
-			return fmt.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
-		}
-	} else if this.Type != nil {
-		return fmt.Errorf("this.Type == nil && that.Type != nil")
-	} else if that1.Type != nil {
+	if this.Type != that1.Type {
 		return fmt.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
 	if !this.Subscribed.Equal(that1.Subscribed) {
@@ -625,13 +619,7 @@ func (this *Event) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Type != nil && that1.Type != nil {
-		if *this.Type != *that1.Type {
-			return false
-		}
-	} else if this.Type != nil {
-		return false
-	} else if that1.Type != nil {
+	if this.Type != that1.Type {
 		return false
 	}
 	if !this.Subscribed.Equal(that1.Subscribed) {
@@ -1063,13 +1051,7 @@ func (this *Call) VerboseEqual(that interface{}) error {
 	if !this.FrameworkID.Equal(&that1.FrameworkID) {
 		return fmt.Errorf("FrameworkID this(%v) Not Equal that(%v)", this.FrameworkID, that1.FrameworkID)
 	}
-	if this.Type != nil && that1.Type != nil {
-		if *this.Type != *that1.Type {
-			return fmt.Errorf("Type this(%v) Not Equal that(%v)", *this.Type, *that1.Type)
-		}
-	} else if this.Type != nil {
-		return fmt.Errorf("this.Type == nil && that.Type != nil")
-	} else if that1.Type != nil {
+	if this.Type != that1.Type {
 		return fmt.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
 	if !this.Subscribe.Equal(that1.Subscribe) {
@@ -1109,13 +1091,7 @@ func (this *Call) Equal(that interface{}) bool {
 	if !this.FrameworkID.Equal(&that1.FrameworkID) {
 		return false
 	}
-	if this.Type != nil && that1.Type != nil {
-		if *this.Type != *that1.Type {
-			return false
-		}
-	} else if this.Type != nil {
-		return false
-	} else if that1.Type != nil {
+	if this.Type != that1.Type {
 		return false
 	}
 	if !this.Subscribe.Equal(that1.Subscribe) {
@@ -1311,9 +1287,7 @@ func (this *Event) GoString() string {
 	}
 	s := make([]string, 0, 12)
 	s = append(s, "&executor.Event{")
-	if this.Type != nil {
-		s = append(s, "Type: "+valueToGoStringExecutor(this.Type, "executor.Event_Type")+",\n")
-	}
+	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
 	if this.Subscribed != nil {
 		s = append(s, "Subscribed: "+fmt.Sprintf("%#v", this.Subscribed)+",\n")
 	}
@@ -1429,9 +1403,7 @@ func (this *Call) GoString() string {
 	s = append(s, "&executor.Call{")
 	s = append(s, "ExecutorID: "+strings.Replace(this.ExecutorID.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "FrameworkID: "+strings.Replace(this.FrameworkID.GoString(), `&`, ``, 1)+",\n")
-	if this.Type != nil {
-		s = append(s, "Type: "+valueToGoStringExecutor(this.Type, "executor.Call_Type")+",\n")
-	}
+	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
 	if this.Subscribe != nil {
 		s = append(s, "Subscribe: "+fmt.Sprintf("%#v", this.Subscribe)+",\n")
 	}
@@ -1521,11 +1493,9 @@ func (m *Event) MarshalTo(data []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Type != nil {
-		data[i] = 0x8
-		i++
-		i = encodeVarintExecutor(data, i, uint64(*m.Type))
-	}
+	data[i] = 0x8
+	i++
+	i = encodeVarintExecutor(data, i, uint64(m.Type))
 	if m.Subscribed != nil {
 		data[i] = 0x12
 		i++
@@ -1852,11 +1822,9 @@ func (m *Call) MarshalTo(data []byte) (int, error) {
 		return 0, err
 	}
 	i += n18
-	if m.Type != nil {
-		data[i] = 0x18
-		i++
-		i = encodeVarintExecutor(data, i, uint64(*m.Type))
-	}
+	data[i] = 0x18
+	i++
+	i = encodeVarintExecutor(data, i, uint64(m.Type))
 	if m.Subscribe != nil {
 		data[i] = 0x22
 		i++
@@ -2013,10 +1981,7 @@ func encodeVarintExecutor(data []byte, offset int, v uint64) int {
 }
 func NewPopulatedEvent(r randyExecutor, easy bool) *Event {
 	this := &Event{}
-	if r.Intn(10) != 0 {
-		v1 := Event_Type([]int32{0, 1, 2, 8, 3, 4, 5, 6, 7}[r.Intn(9)])
-		this.Type = &v1
-	}
+	this.Type = Event_Type([]int32{0, 1, 2, 8, 3, 4, 5, 6, 7}[r.Intn(9)])
 	if r.Intn(10) != 0 {
 		this.Subscribed = NewPopulatedEvent_Subscribed(r, easy)
 	}
@@ -2045,12 +2010,12 @@ func NewPopulatedEvent(r randyExecutor, easy bool) *Event {
 
 func NewPopulatedEvent_Subscribed(r randyExecutor, easy bool) *Event_Subscribed {
 	this := &Event_Subscribed{}
-	v2 := mesos.NewPopulatedExecutorInfo(r, easy)
-	this.ExecutorInfo = *v2
-	v3 := mesos.NewPopulatedFrameworkInfo(r, easy)
-	this.FrameworkInfo = *v3
-	v4 := mesos.NewPopulatedAgentInfo(r, easy)
-	this.AgentInfo = *v4
+	v1 := mesos.NewPopulatedExecutorInfo(r, easy)
+	this.ExecutorInfo = *v1
+	v2 := mesos.NewPopulatedFrameworkInfo(r, easy)
+	this.FrameworkInfo = *v2
+	v3 := mesos.NewPopulatedAgentInfo(r, easy)
+	this.AgentInfo = *v3
 	if r.Intn(10) != 0 {
 		this.ContainerID = mesos.NewPopulatedContainerID(r, easy)
 	}
@@ -2061,8 +2026,8 @@ func NewPopulatedEvent_Subscribed(r randyExecutor, easy bool) *Event_Subscribed 
 
 func NewPopulatedEvent_Launch(r randyExecutor, easy bool) *Event_Launch {
 	this := &Event_Launch{}
-	v5 := mesos.NewPopulatedTaskInfo(r, easy)
-	this.Task = *v5
+	v4 := mesos.NewPopulatedTaskInfo(r, easy)
+	this.Task = *v4
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -2070,8 +2035,8 @@ func NewPopulatedEvent_Launch(r randyExecutor, easy bool) *Event_Launch {
 
 func NewPopulatedEvent_LaunchGroup(r randyExecutor, easy bool) *Event_LaunchGroup {
 	this := &Event_LaunchGroup{}
-	v6 := mesos.NewPopulatedTaskGroupInfo(r, easy)
-	this.TaskGroup = *v6
+	v5 := mesos.NewPopulatedTaskGroupInfo(r, easy)
+	this.TaskGroup = *v5
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -2079,8 +2044,8 @@ func NewPopulatedEvent_LaunchGroup(r randyExecutor, easy bool) *Event_LaunchGrou
 
 func NewPopulatedEvent_Kill(r randyExecutor, easy bool) *Event_Kill {
 	this := &Event_Kill{}
-	v7 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v7
+	v6 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v6
 	if r.Intn(10) != 0 {
 		this.KillPolicy = mesos.NewPopulatedKillPolicy(r, easy)
 	}
@@ -2091,11 +2056,11 @@ func NewPopulatedEvent_Kill(r randyExecutor, easy bool) *Event_Kill {
 
 func NewPopulatedEvent_Acknowledged(r randyExecutor, easy bool) *Event_Acknowledged {
 	this := &Event_Acknowledged{}
-	v8 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v8
-	v9 := r.Intn(100)
-	this.UUID = make([]byte, v9)
-	for i := 0; i < v9; i++ {
+	v7 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v7
+	v8 := r.Intn(100)
+	this.UUID = make([]byte, v8)
+	for i := 0; i < v8; i++ {
 		this.UUID[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -2105,9 +2070,9 @@ func NewPopulatedEvent_Acknowledged(r randyExecutor, easy bool) *Event_Acknowled
 
 func NewPopulatedEvent_Message(r randyExecutor, easy bool) *Event_Message {
 	this := &Event_Message{}
-	v10 := r.Intn(100)
-	this.Data = make([]byte, v10)
-	for i := 0; i < v10; i++ {
+	v9 := r.Intn(100)
+	this.Data = make([]byte, v9)
+	for i := 0; i < v9; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -2125,14 +2090,11 @@ func NewPopulatedEvent_Error(r randyExecutor, easy bool) *Event_Error {
 
 func NewPopulatedCall(r randyExecutor, easy bool) *Call {
 	this := &Call{}
-	v11 := mesos.NewPopulatedExecutorID(r, easy)
-	this.ExecutorID = *v11
-	v12 := mesos.NewPopulatedFrameworkID(r, easy)
-	this.FrameworkID = *v12
-	if r.Intn(10) != 0 {
-		v13 := Call_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
-		this.Type = &v13
-	}
+	v10 := mesos.NewPopulatedExecutorID(r, easy)
+	this.ExecutorID = *v10
+	v11 := mesos.NewPopulatedFrameworkID(r, easy)
+	this.FrameworkID = *v11
+	this.Type = Call_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
 	if r.Intn(10) != 0 {
 		this.Subscribe = NewPopulatedCall_Subscribe(r, easy)
 	}
@@ -2150,19 +2112,19 @@ func NewPopulatedCall(r randyExecutor, easy bool) *Call {
 func NewPopulatedCall_Subscribe(r randyExecutor, easy bool) *Call_Subscribe {
 	this := &Call_Subscribe{}
 	if r.Intn(10) != 0 {
-		v14 := r.Intn(10)
-		this.UnacknowledgedTasks = make([]mesos.TaskInfo, v14)
-		for i := 0; i < v14; i++ {
-			v15 := mesos.NewPopulatedTaskInfo(r, easy)
-			this.UnacknowledgedTasks[i] = *v15
+		v12 := r.Intn(10)
+		this.UnacknowledgedTasks = make([]mesos.TaskInfo, v12)
+		for i := 0; i < v12; i++ {
+			v13 := mesos.NewPopulatedTaskInfo(r, easy)
+			this.UnacknowledgedTasks[i] = *v13
 		}
 	}
 	if r.Intn(10) != 0 {
-		v16 := r.Intn(10)
-		this.UnacknowledgedUpdates = make([]Call_Update, v16)
-		for i := 0; i < v16; i++ {
-			v17 := NewPopulatedCall_Update(r, easy)
-			this.UnacknowledgedUpdates[i] = *v17
+		v14 := r.Intn(10)
+		this.UnacknowledgedUpdates = make([]Call_Update, v14)
+		for i := 0; i < v14; i++ {
+			v15 := NewPopulatedCall_Update(r, easy)
+			this.UnacknowledgedUpdates[i] = *v15
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -2172,8 +2134,8 @@ func NewPopulatedCall_Subscribe(r randyExecutor, easy bool) *Call_Subscribe {
 
 func NewPopulatedCall_Update(r randyExecutor, easy bool) *Call_Update {
 	this := &Call_Update{}
-	v18 := mesos.NewPopulatedTaskStatus(r, easy)
-	this.Status = *v18
+	v16 := mesos.NewPopulatedTaskStatus(r, easy)
+	this.Status = *v16
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -2181,9 +2143,9 @@ func NewPopulatedCall_Update(r randyExecutor, easy bool) *Call_Update {
 
 func NewPopulatedCall_Message(r randyExecutor, easy bool) *Call_Message {
 	this := &Call_Message{}
-	v19 := r.Intn(100)
-	this.Data = make([]byte, v19)
-	for i := 0; i < v19; i++ {
+	v17 := r.Intn(100)
+	this.Data = make([]byte, v17)
+	for i := 0; i < v17; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -2210,9 +2172,9 @@ func randUTF8RuneExecutor(r randyExecutor) rune {
 	return rune(ru + 61)
 }
 func randStringExecutor(r randyExecutor) string {
-	v20 := r.Intn(100)
-	tmps := make([]rune, v20)
-	for i := 0; i < v20; i++ {
+	v18 := r.Intn(100)
+	tmps := make([]rune, v18)
+	for i := 0; i < v18; i++ {
 		tmps[i] = randUTF8RuneExecutor(r)
 	}
 	return string(tmps)
@@ -2234,11 +2196,11 @@ func randFieldExecutor(data []byte, r randyExecutor, fieldNumber int, wire int) 
 	switch wire {
 	case 0:
 		data = encodeVarintPopulateExecutor(data, uint64(key))
-		v21 := r.Int63()
+		v19 := r.Int63()
 		if r.Intn(2) == 0 {
-			v21 *= -1
+			v19 *= -1
 		}
-		data = encodeVarintPopulateExecutor(data, uint64(v21))
+		data = encodeVarintPopulateExecutor(data, uint64(v19))
 	case 1:
 		data = encodeVarintPopulateExecutor(data, uint64(key))
 		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -2266,9 +2228,7 @@ func encodeVarintPopulateExecutor(data []byte, v uint64) []byte {
 func (m *Event) Size() (n int) {
 	var l int
 	_ = l
-	if m.Type != nil {
-		n += 1 + sovExecutor(uint64(*m.Type))
-	}
+	n += 1 + sovExecutor(uint64(m.Type))
 	if m.Subscribed != nil {
 		l = m.Subscribed.Size()
 		n += 1 + l + sovExecutor(uint64(l))
@@ -2381,9 +2341,7 @@ func (m *Call) Size() (n int) {
 	n += 1 + l + sovExecutor(uint64(l))
 	l = m.FrameworkID.Size()
 	n += 1 + l + sovExecutor(uint64(l))
-	if m.Type != nil {
-		n += 1 + sovExecutor(uint64(*m.Type))
-	}
+	n += 1 + sovExecutor(uint64(m.Type))
 	if m.Subscribe != nil {
 		l = m.Subscribe.Size()
 		n += 1 + l + sovExecutor(uint64(l))
@@ -2453,7 +2411,7 @@ func (this *Event) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Event{`,
-		`Type:` + valueToStringExecutor(this.Type) + `,`,
+		`Type:` + fmt.Sprintf("%v", this.Type) + `,`,
 		`Subscribed:` + strings.Replace(fmt.Sprintf("%v", this.Subscribed), "Event_Subscribed", "Event_Subscribed", 1) + `,`,
 		`Acknowledged:` + strings.Replace(fmt.Sprintf("%v", this.Acknowledged), "Event_Acknowledged", "Event_Acknowledged", 1) + `,`,
 		`Launch:` + strings.Replace(fmt.Sprintf("%v", this.Launch), "Event_Launch", "Event_Launch", 1) + `,`,
@@ -2547,7 +2505,7 @@ func (this *Call) String() string {
 	s := strings.Join([]string{`&Call{`,
 		`ExecutorID:` + strings.Replace(strings.Replace(this.ExecutorID.String(), "ExecutorID", "mesos.ExecutorID", 1), `&`, ``, 1) + `,`,
 		`FrameworkID:` + strings.Replace(strings.Replace(this.FrameworkID.String(), "FrameworkID", "mesos.FrameworkID", 1), `&`, ``, 1) + `,`,
-		`Type:` + valueToStringExecutor(this.Type) + `,`,
+		`Type:` + fmt.Sprintf("%v", this.Type) + `,`,
 		`Subscribe:` + strings.Replace(fmt.Sprintf("%v", this.Subscribe), "Call_Subscribe", "Call_Subscribe", 1) + `,`,
 		`Update:` + strings.Replace(fmt.Sprintf("%v", this.Update), "Call_Update", "Call_Update", 1) + `,`,
 		`Message:` + strings.Replace(fmt.Sprintf("%v", this.Message), "Call_Message", "Call_Message", 1) + `,`,
@@ -2627,7 +2585,7 @@ func (m *Event) Unmarshal(data []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}
-			var v Event_Type
+			m.Type = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowExecutor
@@ -2637,12 +2595,11 @@ func (m *Event) Unmarshal(data []byte) error {
 				}
 				b := data[iNdEx]
 				iNdEx++
-				v |= (Event_Type(b) & 0x7F) << shift
+				m.Type |= (Event_Type(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.Type = &v
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Subscribed", wireType)
@@ -3749,7 +3706,7 @@ func (m *Call) Unmarshal(data []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}
-			var v Call_Type
+			m.Type = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowExecutor
@@ -3759,12 +3716,11 @@ func (m *Call) Unmarshal(data []byte) error {
 				}
 				b := data[iNdEx]
 				iNdEx++
-				v |= (Call_Type(b) & 0x7F) << shift
+				m.Type |= (Call_Type(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			m.Type = &v
 		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Subscribe", wireType)

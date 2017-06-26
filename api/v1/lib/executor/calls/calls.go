@@ -22,7 +22,7 @@ func Executor(id string) executor.CallOpt {
 // Subscribe returns an executor call with the given parameters.
 func Subscribe(unackdTasks []mesos.TaskInfo, unackdUpdates []executor.Call_Update) *executor.Call {
 	return &executor.Call{
-		Type: executor.Call_SUBSCRIBE.Enum(),
+		Type: executor.Call_SUBSCRIBE,
 		Subscribe: &executor.Call_Subscribe{
 			UnacknowledgedTasks:   unackdTasks,
 			UnacknowledgedUpdates: unackdUpdates,
@@ -33,7 +33,7 @@ func Subscribe(unackdTasks []mesos.TaskInfo, unackdUpdates []executor.Call_Updat
 // Update returns an executor call with the given parameters.
 func Update(status mesos.TaskStatus) *executor.Call {
 	return &executor.Call{
-		Type: executor.Call_UPDATE.Enum(),
+		Type: executor.Call_UPDATE,
 		Update: &executor.Call_Update{
 			Status: status,
 		},
@@ -43,7 +43,7 @@ func Update(status mesos.TaskStatus) *executor.Call {
 // Message returns an executor call with the given parameters.
 func Message(data []byte) *executor.Call {
 	return &executor.Call{
-		Type: executor.Call_MESSAGE.Enum(),
+		Type: executor.Call_MESSAGE,
 		Message: &executor.Call_Message{
 			Data: data,
 		},

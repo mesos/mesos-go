@@ -6,7 +6,9 @@ type CallOpt func(*Call)
 // With applies the given CallOpts to the receiving Call, returning it.
 func (c *Call) With(opts ...CallOpt) *Call {
 	for _, opt := range opts {
-		opt(c)
+		if opt != nil {
+			opt(c)
+		}
 	}
 	return c
 }
@@ -17,7 +19,9 @@ type ReconcileOpt func(*Call_Reconcile)
 // With applies the given ReconcileOpt's to the receiving Call_Reconcile, returning it.
 func (r *Call_Reconcile) With(opts ...ReconcileOpt) *Call_Reconcile {
 	for _, opt := range opts {
-		opt(r)
+		if opt != nil {
+			opt(r)
+		}
 	}
 	return r
 }

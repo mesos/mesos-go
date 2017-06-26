@@ -88,9 +88,7 @@ func main() {
 			Shell: proto.Bool(false),
 		},
 	}
-	if len(args) > 1 {
-		taskPrototype.Command.Arguments = args[1:]
-	}
+	taskPrototype.Command.Arguments = args
 	if err := run(); err != nil {
 		if exitErr, ok := err.(ExitError); ok {
 			if code := int(exitErr); code != 0 {

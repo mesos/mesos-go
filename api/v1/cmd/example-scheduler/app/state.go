@@ -29,6 +29,7 @@ func prepareExecutorInfo(
 	if execImage != "" {
 		// Create mesos custom executor
 		return &mesos.ExecutorInfo{
+			Type:       mesos.ExecutorInfo_CUSTOM,
 			ExecutorID: mesos.ExecutorID{Value: "default"},
 			Name:       proto.String("Test Executor"),
 			Command: mesos.CommandInfo{
@@ -73,6 +74,7 @@ func prepareExecutorInfo(
 
 		// Create mesos custom executor
 		return &mesos.ExecutorInfo{
+			Type:       mesos.ExecutorInfo_CUSTOM,
 			ExecutorID: mesos.ExecutorID{Value: "default"},
 			Name:       proto.String("Test Executor"),
 			Command: mesos.CommandInfo{

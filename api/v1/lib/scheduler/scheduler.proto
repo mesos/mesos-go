@@ -178,7 +178,7 @@ message Event {
   // Type of the event, indicates which optional field below should be
   // present if that type has a nested message definition.
   // Enum fields should be optional, see: MESOS-4997.
-  optional Type type = 1;
+  optional Type type = 1 [(gogoproto.nullable) = false];
 
   optional Subscribed subscribed = 2;
   optional Offers offers = 3;
@@ -291,6 +291,13 @@ message Call {
     optional Filters filters = 2;
   }
 
+  // Revive offers for a specified role. If role is unset, the
+  // `REVIVE` call will revive offers for all of the roles the
+  // framework is subscribed to.
+  message Revive {
+    optional string role = 1;
+  }
+
   // Kills a specific task. If the scheduler has a custom executor,
   // the kill is forwarded to the executor and it is up to the
   // executor to kill the task and send a TASK_KILLED (or TASK_FAILED)
@@ -341,11 +348,11 @@ message Call {
   // Allows the scheduler to query the status for non-terminal tasks.
   // This causes the master to send back the latest task status for
   // each task in 'tasks', if possible. Tasks that are no longer known
-  // will result in a TASK_LOST update. If 'statuses' is empty, then
-  // the master will send the latest status for each task currently
-  // known.
+  // will result in a TASK_LOST, TASK_UNKNOWN, or TASK_UNREACHABLE update.
+  // If 'tasks' is empty, then the master will send the latest status
+  // for each task currently known.
   message Reconcile {
-   // TODO(vinod): Support arbitrary queries than just state of tasks.
+    // TODO(vinod): Support arbitrary queries than just state of tasks.
     message Task {
       required TaskID task_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "TaskID"];
       optional AgentID agent_id = 2 [(gogoproto.customname) = "AgentID"];
@@ -373,6 +380,13 @@ message Call {
     repeated mesos.Request requests = 1 [(gogoproto.nullable) = false];
   }
 
+  // Suppress offers for a specified role. If role is unset, the
+  // `SUPPRESS` call will suppress offers for all of the roles the
+  // framework is subscribed to.
+  message Suppress {
+    optional string role = 1;
+  }
+
   // Identifies who generated this call. Master assigns a framework id
   // when a new scheduler subscribes for the first time. Once assigned,
   // the scheduler must set the 'framework_id' here and within its
@@ -384,17 +398,19 @@ message Call {
   // Type of the call, indicates which optional field below should be
   // present if that type has a nested message definition.
   // See comments on `Event::Type` above on the reasoning behind this field being optional.
-  optional Type type = 2;
+  optional Type type = 2 [(gogoproto.nullable) = false];
 
   optional Subscribe subscribe = 3;
   optional Accept accept = 4;
   optional Decline decline = 5;
   optional AcceptInverseOffers accept_inverse_offers = 13;
   optional DeclineInverseOffers decline_inverse_offers = 14;
+  optional Revive revive = 15;
   optional Kill kill = 6;
   optional Shutdown shutdown = 7;
   optional Acknowledge acknowledge = 8;
   optional Reconcile reconcile = 9;
   optional Message message = 10;
   optional Request request = 11;
+  optional Suppress suppress = 16;
 }

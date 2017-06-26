@@ -200,9 +200,12 @@ func OpDestroy(rs ...mesos.Resource) mesos.Offer_Operation {
 	}
 }
 
-// Role decorates Revive and Suppress calls
+// Role decorates Revive and Suppress calls; panics for any other call type.
 func Role(role string) scheduler.CallOpt {
 	return func(c *scheduler.Call) {
+		if c == nil {
+			return
+		}
 		switch c.Type {
 		case scheduler.Call_REVIVE:
 			if c.Revive == nil {

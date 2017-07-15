@@ -59,6 +59,7 @@ protobufs: protobufs-requirements clean-protobufs
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. *.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./scheduler/*.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./executor/*.proto)
+	(cd tests/int64support; protoc --proto_path="${PROTO_PATH}" --gogo_out=. *.proto)
 
 .PHONY: clean-protobufs
 clean-protobufs:
@@ -69,6 +70,7 @@ ffjson: clean-ffjson
 	(cd ${API_PKG}; ffjson *.pb.go)
 	(cd ${API_PKG}; ffjson scheduler/*.pb.go)
 	(cd ${API_PKG}; ffjson executor/*.pb.go)
+	(cd tests/int64support; ffjson *.pb.go)
 
 .PHONY: clean-ffjson
 clean-ffjson:

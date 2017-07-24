@@ -3,59 +3,59 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "2I4udA/dza74M1bOgQuEPz103gw=",
+			"checksumSHA1": "PEwAbbGe3XH+ts1Pr5iZGEH6gHU=",
 			"path": "github.com/gogo/protobuf",
-			"revision": "2093b57e5ca2ccbee4626814100bc1aada691b18",
-			"revisionTime": "2015-09-16T11:01:26Z",
+			"revision": "7b6c6391c4ff245962047fc1e2c6e08b1cdfa0e8",
+			"revisionTime": "2017-07-20T14:48:05Z",
 			"tree": true
 		},
 		{
-			"checksumSHA1": "ANHyMfOc1XnqDnlxNipBdpFE1qw=",
+			"checksumSHA1": "tbct1d7/kPoa7bOEEX9HvvddUoc=",
 			"path": "github.com/pquerna/ffjson",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
-			"checksumSHA1": "sKfYQurIIt+ldKDDF7TRbg9w20I=",
+			"checksumSHA1": "sLu2d9DEcqaat6Oqnx1xR8ow2vI=",
 			"path": "github.com/pquerna/ffjson/ffjson",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
-			"checksumSHA1": "D1JbeyQhazKyXOokR5w7XrHWWw8=",
+			"checksumSHA1": "NizrNME2NimBRFA7WnzwlXPzsL4=",
 			"path": "github.com/pquerna/ffjson/fflib/v1",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
 			"checksumSHA1": "iZHmHPBzKJiS6ROUaVOf4DVOhbA=",
 			"path": "github.com/pquerna/ffjson/fflib/v1/internal",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
-			"checksumSHA1": "sMg/rF7FgETLcPfuY03W6HxxAxU=",
+			"checksumSHA1": "yDoWuIXFYv7f5/tucTsmbeRlzSw=",
 			"path": "github.com/pquerna/ffjson/generator",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
-			"checksumSHA1": "pJXmT5p+K2OjK+EZLfDEi7Tlmqs=",
+			"checksumSHA1": "kF67mAiGgp57cbJrS4vRlXLOEO0=",
 			"path": "github.com/pquerna/ffjson/inception",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
 			"checksumSHA1": "B6BfB1HN0tWhL+lfxPCwPDmmGUY=",
 			"path": "github.com/pquerna/ffjson/shared",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
 			"checksumSHA1": "Hkgn6CB/rRe9Xv1iMo5oR8mu9qI=",
 			"path": "github.com/pquerna/ffjson/tests",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
 			"checksumSHA1": "9ds+F4SZZH38NonMOWwUZIfDplA=",
@@ -66,14 +66,14 @@
 		{
 			"checksumSHA1": "JBFCnQcKZZt155shF2Xl341sE28=",
 			"path": "github.com/pquerna/ffjson/tests/go.stripe/base",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
 			"checksumSHA1": "Rtg8tJ3viF2y1ks/IW12iqOWsi8=",
 			"path": "github.com/pquerna/ffjson/tests/go.stripe/ff",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
 			"checksumSHA1": "5trMkk7DX5UlFS3FkhUX02q3fUI=",
@@ -84,14 +84,14 @@
 		{
 			"checksumSHA1": "BJiY26InB05iEXtkOCL9qRGu7Ks=",
 			"path": "github.com/pquerna/ffjson/tests/goser/base",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
 			"checksumSHA1": "MsQb4xLdf80D1o6TcmLzseK2ViY=",
 			"path": "github.com/pquerna/ffjson/tests/goser/ff",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
 			"checksumSHA1": "T6wzPvHL1B7YSXfoY30Cp0whScU=",
@@ -102,8 +102,8 @@
 		{
 			"checksumSHA1": "BDSEuYCBRc25b41GkQdr7XFI96I=",
 			"path": "github.com/pquerna/ffjson/tests/number/ff",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		},
 		{
 			"checksumSHA1": "gOEYiC9BnKY1jsrEV7sRCphxZjU=",
@@ -112,10 +112,10 @@
 			"revisionTime": "2016-08-11T18:35:19Z"
 		},
 		{
-			"checksumSHA1": "BIW3h0fJN4y1nDVVv4PbZjxWA58=",
+			"checksumSHA1": "nZtQTZkroWy/7Tr2vvA9OaqlFCY=",
 			"path": "github.com/pquerna/ffjson/tests/types/ff",
-			"revision": "9d7075fb37d35c5b005b4cd3bdd1074e345a5d4e",
-			"revisionTime": "2016-08-11T18:35:19Z"
+			"revision": "0a1032732ea92f86ab22e27b9d55cd182f2f4a1b",
+			"revisionTime": "2017-05-17T16:37:23Z"
 		}
 	],
 	"rootPath": "github.com/mesos/mesos-go/api/v1"

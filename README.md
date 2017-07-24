@@ -26,9 +26,12 @@ The Mesos v0 API version of the bindings, located in `api/v0`, are more mature b
 - Modular design for easy readability/extensibility
 
 ### Pre-Requisites
-- Go 1.7 or higher
-- A standard and working Go workspace setup
-- Apache Mesos 1.0 or newer
+- Go 1.7 or higher; https://golang.org/dl/
+    - A standard and working Go workspace setup (multiple golang versions are tested via CI)
+- Apache Mesos 1.0 or newer; http://mesos.apache.org/downloads/
+- protoc compiler; https://github.com/google/protobuf/releases
+    - v3.3.x is tested by CI and should be used for code generation
+- `govendor`; https://github.com/kardianos/govendor
 
 ## Installing
 Users of this library are encouraged to vendor it. API stability isn't guaranteed at this stage.

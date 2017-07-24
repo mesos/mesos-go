@@ -320,6 +320,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -508,6 +509,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -1045,6 +1047,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -1242,6 +1245,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -1736,6 +1740,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -1997,6 +2002,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -2201,6 +2207,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -2403,6 +2410,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -2908,6 +2916,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -3099,6 +3108,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -3348,6 +3358,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -3684,6 +3695,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -3886,6 +3898,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -4088,6 +4101,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -4699,6 +4713,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -5160,6 +5175,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -5413,6 +5429,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -6217,6 +6234,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -6896,6 +6914,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -7201,6 +7220,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -7405,6 +7425,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -7842,6 +7863,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -8090,6 +8112,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -8340,6 +8363,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -8891,6 +8915,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -9083,6 +9108,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -9333,6 +9359,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -9581,6 +9608,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -9769,6 +9797,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -10673,6 +10702,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -10707,10 +10737,10 @@ func (mj *FileInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.Size_ != nil {
+	if mj.Size != nil {
 		if true {
 			buf.WriteString(`"size":`)
-			fflib.FormatBits2(buf, uint64(*mj.Size_), 10, false)
+			fflib.FormatBits2(buf, uint64(*mj.Size), 10, false)
 			buf.WriteByte(',')
 		}
 	}
@@ -10763,7 +10793,7 @@ const (
 
 	ffj_t_FileInfo_Nlink
 
-	ffj_t_FileInfo_Size_
+	ffj_t_FileInfo_Size
 
 	ffj_t_FileInfo_Mtime
 
@@ -10778,7 +10808,7 @@ var ffj_key_FileInfo_Path = []byte("path")
 
 var ffj_key_FileInfo_Nlink = []byte("nlink")
 
-var ffj_key_FileInfo_Size_ = []byte("size")
+var ffj_key_FileInfo_Size = []byte("size")
 
 var ffj_key_FileInfo_Mtime = []byte("mtime")
 
@@ -10886,8 +10916,8 @@ mainparse:
 
 				case 's':
 
-					if bytes.Equal(ffj_key_FileInfo_Size_, kn) {
-						currentKey = ffj_t_FileInfo_Size_
+					if bytes.Equal(ffj_key_FileInfo_Size, kn) {
+						currentKey = ffj_t_FileInfo_Size
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -10926,8 +10956,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_FileInfo_Size_, kn) {
-					currentKey = ffj_t_FileInfo_Size_
+				if fflib.EqualFoldRight(ffj_key_FileInfo_Size, kn) {
+					currentKey = ffj_t_FileInfo_Size
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -10967,8 +10997,8 @@ mainparse:
 				case ffj_t_FileInfo_Nlink:
 					goto handle_Nlink
 
-				case ffj_t_FileInfo_Size_:
-					goto handle_Size_
+				case ffj_t_FileInfo_Size:
+					goto handle_Size
 
 				case ffj_t_FileInfo_Mtime:
 					goto handle_Mtime
@@ -11055,9 +11085,9 @@ handle_Nlink:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_Size_:
+handle_Size:
 
-	/* handler: uj.Size_ type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.Size type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -11069,7 +11099,7 @@ handle_Size_:
 
 		if tok == fflib.FFTok_null {
 
-			uj.Size_ = nil
+			uj.Size = nil
 
 		} else {
 
@@ -11080,7 +11110,7 @@ handle_Size_:
 			}
 
 			ttypval := uint64(tval)
-			uj.Size_ = &ttypval
+			uj.Size = &ttypval
 
 		}
 	}
@@ -11222,6 +11252,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -11424,6 +11455,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -11672,6 +11704,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -11860,6 +11893,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -12807,6 +12841,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -13004,6 +13039,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -13689,6 +13725,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -14109,6 +14146,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -14301,6 +14339,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -16014,6 +16053,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -16422,6 +16462,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -16733,6 +16774,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -16986,6 +17028,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -17517,6 +17560,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -18775,6 +18819,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -18979,6 +19024,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -19227,6 +19273,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -19477,6 +19524,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -19681,6 +19729,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -19938,6 +19987,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -20263,6 +20313,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -20798,6 +20849,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -21049,6 +21101,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -21643,6 +21696,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -21911,6 +21965,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -22216,6 +22271,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -23076,6 +23132,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -23264,6 +23321,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -23838,6 +23896,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -24088,6 +24147,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -24338,6 +24398,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -24588,6 +24649,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -24831,6 +24893,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -25081,6 +25144,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -25331,6 +25395,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -25568,6 +25633,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -25818,6 +25884,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -29056,6 +29123,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -29495,6 +29563,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -29745,6 +29814,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -29995,6 +30065,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -30316,6 +30387,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -30629,6 +30701,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -31000,6 +31073,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -31314,6 +31388,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -32120,6 +32195,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -34762,6 +34838,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -35123,6 +35200,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -35652,6 +35730,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -36068,6 +36147,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -36267,6 +36347,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -36597,6 +36678,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -36845,6 +36927,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -37181,6 +37264,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -37369,6 +37453,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -37557,6 +37642,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -37819,6 +37905,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -37958,6 +38045,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -38097,6 +38185,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -38560,6 +38649,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -38950,6 +39040,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -39154,6 +39245,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -39399,6 +39491,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -40474,6 +40567,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -40724,6 +40818,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -40912,6 +41007,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -41878,6 +41974,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -42967,6 +43064,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -44002,6 +44100,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -44194,6 +44293,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -44924,6 +45024,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -45394,6 +45495,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -46014,6 +46116,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -46270,6 +46373,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -46715,6 +46819,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -46960,6 +47065,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -47210,6 +47316,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -47402,6 +47509,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -47654,6 +47762,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -47842,6 +47951,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -48371,6 +48481,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -48815,6 +48926,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -49140,6 +49252,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -49449,6 +49562,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -49695,6 +49809,7 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }
 
@@ -49947,5 +50062,6 @@ tokerror:
 	}
 	panic("ffjson-generated: unreachable, please report bug.")
 done:
+
 	return nil
 }

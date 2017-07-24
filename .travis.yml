@@ -3,9 +3,12 @@ language: go
 # handle submodules ourselves
 git:
   submodules: false
+env:
+  - PROTOBUF_VERSION=3.3.0
 go:
+  # update validate-protobufs Makefile target once golang 1.8.x is no longer tested here
   - 1.7.x
-  - 1.8
+  - 1.8.x
 before_install:
    #these two lines help users who fork mesos-go. It's a noop when running from the mesos organization
   - RepoName=`basename $PWD`; SrcDir=`dirname $PWD`; DestDir="`dirname $SrcDir`/mesos"
@@ -13,6 +16,10 @@ before_install:
   - go get github.com/mattn/goveralls
   - go get github.com/kardianos/govendor
   - make sync
+  - api/v1/vendor/github.com/gogo/protobuf/install-protobuf.sh
+  # re-generate protobuf and json code, check that there are no differences w/ respect to what's been checked in
+  # ONLY for golang1.8.x; generated protobufs are not guaranteed to be consistent across golang versions
+  - make validate-protobufs
 install:
   - make test install
 script:

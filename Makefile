@@ -17,6 +17,8 @@ BINARIES ?= $(shell go list -f "{{.Name}} {{.ImportPath}}" ${CMD_PKG}/...|grep -
 TEST_FLAGS ?= -race
 COVERAGE_TARGETS = ${TEST_DIRS:%/=%.cover}
 
+GO_VERSION := $(shell go version|cut -f3 -d' '|dd bs=1 count=5 2>/dev/null)
+
 .PHONY: all
 all: test
 
@@ -59,6 +61,7 @@ protobufs: protobufs-requirements clean-protobufs
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. *.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./scheduler/*.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./executor/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./agent/*.proto)
 
 .PHONY: clean-protobufs
 clean-protobufs:
@@ -69,6 +72,7 @@ ffjson: clean-ffjson
 	(cd ${API_PKG}; ffjson *.pb.go)
 	(cd ${API_PKG}; ffjson scheduler/*.pb.go)
 	(cd ${API_PKG}; ffjson executor/*.pb.go)
+	(cd ${API_PKG}; ffjson agent/*.pb.go)
 
 .PHONY: clean-ffjson
 clean-ffjson:
@@ -112,9 +116,19 @@ docker:
 	make -C api/${MESOS_API_VERSION}/docker
 
 .PHONY: coveralls
-coveralls: IGNORE_FILES = $(shell { find api/v1/cmd -type d ; ls api/v1/lib{,/scheduler,/executor}/*.pb{,_ffjson}.go ; find api/v0 -type d; } | tr '\n' ,)
+coveralls: IGNORE_FILES = $(shell { find api/v1/cmd -type d ; ls api/v1/lib{,/scheduler,/executor,/agent}/*.pb{,_ffjson}.go ; find api/v0 -type d; } | tr '\n' ,)
 coveralls: SHELL := /bin/bash
 coveralls:
 	test "$(TRAVIS)" = "" || rm -rf $$HOME/gopath/pkg
 	$(MAKE) coverage
 	$$HOME/gopath/bin/goveralls -service=travis-ci -coverprofile=_output/coverage.out -ignore=$(IGNORE_FILES)
+
+# re-generate protobuf and json code, check that there are no differences w/ respect to what's been checked in
+.PHONY: validate-protobufs
+ifeq ($(GO_VERSION),go1.8)
+validate-protobufs: SHELL := /bin/bash
+validate-protobufs:
+	(cd api/v1; govendor install +vendor,program) && $(MAKE) -s protobufs ffjson && [[ `{ git status --porcelain || echo "failed"; } | tee /tmp/status | wc -l` = "0" ]] || { cat /tmp/status; git diff; false; }
+else
+validate-protobufs:
+endif

@@ -64,6 +64,7 @@ protobufs: protobufs-requirements clean-protobufs
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./agent/*.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./quota/*.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./allocator/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./maintenance/*.proto)
 
 .PHONY: clean-protobufs
 clean-protobufs:
@@ -77,6 +78,7 @@ ffjson: clean-ffjson
 	(cd ${API_PKG}; ffjson agent/*.pb.go)
 	(cd ${API_PKG}; ffjson quota/*.pb.go)
 	(cd ${API_PKG}; ffjson allocator/*.pb.go)
+	(cd ${API_PKG}; ffjson maintenance/*.pb.go)
 
 .PHONY: clean-ffjson
 clean-ffjson:
@@ -120,7 +122,7 @@ docker:
 	make -C api/${MESOS_API_VERSION}/docker
 
 .PHONY: coveralls
-coveralls: IGNORE_FILES = $(shell { find api/v1/cmd -type d ; ls api/v1/lib{,/scheduler,/executor,/agent,/quota,/allocator}/*.pb{,_ffjson}.go ; find api/v0 -type d; } | tr '\n' ,)
+coveralls: IGNORE_FILES = $(shell { find api/v1/cmd -type d ; ls api/v1/lib{,/scheduler,/executor,/agent,/quota,/allocator,/maintenance}/*.pb{,_ffjson}.go ; find api/v0 -type d; } | tr '\n' ,)
 coveralls: SHELL := /bin/bash
 coveralls:
 	test "$(TRAVIS)" = "" || rm -rf $$HOME/gopath/pkg

@@ -23,10 +23,10 @@ import strconv "strconv"
 
 import bytes "bytes"
 
+import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
+
 import strings "strings"
 import reflect "reflect"
-
-import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
 
 import io "io"
 
@@ -1430,186 +1430,6 @@ func (this *Call_Message) Equal(that interface{}) bool {
 		return false
 	}
 	return true
-}
-func (this *Event) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 12)
-	s = append(s, "&executor.Event{")
-	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
-	if this.Subscribed != nil {
-		s = append(s, "Subscribed: "+fmt.Sprintf("%#v", this.Subscribed)+",\n")
-	}
-	if this.Acknowledged != nil {
-		s = append(s, "Acknowledged: "+fmt.Sprintf("%#v", this.Acknowledged)+",\n")
-	}
-	if this.Launch != nil {
-		s = append(s, "Launch: "+fmt.Sprintf("%#v", this.Launch)+",\n")
-	}
-	if this.LaunchGroup != nil {
-		s = append(s, "LaunchGroup: "+fmt.Sprintf("%#v", this.LaunchGroup)+",\n")
-	}
-	if this.Kill != nil {
-		s = append(s, "Kill: "+fmt.Sprintf("%#v", this.Kill)+",\n")
-	}
-	if this.Message != nil {
-		s = append(s, "Message: "+fmt.Sprintf("%#v", this.Message)+",\n")
-	}
-	if this.Error != nil {
-		s = append(s, "Error: "+fmt.Sprintf("%#v", this.Error)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Event_Subscribed) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 8)
-	s = append(s, "&executor.Event_Subscribed{")
-	s = append(s, "ExecutorInfo: "+strings.Replace(this.ExecutorInfo.GoString(), `&`, ``, 1)+",\n")
-	s = append(s, "FrameworkInfo: "+strings.Replace(this.FrameworkInfo.GoString(), `&`, ``, 1)+",\n")
-	s = append(s, "AgentInfo: "+strings.Replace(this.AgentInfo.GoString(), `&`, ``, 1)+",\n")
-	if this.ContainerID != nil {
-		s = append(s, "ContainerID: "+fmt.Sprintf("%#v", this.ContainerID)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Event_Launch) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&executor.Event_Launch{")
-	s = append(s, "Task: "+strings.Replace(this.Task.GoString(), `&`, ``, 1)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Event_LaunchGroup) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&executor.Event_LaunchGroup{")
-	s = append(s, "TaskGroup: "+strings.Replace(this.TaskGroup.GoString(), `&`, ``, 1)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Event_Kill) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&executor.Event_Kill{")
-	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
-	if this.KillPolicy != nil {
-		s = append(s, "KillPolicy: "+fmt.Sprintf("%#v", this.KillPolicy)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Event_Acknowledged) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&executor.Event_Acknowledged{")
-	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
-	if this.UUID != nil {
-		s = append(s, "UUID: "+valueToGoStringExecutor(this.UUID, "byte")+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Event_Message) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&executor.Event_Message{")
-	if this.Data != nil {
-		s = append(s, "Data: "+valueToGoStringExecutor(this.Data, "byte")+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Event_Error) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&executor.Event_Error{")
-	s = append(s, "Message: "+fmt.Sprintf("%#v", this.Message)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Call) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 10)
-	s = append(s, "&executor.Call{")
-	s = append(s, "ExecutorID: "+strings.Replace(this.ExecutorID.GoString(), `&`, ``, 1)+",\n")
-	s = append(s, "FrameworkID: "+strings.Replace(this.FrameworkID.GoString(), `&`, ``, 1)+",\n")
-	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
-	if this.Subscribe != nil {
-		s = append(s, "Subscribe: "+fmt.Sprintf("%#v", this.Subscribe)+",\n")
-	}
-	if this.Update != nil {
-		s = append(s, "Update: "+fmt.Sprintf("%#v", this.Update)+",\n")
-	}
-	if this.Message != nil {
-		s = append(s, "Message: "+fmt.Sprintf("%#v", this.Message)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Call_Subscribe) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&executor.Call_Subscribe{")
-	if this.UnacknowledgedTasks != nil {
-		s = append(s, "UnacknowledgedTasks: "+fmt.Sprintf("%#v", this.UnacknowledgedTasks)+",\n")
-	}
-	if this.UnacknowledgedUpdates != nil {
-		s = append(s, "UnacknowledgedUpdates: "+fmt.Sprintf("%#v", this.UnacknowledgedUpdates)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Call_Update) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&executor.Call_Update{")
-	s = append(s, "Status: "+strings.Replace(this.Status.GoString(), `&`, ``, 1)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Call_Message) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&executor.Call_Message{")
-	if this.Data != nil {
-		s = append(s, "Data: "+valueToGoStringExecutor(this.Data, "byte")+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func valueToGoStringExecutor(v interface{}, typ string) string {
-	rv := reflect.ValueOf(v)
-	if rv.IsNil() {
-		return "nil"
-	}
-	pv := reflect.Indirect(rv).Interface()
-	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
 func (m *Event) Marshal() (dAtA []byte, err error) {
 	size := m.ProtoSize()
@@ -4438,8 +4258,8 @@ var fileDescriptorExecutor = []byte{
 	0x5d, 0x96, 0xe0, 0x4a, 0x1c, 0x96, 0xe7, 0x9e, 0xe2, 0xdc, 0x3d, 0x9b, 0xad, 0x3c, 0x4f, 0xac,
 	0x40, 0x6d, 0xe6, 0x89, 0xc4, 0x12, 0xbd, 0x53, 0xbd, 0x75, 0x66, 0xc8, 0xc5, 0x6c, 0x93, 0x97,
 	0x92, 0x5e, 0x6e, 0xef, 0x3d, 0x9f, 0x6a, 0x85, 0xbf, 0xa6, 0x5a, 0xe1, 0xef, 0xa9, 0x86, 0x5e,
-	0x4e, 0x35, 0xf4, 0xef, 0x54, 0x43, 0xdf, 0xc6, 0x1a, 0xfa, 0x35, 0xd6, 0xd0, 0xef, 0xb1, 0x86,
-	0xfe, 0x88, 0x35, 0xf4, 0x2c, 0xd6, 0xd0, 0xf3, 0x58, 0x43, 0xff, 0xc4, 0x5a, 0xe1, 0x65, 0xac,
-	0xa1, 0x1f, 0x5f, 0x68, 0x85, 0x9f, 0x5f, 0x68, 0xe8, 0xeb, 0x6a, 0x5a, 0x8d, 0xff, 0x02, 0x00,
-	0x00, 0xff, 0xff, 0x42, 0x17, 0xcd, 0x0d, 0xbe, 0x08, 0x00, 0x00,
+	0x4e, 0xb5, 0xc2, 0xbf, 0x53, 0x0d, 0x7d, 0x1b, 0x6b, 0xe8, 0xd7, 0x58, 0x43, 0xbf, 0xc7, 0x1a,
+	0xfa, 0x23, 0xd6, 0xd0, 0xb3, 0x58, 0x43, 0xcf, 0x63, 0x0d, 0xfd, 0x13, 0x6b, 0x85, 0x97, 0xb1,
+	0x86, 0x7e, 0x7c, 0xa1, 0x15, 0x7e, 0x7e, 0xa1, 0xa1, 0xaf, 0xab, 0x69, 0x35, 0xfe, 0x0b, 0x00,
+	0x00, 0xff, 0xff, 0x52, 0xa4, 0xce, 0x2f, 0xbe, 0x08, 0x00, 0x00,
 }

@@ -32,7 +32,7 @@ func prepareExecutorInfo(
 			Type:       mesos.ExecutorInfo_CUSTOM,
 			ExecutorID: mesos.ExecutorID{Value: "default"},
 			Name:       proto.String("Test Executor"),
-			Command: mesos.CommandInfo{
+			Command: &mesos.CommandInfo{
 				Shell: func() *bool { x := false; return &x }(),
 			},
 			Container: &mesos.ContainerInfo{
@@ -77,7 +77,7 @@ func prepareExecutorInfo(
 			Type:       mesos.ExecutorInfo_CUSTOM,
 			ExecutorID: mesos.ExecutorID{Value: "default"},
 			Name:       proto.String("Test Executor"),
-			Command: mesos.CommandInfo{
+			Command: &mesos.CommandInfo{
 				Value: proto.String(executorCommand),
 				URIs:  executorUris,
 			},

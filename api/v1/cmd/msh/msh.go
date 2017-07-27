@@ -46,11 +46,19 @@ var (
 	CPUs          = float64(0.010)
 	Memory        = float64(64)
 
-	fidStore           store.Singleton
-	declineAndSuppress bool
-	refuseSeconds      = calls.RefuseSeconds(5 * time.Second)
-	wantsResources     mesos.Resources
-	taskPrototype      mesos.TaskInfo
+	fidStore               store.Singleton
+	declineAndSuppress     bool
+	refuseSeconds          = calls.RefuseSeconds(5 * time.Second)
+	wantsResources         mesos.Resources
+	taskPrototype          mesos.TaskInfo
+	tty                    bool
+	pod                    bool
+	executorPrototype      mesos.ExecutorInfo
+	wantsExecutorResources = mesos.Resources{
+		resources.NewCPUs(0.01).Resource,
+		resources.NewMemory(32).Resource,
+		resources.NewDisk(5).Resource,
+	}
 )
 
 func init() {
@@ -60,6 +68,8 @@ func init() {
 	flag.StringVar(&User, "user", User, "OS user that owns the launched task")
 	flag.Float64Var(&CPUs, "cpus", CPUs, "CPU resources to allocate for the remote command")
 	flag.Float64Var(&Memory, "memory", Memory, "Memory resources to allocate for the remote command")
+	flag.BoolVar(&tty, "tty", tty, "Allocate a tty for the container in which the command is executed")
+	flag.BoolVar(&pod, "pod", pod, "Launch the remote command in a mesos task-group")
 
 	fidStore = store.DecorateSingleton(
 		store.NewInMemorySingleton(),
@@ -89,6 +99,12 @@ func main() {
 		},
 	}
 	taskPrototype.Command.Arguments = args
+	if tty {
+		taskPrototype.Container = &mesos.ContainerInfo{
+			Type:    mesos.ContainerInfo_MESOS.Enum(),
+			TTYInfo: &mesos.TTYInfo{},
+		}
+	}
 	if err := run(); err != nil {
 		if exitErr, ok := err.(ExitError); ok {
 			if code := int(exitErr); code != 0 {
@@ -132,10 +148,28 @@ func buildClient() calls.Caller {
 func buildEventHandler(caller calls.Caller) events.Handler {
 	logger := controller.LogEvents(nil)
 	return controller.LiftErrors().Handle(events.Handlers{
-		scheduler.Event_SUBSCRIBED: eventrules.Rules{logger, controller.TrackSubscription(fidStore, 0)},
-		scheduler.Event_OFFERS:     maybeDeclineOffers(caller).AndThen().Handle(resourceOffers(caller)),
-		scheduler.Event_UPDATE:     controller.AckStatusUpdates(caller).AndThen().HandleF(statusUpdate),
+		scheduler.Event_SUBSCRIBED: eventrules.Rules{
+			logger, controller.TrackSubscription(fidStore, 0), updateExecutor,
+		},
+		scheduler.Event_OFFERS: maybeDeclineOffers(caller).AndThen().Handle(resourceOffers(caller)),
+		scheduler.Event_UPDATE: controller.AckStatusUpdates(caller).AndThen().HandleF(statusUpdate),
 	}.Otherwise(logger.HandleEvent))
+}
+
+func updateExecutor(ctx context.Context, e *scheduler.Event, err error, chain eventrules.Chain) (context.Context, *scheduler.Event, error) {
+	if err != nil {
+		return chain(ctx, e, err)
+	}
+	if e.GetType() != scheduler.Event_SUBSCRIBED {
+		return chain(ctx, e, err)
+	}
+	if pod {
+		executorPrototype = mesos.ExecutorInfo{
+			Type:        mesos.ExecutorInfo_DEFAULT,
+			FrameworkID: e.GetSubscribed().FrameworkID,
+		}
+	}
+	return chain(ctx, e, err)
 }
 
 func maybeDeclineOffers(caller calls.Caller) eventrules.Rule {
@@ -159,22 +193,42 @@ func maybeDeclineOffers(caller calls.Caller) eventrules.Rule {
 func resourceOffers(caller calls.Caller) events.HandlerFunc {
 	return func(ctx context.Context, e *scheduler.Event) (err error) {
 		var (
-			off   = e.GetOffers().GetOffers()
-			index = offers.NewIndex(off, nil)
-			match = index.Find(offers.ContainsResources(wantsResources))
+			off            = e.GetOffers().GetOffers()
+			index          = offers.NewIndex(off, nil)
+			matchResources = func() mesos.Resources {
+				if pod {
+					return wantsResources.Plus(wantsExecutorResources...)
+				} else {
+					return wantsResources
+				}
+			}()
+			match = index.Find(offers.ContainsResources(matchResources))
 		)
 		if match != nil {
+			ts := time.Now().Format(RFC3339a)
 			task := taskPrototype
-			task.TaskID = mesos.TaskID{Value: time.Now().Format(RFC3339a)}
+			task.TaskID = mesos.TaskID{Value: ts}
 			task.AgentID = match.AgentID
 			task.Resources = resources.Find(
 				resources.Flatten(wantsResources, Role.Assign()),
 				match.Resources...,
 			)
 
-			err = calls.CallNoData(ctx, caller, calls.Accept(
-				calls.OfferOperations{calls.OpLaunch(task)}.WithOffers(match.ID),
-			))
+			if pod {
+				executor := executorPrototype
+				executor.ExecutorID = mesos.ExecutorID{Value: "msh_" + ts}
+				executor.Resources = resources.Find(
+					resources.Flatten(wantsExecutorResources, Role.Assign()),
+					match.Resources...,
+				)
+				err = calls.CallNoData(ctx, caller, calls.Accept(
+					calls.OfferOperations{calls.OpLaunchGroup(executor, task)}.WithOffers(match.ID),
+				))
+			} else {
+				err = calls.CallNoData(ctx, caller, calls.Accept(
+					calls.OfferOperations{calls.OpLaunch(task)}.WithOffers(match.ID),
+				))
+			}
 			if err != nil {
 				return
 			}

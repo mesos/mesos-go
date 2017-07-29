@@ -20,6 +20,7 @@ import time "time"
 import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
 import github_com_gogo_protobuf_jsonpb "github.com/gogo/protobuf/jsonpb"
 import fmt "fmt"
+import go_parser "go/parser"
 import proto "github.com/gogo/protobuf/proto"
 import math "math"
 import _ "github.com/mesos/mesos-go/api/v1/lib"
@@ -717,6 +718,58 @@ func TestClusterStatus_DrainingMachineVerboseEqual(t *testing.T) {
 	}
 	if err := p.VerboseEqual(msg); err != nil {
 		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
+	}
+}
+func TestWindowGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedWindow(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
+func TestScheduleGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedSchedule(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
+func TestClusterStatusGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedClusterStatus(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
+func TestClusterStatus_DrainingMachineGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedClusterStatus_DrainingMachine(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
 	}
 }
 func TestWindowProtoSize(t *testing.T) {

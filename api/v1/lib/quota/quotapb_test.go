@@ -20,6 +20,7 @@ import time "time"
 import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
 import github_com_gogo_protobuf_jsonpb "github.com/gogo/protobuf/jsonpb"
 import fmt "fmt"
+import go_parser "go/parser"
 import proto "github.com/gogo/protobuf/proto"
 import math "math"
 import _ "github.com/mesos/mesos-go/api/v1/lib"
@@ -544,6 +545,45 @@ func TestQuotaStatusVerboseEqual(t *testing.T) {
 	}
 	if err := p.VerboseEqual(msg); err != nil {
 		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
+	}
+}
+func TestQuotaInfoGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedQuotaInfo(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
+func TestQuotaRequestGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedQuotaRequest(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
+func TestQuotaStatusGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedQuotaStatus(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
 	}
 }
 func TestQuotaInfoProtoSize(t *testing.T) {

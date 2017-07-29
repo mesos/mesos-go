@@ -23,10 +23,10 @@ import strconv "strconv"
 
 import bytes "bytes"
 
-import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
-
 import strings "strings"
 import reflect "reflect"
+
+import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
 
 import io "io"
 
@@ -3006,6 +3006,408 @@ func (this *Call_Suppress) Equal(that interface{}) bool {
 		return false
 	}
 	return true
+}
+func (this *Event) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 14)
+	s = append(s, "&scheduler.Event{")
+	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
+	if this.Subscribed != nil {
+		s = append(s, "Subscribed: "+fmt.Sprintf("%#v", this.Subscribed)+",\n")
+	}
+	if this.Offers != nil {
+		s = append(s, "Offers: "+fmt.Sprintf("%#v", this.Offers)+",\n")
+	}
+	if this.InverseOffers != nil {
+		s = append(s, "InverseOffers: "+fmt.Sprintf("%#v", this.InverseOffers)+",\n")
+	}
+	if this.Rescind != nil {
+		s = append(s, "Rescind: "+fmt.Sprintf("%#v", this.Rescind)+",\n")
+	}
+	if this.RescindInverseOffer != nil {
+		s = append(s, "RescindInverseOffer: "+fmt.Sprintf("%#v", this.RescindInverseOffer)+",\n")
+	}
+	if this.Update != nil {
+		s = append(s, "Update: "+fmt.Sprintf("%#v", this.Update)+",\n")
+	}
+	if this.Message != nil {
+		s = append(s, "Message: "+fmt.Sprintf("%#v", this.Message)+",\n")
+	}
+	if this.Failure != nil {
+		s = append(s, "Failure: "+fmt.Sprintf("%#v", this.Failure)+",\n")
+	}
+	if this.Error != nil {
+		s = append(s, "Error: "+fmt.Sprintf("%#v", this.Error)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_Subscribed) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&scheduler.Event_Subscribed{")
+	if this.FrameworkID != nil {
+		s = append(s, "FrameworkID: "+fmt.Sprintf("%#v", this.FrameworkID)+",\n")
+	}
+	if this.HeartbeatIntervalSeconds != nil {
+		s = append(s, "HeartbeatIntervalSeconds: "+valueToGoStringScheduler(this.HeartbeatIntervalSeconds, "float64")+",\n")
+	}
+	if this.MasterInfo != nil {
+		s = append(s, "MasterInfo: "+fmt.Sprintf("%#v", this.MasterInfo)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_Offers) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Event_Offers{")
+	if this.Offers != nil {
+		s = append(s, "Offers: "+fmt.Sprintf("%#v", this.Offers)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_InverseOffers) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Event_InverseOffers{")
+	if this.InverseOffers != nil {
+		s = append(s, "InverseOffers: "+fmt.Sprintf("%#v", this.InverseOffers)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_Rescind) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Event_Rescind{")
+	s = append(s, "OfferID: "+strings.Replace(this.OfferID.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_RescindInverseOffer) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Event_RescindInverseOffer{")
+	s = append(s, "InverseOfferID: "+strings.Replace(this.InverseOfferID.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_Update) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Event_Update{")
+	s = append(s, "Status: "+strings.Replace(this.Status.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_Message) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&scheduler.Event_Message{")
+	s = append(s, "AgentID: "+strings.Replace(this.AgentID.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "ExecutorID: "+strings.Replace(this.ExecutorID.GoString(), `&`, ``, 1)+",\n")
+	if this.Data != nil {
+		s = append(s, "Data: "+valueToGoStringScheduler(this.Data, "byte")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_Failure) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&scheduler.Event_Failure{")
+	if this.AgentID != nil {
+		s = append(s, "AgentID: "+fmt.Sprintf("%#v", this.AgentID)+",\n")
+	}
+	if this.ExecutorID != nil {
+		s = append(s, "ExecutorID: "+fmt.Sprintf("%#v", this.ExecutorID)+",\n")
+	}
+	if this.Status != nil {
+		s = append(s, "Status: "+valueToGoStringScheduler(this.Status, "int32")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Event_Error) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Event_Error{")
+	s = append(s, "Message: "+fmt.Sprintf("%#v", this.Message)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 19)
+	s = append(s, "&scheduler.Call{")
+	if this.FrameworkID != nil {
+		s = append(s, "FrameworkID: "+fmt.Sprintf("%#v", this.FrameworkID)+",\n")
+	}
+	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
+	if this.Subscribe != nil {
+		s = append(s, "Subscribe: "+fmt.Sprintf("%#v", this.Subscribe)+",\n")
+	}
+	if this.Accept != nil {
+		s = append(s, "Accept: "+fmt.Sprintf("%#v", this.Accept)+",\n")
+	}
+	if this.Decline != nil {
+		s = append(s, "Decline: "+fmt.Sprintf("%#v", this.Decline)+",\n")
+	}
+	if this.AcceptInverseOffers != nil {
+		s = append(s, "AcceptInverseOffers: "+fmt.Sprintf("%#v", this.AcceptInverseOffers)+",\n")
+	}
+	if this.DeclineInverseOffers != nil {
+		s = append(s, "DeclineInverseOffers: "+fmt.Sprintf("%#v", this.DeclineInverseOffers)+",\n")
+	}
+	if this.Revive != nil {
+		s = append(s, "Revive: "+fmt.Sprintf("%#v", this.Revive)+",\n")
+	}
+	if this.Kill != nil {
+		s = append(s, "Kill: "+fmt.Sprintf("%#v", this.Kill)+",\n")
+	}
+	if this.Shutdown != nil {
+		s = append(s, "Shutdown: "+fmt.Sprintf("%#v", this.Shutdown)+",\n")
+	}
+	if this.Acknowledge != nil {
+		s = append(s, "Acknowledge: "+fmt.Sprintf("%#v", this.Acknowledge)+",\n")
+	}
+	if this.Reconcile != nil {
+		s = append(s, "Reconcile: "+fmt.Sprintf("%#v", this.Reconcile)+",\n")
+	}
+	if this.Message != nil {
+		s = append(s, "Message: "+fmt.Sprintf("%#v", this.Message)+",\n")
+	}
+	if this.Request != nil {
+		s = append(s, "Request: "+fmt.Sprintf("%#v", this.Request)+",\n")
+	}
+	if this.Suppress != nil {
+		s = append(s, "Suppress: "+fmt.Sprintf("%#v", this.Suppress)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Subscribe) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Call_Subscribe{")
+	if this.FrameworkInfo != nil {
+		s = append(s, "FrameworkInfo: "+fmt.Sprintf("%#v", this.FrameworkInfo)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Accept) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&scheduler.Call_Accept{")
+	if this.OfferIDs != nil {
+		s = append(s, "OfferIDs: "+fmt.Sprintf("%#v", this.OfferIDs)+",\n")
+	}
+	if this.Operations != nil {
+		s = append(s, "Operations: "+fmt.Sprintf("%#v", this.Operations)+",\n")
+	}
+	if this.Filters != nil {
+		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Decline) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&scheduler.Call_Decline{")
+	if this.OfferIDs != nil {
+		s = append(s, "OfferIDs: "+fmt.Sprintf("%#v", this.OfferIDs)+",\n")
+	}
+	if this.Filters != nil {
+		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_AcceptInverseOffers) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&scheduler.Call_AcceptInverseOffers{")
+	if this.InverseOfferIDs != nil {
+		s = append(s, "InverseOfferIDs: "+fmt.Sprintf("%#v", this.InverseOfferIDs)+",\n")
+	}
+	if this.Filters != nil {
+		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_DeclineInverseOffers) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&scheduler.Call_DeclineInverseOffers{")
+	if this.InverseOfferIDs != nil {
+		s = append(s, "InverseOfferIDs: "+fmt.Sprintf("%#v", this.InverseOfferIDs)+",\n")
+	}
+	if this.Filters != nil {
+		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Revive) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Call_Revive{")
+	if this.Role != nil {
+		s = append(s, "Role: "+valueToGoStringScheduler(this.Role, "string")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Kill) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&scheduler.Call_Kill{")
+	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
+	if this.AgentID != nil {
+		s = append(s, "AgentID: "+fmt.Sprintf("%#v", this.AgentID)+",\n")
+	}
+	if this.KillPolicy != nil {
+		s = append(s, "KillPolicy: "+fmt.Sprintf("%#v", this.KillPolicy)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Shutdown) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&scheduler.Call_Shutdown{")
+	s = append(s, "ExecutorID: "+strings.Replace(this.ExecutorID.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "AgentID: "+strings.Replace(this.AgentID.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Acknowledge) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&scheduler.Call_Acknowledge{")
+	s = append(s, "AgentID: "+strings.Replace(this.AgentID.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
+	if this.UUID != nil {
+		s = append(s, "UUID: "+valueToGoStringScheduler(this.UUID, "byte")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Reconcile) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Call_Reconcile{")
+	if this.Tasks != nil {
+		s = append(s, "Tasks: "+fmt.Sprintf("%#v", this.Tasks)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Reconcile_Task) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&scheduler.Call_Reconcile_Task{")
+	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
+	if this.AgentID != nil {
+		s = append(s, "AgentID: "+fmt.Sprintf("%#v", this.AgentID)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Message) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&scheduler.Call_Message{")
+	s = append(s, "AgentID: "+strings.Replace(this.AgentID.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "ExecutorID: "+strings.Replace(this.ExecutorID.GoString(), `&`, ``, 1)+",\n")
+	if this.Data != nil {
+		s = append(s, "Data: "+valueToGoStringScheduler(this.Data, "byte")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Request) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Call_Request{")
+	if this.Requests != nil {
+		s = append(s, "Requests: "+fmt.Sprintf("%#v", this.Requests)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_Suppress) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Call_Suppress{")
+	if this.Role != nil {
+		s = append(s, "Role: "+valueToGoStringScheduler(this.Role, "string")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func valueToGoStringScheduler(v interface{}, typ string) string {
+	rv := reflect.ValueOf(v)
+	if rv.IsNil() {
+		return "nil"
+	}
+	pv := reflect.Indirect(rv).Interface()
+	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
 func (m *Event) Marshal() (dAtA []byte, err error) {
 	size := m.ProtoSize()
@@ -8936,9 +9338,9 @@ var fileDescriptorScheduler = []byte{
 	0x77, 0x7b, 0x6a, 0xf5, 0x99, 0x2a, 0xa5, 0x99, 0x87, 0x44, 0xad, 0x1c, 0xec, 0x57, 0xb4, 0x3d,
 	0xd5, 0x1f, 0xb2, 0x83, 0x81, 0x19, 0xfc, 0x89, 0xfb, 0x65, 0x43, 0xad, 0xd5, 0xa5, 0x2c, 0xd7,
 	0xd3, 0x38, 0x3c, 0x24, 0x6a, 0xad, 0x26, 0x2d, 0xf8, 0x43, 0x72, 0xf9, 0xd9, 0xbb, 0x0b, 0x65,
-	0xee, 0x5f, 0x17, 0xca, 0xdc, 0x7f, 0x2e, 0x14, 0xf4, 0xe1, 0x42, 0x99, 0xfb, 0xff, 0x85, 0x82,
-	0x7e, 0x36, 0x50, 0xd0, 0x9f, 0x06, 0x0a, 0xfa, 0xdb, 0x40, 0x41, 0x7f, 0x1f, 0x28, 0xe8, 0xed,
-	0x40, 0x41, 0xef, 0x06, 0x0a, 0xfa, 0xef, 0x40, 0x99, 0xfb, 0x30, 0x50, 0xd0, 0x2f, 0xdf, 0x2b,
-	0x73, 0xbf, 0x7b, 0xaf, 0xa0, 0x1f, 0x64, 0xc2, 0xbc, 0xfe, 0x2c, 0x00, 0x00, 0xff, 0xff, 0x4a,
-	0x1f, 0xe9, 0xe8, 0xda, 0x12, 0x00, 0x00,
+	0xee, 0x5f, 0x17, 0xca, 0xdc, 0x7f, 0x2e, 0x14, 0xf4, 0xe1, 0x42, 0x41, 0xff, 0xbf, 0x50, 0xd0,
+	0xcf, 0x06, 0x0a, 0xfa, 0xd3, 0x40, 0x41, 0x7f, 0x1b, 0x28, 0xe8, 0xef, 0x03, 0x05, 0xbd, 0x1d,
+	0x28, 0xe8, 0xdd, 0x40, 0x41, 0xff, 0x1d, 0x28, 0x73, 0x1f, 0x06, 0x0a, 0xfa, 0xe5, 0x7b, 0x65,
+	0xee, 0x77, 0xef, 0x15, 0xf4, 0x83, 0x4c, 0x98, 0xd7, 0x9f, 0x05, 0x00, 0x00, 0xff, 0xff, 0x9d,
+	0x0c, 0x7c, 0xf5, 0xda, 0x12, 0x00, 0x00,
 }

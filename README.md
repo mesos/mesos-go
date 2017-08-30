@@ -36,7 +36,12 @@ The Mesos v0 API version of the bindings, located in `api/v0`, are more mature b
 ## Installing
 Users of this library are encouraged to vendor it. API stability isn't guaranteed at this stage.
 ```shell
-$ go get github.com/mesos/mesos-go
+# download the source code
+$ go get -d github.com/mesos/mesos-go
+
+# build the example binaries
+$ cd $GOPATH/src/github.com/mesos/mesos-go
+$ make install
 ```
 
 ## Testing

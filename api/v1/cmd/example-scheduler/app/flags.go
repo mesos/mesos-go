@@ -30,7 +30,7 @@ type codec struct{ encoding.Codec }
 func (c *codec) Set(value string) error {
 	v := strings.ToLower(value)
 	for _, codec := range encoding.DefaultCodecs {
-		if v == codec.Name() {
+		if v == codec.Name {
 			c.Codec = codec
 			return nil
 		}

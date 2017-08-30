@@ -2,13 +2,11 @@ package encoding
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
-
-	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
-	"github.com/mesos/mesos-go/api/v1/lib/encoding/proto"
+	"io/ioutil"
 
 	pb "github.com/gogo/protobuf/proto"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
 )
 
 type MediaType string
@@ -22,18 +20,18 @@ const (
 
 // DefaultCodecs are pre-configured default Codecs, ready to use OOTB
 var DefaultCodecs = map[MediaType]Codec{
-	MediaTypeProtobuf: Codec(&codec{
-		name:       "protobuf",
-		mediaTypes: [2]MediaType{MediaTypeProtobuf, MediaTypeProtobuf},
-		newEncoder: NewProtobufEncoder,
-		newDecoder: NewProtobufDecoder,
-	}),
-	MediaTypeJSON: Codec(&codec{
-		name:       "json",
-		mediaTypes: [2]MediaType{MediaTypeJSON, MediaTypeJSON},
-		newEncoder: NewJSONEncoder,
-		newDecoder: NewJSONDecoder,
-	}),
+	MediaTypeProtobuf: Codec{
+		Name:       "protobuf",
+		Type:       MediaTypeProtobuf,
+		NewEncoder: NewProtobufEncoder,
+		NewDecoder: NewProtobufDecoder,
+	},
+	MediaTypeJSON: Codec{
+		Name:       "json",
+		Type:       MediaTypeJSON,
+		NewEncoder: NewJSONEncoder,
+		NewDecoder: NewJSONDecoder,
+	},
 }
 
 // Codec returns the configured Codec for the media type, or nil if no such Codec has been configured.
@@ -43,44 +41,75 @@ func (m MediaType) Codec() Codec { return DefaultCodecs[m] }
 func (m MediaType) ContentType() string { return string(m) }
 
 type (
+	Source func() framing.Reader
+	Sink   func() framing.Writer
+
 	// A Codec composes encoding and decoding of a serialization format.
-	Codec interface {
-		fmt.Stringer
-		Name() string
-		RequestType() MediaType
-		ResponseType() MediaType
-		// NewEncoder returns a new encoder for the defined media type.
-		NewEncoder(io.Writer) Encoder
-		// NewDecoder returns a new decoder for the defined media type.
-		NewDecoder(framing.Reader) Decoder
+	Codec struct {
+		Name       string
+		Type       MediaType
+		NewEncoder func(Sink) Encoder
+		NewDecoder func(Source) Decoder
 	}
 
-	codec struct {
-		// Name holds the codec name.
-		name string
-		// MediaTypes holds the media types of the codec encoding and decoding
-		// formats, respectively.
-		mediaTypes [2]MediaType
-		// NewEncoder returns a new encoder for the defined media type.
-		newEncoder func(io.Writer) EncoderFunc
-		// NewDecoder returns a new decoder for the defined media type.
-		newDecoder func(framing.Reader) DecoderFunc
+	SourceFactory interface {
+		NewSource(r io.Reader) Source
+	}
+	SourceFactoryFunc func(r io.Reader) Source
+
+	SinkFactory interface {
+		NewSink(w io.Writer) Sink
+	}
+	SinkFactoryFunc func(w io.Writer) Sink
+
+	Stream interface {
+		SourceFactory
+		SinkFactory
 	}
 )
 
+func (f SourceFactoryFunc) NewSource(r io.Reader) Source { return f(r) }
+func (f SinkFactoryFunc) NewSink(w io.Writer) Sink       { return f(w) }
+
+// SourceReader returns a Source that buffers all input from the given io.Reader
+// and returns the contents in a single frame.
+func SourceReader(r io.Reader) Source {
+	return func() framing.Reader {
+		b, err := ioutil.ReadAll(r)
+		return framing.ReaderFunc(func() (f []byte, e error) {
+			// only return a non-nil frame ONCE
+			f = b
+			b = nil
+			e = err
+
+			if e == nil {
+				e = io.EOF
+			}
+			return
+		})
+	}
+}
+
+// SinkWriter returns a Sink that sends a frame to an io.Writer with no decoration.
+func SinkWriter(w io.Writer) Sink {
+	return func() framing.Writer {
+		return framing.WriterFunc(func(b []byte) error {
+			n, err := w.Write(b)
+			if err == nil && n != len(b) {
+				return io.ErrShortWrite
+			}
+			return err
+		})
+	}
+}
+
 // String implements the fmt.Stringer interface.
-func (c *codec) String() string {
+func (c *Codec) String() string {
 	if c == nil {
 		return ""
 	}
-	return c.name
+	return c.Name
 }
-
-func (c *codec) Name() string                        { return c.name }
-func (c *codec) RequestType() MediaType              { return c.mediaTypes[0] }
-func (c *codec) ResponseType() MediaType             { return c.mediaTypes[1] }
-func (c *codec) NewEncoder(w io.Writer) Encoder      { return c.newEncoder(w) }
-func (c *codec) NewDecoder(r framing.Reader) Decoder { return c.newDecoder(r) }
 
 type (
 	// Marshaler composes the supported marshaling formats.
@@ -118,31 +147,44 @@ func (f EncoderFunc) Encode(m Marshaler) error { return f(m) }
 
 // NewProtobufEncoder returns a new Encoder of Calls to Protobuf messages written to
 // the given io.Writer.
-func NewProtobufEncoder(w io.Writer) EncoderFunc {
-	enc := proto.NewEncoder(w)
-	return func(m Marshaler) error { return enc.Encode(m) }
+func NewProtobufEncoder(s Sink) Encoder {
+	w := s()
+	return EncoderFunc(func(m Marshaler) error {
+		b, err := pb.Marshal(m.(pb.Message))
+		if err != nil {
+			return err
+		}
+		return w.WriteFrame(b)
+	})
 }
 
 // NewJSONEncoder returns a new Encoder of Calls to JSON messages written to
 // the given io.Writer.
-func NewJSONEncoder(w io.Writer) EncoderFunc {
-	enc := json.NewEncoder(w)
-	return func(m Marshaler) error { return enc.Encode(m) }
+func NewJSONEncoder(s Sink) Encoder {
+	w := s()
+	return EncoderFunc(func(m Marshaler) error {
+		b, err := json.Marshal(m)
+		if err != nil {
+			return err
+		}
+		return w.WriteFrame(b)
+	})
 }
 
-// NewProtobufDecoder returns a new Decoder of Protobuf messages read from the
-// given framing.Reader to Events.
-func NewProtobufDecoder(r framing.Reader) DecoderFunc {
+// NewProtobufDecoder returns a new Decoder of Protobuf messages read from the given Source.
+func NewProtobufDecoder(s Source) Decoder {
+	r := s()
 	var (
 		uf  = func(b []byte, m interface{}) error { return pb.Unmarshal(b, m.(pb.Message)) }
 		dec = framing.NewDecoder(r, uf)
 	)
-	return func(u Unmarshaler) error { return dec.Decode(u) }
+	return DecoderFunc(func(u Unmarshaler) error { return dec.Decode(u) })
+
 }
 
-// NewJSONDecoder returns a new Decoder of JSON messages read from the
-// given framing.Reader to Events.
-func NewJSONDecoder(r framing.Reader) DecoderFunc {
+// NewJSONDecoder returns a new Decoder of JSON messages read from the given source.
+func NewJSONDecoder(s Source) Decoder {
+	r := s()
 	dec := framing.NewDecoder(r, json.Unmarshal)
-	return func(u Unmarshaler) error { return dec.Decode(u) }
+	return DecoderFunc(func(u Unmarshaler) error { return dec.Decode(u) })
 }

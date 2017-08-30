@@ -1,5 +1,7 @@
 package mesos
 
+// DEPRECATED in favor of github.com/mesos/mesos-go/api/v1/lib/client
+
 import (
 	"io"
 

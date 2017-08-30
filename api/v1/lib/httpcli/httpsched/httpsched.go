@@ -9,6 +9,7 @@ import (
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
+	mesosclient "github.com/mesos/mesos-go/api/v1/lib/client"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/apierrors"
@@ -168,8 +169,8 @@ func (mre *mesosRedirectionError) Error() string {
 // header and computing the address of the next endpoint that should be used to replay the failed
 // HTTP request.
 func (cli *client) redirectHandler() httpcli.Opt {
-	return httpcli.HandleResponse(func(hres *http.Response, err error) (mesos.Response, error) {
-		resp, err := cli.HandleResponse(hres, err) // default response handler
+	return httpcli.HandleResponse(func(hres *http.Response, rc mesosclient.ResponseClass, err error) (mesos.Response, error) {
+		resp, err := cli.HandleResponse(hres, rc, err) // default response handler
 		if err == nil || !apierrors.CodeNotLeader.Matches(err) {
 			return resp, err
 		}

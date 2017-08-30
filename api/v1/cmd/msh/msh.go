@@ -15,11 +15,15 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/agent"
+	"github.com/mesos/mesos-go/api/v1/lib/client"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/callrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
@@ -51,6 +55,7 @@ var (
 	refuseSeconds          = calls.RefuseSeconds(5 * time.Second)
 	wantsResources         mesos.Resources
 	taskPrototype          mesos.TaskInfo
+	interactive            bool
 	tty                    bool
 	pod                    bool
 	executorPrototype      mesos.ExecutorInfo
@@ -59,6 +64,8 @@ var (
 		resources.NewMemory(32).Resource,
 		resources.NewDisk(5).Resource,
 	}
+	agentDirectory = make(map[mesos.AgentID]string)
+	uponExit       = new(cleanups)
 )
 
 func init() {
@@ -68,8 +75,9 @@ func init() {
 	flag.StringVar(&User, "user", User, "OS user that owns the launched task")
 	flag.Float64Var(&CPUs, "cpus", CPUs, "CPU resources to allocate for the remote command")
 	flag.Float64Var(&Memory, "memory", Memory, "Memory resources to allocate for the remote command")
-	flag.BoolVar(&tty, "tty", tty, "Allocate a tty for the container in which the command is executed")
+	flag.BoolVar(&tty, "tty", tty, "Route all container stdio, stdout, stderr communication through a TTY device")
 	flag.BoolVar(&pod, "pod", pod, "Launch the remote command in a mesos task-group")
+	flag.BoolVar(&interactive, "interactive", interactive, "Attach to the task's stdin, stdout, and stderr")
 
 	fidStore = store.DecorateSingleton(
 		store.NewInMemorySingleton(),
@@ -99,23 +107,33 @@ func main() {
 		},
 	}
 	taskPrototype.Command.Arguments = args
-	if tty {
+	if interactive {
 		taskPrototype.Container = &mesos.ContainerInfo{
 			Type:    mesos.ContainerInfo_MESOS.Enum(),
 			TTYInfo: &mesos.TTYInfo{},
+		}
+	}
+	if term := os.Getenv("TERM"); term != "" && tty {
+		taskPrototype.Command.Environment = &mesos.Environment{
+			Variables: []mesos.Environment_Variable{
+				mesos.Environment_Variable{Name: "TERM", Value: &term},
+			},
 		}
 	}
 	if err := run(); err != nil {
 		if exitErr, ok := err.(ExitError); ok {
 			if code := int(exitErr); code != 0 {
 				log.Println(exitErr)
+				uponExit.unwind()
 				os.Exit(code)
 			}
 			// else, code=0 indicates success, exit normally
 		} else {
+			uponExit.unwind()
 			log.Fatalf("%#v", err)
 		}
 	}
+	uponExit.unwind()
 }
 
 func run() error {
@@ -149,9 +167,18 @@ func buildEventHandler(caller calls.Caller) events.Handler {
 	logger := controller.LogEvents(nil)
 	return controller.LiftErrors().Handle(events.Handlers{
 		scheduler.Event_SUBSCRIBED: eventrules.Rules{
-			logger, controller.TrackSubscription(fidStore, 0), updateExecutor,
+			logger,
+			controller.TrackSubscription(fidStore, 0),
+			updateExecutor,
 		},
-		scheduler.Event_OFFERS: maybeDeclineOffers(caller).AndThen().Handle(resourceOffers(caller)),
+
+		scheduler.Event_OFFERS: eventrules.Rules{
+			trackAgents,
+			maybeDeclineOffers(caller),
+			eventrules.DropOnError(),
+			eventrules.Handle(resourceOffers(caller)),
+		},
+
 		scheduler.Event_UPDATE: controller.AckStatusUpdates(caller).AndThen().HandleF(statusUpdate),
 	}.Otherwise(logger.HandleEvent))
 }
@@ -168,6 +195,21 @@ func updateExecutor(ctx context.Context, e *scheduler.Event, err error, chain ev
 			Type:        mesos.ExecutorInfo_DEFAULT,
 			FrameworkID: e.GetSubscribed().FrameworkID,
 		}
+	}
+	return chain(ctx, e, err)
+}
+
+func trackAgents(ctx context.Context, e *scheduler.Event, err error, chain eventrules.Chain) (context.Context, *scheduler.Event, error) {
+	if err != nil {
+		return chain(ctx, e, err)
+	}
+	if e.GetType() != scheduler.Event_OFFERS {
+		return chain(ctx, e, err)
+	}
+	off := e.GetOffers().GetOffers()
+	for i := range off {
+		// TODO(jdef) eventually implement an algorithm to purge agents that are gone
+		agentDirectory[off[i].GetAgentID()] = off[i].GetHostname()
 	}
 	return chain(ctx, e, err)
 }
@@ -255,6 +297,13 @@ func statusUpdate(_ context.Context, e *scheduler.Event) error {
 	switch st := s.GetState(); st {
 	case mesos.TASK_FINISHED, mesos.TASK_RUNNING, mesos.TASK_STAGING, mesos.TASK_STARTING:
 		log.Printf("status update from agent %q: %v", s.GetAgentID().GetValue(), st)
+		if st == mesos.TASK_RUNNING && interactive && s.AgentID != nil {
+			cid := s.GetContainerStatus().GetContainerID()
+			if cid != nil {
+				log.Printf("attaching for interactive session to agent %q container %q", s.AgentID.Value, cid.Value)
+				return tryInteractive(agentDirectory[*s.AgentID], *cid)
+			}
+		}
 		if st != mesos.TASK_FINISHED {
 			return nil
 		}
@@ -275,3 +324,194 @@ func statusUpdate(_ context.Context, e *scheduler.Event) error {
 type ExitError int
 
 func (e ExitError) Error() string { return fmt.Sprintf("exit code %d", int(e)) }
+
+func tryInteractive(agentHost string, cid mesos.ContainerID) (err error) {
+	var (
+		ttyCleanups func()
+		winCh       <-chan mesos.TTYInfo_WindowSize
+	)
+	defer func() { uponExit.push(ttyCleanups) }()
+
+	// TODO(jdef) only re-attach if we're disconnected (guard against redundant TASK_RUNNING)
+	var (
+		cli = httpcli.New(
+			httpcli.Endpoint(fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(agentHost, "5051"))),
+			httpcli.Codec(encoding.MediaTypeProtobuf.Codec()),
+		)
+		aciCh = make(chan agent.Call, 1) // must be buffered to avoid blocking below
+		acif  = client.RequestStreamingFunc(func() encoding.Marshaler {
+			m, ok := <-aciCh
+			if !ok {
+				return nil
+			}
+			return &m
+		})
+		aco = &agent.Call{
+			Type: agent.Call_ATTACH_CONTAINER_OUTPUT,
+			AttachContainerOutput: &agent.Call_AttachContainerOutput{
+				ContainerID: cid,
+			},
+		}
+	)
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	if tty {
+		ttyCleanups, winCh, err = initTTY()
+		if err != nil {
+			return
+		}
+		go func() {
+			<-ctx.Done()
+			ttyCleanups()
+		}()
+	}
+
+	go func() {
+		defer cancel()
+		aciCh <- agent.Call{
+			Type: agent.Call_ATTACH_CONTAINER_INPUT,
+			AttachContainerInput: &agent.Call_AttachContainerInput{
+				Type:        agent.Call_AttachContainerInput_CONTAINER_ID,
+				ContainerID: &cid,
+			},
+		}
+		// blocking call, hence the goroutine
+		input, err := cli.Send(acif, client.ResponseClassSingleton, httpcli.Context(ctx))
+		if err != nil {
+			if input != nil {
+				input.Close()
+			}
+			return
+		}
+	}()
+
+	// attach to container stdout, stderr
+	output, err := cli.Send(client.RequestSingleton(aco), client.ResponseClassStreaming)
+	if err != nil {
+		cancel()
+		if output != nil {
+			output.Close()
+		}
+		return
+	}
+
+	go attachContainerInput(ctx, os.Stdin, winCh, aciCh)
+	go func() {
+		defer cancel()
+		attachContainerOutput(output, os.Stdout, os.Stderr)
+	}()
+
+	return nil
+}
+
+func attachContainerInput(ctx context.Context, stdin io.Reader, winCh <-chan mesos.TTYInfo_WindowSize, aciCh chan<- agent.Call) {
+	defer close(aciCh)
+
+	input := make(chan []byte)
+	go func() {
+		defer close(input)
+		for {
+			buf := make([]byte, 4096) // not efficient to always do this
+			n, err := stdin.Read(buf)
+			if n > 0 {
+				select {
+				case input <- buf[:n]:
+				case <-ctx.Done():
+					return
+				}
+			}
+			// TODO(jdef) check for temporary error?
+			if err != nil {
+				return
+			}
+		}
+	}()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		// TODO(jdef) send a heartbeat message every so often
+		// attach_container_input process_io heartbeats may act as keepalive's, `interval` field is ignored:
+		// https://github.com/apache/mesos/blob/4e200e55d8ed282b892f650983ebdf516680d90d/src/slave/containerizer/mesos/io/switchboard.cpp#L1608
+		case data := <-input:
+			c := agent.Call{
+				Type: agent.Call_ATTACH_CONTAINER_INPUT,
+				AttachContainerInput: &agent.Call_AttachContainerInput{
+					Type: agent.Call_AttachContainerInput_PROCESS_IO,
+					ProcessIO: &agent.ProcessIO{
+						Type: agent.ProcessIO_DATA,
+						Data: &agent.ProcessIO_Data{
+							Type: agent.ProcessIO_Data_STDIN,
+							Data: data,
+						},
+					},
+				},
+			}
+			select {
+			case aciCh <- c:
+			case <-ctx.Done():
+				return
+			}
+		case ws := <-winCh:
+			c := agent.Call{
+				Type: agent.Call_ATTACH_CONTAINER_INPUT,
+				AttachContainerInput: &agent.Call_AttachContainerInput{
+					Type: agent.Call_AttachContainerInput_PROCESS_IO,
+					ProcessIO: &agent.ProcessIO{
+						Type: agent.ProcessIO_CONTROL,
+						Control: &agent.ProcessIO_Control{
+							Type: agent.ProcessIO_Control_TTY_INFO,
+							TTYInfo: &mesos.TTYInfo{
+								WindowSize: &ws,
+							},
+						},
+					},
+				},
+			}
+			select {
+			case aciCh <- c:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}
+}
+
+func attachContainerOutput(resp mesos.Response, stdout, stderr io.Writer) error {
+	defer resp.Close()
+	var pio agent.ProcessIO
+	for {
+		err := resp.Decode(&pio)
+		if err != nil {
+			return err
+		}
+		switch pio.GetType() {
+		case agent.ProcessIO_DATA:
+			data := pio.GetData()
+			switch data.GetType() {
+			case agent.ProcessIO_Data_STDOUT:
+				b := data.GetData()
+				n, err := stdout.Write(b)
+				if err == nil && len(b) != n {
+					return io.ErrShortWrite
+				}
+				if err != nil {
+					return err
+				}
+			case agent.ProcessIO_Data_STDERR:
+				b := data.GetData()
+				n, err := stderr.Write(b)
+				if err == nil && len(b) != n {
+					return io.ErrShortWrite
+				}
+				if err != nil {
+					return err
+				}
+			default:
+				// ignore
+			}
+		default:
+			// ignore
+		}
+	}
+}

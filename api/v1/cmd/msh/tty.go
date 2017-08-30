@@ -44,11 +44,34 @@ func (c *cleanups) push(f func()) {
 	}
 }
 
-func initTTY() (_ func(), _ <-chan mesos.TTYInfo_WindowSize, err error) {
-	cleanups := new(cleanups)
+type ttyDevice struct {
+	fd               int
+	cancel           chan struct{}
+	winch            chan mesos.TTYInfo_WindowSize
+	cleanups         *cleanups
+	original_winsize C.struct_winsize
+}
+
+func (t *ttyDevice) Done() <-chan struct{} { return t.cancel }
+func (t *ttyDevice) Close()                { t.cleanups.unwind() }
+
+func initTTY() (_ *ttyDevice, err error) {
+	return newTTY(
+		ttyConsoleAttach(&os.Stdin, &os.Stdout, &os.Stderr),
+		ttyWinch,
+		ttyTermReset,
+	)
+}
+
+func newTTY(opts ...ttyOption) (_ *ttyDevice, err error) {
+	tty := ttyDevice{
+		cancel:   make(chan struct{}),
+		cleanups: new(cleanups),
+	}
+	tty.cleanups.push(func() { close(tty.cancel) })
 	defer func() {
 		if err != nil {
-			cleanups.unwind()
+			tty.Close()
 		}
 	}()
 
@@ -58,15 +81,15 @@ func initTTY() (_ func(), _ <-chan mesos.TTYInfo_WindowSize, err error) {
 		return
 	}
 
-	ttyfd, err := syscall.Open(C.GoString(ttyname), syscall.O_RDWR, 0)
-	if ttyfd < 0 {
-		err = fmt.Errorf("failed to open tty device: %d", ttyfd)
+	tty.fd, _ = syscall.Open(C.GoString(ttyname), syscall.O_RDWR, 0)
+	if tty.fd < 0 {
+		err = fmt.Errorf("failed to open tty device: %d", tty.fd)
 		return
 	}
-	cleanups.push(func() { syscall.Close(ttyfd) })
+	tty.cleanups.push(func() { syscall.Close(tty.fd) })
 
 	var original_termios C.struct_termios
-	result := C.tcgetattr(C.int(ttyfd), &original_termios)
+	result := C.tcgetattr(C.int(tty.fd), &original_termios)
 	if result < 0 {
 		err = fmt.Errorf("failed getting termios: %d", result)
 		return
@@ -74,78 +97,111 @@ func initTTY() (_ func(), _ <-chan mesos.TTYInfo_WindowSize, err error) {
 
 	new_termios := original_termios
 	C.cfmakeraw(&new_termios)
-	result = C.tcsetattr(C.int(ttyfd), C.TCSANOW, &new_termios)
+	result = C.tcsetattr(C.int(tty.fd), C.TCSANOW, &new_termios)
 	if result < 0 {
 		err = fmt.Errorf("failed setting termios: %d", result)
 		return
 	}
-	cleanups.push(func() {
-		r := C.tcsetattr(C.int(ttyfd), C.TCSANOW, &original_termios)
+	tty.cleanups.push(func() {
+		r := C.tcsetattr(C.int(tty.fd), C.TCSANOW, &original_termios)
 		if r < 0 {
 			fmt.Sprintf("failed to set original termios: %d", r)
 		}
 	})
 
+	// use this local var instead of tty.original_winsize to avoid cgo complaints about double-pointers
 	var original_winsize C.struct_winsize
 	result = C.ioctl_winsize(0, C.TIOCGWINSZ, unsafe.Pointer(&original_winsize))
 	if result < 0 {
 		err = fmt.Errorf("failed to get winsize: %d", result)
 		return
 	}
-	cleanups.push(func() {
+	tty.original_winsize = original_winsize
+	tty.cleanups.push(func() {
 		r := C.ioctl_winsize(0, C.TIOCSWINSZ, unsafe.Pointer(&original_winsize))
 		if r < 0 {
 			fmt.Sprintf("failed to set winsize: %d", r)
 		}
 	})
 
-	cleanups.push(swapfd(uintptr(ttyfd), "tty", &os.Stdout))
-	cleanups.push(swapfd(uintptr(ttyfd), "tty", &os.Stderr))
-	cleanups.push(swapfd(uintptr(ttyfd), "tty", &os.Stdin))
+	// debug
+	fmt.Printf("original window size is %d x %d\n", tty.original_winsize.ws_col, tty.original_winsize.ws_row)
 
+	for _, f := range opts {
+		if f != nil {
+			f(&tty)
+		}
+	}
+
+	return &tty, nil
+}
+
+type ttyOption func(*ttyDevice)
+
+func ttyConsoleAttach(stdin, stdout, stderr **os.File) ttyOption {
+	swapfd := func(newfd uintptr, name string, target **os.File) func() {
+		f := os.NewFile(newfd, name)
+		if f == nil {
+			panic(fmt.Sprintf("failed to swap fd for %q", name))
+		}
+		old := *target
+		*target = f
+		return func() {
+			*target = old
+		}
+	}
+	return func(tty *ttyDevice) {
+		tty.cleanups.push(swapfd(uintptr(tty.fd), "tty", stdout))
+		tty.cleanups.push(swapfd(uintptr(tty.fd), "tty", stderr))
+		tty.cleanups.push(swapfd(uintptr(tty.fd), "tty", stdin))
+	}
+}
+
+func ttyWinch(tty *ttyDevice) {
 	// translate window-size signals into chan events
-	var (
-		c     = make(chan os.Signal, 1)
-		winch = make(chan mesos.TTYInfo_WindowSize, 1)
-	)
+	c := make(chan os.Signal, 1)
+	tty.winch = make(chan mesos.TTYInfo_WindowSize, 1)
+	tty.winch <- mesos.TTYInfo_WindowSize{
+		Rows:    uint32(tty.original_winsize.ws_row),
+		Columns: uint32(tty.original_winsize.ws_col),
+	}
 	go func() {
-		for range c {
-			signal.Ignore(os.Signal(syscall.SIGWINCH))
-			var temp_winsize C.struct_winsize
-			r := C.ioctl_winsize(0, C.TIOCGWINSZ, unsafe.Pointer(&temp_winsize))
-			if r < 0 {
-				panic(fmt.Sprintf("failed to get winsize: %d", r))
+		defer signal.Ignore(os.Signal(syscall.SIGWINCH))
+		for {
+			select {
+			case <-c:
+				signal.Ignore(os.Signal(syscall.SIGWINCH))
+				var temp_winsize C.struct_winsize
+				r := C.ioctl_winsize(0, C.TIOCGWINSZ, unsafe.Pointer(&temp_winsize))
+				if r < 0 {
+					panic(fmt.Sprintf("failed to get winsize: %d", r))
+				}
+				ws := mesos.TTYInfo_WindowSize{
+					Rows:    uint32(temp_winsize.ws_row),
+					Columns: uint32(temp_winsize.ws_col),
+				}
+				select {
+				case <-tty.Done():
+					return
+				case tty.winch <- ws:
+					signal.Notify(c, os.Signal(syscall.SIGWINCH))
+				}
+			case <-tty.Done():
+				return
 			}
-			winch <- mesos.TTYInfo_WindowSize{
-				Rows:    uint32(temp_winsize.ws_row),
-				Columns: uint32(temp_winsize.ws_col),
-			}
-			signal.Notify(c, os.Signal(syscall.SIGWINCH))
 		}
 	}()
 	signal.Notify(c, os.Signal(syscall.SIGWINCH))
+}
 
+func ttyTermReset(tty *ttyDevice) {
 	// cleanup properly upon SIGTERM
 	term := make(chan os.Signal, 1)
 	go func() {
 		<-term
-		cleanups.unwind()
-		println("terminating upon SIGTERM")
+		tty.cleanups.unwind()
 		os.Exit(0)
 	}()
+	tty.cleanups.push(func() { signal.Ignore(os.Signal(syscall.SIGTERM)) })
 	signal.Notify(term, os.Signal(syscall.SIGTERM))
-
-	return cleanups.unwind, nil, nil
-}
-
-func swapfd(newfd uintptr, name string, target **os.File) func() {
-	f := os.NewFile(newfd, name)
-	if f == nil {
-		panic(fmt.Sprintf("failed to swap fd for %q", name))
-	}
-	old := *target
-	*target = f
-	return func() {
-		*target = old
-	}
 }

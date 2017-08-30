@@ -22,6 +22,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/agent"
+	agentcalls "github.com/mesos/mesos-go/api/v1/lib/agent/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/client"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/callrules"
@@ -326,96 +327,91 @@ type ExitError int
 func (e ExitError) Error() string { return fmt.Sprintf("exit code %d", int(e)) }
 
 func tryInteractive(agentHost string, cid mesos.ContainerID) (err error) {
-	var (
-		ttyCleanups func()
-		winCh       <-chan mesos.TTYInfo_WindowSize
-	)
-	defer func() { uponExit.push(ttyCleanups) }()
-
 	// TODO(jdef) only re-attach if we're disconnected (guard against redundant TASK_RUNNING)
 	var (
-		cli = httpcli.New(
-			httpcli.Endpoint(fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(agentHost, "5051"))),
-			httpcli.Codec(encoding.MediaTypeProtobuf.Codec()),
-		)
-		aciCh = make(chan agent.Call, 1) // must be buffered to avoid blocking below
-		acif  = client.RequestStreamingFunc(func() encoding.Marshaler {
+		ctx, cancel = context.WithCancel(context.TODO())
+		winCh       <-chan mesos.TTYInfo_WindowSize
+	)
+	if tty {
+		ttyd, err := initTTY()
+		if err != nil {
+			return err
+		}
+
+		uponExit.push(ttyd.Close) // fail-safe
+
+		go func() {
+			<-ctx.Done()
+			ttyd.Close()
+		}()
+
+		winCh = ttyd.winch
+	}
+
+	var (
+		cli   = httpcli.New(httpcli.Endpoint(fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(agentHost, "5051"))))
+		aciCh = make(chan *agent.Call, 1) // must be buffered to avoid blocking below
+	)
+	aciCh <- agentcalls.AttachContainerInput(&cid) // very first input message MUST be this
+	go func() {
+		defer cancel()
+		acif := client.RequestStreamingFunc(func() encoding.Marshaler {
 			m, ok := <-aciCh
 			if !ok {
 				return nil
 			}
-			return &m
+			return m
 		})
-		aco = &agent.Call{
-			Type: agent.Call_ATTACH_CONTAINER_OUTPUT,
-			AttachContainerOutput: &agent.Call_AttachContainerOutput{
-				ContainerID: cid,
-			},
-		}
-	)
 
-	ctx, cancel := context.WithCancel(context.TODO())
-	if tty {
-		ttyCleanups, winCh, err = initTTY()
-		if err != nil {
-			return
+		// blocking call, hence the goroutine; Send only returns when the input stream is severed
+		input, err2 := cli.Send(acif, client.ResponseClassSingleton, httpcli.Context(ctx))
+		if input != nil {
+			input.Close()
 		}
-		go func() {
-			<-ctx.Done()
-			ttyCleanups()
-		}()
-	}
-
-	go func() {
-		defer cancel()
-		aciCh <- agent.Call{
-			Type: agent.Call_ATTACH_CONTAINER_INPUT,
-			AttachContainerInput: &agent.Call_AttachContainerInput{
-				Type:        agent.Call_AttachContainerInput_CONTAINER_ID,
-				ContainerID: &cid,
-			},
-		}
-		// blocking call, hence the goroutine
-		input, err := cli.Send(acif, client.ResponseClassSingleton, httpcli.Context(ctx))
-		if err != nil {
-			if input != nil {
-				input.Close()
-			}
-			return
+		if err2 != nil && err2 != io.EOF {
+			log.Printf("attached input stream error %v", err2)
 		}
 	}()
 
-	// attach to container stdout, stderr
-	output, err := cli.Send(client.RequestSingleton(aco), client.ResponseClassStreaming)
+	// attach to container stdout, stderr; Send returns immediately with a Response from which output
+	// may be decoded.
+	output, err := cli.Send(
+		client.RequestSingleton(agentcalls.AttachContainerOutput(cid)),
+		client.ResponseClassStreaming,
+		httpcli.Context(ctx),
+	)
 	if err != nil {
-		cancel()
+		log.Printf("attach output stream error: %v", err)
 		if output != nil {
 			output.Close()
 		}
+		cancel()
 		return
 	}
 
-	go attachContainerInput(ctx, os.Stdin, winCh, aciCh)
 	go func() {
 		defer cancel()
 		attachContainerOutput(output, os.Stdout, os.Stderr)
 	}()
 
+	go attachContainerInput(ctx, os.Stdin, winCh, aciCh)
+
 	return nil
 }
 
-func attachContainerInput(ctx context.Context, stdin io.Reader, winCh <-chan mesos.TTYInfo_WindowSize, aciCh chan<- agent.Call) {
+func attachContainerInput(ctx context.Context, stdin io.Reader, winCh <-chan mesos.TTYInfo_WindowSize, aciCh chan<- *agent.Call) {
 	defer close(aciCh)
 
 	input := make(chan []byte)
 	go func() {
 		defer close(input)
 		for {
-			buf := make([]byte, 4096) // not efficient to always do this
+			buf := make([]byte, 512) // not efficient to always do this
 			n, err := stdin.Read(buf)
 			if n > 0 {
+				buf = buf[:n]
 				select {
-				case input <- buf[:n]:
+				case input <- buf:
 				case <-ctx.Done():
 					return
 				}
@@ -433,41 +429,18 @@ func attachContainerInput(ctx context.Context, stdin io.Reader, winCh <-chan mes
 		// TODO(jdef) send a heartbeat message every so often
 		// attach_container_input process_io heartbeats may act as keepalive's, `interval` field is ignored:
 		// https://github.com/apache/mesos/blob/4e200e55d8ed282b892f650983ebdf516680d90d/src/slave/containerizer/mesos/io/switchboard.cpp#L1608
-		case data := <-input:
-			c := agent.Call{
-				Type: agent.Call_ATTACH_CONTAINER_INPUT,
-				AttachContainerInput: &agent.Call_AttachContainerInput{
-					Type: agent.Call_AttachContainerInput_PROCESS_IO,
-					ProcessIO: &agent.ProcessIO{
-						Type: agent.ProcessIO_DATA,
-						Data: &agent.ProcessIO_Data{
-							Type: agent.ProcessIO_Data_STDIN,
-							Data: data,
-						},
-					},
-				},
+		case data, ok := <-input:
+			if !ok {
+				return
 			}
+			c := agentcalls.AttachContainerInputData(data)
 			select {
 			case aciCh <- c:
 			case <-ctx.Done():
 				return
 			}
 		case ws := <-winCh:
-			c := agent.Call{
-				Type: agent.Call_ATTACH_CONTAINER_INPUT,
-				AttachContainerInput: &agent.Call_AttachContainerInput{
-					Type: agent.Call_AttachContainerInput_PROCESS_IO,
-					ProcessIO: &agent.ProcessIO{
-						Type: agent.ProcessIO_CONTROL,
-						Control: &agent.ProcessIO_Control{
-							Type: agent.ProcessIO_Control_TTY_INFO,
-							TTYInfo: &mesos.TTYInfo{
-								WindowSize: &ws,
-							},
-						},
-					},
-				},
-			}
+			c := agentcalls.AttachContainerInputTTYInfo(&mesos.TTYInfo{WindowSize: &ws})
 			select {
 			case aciCh <- c:
 			case <-ctx.Done():
@@ -479,8 +452,15 @@ func attachContainerInput(ctx context.Context, stdin io.Reader, winCh <-chan mes
 
 func attachContainerOutput(resp mesos.Response, stdout, stderr io.Writer) error {
 	defer resp.Close()
-	var pio agent.ProcessIO
+	forward := func(b []byte, out io.Writer) error {
+		n, err := out.Write(b)
+		if err == nil && len(b) != n {
+			err = io.ErrShortWrite
+		}
+		return err
+	}
 	for {
+		var pio agent.ProcessIO
 		err := resp.Decode(&pio)
 		if err != nil {
 			return err
@@ -490,21 +470,11 @@ func attachContainerOutput(resp mesos.Response, stdout, stderr io.Writer) error 
 			data := pio.GetData()
 			switch data.GetType() {
 			case agent.ProcessIO_Data_STDOUT:
-				b := data.GetData()
-				n, err := stdout.Write(b)
-				if err == nil && len(b) != n {
-					return io.ErrShortWrite
-				}
-				if err != nil {
+				if err := forward(data.GetData(), stdout); err != nil {
 					return err
 				}
 			case agent.ProcessIO_Data_STDERR:
-				b := data.GetData()
-				n, err := stderr.Write(b)
-				if err == nil && len(b) != n {
-					return io.ErrShortWrite
-				}
-				if err != nil {
+				if err := forward(data.GetData(), stderr); err != nil {
 					return err
 				}
 			default:

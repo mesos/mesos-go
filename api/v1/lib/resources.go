@@ -358,11 +358,31 @@ func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
 	if (left == nil) != (right == nil) {
 		return false
 	}
+
+	if a, b := left.GetSource(), right.GetSource(); (a == nil) != (b == nil) {
+		return false
+	} else if a != nil {
+		if a.GetType() != b.GetType() {
+			return false
+		}
+		if aa, bb := a.GetMount(), b.GetMount(); (aa == nil) != (bb == nil) {
+			return false
+		} else if aa.GetRoot() != bb.GetRoot() {
+			return false
+		}
+		if aa, bb := a.GetPath(), b.GetPath(); (aa == nil) != (bb == nil) {
+			return false
+		} else if aa.GetRoot() != bb.GetRoot() {
+			return false
+		}
+	}
+
 	if a, b := left.GetPersistence(), right.GetPersistence(); (a == nil) != (b == nil) {
 		return false
 	} else if a != nil {
 		return a.GetID() == b.GetID()
 	}
+
 	return true
 }
 

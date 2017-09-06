@@ -23,14 +23,13 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/agent"
 	agentcalls "github.com/mesos/mesos-go/api/v1/lib/agent/calls"
-	"github.com/mesos/mesos-go/api/v1/lib/client"
-	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/callrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/controller"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/offers"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
+	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpsched"
 	"github.com/mesos/mesos-go/api/v1/lib/resources"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
@@ -350,25 +349,20 @@ func tryInteractive(agentHost string, cid mesos.ContainerID) (err error) {
 	}
 
 	var (
-		cli   = httpcli.New(httpcli.Endpoint(fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(agentHost, "5051"))))
+		cli = httpagent.NewSender(
+			httpcli.New(
+				httpcli.Endpoint(fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(agentHost, "5051"))),
+			),
+		)
 		aciCh = make(chan *agent.Call, 1) // must be buffered to avoid blocking below
 	)
 	aciCh <- agentcalls.AttachContainerInput(&cid) // very first input message MUST be this
 	go func() {
 		defer cancel()
-		acif := client.RequestStreamingFunc(func() encoding.Marshaler {
-			m, ok := <-aciCh
-			if !ok {
-				return nil
-			}
-			return m
-		})
+		acif := agentcalls.FromChan(aciCh)
 
 		// blocking call, hence the goroutine; Send only returns when the input stream is severed
-		input, err2 := cli.Send(acif, client.ResponseClassSingleton, httpcli.Context(ctx))
-		if input != nil {
-			input.Close()
-		}
+		err2 := agentcalls.SendNoData(ctx, cli, acif)
 		if err2 != nil && err2 != io.EOF {
 			log.Printf("attached input stream error %v", err2)
 		}
@@ -376,11 +370,7 @@ func tryInteractive(agentHost string, cid mesos.ContainerID) (err error) {
 
 	// attach to container stdout, stderr; Send returns immediately with a Response from which output
 	// may be decoded.
-	output, err := cli.Send(
-		client.RequestSingleton(agentcalls.AttachContainerOutput(cid)),
-		client.ResponseClassStreaming,
-		httpcli.Context(ctx),
-	)
+	output, err := cli.Send(ctx, agentcalls.NonStreaming(agentcalls.AttachContainerOutput(cid)))
 	if err != nil {
 		log.Printf("attach output stream error: %v", err)
 		if output != nil {

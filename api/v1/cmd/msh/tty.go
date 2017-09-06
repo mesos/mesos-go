@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -105,7 +106,7 @@ func newTTY(opts ...ttyOption) (_ *ttyDevice, err error) {
 	tty.cleanups.push(func() {
 		r := C.tcsetattr(C.int(tty.fd), C.TCSANOW, &original_termios)
 		if r < 0 {
-			fmt.Sprintf("failed to set original termios: %d", r)
+			log.Printf("failed to set original termios: %d", r)
 		}
 	})
 
@@ -120,12 +121,11 @@ func newTTY(opts ...ttyOption) (_ *ttyDevice, err error) {
 	tty.cleanups.push(func() {
 		r := C.ioctl_winsize(0, C.TIOCSWINSZ, unsafe.Pointer(&original_winsize))
 		if r < 0 {
-			fmt.Sprintf("failed to set winsize: %d", r)
+			log.Printf("failed to set winsize: %d", r)
 		}
 	})
 
-	// debug
-	fmt.Printf("original window size is %d x %d\n", tty.original_winsize.ws_col, tty.original_winsize.ws_row)
+	log.Printf("original window size is %d x %d\n", tty.original_winsize.ws_col, tty.original_winsize.ws_row)
 
 	for _, f := range opts {
 		if f != nil {

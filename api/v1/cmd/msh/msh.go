@@ -335,6 +335,7 @@ func tryInteractive(agentHost string, cid mesos.ContainerID) (err error) {
 	if tty {
 		ttyd, err := initTTY()
 		if err != nil {
+			cancel() // stop go-vet from complaining
 			return err
 		}
 

@@ -23,8 +23,9 @@ GO_VERSION := $(shell go version|cut -f3 -d' '|dd bs=1 count=5 2>/dev/null)
 all: test
 
 .PHONY: install
+install: INSTALL_FLAGS +=
 install:
-	go install $(BINARIES)
+	go install $(INSTALL_FLAGS) $(BINARIES)
 
 .PHONY: test
 test:

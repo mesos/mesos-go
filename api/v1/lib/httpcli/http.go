@@ -31,7 +31,7 @@ func (pe ProtocolError) Error() string { return string(pe) }
 
 const (
 	debug             = false // TODO(jdef) kill me at some point
-	MediaTypeRecordIO = encoding.MediaType("application/recordio")
+	mediaTypeRecordIO = encoding.MediaType("application/recordio")
 )
 
 // DoFunc sends an HTTP request and returns an HTTP response.
@@ -165,7 +165,7 @@ func prepareForResponse(rc client.ResponseClass, codec encoding.Codec) (RequestO
 	case client.ResponseClassSingleton, client.ResponseClassAuto:
 		accept = append(accept, Header("Accept", codec.Type.ContentType()))
 	case client.ResponseClassStreaming:
-		accept = append(accept, Header("Accept", MediaTypeRecordIO.ContentType()))
+		accept = append(accept, Header("Accept", mediaTypeRecordIO.ContentType()))
 		accept = append(accept, Header("Message-Accept", codec.Type.ContentType()))
 	default:
 		return nil, ProtocolError(fmt.Sprintf("illegal response class requested: %v", rc))
@@ -209,11 +209,11 @@ func (c *Client) buildRequestStream(f func() encoding.Marshaler, rc client.Respo
 	if err != nil {
 		return nil, err
 	}
+
 	var (
 		pr, pw = io.Pipe()
 		enc    = c.codec.NewEncoder(func() framing.Writer { return recordio.NewWriter(pw) })
 	)
-
 	req, err := http.NewRequest("POST", c.url, pr)
 	if err != nil {
 		pw.Close() // ignore error
@@ -245,7 +245,7 @@ func (c *Client) buildRequestStream(f func() encoding.Marshaler, rc client.Respo
 	return helper.
 		withOptions(c.requestOpts, opt).
 		withHeaders(c.header).
-		withHeader("Content-Type", MediaTypeRecordIO.ContentType()).
+		withHeader("Content-Type", mediaTypeRecordIO.ContentType()).
 		withHeader("Message-Content-Type", c.codec.Type.ContentType()).
 		withOptions(accept).
 		Request, nil
@@ -261,7 +261,7 @@ func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc cli
 				return ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
 			}
 		case client.ResponseClassStreaming:
-			if ct != MediaTypeRecordIO.ContentType() {
+			if ct != mediaTypeRecordIO.ContentType() {
 				return ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
 			}
 			ct = res.Header.Get("Message-Content-Type")
@@ -273,7 +273,8 @@ func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc cli
 		}
 
 	case http.StatusAccepted:
-		// nothing to validate, we're not expecting any response entity in this case
+		// nothing to validate, we're not expecting any response entity in this case.
+		// TODO(jdef) perhaps check Content-Length == 0 here?
 	}
 	return nil
 }

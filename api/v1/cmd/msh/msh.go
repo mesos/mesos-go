@@ -440,7 +440,7 @@ func attachContainerInput(ctx context.Context, stdin io.Reader, winCh <-chan mes
 				return
 			}
 		case ws := <-winCh:
-			c := agentcalls.AttachContainerInputTTYInfo(&mesos.TTYInfo{WindowSize: &ws})
+			c := agentcalls.AttachContainerInputTTY(&mesos.TTYInfo{WindowSize: &ws})
 			select {
 			case aciCh <- c:
 			case <-ctx.Done():

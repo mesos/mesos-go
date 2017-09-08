@@ -122,7 +122,7 @@ func AttachContainerOutput(cid mesos.ContainerID) *agent.Call {
 	}
 }
 
-// AttachContainerInput returns a Call that is used to initiate attachment to contained input.
+// AttachContainerInput returns a Call that is used to initiate attachment to a container's stdin.
 // Callers should first send this Call followed by one or more AttachContainerInputXxx calls.
 func AttachContainerInput(cid *mesos.ContainerID) *agent.Call {
 	return &agent.Call{

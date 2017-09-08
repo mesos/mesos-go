@@ -4,22 +4,6 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 )
 
-/*
-// Client represents a Mesos API client which can send Calls and return
-// a streaming Decoder from which callers can read Events from, an io.Closer to
-// close the event stream on graceful termination and an error in case of failure.
-// ResponseClass is the kind of Response expected by the caller, may be validated by the server.
-type Client interface {
-	Do(Request, ResponseClass) (mesos.Response, error)
-}
-
-// ClientFunc is a functional adapter of the Client interface
-type ClientFunc func(Request, ResponseClass) (mesos.Response, error)
-
-// Do implements Client
-func (f ClientFunc) Do(r Request, rc ResponseClass) (mesos.Response, error) { return f(r, rc) }
-*/
-
 type (
 	// ResponseClass indicates the kind of response that a caller is expecting from Mesos.
 	ResponseClass int

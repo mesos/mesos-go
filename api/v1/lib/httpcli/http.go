@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"sync"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/client"
+	logger "github.com/mesos/mesos-go/api/v1/lib/debug"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/apierrors"
@@ -30,7 +30,7 @@ type ProtocolError string
 func (pe ProtocolError) Error() string { return string(pe) }
 
 const (
-	debug             = false // TODO(jdef) kill me at some point
+	debug             = logger.Logger(false)
 	mediaTypeRecordIO = encoding.MediaType("application/recordio")
 )
 
@@ -68,14 +68,14 @@ type ResponseHandler func(*http.Response, client.ResponseClass, error) (mesos.Re
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
-	url            string
-	do             DoFunc
-	header         http.Header
-	codec          encoding.Codec
-	errorMapper    ErrorMapperFunc
-	requestOpts    []RequestOpt
-	buildRequest   func(client.Request, client.ResponseClass, ...RequestOpt) (*http.Request, error)
-	handleResponse ResponseHandler
+	url              string
+	do               DoFunc
+	header           http.Header
+	codec            encoding.Codec
+	errorMapper      ErrorMapperFunc
+	requestOpts      []RequestOpt
+	buildRequestFunc func(client.Request, client.ResponseClass, ...RequestOpt) (*http.Request, error)
+	handleResponse   ResponseHandler
 }
 
 var (
@@ -104,7 +104,7 @@ func New(opts ...Opt) *Client {
 		header:      DefaultHeaders,
 		errorMapper: DefaultErrorMapper,
 	}
-	c.buildRequest = c.BuildRequest
+	c.buildRequestFunc = c.buildRequest
 	c.handleResponse = c.HandleResponse
 	c.With(opts...)
 	return c
@@ -173,9 +173,9 @@ func prepareForResponse(rc client.ResponseClass, codec encoding.Codec) (RequestO
 	return accept, nil
 }
 
-// BuildRequest is a factory func that generates and returns an http.Request for the
+// buildRequest is a factory func that generates and returns an http.Request for the
 // given marshaler and request options.
-func (c *Client) BuildRequest(cr client.Request, rc client.ResponseClass, opt ...RequestOpt) (*http.Request, error) {
+func (c *Client) buildRequest(cr client.Request, rc client.ResponseClass, opt ...RequestOpt) (*http.Request, error) {
 	if crs, ok := cr.(client.RequestStreaming); ok {
 		return c.buildRequestStream(crs.Marshaler, rc, opt...)
 	}
@@ -320,16 +320,12 @@ func (c *Client) HandleResponse(res *http.Response, rc client.ResponseClass, err
 
 	switch res.StatusCode {
 	case http.StatusOK:
-		if debug {
-			log.Println("request OK, decoding response")
-		}
+		debug.Log("request OK, decoding response")
 		sf := responseToSource(res, rc)
 		result.Decoder = c.codec.NewDecoder(sf.NewSource(res.Body))
 
 	case http.StatusAccepted:
-		if debug {
-			log.Println("request Accepted")
-		}
+		debug.Log("request Accepted")
 		// noop; no decoder for these types of calls
 
 	default:
@@ -359,7 +355,7 @@ func (c *Client) Send(cr client.Request, rc client.ResponseClass, opt ...Request
 		hreq *http.Request
 		hres *http.Response
 	)
-	hreq, err = c.buildRequest(cr, rc, opt...)
+	hreq, err = c.buildRequestFunc(cr, rc, opt...)
 	if err == nil {
 		hres, err = c.do(hreq)
 		res, err = c.handleResponse(hres, rc, err)
@@ -564,9 +560,7 @@ func (r *HTTPRequestHelper) withOptions(optsets ...RequestOpts) *HTTPRequestHelp
 func (r *HTTPRequestHelper) withHeaders(hh http.Header) *HTTPRequestHelper {
 	for k, v := range hh {
 		r.Header[k] = v
-		if debug {
-			log.Println("request header " + k + ": " + v[0])
-		}
+		debug.Log("request header " + k + ": " + v[0])
 	}
 	return r
 }

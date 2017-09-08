@@ -205,7 +205,7 @@ message Call {
     required string role = 1 [(gogoproto.nullable) = false];
   }
 
-  optional Type type = 1;
+  optional Type type = 1 [(gogoproto.nullable) = false];
 
   optional GetMetrics get_metrics = 2;
   optional SetLoggingLevel set_logging_level = 3;
@@ -464,7 +464,7 @@ message Response {
     required quota.QuotaStatus status = 1 [(gogoproto.nullable) = false];
   }
 
-  optional Type type = 1;
+  optional Type type = 1 [(gogoproto.nullable) = false];
 
   optional GetHealth get_health = 2;
   optional GetFlags get_flags = 3;
@@ -550,7 +550,7 @@ message Event {
     required AgentID agent_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
   }
 
-  optional Type type = 1;
+  optional Type type = 1 [(gogoproto.nullable) = false];
 
   optional Subscribed subscribed = 2;
   optional TaskAdded task_added = 3;

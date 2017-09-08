@@ -69,7 +69,12 @@ var (
 func NonStreaming(c *agent.Call) RequestFunc { return func() *agent.Call { return c } }
 
 // FromChan returns a streaming request that fetches calls from the given channel until it closes.
+// If a nil chan is specified then the returned func will always generate nil.
 func FromChan(ch <-chan *agent.Call) RequestStreamingFunc {
+	if ch == nil {
+		// avoid blocking forever if we're handed a nil chan
+		return func() *agent.Call { return nil }
+	}
 	return func() *agent.Call {
 		m, ok := <-ch
 		if !ok {

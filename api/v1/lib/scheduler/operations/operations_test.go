@@ -16,8 +16,8 @@ func TestOpCreate(t *testing.T) {
 			Resource(Name("mem"), ValueScalar(512)),
 			Resource(Name("disk"), ValueScalar(1000), Role("role")),
 		)
-		volume1 = Resource(Name("disk"), ValueScalar(200), Role("role"), Disk("1", "path"))
-		volume2 = Resource(Name("disk"), ValueScalar(2000), Role("role"), Disk("1", "path"))
+		volume1 = Resource(Name("disk"), ValueScalar(200), Role("role"), Disk("1", "path", "", 0))
+		volume2 = Resource(Name("disk"), ValueScalar(2000), Role("role"), Disk("1", "path", "", 0))
 	)
 	op := Create(Resources(volume1))
 	rs, err := operations.Apply(op, total)

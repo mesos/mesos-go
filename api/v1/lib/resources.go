@@ -226,6 +226,23 @@ func (resources Resources) String() string {
 		buf.WriteString(")")
 		if d := r.GetDisk(); d != nil {
 			buf.WriteString("[")
+			if s := d.GetSource(); s != nil {
+				switch s.GetType() {
+				case PATH:
+					buf.WriteString("(PATH:")
+					if p := s.GetPath(); p != nil {
+						buf.WriteString(p.GetRoot())
+					}
+				case MOUNT:
+					buf.WriteString("(MOUNT:")
+					if m := s.GetMount(); m != nil {
+						buf.WriteString(m.GetRoot())
+					}
+				default:
+					buf.WriteString("(ROOT:")
+				}
+				buf.WriteString(")")
+			}
 			if p := d.GetPersistence(); p != nil {
 				buf.WriteString(p.GetID())
 			}

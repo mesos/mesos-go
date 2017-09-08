@@ -119,8 +119,8 @@ func TestResources_PersistentVolumes(t *testing.T) {
 			Resource(Name("disk"), ValueScalar(1000)),
 		)
 		disk = mesos.Resources{
-			Resource(Name("disk"), ValueScalar(10), Role("role1"), Disk("1", "path")),
-			Resource(Name("disk"), ValueScalar(20), Role("role2"), Disk("", "")),
+			Resource(Name("disk"), ValueScalar(10), Role("role1"), Disk("1", "path", "", 0)),
+			Resource(Name("disk"), ValueScalar(20), Role("role2"), Disk("", "", "", 0)),
 		}
 	)
 	rs.Add(disk...)
@@ -151,11 +151,11 @@ func TestResource_IsEmpty(t *testing.T) {
 
 func TestResources_Minus(t *testing.T) {
 	disks := mesos.Resources{
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2")),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2", "", 0)),
 	}
 	for i, tc := range []struct {
 		r1, r2      mesos.Resources
@@ -353,9 +353,9 @@ func TestResources_Minus(t *testing.T) {
 
 func TestResources_Plus(t *testing.T) {
 	disks := mesos.Resources{
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "")),
-		Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("", "path")),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "", "", 0)),
+		Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("", "path", "", 0)),
 	}
 	for i, tc := range []struct {
 		r1, r2      mesos.Resources

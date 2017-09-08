@@ -20,11 +20,11 @@ func TestResources_ContainsAll(t *testing.T) {
 		disks2 = Resources(Resource(Name("disks"), ValueSet("sda1", "sda3", "sda4", "sda2"), Role("*")))
 
 		disks = mesos.Resources{
-			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path")),
-			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path")),
-			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("1", "path")),
-			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("", "path")),
-			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("2", "path")),
+			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path", "", 0)),
+			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path", "", 0)),
+			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("1", "path", "", 0)),
+			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("", "path", "", 0)),
+			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("2", "path", "", 0)),
 		}
 		summedDisks  = Resources(disks[0]).Plus(disks[1])
 		summedDisks2 = Resources(disks[0]).Plus(disks[4])
@@ -154,11 +154,11 @@ func TestResources_Validation(t *testing.T) {
 		// don't use Resources(...) because that implicitly validates and skips invalid resources
 		{
 			mesos.Resources{
-				Resource(Name("cpus"), ValueScalar(2), Role("*"), Disk("1", "path")),
+				Resource(Name("cpus"), ValueScalar(2), Role("*"), Disk("1", "path", "", 0)),
 			}, true, true, // expected resource error because cpu resources can't contain disk info
 		},
-		{rs: mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path"))}},
-		{rs: mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path"))}},
+		{rs: mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path", "", 0))}},
+		{rs: mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path", "", 0))}},
 		// reservations
 		{rs: mesos.Resources{Resource(Name("cpus"), ValueScalar(8), Role("*"))}},                                                // unreserved
 		{rs: mesos.Resources{Resource(Name("cpus"), ValueScalar(8), Role("role"))}},                                             // statically reserved
@@ -185,13 +185,17 @@ func TestResources_Validation(t *testing.T) {
 
 func TestResources_Equivalent(t *testing.T) {
 	disks := mesos.Resources{
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "")),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path1")),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path2")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path2")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path1")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path2")),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2")),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path1", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path2", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path2", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path1", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path2", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2", "", 0)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "/mnt/path1", mesos.PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "/mnt/path2", mesos.PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "/mnt/path1", mesos.MOUNT)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "/mnt/path2", mesos.MOUNT)),
 	}
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources
@@ -233,17 +237,22 @@ func TestResources_Equivalent(t *testing.T) {
 			r2:    Resources(Resource(Name("disks"), ValueSet("sda2"), Role("*"))),
 			wants: false,
 		},
-		{Resources(disks[0]), Resources(disks[1]), true},  // 6
-		{Resources(disks[1]), Resources(disks[2]), true},  // 7
-		{Resources(disks[4]), Resources(disks[5]), true},  // 8
-		{Resources(disks[5]), Resources(disks[6]), false}, // 9
-		{Resources(disks[3]), Resources(disks[6]), false}, // 10
-		{ // 11
+		{Resources(disks[0]), Resources(disks[1]), true},   // 6
+		{Resources(disks[1]), Resources(disks[2]), true},   // 7
+		{Resources(disks[4]), Resources(disks[5]), true},   // 8
+		{Resources(disks[5]), Resources(disks[6]), false},  // 9
+		{Resources(disks[3]), Resources(disks[6]), false},  // 10
+		{Resources(disks[0]), Resources(disks[7]), false},  // 11
+		{Resources(disks[0]), Resources(disks[9]), false},  // 12
+		{Resources(disks[7]), Resources(disks[9]), false},  // 13
+		{Resources(disks[7]), Resources(disks[8]), false},  // 14
+		{Resources(disks[9]), Resources(disks[10]), false}, // 15
+		{ // 16
 			r1:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
 			r2:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
 			wants: true,
 		},
-		{ // 12
+		{ // 17
 			r1:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
 			r2:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"))),
 			wants: false,

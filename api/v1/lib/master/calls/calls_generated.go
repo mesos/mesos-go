@@ -1,22 +1,26 @@
 package calls
 
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/master -type C:*master.Call
+// GENERATED CODE FOLLOWS; DO NOT EDIT.
+
 import (
 	"context"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
-	"github.com/mesos/mesos-go/api/v1/lib/agent"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
+
+	"github.com/mesos/mesos-go/api/v1/lib/master"
 )
 
 type (
 	// Request generates a Call that's sent to a Mesos agent. Subsequent invocations are expected to
 	// yield equivalent calls. Intended for use w/ non-streaming requests to an agent.
 	Request interface {
-		Call() *agent.Call
+		Call() *master.Call
 	}
 
 	// RequestFunc is the functional adaptation of Request.
-	RequestFunc func() *agent.Call
+	RequestFunc func() *master.Call
 
 	// RequestStreaming generates a Call that's send to a Mesos agent. Subsequent invocations MAY generate
 	// different Call objects. No more Call objects are expected once a nil is returned to signal the end of
@@ -27,7 +31,7 @@ type (
 	}
 
 	// RequestStreamingFunc is the functional adaptation of RequestStreaming.
-	RequestStreamingFunc func() *agent.Call
+	RequestStreamingFunc func() *master.Call
 
 	// Send issues a Request to a Mesos agent and properly manages Call-specific mechanics.
 	Sender interface {
@@ -38,20 +42,20 @@ type (
 	SenderFunc func(context.Context, Request) (mesos.Response, error)
 )
 
-func (f RequestFunc) Call() *agent.Call { return f() }
+func (f RequestFunc) Call() *master.Call { return f() }
 func (f RequestFunc) Marshaler() encoding.Marshaler {
 	call := f()
-	// avoid returning (*agent.Call)(nil) for interface type
+	// avoid returning (*master.Call)(nil) for interface type
 	if call != nil {
 		return call
 	}
 	return nil
 }
 
-func (f RequestStreamingFunc) Call() *agent.Call { return f() }
+func (f RequestStreamingFunc) Call() *master.Call { return f() }
 func (f RequestStreamingFunc) Marshaler() encoding.Marshaler {
 	call := f()
-	// avoid returning (*agent.Call)(nil) for interface type
+	// avoid returning (*master.Call)(nil) for interface type
 	if call != nil {
 		return call
 	}
@@ -66,16 +70,16 @@ var (
 )
 
 // NonStreaming returns a RequestFunc that always generates the same Call.
-func NonStreaming(c *agent.Call) RequestFunc { return func() *agent.Call { return c } }
+func NonStreaming(c *master.Call) RequestFunc { return func() *master.Call { return c } }
 
 // FromChan returns a streaming request that fetches calls from the given channel until it closes.
 // If a nil chan is specified then the returned func will always generate nil.
-func FromChan(ch <-chan *agent.Call) RequestStreamingFunc {
+func FromChan(ch <-chan *master.Call) RequestStreamingFunc {
 	if ch == nil {
 		// avoid blocking forever if we're handed a nil chan
-		return func() *agent.Call { return nil }
+		return func() *master.Call { return nil }
 	}
-	return func() *agent.Call {
+	return func() *master.Call {
 		m, ok := <-ch
 		if !ok {
 			return nil

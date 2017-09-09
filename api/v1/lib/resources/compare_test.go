@@ -20,11 +20,11 @@ func TestResources_ContainsAll(t *testing.T) {
 		disks2 = Resources(Resource(Name("disks"), ValueSet("sda1", "sda3", "sda4", "sda2"), Role("*")))
 
 		disks = mesos.Resources{
-			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path", "", 0)),
-			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path", "", 0)),
-			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("1", "path", "", 0)),
-			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("", "path", "", 0)),
-			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("2", "path", "", 0)),
+			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path")),
+			Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path")),
+			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("1", "path")),
+			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("", "path")),
+			Resource(Name("disk"), ValueScalar(20), Role("role"), Disk("2", "path")),
 		}
 		summedDisks  = Resources(disks[0]).Plus(disks[1])
 		summedDisks2 = Resources(disks[0]).Plus(disks[4])
@@ -154,11 +154,11 @@ func TestResources_Validation(t *testing.T) {
 		// don't use Resources(...) because that implicitly validates and skips invalid resources
 		{
 			mesos.Resources{
-				Resource(Name("cpus"), ValueScalar(2), Role("*"), Disk("1", "path", "", 0)),
+				Resource(Name("cpus"), ValueScalar(2), Role("*"), Disk("1", "path")),
 			}, true, true, // expected resource error because cpu resources can't contain disk info
 		},
-		{rs: mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path", "", 0))}},
-		{rs: mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path", "", 0))}},
+		{rs: mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path"))}},
+		{rs: mesos.Resources{Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path"))}},
 		// reservations
 		{rs: mesos.Resources{Resource(Name("cpus"), ValueScalar(8), Role("*"))}},                                                // unreserved
 		{rs: mesos.Resources{Resource(Name("cpus"), ValueScalar(8), Role("role"))}},                                             // statically reserved
@@ -185,17 +185,17 @@ func TestResources_Validation(t *testing.T) {
 
 func TestResources_Equivalent(t *testing.T) {
 	disks := mesos.Resources{
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "", 0)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path1", "", 0)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path2", "", 0)),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path2", "", 0)),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path1", "", 0)),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path2", "", 0)),
-		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2", "", 0)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "/mnt/path1", mesos.PATH)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "/mnt/path2", mesos.PATH)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "/mnt/path1", mesos.MOUNT)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "", "/mnt/path2", mesos.MOUNT)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "")),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path1")),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), Disk("", "path2")),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("", "path2")),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path1")),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path2")),
+		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2")),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.MOUNT)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.MOUNT)),
 	}
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources

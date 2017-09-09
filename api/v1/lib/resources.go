@@ -229,21 +229,21 @@ func (resources Resources) String() string {
 			if s := d.GetSource(); s != nil {
 				switch s.GetType() {
 				case PATH:
-					buf.WriteString("(PATH:")
+					buf.WriteString("PATH:")
 					if p := s.GetPath(); p != nil {
 						buf.WriteString(p.GetRoot())
 					}
 				case MOUNT:
-					buf.WriteString("(MOUNT:")
+					buf.WriteString("MOUNT:")
 					if m := s.GetMount(); m != nil {
 						buf.WriteString(m.GetRoot())
 					}
-				default:
-					buf.WriteString("(ROOT:")
 				}
-				buf.WriteString(")")
 			}
 			if p := d.GetPersistence(); p != nil {
+				if d.GetSource() != nil {
+					buf.WriteString(",")
+				}
 				buf.WriteString(p.GetID())
 			}
 			if v := d.GetVolume(); v != nil {

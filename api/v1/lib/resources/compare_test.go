@@ -192,6 +192,10 @@ func TestResources_Equivalent(t *testing.T) {
 		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path1")),
 		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path2")),
 		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2")),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.MOUNT)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.MOUNT)),
 	}
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources
@@ -233,17 +237,22 @@ func TestResources_Equivalent(t *testing.T) {
 			r2:    Resources(Resource(Name("disks"), ValueSet("sda2"), Role("*"))),
 			wants: false,
 		},
-		{Resources(disks[0]), Resources(disks[1]), true},  // 6
-		{Resources(disks[1]), Resources(disks[2]), true},  // 7
-		{Resources(disks[4]), Resources(disks[5]), true},  // 8
-		{Resources(disks[5]), Resources(disks[6]), false}, // 9
-		{Resources(disks[3]), Resources(disks[6]), false}, // 10
-		{ // 11
+		{Resources(disks[0]), Resources(disks[1]), true},   // 6
+		{Resources(disks[1]), Resources(disks[2]), true},   // 7
+		{Resources(disks[4]), Resources(disks[5]), true},   // 8
+		{Resources(disks[5]), Resources(disks[6]), false},  // 9
+		{Resources(disks[3]), Resources(disks[6]), false},  // 10
+		{Resources(disks[0]), Resources(disks[7]), false},  // 11
+		{Resources(disks[0]), Resources(disks[9]), false},  // 12
+		{Resources(disks[7]), Resources(disks[9]), false},  // 13
+		{Resources(disks[7]), Resources(disks[8]), false},  // 14
+		{Resources(disks[9]), Resources(disks[10]), false}, // 15
+		{ // 16
 			r1:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
 			r2:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
 			wants: true,
 		},
-		{ // 12
+		{ // 17
 			r1:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
 			r2:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"))),
 			wants: false,

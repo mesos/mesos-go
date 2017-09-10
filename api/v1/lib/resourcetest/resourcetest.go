@@ -84,6 +84,27 @@ func Disk(persistenceID, containerPath string) Opt {
 	}
 }
 
+func DiskWithSource(persistenceID, containerPath, source string, sourceType mesos.Resource_DiskInfo_Source_Type) Opt {
+	return func(r *mesos.Resource) {
+		r.Disk = &mesos.Resource_DiskInfo{}
+		if containerPath != "" {
+			r.Disk.Volume = &mesos.Volume{ContainerPath: containerPath}
+		}
+		if persistenceID != "" {
+			r.Disk.Persistence = &mesos.Resource_DiskInfo_Persistence{ID: persistenceID}
+		}
+		if source != "" {
+			r.Disk.Source = &mesos.Resource_DiskInfo_Source{Type: &sourceType}
+			switch sourceType {
+			case mesos.PATH:
+				r.Disk.Source.Path = &mesos.Resource_DiskInfo_Source_Path{Root: source}
+			case mesos.MOUNT:
+				r.Disk.Source.Mount = &mesos.Resource_DiskInfo_Source_Mount{Root: source}
+			}
+		}
+	}
+}
+
 func ReservedBy(principal string) *mesos.Resource_ReservationInfo {
 	result := &mesos.Resource_ReservationInfo{}
 	if principal != "" {

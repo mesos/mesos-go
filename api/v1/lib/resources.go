@@ -226,7 +226,24 @@ func (resources Resources) String() string {
 		buf.WriteString(")")
 		if d := r.GetDisk(); d != nil {
 			buf.WriteString("[")
+			if s := d.GetSource(); s != nil {
+				switch s.GetType() {
+				case PATH:
+					buf.WriteString("PATH:")
+					if p := s.GetPath(); p != nil {
+						buf.WriteString(p.GetRoot())
+					}
+				case MOUNT:
+					buf.WriteString("MOUNT:")
+					if m := s.GetMount(); m != nil {
+						buf.WriteString(m.GetRoot())
+					}
+				}
+			}
 			if p := d.GetPersistence(); p != nil {
+				if d.GetSource() != nil {
+					buf.WriteString(",")
+				}
 				buf.WriteString(p.GetID())
 			}
 			if v := d.GetVolume(); v != nil {
@@ -358,11 +375,31 @@ func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
 	if (left == nil) != (right == nil) {
 		return false
 	}
+
+	if a, b := left.GetSource(), right.GetSource(); (a == nil) != (b == nil) {
+		return false
+	} else if a != nil {
+		if a.GetType() != b.GetType() {
+			return false
+		}
+		if aa, bb := a.GetMount(), b.GetMount(); (aa == nil) != (bb == nil) {
+			return false
+		} else if aa.GetRoot() != bb.GetRoot() {
+			return false
+		}
+		if aa, bb := a.GetPath(), b.GetPath(); (aa == nil) != (bb == nil) {
+			return false
+		} else if aa.GetRoot() != bb.GetRoot() {
+			return false
+		}
+	}
+
 	if a, b := left.GetPersistence(), right.GetPersistence(); (a == nil) != (b == nil) {
 		return false
 	} else if a != nil {
 		return a.GetID() == b.GetID()
 	}
+
 	return true
 }
 

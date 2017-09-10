@@ -5,6 +5,7 @@ package calls
 
 import (
 	"context"
+	"sync/atomic"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
@@ -43,25 +44,46 @@ type (
 )
 
 func (f RequestFunc) Call() *master.Call { return f() }
+
 func (f RequestFunc) Marshaler() encoding.Marshaler {
-	call := f()
 	// avoid returning (*master.Call)(nil) for interface type
-	if call != nil {
+	if call := f(); call != nil {
 		return call
 	}
 	return nil
 }
 
-func (f RequestStreamingFunc) Call() *master.Call { return f() }
+func (f RequestStreamingFunc) Push(c ...*master.Call) RequestStreamingFunc { return Push(f, c...) }
+
 func (f RequestStreamingFunc) Marshaler() encoding.Marshaler {
-	call := f()
 	// avoid returning (*master.Call)(nil) for interface type
-	if call != nil {
+	if call := f(); call != nil {
 		return call
 	}
 	return nil
 }
+
 func (f RequestStreamingFunc) IsStreaming() {}
+
+func (f RequestStreamingFunc) Call() *master.Call { return f() }
+
+// Push prepends one or more calls onto a request stream. If no calls are given then the original stream is returned.
+func Push(r RequestStreaming, c ...*master.Call) RequestStreamingFunc {
+	if len(c) == 0 {
+		return r.Call
+	}
+	var forward int32
+	return func() *master.Call {
+		if atomic.LoadInt32(&forward) == 1 {
+			return Push(r, c[1:]...).Call()
+		}
+		atomic.StoreInt32(&forward, 1)
+		return c[0]
+	}
+}
+
+// Empty generates a stream that always returns nil.
+func Empty() RequestStreamingFunc { return func() *master.Call { return nil } }
 
 var (
 	_ = Request(RequestFunc(nil))
@@ -80,11 +102,10 @@ func FromChan(ch <-chan *master.Call) RequestStreamingFunc {
 		return func() *master.Call { return nil }
 	}
 	return func() *master.Call {
-		m, ok := <-ch
-		if !ok {
-			return nil
+		if m, ok := <-ch; ok {
+			return m
 		}
-		return m
+		return nil
 	}
 }
 
@@ -93,12 +114,20 @@ func (f SenderFunc) Send(ctx context.Context, r Request) (mesos.Response, error)
 	return f(ctx, r)
 }
 
+// IgnoreResponse generates a sender that closes any non-nil response received by Mesos.
+func IgnoreResponse(s Sender) SenderFunc {
+	return func(ctx context.Context, r Request) (mesos.Response, error) {
+		resp, err := s.Send(ctx, r)
+		if resp != nil {
+			resp.Close()
+		}
+		return nil, err
+	}
+}
+
 // SendNoData is a convenience func that executes the given Call using the provided Sender
 // and always drops the response data.
-func SendNoData(ctx context.Context, sender Sender, r Request) error {
-	resp, err := sender.Send(ctx, r)
-	if resp != nil {
-		resp.Close()
-	}
-	return err
+func SendNoData(ctx context.Context, sender Sender, r Request) (err error) {
+	_, err = IgnoreResponse(sender).Send(ctx, r)
+	return
 }

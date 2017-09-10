@@ -32,16 +32,9 @@ func NewSender(c *httpcli.Client) calls.Sender {
 
 		var req client.Request
 
-		switch r.(type) {
+		switch r := r.(type) {
 		case calls.RequestStreaming:
-			first := true
-			req = calls.RequestStreamingFunc(func() *master.Call {
-				if first {
-					first = false
-					return obj
-				}
-				return r.Call()
-			})
+			req = calls.Push(r, obj)
 		default:
 			req = calls.NonStreaming(obj)
 		}

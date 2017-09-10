@@ -59,18 +59,11 @@ func Example() {
 		AttachContainerOutput(mesos.ContainerID{}),
 	)
 
-	blackhole = func(calls ...*agent.Call) {
-		ch := make(chan *agent.Call, len(calls))
-		for i := range calls {
-			ch <- calls[i]
-		}
-		swallow(sender.Send(ctx, FromChan(ch)))
-	}
-	blackhole(
+	swallow(sender.Send(ctx, Empty().Push(
 		AttachContainerInput(mesos.ContainerID{}),
 		AttachContainerInputTTY(nil),
 		AttachContainerInputData(nil),
-	)
+	)))
 
 	// Output:
 }

@@ -356,7 +356,7 @@ func tryInteractive(agentHost string, cid mesos.ContainerID) (err error) {
 		)
 		aciCh = make(chan *agent.Call, 1) // must be buffered to avoid blocking below
 	)
-	aciCh <- agentcalls.AttachContainerInput(&cid) // very first input message MUST be this
+	aciCh <- agentcalls.AttachContainerInput(cid) // very first input message MUST be this
 	go func() {
 		defer cancel()
 		acif := agentcalls.FromChan(aciCh)

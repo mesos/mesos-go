@@ -124,12 +124,12 @@ func AttachContainerOutput(cid mesos.ContainerID) *agent.Call {
 
 // AttachContainerInput returns a Call that is used to initiate attachment to a container's stdin.
 // Callers should first send this Call followed by one or more AttachContainerInputXxx calls.
-func AttachContainerInput(cid *mesos.ContainerID) *agent.Call {
+func AttachContainerInput(cid mesos.ContainerID) *agent.Call {
 	return &agent.Call{
 		Type: agent.Call_ATTACH_CONTAINER_INPUT,
 		AttachContainerInput: &agent.Call_AttachContainerInput{
 			Type:        agent.Call_AttachContainerInput_CONTAINER_ID,
-			ContainerID: cid,
+			ContainerID: &cid,
 		},
 	}
 }

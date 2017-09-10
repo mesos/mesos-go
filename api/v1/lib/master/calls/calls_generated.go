@@ -1,11 +1,10 @@
 package calls
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib/master -type C:*master.Call
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/master -type C:master.Call
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
 	"context"
-	"sync/atomic"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
@@ -69,16 +68,13 @@ func (f RequestStreamingFunc) Call() *master.Call { return f() }
 
 // Push prepends one or more calls onto a request stream. If no calls are given then the original stream is returned.
 func Push(r RequestStreaming, c ...*master.Call) RequestStreamingFunc {
-	if len(c) == 0 {
-		return r.Call
-	}
-	var forward int32
 	return func() *master.Call {
-		if atomic.LoadInt32(&forward) == 1 {
-			return Push(r, c[1:]...).Call()
+		if len(c) == 0 {
+			return r.Call()
 		}
-		atomic.StoreInt32(&forward, 1)
-		return c[0]
+		head := c[0]
+		c = c[1:]
+		return head
 	}
 }
 

@@ -8,17 +8,16 @@ import (
 )
 
 func main() {
-	Run(handlersTemplate, nil, os.Args...)
+	Run(srcTemplate, testTemplate, os.Args...)
 }
 
-var handlersTemplate = template.Must(template.New("").Parse(`package {{.Package}}
+var srcTemplate = template.Must(template.New("").Parse(`package {{.Package}}
 
 // go generate {{.Args}}
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
 	"context"
-	"sync/atomic"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
@@ -27,16 +26,16 @@ import (
 {{end}}
 )
 
-{{.RequireType "C" -}}{{/* C is assumed to be a pointer type */ -}}
+{{.RequireType "C" -}}{{/* C is assumed to be a struct or primitive type */ -}}
 type (
 	// Request generates a Call that's sent to a Mesos agent. Subsequent invocations are expected to
 	// yield equivalent calls. Intended for use w/ non-streaming requests to an agent.
 	Request interface {
-		Call() {{.Type "C"}}
+		Call() *{{.Type "C"}}
 	}
 
 	// RequestFunc is the functional adaptation of Request.
-	RequestFunc func() {{.Type "C"}}
+	RequestFunc func() *{{.Type "C"}}
 
 	// RequestStreaming generates a Call that's send to a Mesos agent. Subsequent invocations MAY generate
 	// different Call objects. No more Call objects are expected once a nil is returned to signal the end of
@@ -47,7 +46,7 @@ type (
 	}
 
 	// RequestStreamingFunc is the functional adaptation of RequestStreaming.
-	RequestStreamingFunc func() {{.Type "C"}}
+	RequestStreamingFunc func() *{{.Type "C"}}
 
 	// Send issues a Request to a Mesos agent and properly manages Call-specific mechanics.
 	Sender interface {
@@ -58,20 +57,20 @@ type (
 	SenderFunc func(context.Context, Request) (mesos.Response, error)
 )
 
-func (f RequestFunc) Call() {{.Type "C"}} { return f() }
+func (f RequestFunc) Call() *{{.Type "C"}} { return f() }
 
 func (f RequestFunc) Marshaler() encoding.Marshaler {
-	// avoid returning ({{.Type "C"}})(nil) for interface type
+	// avoid returning (*{{.Type "C"}})(nil) for interface type
 	if call := f(); call != nil {
 		return call
 	}
 	return nil
 }
 
-func (f RequestStreamingFunc) Push(c ...{{.Type "C"}}) RequestStreamingFunc { return Push(f, c...) }
+func (f RequestStreamingFunc) Push(c ...*{{.Type "C"}}) RequestStreamingFunc { return Push(f, c...) }
 
 func (f RequestStreamingFunc) Marshaler() encoding.Marshaler {
-	// avoid returning ({{.Type "C"}})(nil) for interface type
+	// avoid returning (*{{.Type "C"}})(nil) for interface type
 	if call := f(); call != nil {
 		return call
 	}
@@ -80,25 +79,22 @@ func (f RequestStreamingFunc) Marshaler() encoding.Marshaler {
 
 func (f RequestStreamingFunc) IsStreaming() {}
 
-func (f RequestStreamingFunc) Call() {{.Type "C"}} { return f() }
+func (f RequestStreamingFunc) Call() *{{.Type "C"}} { return f() }
 
 // Push prepends one or more calls onto a request stream. If no calls are given then the original stream is returned.
-func Push(r RequestStreaming, c ...{{.Type "C"}}) RequestStreamingFunc {
-	if len(c) == 0 {
-		return r.Call
-	}
-	var forward int32
-	return func() {{.Type "C"}} {
-		if atomic.LoadInt32(&forward) == 1 {
-			return Push(r, c[1:]...).Call()
+func Push(r RequestStreaming, c ...*{{.Type "C"}}) RequestStreamingFunc {
+	return func() *{{.Type "C"}} {
+		if len(c) == 0 {
+			return r.Call()
 		}
-		atomic.StoreInt32(&forward, 1)
-		return c[0]
+		head := c[0]
+		c = c[1:]
+		return head
 	}
 }
 
 // Empty generates a stream that always returns nil.
-func Empty() RequestStreamingFunc { return func() {{.Type "C"}} { return nil } }
+func Empty() RequestStreamingFunc { return func() *{{.Type "C"}} { return nil } }
 
 var (
 	_ = Request(RequestFunc(nil))
@@ -107,16 +103,16 @@ var (
 )
 
 // NonStreaming returns a RequestFunc that always generates the same Call.
-func NonStreaming(c {{.Type "C"}}) RequestFunc { return func() {{.Type "C"}} { return c } }
+func NonStreaming(c *{{.Type "C"}}) RequestFunc { return func() *{{.Type "C"}} { return c } }
 
 // FromChan returns a streaming request that fetches calls from the given channel until it closes.
 // If a nil chan is specified then the returned func will always generate nil.
-func FromChan(ch <-chan {{.Type "C"}}) RequestStreamingFunc {
+func FromChan(ch <-chan *{{.Type "C"}}) RequestStreamingFunc {
 	if ch == nil {
 		// avoid blocking forever if we're handed a nil chan
-		return func() {{.Type "C"}} { return nil }
+		return func() *{{.Type "C"}} { return nil }
 	}
-	return func() {{.Type "C"}} {
+	return func() *{{.Type "C"}} {
 		if m, ok := <-ch; ok {
 			return m
 		}
@@ -145,5 +141,107 @@ func IgnoreResponse(s Sender) SenderFunc {
 func SendNoData(ctx context.Context, sender Sender, r Request) (err error) {
 	_, err = IgnoreResponse(sender).Send(ctx, r)
 	return
+}
+`))
+
+var testTemplate = template.Must(template.New("").Parse(`package {{.Package}}
+
+// go generate {{.Args}}
+// GENERATED CODE FOLLOWS; DO NOT EDIT.
+
+import (
+	"context"
+        "testing"
+
+	"github.com/mesos/mesos-go/api/v1/lib"
+{{range .Imports}}
+        {{ printf "%q" . -}}
+{{end}}
+)
+
+func TestNonStreaming(t *testing.T) {
+	c := new({{.Type "C"}})
+	f := NonStreaming(c)
+	if x := f.Call(); x != c {
+		t.Fatalf("expected %#v instead of $#v", c, x)
+	}
+	if x := f.Marshaler(); x == nil {
+		t.Fatal("expected non-nil Marshaler")
+	}
+	f = NonStreaming(nil)
+	if x := f.Marshaler(); x != nil {
+		t.Fatalf("expected nil Marshaler instead of %#v", x)
+	}
+}
+
+func TestStreaming(t *testing.T) {
+	f := Empty()
+
+	f.IsStreaming()
+
+	if x := f.Call(); x != nil {
+		t.Fatalf("expected nil Call instead of %#v", x)
+	}
+	if x := f.Marshaler(); x != nil {
+		t.Fatalf("expected nil Call instead of %#v", x)
+	}
+
+	c := new({{.Type "C"}})
+
+	f = f.Push(c)
+	if x := f.Marshaler(); x == nil {
+		t.Fatal("expected non-nil Marshaler")
+	}
+	if x := f.Marshaler(); x != nil {
+		t.Fatalf("expected nil Marshaler instead of %#v", x)
+	}
+
+	c2 := new({{.Type "C"}})
+
+	f = Empty().Push(c, c2)
+	if x := f.Call(); x != c {
+		t.Fatalf("expected %#v instead of $#v", c, x)
+	}
+	if x := f.Call(); x != c2 {
+		t.Fatalf("expected %#v instead of $#v", c2, x)
+	}
+	if x := f.Call(); x != nil {
+		t.Fatalf("expected nil Call instead of %#v", x)
+	}
+
+	ch := make(chan *{{.Type "C"}}, 2)
+	ch <- c
+	ch <- c2
+	close(ch)
+	f = FromChan(ch)
+	if x := f.Call(); x != c {
+		t.Fatalf("expected %#v instead of $#v", c, x)
+	}
+	if x := f.Call(); x != c2 {
+		t.Fatalf("expected %#v instead of $#v", c2, x)
+	}
+	if x := f.Call(); x != nil {
+		t.Fatalf("expected nil Call instead of %#v", x)
+	}
+
+	f = FromChan(nil)
+	if x := f.Call(); x != nil {
+		t.Fatalf("expected nil Call instead of %#v", x)
+	}
+}
+
+func TestIgnoreResponse(t *testing.T) {
+	var closed bool
+
+	IgnoreResponse(SenderFunc(func(_ context.Context, _ Request) (mesos.Response, error) {
+		return &mesos.ResponseWrapper{Closer: mesos.CloseFunc(func() error {
+			closed = true
+			return nil
+		})}, nil
+	})).Send(nil, nil)
+
+	if !closed {
+		t.Fatal("expected response to be closed")
+	}
 }
 `))

@@ -12,6 +12,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding/codecs"
 	"github.com/mesos/mesos-go/api/v1/lib/executor"
 	"github.com/mesos/mesos-go/api/v1/lib/executor/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/executor/config"
@@ -54,7 +55,7 @@ func run(cfg config.Config) {
 		state = &internalState{
 			cli: httpcli.New(
 				httpcli.Endpoint(apiURL.String()),
-				httpcli.Codec(encoding.MediaTypeProtobuf.Codec()),
+				httpcli.Codec(codecs.ByMediaType[codecs.MediaTypeProtobuf]),
 				httpcli.Do(httpcli.With(httpcli.Timeout(httpTimeout))),
 			),
 			callOptions: executor.CallOptions{

@@ -1,4 +1,10 @@
-2016-06-19: v0.0.3
+2017-xx-xx: WIP
+  bumped protos to Mesos 1.2.x (v1 API only), with operator API support
+  api/v1/lib/... API refactoring (client, encoding, httpcli, recordio)
+  api/v1/cmd/... new and updated examples (see msh)
+  bumped gogo/protobuf dependency
+
+2017-06-19: v0.0.3
   Initial support for Mesos v1 HTTP API
   Mesos 1.1.1 protos (v1 API only)
   Shuffled packaging to accommodate both Mesos v0 and v1 APIs

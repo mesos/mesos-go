@@ -8,6 +8,7 @@ import (
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding/codecs"
 )
 
 var (
@@ -29,8 +30,8 @@ type codec struct{ encoding.Codec }
 
 func (c *codec) Set(value string) error {
 	v := strings.ToLower(value)
-	for _, codec := range encoding.DefaultCodecs {
-		if v == codec.Name() {
+	for _, codec := range codecs.ByMediaType {
+		if v == codec.Name {
 			c.Codec = codec
 			return nil
 		}

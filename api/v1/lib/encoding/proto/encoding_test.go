@@ -4,22 +4,21 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	. "github.com/mesos/mesos-go/api/v1/lib/encoding/proto"
 )
 
-type FakeMessage struct {
-	Hello string `protobuf:"bytes,1,req,name=hello"`
-}
+type FakeMessage string
 
-func (f *FakeMessage) Reset()         {}
-func (f *FakeMessage) ProtoMessage()  {}
-func (f *FakeMessage) String() string { return f.Hello }
+func (f *FakeMessage) Marshal() ([]byte, error)     { return ([]byte)(*f), nil }
+func (f *FakeMessage) MarshalJSON() ([]byte, error) { return nil, nil }
 
 func TestEncoder(t *testing.T) {
 	// write a proto message, validate that we're actually marshaling proto
 	buf := bytes.Buffer{}
-	enc := NewEncoder(&buf)
-	err := enc.Encode(&FakeMessage{"hello"})
+	enc := NewEncoder(encoding.SinkWriter(&buf))
+	err := enc.Encode(&mesos.FrameworkID{Value: "hello"})
 
 	if err != nil {
 		t.Fatal(err)
@@ -40,7 +39,8 @@ func TestEncoder(t *testing.T) {
 				caughtPanic = true
 			}
 		}()
-		enc.Encode("hello")
+		m := FakeMessage("hello")
+		enc.Encode(&m)
 		t.Fatal("expected panic, but Encode completed normally")
 	}()
 	if !caughtPanic {

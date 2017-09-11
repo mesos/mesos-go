@@ -9859,17 +9859,21 @@ func (mj *ExecutorInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	buf.WriteString(`"command":`)
+	if mj.Command != nil {
+		if true {
+			buf.WriteString(`"command":`)
 
-	{
+			{
 
-		err = mj.Command.MarshalJSONBuf(buf)
-		if err != nil {
-			return err
+				err = mj.Command.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
 		}
-
 	}
-	buf.WriteByte(',')
 	if mj.Container != nil {
 		if true {
 			buf.WriteString(`"container":`)
@@ -10407,8 +10411,14 @@ handle_Command:
 	{
 		if tok == fflib.FFTok_null {
 
+			uj.Command = nil
+
 			state = fflib.FFParse_after_value
 			goto mainparse
+		}
+
+		if uj.Command == nil {
+			uj.Command = new(CommandInfo)
 		}
 
 		err = uj.Command.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)

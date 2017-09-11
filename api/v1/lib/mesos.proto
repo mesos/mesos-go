@@ -707,7 +707,7 @@ message ExecutorInfo {
 
   required ExecutorID executor_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ExecutorID"];
   optional FrameworkID framework_id = 8 [(gogoproto.customname) = "FrameworkID"]; // TODO(benh): Make this required.
-  required CommandInfo command = 7 [(gogoproto.nullable) = false];
+  optional CommandInfo command = 7;
 
   // Executor provided with a container will launch the container
   // with the executor's CommandInfo and we expect the container to

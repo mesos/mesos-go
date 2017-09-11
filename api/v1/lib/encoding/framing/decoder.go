@@ -23,7 +23,7 @@ func (f DecoderFunc) Decode(m interface{}) error { return f(m) }
 
 var _ = Decoder(DecoderFunc(nil))
 
-// NewDecoder returns a new Decoder that reads from the given io.Reader.
+// NewDecoder returns a new Decoder that reads from the given frame Reader.
 func NewDecoder(r Reader, uf UnmarshalFunc) DecoderFunc {
 	return func(m interface{}) error {
 		// Note: the buf returned by ReadFrame will change over time, it can't be sub-sliced

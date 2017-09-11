@@ -6,13 +6,17 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/client"
+	logger "github.com/mesos/mesos-go/api/v1/lib/debug"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding/codecs"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/apierrors"
 	"github.com/mesos/mesos-go/api/v1/lib/recordio"
 )
@@ -27,7 +31,8 @@ type ProtocolError string
 func (pe ProtocolError) Error() string { return string(pe) }
 
 const (
-	debug = false // TODO(jdef) kill me at some point
+	debug             = logger.Logger(false)
+	mediaTypeRecordIO = encoding.MediaType("application/recordio")
 )
 
 // DoFunc sends an HTTP request and returns an HTTP response.
@@ -58,23 +63,24 @@ type Response struct {
 // ErrorMapperFunc generates an error for the given response.
 type ErrorMapperFunc func(*http.Response) error
 
-// ResponseHandler is invoked to process an HTTP response
-type ResponseHandler func(*http.Response, error) (mesos.Response, error)
+// ResponseHandler is invoked to process an HTTP response. Callers SHALL invoke Close for
+// a non-nil Response, even when errors are returned.
+type ResponseHandler func(*http.Response, client.ResponseClass, error) (mesos.Response, error)
 
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
-	url            string
-	do             DoFunc
-	header         http.Header
-	codec          encoding.Codec
-	errorMapper    ErrorMapperFunc
-	requestOpts    []RequestOpt
-	buildRequest   func(encoding.Marshaler, ...RequestOpt) (*http.Request, error)
-	handleResponse ResponseHandler
+	url              string
+	do               DoFunc
+	header           http.Header
+	codec            encoding.Codec
+	errorMapper      ErrorMapperFunc
+	requestOpts      []RequestOpt
+	buildRequestFunc func(client.Request, client.ResponseClass, ...RequestOpt) (*http.Request, error)
+	handleResponse   ResponseHandler
 }
 
 var (
-	DefaultCodec   = encoding.MediaTypeProtobuf.Codec()
+	DefaultCodec   = codecs.ByMediaType[codecs.MediaTypeProtobuf]
 	DefaultHeaders = http.Header{}
 
 	// DefaultConfigOpt represents the default client config options.
@@ -99,7 +105,7 @@ func New(opts ...Opt) *Client {
 		header:      DefaultHeaders,
 		errorMapper: DefaultErrorMapper,
 	}
-	c.buildRequest = c.BuildRequest
+	c.buildRequestFunc = c.buildRequest
 	c.handleResponse = c.HandleResponse
 	c.With(opts...)
 	return c
@@ -142,18 +148,45 @@ func (c *Client) WithTemporary(opt Opt, f func() error) error {
 	return f()
 }
 
-// Mesos returns a mesos.Client variant backed by this implementation
+// Mesos returns a mesos.Client variant backed by this implementation.
+// Deprecated.
 func (c *Client) Mesos(opts ...RequestOpt) mesos.Client {
 	return mesos.ClientFunc(func(m encoding.Marshaler) (mesos.Response, error) {
 		return c.Do(m, opts...)
 	})
 }
 
-// BuildRequest is a factory func that generates and returns an http.Request for the
+func prepareForResponse(rc client.ResponseClass, codec encoding.Codec) (RequestOpts, error) {
+	// We need to tell Mesos both the content-type and message-content-type that we're expecting, otherwise
+	// the server may give us validation problems, or else send back a vague content-type (w/o a
+	// message-content-type). In order to communicate these things we need to understand the desired response
+	// type from the perspective of the caller --> client.ResponseClass.
+	var accept RequestOpts
+	switch rc {
+	case client.ResponseClassSingleton, client.ResponseClassAuto:
+		accept = append(accept, Header("Accept", codec.Type.ContentType()))
+	case client.ResponseClassStreaming:
+		accept = append(accept, Header("Accept", mediaTypeRecordIO.ContentType()))
+		accept = append(accept, Header("Message-Accept", codec.Type.ContentType()))
+	default:
+		return nil, ProtocolError(fmt.Sprintf("illegal response class requested: %v", rc))
+	}
+	return accept, nil
+}
+
+// buildRequest is a factory func that generates and returns an http.Request for the
 // given marshaler and request options.
-func (c *Client) BuildRequest(m encoding.Marshaler, opt ...RequestOpt) (*http.Request, error) {
+func (c *Client) buildRequest(cr client.Request, rc client.ResponseClass, opt ...RequestOpt) (*http.Request, error) {
+	if crs, ok := cr.(client.RequestStreaming); ok {
+		return c.buildRequestStream(crs.Marshaler, rc, opt...)
+	}
+	accept, err := prepareForResponse(rc, c.codec)
+	if err != nil {
+		return nil, err
+	}
+
 	var body bytes.Buffer //TODO(jdef): use a pool to allocate these (and reduce garbage)?
-	if err := c.codec.NewEncoder(&body).Encode(m); err != nil {
+	if err := c.codec.NewEncoder(encoding.SinkWriter(&body)).Encode(cr.Marshaler()); err != nil {
 		return nil, err
 	}
 
@@ -166,14 +199,105 @@ func (c *Client) BuildRequest(m encoding.Marshaler, opt ...RequestOpt) (*http.Re
 	return helper.
 		withOptions(c.requestOpts, opt).
 		withHeaders(c.header).
-		withHeader("Content-Type", c.codec.RequestType().ContentType()).
-		withHeader("Accept", c.codec.ResponseType().ContentType()).
+		withHeader("Content-Type", c.codec.Type.ContentType()).
+		withHeader("Accept", c.codec.Type.ContentType()).
+		withOptions(accept).
 		Request, nil
+}
+
+func (c *Client) buildRequestStream(f func() encoding.Marshaler, rc client.ResponseClass, opt ...RequestOpt) (*http.Request, error) {
+	accept, err := prepareForResponse(rc, c.codec)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		pr, pw = io.Pipe()
+		enc    = c.codec.NewEncoder(func() framing.Writer { return recordio.NewWriter(pw) })
+	)
+	req, err := http.NewRequest("POST", c.url, pr)
+	if err != nil {
+		pw.Close() // ignore error
+		return nil, err
+	}
+
+	go func() {
+		var closeOnce sync.Once
+		defer closeOnce.Do(func() {
+			pw.Close()
+		})
+		for {
+			m := f()
+			if m == nil {
+				// no more messages to send; end of the stream
+				break
+			}
+			err := enc.Encode(m)
+			if err != nil {
+				closeOnce.Do(func() {
+					pw.CloseWithError(err)
+				})
+				break
+			}
+		}
+	}()
+
+	helper := HTTPRequestHelper{req}
+	return helper.
+		withOptions(c.requestOpts, opt).
+		withHeaders(c.header).
+		withHeader("Content-Type", mediaTypeRecordIO.ContentType()).
+		withHeader("Message-Content-Type", c.codec.Type.ContentType()).
+		withOptions(accept).
+		Request, nil
+}
+
+func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc client.ResponseClass) error {
+	switch res.StatusCode {
+	case http.StatusOK:
+		ct := res.Header.Get("Content-Type")
+		switch rc {
+		case client.ResponseClassSingleton, client.ResponseClassAuto:
+			if ct != codec.Type.ContentType() {
+				return ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
+			}
+		case client.ResponseClassStreaming:
+			if ct != mediaTypeRecordIO.ContentType() {
+				return ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
+			}
+			ct = res.Header.Get("Message-Content-Type")
+			if ct != codec.Type.ContentType() {
+				return ProtocolError(fmt.Sprintf("unexpected message content type: %q", ct))
+			}
+		default:
+			return ProtocolError(fmt.Sprintf("unsupported response-class: %q", rc))
+		}
+
+	case http.StatusAccepted:
+		// nothing to validate, we're not expecting any response entity in this case.
+		// TODO(jdef) perhaps check Content-Length == 0 here?
+	}
+	return nil
+}
+
+func responseToSource(res *http.Response, rc client.ResponseClass) encoding.SourceFactoryFunc {
+	switch rc {
+	case client.ResponseClassSingleton:
+		return encoding.SourceReader
+	case client.ResponseClassStreaming, client.ResponseClassAuto:
+		return func(r io.Reader) encoding.Source {
+			return func() framing.Reader {
+				return recordio.NewReader(r)
+			}
+		}
+	default:
+		panic(fmt.Sprintf("unsupported response-class: %q", rc))
+	}
 }
 
 // HandleResponse parses an HTTP response from a Mesos service endpoint, transforming the
 // raw HTTP response into a mesos.Response.
-func (c *Client) HandleResponse(res *http.Response, err error) (mesos.Response, error) {
+func (c *Client) HandleResponse(res *http.Response, rc client.ResponseClass, err error) (mesos.Response, error) {
 	if err != nil {
 		if res != nil && res.Body != nil {
 			res.Body.Close()
@@ -189,41 +313,53 @@ func (c *Client) HandleResponse(res *http.Response, err error) (mesos.Response, 
 		return result, err
 	}
 
+	err = validateSuccessfulResponse(c.codec, res, rc)
+	if err != nil {
+		res.Body.Close()
+		return nil, err
+	}
+
 	switch res.StatusCode {
 	case http.StatusOK:
-		if debug {
-			log.Println("request OK, decoding response")
-		}
-		ct := res.Header.Get("Content-Type")
-		if ct != c.codec.ResponseType().ContentType() {
-			res.Body.Close()
-			return nil, ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
-		}
-		result.Decoder = c.codec.NewDecoder(recordio.NewReader(res.Body))
+		debug.Log("request OK, decoding response")
+		sf := responseToSource(res, rc)
+		result.Decoder = c.codec.NewDecoder(sf.NewSource(res.Body))
 
 	case http.StatusAccepted:
-		if debug {
-			log.Println("request Accepted")
-		}
+		debug.Log("request Accepted")
 		// noop; no decoder for these types of calls
 
 	default:
+		// don't close the response here because the caller may want to evaluate the entity.
+		// it's the caller's job to Close the returned response.
 		return result, ProtocolError(fmt.Sprintf("unexpected mesos HTTP response code: %d", res.StatusCode))
 	}
 
 	return result, nil
 }
 
-// Do sends a Call and returns (a) a Response (should be closed when finished) that
-// contains a streaming Decoder from which callers can read Events from, and; (b) an
-// error in case of failure. Callers are expected to *always* close a non-nil Response
-// if one is returned. For operations which are successful but also for which there is
-// no expected object stream as a result the embedded Decoder will be nil.
+// Do is deprecated in favor of Send.
 func (c *Client) Do(m encoding.Marshaler, opt ...RequestOpt) (res mesos.Response, err error) {
-	var req *http.Request
-	req, err = c.buildRequest(m, opt...)
+	return c.Send(client.RequestSingleton(m), client.ResponseClassAuto, opt...)
+}
+
+// Send sends a Call and returns (a) a Response (should be closed when finished) that
+// contains a either a streaming or non-streaming Decoder from which callers can read
+// objects from, and; (b) an error in case of failure. Callers are expected to *always*
+// close a non-nil Response if one is returned. For operations which are successful but
+// also for which there are no expected result objects the embedded Decoder will be nil.
+// The provided ResponseClass determines whether the client implementation will attempt
+// to decode a result as a single obeject or as an object stream. When working with
+// versions of Mesos prior to v1.2.x callers MUST use ResponseClassAuto.
+func (c *Client) Send(cr client.Request, rc client.ResponseClass, opt ...RequestOpt) (res mesos.Response, err error) {
+	var (
+		hreq *http.Request
+		hres *http.Response
+	)
+	hreq, err = c.buildRequestFunc(cr, rc, opt...)
 	if err == nil {
-		res, err = c.handleResponse(c.do(req))
+		hres, err = c.do(hreq)
+		res, err = c.handleResponse(hres, rc, err)
 	}
 	return
 }
@@ -425,9 +561,7 @@ func (r *HTTPRequestHelper) withOptions(optsets ...RequestOpts) *HTTPRequestHelp
 func (r *HTTPRequestHelper) withHeaders(hh http.Header) *HTTPRequestHelper {
 	for k, v := range hh {
 		r.Header[k] = v
-		if debug {
-			log.Println("request header " + k + ": " + v[0])
-		}
+		debug.Log("request header " + k + ": " + v[0])
 	}
 	return r
 }

@@ -23,8 +23,9 @@ GO_VERSION := $(shell go version|cut -f3 -d' '|dd bs=1 count=5 2>/dev/null)
 all: test
 
 .PHONY: install
+install: INSTALL_FLAGS +=
 install:
-	go install $(BINARIES)
+	go install $(INSTALL_FLAGS) $(BINARIES)
 
 .PHONY: test
 test:
@@ -62,6 +63,10 @@ protobufs: protobufs-requirements clean-protobufs
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./scheduler/*.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./executor/*.proto)
 	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./agent/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./quota/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./allocator/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./maintenance/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./master/*.proto)
 
 .PHONY: clean-protobufs
 clean-protobufs:
@@ -73,6 +78,10 @@ ffjson: clean-ffjson
 	(cd ${API_PKG}; ffjson scheduler/*.pb.go)
 	(cd ${API_PKG}; ffjson executor/*.pb.go)
 	(cd ${API_PKG}; ffjson agent/*.pb.go)
+	(cd ${API_PKG}; ffjson quota/*.pb.go)
+	(cd ${API_PKG}; ffjson allocator/*.pb.go)
+	(cd ${API_PKG}; ffjson maintenance/*.pb.go)
+	(cd ${API_PKG}; ffjson master/*.pb.go)
 
 .PHONY: clean-ffjson
 clean-ffjson:
@@ -85,7 +94,7 @@ sync:
 	(cd ${CMD_VENDOR}; govendor sync)
 
 .PHONY: generate
-generate: GENERATE_PACKAGES = ./api/v1/lib/extras/executor/eventrules ./api/v1/lib/extras/executor/callrules ./api/v1/lib/extras/scheduler/eventrules ./api/v1/lib/extras/scheduler/callrules ./api/v1/lib/executor/events ./api/v1/lib/executor/calls ./api/v1/lib/scheduler/events ./api/v1/lib/scheduler/calls
+generate: GENERATE_PACKAGES = ./api/v1/lib/extras/executor/eventrules ./api/v1/lib/extras/executor/callrules ./api/v1/lib/extras/scheduler/eventrules ./api/v1/lib/extras/scheduler/callrules ./api/v1/lib/executor/events ./api/v1/lib/executor/calls ./api/v1/lib/scheduler/events ./api/v1/lib/scheduler/calls ./api/v1/lib/agent/calls ./api/v1/lib/master/calls ./api/v1/lib/httpcli/httpagent ./api/v1/lib/httpcli/httpmaster
 generate:
 	go generate -x ${GENERATE_PACKAGES}
 
@@ -116,7 +125,7 @@ docker:
 	make -C api/${MESOS_API_VERSION}/docker
 
 .PHONY: coveralls
-coveralls: IGNORE_FILES = $(shell { find api/v1/cmd -type d ; ls api/v1/lib{,/scheduler,/executor,/agent}/*.pb{,_ffjson}.go ; find api/v0 -type d; } | tr '\n' ,)
+coveralls: IGNORE_FILES = $(shell { find api/v1/cmd -type d ; ls api/v1/lib{,/scheduler,/executor,/agent,/quota,/allocator,/maintenance,/master}/*.pb{,_ffjson}.go ; find api/v0 -type d; } | tr '\n' ,)
 coveralls: SHELL := /bin/bash
 coveralls:
 	test "$(TRAVIS)" = "" || rm -rf $$HOME/gopath/pkg

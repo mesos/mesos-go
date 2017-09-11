@@ -163,7 +163,7 @@ func TestNonStreaming(t *testing.T) {
 	c := new({{.Type "C"}})
 	f := NonStreaming(c)
 	if x := f.Call(); x != c {
-		t.Fatalf("expected %#v instead of $#v", c, x)
+		t.Fatalf("expected %#v instead of %#v", c, x)
 	}
 	if x := f.Marshaler(); x == nil {
 		t.Fatal("expected non-nil Marshaler")
@@ -200,10 +200,10 @@ func TestStreaming(t *testing.T) {
 
 	f = Empty().Push(c, c2)
 	if x := f.Call(); x != c {
-		t.Fatalf("expected %#v instead of $#v", c, x)
+		t.Fatalf("expected %#v instead of %#v", c, x)
 	}
 	if x := f.Call(); x != c2 {
-		t.Fatalf("expected %#v instead of $#v", c2, x)
+		t.Fatalf("expected %#v instead of %#v", c2, x)
 	}
 	if x := f.Call(); x != nil {
 		t.Fatalf("expected nil Call instead of %#v", x)
@@ -215,10 +215,10 @@ func TestStreaming(t *testing.T) {
 	close(ch)
 	f = FromChan(ch)
 	if x := f.Call(); x != c {
-		t.Fatalf("expected %#v instead of $#v", c, x)
+		t.Fatalf("expected %#v instead of %#v", c, x)
 	}
 	if x := f.Call(); x != c2 {
-		t.Fatalf("expected %#v instead of $#v", c2, x)
+		t.Fatalf("expected %#v instead of %#v", c2, x)
 	}
 	if x := f.Call(); x != nil {
 		t.Fatalf("expected nil Call instead of %#v", x)

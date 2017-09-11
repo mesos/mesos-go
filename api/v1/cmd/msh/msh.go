@@ -352,7 +352,7 @@ func tryInteractive(agentHost string, cid mesos.ContainerID) (err error) {
 		cli = httpagent.NewSender(
 			httpcli.New(
 				httpcli.Endpoint(fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(agentHost, "5051"))),
-			),
+			).Send,
 		)
 		aciCh = make(chan *agent.Call, 1) // must be buffered to avoid blocking below
 	)

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/mesos/mesos-go/api/v1/cmd"
-	"github.com/mesos/mesos-go/api/v1/lib/encoding"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding/codecs"
 )
 
 type Config struct {
@@ -86,7 +86,7 @@ func NewConfig() Config {
 		user:             env("FRAMEWORK_USER", "root"),
 		name:             env("FRAMEWORK_NAME", "example"),
 		url:              env("MESOS_MASTER_HTTP", "http://:5050/api/v1/scheduler"),
-		codec:            codec{Codec: encoding.MediaTypeProtobuf.Codec()},
+		codec:            codec{Codec: codecs.ByMediaType[codecs.MediaTypeProtobuf]},
 		timeout:          envDuration("MESOS_CONNECT_TIMEOUT", "20s"),
 		failoverTimeout:  envDuration("SCHEDULER_FAILOVER_TIMEOUT", "1000h"),
 		checkpoint:       true,

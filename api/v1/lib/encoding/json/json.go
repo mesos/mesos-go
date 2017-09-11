@@ -1,17 +1,18 @@
-package proto
+package json
 
 import (
-	"github.com/gogo/protobuf/proto"
+	"encoding/json"
+
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
 )
 
-// NewEncoder returns a new Encoder of Calls to Protobuf messages written to
+// NewEncoder returns a new Encoder of Calls to JSON messages written to
 // the given io.Writer.
 func NewEncoder(s encoding.Sink) encoding.Encoder {
 	w := s()
 	return encoding.EncoderFunc(func(m encoding.Marshaler) error {
-		b, err := proto.Marshal(m.(proto.Message))
+		b, err := json.Marshal(m)
 		if err != nil {
 			return err
 		}
@@ -19,12 +20,9 @@ func NewEncoder(s encoding.Sink) encoding.Encoder {
 	})
 }
 
-// NewDecoder returns a new Decoder of Protobuf messages read from the given Source.
+// NewDecoder returns a new Decoder of JSON messages read from the given source.
 func NewDecoder(s encoding.Source) encoding.Decoder {
 	r := s()
-	var (
-		uf  = func(b []byte, m interface{}) error { return proto.Unmarshal(b, m.(proto.Message)) }
-		dec = framing.NewDecoder(r, uf)
-	)
+	dec := framing.NewDecoder(r, json.Unmarshal)
 	return encoding.DecoderFunc(func(u encoding.Unmarshaler) error { return dec.Decode(u) })
 }

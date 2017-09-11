@@ -15,6 +15,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/client"
 	logger "github.com/mesos/mesos-go/api/v1/lib/debug"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
+	"github.com/mesos/mesos-go/api/v1/lib/encoding/codecs"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/apierrors"
 	"github.com/mesos/mesos-go/api/v1/lib/recordio"
@@ -79,7 +80,7 @@ type Client struct {
 }
 
 var (
-	DefaultCodec   = encoding.MediaTypeProtobuf.Codec()
+	DefaultCodec   = codecs.ByMediaType[codecs.MediaTypeProtobuf]
 	DefaultHeaders = http.Header{}
 
 	// DefaultConfigOpt represents the default client config options.

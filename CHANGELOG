@@ -1,7 +1,7 @@
-2017-xx-xx: WIP
+2017-09-13: v0.0.4
   bumped protos to Mesos 1.2.x (v1 API only), with operator API support
   api/v1/lib/... API refactoring (client, encoding, httpcli, recordio)
-  api/v1/cmd/... new and updated examples (see msh)
+  api/v1/cmd/... new and updated examples (see msh, mwatch)
   bumped gogo/protobuf dependency
 
 2017-06-19: v0.0.3

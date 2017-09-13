@@ -8,6 +8,7 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpmaster"
 	"github.com/mesos/mesos-go/api/v1/lib/master"
@@ -25,22 +26,24 @@ func init() {
 
 func main() {
 	var (
-		cli = httpmaster.NewSender(
-			httpcli.New(
-				httpcli.Endpoint(fmt.Sprintf(
-					"http://%s/api/v1", net.JoinHostPort(*masterHost, strconv.Itoa(*masterPort)))),
-			).Send,
-		)
-		ctx       = context.Background()
-		resp, err = cli.Send(ctx, calls.NonStreaming(calls.Subscribe()))
+		uri = fmt.Sprintf("http://%s/api/v1", net.JoinHostPort(*masterHost, strconv.Itoa(*masterPort)))
+		cli = httpmaster.NewSender(httpcli.New(httpcli.Endpoint(uri)).Send)
+		ctx = context.Background()
+		err = watch(cli.Send(ctx, calls.NonStreaming(calls.Subscribe())))
 	)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func watch(resp mesos.Response, err error) error {
 	defer func() {
 		if resp != nil {
 			resp.Close()
 		}
 	}()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	for {
 		var e master.Event
@@ -48,8 +51,20 @@ func main() {
 			if err == io.EOF {
 				break
 			}
-			panic(err)
+			return err
 		}
-		println(e.GetType().String())
+		switch t := e.GetType(); t {
+		case master.Event_TASK_ADDED:
+			fmt.Println(t.String(), e.GetTaskAdded().String())
+		case master.Event_TASK_UPDATED:
+			fmt.Println(t.String(), e.GetTaskUpdated().String())
+		case master.Event_AGENT_ADDED:
+			fmt.Println(t.String(), e.GetAgentAdded().String())
+		case master.Event_AGENT_REMOVED:
+			fmt.Println(t.String(), e.GetAgentRemoved().String())
+		default:
+			fmt.Println(t.String())
+		}
 	}
+	return nil
 }

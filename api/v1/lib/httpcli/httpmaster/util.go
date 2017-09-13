@@ -38,7 +38,9 @@ func classifyResponse(c *master.Call) (rc client.ResponseClass, err error) {
 
 	// streaming
 	case master.Call_SUBSCRIBE:
-		rc = client.ResponseClassStreaming
+		// for some reason, the docs say that thr format is recordio (streaming) but HTTP negotiation
+		// uses application/json or application/x-protobuf; use "auto" class, similar to sched/exec API
+		rc = client.ResponseClassAuto
 
 	// no-data
 	case master.Call_SET_LOGGING_LEVEL,

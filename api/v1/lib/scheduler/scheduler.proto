@@ -135,6 +135,11 @@ message Event {
   // to the task. It is also the responsibility of the scheduler to
   // explicitly acknowledge the receipt of a status update. See
   // 'Acknowledge' in the 'Call' section below for the semantics.
+  //
+  // A task status update may be used for guaranteed delivery of some
+  // task-related information, e.g., task's health update. Such
+  // information may be shadowed by subsequent task status updates, that
+  // do not preserve fields of the previously sent message.
   message Update {
     required TaskStatus status = 1 [(gogoproto.nullable) = false];
   }
@@ -150,7 +155,7 @@ message Event {
     required bytes data = 3;
   }
 
-  // Received when a agent is removed from the cluster (e.g., failed
+  // Received when an agent is removed from the cluster (e.g., failed
   // health checks) or when an executor is terminated. Note that, this
   // event coincides with receipt of terminal UPDATE events for any
   // active tasks belonging to the agent or executor and receipt of
@@ -167,6 +172,16 @@ message Event {
     // 'executor_id' will be set and possibly 'status' (if we were
     // able to determine the exit status).
     optional ExecutorID executor_id = 2 [(gogoproto.customname) = "ExecutorID"];
+
+    // On Posix, `status` corresponds to termination information in the
+    // `stat_loc` area returned from a `waitpid` call. On Windows, `status`
+    // is obtained via calling the `GetExitCodeProcess()` function. For
+    // messages coming from Posix agents, schedulers need to apply
+    // `WEXITSTATUS` family macros or equivalent transformations to obtain
+    // exit codes.
+    //
+    // TODO(alexr): Consider unifying Windows and Posix behavior by returning
+    // exit code here, see MESOS-7241.
     optional int32 status = 3;
   }
 
@@ -293,11 +308,11 @@ message Call {
     optional Filters filters = 2;
   }
 
-  // Revive offers for a specified role. If role is unset, the
-  // `REVIVE` call will revive offers for all of the roles the
-  // framework is subscribed to.
+  // Revive offers for the specified roles. If `roles` is empty,
+  // the `REVIVE` call will revive offers for all of the roles
+  // the framework is currently subscribed to.
   message Revive {
-    optional string role = 1;
+    repeated string roles = 1;
   }
 
   // Kills a specific task. If the scheduler has a custom executor,
@@ -382,11 +397,11 @@ message Call {
     repeated mesos.Request requests = 1 [(gogoproto.nullable) = false];
   }
 
-  // Suppress offers for a specified role. If role is unset, the
-  // `SUPPRESS` call will suppress offers for all of the roles the
-  // framework is subscribed to.
+  // Suppress offers for the specified roles. If `roles` is empty,
+  // the `SUPPRESS` call will suppress offers for all of the roles
+  // the framework is currently subscribed to.
   message Suppress {
-    optional string role = 1;
+    repeated string roles = 1;
   }
 
   // Identifies who generated this call. Master assigns a framework id

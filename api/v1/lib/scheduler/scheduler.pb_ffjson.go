@@ -4173,12 +4173,21 @@ func (mj *Call_Revive) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Role != nil {
-		if true {
-			buf.WriteString(`"role":`)
-			fflib.WriteJsonString(buf, string(*mj.Role))
-			buf.WriteByte(',')
+	if len(mj.Roles) != 0 {
+		buf.WriteString(`"roles":`)
+		if mj.Roles != nil {
+			buf.WriteString(`[`)
+			for i, v := range mj.Roles {
+				if i != 0 {
+					buf.WriteString(`,`)
+				}
+				fflib.WriteJsonString(buf, string(v))
+			}
+			buf.WriteString(`]`)
+		} else {
+			buf.WriteString(`null`)
 		}
+		buf.WriteByte(',')
 	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
@@ -4189,10 +4198,10 @@ const (
 	ffj_t_Call_Revivebase = iota
 	ffj_t_Call_Reviveno_such_key
 
-	ffj_t_Call_Revive_Role
+	ffj_t_Call_Revive_Roles
 )
 
-var ffj_key_Call_Revive_Role = []byte("role")
+var ffj_key_Call_Revive_Roles = []byte("roles")
 
 func (uj *Call_Revive) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -4255,16 +4264,16 @@ mainparse:
 
 				case 'r':
 
-					if bytes.Equal(ffj_key_Call_Revive_Role, kn) {
-						currentKey = ffj_t_Call_Revive_Role
+					if bytes.Equal(ffj_key_Call_Revive_Roles, kn) {
+						currentKey = ffj_t_Call_Revive_Roles
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_Call_Revive_Role, kn) {
-					currentKey = ffj_t_Call_Revive_Role
+				if fflib.EqualFoldRight(ffj_key_Call_Revive_Roles, kn) {
+					currentKey = ffj_t_Call_Revive_Roles
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -4286,8 +4295,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Call_Revive_Role:
-					goto handle_Role
+				case ffj_t_Call_Revive_Roles:
+					goto handle_Roles
 
 				case ffj_t_Call_Reviveno_such_key:
 					err = fs.SkipField(tok)
@@ -4303,30 +4312,74 @@ mainparse:
 		}
 	}
 
-handle_Role:
+handle_Roles:
 
-	/* handler: uj.Role type=string kind=string quoted=false*/
+	/* handler: uj.Roles type=[]string kind=slice quoted=false*/
 
 	{
 
 		{
-			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
-				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
 			}
 		}
 
 		if tok == fflib.FFTok_null {
-
-			uj.Role = nil
-
+			uj.Roles = nil
 		} else {
 
-			var tval string
-			outBuf := fs.Output.Bytes()
+			uj.Roles = []string{}
 
-			tval = string(string(outBuf))
-			uj.Role = &tval
+			wantVal := true
 
+			for {
+
+				var tmp_uj__Roles string
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__Roles type=string kind=string quoted=false*/
+
+				{
+
+					{
+						if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+							return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+						}
+					}
+
+					if tok == fflib.FFTok_null {
+
+					} else {
+
+						outBuf := fs.Output.Bytes()
+
+						tmp_uj__Roles = string(string(outBuf))
+
+					}
+				}
+
+				uj.Roles = append(uj.Roles, tmp_uj__Roles)
+
+				wantVal = false
+			}
 		}
 	}
 
@@ -4822,12 +4875,21 @@ func (mj *Call_Suppress) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ `)
-	if mj.Role != nil {
-		if true {
-			buf.WriteString(`"role":`)
-			fflib.WriteJsonString(buf, string(*mj.Role))
-			buf.WriteByte(',')
+	if len(mj.Roles) != 0 {
+		buf.WriteString(`"roles":`)
+		if mj.Roles != nil {
+			buf.WriteString(`[`)
+			for i, v := range mj.Roles {
+				if i != 0 {
+					buf.WriteString(`,`)
+				}
+				fflib.WriteJsonString(buf, string(v))
+			}
+			buf.WriteString(`]`)
+		} else {
+			buf.WriteString(`null`)
 		}
+		buf.WriteByte(',')
 	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
@@ -4838,10 +4900,10 @@ const (
 	ffj_t_Call_Suppressbase = iota
 	ffj_t_Call_Suppressno_such_key
 
-	ffj_t_Call_Suppress_Role
+	ffj_t_Call_Suppress_Roles
 )
 
-var ffj_key_Call_Suppress_Role = []byte("role")
+var ffj_key_Call_Suppress_Roles = []byte("roles")
 
 func (uj *Call_Suppress) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -4904,16 +4966,16 @@ mainparse:
 
 				case 'r':
 
-					if bytes.Equal(ffj_key_Call_Suppress_Role, kn) {
-						currentKey = ffj_t_Call_Suppress_Role
+					if bytes.Equal(ffj_key_Call_Suppress_Roles, kn) {
+						currentKey = ffj_t_Call_Suppress_Roles
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				}
 
-				if fflib.SimpleLetterEqualFold(ffj_key_Call_Suppress_Role, kn) {
-					currentKey = ffj_t_Call_Suppress_Role
+				if fflib.EqualFoldRight(ffj_key_Call_Suppress_Roles, kn) {
+					currentKey = ffj_t_Call_Suppress_Roles
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -4935,8 +4997,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Call_Suppress_Role:
-					goto handle_Role
+				case ffj_t_Call_Suppress_Roles:
+					goto handle_Roles
 
 				case ffj_t_Call_Suppressno_such_key:
 					err = fs.SkipField(tok)
@@ -4952,30 +5014,74 @@ mainparse:
 		}
 	}
 
-handle_Role:
+handle_Roles:
 
-	/* handler: uj.Role type=string kind=string quoted=false*/
+	/* handler: uj.Roles type=[]string kind=slice quoted=false*/
 
 	{
 
 		{
-			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
-				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
 			}
 		}
 
 		if tok == fflib.FFTok_null {
-
-			uj.Role = nil
-
+			uj.Roles = nil
 		} else {
 
-			var tval string
-			outBuf := fs.Output.Bytes()
+			uj.Roles = []string{}
 
-			tval = string(string(outBuf))
-			uj.Role = &tval
+			wantVal := true
 
+			for {
+
+				var tmp_uj__Roles string
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__Roles type=string kind=string quoted=false*/
+
+				{
+
+					{
+						if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+							return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+						}
+					}
+
+					if tok == fflib.FFTok_null {
+
+					} else {
+
+						outBuf := fs.Output.Bytes()
+
+						tmp_uj__Roles = string(string(outBuf))
+
+					}
+				}
+
+				uj.Roles = append(uj.Roles, tmp_uj__Roles)
+
+				wantVal = false
+			}
 		}
 	}
 

@@ -200,57 +200,39 @@ func OpDestroy(rs ...mesos.Resource) mesos.Offer_Operation {
 	}
 }
 
-// Roles decorates Revive and Suppress calls; panics for any other call type.
-func Roles(roles ...string) scheduler.CallOpt {
-	return func(c *scheduler.Call) {
-		if c == nil {
-			return
-		}
-		switch c.Type {
-		case scheduler.Call_REVIVE:
-			if c.Revive == nil {
-				if len(roles) == 0 {
-					return
-				}
-				c.Revive = new(scheduler.Call_Revive)
-			}
-			if len(roles) == 0 {
-				c.Revive.Roles = nil
-			} else {
-				c.Revive.Roles = roles
-			}
-		case scheduler.Call_SUPPRESS:
-			if c.Suppress == nil {
-				if len(roles) == 0 {
-					return
-				}
-				c.Suppress = new(scheduler.Call_Suppress)
-			}
-			if len(roles) == 0 {
-				c.Suppress.Roles = nil
-			} else {
-				c.Suppress.Roles = roles
-			}
-		default:
-			panic("Roles doesn't support call type " + c.Type.String())
-		}
-	}
+// OfferFlowControl is a marker interface for Call subtypes that adjust offer throttling.
+type OfferFlowControl interface {
+	SetRoles(roles ...string)
 }
+
+// OfferFlowOpt configures OfferFlowControl.
+type OfferFlowOpt func(OfferFlowControl)
+
+// Roles configures the roles for an OfferFlowControl.
+func Roles(roles ...string) OfferFlowOpt { return func(ofc OfferFlowControl) { ofc.SetRoles(roles...) } }
 
 // Revive returns a revive call.
 // Callers are expected to fill in the FrameworkID.
-func Revive() *scheduler.Call {
-	return &scheduler.Call{
-		Type: scheduler.Call_REVIVE,
+func Revive(opts ...OfferFlowOpt) (c *scheduler.Call) {
+	c = &scheduler.Call{Type: scheduler.Call_REVIVE, Revive: &scheduler.Call_Revive{}}
+	for _, f := range opts {
+		if f != nil {
+			f(c.Revive)
+		}
 	}
+	return
 }
 
 // Suppress returns a suppress call.
 // Callers are expected to fill in the FrameworkID.
-func Suppress() *scheduler.Call {
-	return &scheduler.Call{
-		Type: scheduler.Call_SUPPRESS,
+func Suppress(opts ...OfferFlowOpt) (c *scheduler.Call) {
+	c = &scheduler.Call{Type: scheduler.Call_SUPPRESS, Suppress: &scheduler.Call_Suppress{}}
+	for _, f := range opts {
+		if f != nil {
+			f(c.Suppress)
+		}
 	}
+	return
 }
 
 // Decline returns a decline call with the given parameters.

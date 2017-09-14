@@ -37,3 +37,17 @@ func (co CallOptions) Copy() CallOptions {
 	copy(x, co)
 	return x
 }
+
+// SetRoles implements calls.OfferFlowControl
+func (c *Call_Revive) SetRoles(roles ...string) {
+	if c != nil {
+		c.Roles = roles
+	}
+}
+
+// SetRoles implements calls.OfferFlowControl
+func (c *Call_Suppress) SetRoles(roles ...string) {
+	if c != nil {
+		c.Roles = roles
+	}
+}

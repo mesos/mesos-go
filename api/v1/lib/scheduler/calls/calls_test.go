@@ -16,37 +16,39 @@ func TestRole(t *testing.T) {
 		outcomeChanged = outcome(iota)
 		outcomePanic
 		outcomeUnchanged
-
-		roleX = "x"
-		roleY = "y"
+	)
+	var (
+		rolesNone []string
+		roleX     = []string{"x"}
+		roleY     = []string{"y"}
 	)
 	for ti, tc := range []struct {
 		call    *scheduler.Call
-		role    string
+		roles   []string
 		outcome outcome
 	}{
-		{nil, "", outcomeUnchanged},
+		{nil, rolesNone, outcomeUnchanged},
 		{nil, roleX, outcomeUnchanged},
-		{&scheduler.Call{}, "", outcomePanic},
+		{&scheduler.Call{}, rolesNone, outcomePanic},
 		{&scheduler.Call{}, roleX, outcomePanic},
-		{&scheduler.Call{Type: scheduler.Call_SUBSCRIBE}, "", outcomePanic},
+		{&scheduler.Call{Type: scheduler.Call_SUBSCRIBE}, rolesNone, outcomePanic},
 		{&scheduler.Call{Type: scheduler.Call_SUBSCRIBE}, roleX, outcomePanic},
 
-		{&scheduler.Call{Type: scheduler.Call_REVIVE}, "", outcomeUnchanged},
-		{&scheduler.Call{Type: scheduler.Call_REVIVE, Revive: &scheduler.Call_Revive{}}, "", outcomeUnchanged},
-		{&scheduler.Call{Type: scheduler.Call_SUPPRESS}, "", outcomeUnchanged},
-		{&scheduler.Call{Type: scheduler.Call_SUPPRESS, Suppress: &scheduler.Call_Suppress{}}, "", outcomeUnchanged},
+		{&scheduler.Call{Type: scheduler.Call_REVIVE}, rolesNone, outcomeUnchanged},
+		{&scheduler.Call{Type: scheduler.Call_REVIVE, Revive: &scheduler.Call_Revive{}}, rolesNone, outcomeUnchanged},
+		{&scheduler.Call{Type: scheduler.Call_SUPPRESS}, rolesNone, outcomeUnchanged},
+		{&scheduler.Call{Type: scheduler.Call_SUPPRESS, Suppress: &scheduler.Call_Suppress{}}, rolesNone, outcomeUnchanged},
 
 		{&scheduler.Call{Type: scheduler.Call_REVIVE}, roleX, outcomeChanged},
 		{&scheduler.Call{Type: scheduler.Call_REVIVE, Revive: &scheduler.Call_Revive{}}, roleX, outcomeChanged},
 		{&scheduler.Call{Type: scheduler.Call_SUPPRESS}, roleX, outcomeChanged},
 		{&scheduler.Call{Type: scheduler.Call_SUPPRESS, Suppress: &scheduler.Call_Suppress{}}, roleX, outcomeChanged},
 
-		{&scheduler.Call{Type: scheduler.Call_REVIVE, Revive: &scheduler.Call_Revive{Role: proto.String(roleY)}}, roleX, outcomeChanged},
-		{&scheduler.Call{Type: scheduler.Call_SUPPRESS, Suppress: &scheduler.Call_Suppress{Role: proto.String(roleY)}}, roleX, outcomeChanged},
+		{&scheduler.Call{Type: scheduler.Call_REVIVE, Revive: &scheduler.Call_Revive{Roles: roleY}}, roleX, outcomeChanged},
+		{&scheduler.Call{Type: scheduler.Call_SUPPRESS, Suppress: &scheduler.Call_Suppress{Roles: roleY}}, roleX, outcomeChanged},
 
-		{&scheduler.Call{Type: scheduler.Call_REVIVE, Revive: &scheduler.Call_Revive{Role: proto.String(roleY)}}, "", outcomeChanged},
-		{&scheduler.Call{Type: scheduler.Call_SUPPRESS, Suppress: &scheduler.Call_Suppress{Role: proto.String(roleY)}}, "", outcomeChanged},
+		{&scheduler.Call{Type: scheduler.Call_REVIVE, Revive: &scheduler.Call_Revive{Roles: roleY}}, rolesNone, outcomeChanged},
+		{&scheduler.Call{Type: scheduler.Call_SUPPRESS, Suppress: &scheduler.Call_Suppress{Roles: roleY}}, rolesNone, outcomeChanged},
 	} {
 		var (
 			caught interface{}
@@ -56,7 +58,7 @@ func TestRole(t *testing.T) {
 			defer func() {
 				caught = recover()
 			}()
-			_ = tc.call.With(calls.Role(tc.role))
+			_ = tc.call.With(calls.Roles(tc.roles...))
 		}()
 		switch tc.outcome {
 		case outcomePanic:
@@ -68,25 +70,25 @@ func TestRole(t *testing.T) {
 				t.Errorf("test case %d failed: expected unchanged call instead of: %#v ", ti, tc.call)
 			}
 		case outcomeChanged:
-			role, hasRole := func() (string, bool) {
+			roles, hasRole := func() ([]string, bool) {
 				switch tc.call.Type {
 				case scheduler.Call_SUPPRESS:
-					return tc.call.Suppress.GetRole(), tc.call.Suppress.Role != nil
+					return tc.call.Suppress.GetRoles(), len(tc.call.Suppress.Roles) > 0
 				case scheduler.Call_REVIVE:
-					return tc.call.Revive.GetRole(), tc.call.Revive.Role != nil
+					return tc.call.Revive.GetRoles(), len(tc.call.Revive.Roles) > 0
 				default:
 					panic(fmt.Sprintf("test case %d failed: unsupported call type: %v", ti, tc.call.Type))
 				}
 			}()
-			if hasRole != (tc.role != "") {
+			if hasRole != (len(tc.roles) > 0) {
 				if hasRole {
-					t.Errorf("test case %d failed: expected no role instead of %q", ti, role)
+					t.Errorf("test case %d failed: expected no role instead of %q", ti, roles)
 				} else {
-					t.Errorf("test case %d failed: expected role %q instead of no role", ti, tc.role)
+					t.Errorf("test case %d failed: expected role %q instead of no role", ti, tc.roles)
 				}
 			}
-			if hasRole && tc.role != role {
-				t.Errorf("test case %d failed: expected role %q instead of %q", ti, tc.role, role)
+			if hasRole && !reflect.DeepEqual(tc.roles, roles) {
+				t.Errorf("test case %d failed: expected role %q instead of %q", ti, tc.roles, roles)
 			}
 		}
 	}

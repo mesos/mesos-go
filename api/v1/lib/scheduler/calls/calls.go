@@ -200,8 +200,8 @@ func OpDestroy(rs ...mesos.Resource) mesos.Offer_Operation {
 	}
 }
 
-// Role decorates Revive and Suppress calls; panics for any other call type.
-func Role(role string) scheduler.CallOpt {
+// Roles decorates Revive and Suppress calls; panics for any other call type.
+func Roles(roles ...string) scheduler.CallOpt {
 	return func(c *scheduler.Call) {
 		if c == nil {
 			return
@@ -209,30 +209,30 @@ func Role(role string) scheduler.CallOpt {
 		switch c.Type {
 		case scheduler.Call_REVIVE:
 			if c.Revive == nil {
-				if role == "" {
+				if len(roles) == 0 {
 					return
 				}
 				c.Revive = new(scheduler.Call_Revive)
 			}
-			if role == "" {
-				c.Revive.Role = nil
+			if len(roles) == 0 {
+				c.Revive.Roles = nil
 			} else {
-				c.Revive.Role = &role
+				c.Revive.Roles = roles
 			}
 		case scheduler.Call_SUPPRESS:
 			if c.Suppress == nil {
-				if role == "" {
+				if len(roles) == 0 {
 					return
 				}
 				c.Suppress = new(scheduler.Call_Suppress)
 			}
-			if role == "" {
-				c.Suppress.Role = nil
+			if len(roles) == 0 {
+				c.Suppress.Roles = nil
 			} else {
-				c.Suppress.Role = &role
+				c.Suppress.Roles = roles
 			}
 		default:
-			panic("Role doesn't support call type " + c.Type.String())
+			panic("Roles doesn't support call type " + c.Type.String())
 		}
 	}
 }

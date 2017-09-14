@@ -81,12 +81,12 @@ func (rb *Builder) DiskSource(root string, t mesos.Resource_DiskInfo_Source_Type
 	if rb.Resource.Disk == nil {
 		return rb
 	}
-	rb.Resource.Disk.Source = &mesos.Resource_DiskInfo_Source{Type: &t}
+	rb.Resource.Disk.Source = &mesos.Resource_DiskInfo_Source{Type: t}
 	switch t {
 	case mesos.PATH:
-		rb.Resource.Disk.Source.Path = &mesos.Resource_DiskInfo_Source_Path{Root: root}
+		rb.Resource.Disk.Source.Path = &mesos.Resource_DiskInfo_Source_Path{Root: &root}
 	case mesos.MOUNT:
-		rb.Resource.Disk.Source.Mount = &mesos.Resource_DiskInfo_Source_Mount{Root: root}
+		rb.Resource.Disk.Source.Mount = &mesos.Resource_DiskInfo_Source_Mount{Root: &root}
 	}
 	return rb
 }

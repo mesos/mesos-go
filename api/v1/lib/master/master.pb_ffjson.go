@@ -7947,6 +7947,27 @@ func (mj *Response_GetAgents_Agent) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 	} else {
 		buf.WriteString(`null`)
 	}
+	buf.WriteString(`,"capabilities":`)
+	if mj.Capabilities != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Capabilities {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
 	buf.WriteByte('}')
 	return nil
 }
@@ -7972,6 +7993,8 @@ const (
 	ffj_t_Response_GetAgents_Agent_AllocatedResources
 
 	ffj_t_Response_GetAgents_Agent_OfferedResources
+
+	ffj_t_Response_GetAgents_Agent_Capabilities
 )
 
 var ffj_key_Response_GetAgents_Agent_AgentInfo = []byte("agent_info")
@@ -7991,6 +8014,8 @@ var ffj_key_Response_GetAgents_Agent_TotalResources = []byte("total_resources")
 var ffj_key_Response_GetAgents_Agent_AllocatedResources = []byte("allocated_resources")
 
 var ffj_key_Response_GetAgents_Agent_OfferedResources = []byte("offered_resources")
+
+var ffj_key_Response_GetAgents_Agent_Capabilities = []byte("capabilities")
 
 func (uj *Response_GetAgents_Agent) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -8069,6 +8094,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'c':
+
+					if bytes.Equal(ffj_key_Response_GetAgents_Agent_Capabilities, kn) {
+						currentKey = ffj_t_Response_GetAgents_Agent_Capabilities
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'o':
 
 					if bytes.Equal(ffj_key_Response_GetAgents_Agent_OfferedResources, kn) {
@@ -8114,6 +8147,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Response_GetAgents_Agent_Capabilities, kn) {
+					currentKey = ffj_t_Response_GetAgents_Agent_Capabilities
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Response_GetAgents_Agent_OfferedResources, kn) {
@@ -8213,6 +8252,9 @@ mainparse:
 
 				case ffj_t_Response_GetAgents_Agent_OfferedResources:
 					goto handle_OfferedResources
+
+				case ffj_t_Response_GetAgents_Agent_Capabilities:
+					goto handle_Capabilities
 
 				case ffj_t_Response_GetAgents_Agentno_such_key:
 					err = fs.SkipField(tok)
@@ -8592,6 +8634,75 @@ handle_OfferedResources:
 				}
 
 				uj.OfferedResources = append(uj.OfferedResources, tmp_uj__OfferedResources)
+
+				wantVal = false
+			}
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Capabilities:
+
+	/* handler: uj.Capabilities type=[]mesos.AgentInfo_Capability kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.Capabilities = nil
+		} else {
+
+			uj.Capabilities = []mesos.AgentInfo_Capability{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__Capabilities mesos.AgentInfo_Capability
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__Capabilities type=mesos.AgentInfo_Capability kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__Capabilities.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.Capabilities = append(uj.Capabilities, tmp_uj__Capabilities)
 
 				wantVal = false
 			}

@@ -46,6 +46,14 @@ var (
 	_ = SinkFactory(SinkFactoryFunc(nil))
 )
 
+func SourceNil(r io.Reader) Source {
+	return func() framing.Reader {
+		return framing.ReaderFunc(func() ([]byte, error) {
+			return nil, io.EOF
+		})
+	}
+}
+
 // SourceReader returns a Source that buffers all input from the given io.Reader
 // and returns the contents in a single frame.
 func SourceReader(r io.Reader) Source {

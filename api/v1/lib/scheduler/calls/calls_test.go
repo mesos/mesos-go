@@ -18,18 +18,21 @@ func TestRole(t *testing.T) {
 		call  *scheduler.Call
 		roles []string
 	}{
-		{calls.Revive(calls.Roles()), rolesNone},
-		{calls.Suppress(calls.Roles()), rolesNone},
+		{calls.Revive(), rolesNone},
+		{calls.Suppress(), rolesNone},
 
-		{calls.Revive(calls.Roles(roleX...)), roleX},
-		{calls.Suppress(calls.Roles(roleX...)), roleX},
+		{calls.ReviveWith(nil), rolesNone},
+		{calls.SuppressWith(nil), rolesNone},
+
+		{calls.ReviveWith(roleX), roleX},
+		{calls.SuppressWith(roleX), roleX},
 	} {
 		roles, hasRole := func() ([]string, bool) {
 			switch tc.call.Type {
 			case scheduler.Call_SUPPRESS:
-				return tc.call.Suppress.GetRoles(), len(tc.call.Suppress.Roles) > 0
+				return tc.call.GetSuppress().GetRoles(), len(tc.call.GetSuppress().GetRoles()) > 0
 			case scheduler.Call_REVIVE:
-				return tc.call.Revive.GetRoles(), len(tc.call.Revive.Roles) > 0
+				return tc.call.GetRevive().GetRoles(), len(tc.call.GetRevive().GetRoles()) > 0
 			default:
 				panic(fmt.Sprintf("test case %d failed: unsupported call type: %v", ti, tc.call.Type))
 			}

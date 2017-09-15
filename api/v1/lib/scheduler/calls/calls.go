@@ -200,39 +200,34 @@ func OpDestroy(rs ...mesos.Resource) mesos.Offer_Operation {
 	}
 }
 
-// OfferFlowControl is a marker interface for Call subtypes that adjust offer throttling.
-type OfferFlowControl interface {
-	SetRoles(roles ...string)
-}
-
-// OfferFlowOpt configures OfferFlowControl.
-type OfferFlowOpt func(OfferFlowControl)
-
-// Roles configures the roles for an OfferFlowControl.
-func Roles(roles ...string) OfferFlowOpt { return func(ofc OfferFlowControl) { ofc.SetRoles(roles...) } }
-
 // Revive returns a revive call.
 // Callers are expected to fill in the FrameworkID.
-func Revive(opts ...OfferFlowOpt) (c *scheduler.Call) {
-	c = &scheduler.Call{Type: scheduler.Call_REVIVE, Revive: &scheduler.Call_Revive{}}
-	for _, f := range opts {
-		if f != nil {
-			f(c.Revive)
-		}
+func Revive() *scheduler.Call {
+	return &scheduler.Call{Type: scheduler.Call_REVIVE}
+}
+
+// Revive returns a revive call with the given filters.
+// Callers are expected to fill in the FrameworkID.
+func ReviveWith(roles []string) *scheduler.Call {
+	return &scheduler.Call{
+		Type:   scheduler.Call_REVIVE,
+		Revive: &scheduler.Call_Revive{Roles: roles},
 	}
-	return
 }
 
 // Suppress returns a suppress call.
 // Callers are expected to fill in the FrameworkID.
-func Suppress(opts ...OfferFlowOpt) (c *scheduler.Call) {
-	c = &scheduler.Call{Type: scheduler.Call_SUPPRESS, Suppress: &scheduler.Call_Suppress{}}
-	for _, f := range opts {
-		if f != nil {
-			f(c.Suppress)
-		}
+func Suppress() *scheduler.Call {
+	return &scheduler.Call{Type: scheduler.Call_SUPPRESS}
+}
+
+// Suppress returns a suppress call with the given filters.
+// Callers are expected to fill in the FrameworkID.
+func SuppressWith(roles []string) *scheduler.Call {
+	return &scheduler.Call{
+		Type:     scheduler.Call_SUPPRESS,
+		Suppress: &scheduler.Call_Suppress{Roles: roles},
 	}
-	return
 }
 
 // Decline returns a decline call with the given parameters.

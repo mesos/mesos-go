@@ -45,6 +45,7 @@ func RequestSingleton(m encoding.Marshaler) Request {
 const (
 	ResponseClassSingleton ResponseClass = iota
 	ResponseClassStreaming
+	ResponseClassNoData
 
 	// ResponseClassAuto should be used with versions of Mesos prior to 1.2.x.
 	// Otherwise, this type is deprecated and callers should use ResponseClassSingleton

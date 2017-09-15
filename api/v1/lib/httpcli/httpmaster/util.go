@@ -54,7 +54,7 @@ func classifyResponse(c *master.Call) (rc client.ResponseClass, err error) {
 		master.Call_STOP_MAINTENANCE,
 		master.Call_SET_QUOTA,
 		master.Call_REMOVE_QUOTA:
-		rc = client.ResponseClassAuto
+		rc = client.ResponseClassNoData
 
 	default:
 		err = httpcli.ProtocolError(fmt.Sprintf("unsupported master.Call type: %v", t))

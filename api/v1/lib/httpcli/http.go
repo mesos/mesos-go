@@ -163,7 +163,7 @@ func prepareForResponse(rc client.ResponseClass, codec encoding.Codec) (RequestO
 	// type from the perspective of the caller --> client.ResponseClass.
 	var accept RequestOpts
 	switch rc {
-	case client.ResponseClassSingleton, client.ResponseClassAuto:
+	case client.ResponseClassSingleton, client.ResponseClassAuto, client.ResponseClassNoData:
 		accept = append(accept, Header("Accept", codec.Type.ContentType()))
 	case client.ResponseClassStreaming:
 		accept = append(accept, Header("Accept", mediaTypeRecordIO.ContentType()))
@@ -257,6 +257,10 @@ func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc cli
 	case http.StatusOK:
 		ct := res.Header.Get("Content-Type")
 		switch rc {
+		case client.ResponseClassNoData:
+			if ct != "" {
+				return ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
+			}
 		case client.ResponseClassSingleton, client.ResponseClassAuto:
 			if ct != codec.Type.ContentType() {
 				return ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
@@ -282,6 +286,8 @@ func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc cli
 
 func responseToSource(res *http.Response, rc client.ResponseClass) encoding.SourceFactoryFunc {
 	switch rc {
+	case client.ResponseClassNoData:
+		return encoding.SourceNil
 	case client.ResponseClassSingleton:
 		return encoding.SourceReader
 	case client.ResponseClassStreaming, client.ResponseClassAuto:

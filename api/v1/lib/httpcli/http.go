@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
@@ -287,7 +288,7 @@ func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc cli
 func responseToSource(res *http.Response, rc client.ResponseClass) encoding.SourceFactoryFunc {
 	switch rc {
 	case client.ResponseClassNoData:
-		return encoding.SourceNil
+		return nil
 	case client.ResponseClassSingleton:
 		return encoding.SourceReader
 	case client.ResponseClassStreaming, client.ResponseClassAuto:
@@ -328,17 +329,35 @@ func (c *Client) HandleResponse(res *http.Response, rc client.ResponseClass, err
 	switch res.StatusCode {
 	case http.StatusOK:
 		debug.Log("request OK, decoding response")
+
 		sf := responseToSource(res, rc)
+		if sf == nil {
+			if rc != client.ResponseClassNoData {
+				panic("nil Source for response that expected data")
+			}
+			// we don't expect any data. drain the response body and close it (compliant with golang's expectations
+			// for http/1.1 keepalive support.
+			defer res.Body.Close()
+			_, err = io.Copy(ioutil.Discard, res.Body)
+			return nil, err
+		}
+
 		result.Decoder = c.codec.NewDecoder(sf.NewSource(res.Body))
 
 	case http.StatusAccepted:
 		debug.Log("request Accepted")
+
 		// noop; no decoder for these types of calls
+		defer res.Body.Close()
+		_, err = io.Copy(ioutil.Discard, res.Body)
+		return nil, err
 
 	default:
-		// don't close the response here because the caller may want to evaluate the entity.
-		// it's the caller's job to Close the returned response.
-		return result, ProtocolError(fmt.Sprintf("unexpected mesos HTTP response code: %d", res.StatusCode))
+		debug.Log("unexpected HTTP status", res.StatusCode)
+
+		defer res.Body.Close()
+		io.Copy(ioutil.Discard, res.Body) // intentionally discard any error here
+		return nil, ProtocolError(fmt.Sprintf("unexpected mesos HTTP response code: %d", res.StatusCode))
 	}
 
 	return result, nil

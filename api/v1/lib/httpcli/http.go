@@ -186,7 +186,9 @@ func (c *Client) buildRequest(cr client.Request, rc client.ResponseClass, opt ..
 		return nil, err
 	}
 
-	var body bytes.Buffer //TODO(jdef): use a pool to allocate these (and reduce garbage)?
+	//TODO(jdef): use a pool to allocate these (and reduce garbage)?
+	// .. or else, use a pipe (like streaming does) to avoid the intermediate buffer?
+	var body bytes.Buffer
 	if err := c.codec.NewEncoder(encoding.SinkWriter(&body)).Encode(cr.Marshaler()); err != nil {
 		return nil, err
 	}
@@ -285,21 +287,21 @@ func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc cli
 	return nil
 }
 
-func responseToSource(res *http.Response, rc client.ResponseClass) encoding.SourceFactoryFunc {
+func newSourceFactory(rc client.ResponseClass) encoding.SourceFactoryFunc {
 	switch rc {
 	case client.ResponseClassNoData:
 		return nil
 	case client.ResponseClassSingleton:
 		return encoding.SourceReader
 	case client.ResponseClassStreaming, client.ResponseClassAuto:
-		return func(r io.Reader) encoding.Source {
-			return func() framing.Reader {
-				return recordio.NewReader(r)
-			}
-		}
+		return recordIOSourceFactory
 	default:
 		panic(fmt.Sprintf("unsupported response-class: %q", rc))
 	}
+}
+
+func recordIOSourceFactory(r io.Reader) encoding.Source {
+	return func() framing.Reader { return recordio.NewReader(r) }
 }
 
 // HandleResponse parses an HTTP response from a Mesos service endpoint, transforming the
@@ -330,7 +332,7 @@ func (c *Client) HandleResponse(res *http.Response, rc client.ResponseClass, err
 	case http.StatusOK:
 		debug.Log("request OK, decoding response")
 
-		sf := responseToSource(res, rc)
+		sf := newSourceFactory(rc)
 		if sf == nil {
 			if rc != client.ResponseClassNoData {
 				panic("nil Source for response that expected data")

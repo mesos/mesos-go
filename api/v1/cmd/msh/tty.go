@@ -166,7 +166,7 @@ func ttyWinch(tty *ttyDevice) {
 		Columns: uint32(tty.original_winsize.ws_col),
 	}
 	go func() {
-		defer signal.Ignore(os.Signal(syscall.SIGWINCH))
+		defer signal.Reset(os.Signal(syscall.SIGWINCH))
 		for {
 			select {
 			case <-c:
@@ -195,13 +195,23 @@ func ttyWinch(tty *ttyDevice) {
 }
 
 func ttyTermReset(tty *ttyDevice) {
-	// cleanup properly upon SIGTERM
-	term := make(chan os.Signal, 1)
+	var (
+		// cleanup properly upon SIGTERM
+		term = make(chan os.Signal, 1)
+		done = make(chan struct{})
+	)
 	go func() {
-		<-term
-		tty.cleanups.unwind()
-		os.Exit(0)
+		select {
+		case <-term:
+			tty.cleanups.unwind()
+			os.Exit(0)
+		case <-done:
+			//println("stop waiting for SIGTERM")
+		}
 	}()
-	tty.cleanups.push(func() { signal.Ignore(os.Signal(syscall.SIGTERM)) })
+	tty.cleanups.push(func() {
+		signal.Reset(os.Signal(syscall.SIGTERM))
+		close(done) // stop waiting for a signal
+	})
 	signal.Notify(term, os.Signal(syscall.SIGTERM))
 }

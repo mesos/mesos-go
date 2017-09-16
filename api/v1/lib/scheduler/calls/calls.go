@@ -200,56 +200,33 @@ func OpDestroy(rs ...mesos.Resource) mesos.Offer_Operation {
 	}
 }
 
-// Role decorates Revive and Suppress calls; panics for any other call type.
-func Role(role string) scheduler.CallOpt {
-	return func(c *scheduler.Call) {
-		if c == nil {
-			return
-		}
-		switch c.Type {
-		case scheduler.Call_REVIVE:
-			if c.Revive == nil {
-				if role == "" {
-					return
-				}
-				c.Revive = new(scheduler.Call_Revive)
-			}
-			if role == "" {
-				c.Revive.Role = nil
-			} else {
-				c.Revive.Role = &role
-			}
-		case scheduler.Call_SUPPRESS:
-			if c.Suppress == nil {
-				if role == "" {
-					return
-				}
-				c.Suppress = new(scheduler.Call_Suppress)
-			}
-			if role == "" {
-				c.Suppress.Role = nil
-			} else {
-				c.Suppress.Role = &role
-			}
-		default:
-			panic("Role doesn't support call type " + c.Type.String())
-		}
-	}
-}
-
 // Revive returns a revive call.
 // Callers are expected to fill in the FrameworkID.
 func Revive() *scheduler.Call {
+	return &scheduler.Call{Type: scheduler.Call_REVIVE}
+}
+
+// Revive returns a revive call with the given filters.
+// Callers are expected to fill in the FrameworkID.
+func ReviveWith(roles []string) *scheduler.Call {
 	return &scheduler.Call{
-		Type: scheduler.Call_REVIVE,
+		Type:   scheduler.Call_REVIVE,
+		Revive: &scheduler.Call_Revive{Roles: roles},
 	}
 }
 
 // Suppress returns a suppress call.
 // Callers are expected to fill in the FrameworkID.
 func Suppress() *scheduler.Call {
+	return &scheduler.Call{Type: scheduler.Call_SUPPRESS}
+}
+
+// Suppress returns a suppress call with the given filters.
+// Callers are expected to fill in the FrameworkID.
+func SuppressWith(roles []string) *scheduler.Call {
 	return &scheduler.Call{
-		Type: scheduler.Call_SUPPRESS,
+		Type:     scheduler.Call_SUPPRESS,
+		Suppress: &scheduler.Call_Suppress{Roles: roles},
 	}
 }
 

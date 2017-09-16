@@ -10,6 +10,7 @@ package main
 //
 
 import (
+	"bytes"
 	"context"
 	"flag"
 	"fmt"
@@ -342,6 +343,7 @@ func tryInteractive(agentHost string, cid mesos.ContainerID) (err error) {
 
 		go func() {
 			<-ctx.Done()
+			//println("closing ttyd via ctx.Done")
 			ttyd.Close()
 		}()
 
@@ -396,11 +398,18 @@ func attachContainerInput(ctx context.Context, stdin io.Reader, winCh <-chan mes
 	input := make(chan []byte)
 	go func() {
 		defer close(input)
+		escape := []byte{0x10, 0x11} // CTRL-P, CTRL-Q
+		var last byte
 		for {
 			buf := make([]byte, 512) // not efficient to always do this
 			n, err := stdin.Read(buf)
 			if n > 0 {
+				if (last == escape[0] && buf[0] == escape[1]) || bytes.Index(buf, escape) > -1 {
+					//println("escape sequence detected")
+					return
+				}
 				buf = buf[:n]
+				last = buf[n-1]
 				select {
 				case input <- buf:
 				case <-ctx.Done():

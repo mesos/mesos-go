@@ -43,6 +43,7 @@ func Example() {
 		GetFrameworks(),
 		GetExecutors(),
 		GetTasks(),
+		GetAgent(),
 		WaitNestedContainer(mesos.ContainerID{}),
 		LaunchNestedContainerSession(mesos.ContainerID{}, nil, nil),
 	)
@@ -56,6 +57,7 @@ func Example() {
 		SetLoggingLevel(0, d),
 		LaunchNestedContainer(mesos.ContainerID{}, nil, nil),
 		KillNestedContainer(mesos.ContainerID{}),
+		RemoveNestedContainer(mesos.ContainerID{}),
 		AttachContainerOutput(mesos.ContainerID{}),
 	)
 

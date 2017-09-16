@@ -28,6 +28,7 @@ func classifyResponse(c *agent.Call) (rc client.ResponseClass, err error) {
 		agent.Call_GET_FRAMEWORKS,
 		agent.Call_GET_EXECUTORS,
 		agent.Call_GET_TASKS,
+		agent.Call_GET_AGENT,
 		agent.Call_WAIT_NESTED_CONTAINER:
 		rc = client.ResponseClassSingleton
 
@@ -40,8 +41,9 @@ func classifyResponse(c *agent.Call) (rc client.ResponseClass, err error) {
 	case agent.Call_SET_LOGGING_LEVEL,
 		agent.Call_LAUNCH_NESTED_CONTAINER,
 		agent.Call_KILL_NESTED_CONTAINER,
+		agent.Call_REMOVE_NESTED_CONTAINER,
 		agent.Call_ATTACH_CONTAINER_INPUT:
-		rc = client.ResponseClassAuto
+		rc = client.ResponseClassNoData
 
 	default:
 		err = httpcli.ProtocolError(fmt.Sprintf("unsupported agent.Call type: %v", t))

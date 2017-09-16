@@ -73,6 +73,8 @@ func GetExecutors() *agent.Call { return &agent.Call{Type: agent.Call_GET_EXECUT
 
 func GetTasks() *agent.Call { return &agent.Call{Type: agent.Call_GET_TASKS} }
 
+func GetAgent() *agent.Call { return &agent.Call{Type: agent.Call_GET_AGENT} }
+
 func LaunchNestedContainer(cid mesos.ContainerID, cmd *mesos.CommandInfo, ci *mesos.ContainerInfo) *agent.Call {
 	return &agent.Call{
 		Type: agent.Call_LAUNCH_NESTED_CONTAINER,
@@ -97,6 +99,15 @@ func KillNestedContainer(cid mesos.ContainerID) *agent.Call {
 	return &agent.Call{
 		Type: agent.Call_KILL_NESTED_CONTAINER,
 		KillNestedContainer: &agent.Call_KillNestedContainer{
+			ContainerID: cid,
+		},
+	}
+}
+
+func RemoveNestedContainer(cid mesos.ContainerID) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_REMOVE_NESTED_CONTAINER,
+		RemoveNestedContainer: &agent.Call_RemoveNestedContainer{
 			ContainerID: cid,
 		},
 	}

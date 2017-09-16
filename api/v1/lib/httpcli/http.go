@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
@@ -163,7 +164,7 @@ func prepareForResponse(rc client.ResponseClass, codec encoding.Codec) (RequestO
 	// type from the perspective of the caller --> client.ResponseClass.
 	var accept RequestOpts
 	switch rc {
-	case client.ResponseClassSingleton, client.ResponseClassAuto:
+	case client.ResponseClassSingleton, client.ResponseClassAuto, client.ResponseClassNoData:
 		accept = append(accept, Header("Accept", codec.Type.ContentType()))
 	case client.ResponseClassStreaming:
 		accept = append(accept, Header("Accept", mediaTypeRecordIO.ContentType()))
@@ -185,7 +186,9 @@ func (c *Client) buildRequest(cr client.Request, rc client.ResponseClass, opt ..
 		return nil, err
 	}
 
-	var body bytes.Buffer //TODO(jdef): use a pool to allocate these (and reduce garbage)?
+	//TODO(jdef): use a pool to allocate these (and reduce garbage)?
+	// .. or else, use a pipe (like streaming does) to avoid the intermediate buffer?
+	var body bytes.Buffer
 	if err := c.codec.NewEncoder(encoding.SinkWriter(&body)).Encode(cr.Marshaler()); err != nil {
 		return nil, err
 	}
@@ -257,6 +260,10 @@ func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc cli
 	case http.StatusOK:
 		ct := res.Header.Get("Content-Type")
 		switch rc {
+		case client.ResponseClassNoData:
+			if ct != "" {
+				return ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
+			}
 		case client.ResponseClassSingleton, client.ResponseClassAuto:
 			if ct != codec.Type.ContentType() {
 				return ProtocolError(fmt.Sprintf("unexpected content type: %q", ct))
@@ -280,19 +287,21 @@ func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc cli
 	return nil
 }
 
-func responseToSource(res *http.Response, rc client.ResponseClass) encoding.SourceFactoryFunc {
+func newSourceFactory(rc client.ResponseClass) encoding.SourceFactoryFunc {
 	switch rc {
+	case client.ResponseClassNoData:
+		return nil
 	case client.ResponseClassSingleton:
 		return encoding.SourceReader
 	case client.ResponseClassStreaming, client.ResponseClassAuto:
-		return func(r io.Reader) encoding.Source {
-			return func() framing.Reader {
-				return recordio.NewReader(r)
-			}
-		}
+		return recordIOSourceFactory
 	default:
 		panic(fmt.Sprintf("unsupported response-class: %q", rc))
 	}
+}
+
+func recordIOSourceFactory(r io.Reader) encoding.Source {
+	return func() framing.Reader { return recordio.NewReader(r) }
 }
 
 // HandleResponse parses an HTTP response from a Mesos service endpoint, transforming the
@@ -322,17 +331,35 @@ func (c *Client) HandleResponse(res *http.Response, rc client.ResponseClass, err
 	switch res.StatusCode {
 	case http.StatusOK:
 		debug.Log("request OK, decoding response")
-		sf := responseToSource(res, rc)
+
+		sf := newSourceFactory(rc)
+		if sf == nil {
+			if rc != client.ResponseClassNoData {
+				panic("nil Source for response that expected data")
+			}
+			// we don't expect any data. drain the response body and close it (compliant with golang's expectations
+			// for http/1.1 keepalive support.
+			defer res.Body.Close()
+			_, err = io.Copy(ioutil.Discard, res.Body)
+			return nil, err
+		}
+
 		result.Decoder = c.codec.NewDecoder(sf.NewSource(res.Body))
 
 	case http.StatusAccepted:
 		debug.Log("request Accepted")
+
 		// noop; no decoder for these types of calls
+		defer res.Body.Close()
+		_, err = io.Copy(ioutil.Discard, res.Body)
+		return nil, err
 
 	default:
-		// don't close the response here because the caller may want to evaluate the entity.
-		// it's the caller's job to Close the returned response.
-		return result, ProtocolError(fmt.Sprintf("unexpected mesos HTTP response code: %d", res.StatusCode))
+		debug.Log("unexpected HTTP status", res.StatusCode)
+
+		defer res.Body.Close()
+		io.Copy(ioutil.Discard, res.Body) // intentionally discard any error here
+		return nil, ProtocolError(fmt.Sprintf("unexpected mesos HTTP response code: %d", res.StatusCode))
 	}
 
 	return result, nil

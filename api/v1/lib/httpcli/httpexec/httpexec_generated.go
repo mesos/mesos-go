@@ -1,6 +1,6 @@
 package httpexec
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -import github.com/mesos/mesos-go/api/v1/lib/executor/calls -type C:executor.Call:executor.Call{Type:agent.Call_MESSAGE}
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -import github.com/mesos/mesos-go/api/v1/lib/executor/calls -type C:executor.Call:executor.Call{Type:executor.Call_MESSAGE}
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (

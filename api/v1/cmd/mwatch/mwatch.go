@@ -62,6 +62,12 @@ func watch(resp mesos.Response, err error) error {
 			fmt.Println(t.String(), e.GetAgentAdded().String())
 		case master.Event_AGENT_REMOVED:
 			fmt.Println(t.String(), e.GetAgentRemoved().String())
+		case master.Event_FRAMEWORK_ADDED:
+			fmt.Println(t.String(), e.GetFrameworkAdded().String())
+		case master.Event_FRAMEWORK_UPDATED:
+			fmt.Println(t.String(), e.GetFrameworkUpdated().String())
+		case master.Event_FRAMEWORK_REMOVED:
+			fmt.Println(t.String(), e.GetFrameworkRemoved().String())
 		default:
 			fmt.Println(t.String())
 		}

@@ -173,11 +173,11 @@ var testTemplate = template.Must(template.New("").Parse(`package {{.Package}}
 
 import (
 	"context"
-        "testing"
+	"testing"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 {{range .Imports}}
-        {{ printf "%q" . -}}
+	{{ printf "%q" . -}}
 {{end}}
 )
 

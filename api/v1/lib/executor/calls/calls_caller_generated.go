@@ -1,6 +1,6 @@
 package calls
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type C:*executor.Call
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type C:*executor.Call -output calls_caller_generated.go
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (

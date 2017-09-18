@@ -1,6 +1,6 @@
-package httpagent
+package httpexec
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib/agent -import github.com/mesos/mesos-go/api/v1/lib/agent/calls -type C:agent.Call:agent.Call{Type:agent.Call_GET_METRICS}
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -import github.com/mesos/mesos-go/api/v1/lib/executor/calls -type C:executor.Call:executor.Call{Type:executor.Call_MESSAGE}
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
@@ -10,12 +10,12 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/client"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 
-	"github.com/mesos/mesos-go/api/v1/lib/agent"
-	"github.com/mesos/mesos-go/api/v1/lib/agent/calls"
+	"github.com/mesos/mesos-go/api/v1/lib/executor"
+	"github.com/mesos/mesos-go/api/v1/lib/executor/calls"
 )
 
 // ResponseClassifier determines the appropriate response class for the given call.
-type ResponseClassifier func(*agent.Call) (client.ResponseClass, error)
+type ResponseClassifier func(*executor.Call) (client.ResponseClass, error)
 
 // ClientFunc sends a Request to Mesos and returns the generated Response.
 type ClientFunc func(client.Request, client.ResponseClass, ...httpcli.RequestOpt) (mesos.Response, error)

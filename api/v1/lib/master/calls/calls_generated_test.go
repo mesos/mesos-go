@@ -5,11 +5,11 @@ package calls
 
 import (
 	"context"
-        "testing"
+	"testing"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 
-        "github.com/mesos/mesos-go/api/v1/lib/master"
+	"github.com/mesos/mesos-go/api/v1/lib/master"
 )
 
 func TestNonStreaming(t *testing.T) {

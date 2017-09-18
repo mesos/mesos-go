@@ -142,6 +142,28 @@ func SendNoData(ctx context.Context, sender Sender, r Request) (err error) {
 	_, err = IgnoreResponse(sender).Send(ctx, r)
 	return
 }
+{{if .Type "O"}}{{/* O is a functional call option, C.With(...O) must be defined elsewhere */}}
+// SendWith injects the given options for all calls.
+func SenderWith(s Sender, opts ...{{.Type "O"}}) SenderFunc {
+	if len(opts) == 0 {
+		return s.Send
+	}
+        return func(ctx context.Context, r Request) (mesos.Response, error) {
+                f := func() (c *{{.Type "C"}}) {
+                        if c = r.Call(); c != nil {
+                                c = c.With(opts...)
+                        }
+                        return
+                }
+                switch r.(type) {
+                case RequestStreaming:
+                        return s.Send(ctx, RequestStreamingFunc(f))
+                default:
+                        return s.Send(ctx, RequestFunc(f))
+                }
+        }
+}
+{{end -}}
 `))
 
 var testTemplate = template.Must(template.New("").Parse(`package {{.Package}}
@@ -151,11 +173,11 @@ var testTemplate = template.Must(template.New("").Parse(`package {{.Package}}
 
 import (
 	"context"
-        "testing"
+	"testing"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
 {{range .Imports}}
-        {{ printf "%q" . -}}
+	{{ printf "%q" . -}}
 {{end}}
 )
 
@@ -244,4 +266,34 @@ func TestIgnoreResponse(t *testing.T) {
 		t.Fatal("expected response to be closed")
 	}
 }
+{{if .Type "O"}}{{/* O is a functional call option, C.With(...O) must be defined elsewhere */}}
+func TestSenderWith(t *testing.T) {
+	var (
+		s = SenderFunc(func(_ context.Context, r Request) (mesos.Response, error) {
+			_ = r.Call() // need to invoke this to invoke SenderWith call decoration
+			return nil, nil
+		})
+		ignore = func(_ mesos.Response, _ error) {}
+		c = new({{.Type "C"}})
+	)
+
+	for ti, tc := range []Request{NonStreaming(c), Empty().Push(c, c)} {
+		var (
+			invoked bool
+			opt = func(c *{{.Type "C"}}) { invoked = true }
+		)
+
+		// sanity check (w/o any options)
+		ignore(SenderWith(s).Send(context.Background(), tc))
+		if invoked {
+			t.Fatalf("test case %d failed: unexpected option invocation", ti)
+		}
+
+		ignore(SenderWith(s, opt).Send(context.Background(), tc))
+		if !invoked {
+			t.Fatalf("test case %d failed: expected option invocation", ti)
+		}
+	}
+}
+{{end -}}
 `))

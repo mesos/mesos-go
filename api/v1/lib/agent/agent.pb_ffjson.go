@@ -1640,7 +1640,7 @@ func (mj *Call_KillNestedContainer) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{"container_id":`)
+	buf.WriteString(`{ "container_id":`)
 
 	{
 
@@ -1650,6 +1650,15 @@ func (mj *Call_KillNestedContainer) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 		}
 
 	}
+	buf.WriteByte(',')
+	if mj.Signal != nil {
+		if true {
+			buf.WriteString(`"signal":`)
+			fflib.FormatBits2(buf, uint64(*mj.Signal), 10, *mj.Signal < 0)
+			buf.WriteByte(',')
+		}
+	}
+	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -1659,9 +1668,13 @@ const (
 	ffj_t_Call_KillNestedContainerno_such_key
 
 	ffj_t_Call_KillNestedContainer_ContainerID
+
+	ffj_t_Call_KillNestedContainer_Signal
 )
 
 var ffj_key_Call_KillNestedContainer_ContainerID = []byte("container_id")
+
+var ffj_key_Call_KillNestedContainer_Signal = []byte("signal")
 
 func (uj *Call_KillNestedContainer) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -1730,6 +1743,20 @@ mainparse:
 						goto mainparse
 					}
 
+				case 's':
+
+					if bytes.Equal(ffj_key_Call_KillNestedContainer_Signal, kn) {
+						currentKey = ffj_t_Call_KillNestedContainer_Signal
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_KillNestedContainer_Signal, kn) {
+					currentKey = ffj_t_Call_KillNestedContainer_Signal
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.AsciiEqualFold(ffj_key_Call_KillNestedContainer_ContainerID, kn) {
@@ -1757,6 +1784,9 @@ mainparse:
 
 				case ffj_t_Call_KillNestedContainer_ContainerID:
 					goto handle_ContainerID
+
+				case ffj_t_Call_KillNestedContainer_Signal:
+					goto handle_Signal
 
 				case ffj_t_Call_KillNestedContainerno_such_key:
 					err = fs.SkipField(tok)
@@ -1788,6 +1818,39 @@ handle_ContainerID:
 			return err
 		}
 		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Signal:
+
+	/* handler: uj.Signal type=int32 kind=int32 quoted=false*/
+
+	{
+		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for int32", tok))
+		}
+	}
+
+	{
+
+		if tok == fflib.FFTok_null {
+
+			uj.Signal = nil
+
+		} else {
+
+			tval, err := fflib.ParseInt(fs.Output.Bytes(), 10, 32)
+
+			if err != nil {
+				return fs.WrapErr(err)
+			}
+
+			ttypval := int32(tval)
+			uj.Signal = &ttypval
+
+		}
 	}
 
 	state = fflib.FFParse_after_value

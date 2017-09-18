@@ -1,6 +1,6 @@
 package calls
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type C:executor.Call -output calls_sender_generated.go
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type C:executor.Call -type O:executor.CallOpt -output calls_sender_generated.go
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
@@ -95,5 +95,34 @@ func TestIgnoreResponse(t *testing.T) {
 
 	if !closed {
 		t.Fatal("expected response to be closed")
+	}
+}
+
+func TestSenderWith(t *testing.T) {
+	var (
+		s = SenderFunc(func(_ context.Context, r Request) (mesos.Response, error) {
+			_ = r.Call() // need to invoke this to invoke SenderWith call decoration
+			return nil, nil
+		})
+		ignore = func(_ mesos.Response, _ error) {}
+		c = new(executor.Call)
+	)
+
+	for ti, tc := range []Request{NonStreaming(c), Empty().Push(c, c)} {
+		var (
+			invoked bool
+			opt = func(c *executor.Call) { invoked = true }
+		)
+
+		// sanity check (w/o any options)
+		ignore(SenderWith(s).Send(context.Background(), tc))
+		if invoked {
+			t.Fatalf("test case %d failed: unexpected option invocation", ti)
+		}
+
+		ignore(SenderWith(s, opt).Send(context.Background(), tc))
+		if !invoked {
+			t.Fatalf("test case %d failed: expected option invocation", ti)
+		}
 	}
 }

@@ -1,6 +1,6 @@
 package calls
 
-// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type C:executor.Call -output calls_sender_generated.go
+// go generate -import github.com/mesos/mesos-go/api/v1/lib/executor -type C:executor.Call -type O:executor.CallOpt -output calls_sender_generated.go
 // GENERATED CODE FOLLOWS; DO NOT EDIT.
 
 import (
@@ -126,4 +126,25 @@ func IgnoreResponse(s Sender) SenderFunc {
 func SendNoData(ctx context.Context, sender Sender, r Request) (err error) {
 	_, err = IgnoreResponse(sender).Send(ctx, r)
 	return
+}
+
+// SendWith injects the given options for all calls.
+func SenderWith(s Sender, opts ...executor.CallOpt) SenderFunc {
+	if len(opts) == 0 {
+		return s.Send
+	}
+        return func(ctx context.Context, r Request) (mesos.Response, error) {
+                f := func() (c *executor.Call) {
+                        if c = r.Call(); c != nil {
+                                c = c.With(opts...)
+                        }
+                        return
+                }
+                switch r.(type) {
+                case RequestStreaming:
+                        return s.Send(ctx, RequestStreamingFunc(f))
+                default:
+                        return s.Send(ctx, RequestFunc(f))
+                }
+        }
 }

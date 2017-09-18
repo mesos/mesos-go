@@ -18,6 +18,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/executor/config"
 	"github.com/mesos/mesos-go/api/v1/lib/executor/events"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
+	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpexec"
 	"github.com/pborman/uuid"
 )
 
@@ -52,32 +53,38 @@ func run(cfg config.Config) {
 			Host:   cfg.AgentEndpoint,
 			Path:   apiPath,
 		}
+		http = httpcli.New(
+			httpcli.Endpoint(apiURL.String()),
+			httpcli.Codec(codecs.ByMediaType[codecs.MediaTypeProtobuf]),
+			httpcli.Do(httpcli.With(httpcli.Timeout(httpTimeout))),
+		)
+		callOptions = executor.CallOptions{
+			calls.Framework(cfg.FrameworkID),
+			calls.Executor(cfg.ExecutorID),
+		}
 		state = &internalState{
-			cli: httpcli.New(
-				httpcli.Endpoint(apiURL.String()),
-				httpcli.Codec(codecs.ByMediaType[codecs.MediaTypeProtobuf]),
-				httpcli.Do(httpcli.With(httpcli.Timeout(httpTimeout))),
+			cli: calls.SenderWith(
+				httpexec.NewSender(http.Send),
+				callOptions...,
 			),
-			callOptions: executor.CallOptions{
-				calls.Framework(cfg.FrameworkID),
-				calls.Executor(cfg.ExecutorID),
-			},
 			unackedTasks:   make(map[mesos.TaskID]mesos.TaskInfo),
 			unackedUpdates: make(map[string]executor.Call_Update),
 			failedTasks:    make(map[mesos.TaskID]mesos.TaskStatus),
 		}
-		subscribe       = calls.Subscribe(nil, nil).With(state.callOptions...)
+		subscriber = calls.SenderWith(
+			httpexec.NewSender(http.Send, httpcli.Close(true)),
+			callOptions...,
+		)
 		shouldReconnect = maybeReconnect(cfg)
 		disconnected    = time.Now()
 		handler         = buildEventHandler(state)
 	)
 	for {
-		subscribe = subscribe.With(
-			unacknowledgedTasks(state),
-			unacknowledgedUpdates(state),
-		)
 		func() {
-			resp, err := state.cli.Do(subscribe, httpcli.Close(true))
+			subscribe := calls.Subscribe(unacknowledgedTasks(state), unacknowledgedUpdates(state))
+
+			log.Println("subscribing to agent for events..")
+			resp, err := subscriber.Send(context.TODO(), calls.NonStreaming(subscribe))
 			if resp != nil {
 				defer resp.Close()
 			}
@@ -104,43 +111,35 @@ func run(cfg config.Config) {
 			log.Printf("failed to re-establish subscription with agent within %v, aborting", cfg.RecoveryTimeout)
 			return
 		}
+		log.Println("waiting for reconnect timeout")
 		<-shouldReconnect // wait for some amount of time before retrying subscription
 	}
 }
 
-// unacknowledgedTasks is a functional option that sets the value of the UnacknowledgedTasks
-// field of a Subscribe call.
-func unacknowledgedTasks(state *internalState) executor.CallOpt {
-	return func(call *executor.Call) {
-		if n := len(state.unackedTasks); n > 0 {
-			unackedTasks := make([]mesos.TaskInfo, 0, n)
-			for k := range state.unackedTasks {
-				unackedTasks = append(unackedTasks, state.unackedTasks[k])
-			}
-			call.Subscribe.UnacknowledgedTasks = unackedTasks
-		} else {
-			call.Subscribe.UnacknowledgedTasks = nil
+// unacknowledgedTasks generates the value of the UnacknowledgedTasks field of a Subscribe call.
+func unacknowledgedTasks(state *internalState) (result []mesos.TaskInfo) {
+	if n := len(state.unackedTasks); n > 0 {
+		result = make([]mesos.TaskInfo, 0, n)
+		for k := range state.unackedTasks {
+			result = append(result, state.unackedTasks[k])
 		}
 	}
+	return
 }
 
-// unacknowledgedUpdates is a functional option that sets the value of the UnacknowledgedUpdates
-// field of a Subscribe call.
-func unacknowledgedUpdates(state *internalState) executor.CallOpt {
-	return func(call *executor.Call) {
-		if n := len(state.unackedUpdates); n > 0 {
-			unackedUpdates := make([]executor.Call_Update, 0, n)
-			for k := range state.unackedUpdates {
-				unackedUpdates = append(unackedUpdates, state.unackedUpdates[k])
-			}
-			call.Subscribe.UnacknowledgedUpdates = unackedUpdates
-		} else {
-			call.Subscribe.UnacknowledgedUpdates = nil
+// unacknowledgedUpdates generates the value of the UnacknowledgedUpdates field of a Subscribe call.
+func unacknowledgedUpdates(state *internalState) (result []executor.Call_Update) {
+	if n := len(state.unackedUpdates); n > 0 {
+		result = make([]executor.Call_Update, 0, n)
+		for k := range state.unackedUpdates {
+			result = append(result, state.unackedUpdates[k])
 		}
 	}
+	return
 }
 
 func eventLoop(state *internalState, decoder encoding.Decoder, h events.Handler) (err error) {
+	log.Println("listening for events from agent...")
 	ctx := context.TODO()
 	for err == nil && !state.shouldQuit {
 		// housekeeping
@@ -239,8 +238,8 @@ func launch(state *internalState, task mesos.TaskInfo) {
 func protoString(s string) *string { return &s }
 
 func update(state *internalState, status mesos.TaskStatus) error {
-	upd := calls.Update(status).With(state.callOptions...)
-	resp, err := state.cli.Do(upd)
+	upd := calls.Update(status)
+	resp, err := state.cli.Send(context.TODO(), calls.NonStreaming(upd))
 	if resp != nil {
 		resp.Close()
 	}
@@ -263,8 +262,7 @@ func newStatus(state *internalState, id mesos.TaskID) mesos.TaskStatus {
 }
 
 type internalState struct {
-	callOptions    executor.CallOptions
-	cli            *httpcli.Client
+	cli            calls.Sender
 	cfg            config.Config
 	framework      mesos.FrameworkInfo
 	executor       mesos.ExecutorInfo

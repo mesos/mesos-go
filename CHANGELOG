@@ -1,3 +1,13 @@
+2017-09-19: v0.0.5
+  1.3.x protobuf support
+  cmd/msh: fixes and non-terminating detach (CTRL-P, Q)
+  lib/scheduler: refactor Revive/Suppress convenience APIs
+  lib/client,httpcli: ReponseClassNoData for empty response entities
+  lib/httpcli: drain HTTP response body when appropriate
+  lib/executor/calls: support Sender API
+  lib/httpcli/httpexec: initial revision
+  cmd/example-executor: refactor to use httpexec, Sender API
+
 2017-09-13: v0.0.4
   bumped protos to Mesos 1.2.x (v1 API only), with operator API support
   api/v1/lib/... API refactoring (client, encoding, httpcli, recordio)

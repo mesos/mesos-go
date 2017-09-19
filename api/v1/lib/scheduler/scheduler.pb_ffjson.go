@@ -4685,6 +4685,22 @@ func (mj *Call_Subscribe) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if len(mj.SuppressedRoles) != 0 {
+		buf.WriteString(`"suppressed_roles":`)
+		if mj.SuppressedRoles != nil {
+			buf.WriteString(`[`)
+			for i, v := range mj.SuppressedRoles {
+				if i != 0 {
+					buf.WriteString(`,`)
+				}
+				fflib.WriteJsonString(buf, string(v))
+			}
+			buf.WriteString(`]`)
+		} else {
+			buf.WriteString(`null`)
+		}
+		buf.WriteByte(',')
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -4695,9 +4711,13 @@ const (
 	ffj_t_Call_Subscribeno_such_key
 
 	ffj_t_Call_Subscribe_FrameworkInfo
+
+	ffj_t_Call_Subscribe_SuppressedRoles
 )
 
 var ffj_key_Call_Subscribe_FrameworkInfo = []byte("framework_info")
+
+var ffj_key_Call_Subscribe_SuppressedRoles = []byte("suppressed_roles")
 
 func (uj *Call_Subscribe) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -4766,6 +4786,20 @@ mainparse:
 						goto mainparse
 					}
 
+				case 's':
+
+					if bytes.Equal(ffj_key_Call_Subscribe_SuppressedRoles, kn) {
+						currentKey = ffj_t_Call_Subscribe_SuppressedRoles
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_Subscribe_SuppressedRoles, kn) {
+					currentKey = ffj_t_Call_Subscribe_SuppressedRoles
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Call_Subscribe_FrameworkInfo, kn) {
@@ -4793,6 +4827,9 @@ mainparse:
 
 				case ffj_t_Call_Subscribe_FrameworkInfo:
 					goto handle_FrameworkInfo
+
+				case ffj_t_Call_Subscribe_SuppressedRoles:
+					goto handle_SuppressedRoles
 
 				case ffj_t_Call_Subscribeno_such_key:
 					err = fs.SkipField(tok)
@@ -4830,6 +4867,80 @@ handle_FrameworkInfo:
 			return err
 		}
 		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_SuppressedRoles:
+
+	/* handler: uj.SuppressedRoles type=[]string kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.SuppressedRoles = nil
+		} else {
+
+			uj.SuppressedRoles = []string{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__SuppressedRoles string
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__SuppressedRoles type=string kind=string quoted=false*/
+
+				{
+
+					{
+						if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+							return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+						}
+					}
+
+					if tok == fflib.FFTok_null {
+
+					} else {
+
+						outBuf := fs.Output.Bytes()
+
+						tmp_uj__SuppressedRoles = string(string(outBuf))
+
+					}
+				}
+
+				uj.SuppressedRoles = append(uj.SuppressedRoles, tmp_uj__SuppressedRoles)
+
+				wantVal = false
+			}
+		}
 	}
 
 	state = fflib.FFParse_after_value

@@ -4666,6 +4666,51 @@ func (mj *Event) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.FrameworkAdded != nil {
+		if true {
+			buf.WriteString(`"framework_added":`)
+
+			{
+
+				err = mj.FrameworkAdded.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.FrameworkUpdated != nil {
+		if true {
+			buf.WriteString(`"framework_updated":`)
+
+			{
+
+				err = mj.FrameworkUpdated.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.FrameworkRemoved != nil {
+		if true {
+			buf.WriteString(`"framework_removed":`)
+
+			{
+
+				err = mj.FrameworkRemoved.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -4686,6 +4731,12 @@ const (
 	ffj_t_Event_AgentAdded
 
 	ffj_t_Event_AgentRemoved
+
+	ffj_t_Event_FrameworkAdded
+
+	ffj_t_Event_FrameworkUpdated
+
+	ffj_t_Event_FrameworkRemoved
 )
 
 var ffj_key_Event_Type = []byte("type")
@@ -4699,6 +4750,12 @@ var ffj_key_Event_TaskUpdated = []byte("task_updated")
 var ffj_key_Event_AgentAdded = []byte("agent_added")
 
 var ffj_key_Event_AgentRemoved = []byte("agent_removed")
+
+var ffj_key_Event_FrameworkAdded = []byte("framework_added")
+
+var ffj_key_Event_FrameworkUpdated = []byte("framework_updated")
+
+var ffj_key_Event_FrameworkRemoved = []byte("framework_removed")
 
 func (uj *Event) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -4772,6 +4829,24 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'f':
+
+					if bytes.Equal(ffj_key_Event_FrameworkAdded, kn) {
+						currentKey = ffj_t_Event_FrameworkAdded
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Event_FrameworkUpdated, kn) {
+						currentKey = ffj_t_Event_FrameworkUpdated
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Event_FrameworkRemoved, kn) {
+						currentKey = ffj_t_Event_FrameworkRemoved
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 's':
 
 					if bytes.Equal(ffj_key_Event_Subscribed, kn) {
@@ -4798,6 +4873,24 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_FrameworkRemoved, kn) {
+					currentKey = ffj_t_Event_FrameworkRemoved
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_FrameworkUpdated, kn) {
+					currentKey = ffj_t_Event_FrameworkUpdated
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_FrameworkAdded, kn) {
+					currentKey = ffj_t_Event_FrameworkAdded
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.AsciiEqualFold(ffj_key_Event_AgentRemoved, kn) {
@@ -4870,6 +4963,15 @@ mainparse:
 
 				case ffj_t_Event_AgentRemoved:
 					goto handle_AgentRemoved
+
+				case ffj_t_Event_FrameworkAdded:
+					goto handle_FrameworkAdded
+
+				case ffj_t_Event_FrameworkUpdated:
+					goto handle_FrameworkUpdated
+
+				case ffj_t_Event_FrameworkRemoved:
+					goto handle_FrameworkRemoved
 
 				case ffj_t_Eventno_such_key:
 					err = fs.SkipField(tok)
@@ -5037,6 +5139,87 @@ handle_AgentRemoved:
 		}
 
 		err = uj.AgentRemoved.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_FrameworkAdded:
+
+	/* handler: uj.FrameworkAdded type=master.Event_FrameworkAdded kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.FrameworkAdded = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.FrameworkAdded == nil {
+			uj.FrameworkAdded = new(Event_FrameworkAdded)
+		}
+
+		err = uj.FrameworkAdded.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_FrameworkUpdated:
+
+	/* handler: uj.FrameworkUpdated type=master.Event_FrameworkUpdated kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.FrameworkUpdated = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.FrameworkUpdated == nil {
+			uj.FrameworkUpdated = new(Event_FrameworkUpdated)
+		}
+
+		err = uj.FrameworkUpdated.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_FrameworkRemoved:
+
+	/* handler: uj.FrameworkRemoved type=master.Event_FrameworkRemoved kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.FrameworkRemoved = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.FrameworkRemoved == nil {
+			uj.FrameworkRemoved = new(Event_FrameworkRemoved)
+		}
+
+		err = uj.FrameworkRemoved.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -5421,6 +5604,582 @@ handle_AgentID:
 		}
 
 		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Event_FrameworkAdded) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Event_FrameworkAdded) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"framework":`)
+
+	{
+
+		err = mj.Framework.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Event_FrameworkAddedbase = iota
+	ffj_t_Event_FrameworkAddedno_such_key
+
+	ffj_t_Event_FrameworkAdded_Framework
+)
+
+var ffj_key_Event_FrameworkAdded_Framework = []byte("framework")
+
+func (uj *Event_FrameworkAdded) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Event_FrameworkAdded) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Event_FrameworkAddedbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Event_FrameworkAddedno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'f':
+
+					if bytes.Equal(ffj_key_Event_FrameworkAdded_Framework, kn) {
+						currentKey = ffj_t_Event_FrameworkAdded_Framework
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_FrameworkAdded_Framework, kn) {
+					currentKey = ffj_t_Event_FrameworkAdded_Framework
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Event_FrameworkAddedno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Event_FrameworkAdded_Framework:
+					goto handle_Framework
+
+				case ffj_t_Event_FrameworkAddedno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_Framework:
+
+	/* handler: uj.Framework type=master.Response_GetFrameworks_Framework kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.Framework.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Event_FrameworkRemoved) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Event_FrameworkRemoved) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"framework_info":`)
+
+	{
+
+		err = mj.FrameworkInfo.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Event_FrameworkRemovedbase = iota
+	ffj_t_Event_FrameworkRemovedno_such_key
+
+	ffj_t_Event_FrameworkRemoved_FrameworkInfo
+)
+
+var ffj_key_Event_FrameworkRemoved_FrameworkInfo = []byte("framework_info")
+
+func (uj *Event_FrameworkRemoved) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Event_FrameworkRemoved) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Event_FrameworkRemovedbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Event_FrameworkRemovedno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'f':
+
+					if bytes.Equal(ffj_key_Event_FrameworkRemoved_FrameworkInfo, kn) {
+						currentKey = ffj_t_Event_FrameworkRemoved_FrameworkInfo
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_FrameworkRemoved_FrameworkInfo, kn) {
+					currentKey = ffj_t_Event_FrameworkRemoved_FrameworkInfo
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Event_FrameworkRemovedno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Event_FrameworkRemoved_FrameworkInfo:
+					goto handle_FrameworkInfo
+
+				case ffj_t_Event_FrameworkRemovedno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_FrameworkInfo:
+
+	/* handler: uj.FrameworkInfo type=mesos.FrameworkInfo kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.FrameworkInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Event_FrameworkUpdated) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Event_FrameworkUpdated) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"framework":`)
+
+	{
+
+		err = mj.Framework.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Event_FrameworkUpdatedbase = iota
+	ffj_t_Event_FrameworkUpdatedno_such_key
+
+	ffj_t_Event_FrameworkUpdated_Framework
+)
+
+var ffj_key_Event_FrameworkUpdated_Framework = []byte("framework")
+
+func (uj *Event_FrameworkUpdated) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Event_FrameworkUpdated) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Event_FrameworkUpdatedbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Event_FrameworkUpdatedno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'f':
+
+					if bytes.Equal(ffj_key_Event_FrameworkUpdated_Framework, kn) {
+						currentKey = ffj_t_Event_FrameworkUpdated_Framework
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_FrameworkUpdated_Framework, kn) {
+					currentKey = ffj_t_Event_FrameworkUpdated_Framework
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Event_FrameworkUpdatedno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Event_FrameworkUpdated_Framework:
+					goto handle_Framework
+
+				case ffj_t_Event_FrameworkUpdatedno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_Framework:
+
+	/* handler: uj.Framework type=master.Response_GetFrameworks_Framework kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.Framework.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

@@ -21,6 +21,7 @@ package healthchecker
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -137,7 +138,7 @@ func (e *errHttp) Error() string { return fmt.Sprintf("http error code: %d", e.S
 
 func (s *SlaveHealthChecker) doCheck(pid upid.UPID) {
 	unhealthy := false
-	path := fmt.Sprintf("http://%s:%s/%s/health", pid.Host, pid.Port, pid.ID)
+	path := fmt.Sprintf("http://%s/%s/health", net.JoinHostPort(pid.Host, pid.Port), pid.ID)
 	req, err := http.NewRequest("HEAD", path, nil)
 	req.Close = true
 	err = s.httpDo(req, func(resp *http.Response, err error) error {

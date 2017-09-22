@@ -63,6 +63,7 @@ func TestUPIDIPAddress(t *testing.T) {
 	assert.NotNil(t, u)
 	assert.NoError(t, err)
 	assert.Equal(t, "2001:db8::1", u.Host)
+	assert.Equal(t, "mesos@[2001:db8::1]:5050", u.String())
 
 	u, err = Parse("mesos@[fe80::1%lo0]:5051")
 	assert.NotNil(t, u)

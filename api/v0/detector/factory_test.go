@@ -3,6 +3,7 @@ package detector
 import (
 	"testing"
 
+	"github.com/mesos/mesos-go/api/v0/upid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,4 +57,37 @@ func TestDectorFactoryNew_TrivialSpec(t *testing.T) {
 	assert.NoError(err)
 	assert.NotNil(m)
 	assert.IsType(&Standalone{}, m)
+}
+
+func TestDectorFactoryNew_IPAddress(t *testing.T) {
+	assert := assert.New(t)
+	m, err := New("master@[2001:db8::1]:5050")
+	assert.NoError(err)
+	assert.NotNil(m)
+	assert.IsType(&Standalone{}, m)
+
+	m, err = New("192.0.2.1:5050")
+	assert.NoError(err)
+	assert.NotNil(m)
+	assert.IsType(&Standalone{}, m)
+}
+
+func TestDetectorFactoryCreateMasterInfo(t *testing.T) {
+	u, _ := upid.Parse("master@[2001:db8::2]:5050")
+	m := CreateMasterInfo(u)
+	assert.NotNil(t, u)
+	assert.Equal(t, uint32(0), m.GetIp())
+	assert.Equal(t, "2001:db8::2", m.GetAddress().GetIp())
+
+	u, _ = upid.Parse("master@192.0.2.1:5050")
+	m = CreateMasterInfo(u)
+	assert.NotNil(t, u)
+	assert.Equal(t, uint32(3221225985), m.GetIp())
+	assert.Equal(t, "192.0.2.1", m.GetAddress().GetIp())
+
+	u, _ = upid.Parse("master@localhost:5050")
+	m = CreateMasterInfo(u)
+	assert.NotNil(t, u)
+	assert.Equal(t, uint32(2130706433), m.GetIp())
+	assert.Equal(t, "127.0.0.1", m.GetAddress().GetIp())
 }

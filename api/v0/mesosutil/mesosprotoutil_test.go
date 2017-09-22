@@ -142,6 +142,34 @@ func TestNewMasterInfo(t *testing.T) {
 	}
 }
 
+func TestNewMasterInfoWithAddress(t *testing.T) {
+	master := WithAddress("master-1", "host", "1234", 1234, 5678)
+	if master == nil {
+		t.Fatal("Not creating protobuf object MasterInfo")
+	}
+	if master.GetId() != "master-1" {
+		t.Fatal("Protobuf object MasterInfo.Id missing.")
+	}
+	if master.GetIp() != 1234 {
+		t.Fatal("Protobuf object MasterInfo.Ip missing.")
+	}
+	if master.GetHostname() != "host" {
+		t.Fatal("Protobuf object MasterInfo.Hostname missing.")
+	}
+	if master.GetPort() != 5678 {
+		t.Fatal("Protobuf object MasterInfo.Port missing.")
+	}
+	if master.GetAddress().GetIp() != "1234" {
+		t.Fatal("Protobuf object MasterInfo.Address.Ip missing.")
+	}
+	if master.GetAddress().GetHostname() != "host" {
+		t.Fatal("Protobuf object MasterInfo.Address.Hostname missing.")
+	}
+	if master.GetAddress().GetPort() != 5678 {
+		t.Fatal("Protobuf object MasterInfo.Address.Port missing.")
+	}
+}
+
 func TestNewOfferID(t *testing.T) {
 	id := NewOfferID("offer-1")
 	if id == nil {

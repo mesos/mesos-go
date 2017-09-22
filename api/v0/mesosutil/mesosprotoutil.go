@@ -121,14 +121,11 @@ func NewMasterInfo(id string, ip, port uint32) *mesos.MasterInfo {
 }
 
 func NewMasterInfoWithAddress(id, hostname, ip string, ipv4 uint32, port int32) *mesos.MasterInfo {
-	mi := &mesos.MasterInfo{
-		Id:   proto.String(id),
-		Ip:   proto.Uint32(ipv4),
-		Port: proto.Uint32(uint32(port)),
-		Address: &mesos.Address{
-			Ip:   proto.String(ip),
-			Port: proto.Int32(port),
-		},
+	mi := NewMasterInfo(id, ipv4, uint32(port))
+
+	mi.Address = &mesos.Address{
+		Ip:   proto.String(ip),
+		Port: proto.Int32(port),
 	}
 
 	if hostname != "" {

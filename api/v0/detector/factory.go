@@ -125,20 +125,43 @@ func CreateMasterInfo(pid *upid.UPID) *mesos.MasterInfo {
 		return nil
 	}
 
-	ip := util.LookupIP(pid.Host)
-	if ip == nil {
+	var ip net.IP
+	parsedIP := net.ParseIP(pid.Host)
+
+	if ip = parsedIP.To4(); ip != nil {
+		// This is needed for the people cross-compiling from macos to linux.
+		// The cross-compiled version of net.LookupIP() fails to handle plain IPs.
+		// See https://github.com/mesos/mesos-go/pull/117
+	} else if ip = parsedIP.To16(); ip != nil {
+
+	} else if ips, err := net.LookupIP(pid.Host); err == nil {
+		// Find the first ipv4 and break. If none are found, keep the
+		// first ipv6 found.
+		for _, lookupIP := range ips {
+			if ip = lookupIP.To4(); ip != nil {
+				break
+			} else if ip == nil {
+				ip = lookupIP.To16()
+			}
+		}
+		if ip == nil {
+			log.Errorf("host does not resolve to an IPv4 or IPv6 address: %v", pid.Host)
+			return nil
+		}
+	} else {
+		log.Errorf("failed to lookup IPs for host '%v': %v", pid.Host, err)
 		return nil
 	}
 
 	// MasterInfo.Ip only supports IPv4
-	var packedip uint32
+	var packedipv4 uint32
 	if len(ip) == 4 {
-		packedip = binary.BigEndian.Uint32(ip) // network byte order is big-endian
+		packedipv4 = binary.BigEndian.Uint32(ip) // network byte order is big-endian
 	} else {
-		packedip = 0
+		packedipv4 = 0
 	}
 
-	mi := util.NewMasterInfoWithAddress(pid.ID, pid.Host, ip.String(), packedip, int32(port))
+	mi := util.NewMasterInfoWithAddress(pid.ID, pid.Host, ip.String(), packedipv4, int32(port))
 	mi.Pid = proto.String(pid.String())
 
 	return mi

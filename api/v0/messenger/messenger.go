@@ -110,32 +110,12 @@ func UPIDBindingAddress(hostname string, bindingAddress net.IP) (string, error) 
 		if hostname == "" || hostname == "0.0.0.0" {
 			return "", fmt.Errorf("invalid hostname (%q) specified with binding address %v", hostname, bindingAddress)
 		}
-		ip := net.ParseIP(hostname)
-		if ip != nil {
-			ip = ip.To4()
+
+		if ip, err := upid.LookupIP(hostname); err == nil && ip != nil {
+			upidHost = ip.String()
+		} else {
+			return "", err
 		}
-		if ip == nil {
-			ips, err := net.LookupIP(hostname)
-			if err != nil {
-				return "", err
-			}
-			// try to find an ipv4 and use that
-			for _, addr := range ips {
-				if ip = addr.To4(); ip != nil {
-					break
-				}
-			}
-			if ip == nil {
-				// no ipv4? best guess, just take the first addr
-				if len(ips) > 0 {
-					ip = ips[0]
-					log.Warningf("failed to find an IPv4 address for '%v', best guess is '%v'", hostname, ip)
-				} else {
-					return "", fmt.Errorf("failed to determine IP address for host '%v'", hostname)
-				}
-			}
-		}
-		upidHost = ip.String()
 	}
 	return upidHost, nil
 }

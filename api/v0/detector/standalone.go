@@ -122,18 +122,32 @@ func (s *Standalone) _poller(pf fetcherFunc) {
 		log.Errorf("aborting master poller since initial master info is nil")
 		return
 	}
-	addrinfo := s.initial.GetAddress()
-	addr := addrinfo.GetHostname()
-	if len(addr) == 0 {
-		addr := addrinfo.GetIp()
+	addr := ""
+	port := int32(s.assumedMasterPort)
+	if addrinfo := s.initial.GetAddress(); addrinfo != nil {
+		addr = addrinfo.GetHostname()
 		if len(addr) == 0 {
-			log.Warningf("aborted mater poller since initial master info has no host")
-			return
+			addr = addrinfo.GetIp()
+		}
+		if addrinfo.Port != nil && *addrinfo.Port != 0 {
+			port = *addrinfo.Port
+		}
+	} else {
+		addr = s.initial.GetHostname()
+		if len(addr) == 0 {
+			if s.initial.GetIp() != 0 {
+				ip := make([]byte, 4)
+				binary.BigEndian.PutUint32(ip, s.initial.GetIp())
+				addr = net.IP(ip).To4().String()
+			}
+		}
+		if s.initial.Port != nil && *s.initial.Port != 0 {
+			port = int32(*s.initial.Port)
 		}
 	}
-	port := uint32(s.assumedMasterPort)
-	if addrinfo.Port != nil && *addrinfo.Port != 0 {
-		port = *addrinfo.Port
+	if len(addr) == 0 {
+		log.Warningf("aborted mater poller since initial master info has no host")
+		return
 	}
 	addr = net.JoinHostPort(addr, strconv.Itoa(int(port)))
 	log.V(1).Infof("polling for master leadership at '%v'", addr)

@@ -143,7 +143,7 @@ func TestNewMasterInfo(t *testing.T) {
 }
 
 func TestNewMasterInfoWithAddress(t *testing.T) {
-	master := WithAddress("master-1", "host", "1234", 1234, 5678)
+	master := NewMasterInfoWithAddress("master-1", "host", "1234", 1234, 5678)
 	if master == nil {
 		t.Fatal("Not creating protobuf object MasterInfo")
 	}

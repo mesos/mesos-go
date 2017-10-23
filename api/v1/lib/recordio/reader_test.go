@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
 	"github.com/mesos/mesos-go/api/v1/lib/recordio"
@@ -36,52 +37,64 @@ func Example() {
 
 func TestReadFrame(t *testing.T) {
 	list := func(v ...string) []string { return v }
+	variants := []struct {
+		name     string
+		decorate func(io.Reader) io.Reader
+	}{
+		{"identity", func(r io.Reader) io.Reader { return r }},
+		{"one-byte", iotest.OneByteReader},
+		{"half", iotest.HalfReader},
+	}
 	for ti, tc := range []struct {
 		in     string
 		frames []string
 		err    error
 	}{
-		{"", nil, nil},
-		{"a", nil, framing.ErrorUnderrun},
-		{"aaaaaaaaaaaaaaaaaaaaa", nil, framing.ErrorBadSize}, // 21 digits is too large for frame size
-		{"111111111111111111111", nil, framing.ErrorBadSize},
-		{"a\n", nil, framing.ErrorBadSize},
-		{"0\n", nil, nil},
-		{"00000000000000000000\n", nil, nil},
-		{"000000000000000000000\n", nil, framing.ErrorBadSize},
-		{"0\n0\n0\n", nil, nil},
-		{"1\n", nil, framing.ErrorUnderrun},
-		{"1\na", list("a"), nil},
-		{"2\na", nil, framing.ErrorUnderrun},
-		{"1\na1\nb1\nc", list("a", "b", "c"), nil},
-		{"5\nabcde", list("abcde"), nil},
-		{"5\nabcde3\nfgh", list("abcde", "fgh"), nil},
-		{"5\nabcde5\nfgh", list("abcde"), framing.ErrorUnderrun},
-		{"23\n", nil, framing.ErrorOversizedFrame}, // 23 exceeds max of 22
+		/*  0 */ {"", nil, nil},
+		/*  1 */ {"a", nil, framing.ErrorUnderrun},
+		/*  2 */ {"aaaaaaaaaaaaaaaaaaaaa", nil, framing.ErrorBadSize}, // 21 digits is too large for frame size
+		/*  3 */ {"111111111111111111111", nil, framing.ErrorBadSize},
+		/*  4 */ {"a\n", nil, framing.ErrorBadSize},
+		/*  5 */ {"0\n", nil, nil},
+		/*  6 */ {"00000000000000000000\n", nil, nil},
+		/*  7 */ {"000000000000000000000\n", nil, framing.ErrorBadSize},
+		/*  8 */ {"0\n0\n0\n", nil, nil},
+		/*  9 */ {"1\n", nil, framing.ErrorUnderrun},
+		/* 10 */ {"1\na", list("a"), nil},
+		/* 11 */ {"1\na0\n1\nb", list("a", "b"), nil},
+		/* 12 */ {"2\na", nil, framing.ErrorUnderrun},
+		/* 13 */ {"1\na1\nb1\nc", list("a", "b", "c"), nil},
+		/* 14 */ {"5\nabcde", list("abcde"), nil},
+		/* 15 */ {"5\nabcde3\nfgh", list("abcde", "fgh"), nil},
+		/* 16 */ {"5\nabcde5\nfgh", list("abcde"), framing.ErrorUnderrun},
+		/* 17 */ {"23\n", nil, framing.ErrorOversizedFrame}, // 23 exceeds max of 22
 	} {
-		var (
-			r       = recordio.NewReader(strings.NewReader(tc.in), recordio.MaxMessageSize(22))
-			frames  []string
-			lastErr error
-		)
-		for lastErr == nil {
-			fr, err := r.ReadFrame()
-			if err == nil || err == io.EOF {
-				if fr != nil {
-					println("read frame " + string(fr))
-					frames = append(frames, string(fr))
+		for _, v := range variants {
+			t.Run(fmt.Sprintf("test case %d %s", ti, v.name), func(t *testing.T) {
+				var (
+					r = recordio.NewReader(v.decorate(
+						strings.NewReader(tc.in)), recordio.MaxMessageSize(22))
+					frames  []string
+					lastErr error
+				)
+				for lastErr == nil {
+					fr, err := r.ReadFrame()
+					if err == nil {
+						t.Log("read frame " + string(fr))
+						frames = append(frames, string(fr))
+					}
+					lastErr = err
 				}
-			}
-			lastErr = err
-		}
-		if tc.err == nil && lastErr != io.EOF {
-			t.Fatalf("test case %d failed: unexpected error %q", ti, lastErr)
-		}
-		if tc.err != nil && lastErr != tc.err {
-			t.Fatalf("test case %d failed: expected error %q instead of error %q", ti, tc.err, lastErr)
-		}
-		if !reflect.DeepEqual(tc.frames, frames) {
-			t.Fatalf("test case %d failed: expected frames %#v instead of frames %#v", ti, tc.frames, frames)
+				if tc.err == nil && lastErr != io.EOF {
+					t.Fatalf("unexpected error %q", lastErr)
+				}
+				if tc.err != nil && lastErr != tc.err {
+					t.Fatalf("expected error %q instead of error %q", tc.err, lastErr)
+				}
+				if !reflect.DeepEqual(tc.frames, frames) {
+					t.Fatalf("expected frames %#v instead of frames %#v", tc.frames, frames)
+				}
+			})
 		}
 	}
 }

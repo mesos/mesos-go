@@ -1,9 +1,11 @@
-package framing
+package framing_test
 
 import (
 	"bytes"
 	"io"
 	"testing"
+
+	. "github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
 )
 
 func TestError(t *testing.T) {
@@ -43,4 +45,59 @@ func TestReadAll(t *testing.T) {
 	if err != io.EOF {
 		t.Errorf("expected EOF instead of %+v", err)
 	}
+}
+
+func TestWriterFor(t *testing.T) {
+	buf := new(bytes.Buffer)
+	w := WriterFor(buf)
+	err := w.WriteFrame(([]byte)("foo"))
+	if err != nil {
+		t.Fatalf("failed to write frame: +%v", err)
+	}
+	if buf.String() != "foo" {
+		t.Fatalf("expected 'foo' instead of %q", buf.String())
+	}
+
+	err = w.WriteFrame(([]byte)(""))
+	if err != nil {
+		t.Fatalf("failed to write empty frame: +%v", err)
+	}
+	if buf.String() != "foo" {
+		t.Fatalf("expected 'foo' instead of %q", buf.String())
+	}
+
+	w = WriterFor(&shortWriter{w: buf, n: 1})
+	err = w.WriteFrame(([]byte)(""))
+	if err != nil {
+		t.Fatalf("failed to write empty frame: +%v", err)
+	}
+	if buf.String() != "foo" {
+		t.Fatalf("expected 'foo' instead of %q", buf.String())
+	}
+
+	err = w.WriteFrame(([]byte)("bar"))
+	if err != io.ErrShortWrite {
+		t.Fatalf("failed to detect short write: +%v", err)
+	}
+	if buf.String() != "foob" {
+		t.Fatalf("expected 'foob' instead of %q", buf.String())
+	}
+}
+
+type shortWriter struct {
+	w io.Writer
+	n int
+}
+
+func (s *shortWriter) Write(b []byte) (n int, err error) {
+	if s.n <= 0 {
+		return 0, nil
+	}
+	n = len(b)
+	if n > s.n {
+		n = s.n
+	}
+	n, err = s.w.Write(b[0:n])
+	s.n -= n
+	return
 }

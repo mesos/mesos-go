@@ -1,9 +1,5 @@
 package framing
 
-import (
-	"io"
-)
-
 type (
 	// UnmarshalFunc translates bytes to objects
 	UnmarshalFunc func([]byte, interface{}) error
@@ -30,11 +26,9 @@ func NewDecoder(r Reader, uf UnmarshalFunc) DecoderFunc {
 		// and then those sub-slices retained. Examination of generated proto code seems to indicate
 		// that byte buffers are copied vs. referenced by sub-slice (gogo protoc).
 		frame, err := r.ReadFrame()
-		if err == nil || err == io.EOF {
-			if err2 := uf(frame, m); err2 != nil {
-				err = err2
-			}
+		if err != nil {
+			return err
 		}
-		return err
+		return uf(frame, m)
 	}
 }

@@ -3,7 +3,6 @@ package encoding
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 
 	pb "github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding/framing"
@@ -49,34 +48,20 @@ var (
 // SourceReader returns a Source that buffers all input from the given io.Reader
 // and returns the contents in a single frame.
 func SourceReader(r io.Reader) Source {
+	ch := make(chan framing.ReaderFunc, 1)
+	ch <- framing.ReadAll(r)
 	return func() framing.Reader {
-		b, err := ioutil.ReadAll(r)
-		return framing.ReaderFunc(func() (f []byte, e error) {
-			// only return a non-nil frame ONCE
-			f = b
-			b = nil
-			e = err
-
-			if e == nil {
-				e = io.EOF
-			}
-			return
-		})
+		select {
+		case f := <-ch:
+			return f
+		default:
+			return framing.ReaderFunc(framing.EOFReaderFunc)
+		}
 	}
 }
 
 // SinkWriter returns a Sink that sends a frame to an io.Writer with no decoration.
-func SinkWriter(w io.Writer) Sink {
-	return func() framing.Writer {
-		return framing.WriterFunc(func(b []byte) error {
-			n, err := w.Write(b)
-			if err == nil && n != len(b) {
-				return io.ErrShortWrite
-			}
-			return err
-		})
-	}
-}
+func SinkWriter(w io.Writer) Sink { return func() framing.Writer { return framing.WriterFor(w) } }
 
 // String implements the fmt.Stringer interface.
 func (c *Codec) String() string {

@@ -22,6 +22,8 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/recordio"
 )
 
+func noRedirect(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
+
 // ProtocolError is returned when we receive a response from Mesos that is outside of the HTTP API specification.
 // Receipt of the following will yield protocol errors:
 //   - any unexpected non-error HTTP response codes (e.g. 199)
@@ -517,7 +519,10 @@ func With(opt ...ConfigOpt) DoFunc {
 		config = &Config{
 			dialer:    dialer,
 			transport: transport,
-			client:    &http.Client{Transport: transport},
+			client: &http.Client{
+				Transport:     transport,
+				CheckRedirect: noRedirect, // so we can actually see the 307 redirects
+			},
 		}
 	)
 	for _, o := range opt {

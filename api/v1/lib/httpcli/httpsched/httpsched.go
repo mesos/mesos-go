@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	mesosclient "github.com/mesos/mesos-go/api/v1/lib/client"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"

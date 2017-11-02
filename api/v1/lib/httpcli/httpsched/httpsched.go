@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	mesosclient "github.com/mesos/mesos-go/api/v1/lib/client"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
@@ -140,7 +139,9 @@ func (cli *client) httpDo(ctx context.Context, m encoding.Marshaler, opt ...http
 			return resp, err
 		}
 		if attempt < cli.redirect.MaxAttempts {
-			log.Println("redirecting to " + redirectErr.newURL)
+			if debug {
+				log.Println("redirecting to " + redirectErr.newURL)
+			}
 			cli.With(httpcli.Endpoint(redirectErr.newURL))
 			select {
 			case <-getBackoff():
@@ -182,7 +183,9 @@ func (cli *client) redirectHandler() httpcli.Opt {
 			}
 			return nil, errNotHTTPCli
 		}
-		log.Println("master changed?")
+		if debug {
+			log.Println("master changed?")
+		}
 		location, ok := buildNewEndpoint(res.Header.Get("Location"), cli.Endpoint())
 		if !ok {
 			return nil, errBadLocation

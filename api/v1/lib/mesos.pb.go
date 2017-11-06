@@ -15,6 +15,7 @@
 		ExecutorID
 		ContainerID
 		ResourceProviderID
+		OfferOperationID
 		TimeInfo
 		DurationInfo
 		Address
@@ -31,6 +32,7 @@
 		DomainInfo
 		MasterInfo
 		AgentInfo
+		CSIPluginInfo
 		ResourceProviderInfo
 		Value
 		Attribute
@@ -51,6 +53,9 @@
 		TaskInfo
 		TaskGroupInfo
 		Task
+		TaskResourceLimitation
+		OfferOperation
+		OfferOperationStatus
 		CheckStatusInfo
 		TaskStatus
 		Filters
@@ -173,7 +178,8 @@ const (
 	TASK_RUNNING  TaskState = 1
 	// NOTE: This should only be sent when the framework has
 	// the TASK_KILLING_STATE capability.
-	TASK_KILLING  TaskState = 8
+	TASK_KILLING TaskState = 8
+	// The task finished successfully on its own without external interference.
 	TASK_FINISHED TaskState = 2
 	TASK_FAILED   TaskState = 3
 	TASK_KILLED   TaskState = 4
@@ -267,6 +273,58 @@ func (x *TaskState) UnmarshalJSON(data []byte) error {
 }
 func (TaskState) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{1} }
 
+// *
+// Describes possible offer operation states.
+type OfferOperationState int32
+
+const (
+	// Default value if the enum is not set. See MESOS-4997.
+	OFFER_OPERATION_UNSUPPORTED OfferOperationState = 0
+	// Initial state.
+	OFFER_OPERATION_PENDING OfferOperationState = 1
+	// The operation was successfully applied.
+	// This state is terminal.
+	OFFER_OPERATION_FINISHED OfferOperationState = 2
+	// The operation failed to apply.
+	// This state is terminal.
+	OFFER_OPERATION_FAILED OfferOperationState = 3
+	// The operation description contains an error.
+	OFFER_OPERATION_ERROR OfferOperationState = 4
+)
+
+var OfferOperationState_name = map[int32]string{
+	0: "OFFER_OPERATION_UNSUPPORTED",
+	1: "OFFER_OPERATION_PENDING",
+	2: "OFFER_OPERATION_FINISHED",
+	3: "OFFER_OPERATION_FAILED",
+	4: "OFFER_OPERATION_ERROR",
+}
+var OfferOperationState_value = map[string]int32{
+	"OFFER_OPERATION_UNSUPPORTED": 0,
+	"OFFER_OPERATION_PENDING":     1,
+	"OFFER_OPERATION_FINISHED":    2,
+	"OFFER_OPERATION_FAILED":      3,
+	"OFFER_OPERATION_ERROR":       4,
+}
+
+func (x OfferOperationState) Enum() *OfferOperationState {
+	p := new(OfferOperationState)
+	*p = x
+	return p
+}
+func (x OfferOperationState) MarshalJSON() ([]byte, error) {
+	return proto.MarshalJSONEnum(OfferOperationState_name, int32(x))
+}
+func (x *OfferOperationState) UnmarshalJSON(data []byte) error {
+	value, err := proto.UnmarshalJSONEnum(OfferOperationState_value, data, "OfferOperationState")
+	if err != nil {
+		return err
+	}
+	*x = OfferOperationState(value)
+	return nil
+}
+func (OfferOperationState) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{2} }
+
 // Describes the several states that a machine can be in.  A `Mode`
 // applies to a machine and to all associated agents on the machine.
 type MachineInfo_Mode int32
@@ -314,7 +372,7 @@ func (x *MachineInfo_Mode) UnmarshalJSON(data []byte) error {
 	*x = MachineInfo_Mode(value)
 	return nil
 }
-func (MachineInfo_Mode) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{13, 0} }
+func (MachineInfo_Mode) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{14, 0} }
 
 type FrameworkInfo_Capability_Type int32
 
@@ -450,7 +508,7 @@ func (x *FrameworkInfo_Capability_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (FrameworkInfo_Capability_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{14, 0, 0}
+	return fileDescriptorMesos, []int{15, 0, 0}
 }
 
 type CheckInfo_Type int32
@@ -491,7 +549,7 @@ func (x *CheckInfo_Type) UnmarshalJSON(data []byte) error {
 	*x = CheckInfo_Type(value)
 	return nil
 }
-func (CheckInfo_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{15, 0} }
+func (CheckInfo_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{16, 0} }
 
 type HealthCheck_Type int32
 
@@ -531,7 +589,7 @@ func (x *HealthCheck_Type) UnmarshalJSON(data []byte) error {
 	*x = HealthCheck_Type(value)
 	return nil
 }
-func (HealthCheck_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{16, 0} }
+func (HealthCheck_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{17, 0} }
 
 type ExecutorInfo_Type int32
 
@@ -583,7 +641,7 @@ func (x *ExecutorInfo_Type) UnmarshalJSON(data []byte) error {
 	*x = ExecutorInfo_Type(value)
 	return nil
 }
-func (ExecutorInfo_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19, 0} }
+func (ExecutorInfo_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{20, 0} }
 
 type AgentInfo_Capability_Type int32
 
@@ -636,6 +694,14 @@ const (
 	// NOTE: Resources are said to have refined reservations if it uses the
 	// `Resource.reservations` field, and `Resource.reservations_size() > 1`.
 	AgentInfo_Capability_RESERVATION_REFINEMENT AgentInfo_Capability_Type = 3
+	// This expresses the ability for the agent to handle resource
+	// provider related operations. This includes the following:
+	//
+	// (1) The ability to report resources that are provided by some
+	//     local resource providers through the resource provider API.
+	//
+	// (2) The ability to provide offer operations feedback.
+	AgentInfo_Capability_RESOURCE_PROVIDER AgentInfo_Capability_Type = 4
 )
 
 var AgentInfo_Capability_Type_name = map[int32]string{
@@ -643,12 +709,14 @@ var AgentInfo_Capability_Type_name = map[int32]string{
 	1: "MULTI_ROLE",
 	2: "HIERARCHICAL_ROLE",
 	3: "RESERVATION_REFINEMENT",
+	4: "RESOURCE_PROVIDER",
 }
 var AgentInfo_Capability_Type_value = map[string]int32{
 	"UNKNOWN":                0,
 	"MULTI_ROLE":             1,
 	"HIERARCHICAL_ROLE":      2,
 	"RESERVATION_REFINEMENT": 3,
+	"RESOURCE_PROVIDER":      4,
 }
 
 func (x AgentInfo_Capability_Type) Enum() *AgentInfo_Capability_Type {
@@ -668,7 +736,7 @@ func (x *AgentInfo_Capability_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (AgentInfo_Capability_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{22, 0, 0}
+	return fileDescriptorMesos, []int{23, 0, 0}
 }
 
 type Value_Type int32
@@ -709,7 +777,7 @@ func (x *Value_Type) UnmarshalJSON(data []byte) error {
 	*x = Value_Type(value)
 	return nil
 }
-func (Value_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24, 0} }
+func (Value_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 0} }
 
 type Resource_ReservationInfo_Type int32
 
@@ -747,7 +815,7 @@ func (x *Resource_ReservationInfo_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (Resource_ReservationInfo_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{26, 1, 0}
+	return fileDescriptorMesos, []int{28, 1, 0}
 }
 
 type Resource_DiskInfo_Source_Type int32
@@ -756,17 +824,23 @@ const (
 	UNKNOWN Resource_DiskInfo_Source_Type = 0
 	PATH    Resource_DiskInfo_Source_Type = 1
 	MOUNT   Resource_DiskInfo_Source_Type = 2
+	BLOCK   Resource_DiskInfo_Source_Type = 3
+	RAW     Resource_DiskInfo_Source_Type = 4
 )
 
 var Resource_DiskInfo_Source_Type_name = map[int32]string{
 	0: "UNKNOWN",
 	1: "PATH",
 	2: "MOUNT",
+	3: "BLOCK",
+	4: "RAW",
 }
 var Resource_DiskInfo_Source_Type_value = map[string]int32{
 	"UNKNOWN": 0,
 	"PATH":    1,
 	"MOUNT":   2,
+	"BLOCK":   3,
+	"RAW":     4,
 }
 
 func (x Resource_DiskInfo_Source_Type) Enum() *Resource_DiskInfo_Source_Type {
@@ -786,38 +860,50 @@ func (x *Resource_DiskInfo_Source_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (Resource_DiskInfo_Source_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{26, 2, 1, 0}
+	return fileDescriptorMesos, []int{28, 2, 1, 0}
 }
 
 type Offer_Operation_Type int32
 
 const (
-	Offer_Operation_UNKNOWN      Offer_Operation_Type = 0
-	Offer_Operation_LAUNCH       Offer_Operation_Type = 1
-	Offer_Operation_LAUNCH_GROUP Offer_Operation_Type = 6
-	Offer_Operation_RESERVE      Offer_Operation_Type = 2
-	Offer_Operation_UNRESERVE    Offer_Operation_Type = 3
-	Offer_Operation_CREATE       Offer_Operation_Type = 4
-	Offer_Operation_DESTROY      Offer_Operation_Type = 5
+	Offer_Operation_UNKNOWN        Offer_Operation_Type = 0
+	Offer_Operation_LAUNCH         Offer_Operation_Type = 1
+	Offer_Operation_LAUNCH_GROUP   Offer_Operation_Type = 6
+	Offer_Operation_RESERVE        Offer_Operation_Type = 2
+	Offer_Operation_UNRESERVE      Offer_Operation_Type = 3
+	Offer_Operation_CREATE         Offer_Operation_Type = 4
+	Offer_Operation_DESTROY        Offer_Operation_Type = 5
+	Offer_Operation_CREATE_VOLUME  Offer_Operation_Type = 7
+	Offer_Operation_DESTROY_VOLUME Offer_Operation_Type = 8
+	Offer_Operation_CREATE_BLOCK   Offer_Operation_Type = 9
+	Offer_Operation_DESTROY_BLOCK  Offer_Operation_Type = 10
 )
 
 var Offer_Operation_Type_name = map[int32]string{
-	0: "UNKNOWN",
-	1: "LAUNCH",
-	6: "LAUNCH_GROUP",
-	2: "RESERVE",
-	3: "UNRESERVE",
-	4: "CREATE",
-	5: "DESTROY",
+	0:  "UNKNOWN",
+	1:  "LAUNCH",
+	6:  "LAUNCH_GROUP",
+	2:  "RESERVE",
+	3:  "UNRESERVE",
+	4:  "CREATE",
+	5:  "DESTROY",
+	7:  "CREATE_VOLUME",
+	8:  "DESTROY_VOLUME",
+	9:  "CREATE_BLOCK",
+	10: "DESTROY_BLOCK",
 }
 var Offer_Operation_Type_value = map[string]int32{
-	"UNKNOWN":      0,
-	"LAUNCH":       1,
-	"LAUNCH_GROUP": 6,
-	"RESERVE":      2,
-	"UNRESERVE":    3,
-	"CREATE":       4,
-	"DESTROY":      5,
+	"UNKNOWN":        0,
+	"LAUNCH":         1,
+	"LAUNCH_GROUP":   6,
+	"RESERVE":        2,
+	"UNRESERVE":      3,
+	"CREATE":         4,
+	"DESTROY":        5,
+	"CREATE_VOLUME":  7,
+	"DESTROY_VOLUME": 8,
+	"CREATE_BLOCK":   9,
+	"DESTROY_BLOCK":  10,
 }
 
 func (x Offer_Operation_Type) Enum() *Offer_Operation_Type {
@@ -837,7 +923,7 @@ func (x *Offer_Operation_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (Offer_Operation_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{38, 0, 0}
+	return fileDescriptorMesos, []int{40, 0, 0}
 }
 
 // Describes the source of the task status update.
@@ -876,12 +962,10 @@ func (x *TaskStatus_Source) UnmarshalJSON(data []byte) error {
 	*x = TaskStatus_Source(value)
 	return nil
 }
-func (TaskStatus_Source) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{44, 0} }
+func (TaskStatus_Source) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{49, 0} }
 
 // Detailed reason for the task status update.
-//
-// TODO(bmahler): Differentiate between agent removal reasons
-// (e.g. unhealthy vs. unregistered for maintenance).
+// Refer to docs/task-state-reasons.md for additional explanation.
 type TaskStatus_Reason int32
 
 const (
@@ -909,6 +993,7 @@ const (
 	REASON_RESOURCES_UNKNOWN                TaskStatus_Reason = 18
 	REASON_AGENT_DISCONNECTED               TaskStatus_Reason = 10
 	REASON_AGENT_REMOVED                    TaskStatus_Reason = 11
+	REASON_AGENT_REMOVED_BY_OPERATOR        TaskStatus_Reason = 31
 	REASON_AGENT_RESTARTED                  TaskStatus_Reason = 12
 	REASON_AGENT_UNKNOWN                    TaskStatus_Reason = 13
 	REASON_TASK_KILLED_DURING_LAUNCH        TaskStatus_Reason = 30
@@ -943,6 +1028,7 @@ var TaskStatus_Reason_name = map[int32]string{
 	18: "REASON_RESOURCES_UNKNOWN",
 	10: "REASON_AGENT_DISCONNECTED",
 	11: "REASON_AGENT_REMOVED",
+	31: "REASON_AGENT_REMOVED_BY_OPERATOR",
 	12: "REASON_AGENT_RESTARTED",
 	13: "REASON_AGENT_UNKNOWN",
 	30: "REASON_TASK_KILLED_DURING_LAUNCH",
@@ -976,6 +1062,7 @@ var TaskStatus_Reason_value = map[string]int32{
 	"REASON_RESOURCES_UNKNOWN":                18,
 	"REASON_AGENT_DISCONNECTED":               10,
 	"REASON_AGENT_REMOVED":                    11,
+	"REASON_AGENT_REMOVED_BY_OPERATOR":        31,
 	"REASON_AGENT_RESTARTED":                  12,
 	"REASON_AGENT_UNKNOWN":                    13,
 	"REASON_TASK_KILLED_DURING_LAUNCH":        30,
@@ -1004,7 +1091,7 @@ func (x *TaskStatus_Reason) UnmarshalJSON(data []byte) error {
 	*x = TaskStatus_Reason(value)
 	return nil
 }
-func (TaskStatus_Reason) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{44, 1} }
+func (TaskStatus_Reason) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{49, 1} }
 
 type Environment_Variable_Type int32
 
@@ -1042,7 +1129,7 @@ func (x *Environment_Variable_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (Environment_Variable_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{46, 0, 0}
+	return fileDescriptorMesos, []int{51, 0, 0}
 }
 
 type Secret_Type int32
@@ -1080,7 +1167,7 @@ func (x *Secret_Type) UnmarshalJSON(data []byte) error {
 	*x = Secret_Type(value)
 	return nil
 }
-func (Secret_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{51, 0} }
+func (Secret_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{56, 0} }
 
 type Image_Type int32
 
@@ -1114,7 +1201,7 @@ func (x *Image_Type) UnmarshalJSON(data []byte) error {
 	*x = Image_Type(value)
 	return nil
 }
-func (Image_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{54, 0} }
+func (Image_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{59, 0} }
 
 type Volume_Mode int32
 
@@ -1148,7 +1235,7 @@ func (x *Volume_Mode) UnmarshalJSON(data []byte) error {
 	*x = Volume_Mode(value)
 	return nil
 }
-func (Volume_Mode) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{55, 0} }
+func (Volume_Mode) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{60, 0} }
 
 type Volume_Source_Type int32
 
@@ -1158,8 +1245,9 @@ const (
 	// is UNKNOWN. This enables enum values to be added
 	// in a backwards-compatible way. See: MESOS-4997.
 	Volume_Source_UNKNOWN Volume_Source_Type = 0
-	// TODO(gyliu513): Add HOST_PATH and IMAGE as volume source type.
+	// TODO(gyliu513): Add IMAGE as volume source type.
 	Volume_Source_DOCKER_VOLUME Volume_Source_Type = 1
+	Volume_Source_HOST_PATH     Volume_Source_Type = 4
 	Volume_Source_SANDBOX_PATH  Volume_Source_Type = 2
 	Volume_Source_SECRET        Volume_Source_Type = 3
 )
@@ -1167,12 +1255,14 @@ const (
 var Volume_Source_Type_name = map[int32]string{
 	0: "UNKNOWN",
 	1: "DOCKER_VOLUME",
+	4: "HOST_PATH",
 	2: "SANDBOX_PATH",
 	3: "SECRET",
 }
 var Volume_Source_Type_value = map[string]int32{
 	"UNKNOWN":       0,
 	"DOCKER_VOLUME": 1,
+	"HOST_PATH":     4,
 	"SANDBOX_PATH":  2,
 	"SECRET":        3,
 }
@@ -1194,7 +1284,7 @@ func (x *Volume_Source_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (Volume_Source_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{55, 0, 0}
+	return fileDescriptorMesos, []int{60, 0, 0}
 }
 
 type Volume_Source_SandboxPath_Type int32
@@ -1233,7 +1323,7 @@ func (x *Volume_Source_SandboxPath_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (Volume_Source_SandboxPath_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{55, 0, 1, 0}
+	return fileDescriptorMesos, []int{60, 0, 2, 0}
 }
 
 type NetworkInfo_Protocol int32
@@ -1268,7 +1358,7 @@ func (x *NetworkInfo_Protocol) UnmarshalJSON(data []byte) error {
 	*x = NetworkInfo_Protocol(value)
 	return nil
 }
-func (NetworkInfo_Protocol) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{56, 0} }
+func (NetworkInfo_Protocol) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{61, 0} }
 
 // We start the actual values at an offset(1000) because Protobuf 2
 // uses the first value as the default one. Separating the default
@@ -1419,7 +1509,7 @@ func (x *CapabilityInfo_Capability) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (CapabilityInfo_Capability) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{57, 0}
+	return fileDescriptorMesos, []int{62, 0}
 }
 
 type RLimitInfo_RLimit_Type int32
@@ -1500,7 +1590,7 @@ func (x *RLimitInfo_RLimit_Type) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (RLimitInfo_RLimit_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{59, 0, 0}
+	return fileDescriptorMesos, []int{64, 0, 0}
 }
 
 // All container implementation types.
@@ -1536,7 +1626,7 @@ func (x *ContainerInfo_Type) UnmarshalJSON(data []byte) error {
 	*x = ContainerInfo_Type(value)
 	return nil
 }
-func (ContainerInfo_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{61, 0} }
+func (ContainerInfo_Type) EnumDescriptor() ([]byte, []int) { return fileDescriptorMesos, []int{66, 0} }
 
 // Network options.
 type ContainerInfo_DockerInfo_Network int32
@@ -1578,7 +1668,7 @@ func (x *ContainerInfo_DockerInfo_Network) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (ContainerInfo_DockerInfo_Network) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{61, 0, 0}
+	return fileDescriptorMesos, []int{66, 0, 0}
 }
 
 type CgroupInfo_Blkio_Operation int32
@@ -1626,7 +1716,7 @@ func (x *CgroupInfo_Blkio_Operation) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (CgroupInfo_Blkio_Operation) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{63, 0, 0}
+	return fileDescriptorMesos, []int{68, 0, 0}
 }
 
 type DiscoveryInfo_Visibility int32
@@ -1665,7 +1755,7 @@ func (x *DiscoveryInfo_Visibility) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (DiscoveryInfo_Visibility) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{68, 0}
+	return fileDescriptorMesos, []int{73, 0}
 }
 
 // *
@@ -1809,6 +1899,24 @@ func (m *ResourceProviderID) GetValue() string {
 }
 
 // *
+// A framework-generated ID to distinguish an offer operation. The ID
+// must be unique within the framework.
+type OfferOperationID struct {
+	Value string `protobuf:"bytes,1,req,name=value" json:"value"`
+}
+
+func (m *OfferOperationID) Reset()                    { *m = OfferOperationID{} }
+func (*OfferOperationID) ProtoMessage()               {}
+func (*OfferOperationID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{7} }
+
+func (m *OfferOperationID) GetValue() string {
+	if m != nil {
+		return m.Value
+	}
+	return ""
+}
+
+// *
 // Represents time since the epoch, in nanoseconds.
 type TimeInfo struct {
 	Nanoseconds int64 `protobuf:"varint,1,req,name=nanoseconds" json:"nanoseconds"`
@@ -1816,7 +1924,7 @@ type TimeInfo struct {
 
 func (m *TimeInfo) Reset()                    { *m = TimeInfo{} }
 func (*TimeInfo) ProtoMessage()               {}
-func (*TimeInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{7} }
+func (*TimeInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{8} }
 
 func (m *TimeInfo) GetNanoseconds() int64 {
 	if m != nil {
@@ -1833,7 +1941,7 @@ type DurationInfo struct {
 
 func (m *DurationInfo) Reset()                    { *m = DurationInfo{} }
 func (*DurationInfo) ProtoMessage()               {}
-func (*DurationInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{8} }
+func (*DurationInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{9} }
 
 func (m *DurationInfo) GetNanoseconds() int64 {
 	if m != nil {
@@ -1855,7 +1963,7 @@ type Address struct {
 
 func (m *Address) Reset()                    { *m = Address{} }
 func (*Address) ProtoMessage()               {}
-func (*Address) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{9} }
+func (*Address) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{10} }
 
 func (m *Address) GetHostname() string {
 	if m != nil && m.Hostname != nil {
@@ -1890,7 +1998,7 @@ type URL struct {
 
 func (m *URL) Reset()                    { *m = URL{} }
 func (*URL) ProtoMessage()               {}
-func (*URL) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{10} }
+func (*URL) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{11} }
 
 func (m *URL) GetScheme() string {
 	if m != nil {
@@ -1940,7 +2048,7 @@ type Unavailability struct {
 
 func (m *Unavailability) Reset()                    { *m = Unavailability{} }
 func (*Unavailability) ProtoMessage()               {}
-func (*Unavailability) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{11} }
+func (*Unavailability) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{12} }
 
 func (m *Unavailability) GetStart() TimeInfo {
 	if m != nil {
@@ -1969,7 +2077,7 @@ type MachineID struct {
 
 func (m *MachineID) Reset()                    { *m = MachineID{} }
 func (*MachineID) ProtoMessage()               {}
-func (*MachineID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{12} }
+func (*MachineID) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{13} }
 
 func (m *MachineID) GetHostname() string {
 	if m != nil && m.Hostname != nil {
@@ -1999,7 +2107,7 @@ type MachineInfo struct {
 
 func (m *MachineInfo) Reset()                    { *m = MachineInfo{} }
 func (*MachineInfo) ProtoMessage()               {}
-func (*MachineInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{13} }
+func (*MachineInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{14} }
 
 func (m *MachineInfo) GetID() MachineID {
 	if m != nil {
@@ -2096,7 +2204,7 @@ type FrameworkInfo struct {
 
 func (m *FrameworkInfo) Reset()                    { *m = FrameworkInfo{} }
 func (*FrameworkInfo) ProtoMessage()               {}
-func (*FrameworkInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{14} }
+func (*FrameworkInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{15} }
 
 const Default_FrameworkInfo_FailoverTimeout float64 = 0
 const Default_FrameworkInfo_Checkpoint bool = false
@@ -2194,7 +2302,7 @@ type FrameworkInfo_Capability struct {
 func (m *FrameworkInfo_Capability) Reset()      { *m = FrameworkInfo_Capability{} }
 func (*FrameworkInfo_Capability) ProtoMessage() {}
 func (*FrameworkInfo_Capability) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{14, 0}
+	return fileDescriptorMesos, []int{15, 0}
 }
 
 func (m *FrameworkInfo_Capability) GetType() FrameworkInfo_Capability_Type {
@@ -2239,7 +2347,7 @@ type CheckInfo struct {
 
 func (m *CheckInfo) Reset()                    { *m = CheckInfo{} }
 func (*CheckInfo) ProtoMessage()               {}
-func (*CheckInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{15} }
+func (*CheckInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{16} }
 
 const Default_CheckInfo_DelaySeconds float64 = 15
 const Default_CheckInfo_IntervalSeconds float64 = 10
@@ -2302,7 +2410,7 @@ type CheckInfo_Command struct {
 
 func (m *CheckInfo_Command) Reset()                    { *m = CheckInfo_Command{} }
 func (*CheckInfo_Command) ProtoMessage()               {}
-func (*CheckInfo_Command) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{15, 0} }
+func (*CheckInfo_Command) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{16, 0} }
 
 func (m *CheckInfo_Command) GetCommand() CommandInfo {
 	if m != nil {
@@ -2323,7 +2431,7 @@ type CheckInfo_Http struct {
 
 func (m *CheckInfo_Http) Reset()                    { *m = CheckInfo_Http{} }
 func (*CheckInfo_Http) ProtoMessage()               {}
-func (*CheckInfo_Http) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{15, 1} }
+func (*CheckInfo_Http) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{16, 1} }
 
 func (m *CheckInfo_Http) GetPort() uint32 {
 	if m != nil {
@@ -2348,7 +2456,7 @@ type CheckInfo_Tcp struct {
 
 func (m *CheckInfo_Tcp) Reset()                    { *m = CheckInfo_Tcp{} }
 func (*CheckInfo_Tcp) ProtoMessage()               {}
-func (*CheckInfo_Tcp) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{15, 2} }
+func (*CheckInfo_Tcp) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{16, 2} }
 
 func (m *CheckInfo_Tcp) GetPort() uint32 {
 	if m != nil {
@@ -2394,7 +2502,7 @@ type HealthCheck struct {
 
 func (m *HealthCheck) Reset()                    { *m = HealthCheck{} }
 func (*HealthCheck) ProtoMessage()               {}
-func (*HealthCheck) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{16} }
+func (*HealthCheck) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{17} }
 
 const Default_HealthCheck_DelaySeconds float64 = 15
 const Default_HealthCheck_IntervalSeconds float64 = 10
@@ -2489,7 +2597,7 @@ type HealthCheck_HTTPCheckInfo struct {
 func (m *HealthCheck_HTTPCheckInfo) Reset()      { *m = HealthCheck_HTTPCheckInfo{} }
 func (*HealthCheck_HTTPCheckInfo) ProtoMessage() {}
 func (*HealthCheck_HTTPCheckInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{16, 0}
+	return fileDescriptorMesos, []int{17, 0}
 }
 
 func (m *HealthCheck_HTTPCheckInfo) GetScheme() string {
@@ -2530,7 +2638,7 @@ type HealthCheck_TCPCheckInfo struct {
 func (m *HealthCheck_TCPCheckInfo) Reset()      { *m = HealthCheck_TCPCheckInfo{} }
 func (*HealthCheck_TCPCheckInfo) ProtoMessage() {}
 func (*HealthCheck_TCPCheckInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{16, 1}
+	return fileDescriptorMesos, []int{17, 1}
 }
 
 func (m *HealthCheck_TCPCheckInfo) GetPort() uint32 {
@@ -2570,7 +2678,7 @@ type KillPolicy struct {
 
 func (m *KillPolicy) Reset()                    { *m = KillPolicy{} }
 func (*KillPolicy) ProtoMessage()               {}
-func (*KillPolicy) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{17} }
+func (*KillPolicy) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{18} }
 
 func (m *KillPolicy) GetGracePeriod() *DurationInfo {
 	if m != nil {
@@ -2615,7 +2723,7 @@ type CommandInfo struct {
 
 func (m *CommandInfo) Reset()                    { *m = CommandInfo{} }
 func (*CommandInfo) ProtoMessage()               {}
-func (*CommandInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{18} }
+func (*CommandInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19} }
 
 const Default_CommandInfo_Shell bool = true
 
@@ -2690,7 +2798,7 @@ type CommandInfo_URI struct {
 
 func (m *CommandInfo_URI) Reset()                    { *m = CommandInfo_URI{} }
 func (*CommandInfo_URI) ProtoMessage()               {}
-func (*CommandInfo_URI) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{18, 0} }
+func (*CommandInfo_URI) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19, 0} }
 
 const Default_CommandInfo_URI_Extract bool = true
 
@@ -2785,7 +2893,7 @@ type ExecutorInfo struct {
 
 func (m *ExecutorInfo) Reset()                    { *m = ExecutorInfo{} }
 func (*ExecutorInfo) ProtoMessage()               {}
-func (*ExecutorInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{19} }
+func (*ExecutorInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{20} }
 
 func (m *ExecutorInfo) GetType() ExecutorInfo_Type {
 	if m != nil {
@@ -2912,7 +3020,7 @@ type DomainInfo struct {
 
 func (m *DomainInfo) Reset()                    { *m = DomainInfo{} }
 func (*DomainInfo) ProtoMessage()               {}
-func (*DomainInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{20} }
+func (*DomainInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{21} }
 
 func (m *DomainInfo) GetFaultDomain() *DomainInfo_FaultDomain {
 	if m != nil {
@@ -2928,7 +3036,7 @@ type DomainInfo_FaultDomain struct {
 
 func (m *DomainInfo_FaultDomain) Reset()                    { *m = DomainInfo_FaultDomain{} }
 func (*DomainInfo_FaultDomain) ProtoMessage()               {}
-func (*DomainInfo_FaultDomain) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{20, 0} }
+func (*DomainInfo_FaultDomain) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{21, 0} }
 
 func (m *DomainInfo_FaultDomain) GetRegion() DomainInfo_FaultDomain_RegionInfo {
 	if m != nil {
@@ -2951,7 +3059,7 @@ type DomainInfo_FaultDomain_RegionInfo struct {
 func (m *DomainInfo_FaultDomain_RegionInfo) Reset()      { *m = DomainInfo_FaultDomain_RegionInfo{} }
 func (*DomainInfo_FaultDomain_RegionInfo) ProtoMessage() {}
 func (*DomainInfo_FaultDomain_RegionInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{20, 0, 0}
+	return fileDescriptorMesos, []int{21, 0, 0}
 }
 
 func (m *DomainInfo_FaultDomain_RegionInfo) GetName() string {
@@ -2968,7 +3076,7 @@ type DomainInfo_FaultDomain_ZoneInfo struct {
 func (m *DomainInfo_FaultDomain_ZoneInfo) Reset()      { *m = DomainInfo_FaultDomain_ZoneInfo{} }
 func (*DomainInfo_FaultDomain_ZoneInfo) ProtoMessage() {}
 func (*DomainInfo_FaultDomain_ZoneInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{20, 0, 1}
+	return fileDescriptorMesos, []int{21, 0, 1}
 }
 
 func (m *DomainInfo_FaultDomain_ZoneInfo) GetName() string {
@@ -3014,7 +3122,7 @@ type MasterInfo struct {
 
 func (m *MasterInfo) Reset()                    { *m = MasterInfo{} }
 func (*MasterInfo) ProtoMessage()               {}
-func (*MasterInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{21} }
+func (*MasterInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{22} }
 
 const Default_MasterInfo_Port uint32 = 5050
 
@@ -3096,7 +3204,7 @@ type AgentInfo struct {
 
 func (m *AgentInfo) Reset()                    { *m = AgentInfo{} }
 func (*AgentInfo) ProtoMessage()               {}
-func (*AgentInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{22} }
+func (*AgentInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{23} }
 
 const Default_AgentInfo_Port int32 = 5051
 
@@ -3149,13 +3257,54 @@ type AgentInfo_Capability struct {
 
 func (m *AgentInfo_Capability) Reset()                    { *m = AgentInfo_Capability{} }
 func (*AgentInfo_Capability) ProtoMessage()               {}
-func (*AgentInfo_Capability) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{22, 0} }
+func (*AgentInfo_Capability) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{23, 0} }
 
 func (m *AgentInfo_Capability) GetType() AgentInfo_Capability_Type {
 	if m != nil {
 		return m.Type
 	}
 	return AgentInfo_Capability_UNKNOWN
+}
+
+// *
+// Describes a CSI plugin.
+type CSIPluginInfo struct {
+	Name      string         `protobuf:"bytes,1,req,name=name" json:"name"`
+	Command   CommandInfo    `protobuf:"bytes,2,req,name=command" json:"command"`
+	Resources []Resource     `protobuf:"bytes,3,rep,name=resources" json:"resources"`
+	Container *ContainerInfo `protobuf:"bytes,4,opt,name=container" json:"container,omitempty"`
+}
+
+func (m *CSIPluginInfo) Reset()                    { *m = CSIPluginInfo{} }
+func (*CSIPluginInfo) ProtoMessage()               {}
+func (*CSIPluginInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24} }
+
+func (m *CSIPluginInfo) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *CSIPluginInfo) GetCommand() CommandInfo {
+	if m != nil {
+		return m.Command
+	}
+	return CommandInfo{}
+}
+
+func (m *CSIPluginInfo) GetResources() []Resource {
+	if m != nil {
+		return m.Resources
+	}
+	return nil
+}
+
+func (m *CSIPluginInfo) GetContainer() *ContainerInfo {
+	if m != nil {
+		return m.Container
+	}
+	return nil
 }
 
 // *
@@ -3176,12 +3325,13 @@ type ResourceProviderInfo struct {
 	// The name of the resource provider. There could be multiple
 	// instances of a type of resource provider. The name field is used
 	// to distinguish these instances.
-	Name string `protobuf:"bytes,4,req,name=name" json:"name"`
+	Name    string                            `protobuf:"bytes,4,req,name=name" json:"name"`
+	Storage *ResourceProviderInfo_StorageInfo `protobuf:"bytes,5,opt,name=storage" json:"storage,omitempty"`
 }
 
 func (m *ResourceProviderInfo) Reset()                    { *m = ResourceProviderInfo{} }
 func (*ResourceProviderInfo) ProtoMessage()               {}
-func (*ResourceProviderInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{23} }
+func (*ResourceProviderInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{25} }
 
 func (m *ResourceProviderInfo) GetID() *ResourceProviderID {
 	if m != nil {
@@ -3211,6 +3361,46 @@ func (m *ResourceProviderInfo) GetName() string {
 	return ""
 }
 
+func (m *ResourceProviderInfo) GetStorage() *ResourceProviderInfo_StorageInfo {
+	if m != nil {
+		return m.Storage
+	}
+	return nil
+}
+
+type ResourceProviderInfo_StorageInfo struct {
+	CsiPlugins       []CSIPluginInfo `protobuf:"bytes,1,rep,name=csi_plugins,json=csiPlugins" json:"csi_plugins"`
+	ControllerPlugin string          `protobuf:"bytes,2,req,name=controller_plugin,json=controllerPlugin" json:"controller_plugin"`
+	NodePlugin       string          `protobuf:"bytes,3,req,name=node_plugin,json=nodePlugin" json:"node_plugin"`
+}
+
+func (m *ResourceProviderInfo_StorageInfo) Reset()      { *m = ResourceProviderInfo_StorageInfo{} }
+func (*ResourceProviderInfo_StorageInfo) ProtoMessage() {}
+func (*ResourceProviderInfo_StorageInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{25, 0}
+}
+
+func (m *ResourceProviderInfo_StorageInfo) GetCsiPlugins() []CSIPluginInfo {
+	if m != nil {
+		return m.CsiPlugins
+	}
+	return nil
+}
+
+func (m *ResourceProviderInfo_StorageInfo) GetControllerPlugin() string {
+	if m != nil {
+		return m.ControllerPlugin
+	}
+	return ""
+}
+
+func (m *ResourceProviderInfo_StorageInfo) GetNodePlugin() string {
+	if m != nil {
+		return m.NodePlugin
+	}
+	return ""
+}
+
 // *
 // Describes an Attribute or Resource "value". A value is described
 // using the standard protocol buffer "union" trick.
@@ -3224,7 +3414,7 @@ type Value struct {
 
 func (m *Value) Reset()                    { *m = Value{} }
 func (*Value) ProtoMessage()               {}
-func (*Value) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24} }
+func (*Value) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26} }
 
 func (m *Value) GetType() Value_Type {
 	if m != nil {
@@ -3275,7 +3465,7 @@ type Value_Scalar struct {
 
 func (m *Value_Scalar) Reset()                    { *m = Value_Scalar{} }
 func (*Value_Scalar) ProtoMessage()               {}
-func (*Value_Scalar) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24, 0} }
+func (*Value_Scalar) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 0} }
 
 func (m *Value_Scalar) GetValue() float64 {
 	if m != nil {
@@ -3291,7 +3481,7 @@ type Value_Range struct {
 
 func (m *Value_Range) Reset()                    { *m = Value_Range{} }
 func (*Value_Range) ProtoMessage()               {}
-func (*Value_Range) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24, 1} }
+func (*Value_Range) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 1} }
 
 func (m *Value_Range) GetBegin() uint64 {
 	if m != nil {
@@ -3313,7 +3503,7 @@ type Value_Ranges struct {
 
 func (m *Value_Ranges) Reset()                    { *m = Value_Ranges{} }
 func (*Value_Ranges) ProtoMessage()               {}
-func (*Value_Ranges) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24, 2} }
+func (*Value_Ranges) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 2} }
 
 func (m *Value_Ranges) GetRange() []Value_Range {
 	if m != nil {
@@ -3328,7 +3518,7 @@ type Value_Set struct {
 
 func (m *Value_Set) Reset()                    { *m = Value_Set{} }
 func (*Value_Set) ProtoMessage()               {}
-func (*Value_Set) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24, 3} }
+func (*Value_Set) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 3} }
 
 func (m *Value_Set) GetItem() []string {
 	if m != nil {
@@ -3343,7 +3533,7 @@ type Value_Text struct {
 
 func (m *Value_Text) Reset()                    { *m = Value_Text{} }
 func (*Value_Text) ProtoMessage()               {}
-func (*Value_Text) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{24, 4} }
+func (*Value_Text) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 4} }
 
 func (m *Value_Text) GetValue() string {
 	if m != nil {
@@ -3367,7 +3557,7 @@ type Attribute struct {
 
 func (m *Attribute) Reset()                    { *m = Attribute{} }
 func (*Attribute) ProtoMessage()               {}
-func (*Attribute) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{25} }
+func (*Attribute) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{27} }
 
 func (m *Attribute) GetName() string {
 	if m != nil {
@@ -3471,7 +3661,7 @@ type Resource struct {
 
 func (m *Resource) Reset()                    { *m = Resource{} }
 func (*Resource) ProtoMessage()               {}
-func (*Resource) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26} }
+func (*Resource) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{28} }
 
 const Default_Resource_Role string = "*"
 
@@ -3579,7 +3769,7 @@ type Resource_AllocationInfo struct {
 
 func (m *Resource_AllocationInfo) Reset()                    { *m = Resource_AllocationInfo{} }
 func (*Resource_AllocationInfo) ProtoMessage()               {}
-func (*Resource_AllocationInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 0} }
+func (*Resource_AllocationInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{28, 0} }
 
 func (m *Resource_AllocationInfo) GetRole() string {
 	if m != nil && m.Role != nil {
@@ -3614,7 +3804,7 @@ type Resource_ReservationInfo struct {
 func (m *Resource_ReservationInfo) Reset()      { *m = Resource_ReservationInfo{} }
 func (*Resource_ReservationInfo) ProtoMessage() {}
 func (*Resource_ReservationInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{26, 1}
+	return fileDescriptorMesos, []int{28, 1}
 }
 
 func (m *Resource_ReservationInfo) GetType() Resource_ReservationInfo_Type {
@@ -3662,7 +3852,7 @@ type Resource_DiskInfo struct {
 
 func (m *Resource_DiskInfo) Reset()                    { *m = Resource_DiskInfo{} }
 func (*Resource_DiskInfo) ProtoMessage()               {}
-func (*Resource_DiskInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 2} }
+func (*Resource_DiskInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{28, 2} }
 
 func (m *Resource_DiskInfo) GetPersistence() *Resource_DiskInfo_Persistence {
 	if m != nil {
@@ -3713,7 +3903,7 @@ type Resource_DiskInfo_Persistence struct {
 func (m *Resource_DiskInfo_Persistence) Reset()      { *m = Resource_DiskInfo_Persistence{} }
 func (*Resource_DiskInfo_Persistence) ProtoMessage() {}
 func (*Resource_DiskInfo_Persistence) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{26, 2, 0}
+	return fileDescriptorMesos, []int{28, 2, 0}
 }
 
 func (m *Resource_DiskInfo_Persistence) GetID() string {
@@ -3736,12 +3926,25 @@ type Resource_DiskInfo_Source struct {
 	Type  Resource_DiskInfo_Source_Type   `protobuf:"varint,1,req,name=type,enum=mesos.Resource_DiskInfo_Source_Type" json:"type"`
 	Path  *Resource_DiskInfo_Source_Path  `protobuf:"bytes,2,opt,name=path" json:"path,omitempty"`
 	Mount *Resource_DiskInfo_Source_Mount `protobuf:"bytes,3,opt,name=mount" json:"mount,omitempty"`
+	// An identifier for this source. This field maps onto CSI
+	// volume IDs and is not expected to be set by frameworks.
+	ID string `protobuf:"bytes,4,opt,name=id" json:"id"`
+	// Additional metadata for this source. This field maps onto CSI
+	// volume metadata and is not expected to be set by frameworks.
+	Metadata *Labels `protobuf:"bytes,5,opt,name=metadata" json:"metadata,omitempty"`
+	// This field serves as an indirection to a set of storage
+	// vendor specific disk parameters which describe the properties
+	// of the disk. The operator will setup mappings between a
+	// profile name to a set of vendor specific disk parameters. And
+	// the framework will do disk selection based on profile names,
+	// instead of vendor specific disk parameters.
+	Profile *string `protobuf:"bytes,6,opt,name=profile" json:"profile,omitempty"`
 }
 
 func (m *Resource_DiskInfo_Source) Reset()      { *m = Resource_DiskInfo_Source{} }
 func (*Resource_DiskInfo_Source) ProtoMessage() {}
 func (*Resource_DiskInfo_Source) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{26, 2, 1}
+	return fileDescriptorMesos, []int{28, 2, 1}
 }
 
 func (m *Resource_DiskInfo_Source) GetType() Resource_DiskInfo_Source_Type {
@@ -3765,6 +3968,27 @@ func (m *Resource_DiskInfo_Source) GetMount() *Resource_DiskInfo_Source_Mount {
 	return nil
 }
 
+func (m *Resource_DiskInfo_Source) GetID() string {
+	if m != nil {
+		return m.ID
+	}
+	return ""
+}
+
+func (m *Resource_DiskInfo_Source) GetMetadata() *Labels {
+	if m != nil {
+		return m.Metadata
+	}
+	return nil
+}
+
+func (m *Resource_DiskInfo_Source) GetProfile() string {
+	if m != nil && m.Profile != nil {
+		return *m.Profile
+	}
+	return ""
+}
+
 // A folder that can be located on a separate disk device. This
 // can be shared and carved up as necessary between frameworks.
 type Resource_DiskInfo_Source_Path struct {
@@ -3775,7 +3999,7 @@ type Resource_DiskInfo_Source_Path struct {
 func (m *Resource_DiskInfo_Source_Path) Reset()      { *m = Resource_DiskInfo_Source_Path{} }
 func (*Resource_DiskInfo_Source_Path) ProtoMessage() {}
 func (*Resource_DiskInfo_Source_Path) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{26, 2, 1, 0}
+	return fileDescriptorMesos, []int{28, 2, 1, 0}
 }
 
 func (m *Resource_DiskInfo_Source_Path) GetRoot() string {
@@ -3796,7 +4020,7 @@ type Resource_DiskInfo_Source_Mount struct {
 func (m *Resource_DiskInfo_Source_Mount) Reset()      { *m = Resource_DiskInfo_Source_Mount{} }
 func (*Resource_DiskInfo_Source_Mount) ProtoMessage() {}
 func (*Resource_DiskInfo_Source_Mount) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{26, 2, 1, 1}
+	return fileDescriptorMesos, []int{28, 2, 1, 1}
 }
 
 func (m *Resource_DiskInfo_Source_Mount) GetRoot() string {
@@ -3811,7 +4035,7 @@ type Resource_RevocableInfo struct {
 
 func (m *Resource_RevocableInfo) Reset()                    { *m = Resource_RevocableInfo{} }
 func (*Resource_RevocableInfo) ProtoMessage()               {}
-func (*Resource_RevocableInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 3} }
+func (*Resource_RevocableInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{28, 3} }
 
 // Allow the resource to be shared across tasks.
 type Resource_SharedInfo struct {
@@ -3819,7 +4043,7 @@ type Resource_SharedInfo struct {
 
 func (m *Resource_SharedInfo) Reset()                    { *m = Resource_SharedInfo{} }
 func (*Resource_SharedInfo) ProtoMessage()               {}
-func (*Resource_SharedInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{26, 4} }
+func (*Resource_SharedInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{28, 4} }
 
 // *
 // When the network bandwidth caps are enabled and the container
@@ -3860,7 +4084,7 @@ type TrafficControlStatistics struct {
 
 func (m *TrafficControlStatistics) Reset()                    { *m = TrafficControlStatistics{} }
 func (*TrafficControlStatistics) ProtoMessage()               {}
-func (*TrafficControlStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{27} }
+func (*TrafficControlStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{29} }
 
 func (m *TrafficControlStatistics) GetID() string {
 	if m != nil {
@@ -3956,7 +4180,7 @@ type IpStatistics struct {
 
 func (m *IpStatistics) Reset()                    { *m = IpStatistics{} }
 func (*IpStatistics) ProtoMessage()               {}
-func (*IpStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{28} }
+func (*IpStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{30} }
 
 func (m *IpStatistics) GetForwarding() int64 {
 	if m != nil && m.Forwarding != nil {
@@ -4123,7 +4347,7 @@ type IcmpStatistics struct {
 
 func (m *IcmpStatistics) Reset()                    { *m = IcmpStatistics{} }
 func (*IcmpStatistics) ProtoMessage()               {}
-func (*IcmpStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{29} }
+func (*IcmpStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{31} }
 
 func (m *IcmpStatistics) GetInMsgs() int64 {
 	if m != nil && m.InMsgs != nil {
@@ -4334,7 +4558,7 @@ type TcpStatistics struct {
 
 func (m *TcpStatistics) Reset()                    { *m = TcpStatistics{} }
 func (*TcpStatistics) ProtoMessage()               {}
-func (*TcpStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{30} }
+func (*TcpStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{32} }
 
 func (m *TcpStatistics) GetRtoAlgorithm() int64 {
 	if m != nil && m.RtoAlgorithm != nil {
@@ -4454,7 +4678,7 @@ type UdpStatistics struct {
 
 func (m *UdpStatistics) Reset()                    { *m = UdpStatistics{} }
 func (*UdpStatistics) ProtoMessage()               {}
-func (*UdpStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{31} }
+func (*UdpStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{33} }
 
 func (m *UdpStatistics) GetInDatagrams() int64 {
 	if m != nil && m.InDatagrams != nil {
@@ -4521,7 +4745,7 @@ type SNMPStatistics struct {
 
 func (m *SNMPStatistics) Reset()                    { *m = SNMPStatistics{} }
 func (*SNMPStatistics) ProtoMessage()               {}
-func (*SNMPStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{32} }
+func (*SNMPStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{34} }
 
 func (m *SNMPStatistics) GetIPStats() *IpStatistics {
 	if m != nil {
@@ -4560,7 +4784,7 @@ type DiskStatistics struct {
 
 func (m *DiskStatistics) Reset()                    { *m = DiskStatistics{} }
 func (*DiskStatistics) ProtoMessage()               {}
-func (*DiskStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{33} }
+func (*DiskStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{35} }
 
 func (m *DiskStatistics) GetSource() *Resource_DiskInfo_Source {
 	if m != nil {
@@ -4676,7 +4900,7 @@ type ResourceStatistics struct {
 
 func (m *ResourceStatistics) Reset()                    { *m = ResourceStatistics{} }
 func (*ResourceStatistics) ProtoMessage()               {}
-func (*ResourceStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{34} }
+func (*ResourceStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{36} }
 
 func (m *ResourceStatistics) GetTimestamp() float64 {
 	if m != nil {
@@ -4997,7 +5221,7 @@ type ResourceUsage struct {
 
 func (m *ResourceUsage) Reset()                    { *m = ResourceUsage{} }
 func (*ResourceUsage) ProtoMessage()               {}
-func (*ResourceUsage) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{35} }
+func (*ResourceUsage) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{37} }
 
 func (m *ResourceUsage) GetExecutors() []ResourceUsage_Executor {
 	if m != nil {
@@ -5029,7 +5253,7 @@ type ResourceUsage_Executor struct {
 
 func (m *ResourceUsage_Executor) Reset()                    { *m = ResourceUsage_Executor{} }
 func (*ResourceUsage_Executor) ProtoMessage()               {}
-func (*ResourceUsage_Executor) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{35, 0} }
+func (*ResourceUsage_Executor) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{37, 0} }
 
 func (m *ResourceUsage_Executor) GetExecutorInfo() ExecutorInfo {
 	if m != nil {
@@ -5076,7 +5300,7 @@ type ResourceUsage_Executor_Task struct {
 func (m *ResourceUsage_Executor_Task) Reset()      { *m = ResourceUsage_Executor_Task{} }
 func (*ResourceUsage_Executor_Task) ProtoMessage() {}
 func (*ResourceUsage_Executor_Task) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{35, 0, 0}
+	return fileDescriptorMesos, []int{37, 0, 0}
 }
 
 func (m *ResourceUsage_Executor_Task) GetName() string {
@@ -5179,7 +5403,7 @@ type PerfStatistics struct {
 
 func (m *PerfStatistics) Reset()                    { *m = PerfStatistics{} }
 func (*PerfStatistics) ProtoMessage()               {}
-func (*PerfStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{36} }
+func (*PerfStatistics) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{38} }
 
 func (m *PerfStatistics) GetTimestamp() float64 {
 	if m != nil {
@@ -5564,7 +5788,7 @@ type Request struct {
 
 func (m *Request) Reset()                    { *m = Request{} }
 func (*Request) ProtoMessage()               {}
-func (*Request) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{37} }
+func (*Request) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{39} }
 
 func (m *Request) GetAgentID() *AgentID {
 	if m != nil {
@@ -5615,7 +5839,7 @@ type Offer struct {
 
 func (m *Offer) Reset()                    { *m = Offer{} }
 func (*Offer) ProtoMessage()               {}
-func (*Offer) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{38} }
+func (*Offer) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{40} }
 
 func (m *Offer) GetID() OfferID {
 	if m != nil {
@@ -5696,24 +5920,36 @@ func (m *Offer) GetAllocationInfo() *Resource_AllocationInfo {
 
 // Defines an operation that can be performed against offers.
 type Offer_Operation struct {
-	Type        Offer_Operation_Type         `protobuf:"varint,1,opt,name=type,enum=mesos.Offer_Operation_Type" json:"type"`
-	Launch      *Offer_Operation_Launch      `protobuf:"bytes,2,opt,name=launch" json:"launch,omitempty"`
-	LaunchGroup *Offer_Operation_LaunchGroup `protobuf:"bytes,7,opt,name=launch_group,json=launchGroup" json:"launch_group,omitempty"`
-	Reserve     *Offer_Operation_Reserve     `protobuf:"bytes,3,opt,name=reserve" json:"reserve,omitempty"`
-	Unreserve   *Offer_Operation_Unreserve   `protobuf:"bytes,4,opt,name=unreserve" json:"unreserve,omitempty"`
-	Create      *Offer_Operation_Create      `protobuf:"bytes,5,opt,name=create" json:"create,omitempty"`
-	Destroy     *Offer_Operation_Destroy     `protobuf:"bytes,6,opt,name=destroy" json:"destroy,omitempty"`
+	Type          Offer_Operation_Type           `protobuf:"varint,1,opt,name=type,enum=mesos.Offer_Operation_Type" json:"type"`
+	ID            *OfferOperationID              `protobuf:"bytes,12,opt,name=id" json:"id,omitempty"`
+	Launch        *Offer_Operation_Launch        `protobuf:"bytes,2,opt,name=launch" json:"launch,omitempty"`
+	LaunchGroup   *Offer_Operation_LaunchGroup   `protobuf:"bytes,7,opt,name=launch_group,json=launchGroup" json:"launch_group,omitempty"`
+	Reserve       *Offer_Operation_Reserve       `protobuf:"bytes,3,opt,name=reserve" json:"reserve,omitempty"`
+	Unreserve     *Offer_Operation_Unreserve     `protobuf:"bytes,4,opt,name=unreserve" json:"unreserve,omitempty"`
+	Create        *Offer_Operation_Create        `protobuf:"bytes,5,opt,name=create" json:"create,omitempty"`
+	Destroy       *Offer_Operation_Destroy       `protobuf:"bytes,6,opt,name=destroy" json:"destroy,omitempty"`
+	CreateVolume  *Offer_Operation_CreateVolume  `protobuf:"bytes,8,opt,name=create_volume,json=createVolume" json:"create_volume,omitempty"`
+	DestroyVolume *Offer_Operation_DestroyVolume `protobuf:"bytes,9,opt,name=destroy_volume,json=destroyVolume" json:"destroy_volume,omitempty"`
+	CreateBlock   *Offer_Operation_CreateBlock   `protobuf:"bytes,10,opt,name=create_block,json=createBlock" json:"create_block,omitempty"`
+	DestroyBlock  *Offer_Operation_DestroyBlock  `protobuf:"bytes,11,opt,name=destroy_block,json=destroyBlock" json:"destroy_block,omitempty"`
 }
 
 func (m *Offer_Operation) Reset()                    { *m = Offer_Operation{} }
 func (*Offer_Operation) ProtoMessage()               {}
-func (*Offer_Operation) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{38, 0} }
+func (*Offer_Operation) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{40, 0} }
 
 func (m *Offer_Operation) GetType() Offer_Operation_Type {
 	if m != nil {
 		return m.Type
 	}
 	return Offer_Operation_UNKNOWN
+}
+
+func (m *Offer_Operation) GetID() *OfferOperationID {
+	if m != nil {
+		return m.ID
+	}
+	return nil
 }
 
 func (m *Offer_Operation) GetLaunch() *Offer_Operation_Launch {
@@ -5758,6 +5994,34 @@ func (m *Offer_Operation) GetDestroy() *Offer_Operation_Destroy {
 	return nil
 }
 
+func (m *Offer_Operation) GetCreateVolume() *Offer_Operation_CreateVolume {
+	if m != nil {
+		return m.CreateVolume
+	}
+	return nil
+}
+
+func (m *Offer_Operation) GetDestroyVolume() *Offer_Operation_DestroyVolume {
+	if m != nil {
+		return m.DestroyVolume
+	}
+	return nil
+}
+
+func (m *Offer_Operation) GetCreateBlock() *Offer_Operation_CreateBlock {
+	if m != nil {
+		return m.CreateBlock
+	}
+	return nil
+}
+
+func (m *Offer_Operation) GetDestroyBlock() *Offer_Operation_DestroyBlock {
+	if m != nil {
+		return m.DestroyBlock
+	}
+	return nil
+}
+
 // TODO(vinod): Deprecate this in favor of `LaunchGroup` below.
 type Offer_Operation_Launch struct {
 	TaskInfos []TaskInfo `protobuf:"bytes,1,rep,name=task_infos,json=taskInfos" json:"task_infos"`
@@ -5766,7 +6030,7 @@ type Offer_Operation_Launch struct {
 func (m *Offer_Operation_Launch) Reset()      { *m = Offer_Operation_Launch{} }
 func (*Offer_Operation_Launch) ProtoMessage() {}
 func (*Offer_Operation_Launch) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{38, 0, 0}
+	return fileDescriptorMesos, []int{40, 0, 0}
 }
 
 func (m *Offer_Operation_Launch) GetTaskInfos() []TaskInfo {
@@ -5792,7 +6056,7 @@ type Offer_Operation_LaunchGroup struct {
 func (m *Offer_Operation_LaunchGroup) Reset()      { *m = Offer_Operation_LaunchGroup{} }
 func (*Offer_Operation_LaunchGroup) ProtoMessage() {}
 func (*Offer_Operation_LaunchGroup) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{38, 0, 1}
+	return fileDescriptorMesos, []int{40, 0, 1}
 }
 
 func (m *Offer_Operation_LaunchGroup) GetExecutor() ExecutorInfo {
@@ -5816,7 +6080,7 @@ type Offer_Operation_Reserve struct {
 func (m *Offer_Operation_Reserve) Reset()      { *m = Offer_Operation_Reserve{} }
 func (*Offer_Operation_Reserve) ProtoMessage() {}
 func (*Offer_Operation_Reserve) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{38, 0, 2}
+	return fileDescriptorMesos, []int{40, 0, 2}
 }
 
 func (m *Offer_Operation_Reserve) GetResources() []Resource {
@@ -5833,7 +6097,7 @@ type Offer_Operation_Unreserve struct {
 func (m *Offer_Operation_Unreserve) Reset()      { *m = Offer_Operation_Unreserve{} }
 func (*Offer_Operation_Unreserve) ProtoMessage() {}
 func (*Offer_Operation_Unreserve) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{38, 0, 3}
+	return fileDescriptorMesos, []int{40, 0, 3}
 }
 
 func (m *Offer_Operation_Unreserve) GetResources() []Resource {
@@ -5850,7 +6114,7 @@ type Offer_Operation_Create struct {
 func (m *Offer_Operation_Create) Reset()      { *m = Offer_Operation_Create{} }
 func (*Offer_Operation_Create) ProtoMessage() {}
 func (*Offer_Operation_Create) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{38, 0, 4}
+	return fileDescriptorMesos, []int{40, 0, 4}
 }
 
 func (m *Offer_Operation_Create) GetVolumes() []Resource {
@@ -5867,7 +6131,7 @@ type Offer_Operation_Destroy struct {
 func (m *Offer_Operation_Destroy) Reset()      { *m = Offer_Operation_Destroy{} }
 func (*Offer_Operation_Destroy) ProtoMessage() {}
 func (*Offer_Operation_Destroy) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{38, 0, 5}
+	return fileDescriptorMesos, []int{40, 0, 5}
 }
 
 func (m *Offer_Operation_Destroy) GetVolumes() []Resource {
@@ -5875,6 +6139,82 @@ func (m *Offer_Operation_Destroy) GetVolumes() []Resource {
 		return m.Volumes
 	}
 	return nil
+}
+
+type Offer_Operation_CreateVolume struct {
+	Source     Resource                      `protobuf:"bytes,1,req,name=source" json:"source"`
+	TargetType Resource_DiskInfo_Source_Type `protobuf:"varint,2,req,name=target_type,json=targetType,enum=mesos.Resource_DiskInfo_Source_Type" json:"target_type"`
+}
+
+func (m *Offer_Operation_CreateVolume) Reset()      { *m = Offer_Operation_CreateVolume{} }
+func (*Offer_Operation_CreateVolume) ProtoMessage() {}
+func (*Offer_Operation_CreateVolume) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{40, 0, 6}
+}
+
+func (m *Offer_Operation_CreateVolume) GetSource() Resource {
+	if m != nil {
+		return m.Source
+	}
+	return Resource{}
+}
+
+func (m *Offer_Operation_CreateVolume) GetTargetType() Resource_DiskInfo_Source_Type {
+	if m != nil {
+		return m.TargetType
+	}
+	return UNKNOWN
+}
+
+type Offer_Operation_DestroyVolume struct {
+	Volume Resource `protobuf:"bytes,1,req,name=volume" json:"volume"`
+}
+
+func (m *Offer_Operation_DestroyVolume) Reset()      { *m = Offer_Operation_DestroyVolume{} }
+func (*Offer_Operation_DestroyVolume) ProtoMessage() {}
+func (*Offer_Operation_DestroyVolume) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{40, 0, 7}
+}
+
+func (m *Offer_Operation_DestroyVolume) GetVolume() Resource {
+	if m != nil {
+		return m.Volume
+	}
+	return Resource{}
+}
+
+type Offer_Operation_CreateBlock struct {
+	Source Resource `protobuf:"bytes,1,req,name=source" json:"source"`
+}
+
+func (m *Offer_Operation_CreateBlock) Reset()      { *m = Offer_Operation_CreateBlock{} }
+func (*Offer_Operation_CreateBlock) ProtoMessage() {}
+func (*Offer_Operation_CreateBlock) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{40, 0, 8}
+}
+
+func (m *Offer_Operation_CreateBlock) GetSource() Resource {
+	if m != nil {
+		return m.Source
+	}
+	return Resource{}
+}
+
+type Offer_Operation_DestroyBlock struct {
+	Block Resource `protobuf:"bytes,1,req,name=block" json:"block"`
+}
+
+func (m *Offer_Operation_DestroyBlock) Reset()      { *m = Offer_Operation_DestroyBlock{} }
+func (*Offer_Operation_DestroyBlock) ProtoMessage() {}
+func (*Offer_Operation_DestroyBlock) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{40, 0, 9}
+}
+
+func (m *Offer_Operation_DestroyBlock) GetBlock() Resource {
+	if m != nil {
+		return m.Block
+	}
+	return Resource{}
 }
 
 // *
@@ -5920,7 +6260,7 @@ type InverseOffer struct {
 
 func (m *InverseOffer) Reset()                    { *m = InverseOffer{} }
 func (*InverseOffer) ProtoMessage()               {}
-func (*InverseOffer) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{39} }
+func (*InverseOffer) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{41} }
 
 func (m *InverseOffer) GetOfferID() OfferID {
 	if m != nil {
@@ -6015,7 +6355,7 @@ type TaskInfo struct {
 
 func (m *TaskInfo) Reset()                    { *m = TaskInfo{} }
 func (*TaskInfo) ProtoMessage()               {}
-func (*TaskInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{40} }
+func (*TaskInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{42} }
 
 func (m *TaskInfo) GetName() string {
 	if m != nil {
@@ -6123,7 +6463,7 @@ type TaskGroupInfo struct {
 
 func (m *TaskGroupInfo) Reset()                    { *m = TaskGroupInfo{} }
 func (*TaskGroupInfo) ProtoMessage()               {}
-func (*TaskGroupInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{41} }
+func (*TaskGroupInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{43} }
 
 func (m *TaskGroupInfo) GetTasks() []TaskInfo {
 	if m != nil {
@@ -6172,7 +6512,7 @@ type Task struct {
 
 func (m *Task) Reset()                    { *m = Task{} }
 func (*Task) ProtoMessage()               {}
-func (*Task) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{42} }
+func (*Task) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{44} }
 
 func (m *Task) GetName() string {
 	if m != nil {
@@ -6273,6 +6613,129 @@ func (m *Task) GetUser() string {
 }
 
 // *
+// Describes a resource limitation that caused a task failure.
+type TaskResourceLimitation struct {
+	// This field contains the resource whose limits were violated.
+	//
+	// NOTE: 'Resources' is used here because the resource may span
+	// multiple roles (e.g. `"mem(*):1;mem(role):2"`).
+	Resources []Resource `protobuf:"bytes,1,rep,name=resources" json:"resources"`
+}
+
+func (m *TaskResourceLimitation) Reset()                    { *m = TaskResourceLimitation{} }
+func (*TaskResourceLimitation) ProtoMessage()               {}
+func (*TaskResourceLimitation) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{45} }
+
+func (m *TaskResourceLimitation) GetResources() []Resource {
+	if m != nil {
+		return m.Resources
+	}
+	return nil
+}
+
+// *
+// Describes an offer operation, similar to `Offer.Operation`, with
+// some additional information.
+type OfferOperation struct {
+	FrameworkID FrameworkID     `protobuf:"bytes,1,req,name=framework_id,json=frameworkId" json:"framework_id"`
+	Info        Offer_Operation `protobuf:"bytes,2,req,name=info" json:"info"`
+	// All the statuses known to this offer operation. Some of the
+	// statuses in this list might not have been acknowledged yet. The
+	// statuses are ordered.
+	Statuses []OfferOperationStatus `protobuf:"bytes,3,rep,name=statuses" json:"statuses"`
+	// This is the internal UUID for the operation, which is kept
+	// independently from the framework-specified operation ID, which is
+	// optional.
+	OperationUUID []byte `protobuf:"bytes,4,req,name=operation_uuid,json=operationUuid" json:"operation_uuid,omitempty"`
+}
+
+func (m *OfferOperation) Reset()                    { *m = OfferOperation{} }
+func (*OfferOperation) ProtoMessage()               {}
+func (*OfferOperation) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{46} }
+
+func (m *OfferOperation) GetFrameworkID() FrameworkID {
+	if m != nil {
+		return m.FrameworkID
+	}
+	return FrameworkID{}
+}
+
+func (m *OfferOperation) GetInfo() Offer_Operation {
+	if m != nil {
+		return m.Info
+	}
+	return Offer_Operation{}
+}
+
+func (m *OfferOperation) GetStatuses() []OfferOperationStatus {
+	if m != nil {
+		return m.Statuses
+	}
+	return nil
+}
+
+func (m *OfferOperation) GetOperationUUID() []byte {
+	if m != nil {
+		return m.OperationUUID
+	}
+	return nil
+}
+
+// *
+// Describes the current status of an offer operation.
+type OfferOperationStatus struct {
+	OperationID *OfferOperationID   `protobuf:"bytes,1,opt,name=operation_id,json=operationId" json:"operation_id,omitempty"`
+	State       OfferOperationState `protobuf:"varint,2,req,name=state,enum=mesos.OfferOperationState" json:"state"`
+	Message     *string             `protobuf:"bytes,3,opt,name=message" json:"message,omitempty"`
+	// Converted resources after applying the operation. This only
+	// applies if the `state` is `OFFER_OPERATION_FINISHED`.
+	ConvertedResources []Resource `protobuf:"bytes,4,rep,name=converted_resources,json=convertedResources" json:"converted_resources"`
+	// Statuses that are delivered reliably to the scheduler will
+	// include a `status_uuid`. The status is considered delivered once
+	// it is acknowledged by the scheduler.
+	StatusUUID []byte `protobuf:"bytes,5,opt,name=status_uuid,json=statusUuid" json:"status_uuid,omitempty"`
+}
+
+func (m *OfferOperationStatus) Reset()                    { *m = OfferOperationStatus{} }
+func (*OfferOperationStatus) ProtoMessage()               {}
+func (*OfferOperationStatus) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{47} }
+
+func (m *OfferOperationStatus) GetOperationID() *OfferOperationID {
+	if m != nil {
+		return m.OperationID
+	}
+	return nil
+}
+
+func (m *OfferOperationStatus) GetState() OfferOperationState {
+	if m != nil {
+		return m.State
+	}
+	return OFFER_OPERATION_UNSUPPORTED
+}
+
+func (m *OfferOperationStatus) GetMessage() string {
+	if m != nil && m.Message != nil {
+		return *m.Message
+	}
+	return ""
+}
+
+func (m *OfferOperationStatus) GetConvertedResources() []Resource {
+	if m != nil {
+		return m.ConvertedResources
+	}
+	return nil
+}
+
+func (m *OfferOperationStatus) GetStatusUUID() []byte {
+	if m != nil {
+		return m.StatusUUID
+	}
+	return nil
+}
+
+// *
 // Describes the status of a check. Type and the corresponding field, i.e.,
 // `command` or `http` must be set. If the result of the check is not available
 // (e.g., the check timed out), these fields must contain empty messages, i.e.,
@@ -6292,7 +6755,7 @@ type CheckStatusInfo struct {
 
 func (m *CheckStatusInfo) Reset()                    { *m = CheckStatusInfo{} }
 func (*CheckStatusInfo) ProtoMessage()               {}
-func (*CheckStatusInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{43} }
+func (*CheckStatusInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{48} }
 
 func (m *CheckStatusInfo) GetType() CheckInfo_Type {
 	if m != nil && m.Type != nil {
@@ -6331,7 +6794,7 @@ type CheckStatusInfo_Command struct {
 
 func (m *CheckStatusInfo_Command) Reset()                    { *m = CheckStatusInfo_Command{} }
 func (*CheckStatusInfo_Command) ProtoMessage()               {}
-func (*CheckStatusInfo_Command) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{43, 0} }
+func (*CheckStatusInfo_Command) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{48, 0} }
 
 func (m *CheckStatusInfo_Command) GetExitCode() int32 {
 	if m != nil && m.ExitCode != nil {
@@ -6347,7 +6810,7 @@ type CheckStatusInfo_Http struct {
 
 func (m *CheckStatusInfo_Http) Reset()                    { *m = CheckStatusInfo_Http{} }
 func (*CheckStatusInfo_Http) ProtoMessage()               {}
-func (*CheckStatusInfo_Http) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{43, 1} }
+func (*CheckStatusInfo_Http) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{48, 1} }
 
 func (m *CheckStatusInfo_Http) GetStatusCode() uint32 {
 	if m != nil && m.StatusCode != nil {
@@ -6363,7 +6826,7 @@ type CheckStatusInfo_Tcp struct {
 
 func (m *CheckStatusInfo_Tcp) Reset()                    { *m = CheckStatusInfo_Tcp{} }
 func (*CheckStatusInfo_Tcp) ProtoMessage()               {}
-func (*CheckStatusInfo_Tcp) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{43, 2} }
+func (*CheckStatusInfo_Tcp) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{48, 2} }
 
 func (m *CheckStatusInfo_Tcp) GetSucceeded() bool {
 	if m != nil && m.Succeeded != nil {
@@ -6424,11 +6887,14 @@ type TaskStatus struct {
 	// status updates for tasks running on agents that are unreachable
 	// (e.g., partitioned away from the master).
 	UnreachableTime *TimeInfo `protobuf:"bytes,14,opt,name=unreachable_time,json=unreachableTime" json:"unreachable_time,omitempty"`
+	// If the reason field indicates a container resource limitation,
+	// this field optionally contains additional information.
+	Limitation *TaskResourceLimitation `protobuf:"bytes,16,opt,name=limitation" json:"limitation,omitempty"`
 }
 
 func (m *TaskStatus) Reset()                    { *m = TaskStatus{} }
 func (*TaskStatus) ProtoMessage()               {}
-func (*TaskStatus) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{44} }
+func (*TaskStatus) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{49} }
 
 func (m *TaskStatus) GetTaskID() TaskID {
 	if m != nil {
@@ -6535,6 +7001,13 @@ func (m *TaskStatus) GetUnreachableTime() *TimeInfo {
 	return nil
 }
 
+func (m *TaskStatus) GetLimitation() *TaskResourceLimitation {
+	if m != nil {
+		return m.Limitation
+	}
+	return nil
+}
+
 // *
 // Describes possible filters that can be applied to unused resources
 // (see SchedulerDriver::launchTasks) to influence the allocator.
@@ -6545,12 +7018,17 @@ type Filters struct {
 	// SchedulerDriver::launchTasks. You MUST pass Filters with this
 	// field set to change this behavior (i.e., get another offer which
 	// includes unused resources sooner or later than the default).
+	//
+	// If this field is set to a number of seconds greater than 31536000
+	// (365 days), then the resources will be considered refused for 365
+	// days. If it is set to a negative number, then the default value
+	// will be used.
 	RefuseSeconds *float64 `protobuf:"fixed64,1,opt,name=refuse_seconds,json=refuseSeconds,def=5" json:"refuse_seconds,omitempty"`
 }
 
 func (m *Filters) Reset()                    { *m = Filters{} }
 func (*Filters) ProtoMessage()               {}
-func (*Filters) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{45} }
+func (*Filters) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{50} }
 
 const Default_Filters_RefuseSeconds float64 = 5
 
@@ -6572,7 +7050,7 @@ type Environment struct {
 
 func (m *Environment) Reset()                    { *m = Environment{} }
 func (*Environment) ProtoMessage()               {}
-func (*Environment) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{46} }
+func (*Environment) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{51} }
 
 func (m *Environment) GetVariables() []Environment_Variable {
 	if m != nil {
@@ -6596,7 +7074,7 @@ type Environment_Variable struct {
 
 func (m *Environment_Variable) Reset()                    { *m = Environment_Variable{} }
 func (*Environment_Variable) ProtoMessage()               {}
-func (*Environment_Variable) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{46, 0} }
+func (*Environment_Variable) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{51, 0} }
 
 const Default_Environment_Variable_Type Environment_Variable_Type = Environment_Variable_VALUE
 
@@ -6637,7 +7115,7 @@ type Parameter struct {
 
 func (m *Parameter) Reset()                    { *m = Parameter{} }
 func (*Parameter) ProtoMessage()               {}
-func (*Parameter) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{47} }
+func (*Parameter) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{52} }
 
 func (m *Parameter) GetKey() string {
 	if m != nil {
@@ -6661,7 +7139,7 @@ type Parameters struct {
 
 func (m *Parameters) Reset()                    { *m = Parameters{} }
 func (*Parameters) ProtoMessage()               {}
-func (*Parameters) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{48} }
+func (*Parameters) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{53} }
 
 func (m *Parameters) GetParameter() []Parameter {
 	if m != nil {
@@ -6685,7 +7163,7 @@ type Credential struct {
 
 func (m *Credential) Reset()                    { *m = Credential{} }
 func (*Credential) ProtoMessage()               {}
-func (*Credential) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{49} }
+func (*Credential) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{54} }
 
 func (m *Credential) GetPrincipal() string {
 	if m != nil {
@@ -6711,7 +7189,7 @@ type Credentials struct {
 
 func (m *Credentials) Reset()                    { *m = Credentials{} }
 func (*Credentials) ProtoMessage()               {}
-func (*Credentials) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{50} }
+func (*Credentials) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{55} }
 
 func (m *Credentials) GetCredentials() []Credential {
 	if m != nil {
@@ -6733,7 +7211,7 @@ type Secret struct {
 
 func (m *Secret) Reset()                    { *m = Secret{} }
 func (*Secret) ProtoMessage()               {}
-func (*Secret) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{51} }
+func (*Secret) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{56} }
 
 func (m *Secret) GetType() Secret_Type {
 	if m != nil {
@@ -6777,7 +7255,7 @@ type Secret_Reference struct {
 
 func (m *Secret_Reference) Reset()                    { *m = Secret_Reference{} }
 func (*Secret_Reference) ProtoMessage()               {}
-func (*Secret_Reference) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{51, 0} }
+func (*Secret_Reference) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{56, 0} }
 
 func (m *Secret_Reference) GetName() string {
 	if m != nil {
@@ -6800,7 +7278,7 @@ type Secret_Value struct {
 
 func (m *Secret_Value) Reset()                    { *m = Secret_Value{} }
 func (*Secret_Value) ProtoMessage()               {}
-func (*Secret_Value) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{51, 1} }
+func (*Secret_Value) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{56, 1} }
 
 func (m *Secret_Value) GetData() []byte {
 	if m != nil {
@@ -6831,7 +7309,7 @@ type RateLimit struct {
 
 func (m *RateLimit) Reset()                    { *m = RateLimit{} }
 func (*RateLimit) ProtoMessage()               {}
-func (*RateLimit) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{52} }
+func (*RateLimit) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{57} }
 
 func (m *RateLimit) GetQPS() float64 {
 	if m != nil && m.QPS != nil {
@@ -6872,7 +7350,7 @@ type RateLimits struct {
 
 func (m *RateLimits) Reset()                    { *m = RateLimits{} }
 func (*RateLimits) ProtoMessage()               {}
-func (*RateLimits) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{53} }
+func (*RateLimits) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{58} }
 
 func (m *RateLimits) GetLimits() []RateLimit {
 	if m != nil {
@@ -6912,7 +7390,7 @@ type Image struct {
 
 func (m *Image) Reset()                    { *m = Image{} }
 func (*Image) ProtoMessage()               {}
-func (*Image) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{54} }
+func (*Image) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{59} }
 
 const Default_Image_Cached bool = true
 
@@ -6960,7 +7438,7 @@ type Image_Appc struct {
 
 func (m *Image_Appc) Reset()                    { *m = Image_Appc{} }
 func (*Image_Appc) ProtoMessage()               {}
-func (*Image_Appc) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{54, 0} }
+func (*Image_Appc) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{59, 0} }
 
 func (m *Image_Appc) GetName() string {
 	if m != nil {
@@ -7005,7 +7483,7 @@ type Image_Docker struct {
 
 func (m *Image_Docker) Reset()                    { *m = Image_Docker{} }
 func (*Image_Docker) ProtoMessage()               {}
-func (*Image_Docker) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{54, 1} }
+func (*Image_Docker) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{59, 1} }
 
 func (m *Image_Docker) GetName() string {
 	if m != nil {
@@ -7050,7 +7528,7 @@ type Volume struct {
 
 func (m *Volume) Reset()                    { *m = Volume{} }
 func (*Volume) ProtoMessage()               {}
-func (*Volume) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{55} }
+func (*Volume) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{60} }
 
 func (m *Volume) GetMode() Volume_Mode {
 	if m != nil && m.Mode != nil {
@@ -7093,6 +7571,7 @@ type Volume_Source struct {
 	Type Volume_Source_Type `protobuf:"varint,1,opt,name=type,enum=mesos.Volume_Source_Type" json:"type"`
 	// The source of the volume created by docker volume driver.
 	DockerVolume *Volume_Source_DockerVolume `protobuf:"bytes,2,opt,name=docker_volume,json=dockerVolume" json:"docker_volume,omitempty"`
+	HostPath     *Volume_Source_HostPath     `protobuf:"bytes,5,opt,name=host_path,json=hostPath" json:"host_path,omitempty"`
 	SandboxPath  *Volume_Source_SandboxPath  `protobuf:"bytes,3,opt,name=sandbox_path,json=sandboxPath" json:"sandbox_path,omitempty"`
 	// The volume/secret isolator uses the secret-fetcher module (third-party or
 	// internal) downloads the secret and makes it available at container_path.
@@ -7101,7 +7580,7 @@ type Volume_Source struct {
 
 func (m *Volume_Source) Reset()                    { *m = Volume_Source{} }
 func (*Volume_Source) ProtoMessage()               {}
-func (*Volume_Source) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{55, 0} }
+func (*Volume_Source) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{60, 0} }
 
 func (m *Volume_Source) GetType() Volume_Source_Type {
 	if m != nil {
@@ -7113,6 +7592,13 @@ func (m *Volume_Source) GetType() Volume_Source_Type {
 func (m *Volume_Source) GetDockerVolume() *Volume_Source_DockerVolume {
 	if m != nil {
 		return m.DockerVolume
+	}
+	return nil
+}
+
+func (m *Volume_Source) GetHostPath() *Volume_Source_HostPath {
+	if m != nil {
+		return m.HostPath
 	}
 	return nil
 }
@@ -7143,7 +7629,7 @@ type Volume_Source_DockerVolume struct {
 func (m *Volume_Source_DockerVolume) Reset()      { *m = Volume_Source_DockerVolume{} }
 func (*Volume_Source_DockerVolume) ProtoMessage() {}
 func (*Volume_Source_DockerVolume) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{55, 0, 0}
+	return fileDescriptorMesos, []int{60, 0, 0}
 }
 
 func (m *Volume_Source_DockerVolume) GetDriver() string {
@@ -7167,6 +7653,24 @@ func (m *Volume_Source_DockerVolume) GetDriverOptions() *Parameters {
 	return nil
 }
 
+// Absolute path pointing to a directory or file on the host.
+type Volume_Source_HostPath struct {
+	Path string `protobuf:"bytes,1,req,name=path" json:"path"`
+}
+
+func (m *Volume_Source_HostPath) Reset()      { *m = Volume_Source_HostPath{} }
+func (*Volume_Source_HostPath) ProtoMessage() {}
+func (*Volume_Source_HostPath) Descriptor() ([]byte, []int) {
+	return fileDescriptorMesos, []int{60, 0, 1}
+}
+
+func (m *Volume_Source_HostPath) GetPath() string {
+	if m != nil {
+		return m.Path
+	}
+	return ""
+}
+
 // Describe a path from a container's sandbox. The container can
 // be the current container (SELF), or its parent container
 // (PARENT). PARENT allows all child containers to share a volume
@@ -7182,7 +7686,7 @@ type Volume_Source_SandboxPath struct {
 func (m *Volume_Source_SandboxPath) Reset()      { *m = Volume_Source_SandboxPath{} }
 func (*Volume_Source_SandboxPath) ProtoMessage() {}
 func (*Volume_Source_SandboxPath) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{55, 0, 1}
+	return fileDescriptorMesos, []int{60, 0, 2}
 }
 
 func (m *Volume_Source_SandboxPath) GetType() Volume_Source_SandboxPath_Type {
@@ -7245,7 +7749,7 @@ type NetworkInfo struct {
 
 func (m *NetworkInfo) Reset()                    { *m = NetworkInfo{} }
 func (*NetworkInfo) ProtoMessage()               {}
-func (*NetworkInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{56} }
+func (*NetworkInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{61} }
 
 func (m *NetworkInfo) GetIPAddresses() []NetworkInfo_IPAddress {
 	if m != nil {
@@ -7306,7 +7810,7 @@ type NetworkInfo_IPAddress struct {
 
 func (m *NetworkInfo_IPAddress) Reset()                    { *m = NetworkInfo_IPAddress{} }
 func (*NetworkInfo_IPAddress) ProtoMessage()               {}
-func (*NetworkInfo_IPAddress) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{56, 0} }
+func (*NetworkInfo_IPAddress) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{61, 0} }
 
 const Default_NetworkInfo_IPAddress_Protocol NetworkInfo_Protocol = IPv4
 
@@ -7334,7 +7838,7 @@ type NetworkInfo_PortMapping struct {
 
 func (m *NetworkInfo_PortMapping) Reset()                    { *m = NetworkInfo_PortMapping{} }
 func (*NetworkInfo_PortMapping) ProtoMessage()               {}
-func (*NetworkInfo_PortMapping) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{56, 1} }
+func (*NetworkInfo_PortMapping) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{61, 1} }
 
 func (m *NetworkInfo_PortMapping) GetHostPort() uint32 {
 	if m != nil {
@@ -7366,7 +7870,7 @@ type CapabilityInfo struct {
 
 func (m *CapabilityInfo) Reset()                    { *m = CapabilityInfo{} }
 func (*CapabilityInfo) ProtoMessage()               {}
-func (*CapabilityInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{57} }
+func (*CapabilityInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{62} }
 
 func (m *CapabilityInfo) GetCapabilities() []CapabilityInfo_Capability {
 	if m != nil {
@@ -7398,7 +7902,7 @@ type LinuxInfo struct {
 
 func (m *LinuxInfo) Reset()                    { *m = LinuxInfo{} }
 func (*LinuxInfo) ProtoMessage()               {}
-func (*LinuxInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{58} }
+func (*LinuxInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{63} }
 
 func (m *LinuxInfo) GetCapabilityInfo() *CapabilityInfo {
 	if m != nil {
@@ -7440,7 +7944,7 @@ type RLimitInfo struct {
 
 func (m *RLimitInfo) Reset()                    { *m = RLimitInfo{} }
 func (*RLimitInfo) ProtoMessage()               {}
-func (*RLimitInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{59} }
+func (*RLimitInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{64} }
 
 func (m *RLimitInfo) GetRlimits() []RLimitInfo_RLimit {
 	if m != nil {
@@ -7460,7 +7964,7 @@ type RLimitInfo_RLimit struct {
 
 func (m *RLimitInfo_RLimit) Reset()                    { *m = RLimitInfo_RLimit{} }
 func (*RLimitInfo_RLimit) ProtoMessage()               {}
-func (*RLimitInfo_RLimit) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{59, 0} }
+func (*RLimitInfo_RLimit) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{64, 0} }
 
 func (m *RLimitInfo_RLimit) GetType() RLimitInfo_RLimit_Type {
 	if m != nil {
@@ -7492,7 +7996,7 @@ type TTYInfo struct {
 
 func (m *TTYInfo) Reset()                    { *m = TTYInfo{} }
 func (*TTYInfo) ProtoMessage()               {}
-func (*TTYInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{60} }
+func (*TTYInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{65} }
 
 func (m *TTYInfo) GetWindowSize() *TTYInfo_WindowSize {
 	if m != nil {
@@ -7508,7 +8012,7 @@ type TTYInfo_WindowSize struct {
 
 func (m *TTYInfo_WindowSize) Reset()                    { *m = TTYInfo_WindowSize{} }
 func (*TTYInfo_WindowSize) ProtoMessage()               {}
-func (*TTYInfo_WindowSize) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{60, 0} }
+func (*TTYInfo_WindowSize) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{65, 0} }
 
 func (m *TTYInfo_WindowSize) GetRows() uint32 {
 	if m != nil {
@@ -7555,7 +8059,7 @@ type ContainerInfo struct {
 
 func (m *ContainerInfo) Reset()                    { *m = ContainerInfo{} }
 func (*ContainerInfo) ProtoMessage()               {}
-func (*ContainerInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{61} }
+func (*ContainerInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{66} }
 
 func (m *ContainerInfo) GetType() ContainerInfo_Type {
 	if m != nil && m.Type != nil {
@@ -7642,7 +8146,7 @@ type ContainerInfo_DockerInfo struct {
 func (m *ContainerInfo_DockerInfo) Reset()      { *m = ContainerInfo_DockerInfo{} }
 func (*ContainerInfo_DockerInfo) ProtoMessage() {}
 func (*ContainerInfo_DockerInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{61, 0}
+	return fileDescriptorMesos, []int{66, 0}
 }
 
 const Default_ContainerInfo_DockerInfo_Network ContainerInfo_DockerInfo_Network = ContainerInfo_DockerInfo_HOST
@@ -7707,7 +8211,7 @@ type ContainerInfo_DockerInfo_PortMapping struct {
 func (m *ContainerInfo_DockerInfo_PortMapping) Reset()      { *m = ContainerInfo_DockerInfo_PortMapping{} }
 func (*ContainerInfo_DockerInfo_PortMapping) ProtoMessage() {}
 func (*ContainerInfo_DockerInfo_PortMapping) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{61, 0, 0}
+	return fileDescriptorMesos, []int{66, 0, 0}
 }
 
 func (m *ContainerInfo_DockerInfo_PortMapping) GetHostPort() uint32 {
@@ -7737,7 +8241,7 @@ type ContainerInfo_MesosInfo struct {
 
 func (m *ContainerInfo_MesosInfo) Reset()                    { *m = ContainerInfo_MesosInfo{} }
 func (*ContainerInfo_MesosInfo) ProtoMessage()               {}
-func (*ContainerInfo_MesosInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{61, 1} }
+func (*ContainerInfo_MesosInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{66, 1} }
 
 func (m *ContainerInfo_MesosInfo) GetImage() *Image {
 	if m != nil {
@@ -7762,7 +8266,7 @@ type ContainerStatus struct {
 
 func (m *ContainerStatus) Reset()                    { *m = ContainerStatus{} }
 func (*ContainerStatus) ProtoMessage()               {}
-func (*ContainerStatus) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{62} }
+func (*ContainerStatus) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{67} }
 
 func (m *ContainerStatus) GetContainerID() *ContainerID {
 	if m != nil {
@@ -7800,7 +8304,7 @@ type CgroupInfo struct {
 
 func (m *CgroupInfo) Reset()                    { *m = CgroupInfo{} }
 func (*CgroupInfo) ProtoMessage()               {}
-func (*CgroupInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{63} }
+func (*CgroupInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{68} }
 
 func (m *CgroupInfo) GetNetCLS() *CgroupInfo_NetCls {
 	if m != nil {
@@ -7815,7 +8319,7 @@ type CgroupInfo_Blkio struct {
 
 func (m *CgroupInfo_Blkio) Reset()                    { *m = CgroupInfo_Blkio{} }
 func (*CgroupInfo_Blkio) ProtoMessage()               {}
-func (*CgroupInfo_Blkio) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{63, 0} }
+func (*CgroupInfo_Blkio) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{68, 0} }
 
 // Describes a stat value without the device descriptor part.
 type CgroupInfo_Blkio_Value struct {
@@ -7826,7 +8330,7 @@ type CgroupInfo_Blkio_Value struct {
 func (m *CgroupInfo_Blkio_Value) Reset()      { *m = CgroupInfo_Blkio_Value{} }
 func (*CgroupInfo_Blkio_Value) ProtoMessage() {}
 func (*CgroupInfo_Blkio_Value) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{63, 0, 0}
+	return fileDescriptorMesos, []int{68, 0, 0}
 }
 
 func (m *CgroupInfo_Blkio_Value) GetOp() CgroupInfo_Blkio_Operation {
@@ -7848,7 +8352,7 @@ type CgroupInfo_Blkio_CFQ struct {
 
 func (m *CgroupInfo_Blkio_CFQ) Reset()                    { *m = CgroupInfo_Blkio_CFQ{} }
 func (*CgroupInfo_Blkio_CFQ) ProtoMessage()               {}
-func (*CgroupInfo_Blkio_CFQ) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{63, 0, 1} }
+func (*CgroupInfo_Blkio_CFQ) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{68, 0, 1} }
 
 type CgroupInfo_Blkio_CFQ_Statistics struct {
 	// Stats are grouped by block devices. If `device` is not
@@ -7875,7 +8379,7 @@ type CgroupInfo_Blkio_CFQ_Statistics struct {
 func (m *CgroupInfo_Blkio_CFQ_Statistics) Reset()      { *m = CgroupInfo_Blkio_CFQ_Statistics{} }
 func (*CgroupInfo_Blkio_CFQ_Statistics) ProtoMessage() {}
 func (*CgroupInfo_Blkio_CFQ_Statistics) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{63, 0, 1, 0}
+	return fileDescriptorMesos, []int{68, 0, 1, 0}
 }
 
 func (m *CgroupInfo_Blkio_CFQ_Statistics) GetDevice() *Device_Number {
@@ -7947,7 +8451,7 @@ type CgroupInfo_Blkio_Throttling struct {
 func (m *CgroupInfo_Blkio_Throttling) Reset()      { *m = CgroupInfo_Blkio_Throttling{} }
 func (*CgroupInfo_Blkio_Throttling) ProtoMessage() {}
 func (*CgroupInfo_Blkio_Throttling) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{63, 0, 2}
+	return fileDescriptorMesos, []int{68, 0, 2}
 }
 
 type CgroupInfo_Blkio_Throttling_Statistics struct {
@@ -7965,7 +8469,7 @@ func (m *CgroupInfo_Blkio_Throttling_Statistics) Reset() {
 }
 func (*CgroupInfo_Blkio_Throttling_Statistics) ProtoMessage() {}
 func (*CgroupInfo_Blkio_Throttling_Statistics) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{63, 0, 2, 0}
+	return fileDescriptorMesos, []int{68, 0, 2, 0}
 }
 
 func (m *CgroupInfo_Blkio_Throttling_Statistics) GetDevice() *Device_Number {
@@ -7998,7 +8502,7 @@ type CgroupInfo_Blkio_Statistics struct {
 func (m *CgroupInfo_Blkio_Statistics) Reset()      { *m = CgroupInfo_Blkio_Statistics{} }
 func (*CgroupInfo_Blkio_Statistics) ProtoMessage() {}
 func (*CgroupInfo_Blkio_Statistics) Descriptor() ([]byte, []int) {
-	return fileDescriptorMesos, []int{63, 0, 3}
+	return fileDescriptorMesos, []int{68, 0, 3}
 }
 
 func (m *CgroupInfo_Blkio_Statistics) GetCFQ() []CgroupInfo_Blkio_CFQ_Statistics {
@@ -8033,7 +8537,7 @@ type CgroupInfo_NetCls struct {
 
 func (m *CgroupInfo_NetCls) Reset()                    { *m = CgroupInfo_NetCls{} }
 func (*CgroupInfo_NetCls) ProtoMessage()               {}
-func (*CgroupInfo_NetCls) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{63, 1} }
+func (*CgroupInfo_NetCls) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{68, 1} }
 
 func (m *CgroupInfo_NetCls) GetClassID() uint32 {
 	if m != nil && m.ClassID != nil {
@@ -8051,7 +8555,7 @@ type Labels struct {
 
 func (m *Labels) Reset()                    { *m = Labels{} }
 func (*Labels) ProtoMessage()               {}
-func (*Labels) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{64} }
+func (*Labels) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{69} }
 
 func (m *Labels) GetLabels() []Label {
 	if m != nil {
@@ -8069,7 +8573,7 @@ type Label struct {
 
 func (m *Label) Reset()                    { *m = Label{} }
 func (*Label) ProtoMessage()               {}
-func (*Label) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{65} }
+func (*Label) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{70} }
 
 func (m *Label) GetKey() string {
 	if m != nil {
@@ -8106,7 +8610,7 @@ type Port struct {
 
 func (m *Port) Reset()                    { *m = Port{} }
 func (*Port) ProtoMessage()               {}
-func (*Port) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{66} }
+func (*Port) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{71} }
 
 func (m *Port) GetNumber() uint32 {
 	if m != nil {
@@ -8151,7 +8655,7 @@ type Ports struct {
 
 func (m *Ports) Reset()                    { *m = Ports{} }
 func (*Ports) ProtoMessage()               {}
-func (*Ports) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{67} }
+func (*Ports) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{72} }
 
 func (m *Ports) GetPorts() []Port {
 	if m != nil {
@@ -8185,7 +8689,7 @@ type DiscoveryInfo struct {
 
 func (m *DiscoveryInfo) Reset()                    { *m = DiscoveryInfo{} }
 func (*DiscoveryInfo) ProtoMessage()               {}
-func (*DiscoveryInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{68} }
+func (*DiscoveryInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{73} }
 
 func (m *DiscoveryInfo) GetVisibility() DiscoveryInfo_Visibility {
 	if m != nil {
@@ -8247,7 +8751,7 @@ type WeightInfo struct {
 
 func (m *WeightInfo) Reset()                    { *m = WeightInfo{} }
 func (*WeightInfo) ProtoMessage()               {}
-func (*WeightInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{69} }
+func (*WeightInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{74} }
 
 func (m *WeightInfo) GetWeight() float64 {
 	if m != nil {
@@ -8277,7 +8781,7 @@ type VersionInfo struct {
 
 func (m *VersionInfo) Reset()                    { *m = VersionInfo{} }
 func (*VersionInfo) ProtoMessage()               {}
-func (*VersionInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{70} }
+func (*VersionInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{75} }
 
 func (m *VersionInfo) GetVersion() string {
 	if m != nil {
@@ -8337,7 +8841,7 @@ type Flag struct {
 
 func (m *Flag) Reset()                    { *m = Flag{} }
 func (*Flag) ProtoMessage()               {}
-func (*Flag) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{71} }
+func (*Flag) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{76} }
 
 func (m *Flag) GetName() string {
 	if m != nil {
@@ -8365,7 +8869,7 @@ type Role struct {
 
 func (m *Role) Reset()                    { *m = Role{} }
 func (*Role) ProtoMessage()               {}
-func (*Role) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{72} }
+func (*Role) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{77} }
 
 func (m *Role) GetName() string {
 	if m != nil {
@@ -8404,7 +8908,7 @@ type Metric struct {
 
 func (m *Metric) Reset()                    { *m = Metric{} }
 func (*Metric) ProtoMessage()               {}
-func (*Metric) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{73} }
+func (*Metric) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{78} }
 
 func (m *Metric) GetName() string {
 	if m != nil {
@@ -8442,7 +8946,7 @@ type FileInfo struct {
 
 func (m *FileInfo) Reset()                    { *m = FileInfo{} }
 func (*FileInfo) ProtoMessage()               {}
-func (*FileInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{74} }
+func (*FileInfo) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{79} }
 
 func (m *FileInfo) GetPath() string {
 	if m != nil {
@@ -8502,7 +9006,7 @@ type Device struct {
 
 func (m *Device) Reset()                    { *m = Device{} }
 func (*Device) ProtoMessage()               {}
-func (*Device) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{75} }
+func (*Device) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{80} }
 
 func (m *Device) GetPath() string {
 	if m != nil && m.Path != nil {
@@ -8525,7 +9029,7 @@ type Device_Number struct {
 
 func (m *Device_Number) Reset()                    { *m = Device_Number{} }
 func (*Device_Number) ProtoMessage()               {}
-func (*Device_Number) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{75, 0} }
+func (*Device_Number) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{80, 0} }
 
 func (m *Device_Number) GetMajorNumber() uint64 {
 	if m != nil && m.MajorNumber != nil {
@@ -8550,7 +9054,7 @@ type DeviceAccess struct {
 
 func (m *DeviceAccess) Reset()                    { *m = DeviceAccess{} }
 func (*DeviceAccess) ProtoMessage()               {}
-func (*DeviceAccess) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{76} }
+func (*DeviceAccess) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{81} }
 
 func (m *DeviceAccess) GetDevice() Device {
 	if m != nil {
@@ -8574,7 +9078,7 @@ type DeviceAccess_Access struct {
 
 func (m *DeviceAccess_Access) Reset()                    { *m = DeviceAccess_Access{} }
 func (*DeviceAccess_Access) ProtoMessage()               {}
-func (*DeviceAccess_Access) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{76, 0} }
+func (*DeviceAccess_Access) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{81, 0} }
 
 func (m *DeviceAccess_Access) GetRead() bool {
 	if m != nil && m.Read != nil {
@@ -8603,7 +9107,7 @@ type DeviceWhitelist struct {
 
 func (m *DeviceWhitelist) Reset()                    { *m = DeviceWhitelist{} }
 func (*DeviceWhitelist) ProtoMessage()               {}
-func (*DeviceWhitelist) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{77} }
+func (*DeviceWhitelist) Descriptor() ([]byte, []int) { return fileDescriptorMesos, []int{82} }
 
 func (m *DeviceWhitelist) GetAllowedDevices() []DeviceAccess {
 	if m != nil {
@@ -8620,6 +9124,7 @@ func init() {
 	proto.RegisterType((*ExecutorID)(nil), "mesos.ExecutorID")
 	proto.RegisterType((*ContainerID)(nil), "mesos.ContainerID")
 	proto.RegisterType((*ResourceProviderID)(nil), "mesos.ResourceProviderID")
+	proto.RegisterType((*OfferOperationID)(nil), "mesos.OfferOperationID")
 	proto.RegisterType((*TimeInfo)(nil), "mesos.TimeInfo")
 	proto.RegisterType((*DurationInfo)(nil), "mesos.DurationInfo")
 	proto.RegisterType((*Address)(nil), "mesos.Address")
@@ -8647,7 +9152,9 @@ func init() {
 	proto.RegisterType((*MasterInfo)(nil), "mesos.MasterInfo")
 	proto.RegisterType((*AgentInfo)(nil), "mesos.AgentInfo")
 	proto.RegisterType((*AgentInfo_Capability)(nil), "mesos.AgentInfo.Capability")
+	proto.RegisterType((*CSIPluginInfo)(nil), "mesos.CSIPluginInfo")
 	proto.RegisterType((*ResourceProviderInfo)(nil), "mesos.ResourceProviderInfo")
+	proto.RegisterType((*ResourceProviderInfo_StorageInfo)(nil), "mesos.ResourceProviderInfo.StorageInfo")
 	proto.RegisterType((*Value)(nil), "mesos.Value")
 	proto.RegisterType((*Value_Scalar)(nil), "mesos.Value.Scalar")
 	proto.RegisterType((*Value_Range)(nil), "mesos.Value.Range")
@@ -8686,10 +9193,17 @@ func init() {
 	proto.RegisterType((*Offer_Operation_Unreserve)(nil), "mesos.Offer.Operation.Unreserve")
 	proto.RegisterType((*Offer_Operation_Create)(nil), "mesos.Offer.Operation.Create")
 	proto.RegisterType((*Offer_Operation_Destroy)(nil), "mesos.Offer.Operation.Destroy")
+	proto.RegisterType((*Offer_Operation_CreateVolume)(nil), "mesos.Offer.Operation.CreateVolume")
+	proto.RegisterType((*Offer_Operation_DestroyVolume)(nil), "mesos.Offer.Operation.DestroyVolume")
+	proto.RegisterType((*Offer_Operation_CreateBlock)(nil), "mesos.Offer.Operation.CreateBlock")
+	proto.RegisterType((*Offer_Operation_DestroyBlock)(nil), "mesos.Offer.Operation.DestroyBlock")
 	proto.RegisterType((*InverseOffer)(nil), "mesos.InverseOffer")
 	proto.RegisterType((*TaskInfo)(nil), "mesos.TaskInfo")
 	proto.RegisterType((*TaskGroupInfo)(nil), "mesos.TaskGroupInfo")
 	proto.RegisterType((*Task)(nil), "mesos.Task")
+	proto.RegisterType((*TaskResourceLimitation)(nil), "mesos.TaskResourceLimitation")
+	proto.RegisterType((*OfferOperation)(nil), "mesos.OfferOperation")
+	proto.RegisterType((*OfferOperationStatus)(nil), "mesos.OfferOperationStatus")
 	proto.RegisterType((*CheckStatusInfo)(nil), "mesos.CheckStatusInfo")
 	proto.RegisterType((*CheckStatusInfo_Command)(nil), "mesos.CheckStatusInfo.Command")
 	proto.RegisterType((*CheckStatusInfo_Http)(nil), "mesos.CheckStatusInfo.Http")
@@ -8713,6 +9227,7 @@ func init() {
 	proto.RegisterType((*Volume)(nil), "mesos.Volume")
 	proto.RegisterType((*Volume_Source)(nil), "mesos.Volume.Source")
 	proto.RegisterType((*Volume_Source_DockerVolume)(nil), "mesos.Volume.Source.DockerVolume")
+	proto.RegisterType((*Volume_Source_HostPath)(nil), "mesos.Volume.Source.HostPath")
 	proto.RegisterType((*Volume_Source_SandboxPath)(nil), "mesos.Volume.Source.SandboxPath")
 	proto.RegisterType((*NetworkInfo)(nil), "mesos.NetworkInfo")
 	proto.RegisterType((*NetworkInfo_IPAddress)(nil), "mesos.NetworkInfo.IPAddress")
@@ -8755,6 +9270,7 @@ func init() {
 	proto.RegisterType((*DeviceWhitelist)(nil), "mesos.DeviceWhitelist")
 	proto.RegisterEnum("mesos.Status", Status_name, Status_value)
 	proto.RegisterEnum("mesos.TaskState", TaskState_name, TaskState_value)
+	proto.RegisterEnum("mesos.OfferOperationState", OfferOperationState_name, OfferOperationState_value)
 	proto.RegisterEnum("mesos.MachineInfo_Mode", MachineInfo_Mode_name, MachineInfo_Mode_value)
 	proto.RegisterEnum("mesos.FrameworkInfo_Capability_Type", FrameworkInfo_Capability_Type_name, FrameworkInfo_Capability_Type_value)
 	proto.RegisterEnum("mesos.CheckInfo_Type", CheckInfo_Type_name, CheckInfo_Type_value)
@@ -8790,6 +9306,13 @@ func (x Status) String() string {
 }
 func (x TaskState) String() string {
 	s, ok := TaskState_name[int32(x)]
+	if ok {
+		return s
+	}
+	return strconv.Itoa(int(x))
+}
+func (x OfferOperationState) String() string {
+	s, ok := OfferOperationState_name[int32(x)]
 	if ok {
 		return s
 	}
@@ -9377,6 +9900,66 @@ func (this *ResourceProviderID) Equal(that interface{}) bool {
 	that1, ok := that.(*ResourceProviderID)
 	if !ok {
 		that2, ok := that.(ResourceProviderID)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Value != that1.Value {
+		return false
+	}
+	return true
+}
+func (this *OfferOperationID) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*OfferOperationID)
+	if !ok {
+		that2, ok := that.(OfferOperationID)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *OfferOperationID")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *OfferOperationID but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *OfferOperationID but is not nil && this == nil")
+	}
+	if this.Value != that1.Value {
+		return fmt.Errorf("Value this(%v) Not Equal that(%v)", this.Value, that1.Value)
+	}
+	return nil
+}
+func (this *OfferOperationID) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*OfferOperationID)
+	if !ok {
+		that2, ok := that.(OfferOperationID)
 		if ok {
 			that1 = &that2
 		} else {
@@ -11994,6 +12577,94 @@ func (this *AgentInfo_Capability) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *CSIPluginInfo) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*CSIPluginInfo)
+	if !ok {
+		that2, ok := that.(CSIPluginInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *CSIPluginInfo")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *CSIPluginInfo but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *CSIPluginInfo but is not nil && this == nil")
+	}
+	if this.Name != that1.Name {
+		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+	}
+	if !this.Command.Equal(&that1.Command) {
+		return fmt.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
+	}
+	if len(this.Resources) != len(that1.Resources) {
+		return fmt.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
+	}
+	for i := range this.Resources {
+		if !this.Resources[i].Equal(&that1.Resources[i]) {
+			return fmt.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
+		}
+	}
+	if !this.Container.Equal(that1.Container) {
+		return fmt.Errorf("Container this(%v) Not Equal that(%v)", this.Container, that1.Container)
+	}
+	return nil
+}
+func (this *CSIPluginInfo) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*CSIPluginInfo)
+	if !ok {
+		that2, ok := that.(CSIPluginInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if !this.Command.Equal(&that1.Command) {
+		return false
+	}
+	if len(this.Resources) != len(that1.Resources) {
+		return false
+	}
+	for i := range this.Resources {
+		if !this.Resources[i].Equal(&that1.Resources[i]) {
+			return false
+		}
+	}
+	if !this.Container.Equal(that1.Container) {
+		return false
+	}
+	return true
+}
 func (this *ResourceProviderInfo) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -12035,6 +12706,9 @@ func (this *ResourceProviderInfo) VerboseEqual(that interface{}) error {
 	}
 	if this.Name != that1.Name {
 		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+	}
+	if !this.Storage.Equal(that1.Storage) {
+		return fmt.Errorf("Storage this(%v) Not Equal that(%v)", this.Storage, that1.Storage)
 	}
 	return nil
 }
@@ -12078,6 +12752,91 @@ func (this *ResourceProviderInfo) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Name != that1.Name {
+		return false
+	}
+	if !this.Storage.Equal(that1.Storage) {
+		return false
+	}
+	return true
+}
+func (this *ResourceProviderInfo_StorageInfo) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*ResourceProviderInfo_StorageInfo)
+	if !ok {
+		that2, ok := that.(ResourceProviderInfo_StorageInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *ResourceProviderInfo_StorageInfo")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *ResourceProviderInfo_StorageInfo but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *ResourceProviderInfo_StorageInfo but is not nil && this == nil")
+	}
+	if len(this.CsiPlugins) != len(that1.CsiPlugins) {
+		return fmt.Errorf("CsiPlugins this(%v) Not Equal that(%v)", len(this.CsiPlugins), len(that1.CsiPlugins))
+	}
+	for i := range this.CsiPlugins {
+		if !this.CsiPlugins[i].Equal(&that1.CsiPlugins[i]) {
+			return fmt.Errorf("CsiPlugins this[%v](%v) Not Equal that[%v](%v)", i, this.CsiPlugins[i], i, that1.CsiPlugins[i])
+		}
+	}
+	if this.ControllerPlugin != that1.ControllerPlugin {
+		return fmt.Errorf("ControllerPlugin this(%v) Not Equal that(%v)", this.ControllerPlugin, that1.ControllerPlugin)
+	}
+	if this.NodePlugin != that1.NodePlugin {
+		return fmt.Errorf("NodePlugin this(%v) Not Equal that(%v)", this.NodePlugin, that1.NodePlugin)
+	}
+	return nil
+}
+func (this *ResourceProviderInfo_StorageInfo) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*ResourceProviderInfo_StorageInfo)
+	if !ok {
+		that2, ok := that.(ResourceProviderInfo_StorageInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if len(this.CsiPlugins) != len(that1.CsiPlugins) {
+		return false
+	}
+	for i := range this.CsiPlugins {
+		if !this.CsiPlugins[i].Equal(&that1.CsiPlugins[i]) {
+			return false
+		}
+	}
+	if this.ControllerPlugin != that1.ControllerPlugin {
+		return false
+	}
+	if this.NodePlugin != that1.NodePlugin {
 		return false
 	}
 	return true
@@ -13118,6 +13877,21 @@ func (this *Resource_DiskInfo_Source) VerboseEqual(that interface{}) error {
 	if !this.Mount.Equal(that1.Mount) {
 		return fmt.Errorf("Mount this(%v) Not Equal that(%v)", this.Mount, that1.Mount)
 	}
+	if this.ID != that1.ID {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
+	}
+	if !this.Metadata.Equal(that1.Metadata) {
+		return fmt.Errorf("Metadata this(%v) Not Equal that(%v)", this.Metadata, that1.Metadata)
+	}
+	if this.Profile != nil && that1.Profile != nil {
+		if *this.Profile != *that1.Profile {
+			return fmt.Errorf("Profile this(%v) Not Equal that(%v)", *this.Profile, *that1.Profile)
+		}
+	} else if this.Profile != nil {
+		return fmt.Errorf("this.Profile == nil && that.Profile != nil")
+	} else if that1.Profile != nil {
+		return fmt.Errorf("Profile this(%v) Not Equal that(%v)", this.Profile, that1.Profile)
+	}
 	return nil
 }
 func (this *Resource_DiskInfo_Source) Equal(that interface{}) bool {
@@ -13152,6 +13926,21 @@ func (this *Resource_DiskInfo_Source) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Mount.Equal(that1.Mount) {
+		return false
+	}
+	if this.ID != that1.ID {
+		return false
+	}
+	if !this.Metadata.Equal(that1.Metadata) {
+		return false
+	}
+	if this.Profile != nil && that1.Profile != nil {
+		if *this.Profile != *that1.Profile {
+			return false
+		}
+	} else if this.Profile != nil {
+		return false
+	} else if that1.Profile != nil {
 		return false
 	}
 	return true
@@ -17578,6 +18367,9 @@ func (this *Offer_Operation) VerboseEqual(that interface{}) error {
 	if this.Type != that1.Type {
 		return fmt.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
 	}
+	if !this.ID.Equal(that1.ID) {
+		return fmt.Errorf("ID this(%v) Not Equal that(%v)", this.ID, that1.ID)
+	}
 	if !this.Launch.Equal(that1.Launch) {
 		return fmt.Errorf("Launch this(%v) Not Equal that(%v)", this.Launch, that1.Launch)
 	}
@@ -17595,6 +18387,18 @@ func (this *Offer_Operation) VerboseEqual(that interface{}) error {
 	}
 	if !this.Destroy.Equal(that1.Destroy) {
 		return fmt.Errorf("Destroy this(%v) Not Equal that(%v)", this.Destroy, that1.Destroy)
+	}
+	if !this.CreateVolume.Equal(that1.CreateVolume) {
+		return fmt.Errorf("CreateVolume this(%v) Not Equal that(%v)", this.CreateVolume, that1.CreateVolume)
+	}
+	if !this.DestroyVolume.Equal(that1.DestroyVolume) {
+		return fmt.Errorf("DestroyVolume this(%v) Not Equal that(%v)", this.DestroyVolume, that1.DestroyVolume)
+	}
+	if !this.CreateBlock.Equal(that1.CreateBlock) {
+		return fmt.Errorf("CreateBlock this(%v) Not Equal that(%v)", this.CreateBlock, that1.CreateBlock)
+	}
+	if !this.DestroyBlock.Equal(that1.DestroyBlock) {
+		return fmt.Errorf("DestroyBlock this(%v) Not Equal that(%v)", this.DestroyBlock, that1.DestroyBlock)
 	}
 	return nil
 }
@@ -17626,6 +18430,9 @@ func (this *Offer_Operation) Equal(that interface{}) bool {
 	if this.Type != that1.Type {
 		return false
 	}
+	if !this.ID.Equal(that1.ID) {
+		return false
+	}
 	if !this.Launch.Equal(that1.Launch) {
 		return false
 	}
@@ -17642,6 +18449,18 @@ func (this *Offer_Operation) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Destroy.Equal(that1.Destroy) {
+		return false
+	}
+	if !this.CreateVolume.Equal(that1.CreateVolume) {
+		return false
+	}
+	if !this.DestroyVolume.Equal(that1.DestroyVolume) {
+		return false
+	}
+	if !this.CreateBlock.Equal(that1.CreateBlock) {
+		return false
+	}
+	if !this.DestroyBlock.Equal(that1.DestroyBlock) {
 		return false
 	}
 	return true
@@ -18059,6 +18878,252 @@ func (this *Offer_Operation_Destroy) Equal(that interface{}) bool {
 		if !this.Volumes[i].Equal(&that1.Volumes[i]) {
 			return false
 		}
+	}
+	return true
+}
+func (this *Offer_Operation_CreateVolume) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Offer_Operation_CreateVolume)
+	if !ok {
+		that2, ok := that.(Offer_Operation_CreateVolume)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation_CreateVolume")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Offer_Operation_CreateVolume but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Offer_Operation_CreateVolume but is not nil && this == nil")
+	}
+	if !this.Source.Equal(&that1.Source) {
+		return fmt.Errorf("Source this(%v) Not Equal that(%v)", this.Source, that1.Source)
+	}
+	if this.TargetType != that1.TargetType {
+		return fmt.Errorf("TargetType this(%v) Not Equal that(%v)", this.TargetType, that1.TargetType)
+	}
+	return nil
+}
+func (this *Offer_Operation_CreateVolume) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Offer_Operation_CreateVolume)
+	if !ok {
+		that2, ok := that.(Offer_Operation_CreateVolume)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Source.Equal(&that1.Source) {
+		return false
+	}
+	if this.TargetType != that1.TargetType {
+		return false
+	}
+	return true
+}
+func (this *Offer_Operation_DestroyVolume) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Offer_Operation_DestroyVolume)
+	if !ok {
+		that2, ok := that.(Offer_Operation_DestroyVolume)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation_DestroyVolume")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Offer_Operation_DestroyVolume but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Offer_Operation_DestroyVolume but is not nil && this == nil")
+	}
+	if !this.Volume.Equal(&that1.Volume) {
+		return fmt.Errorf("Volume this(%v) Not Equal that(%v)", this.Volume, that1.Volume)
+	}
+	return nil
+}
+func (this *Offer_Operation_DestroyVolume) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Offer_Operation_DestroyVolume)
+	if !ok {
+		that2, ok := that.(Offer_Operation_DestroyVolume)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Volume.Equal(&that1.Volume) {
+		return false
+	}
+	return true
+}
+func (this *Offer_Operation_CreateBlock) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Offer_Operation_CreateBlock)
+	if !ok {
+		that2, ok := that.(Offer_Operation_CreateBlock)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation_CreateBlock")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Offer_Operation_CreateBlock but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Offer_Operation_CreateBlock but is not nil && this == nil")
+	}
+	if !this.Source.Equal(&that1.Source) {
+		return fmt.Errorf("Source this(%v) Not Equal that(%v)", this.Source, that1.Source)
+	}
+	return nil
+}
+func (this *Offer_Operation_CreateBlock) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Offer_Operation_CreateBlock)
+	if !ok {
+		that2, ok := that.(Offer_Operation_CreateBlock)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Source.Equal(&that1.Source) {
+		return false
+	}
+	return true
+}
+func (this *Offer_Operation_DestroyBlock) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Offer_Operation_DestroyBlock)
+	if !ok {
+		that2, ok := that.(Offer_Operation_DestroyBlock)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Offer_Operation_DestroyBlock")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Offer_Operation_DestroyBlock but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Offer_Operation_DestroyBlock but is not nil && this == nil")
+	}
+	if !this.Block.Equal(&that1.Block) {
+		return fmt.Errorf("Block this(%v) Not Equal that(%v)", this.Block, that1.Block)
+	}
+	return nil
+}
+func (this *Offer_Operation_DestroyBlock) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Offer_Operation_DestroyBlock)
+	if !ok {
+		that2, ok := that.(Offer_Operation_DestroyBlock)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Block.Equal(&that1.Block) {
+		return false
 	}
 	return true
 }
@@ -18568,6 +19633,270 @@ func (this *Task) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *TaskResourceLimitation) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*TaskResourceLimitation)
+	if !ok {
+		that2, ok := that.(TaskResourceLimitation)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *TaskResourceLimitation")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *TaskResourceLimitation but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *TaskResourceLimitation but is not nil && this == nil")
+	}
+	if len(this.Resources) != len(that1.Resources) {
+		return fmt.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
+	}
+	for i := range this.Resources {
+		if !this.Resources[i].Equal(&that1.Resources[i]) {
+			return fmt.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
+		}
+	}
+	return nil
+}
+func (this *TaskResourceLimitation) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*TaskResourceLimitation)
+	if !ok {
+		that2, ok := that.(TaskResourceLimitation)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if len(this.Resources) != len(that1.Resources) {
+		return false
+	}
+	for i := range this.Resources {
+		if !this.Resources[i].Equal(&that1.Resources[i]) {
+			return false
+		}
+	}
+	return true
+}
+func (this *OfferOperation) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*OfferOperation)
+	if !ok {
+		that2, ok := that.(OfferOperation)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *OfferOperation")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *OfferOperation but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *OfferOperation but is not nil && this == nil")
+	}
+	if !this.FrameworkID.Equal(&that1.FrameworkID) {
+		return fmt.Errorf("FrameworkID this(%v) Not Equal that(%v)", this.FrameworkID, that1.FrameworkID)
+	}
+	if !this.Info.Equal(&that1.Info) {
+		return fmt.Errorf("Info this(%v) Not Equal that(%v)", this.Info, that1.Info)
+	}
+	if len(this.Statuses) != len(that1.Statuses) {
+		return fmt.Errorf("Statuses this(%v) Not Equal that(%v)", len(this.Statuses), len(that1.Statuses))
+	}
+	for i := range this.Statuses {
+		if !this.Statuses[i].Equal(&that1.Statuses[i]) {
+			return fmt.Errorf("Statuses this[%v](%v) Not Equal that[%v](%v)", i, this.Statuses[i], i, that1.Statuses[i])
+		}
+	}
+	if !bytes.Equal(this.OperationUUID, that1.OperationUUID) {
+		return fmt.Errorf("OperationUUID this(%v) Not Equal that(%v)", this.OperationUUID, that1.OperationUUID)
+	}
+	return nil
+}
+func (this *OfferOperation) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*OfferOperation)
+	if !ok {
+		that2, ok := that.(OfferOperation)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.FrameworkID.Equal(&that1.FrameworkID) {
+		return false
+	}
+	if !this.Info.Equal(&that1.Info) {
+		return false
+	}
+	if len(this.Statuses) != len(that1.Statuses) {
+		return false
+	}
+	for i := range this.Statuses {
+		if !this.Statuses[i].Equal(&that1.Statuses[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.OperationUUID, that1.OperationUUID) {
+		return false
+	}
+	return true
+}
+func (this *OfferOperationStatus) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*OfferOperationStatus)
+	if !ok {
+		that2, ok := that.(OfferOperationStatus)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *OfferOperationStatus")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *OfferOperationStatus but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *OfferOperationStatus but is not nil && this == nil")
+	}
+	if !this.OperationID.Equal(that1.OperationID) {
+		return fmt.Errorf("OperationID this(%v) Not Equal that(%v)", this.OperationID, that1.OperationID)
+	}
+	if this.State != that1.State {
+		return fmt.Errorf("State this(%v) Not Equal that(%v)", this.State, that1.State)
+	}
+	if this.Message != nil && that1.Message != nil {
+		if *this.Message != *that1.Message {
+			return fmt.Errorf("Message this(%v) Not Equal that(%v)", *this.Message, *that1.Message)
+		}
+	} else if this.Message != nil {
+		return fmt.Errorf("this.Message == nil && that.Message != nil")
+	} else if that1.Message != nil {
+		return fmt.Errorf("Message this(%v) Not Equal that(%v)", this.Message, that1.Message)
+	}
+	if len(this.ConvertedResources) != len(that1.ConvertedResources) {
+		return fmt.Errorf("ConvertedResources this(%v) Not Equal that(%v)", len(this.ConvertedResources), len(that1.ConvertedResources))
+	}
+	for i := range this.ConvertedResources {
+		if !this.ConvertedResources[i].Equal(&that1.ConvertedResources[i]) {
+			return fmt.Errorf("ConvertedResources this[%v](%v) Not Equal that[%v](%v)", i, this.ConvertedResources[i], i, that1.ConvertedResources[i])
+		}
+	}
+	if !bytes.Equal(this.StatusUUID, that1.StatusUUID) {
+		return fmt.Errorf("StatusUUID this(%v) Not Equal that(%v)", this.StatusUUID, that1.StatusUUID)
+	}
+	return nil
+}
+func (this *OfferOperationStatus) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*OfferOperationStatus)
+	if !ok {
+		that2, ok := that.(OfferOperationStatus)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.OperationID.Equal(that1.OperationID) {
+		return false
+	}
+	if this.State != that1.State {
+		return false
+	}
+	if this.Message != nil && that1.Message != nil {
+		if *this.Message != *that1.Message {
+			return false
+		}
+	} else if this.Message != nil {
+		return false
+	} else if that1.Message != nil {
+		return false
+	}
+	if len(this.ConvertedResources) != len(that1.ConvertedResources) {
+		return false
+	}
+	for i := range this.ConvertedResources {
+		if !this.ConvertedResources[i].Equal(&that1.ConvertedResources[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.StatusUUID, that1.StatusUUID) {
+		return false
+	}
+	return true
+}
 func (this *CheckStatusInfo) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -18980,6 +20309,9 @@ func (this *TaskStatus) VerboseEqual(that interface{}) error {
 	if !this.UnreachableTime.Equal(that1.UnreachableTime) {
 		return fmt.Errorf("UnreachableTime this(%v) Not Equal that(%v)", this.UnreachableTime, that1.UnreachableTime)
 	}
+	if !this.Limitation.Equal(that1.Limitation) {
+		return fmt.Errorf("Limitation this(%v) Not Equal that(%v)", this.Limitation, that1.Limitation)
+	}
 	return nil
 }
 func (this *TaskStatus) Equal(that interface{}) bool {
@@ -19086,6 +20418,9 @@ func (this *TaskStatus) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.UnreachableTime.Equal(that1.UnreachableTime) {
+		return false
+	}
+	if !this.Limitation.Equal(that1.Limitation) {
 		return false
 	}
 	return true
@@ -20427,6 +21762,9 @@ func (this *Volume_Source) VerboseEqual(that interface{}) error {
 	if !this.DockerVolume.Equal(that1.DockerVolume) {
 		return fmt.Errorf("DockerVolume this(%v) Not Equal that(%v)", this.DockerVolume, that1.DockerVolume)
 	}
+	if !this.HostPath.Equal(that1.HostPath) {
+		return fmt.Errorf("HostPath this(%v) Not Equal that(%v)", this.HostPath, that1.HostPath)
+	}
 	if !this.SandboxPath.Equal(that1.SandboxPath) {
 		return fmt.Errorf("SandboxPath this(%v) Not Equal that(%v)", this.SandboxPath, that1.SandboxPath)
 	}
@@ -20464,6 +21802,9 @@ func (this *Volume_Source) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.DockerVolume.Equal(that1.DockerVolume) {
+		return false
+	}
+	if !this.HostPath.Equal(that1.HostPath) {
 		return false
 	}
 	if !this.SandboxPath.Equal(that1.SandboxPath) {
@@ -20554,6 +21895,66 @@ func (this *Volume_Source_DockerVolume) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.DriverOptions.Equal(that1.DriverOptions) {
+		return false
+	}
+	return true
+}
+func (this *Volume_Source_HostPath) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Volume_Source_HostPath)
+	if !ok {
+		that2, ok := that.(Volume_Source_HostPath)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Volume_Source_HostPath")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Volume_Source_HostPath but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Volume_Source_HostPath but is not nil && this == nil")
+	}
+	if this.Path != that1.Path {
+		return fmt.Errorf("Path this(%v) Not Equal that(%v)", this.Path, that1.Path)
+	}
+	return nil
+}
+func (this *Volume_Source_HostPath) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Volume_Source_HostPath)
+	if !ok {
+		that2, ok := that.(Volume_Source_HostPath)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Path != that1.Path {
 		return false
 	}
 	return true
@@ -24329,6 +25730,16 @@ func (this *ResourceProviderID) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *OfferOperationID) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&mesos.OfferOperationID{")
+	s = append(s, "Value: "+fmt.Sprintf("%#v", this.Value)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func (this *TimeInfo) GoString() string {
 	if this == nil {
 		return "nil"
@@ -24813,11 +26224,28 @@ func (this *AgentInfo_Capability) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
-func (this *ResourceProviderInfo) GoString() string {
+func (this *CSIPluginInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
 	s := make([]string, 0, 8)
+	s = append(s, "&mesos.CSIPluginInfo{")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "Command: "+strings.Replace(this.Command.GoString(), `&`, ``, 1)+",\n")
+	if this.Resources != nil {
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
+	}
+	if this.Container != nil {
+		s = append(s, "Container: "+fmt.Sprintf("%#v", this.Container)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *ResourceProviderInfo) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 9)
 	s = append(s, "&mesos.ResourceProviderInfo{")
 	if this.ID != nil {
 		s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
@@ -24827,6 +26255,23 @@ func (this *ResourceProviderInfo) GoString() string {
 	}
 	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
 	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	if this.Storage != nil {
+		s = append(s, "Storage: "+fmt.Sprintf("%#v", this.Storage)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *ResourceProviderInfo_StorageInfo) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&mesos.ResourceProviderInfo_StorageInfo{")
+	if this.CsiPlugins != nil {
+		s = append(s, "CsiPlugins: "+fmt.Sprintf("%#v", this.CsiPlugins)+",\n")
+	}
+	s = append(s, "ControllerPlugin: "+fmt.Sprintf("%#v", this.ControllerPlugin)+",\n")
+	s = append(s, "NodePlugin: "+fmt.Sprintf("%#v", this.NodePlugin)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -25044,7 +26489,7 @@ func (this *Resource_DiskInfo_Source) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 7)
+	s := make([]string, 0, 10)
 	s = append(s, "&mesos.Resource_DiskInfo_Source{")
 	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
 	if this.Path != nil {
@@ -25052,6 +26497,13 @@ func (this *Resource_DiskInfo_Source) GoString() string {
 	}
 	if this.Mount != nil {
 		s = append(s, "Mount: "+fmt.Sprintf("%#v", this.Mount)+",\n")
+	}
+	s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
+	if this.Metadata != nil {
+		s = append(s, "Metadata: "+fmt.Sprintf("%#v", this.Metadata)+",\n")
+	}
+	if this.Profile != nil {
+		s = append(s, "Profile: "+valueToGoStringMesos(this.Profile, "string")+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25828,9 +27280,12 @@ func (this *Offer_Operation) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 11)
+	s := make([]string, 0, 16)
 	s = append(s, "&mesos.Offer_Operation{")
 	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
+	if this.ID != nil {
+		s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
+	}
 	if this.Launch != nil {
 		s = append(s, "Launch: "+fmt.Sprintf("%#v", this.Launch)+",\n")
 	}
@@ -25848,6 +27303,18 @@ func (this *Offer_Operation) GoString() string {
 	}
 	if this.Destroy != nil {
 		s = append(s, "Destroy: "+fmt.Sprintf("%#v", this.Destroy)+",\n")
+	}
+	if this.CreateVolume != nil {
+		s = append(s, "CreateVolume: "+fmt.Sprintf("%#v", this.CreateVolume)+",\n")
+	}
+	if this.DestroyVolume != nil {
+		s = append(s, "DestroyVolume: "+fmt.Sprintf("%#v", this.DestroyVolume)+",\n")
+	}
+	if this.CreateBlock != nil {
+		s = append(s, "CreateBlock: "+fmt.Sprintf("%#v", this.CreateBlock)+",\n")
+	}
+	if this.DestroyBlock != nil {
+		s = append(s, "DestroyBlock: "+fmt.Sprintf("%#v", this.DestroyBlock)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25920,6 +27387,47 @@ func (this *Offer_Operation_Destroy) GoString() string {
 	if this.Volumes != nil {
 		s = append(s, "Volumes: "+fmt.Sprintf("%#v", this.Volumes)+",\n")
 	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Offer_Operation_CreateVolume) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&mesos.Offer_Operation_CreateVolume{")
+	s = append(s, "Source: "+strings.Replace(this.Source.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "TargetType: "+fmt.Sprintf("%#v", this.TargetType)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Offer_Operation_DestroyVolume) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&mesos.Offer_Operation_DestroyVolume{")
+	s = append(s, "Volume: "+strings.Replace(this.Volume.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Offer_Operation_CreateBlock) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&mesos.Offer_Operation_CreateBlock{")
+	s = append(s, "Source: "+strings.Replace(this.Source.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Offer_Operation_DestroyBlock) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&mesos.Offer_Operation_DestroyBlock{")
+	s = append(s, "Block: "+strings.Replace(this.Block.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -26041,6 +27549,57 @@ func (this *Task) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *TaskResourceLimitation) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&mesos.TaskResourceLimitation{")
+	if this.Resources != nil {
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *OfferOperation) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 8)
+	s = append(s, "&mesos.OfferOperation{")
+	s = append(s, "FrameworkID: "+strings.Replace(this.FrameworkID.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "Info: "+strings.Replace(this.Info.GoString(), `&`, ``, 1)+",\n")
+	if this.Statuses != nil {
+		s = append(s, "Statuses: "+fmt.Sprintf("%#v", this.Statuses)+",\n")
+	}
+	if this.OperationUUID != nil {
+		s = append(s, "OperationUUID: "+valueToGoStringMesos(this.OperationUUID, "byte")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *OfferOperationStatus) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 9)
+	s = append(s, "&mesos.OfferOperationStatus{")
+	if this.OperationID != nil {
+		s = append(s, "OperationID: "+fmt.Sprintf("%#v", this.OperationID)+",\n")
+	}
+	s = append(s, "State: "+fmt.Sprintf("%#v", this.State)+",\n")
+	if this.Message != nil {
+		s = append(s, "Message: "+valueToGoStringMesos(this.Message, "string")+",\n")
+	}
+	if this.ConvertedResources != nil {
+		s = append(s, "ConvertedResources: "+fmt.Sprintf("%#v", this.ConvertedResources)+",\n")
+	}
+	if this.StatusUUID != nil {
+		s = append(s, "StatusUUID: "+valueToGoStringMesos(this.StatusUUID, "byte")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func (this *CheckStatusInfo) GoString() string {
 	if this == nil {
 		return "nil"
@@ -26102,7 +27661,7 @@ func (this *TaskStatus) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 19)
+	s := make([]string, 0, 20)
 	s = append(s, "&mesos.TaskStatus{")
 	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
 	if this.State != nil {
@@ -26146,6 +27705,9 @@ func (this *TaskStatus) GoString() string {
 	}
 	if this.UnreachableTime != nil {
 		s = append(s, "UnreachableTime: "+fmt.Sprintf("%#v", this.UnreachableTime)+",\n")
+	}
+	if this.Limitation != nil {
+		s = append(s, "Limitation: "+fmt.Sprintf("%#v", this.Limitation)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -26395,11 +27957,14 @@ func (this *Volume_Source) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 8)
+	s := make([]string, 0, 9)
 	s = append(s, "&mesos.Volume_Source{")
 	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
 	if this.DockerVolume != nil {
 		s = append(s, "DockerVolume: "+fmt.Sprintf("%#v", this.DockerVolume)+",\n")
+	}
+	if this.HostPath != nil {
+		s = append(s, "HostPath: "+fmt.Sprintf("%#v", this.HostPath)+",\n")
 	}
 	if this.SandboxPath != nil {
 		s = append(s, "SandboxPath: "+fmt.Sprintf("%#v", this.SandboxPath)+",\n")
@@ -26423,6 +27988,16 @@ func (this *Volume_Source_DockerVolume) GoString() string {
 	if this.DriverOptions != nil {
 		s = append(s, "DriverOptions: "+fmt.Sprintf("%#v", this.DriverOptions)+",\n")
 	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Volume_Source_HostPath) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&mesos.Volume_Source_HostPath{")
+	s = append(s, "Path: "+fmt.Sprintf("%#v", this.Path)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -27254,6 +28829,28 @@ func (m *ResourceProviderID) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ResourceProviderID) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(len(m.Value)))
+	i += copy(dAtA[i:], m.Value)
+	return i, nil
+}
+
+func (m *OfferOperationID) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OfferOperationID) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -28461,6 +30058,58 @@ func (m *AgentInfo_Capability) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *CSIPluginInfo) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CSIPluginInfo) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(len(m.Name)))
+	i += copy(dAtA[i:], m.Name)
+	dAtA[i] = 0x12
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(m.Command.ProtoSize()))
+	n32, err := m.Command.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n32
+	if len(m.Resources) > 0 {
+		for _, msg := range m.Resources {
+			dAtA[i] = 0x1a
+			i++
+			i = encodeVarintMesos(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.Container != nil {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.Container.ProtoSize()))
+		n33, err := m.Container.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n33
+	}
+	return i, nil
+}
+
 func (m *ResourceProviderInfo) Marshal() (dAtA []byte, err error) {
 	size := m.ProtoSize()
 	dAtA = make([]byte, size)
@@ -28480,11 +30129,11 @@ func (m *ResourceProviderInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.ID.ProtoSize()))
-		n32, err := m.ID.MarshalTo(dAtA[i:])
+		n34, err := m.ID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n32
+		i += n34
 	}
 	if len(m.Attributes) > 0 {
 		for _, msg := range m.Attributes {
@@ -28506,6 +30155,54 @@ func (m *ResourceProviderInfo) MarshalTo(dAtA []byte) (int, error) {
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(len(m.Name)))
 	i += copy(dAtA[i:], m.Name)
+	if m.Storage != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.Storage.ProtoSize()))
+		n35, err := m.Storage.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n35
+	}
+	return i, nil
+}
+
+func (m *ResourceProviderInfo_StorageInfo) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ResourceProviderInfo_StorageInfo) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.CsiPlugins) > 0 {
+		for _, msg := range m.CsiPlugins {
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintMesos(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	dAtA[i] = 0x12
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(len(m.ControllerPlugin)))
+	i += copy(dAtA[i:], m.ControllerPlugin)
+	dAtA[i] = 0x1a
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(len(m.NodePlugin)))
+	i += copy(dAtA[i:], m.NodePlugin)
 	return i, nil
 }
 
@@ -28531,41 +30228,41 @@ func (m *Value) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Scalar.ProtoSize()))
-		n33, err := m.Scalar.MarshalTo(dAtA[i:])
+		n36, err := m.Scalar.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n33
+		i += n36
 	}
 	if m.Ranges != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Ranges.ProtoSize()))
-		n34, err := m.Ranges.MarshalTo(dAtA[i:])
+		n37, err := m.Ranges.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n34
+		i += n37
 	}
 	if m.Set != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Set.ProtoSize()))
-		n35, err := m.Set.MarshalTo(dAtA[i:])
+		n38, err := m.Set.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n35
+		i += n38
 	}
 	if m.Text != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Text.ProtoSize()))
-		n36, err := m.Text.MarshalTo(dAtA[i:])
+		n39, err := m.Text.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n36
+		i += n39
 	}
 	return i, nil
 }
@@ -28726,41 +30423,41 @@ func (m *Attribute) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Scalar.ProtoSize()))
-		n37, err := m.Scalar.MarshalTo(dAtA[i:])
+		n40, err := m.Scalar.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n37
+		i += n40
 	}
 	if m.Ranges != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Ranges.ProtoSize()))
-		n38, err := m.Ranges.MarshalTo(dAtA[i:])
+		n41, err := m.Ranges.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n38
+		i += n41
 	}
 	if m.Text != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Text.ProtoSize()))
-		n39, err := m.Text.MarshalTo(dAtA[i:])
+		n42, err := m.Text.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n39
+		i += n42
 	}
 	if m.Set != nil {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Set.ProtoSize()))
-		n40, err := m.Set.MarshalTo(dAtA[i:])
+		n43, err := m.Set.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n40
+		i += n43
 	}
 	return i, nil
 }
@@ -28795,31 +30492,31 @@ func (m *Resource) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Scalar.ProtoSize()))
-		n41, err := m.Scalar.MarshalTo(dAtA[i:])
+		n44, err := m.Scalar.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n41
+		i += n44
 	}
 	if m.Ranges != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Ranges.ProtoSize()))
-		n42, err := m.Ranges.MarshalTo(dAtA[i:])
+		n45, err := m.Ranges.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n42
+		i += n45
 	}
 	if m.Set != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Set.ProtoSize()))
-		n43, err := m.Set.MarshalTo(dAtA[i:])
+		n46, err := m.Set.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n43
+		i += n46
 	}
 	if m.Role != nil {
 		dAtA[i] = 0x32
@@ -28831,61 +30528,61 @@ func (m *Resource) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Disk.ProtoSize()))
-		n44, err := m.Disk.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n44
-	}
-	if m.Reservation != nil {
-		dAtA[i] = 0x42
-		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.Reservation.ProtoSize()))
-		n45, err := m.Reservation.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n45
-	}
-	if m.Revocable != nil {
-		dAtA[i] = 0x4a
-		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.Revocable.ProtoSize()))
-		n46, err := m.Revocable.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n46
-	}
-	if m.Shared != nil {
-		dAtA[i] = 0x52
-		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.Shared.ProtoSize()))
-		n47, err := m.Shared.MarshalTo(dAtA[i:])
+		n47, err := m.Disk.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n47
 	}
-	if m.AllocationInfo != nil {
-		dAtA[i] = 0x5a
+	if m.Reservation != nil {
+		dAtA[i] = 0x42
 		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.AllocationInfo.ProtoSize()))
-		n48, err := m.AllocationInfo.MarshalTo(dAtA[i:])
+		i = encodeVarintMesos(dAtA, i, uint64(m.Reservation.ProtoSize()))
+		n48, err := m.Reservation.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n48
 	}
-	if m.ProviderID != nil {
-		dAtA[i] = 0x62
+	if m.Revocable != nil {
+		dAtA[i] = 0x4a
 		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.ProviderID.ProtoSize()))
-		n49, err := m.ProviderID.MarshalTo(dAtA[i:])
+		i = encodeVarintMesos(dAtA, i, uint64(m.Revocable.ProtoSize()))
+		n49, err := m.Revocable.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n49
+	}
+	if m.Shared != nil {
+		dAtA[i] = 0x52
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.Shared.ProtoSize()))
+		n50, err := m.Shared.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n50
+	}
+	if m.AllocationInfo != nil {
+		dAtA[i] = 0x5a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.AllocationInfo.ProtoSize()))
+		n51, err := m.AllocationInfo.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n51
+	}
+	if m.ProviderID != nil {
+		dAtA[i] = 0x62
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.ProviderID.ProtoSize()))
+		n52, err := m.ProviderID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n52
 	}
 	if len(m.Reservations) > 0 {
 		for _, msg := range m.Reservations {
@@ -28951,11 +30648,11 @@ func (m *Resource_ReservationInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Labels.ProtoSize()))
-		n50, err := m.Labels.MarshalTo(dAtA[i:])
+		n53, err := m.Labels.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n50
+		i += n53
 	}
 	if m.Role != nil {
 		dAtA[i] = 0x1a
@@ -28990,31 +30687,31 @@ func (m *Resource_DiskInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Persistence.ProtoSize()))
-		n51, err := m.Persistence.MarshalTo(dAtA[i:])
+		n54, err := m.Persistence.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n51
+		i += n54
 	}
 	if m.Volume != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Volume.ProtoSize()))
-		n52, err := m.Volume.MarshalTo(dAtA[i:])
+		n55, err := m.Volume.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n52
+		i += n55
 	}
 	if m.Source != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Source.ProtoSize()))
-		n53, err := m.Source.MarshalTo(dAtA[i:])
+		n56, err := m.Source.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n53
+		i += n56
 	}
 	return i, nil
 }
@@ -29069,21 +30766,41 @@ func (m *Resource_DiskInfo_Source) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Path.ProtoSize()))
-		n54, err := m.Path.MarshalTo(dAtA[i:])
+		n57, err := m.Path.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n54
+		i += n57
 	}
 	if m.Mount != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Mount.ProtoSize()))
-		n55, err := m.Mount.MarshalTo(dAtA[i:])
+		n58, err := m.Mount.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n55
+		i += n58
+	}
+	dAtA[i] = 0x22
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(len(m.ID)))
+	i += copy(dAtA[i:], m.ID)
+	if m.Metadata != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.Metadata.ProtoSize()))
+		n59, err := m.Metadata.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n59
+	}
+	if m.Profile != nil {
+		dAtA[i] = 0x32
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(len(*m.Profile)))
+		i += copy(dAtA[i:], *m.Profile)
 	}
 	return i, nil
 }
@@ -29707,41 +31424,41 @@ func (m *SNMPStatistics) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.IPStats.ProtoSize()))
-		n56, err := m.IPStats.MarshalTo(dAtA[i:])
+		n60, err := m.IPStats.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n56
+		i += n60
 	}
 	if m.ICMPStats != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.ICMPStats.ProtoSize()))
-		n57, err := m.ICMPStats.MarshalTo(dAtA[i:])
+		n61, err := m.ICMPStats.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n57
+		i += n61
 	}
 	if m.TCPStats != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.TCPStats.ProtoSize()))
-		n58, err := m.TCPStats.MarshalTo(dAtA[i:])
+		n62, err := m.TCPStats.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n58
+		i += n62
 	}
 	if m.UDPStats != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.UDPStats.ProtoSize()))
-		n59, err := m.UDPStats.MarshalTo(dAtA[i:])
+		n63, err := m.UDPStats.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n59
+		i += n63
 	}
 	return i, nil
 }
@@ -29765,21 +31482,21 @@ func (m *DiskStatistics) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Source.ProtoSize()))
-		n60, err := m.Source.MarshalTo(dAtA[i:])
+		n64, err := m.Source.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n60
+		i += n64
 	}
 	if m.Persistence != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Persistence.ProtoSize()))
-		n61, err := m.Persistence.MarshalTo(dAtA[i:])
+		n65, err := m.Persistence.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n61
+		i += n65
 	}
 	if m.LimitBytes != nil {
 		dAtA[i] = 0x18
@@ -29871,11 +31588,11 @@ func (m *ResourceStatistics) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x6a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Perf.ProtoSize()))
-		n62, err := m.Perf.MarshalTo(dAtA[i:])
+		n66, err := m.Perf.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n62
+		i += n66
 	}
 	if m.NetRxPackets != nil {
 		dAtA[i] = 0x70
@@ -30082,11 +31799,11 @@ func (m *ResourceStatistics) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.NetSNMPStatistics.ProtoSize()))
-		n63, err := m.NetSNMPStatistics.MarshalTo(dAtA[i:])
+		n67, err := m.NetSNMPStatistics.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n63
+		i += n67
 	}
 	if len(m.DiskStatistics) > 0 {
 		for _, msg := range m.DiskStatistics {
@@ -30108,11 +31825,11 @@ func (m *ResourceStatistics) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.BlkioStatistics.ProtoSize()))
-		n64, err := m.BlkioStatistics.MarshalTo(dAtA[i:])
+		n68, err := m.BlkioStatistics.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n64
+		i += n68
 	}
 	return i, nil
 }
@@ -30177,11 +31894,11 @@ func (m *ResourceUsage_Executor) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.ExecutorInfo.ProtoSize()))
-	n65, err := m.ExecutorInfo.MarshalTo(dAtA[i:])
+	n69, err := m.ExecutorInfo.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n65
+	i += n69
 	if len(m.Allocated) > 0 {
 		for _, msg := range m.Allocated {
 			dAtA[i] = 0x12
@@ -30198,20 +31915,20 @@ func (m *ResourceUsage_Executor) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Statistics.ProtoSize()))
-		n66, err := m.Statistics.MarshalTo(dAtA[i:])
+		n70, err := m.Statistics.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n66
+		i += n70
 	}
 	dAtA[i] = 0x22
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-	n67, err := m.ContainerID.MarshalTo(dAtA[i:])
+	n71, err := m.ContainerID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n67
+	i += n71
 	if len(m.Tasks) > 0 {
 		for _, msg := range m.Tasks {
 			dAtA[i] = 0x2a
@@ -30249,11 +31966,11 @@ func (m *ResourceUsage_Executor_Task) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.ID.ProtoSize()))
-	n68, err := m.ID.MarshalTo(dAtA[i:])
+	n72, err := m.ID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n68
+	i += n72
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
 			dAtA[i] = 0x1a
@@ -30270,11 +31987,11 @@ func (m *ResourceUsage_Executor_Task) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Labels.ProtoSize()))
-		n69, err := m.Labels.MarshalTo(dAtA[i:])
+		n73, err := m.Labels.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n69
+		i += n73
 	}
 	return i, nil
 }
@@ -30653,11 +32370,11 @@ func (m *Request) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.AgentID.ProtoSize()))
-		n70, err := m.AgentID.MarshalTo(dAtA[i:])
+		n74, err := m.AgentID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n70
+		i += n74
 	}
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
@@ -30692,27 +32409,27 @@ func (m *Offer) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.ID.ProtoSize()))
-	n71, err := m.ID.MarshalTo(dAtA[i:])
+	n75, err := m.ID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n71
+	i += n75
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.FrameworkID.ProtoSize()))
-	n72, err := m.FrameworkID.MarshalTo(dAtA[i:])
+	n76, err := m.FrameworkID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n72
+	i += n76
 	dAtA[i] = 0x1a
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.AgentID.ProtoSize()))
-	n73, err := m.AgentID.MarshalTo(dAtA[i:])
+	n77, err := m.AgentID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n73
+	i += n77
 	dAtA[i] = 0x22
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(len(m.Hostname)))
@@ -30757,41 +32474,41 @@ func (m *Offer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.URL.ProtoSize()))
-		n74, err := m.URL.MarshalTo(dAtA[i:])
+		n78, err := m.URL.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n74
+		i += n78
 	}
 	if m.Unavailability != nil {
 		dAtA[i] = 0x4a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Unavailability.ProtoSize()))
-		n75, err := m.Unavailability.MarshalTo(dAtA[i:])
+		n79, err := m.Unavailability.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n75
+		i += n79
 	}
 	if m.AllocationInfo != nil {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.AllocationInfo.ProtoSize()))
-		n76, err := m.AllocationInfo.MarshalTo(dAtA[i:])
+		n80, err := m.AllocationInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n76
+		i += n80
 	}
 	if m.Domain != nil {
 		dAtA[i] = 0x5a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Domain.ProtoSize()))
-		n77, err := m.Domain.MarshalTo(dAtA[i:])
+		n81, err := m.Domain.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n77
+		i += n81
 	}
 	return i, nil
 }
@@ -30818,61 +32535,111 @@ func (m *Offer_Operation) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Launch.ProtoSize()))
-		n78, err := m.Launch.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n78
-	}
-	if m.Reserve != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.Reserve.ProtoSize()))
-		n79, err := m.Reserve.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n79
-	}
-	if m.Unreserve != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.Unreserve.ProtoSize()))
-		n80, err := m.Unreserve.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n80
-	}
-	if m.Create != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.Create.ProtoSize()))
-		n81, err := m.Create.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n81
-	}
-	if m.Destroy != nil {
-		dAtA[i] = 0x32
-		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.Destroy.ProtoSize()))
-		n82, err := m.Destroy.MarshalTo(dAtA[i:])
+		n82, err := m.Launch.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n82
 	}
-	if m.LaunchGroup != nil {
-		dAtA[i] = 0x3a
+	if m.Reserve != nil {
+		dAtA[i] = 0x1a
 		i++
-		i = encodeVarintMesos(dAtA, i, uint64(m.LaunchGroup.ProtoSize()))
-		n83, err := m.LaunchGroup.MarshalTo(dAtA[i:])
+		i = encodeVarintMesos(dAtA, i, uint64(m.Reserve.ProtoSize()))
+		n83, err := m.Reserve.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n83
+	}
+	if m.Unreserve != nil {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.Unreserve.ProtoSize()))
+		n84, err := m.Unreserve.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n84
+	}
+	if m.Create != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.Create.ProtoSize()))
+		n85, err := m.Create.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n85
+	}
+	if m.Destroy != nil {
+		dAtA[i] = 0x32
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.Destroy.ProtoSize()))
+		n86, err := m.Destroy.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n86
+	}
+	if m.LaunchGroup != nil {
+		dAtA[i] = 0x3a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.LaunchGroup.ProtoSize()))
+		n87, err := m.LaunchGroup.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n87
+	}
+	if m.CreateVolume != nil {
+		dAtA[i] = 0x42
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.CreateVolume.ProtoSize()))
+		n88, err := m.CreateVolume.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n88
+	}
+	if m.DestroyVolume != nil {
+		dAtA[i] = 0x4a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.DestroyVolume.ProtoSize()))
+		n89, err := m.DestroyVolume.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n89
+	}
+	if m.CreateBlock != nil {
+		dAtA[i] = 0x52
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.CreateBlock.ProtoSize()))
+		n90, err := m.CreateBlock.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n90
+	}
+	if m.DestroyBlock != nil {
+		dAtA[i] = 0x5a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.DestroyBlock.ProtoSize()))
+		n91, err := m.DestroyBlock.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n91
+	}
+	if m.ID != nil {
+		dAtA[i] = 0x62
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.ID.ProtoSize()))
+		n92, err := m.ID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n92
 	}
 	return i, nil
 }
@@ -30925,19 +32692,19 @@ func (m *Offer_Operation_LaunchGroup) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.Executor.ProtoSize()))
-	n84, err := m.Executor.MarshalTo(dAtA[i:])
+	n93, err := m.Executor.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n84
+	i += n93
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.TaskGroup.ProtoSize()))
-	n85, err := m.TaskGroup.MarshalTo(dAtA[i:])
+	n94, err := m.TaskGroup.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n85
+	i += n94
 	return i, nil
 }
 
@@ -31061,6 +32828,113 @@ func (m *Offer_Operation_Destroy) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *Offer_Operation_CreateVolume) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Offer_Operation_CreateVolume) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(m.Source.ProtoSize()))
+	n95, err := m.Source.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n95
+	dAtA[i] = 0x10
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(m.TargetType))
+	return i, nil
+}
+
+func (m *Offer_Operation_DestroyVolume) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Offer_Operation_DestroyVolume) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(m.Volume.ProtoSize()))
+	n96, err := m.Volume.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n96
+	return i, nil
+}
+
+func (m *Offer_Operation_CreateBlock) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Offer_Operation_CreateBlock) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(m.Source.ProtoSize()))
+	n97, err := m.Source.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n97
+	return i, nil
+}
+
+func (m *Offer_Operation_DestroyBlock) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Offer_Operation_DestroyBlock) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(m.Block.ProtoSize()))
+	n98, err := m.Block.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n98
+	return i, nil
+}
+
 func (m *InverseOffer) Marshal() (dAtA []byte, err error) {
 	size := m.ProtoSize()
 	dAtA = make([]byte, size)
@@ -31079,47 +32953,47 @@ func (m *InverseOffer) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.OfferID.ProtoSize()))
-	n86, err := m.OfferID.MarshalTo(dAtA[i:])
+	n99, err := m.OfferID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n86
+	i += n99
 	if m.URL != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.URL.ProtoSize()))
-		n87, err := m.URL.MarshalTo(dAtA[i:])
+		n100, err := m.URL.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n87
+		i += n100
 	}
 	dAtA[i] = 0x1a
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.FrameworkID.ProtoSize()))
-	n88, err := m.FrameworkID.MarshalTo(dAtA[i:])
+	n101, err := m.FrameworkID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n88
+	i += n101
 	if m.AgentID != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.AgentID.ProtoSize()))
-		n89, err := m.AgentID.MarshalTo(dAtA[i:])
+		n102, err := m.AgentID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n89
+		i += n102
 	}
 	dAtA[i] = 0x2a
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.Unavailability.ProtoSize()))
-	n90, err := m.Unavailability.MarshalTo(dAtA[i:])
+	n103, err := m.Unavailability.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n90
+	i += n103
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
 			dAtA[i] = 0x32
@@ -31157,19 +33031,19 @@ func (m *TaskInfo) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.TaskID.ProtoSize()))
-	n91, err := m.TaskID.MarshalTo(dAtA[i:])
+	n104, err := m.TaskID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n91
+	i += n104
 	dAtA[i] = 0x1a
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.AgentID.ProtoSize()))
-	n92, err := m.AgentID.MarshalTo(dAtA[i:])
+	n105, err := m.AgentID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n92
+	i += n105
 	if len(m.Resources) > 0 {
 		for _, msg := range m.Resources {
 			dAtA[i] = 0x22
@@ -31186,11 +33060,11 @@ func (m *TaskInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Executor.ProtoSize()))
-		n93, err := m.Executor.MarshalTo(dAtA[i:])
+		n106, err := m.Executor.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n93
+		i += n106
 	}
 	if m.Data != nil {
 		dAtA[i] = 0x32
@@ -31202,71 +33076,71 @@ func (m *TaskInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Command.ProtoSize()))
-		n94, err := m.Command.MarshalTo(dAtA[i:])
+		n107, err := m.Command.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n94
+		i += n107
 	}
 	if m.HealthCheck != nil {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.HealthCheck.ProtoSize()))
-		n95, err := m.HealthCheck.MarshalTo(dAtA[i:])
+		n108, err := m.HealthCheck.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n95
+		i += n108
 	}
 	if m.Container != nil {
 		dAtA[i] = 0x4a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Container.ProtoSize()))
-		n96, err := m.Container.MarshalTo(dAtA[i:])
+		n109, err := m.Container.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n96
+		i += n109
 	}
 	if m.Labels != nil {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Labels.ProtoSize()))
-		n97, err := m.Labels.MarshalTo(dAtA[i:])
+		n110, err := m.Labels.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n97
+		i += n110
 	}
 	if m.Discovery != nil {
 		dAtA[i] = 0x5a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Discovery.ProtoSize()))
-		n98, err := m.Discovery.MarshalTo(dAtA[i:])
+		n111, err := m.Discovery.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n98
+		i += n111
 	}
 	if m.KillPolicy != nil {
 		dAtA[i] = 0x62
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.KillPolicy.ProtoSize()))
-		n99, err := m.KillPolicy.MarshalTo(dAtA[i:])
+		n112, err := m.KillPolicy.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n99
+		i += n112
 	}
 	if m.Check != nil {
 		dAtA[i] = 0x6a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Check.ProtoSize()))
-		n100, err := m.Check.MarshalTo(dAtA[i:])
+		n113, err := m.Check.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n100
+		i += n113
 	}
 	return i, nil
 }
@@ -31323,37 +33197,37 @@ func (m *Task) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.TaskID.ProtoSize()))
-	n101, err := m.TaskID.MarshalTo(dAtA[i:])
+	n114, err := m.TaskID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n101
+	i += n114
 	dAtA[i] = 0x1a
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.FrameworkID.ProtoSize()))
-	n102, err := m.FrameworkID.MarshalTo(dAtA[i:])
+	n115, err := m.FrameworkID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n102
+	i += n115
 	if m.ExecutorID != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.ExecutorID.ProtoSize()))
-		n103, err := m.ExecutorID.MarshalTo(dAtA[i:])
+		n116, err := m.ExecutorID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n103
+		i += n116
 	}
 	dAtA[i] = 0x2a
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.AgentID.ProtoSize()))
-	n104, err := m.AgentID.MarshalTo(dAtA[i:])
+	n117, err := m.AgentID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n104
+	i += n117
 	if m.State == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
 	} else {
@@ -31400,37 +33274,176 @@ func (m *Task) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Labels.ProtoSize()))
-		n105, err := m.Labels.MarshalTo(dAtA[i:])
+		n118, err := m.Labels.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n105
+		i += n118
 	}
 	if m.Discovery != nil {
 		dAtA[i] = 0x62
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Discovery.ProtoSize()))
-		n106, err := m.Discovery.MarshalTo(dAtA[i:])
+		n119, err := m.Discovery.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n106
+		i += n119
 	}
 	if m.Container != nil {
 		dAtA[i] = 0x6a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Container.ProtoSize()))
-		n107, err := m.Container.MarshalTo(dAtA[i:])
+		n120, err := m.Container.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n107
+		i += n120
 	}
 	if m.User != nil {
 		dAtA[i] = 0x72
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(len(*m.User)))
 		i += copy(dAtA[i:], *m.User)
+	}
+	return i, nil
+}
+
+func (m *TaskResourceLimitation) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TaskResourceLimitation) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Resources) > 0 {
+		for _, msg := range m.Resources {
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintMesos(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	return i, nil
+}
+
+func (m *OfferOperation) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OfferOperation) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(m.FrameworkID.ProtoSize()))
+	n121, err := m.FrameworkID.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n121
+	dAtA[i] = 0x12
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(m.Info.ProtoSize()))
+	n122, err := m.Info.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n122
+	if len(m.Statuses) > 0 {
+		for _, msg := range m.Statuses {
+			dAtA[i] = 0x1a
+			i++
+			i = encodeVarintMesos(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.OperationUUID == nil {
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("operation_uuid")
+	} else {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(len(m.OperationUUID)))
+		i += copy(dAtA[i:], m.OperationUUID)
+	}
+	return i, nil
+}
+
+func (m *OfferOperationStatus) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OfferOperationStatus) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.OperationID != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.OperationID.ProtoSize()))
+		n123, err := m.OperationID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n123
+	}
+	dAtA[i] = 0x10
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(m.State))
+	if m.Message != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(len(*m.Message)))
+		i += copy(dAtA[i:], *m.Message)
+	}
+	if len(m.ConvertedResources) > 0 {
+		for _, msg := range m.ConvertedResources {
+			dAtA[i] = 0x22
+			i++
+			i = encodeVarintMesos(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.StatusUUID != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(len(m.StatusUUID)))
+		i += copy(dAtA[i:], m.StatusUUID)
 	}
 	return i, nil
 }
@@ -31459,31 +33472,31 @@ func (m *CheckStatusInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Command.ProtoSize()))
-		n108, err := m.Command.MarshalTo(dAtA[i:])
+		n124, err := m.Command.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n108
+		i += n124
 	}
 	if m.HTTP != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.HTTP.ProtoSize()))
-		n109, err := m.HTTP.MarshalTo(dAtA[i:])
+		n125, err := m.HTTP.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n109
+		i += n125
 	}
 	if m.TCP != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.TCP.ProtoSize()))
-		n110, err := m.TCP.MarshalTo(dAtA[i:])
+		n126, err := m.TCP.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n110
+		i += n126
 	}
 	return i, nil
 }
@@ -31580,11 +33593,11 @@ func (m *TaskStatus) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.TaskID.ProtoSize()))
-	n111, err := m.TaskID.MarshalTo(dAtA[i:])
+	n127, err := m.TaskID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n111
+	i += n127
 	if m.State == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
 	} else {
@@ -31608,11 +33621,11 @@ func (m *TaskStatus) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.AgentID.ProtoSize()))
-		n112, err := m.AgentID.MarshalTo(dAtA[i:])
+		n128, err := m.AgentID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n112
+		i += n128
 	}
 	if m.Timestamp != nil {
 		dAtA[i] = 0x31
@@ -31623,11 +33636,11 @@ func (m *TaskStatus) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.ExecutorID.ProtoSize()))
-		n113, err := m.ExecutorID.MarshalTo(dAtA[i:])
+		n129, err := m.ExecutorID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n113
+		i += n129
 	}
 	if m.Healthy != nil {
 		dAtA[i] = 0x40
@@ -31659,41 +33672,53 @@ func (m *TaskStatus) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x62
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Labels.ProtoSize()))
-		n114, err := m.Labels.MarshalTo(dAtA[i:])
+		n130, err := m.Labels.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n114
+		i += n130
 	}
 	if m.ContainerStatus != nil {
 		dAtA[i] = 0x6a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.ContainerStatus.ProtoSize()))
-		n115, err := m.ContainerStatus.MarshalTo(dAtA[i:])
+		n131, err := m.ContainerStatus.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n115
+		i += n131
 	}
 	if m.UnreachableTime != nil {
 		dAtA[i] = 0x72
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.UnreachableTime.ProtoSize()))
-		n116, err := m.UnreachableTime.MarshalTo(dAtA[i:])
+		n132, err := m.UnreachableTime.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n116
+		i += n132
 	}
 	if m.CheckStatus != nil {
 		dAtA[i] = 0x7a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.CheckStatus.ProtoSize()))
-		n117, err := m.CheckStatus.MarshalTo(dAtA[i:])
+		n133, err := m.CheckStatus.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n117
+		i += n133
+	}
+	if m.Limitation != nil {
+		dAtA[i] = 0x82
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.Limitation.ProtoSize()))
+		n134, err := m.Limitation.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n134
 	}
 	return i, nil
 }
@@ -31785,11 +33810,11 @@ func (m *Environment_Variable) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Secret.ProtoSize()))
-		n118, err := m.Secret.MarshalTo(dAtA[i:])
+		n135, err := m.Secret.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n118
+		i += n135
 	}
 	return i, nil
 }
@@ -31930,21 +33955,21 @@ func (m *Secret) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Reference.ProtoSize()))
-		n119, err := m.Reference.MarshalTo(dAtA[i:])
+		n136, err := m.Reference.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n119
+		i += n136
 	}
 	if m.Value != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Value.ProtoSize()))
-		n120, err := m.Value.MarshalTo(dAtA[i:])
+		n137, err := m.Value.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n120
+		i += n137
 	}
 	return i, nil
 }
@@ -32101,21 +34126,21 @@ func (m *Image) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Appc.ProtoSize()))
-		n121, err := m.Appc.MarshalTo(dAtA[i:])
+		n138, err := m.Appc.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n121
+		i += n138
 	}
 	if m.Docker != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Docker.ProtoSize()))
-		n122, err := m.Docker.MarshalTo(dAtA[i:])
+		n139, err := m.Docker.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n122
+		i += n139
 	}
 	if m.Cached != nil {
 		dAtA[i] = 0x20
@@ -32159,11 +34184,11 @@ func (m *Image_Appc) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Labels.ProtoSize()))
-		n123, err := m.Labels.MarshalTo(dAtA[i:])
+		n140, err := m.Labels.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n123
+		i += n140
 	}
 	return i, nil
 }
@@ -32191,21 +34216,21 @@ func (m *Image_Docker) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Credential.ProtoSize()))
-		n124, err := m.Credential.MarshalTo(dAtA[i:])
+		n141, err := m.Credential.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n124
+		i += n141
 	}
 	if m.Config != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Config.ProtoSize()))
-		n125, err := m.Config.MarshalTo(dAtA[i:])
+		n142, err := m.Config.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n125
+		i += n142
 	}
 	return i, nil
 }
@@ -32246,21 +34271,21 @@ func (m *Volume) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Image.ProtoSize()))
-		n126, err := m.Image.MarshalTo(dAtA[i:])
+		n143, err := m.Image.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n126
+		i += n143
 	}
 	if m.Source != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Source.ProtoSize()))
-		n127, err := m.Source.MarshalTo(dAtA[i:])
+		n144, err := m.Source.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n127
+		i += n144
 	}
 	return i, nil
 }
@@ -32287,31 +34312,41 @@ func (m *Volume_Source) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.DockerVolume.ProtoSize()))
-		n128, err := m.DockerVolume.MarshalTo(dAtA[i:])
+		n145, err := m.DockerVolume.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n128
+		i += n145
 	}
 	if m.SandboxPath != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.SandboxPath.ProtoSize()))
-		n129, err := m.SandboxPath.MarshalTo(dAtA[i:])
+		n146, err := m.SandboxPath.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n129
+		i += n146
 	}
 	if m.Secret != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Secret.ProtoSize()))
-		n130, err := m.Secret.MarshalTo(dAtA[i:])
+		n147, err := m.Secret.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n130
+		i += n147
+	}
+	if m.HostPath != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintMesos(dAtA, i, uint64(m.HostPath.ProtoSize()))
+		n148, err := m.HostPath.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n148
 	}
 	return i, nil
 }
@@ -32345,12 +34380,34 @@ func (m *Volume_Source_DockerVolume) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.DriverOptions.ProtoSize()))
-		n131, err := m.DriverOptions.MarshalTo(dAtA[i:])
+		n149, err := m.DriverOptions.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n131
+		i += n149
 	}
+	return i, nil
+}
+
+func (m *Volume_Source_HostPath) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Volume_Source_HostPath) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintMesos(dAtA, i, uint64(len(m.Path)))
+	i += copy(dAtA[i:], m.Path)
 	return i, nil
 }
 
@@ -32413,11 +34470,11 @@ func (m *NetworkInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Labels.ProtoSize()))
-		n132, err := m.Labels.MarshalTo(dAtA[i:])
+		n150, err := m.Labels.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n132
+		i += n150
 	}
 	if len(m.IPAddresses) > 0 {
 		for _, msg := range m.IPAddresses {
@@ -32555,31 +34612,31 @@ func (m *LinuxInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.CapabilityInfo.ProtoSize()))
-		n133, err := m.CapabilityInfo.MarshalTo(dAtA[i:])
+		n151, err := m.CapabilityInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n133
+		i += n151
 	}
 	if m.BoundingCapabilities != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.BoundingCapabilities.ProtoSize()))
-		n134, err := m.BoundingCapabilities.MarshalTo(dAtA[i:])
+		n152, err := m.BoundingCapabilities.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n134
+		i += n152
 	}
 	if m.EffectiveCapabilities != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.EffectiveCapabilities.ProtoSize()))
-		n135, err := m.EffectiveCapabilities.MarshalTo(dAtA[i:])
+		n153, err := m.EffectiveCapabilities.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n135
+		i += n153
 	}
 	if m.SharePIDNamespace != nil {
 		dAtA[i] = 0x20
@@ -32674,11 +34731,11 @@ func (m *TTYInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.WindowSize.ProtoSize()))
-		n136, err := m.WindowSize.MarshalTo(dAtA[i:])
+		n154, err := m.WindowSize.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n136
+		i += n154
 	}
 	return i, nil
 }
@@ -32745,11 +34802,11 @@ func (m *ContainerInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Docker.ProtoSize()))
-		n137, err := m.Docker.MarshalTo(dAtA[i:])
+		n155, err := m.Docker.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n137
+		i += n155
 	}
 	if m.Hostname != nil {
 		dAtA[i] = 0x22
@@ -32761,11 +34818,11 @@ func (m *ContainerInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Mesos.ProtoSize()))
-		n138, err := m.Mesos.MarshalTo(dAtA[i:])
+		n156, err := m.Mesos.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n138
+		i += n156
 	}
 	if len(m.NetworkInfos) > 0 {
 		for _, msg := range m.NetworkInfos {
@@ -32783,31 +34840,31 @@ func (m *ContainerInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.LinuxInfo.ProtoSize()))
-		n139, err := m.LinuxInfo.MarshalTo(dAtA[i:])
+		n157, err := m.LinuxInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n139
+		i += n157
 	}
 	if m.RlimitInfo != nil {
 		dAtA[i] = 0x4a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.RlimitInfo.ProtoSize()))
-		n140, err := m.RlimitInfo.MarshalTo(dAtA[i:])
+		n158, err := m.RlimitInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n140
+		i += n158
 	}
 	if m.TTYInfo != nil {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.TTYInfo.ProtoSize()))
-		n141, err := m.TTYInfo.MarshalTo(dAtA[i:])
+		n159, err := m.TTYInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n141
+		i += n159
 	}
 	return i, nil
 }
@@ -32938,11 +34995,11 @@ func (m *ContainerInfo_MesosInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Image.ProtoSize()))
-		n142, err := m.Image.MarshalTo(dAtA[i:])
+		n160, err := m.Image.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n142
+		i += n160
 	}
 	return i, nil
 }
@@ -32978,11 +35035,11 @@ func (m *ContainerStatus) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.CgroupInfo.ProtoSize()))
-		n143, err := m.CgroupInfo.MarshalTo(dAtA[i:])
+		n161, err := m.CgroupInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n143
+		i += n161
 	}
 	if m.ExecutorPID != nil {
 		dAtA[i] = 0x18
@@ -32993,11 +35050,11 @@ func (m *ContainerStatus) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-		n144, err := m.ContainerID.MarshalTo(dAtA[i:])
+		n162, err := m.ContainerID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n144
+		i += n162
 	}
 	return i, nil
 }
@@ -33021,11 +35078,11 @@ func (m *CgroupInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.NetCLS.ProtoSize()))
-		n145, err := m.NetCLS.MarshalTo(dAtA[i:])
+		n163, err := m.NetCLS.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n145
+		i += n163
 	}
 	return i, nil
 }
@@ -33113,11 +35170,11 @@ func (m *CgroupInfo_Blkio_CFQ_Statistics) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Device.ProtoSize()))
-		n146, err := m.Device.MarshalTo(dAtA[i:])
+		n164, err := m.Device.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n146
+		i += n164
 	}
 	if m.Sectors != nil {
 		dAtA[i] = 0x10
@@ -33241,11 +35298,11 @@ func (m *CgroupInfo_Blkio_Throttling_Statistics) MarshalTo(dAtA []byte) (int, er
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Device.ProtoSize()))
-		n147, err := m.Device.MarshalTo(dAtA[i:])
+		n165, err := m.Device.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n147
+		i += n165
 	}
 	if len(m.IOServiced) > 0 {
 		for _, msg := range m.IOServiced {
@@ -33448,11 +35505,11 @@ func (m *Port) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Labels.ProtoSize()))
-		n148, err := m.Labels.MarshalTo(dAtA[i:])
+		n166, err := m.Labels.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n148
+		i += n166
 	}
 	return i, nil
 }
@@ -33533,21 +35590,21 @@ func (m *DiscoveryInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Ports.ProtoSize()))
-		n149, err := m.Ports.MarshalTo(dAtA[i:])
+		n167, err := m.Ports.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n149
+		i += n167
 	}
 	if m.Labels != nil {
 		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Labels.ProtoSize()))
-		n150, err := m.Labels.MarshalTo(dAtA[i:])
+		n168, err := m.Labels.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n150
+		i += n168
 	}
 	return i, nil
 }
@@ -33773,11 +35830,11 @@ func (m *FileInfo) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Mtime.ProtoSize()))
-		n151, err := m.Mtime.MarshalTo(dAtA[i:])
+		n169, err := m.Mtime.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n151
+		i += n169
 	}
 	if m.Mode != nil {
 		dAtA[i] = 0x28
@@ -33824,11 +35881,11 @@ func (m *Device) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(m.Number.ProtoSize()))
-		n152, err := m.Number.MarshalTo(dAtA[i:])
+		n170, err := m.Number.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n152
+		i += n170
 	}
 	return i, nil
 }
@@ -33883,19 +35940,19 @@ func (m *DeviceAccess) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.Device.ProtoSize()))
-	n153, err := m.Device.MarshalTo(dAtA[i:])
+	n171, err := m.Device.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n153
+	i += n171
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.Access.ProtoSize()))
-	n154, err := m.Access.MarshalTo(dAtA[i:])
+	n172, err := m.Access.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n154
+	i += n172
 	return i, nil
 }
 
@@ -34057,6 +36114,14 @@ func NewPopulatedContainerID(r randyMesos, easy bool) *ContainerID {
 
 func NewPopulatedResourceProviderID(r randyMesos, easy bool) *ResourceProviderID {
 	this := &ResourceProviderID{}
+	this.Value = string(randStringMesos(r))
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedOfferOperationID(r randyMesos, easy bool) *OfferOperationID {
+	this := &OfferOperationID{}
 	this.Value = string(randStringMesos(r))
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -34612,7 +36677,28 @@ func NewPopulatedAgentInfo(r randyMesos, easy bool) *AgentInfo {
 
 func NewPopulatedAgentInfo_Capability(r randyMesos, easy bool) *AgentInfo_Capability {
 	this := &AgentInfo_Capability{}
-	this.Type = AgentInfo_Capability_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
+	this.Type = AgentInfo_Capability_Type([]int32{0, 1, 2, 3, 4}[r.Intn(5)])
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedCSIPluginInfo(r randyMesos, easy bool) *CSIPluginInfo {
+	this := &CSIPluginInfo{}
+	this.Name = string(randStringMesos(r))
+	v62 := NewPopulatedCommandInfo(r, easy)
+	this.Command = *v62
+	if r.Intn(10) != 0 {
+		v63 := r.Intn(5)
+		this.Resources = make([]Resource, v63)
+		for i := 0; i < v63; i++ {
+			v64 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v64
+		}
+	}
+	if r.Intn(10) != 0 {
+		this.Container = NewPopulatedContainerInfo(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -34624,15 +36710,35 @@ func NewPopulatedResourceProviderInfo(r randyMesos, easy bool) *ResourceProvider
 		this.ID = NewPopulatedResourceProviderID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v62 := r.Intn(5)
-		this.Attributes = make([]Attribute, v62)
-		for i := 0; i < v62; i++ {
-			v63 := NewPopulatedAttribute(r, easy)
-			this.Attributes[i] = *v63
+		v65 := r.Intn(5)
+		this.Attributes = make([]Attribute, v65)
+		for i := 0; i < v65; i++ {
+			v66 := NewPopulatedAttribute(r, easy)
+			this.Attributes[i] = *v66
 		}
 	}
 	this.Type = string(randStringMesos(r))
 	this.Name = string(randStringMesos(r))
+	if r.Intn(10) != 0 {
+		this.Storage = NewPopulatedResourceProviderInfo_StorageInfo(r, easy)
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedResourceProviderInfo_StorageInfo(r randyMesos, easy bool) *ResourceProviderInfo_StorageInfo {
+	this := &ResourceProviderInfo_StorageInfo{}
+	if r.Intn(10) != 0 {
+		v67 := r.Intn(5)
+		this.CsiPlugins = make([]CSIPluginInfo, v67)
+		for i := 0; i < v67; i++ {
+			v68 := NewPopulatedCSIPluginInfo(r, easy)
+			this.CsiPlugins[i] = *v68
+		}
+	}
+	this.ControllerPlugin = string(randStringMesos(r))
+	this.NodePlugin = string(randStringMesos(r))
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -34681,11 +36787,11 @@ func NewPopulatedValue_Range(r randyMesos, easy bool) *Value_Range {
 func NewPopulatedValue_Ranges(r randyMesos, easy bool) *Value_Ranges {
 	this := &Value_Ranges{}
 	if r.Intn(10) != 0 {
-		v64 := r.Intn(5)
-		this.Range = make([]Value_Range, v64)
-		for i := 0; i < v64; i++ {
-			v65 := NewPopulatedValue_Range(r, easy)
-			this.Range[i] = *v65
+		v69 := r.Intn(5)
+		this.Range = make([]Value_Range, v69)
+		for i := 0; i < v69; i++ {
+			v70 := NewPopulatedValue_Range(r, easy)
+			this.Range[i] = *v70
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -34696,9 +36802,9 @@ func NewPopulatedValue_Ranges(r randyMesos, easy bool) *Value_Ranges {
 func NewPopulatedValue_Set(r randyMesos, easy bool) *Value_Set {
 	this := &Value_Set{}
 	if r.Intn(10) != 0 {
-		v66 := r.Intn(10)
-		this.Item = make([]string, v66)
-		for i := 0; i < v66; i++ {
+		v71 := r.Intn(10)
+		this.Item = make([]string, v71)
+		for i := 0; i < v71; i++ {
 			this.Item[i] = string(randStringMesos(r))
 		}
 	}
@@ -34739,8 +36845,8 @@ func NewPopulatedAttribute(r randyMesos, easy bool) *Attribute {
 func NewPopulatedResource(r randyMesos, easy bool) *Resource {
 	this := &Resource{}
 	this.Name = string(randStringMesos(r))
-	v67 := Value_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
-	this.Type = &v67
+	v72 := Value_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
+	this.Type = &v72
 	if r.Intn(10) != 0 {
 		this.Scalar = NewPopulatedValue_Scalar(r, easy)
 	}
@@ -34751,8 +36857,8 @@ func NewPopulatedResource(r randyMesos, easy bool) *Resource {
 		this.Set = NewPopulatedValue_Set(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v68 := string(randStringMesos(r))
-		this.Role = &v68
+		v73 := string(randStringMesos(r))
+		this.Role = &v73
 	}
 	if r.Intn(10) != 0 {
 		this.Disk = NewPopulatedResource_DiskInfo(r, easy)
@@ -34773,11 +36879,11 @@ func NewPopulatedResource(r randyMesos, easy bool) *Resource {
 		this.ProviderID = NewPopulatedResourceProviderID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v69 := r.Intn(5)
-		this.Reservations = make([]Resource_ReservationInfo, v69)
-		for i := 0; i < v69; i++ {
-			v70 := NewPopulatedResource_ReservationInfo(r, easy)
-			this.Reservations[i] = *v70
+		v74 := r.Intn(5)
+		this.Reservations = make([]Resource_ReservationInfo, v74)
+		for i := 0; i < v74; i++ {
+			v75 := NewPopulatedResource_ReservationInfo(r, easy)
+			this.Reservations[i] = *v75
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -34788,8 +36894,8 @@ func NewPopulatedResource(r randyMesos, easy bool) *Resource {
 func NewPopulatedResource_AllocationInfo(r randyMesos, easy bool) *Resource_AllocationInfo {
 	this := &Resource_AllocationInfo{}
 	if r.Intn(10) != 0 {
-		v71 := string(randStringMesos(r))
-		this.Role = &v71
+		v76 := string(randStringMesos(r))
+		this.Role = &v76
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -34799,19 +36905,19 @@ func NewPopulatedResource_AllocationInfo(r randyMesos, easy bool) *Resource_Allo
 func NewPopulatedResource_ReservationInfo(r randyMesos, easy bool) *Resource_ReservationInfo {
 	this := &Resource_ReservationInfo{}
 	if r.Intn(10) != 0 {
-		v72 := string(randStringMesos(r))
-		this.Principal = &v72
+		v77 := string(randStringMesos(r))
+		this.Principal = &v77
 	}
 	if r.Intn(10) != 0 {
 		this.Labels = NewPopulatedLabels(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v73 := string(randStringMesos(r))
-		this.Role = &v73
+		v78 := string(randStringMesos(r))
+		this.Role = &v78
 	}
 	if r.Intn(10) != 0 {
-		v74 := Resource_ReservationInfo_Type([]int32{0, 1, 2}[r.Intn(3)])
-		this.Type = &v74
+		v79 := Resource_ReservationInfo_Type([]int32{0, 1, 2}[r.Intn(3)])
+		this.Type = &v79
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -34838,8 +36944,8 @@ func NewPopulatedResource_DiskInfo_Persistence(r randyMesos, easy bool) *Resourc
 	this := &Resource_DiskInfo_Persistence{}
 	this.ID = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v75 := string(randStringMesos(r))
-		this.Principal = &v75
+		v80 := string(randStringMesos(r))
+		this.Principal = &v80
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -34848,12 +36954,20 @@ func NewPopulatedResource_DiskInfo_Persistence(r randyMesos, easy bool) *Resourc
 
 func NewPopulatedResource_DiskInfo_Source(r randyMesos, easy bool) *Resource_DiskInfo_Source {
 	this := &Resource_DiskInfo_Source{}
-	this.Type = Resource_DiskInfo_Source_Type([]int32{0, 1, 2}[r.Intn(3)])
+	this.Type = Resource_DiskInfo_Source_Type([]int32{0, 1, 2, 3, 4}[r.Intn(5)])
 	if r.Intn(10) != 0 {
 		this.Path = NewPopulatedResource_DiskInfo_Source_Path(r, easy)
 	}
 	if r.Intn(10) != 0 {
 		this.Mount = NewPopulatedResource_DiskInfo_Source_Mount(r, easy)
+	}
+	this.ID = string(randStringMesos(r))
+	if r.Intn(10) != 0 {
+		this.Metadata = NewPopulatedLabels(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		v81 := string(randStringMesos(r))
+		this.Profile = &v81
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -34863,8 +36977,8 @@ func NewPopulatedResource_DiskInfo_Source(r randyMesos, easy bool) *Resource_Dis
 func NewPopulatedResource_DiskInfo_Source_Path(r randyMesos, easy bool) *Resource_DiskInfo_Source_Path {
 	this := &Resource_DiskInfo_Source_Path{}
 	if r.Intn(10) != 0 {
-		v76 := string(randStringMesos(r))
-		this.Root = &v76
+		v82 := string(randStringMesos(r))
+		this.Root = &v82
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -34874,8 +36988,8 @@ func NewPopulatedResource_DiskInfo_Source_Path(r randyMesos, easy bool) *Resourc
 func NewPopulatedResource_DiskInfo_Source_Mount(r randyMesos, easy bool) *Resource_DiskInfo_Source_Mount {
 	this := &Resource_DiskInfo_Source_Mount{}
 	if r.Intn(10) != 0 {
-		v77 := string(randStringMesos(r))
-		this.Root = &v77
+		v83 := string(randStringMesos(r))
+		this.Root = &v83
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -34900,40 +37014,40 @@ func NewPopulatedTrafficControlStatistics(r randyMesos, easy bool) *TrafficContr
 	this := &TrafficControlStatistics{}
 	this.ID = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v78 := uint64(uint64(r.Uint32()))
-		this.Backlog = &v78
-	}
-	if r.Intn(10) != 0 {
-		v79 := uint64(uint64(r.Uint32()))
-		this.Bytes = &v79
-	}
-	if r.Intn(10) != 0 {
-		v80 := uint64(uint64(r.Uint32()))
-		this.Drops = &v80
-	}
-	if r.Intn(10) != 0 {
-		v81 := uint64(uint64(r.Uint32()))
-		this.Overlimits = &v81
-	}
-	if r.Intn(10) != 0 {
-		v82 := uint64(uint64(r.Uint32()))
-		this.Packets = &v82
-	}
-	if r.Intn(10) != 0 {
-		v83 := uint64(uint64(r.Uint32()))
-		this.Qlen = &v83
-	}
-	if r.Intn(10) != 0 {
 		v84 := uint64(uint64(r.Uint32()))
-		this.RateBPS = &v84
+		this.Backlog = &v84
 	}
 	if r.Intn(10) != 0 {
 		v85 := uint64(uint64(r.Uint32()))
-		this.RatePPS = &v85
+		this.Bytes = &v85
 	}
 	if r.Intn(10) != 0 {
 		v86 := uint64(uint64(r.Uint32()))
-		this.Requeues = &v86
+		this.Drops = &v86
+	}
+	if r.Intn(10) != 0 {
+		v87 := uint64(uint64(r.Uint32()))
+		this.Overlimits = &v87
+	}
+	if r.Intn(10) != 0 {
+		v88 := uint64(uint64(r.Uint32()))
+		this.Packets = &v88
+	}
+	if r.Intn(10) != 0 {
+		v89 := uint64(uint64(r.Uint32()))
+		this.Qlen = &v89
+	}
+	if r.Intn(10) != 0 {
+		v90 := uint64(uint64(r.Uint32()))
+		this.RateBPS = &v90
+	}
+	if r.Intn(10) != 0 {
+		v91 := uint64(uint64(r.Uint32()))
+		this.RatePPS = &v91
+	}
+	if r.Intn(10) != 0 {
+		v92 := uint64(uint64(r.Uint32()))
+		this.Requeues = &v92
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -34943,137 +37057,137 @@ func NewPopulatedTrafficControlStatistics(r randyMesos, easy bool) *TrafficContr
 func NewPopulatedIpStatistics(r randyMesos, easy bool) *IpStatistics {
 	this := &IpStatistics{}
 	if r.Intn(10) != 0 {
-		v87 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v87 *= -1
-		}
-		this.Forwarding = &v87
-	}
-	if r.Intn(10) != 0 {
-		v88 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v88 *= -1
-		}
-		this.DefaultTTL = &v88
-	}
-	if r.Intn(10) != 0 {
-		v89 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v89 *= -1
-		}
-		this.InReceives = &v89
-	}
-	if r.Intn(10) != 0 {
-		v90 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v90 *= -1
-		}
-		this.InHdrErrors = &v90
-	}
-	if r.Intn(10) != 0 {
-		v91 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v91 *= -1
-		}
-		this.InAddrErrors = &v91
-	}
-	if r.Intn(10) != 0 {
-		v92 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v92 *= -1
-		}
-		this.ForwDatagrams = &v92
-	}
-	if r.Intn(10) != 0 {
 		v93 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v93 *= -1
 		}
-		this.InUnknownProtos = &v93
+		this.Forwarding = &v93
 	}
 	if r.Intn(10) != 0 {
 		v94 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v94 *= -1
 		}
-		this.InDiscards = &v94
+		this.DefaultTTL = &v94
 	}
 	if r.Intn(10) != 0 {
 		v95 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v95 *= -1
 		}
-		this.InDelivers = &v95
+		this.InReceives = &v95
 	}
 	if r.Intn(10) != 0 {
 		v96 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v96 *= -1
 		}
-		this.OutRequests = &v96
+		this.InHdrErrors = &v96
 	}
 	if r.Intn(10) != 0 {
 		v97 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v97 *= -1
 		}
-		this.OutDiscards = &v97
+		this.InAddrErrors = &v97
 	}
 	if r.Intn(10) != 0 {
 		v98 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v98 *= -1
 		}
-		this.OutNoRoutes = &v98
+		this.ForwDatagrams = &v98
 	}
 	if r.Intn(10) != 0 {
 		v99 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v99 *= -1
 		}
-		this.ReasmTimeout = &v99
+		this.InUnknownProtos = &v99
 	}
 	if r.Intn(10) != 0 {
 		v100 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v100 *= -1
 		}
-		this.ReasmReqds = &v100
+		this.InDiscards = &v100
 	}
 	if r.Intn(10) != 0 {
 		v101 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v101 *= -1
 		}
-		this.ReasmOKs = &v101
+		this.InDelivers = &v101
 	}
 	if r.Intn(10) != 0 {
 		v102 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v102 *= -1
 		}
-		this.ReasmFails = &v102
+		this.OutRequests = &v102
 	}
 	if r.Intn(10) != 0 {
 		v103 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v103 *= -1
 		}
-		this.FragOKs = &v103
+		this.OutDiscards = &v103
 	}
 	if r.Intn(10) != 0 {
 		v104 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v104 *= -1
 		}
-		this.FragFails = &v104
+		this.OutNoRoutes = &v104
 	}
 	if r.Intn(10) != 0 {
 		v105 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v105 *= -1
 		}
-		this.FragCreates = &v105
+		this.ReasmTimeout = &v105
+	}
+	if r.Intn(10) != 0 {
+		v106 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v106 *= -1
+		}
+		this.ReasmReqds = &v106
+	}
+	if r.Intn(10) != 0 {
+		v107 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v107 *= -1
+		}
+		this.ReasmOKs = &v107
+	}
+	if r.Intn(10) != 0 {
+		v108 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v108 *= -1
+		}
+		this.ReasmFails = &v108
+	}
+	if r.Intn(10) != 0 {
+		v109 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v109 *= -1
+		}
+		this.FragOKs = &v109
+	}
+	if r.Intn(10) != 0 {
+		v110 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v110 *= -1
+		}
+		this.FragFails = &v110
+	}
+	if r.Intn(10) != 0 {
+		v111 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v111 *= -1
+		}
+		this.FragCreates = &v111
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -35083,193 +37197,193 @@ func NewPopulatedIpStatistics(r randyMesos, easy bool) *IpStatistics {
 func NewPopulatedIcmpStatistics(r randyMesos, easy bool) *IcmpStatistics {
 	this := &IcmpStatistics{}
 	if r.Intn(10) != 0 {
-		v106 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v106 *= -1
-		}
-		this.InMsgs = &v106
-	}
-	if r.Intn(10) != 0 {
-		v107 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v107 *= -1
-		}
-		this.InErrors = &v107
-	}
-	if r.Intn(10) != 0 {
-		v108 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v108 *= -1
-		}
-		this.InCsumErrors = &v108
-	}
-	if r.Intn(10) != 0 {
-		v109 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v109 *= -1
-		}
-		this.InDestUnreachs = &v109
-	}
-	if r.Intn(10) != 0 {
-		v110 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v110 *= -1
-		}
-		this.InTimeExcds = &v110
-	}
-	if r.Intn(10) != 0 {
-		v111 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v111 *= -1
-		}
-		this.InParmProbs = &v111
-	}
-	if r.Intn(10) != 0 {
 		v112 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v112 *= -1
 		}
-		this.InSrcQuenchs = &v112
+		this.InMsgs = &v112
 	}
 	if r.Intn(10) != 0 {
 		v113 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v113 *= -1
 		}
-		this.InRedirects = &v113
+		this.InErrors = &v113
 	}
 	if r.Intn(10) != 0 {
 		v114 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v114 *= -1
 		}
-		this.InEchos = &v114
+		this.InCsumErrors = &v114
 	}
 	if r.Intn(10) != 0 {
 		v115 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v115 *= -1
 		}
-		this.InEchoReps = &v115
+		this.InDestUnreachs = &v115
 	}
 	if r.Intn(10) != 0 {
 		v116 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v116 *= -1
 		}
-		this.InTimestamps = &v116
+		this.InTimeExcds = &v116
 	}
 	if r.Intn(10) != 0 {
 		v117 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v117 *= -1
 		}
-		this.InTimestampReps = &v117
+		this.InParmProbs = &v117
 	}
 	if r.Intn(10) != 0 {
 		v118 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v118 *= -1
 		}
-		this.InAddrMasks = &v118
+		this.InSrcQuenchs = &v118
 	}
 	if r.Intn(10) != 0 {
 		v119 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v119 *= -1
 		}
-		this.InAddrMaskReps = &v119
+		this.InRedirects = &v119
 	}
 	if r.Intn(10) != 0 {
 		v120 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v120 *= -1
 		}
-		this.OutMsgs = &v120
+		this.InEchos = &v120
 	}
 	if r.Intn(10) != 0 {
 		v121 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v121 *= -1
 		}
-		this.OutErrors = &v121
+		this.InEchoReps = &v121
 	}
 	if r.Intn(10) != 0 {
 		v122 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v122 *= -1
 		}
-		this.OutDestUnreachs = &v122
+		this.InTimestamps = &v122
 	}
 	if r.Intn(10) != 0 {
 		v123 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v123 *= -1
 		}
-		this.OutTimeExcds = &v123
+		this.InTimestampReps = &v123
 	}
 	if r.Intn(10) != 0 {
 		v124 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v124 *= -1
 		}
-		this.OutParmProbs = &v124
+		this.InAddrMasks = &v124
 	}
 	if r.Intn(10) != 0 {
 		v125 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v125 *= -1
 		}
-		this.OutSrcQuenchs = &v125
+		this.InAddrMaskReps = &v125
 	}
 	if r.Intn(10) != 0 {
 		v126 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v126 *= -1
 		}
-		this.OutRedirects = &v126
+		this.OutMsgs = &v126
 	}
 	if r.Intn(10) != 0 {
 		v127 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v127 *= -1
 		}
-		this.OutEchos = &v127
+		this.OutErrors = &v127
 	}
 	if r.Intn(10) != 0 {
 		v128 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v128 *= -1
 		}
-		this.OutEchoReps = &v128
+		this.OutDestUnreachs = &v128
 	}
 	if r.Intn(10) != 0 {
 		v129 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v129 *= -1
 		}
-		this.OutTimestamps = &v129
+		this.OutTimeExcds = &v129
 	}
 	if r.Intn(10) != 0 {
 		v130 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v130 *= -1
 		}
-		this.OutTimestampReps = &v130
+		this.OutParmProbs = &v130
 	}
 	if r.Intn(10) != 0 {
 		v131 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v131 *= -1
 		}
-		this.OutAddrMasks = &v131
+		this.OutSrcQuenchs = &v131
 	}
 	if r.Intn(10) != 0 {
 		v132 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v132 *= -1
 		}
-		this.OutAddrMaskReps = &v132
+		this.OutRedirects = &v132
+	}
+	if r.Intn(10) != 0 {
+		v133 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v133 *= -1
+		}
+		this.OutEchos = &v133
+	}
+	if r.Intn(10) != 0 {
+		v134 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v134 *= -1
+		}
+		this.OutEchoReps = &v134
+	}
+	if r.Intn(10) != 0 {
+		v135 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v135 *= -1
+		}
+		this.OutTimestamps = &v135
+	}
+	if r.Intn(10) != 0 {
+		v136 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v136 *= -1
+		}
+		this.OutTimestampReps = &v136
+	}
+	if r.Intn(10) != 0 {
+		v137 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v137 *= -1
+		}
+		this.OutAddrMasks = &v137
+	}
+	if r.Intn(10) != 0 {
+		v138 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v138 *= -1
+		}
+		this.OutAddrMaskReps = &v138
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -35279,109 +37393,109 @@ func NewPopulatedIcmpStatistics(r randyMesos, easy bool) *IcmpStatistics {
 func NewPopulatedTcpStatistics(r randyMesos, easy bool) *TcpStatistics {
 	this := &TcpStatistics{}
 	if r.Intn(10) != 0 {
-		v133 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v133 *= -1
-		}
-		this.RtoAlgorithm = &v133
-	}
-	if r.Intn(10) != 0 {
-		v134 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v134 *= -1
-		}
-		this.RtoMin = &v134
-	}
-	if r.Intn(10) != 0 {
-		v135 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v135 *= -1
-		}
-		this.RtoMax = &v135
-	}
-	if r.Intn(10) != 0 {
-		v136 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v136 *= -1
-		}
-		this.MaxConn = &v136
-	}
-	if r.Intn(10) != 0 {
-		v137 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v137 *= -1
-		}
-		this.ActiveOpens = &v137
-	}
-	if r.Intn(10) != 0 {
-		v138 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v138 *= -1
-		}
-		this.PassiveOpens = &v138
-	}
-	if r.Intn(10) != 0 {
 		v139 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v139 *= -1
 		}
-		this.AttemptFails = &v139
+		this.RtoAlgorithm = &v139
 	}
 	if r.Intn(10) != 0 {
 		v140 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v140 *= -1
 		}
-		this.EstabResets = &v140
+		this.RtoMin = &v140
 	}
 	if r.Intn(10) != 0 {
 		v141 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v141 *= -1
 		}
-		this.CurrEstab = &v141
+		this.RtoMax = &v141
 	}
 	if r.Intn(10) != 0 {
 		v142 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v142 *= -1
 		}
-		this.InSegs = &v142
+		this.MaxConn = &v142
 	}
 	if r.Intn(10) != 0 {
 		v143 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v143 *= -1
 		}
-		this.OutSegs = &v143
+		this.ActiveOpens = &v143
 	}
 	if r.Intn(10) != 0 {
 		v144 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v144 *= -1
 		}
-		this.RetransSegs = &v144
+		this.PassiveOpens = &v144
 	}
 	if r.Intn(10) != 0 {
 		v145 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v145 *= -1
 		}
-		this.InErrs = &v145
+		this.AttemptFails = &v145
 	}
 	if r.Intn(10) != 0 {
 		v146 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v146 *= -1
 		}
-		this.OutRsts = &v146
+		this.EstabResets = &v146
 	}
 	if r.Intn(10) != 0 {
 		v147 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v147 *= -1
 		}
-		this.InCsumErrors = &v147
+		this.CurrEstab = &v147
+	}
+	if r.Intn(10) != 0 {
+		v148 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v148 *= -1
+		}
+		this.InSegs = &v148
+	}
+	if r.Intn(10) != 0 {
+		v149 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v149 *= -1
+		}
+		this.OutSegs = &v149
+	}
+	if r.Intn(10) != 0 {
+		v150 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v150 *= -1
+		}
+		this.RetransSegs = &v150
+	}
+	if r.Intn(10) != 0 {
+		v151 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v151 *= -1
+		}
+		this.InErrs = &v151
+	}
+	if r.Intn(10) != 0 {
+		v152 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v152 *= -1
+		}
+		this.OutRsts = &v152
+	}
+	if r.Intn(10) != 0 {
+		v153 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v153 *= -1
+		}
+		this.InCsumErrors = &v153
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -35391,60 +37505,60 @@ func NewPopulatedTcpStatistics(r randyMesos, easy bool) *TcpStatistics {
 func NewPopulatedUdpStatistics(r randyMesos, easy bool) *UdpStatistics {
 	this := &UdpStatistics{}
 	if r.Intn(10) != 0 {
-		v148 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v148 *= -1
-		}
-		this.InDatagrams = &v148
-	}
-	if r.Intn(10) != 0 {
-		v149 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v149 *= -1
-		}
-		this.NoPorts = &v149
-	}
-	if r.Intn(10) != 0 {
-		v150 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v150 *= -1
-		}
-		this.InErrors = &v150
-	}
-	if r.Intn(10) != 0 {
-		v151 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v151 *= -1
-		}
-		this.OutDatagrams = &v151
-	}
-	if r.Intn(10) != 0 {
-		v152 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v152 *= -1
-		}
-		this.RcvbufErrors = &v152
-	}
-	if r.Intn(10) != 0 {
-		v153 := int64(r.Int63())
-		if r.Intn(2) == 0 {
-			v153 *= -1
-		}
-		this.SndbufErrors = &v153
-	}
-	if r.Intn(10) != 0 {
 		v154 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v154 *= -1
 		}
-		this.InCsumErrors = &v154
+		this.InDatagrams = &v154
 	}
 	if r.Intn(10) != 0 {
 		v155 := int64(r.Int63())
 		if r.Intn(2) == 0 {
 			v155 *= -1
 		}
-		this.IgnoredMulti = &v155
+		this.NoPorts = &v155
+	}
+	if r.Intn(10) != 0 {
+		v156 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v156 *= -1
+		}
+		this.InErrors = &v156
+	}
+	if r.Intn(10) != 0 {
+		v157 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v157 *= -1
+		}
+		this.OutDatagrams = &v157
+	}
+	if r.Intn(10) != 0 {
+		v158 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v158 *= -1
+		}
+		this.RcvbufErrors = &v158
+	}
+	if r.Intn(10) != 0 {
+		v159 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v159 *= -1
+		}
+		this.SndbufErrors = &v159
+	}
+	if r.Intn(10) != 0 {
+		v160 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v160 *= -1
+		}
+		this.InCsumErrors = &v160
+	}
+	if r.Intn(10) != 0 {
+		v161 := int64(r.Int63())
+		if r.Intn(2) == 0 {
+			v161 *= -1
+		}
+		this.IgnoredMulti = &v161
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -35479,12 +37593,12 @@ func NewPopulatedDiskStatistics(r randyMesos, easy bool) *DiskStatistics {
 		this.Persistence = NewPopulatedResource_DiskInfo_Persistence(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v156 := uint64(uint64(r.Uint32()))
-		this.LimitBytes = &v156
+		v162 := uint64(uint64(r.Uint32()))
+		this.LimitBytes = &v162
 	}
 	if r.Intn(10) != 0 {
-		v157 := uint64(uint64(r.Uint32()))
-		this.UsedBytes = &v157
+		v163 := uint64(uint64(r.Uint32()))
+		this.UsedBytes = &v163
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -35498,207 +37612,207 @@ func NewPopulatedResourceStatistics(r randyMesos, easy bool) *ResourceStatistics
 		this.Timestamp *= -1
 	}
 	if r.Intn(10) != 0 {
-		v158 := float64(r.Float64())
+		v164 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v158 *= -1
+			v164 *= -1
 		}
-		this.CPUsUserTimeSecs = &v158
-	}
-	if r.Intn(10) != 0 {
-		v159 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v159 *= -1
-		}
-		this.CPUsSystemTimeSecs = &v159
-	}
-	if r.Intn(10) != 0 {
-		v160 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v160 *= -1
-		}
-		this.CPUsLimit = &v160
-	}
-	if r.Intn(10) != 0 {
-		v161 := uint64(uint64(r.Uint32()))
-		this.MemRSSBytes = &v161
-	}
-	if r.Intn(10) != 0 {
-		v162 := uint64(uint64(r.Uint32()))
-		this.MemLimitBytes = &v162
-	}
-	if r.Intn(10) != 0 {
-		v163 := uint32(r.Uint32())
-		this.CPUsNrPeriods = &v163
-	}
-	if r.Intn(10) != 0 {
-		v164 := uint32(r.Uint32())
-		this.CPUsNrThrottled = &v164
+		this.CPUsUserTimeSecs = &v164
 	}
 	if r.Intn(10) != 0 {
 		v165 := float64(r.Float64())
 		if r.Intn(2) == 0 {
 			v165 *= -1
 		}
-		this.CPUsThrottledTimeSecs = &v165
+		this.CPUsSystemTimeSecs = &v165
 	}
 	if r.Intn(10) != 0 {
-		v166 := uint64(uint64(r.Uint32()))
-		this.MemFileBytes = &v166
+		v166 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v166 *= -1
+		}
+		this.CPUsLimit = &v166
 	}
 	if r.Intn(10) != 0 {
 		v167 := uint64(uint64(r.Uint32()))
-		this.MemAnonBytes = &v167
+		this.MemRSSBytes = &v167
 	}
 	if r.Intn(10) != 0 {
 		v168 := uint64(uint64(r.Uint32()))
-		this.MemMappedFileBytes = &v168
+		this.MemLimitBytes = &v168
+	}
+	if r.Intn(10) != 0 {
+		v169 := uint32(r.Uint32())
+		this.CPUsNrPeriods = &v169
+	}
+	if r.Intn(10) != 0 {
+		v170 := uint32(r.Uint32())
+		this.CPUsNrThrottled = &v170
+	}
+	if r.Intn(10) != 0 {
+		v171 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v171 *= -1
+		}
+		this.CPUsThrottledTimeSecs = &v171
+	}
+	if r.Intn(10) != 0 {
+		v172 := uint64(uint64(r.Uint32()))
+		this.MemFileBytes = &v172
+	}
+	if r.Intn(10) != 0 {
+		v173 := uint64(uint64(r.Uint32()))
+		this.MemAnonBytes = &v173
+	}
+	if r.Intn(10) != 0 {
+		v174 := uint64(uint64(r.Uint32()))
+		this.MemMappedFileBytes = &v174
 	}
 	if r.Intn(10) != 0 {
 		this.Perf = NewPopulatedPerfStatistics(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v169 := uint64(uint64(r.Uint32()))
-		this.NetRxPackets = &v169
-	}
-	if r.Intn(10) != 0 {
-		v170 := uint64(uint64(r.Uint32()))
-		this.NetRxBytes = &v170
-	}
-	if r.Intn(10) != 0 {
-		v171 := uint64(uint64(r.Uint32()))
-		this.NetRxErrors = &v171
-	}
-	if r.Intn(10) != 0 {
-		v172 := uint64(uint64(r.Uint32()))
-		this.NetRxDropped = &v172
-	}
-	if r.Intn(10) != 0 {
-		v173 := uint64(uint64(r.Uint32()))
-		this.NetTxPackets = &v173
-	}
-	if r.Intn(10) != 0 {
-		v174 := uint64(uint64(r.Uint32()))
-		this.NetTxBytes = &v174
-	}
-	if r.Intn(10) != 0 {
 		v175 := uint64(uint64(r.Uint32()))
-		this.NetTxErrors = &v175
+		this.NetRxPackets = &v175
 	}
 	if r.Intn(10) != 0 {
 		v176 := uint64(uint64(r.Uint32()))
-		this.NetTxDropped = &v176
+		this.NetRxBytes = &v176
 	}
 	if r.Intn(10) != 0 {
-		v177 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v177 *= -1
-		}
-		this.NetTCPRttMicrosecsP50 = &v177
+		v177 := uint64(uint64(r.Uint32()))
+		this.NetRxErrors = &v177
 	}
 	if r.Intn(10) != 0 {
-		v178 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v178 *= -1
-		}
-		this.NetTCPRttMicrosecsP90 = &v178
+		v178 := uint64(uint64(r.Uint32()))
+		this.NetRxDropped = &v178
 	}
 	if r.Intn(10) != 0 {
-		v179 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v179 *= -1
-		}
-		this.NetTCPRttMicrosecsP95 = &v179
+		v179 := uint64(uint64(r.Uint32()))
+		this.NetTxPackets = &v179
 	}
 	if r.Intn(10) != 0 {
-		v180 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v180 *= -1
-		}
-		this.NetTCPRttMicrosecsP99 = &v180
+		v180 := uint64(uint64(r.Uint32()))
+		this.NetTxBytes = &v180
 	}
 	if r.Intn(10) != 0 {
 		v181 := uint64(uint64(r.Uint32()))
-		this.DiskLimitBytes = &v181
+		this.NetTxErrors = &v181
 	}
 	if r.Intn(10) != 0 {
 		v182 := uint64(uint64(r.Uint32()))
-		this.DiskUsedBytes = &v182
+		this.NetTxDropped = &v182
 	}
 	if r.Intn(10) != 0 {
 		v183 := float64(r.Float64())
 		if r.Intn(2) == 0 {
 			v183 *= -1
 		}
-		this.NetTCPActiveConnections = &v183
+		this.NetTCPRttMicrosecsP50 = &v183
 	}
 	if r.Intn(10) != 0 {
 		v184 := float64(r.Float64())
 		if r.Intn(2) == 0 {
 			v184 *= -1
 		}
-		this.NetTCPTimeWaitConnections = &v184
+		this.NetTCPRttMicrosecsP90 = &v184
 	}
 	if r.Intn(10) != 0 {
-		v185 := uint32(r.Uint32())
-		this.Processes = &v185
+		v185 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v185 *= -1
+		}
+		this.NetTCPRttMicrosecsP95 = &v185
 	}
 	if r.Intn(10) != 0 {
-		v186 := uint32(r.Uint32())
-		this.Threads = &v186
+		v186 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v186 *= -1
+		}
+		this.NetTCPRttMicrosecsP99 = &v186
 	}
 	if r.Intn(10) != 0 {
 		v187 := uint64(uint64(r.Uint32()))
-		this.MemLowPressureCounter = &v187
+		this.DiskLimitBytes = &v187
 	}
 	if r.Intn(10) != 0 {
 		v188 := uint64(uint64(r.Uint32()))
-		this.MemMediumPressureCounter = &v188
+		this.DiskUsedBytes = &v188
 	}
 	if r.Intn(10) != 0 {
-		v189 := uint64(uint64(r.Uint32()))
-		this.MemCriticalPressureCounter = &v189
-	}
-	if r.Intn(10) != 0 {
-		v190 := r.Intn(5)
-		this.NetTrafficControlStatistics = make([]TrafficControlStatistics, v190)
-		for i := 0; i < v190; i++ {
-			v191 := NewPopulatedTrafficControlStatistics(r, easy)
-			this.NetTrafficControlStatistics[i] = *v191
+		v189 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v189 *= -1
 		}
+		this.NetTCPActiveConnections = &v189
 	}
 	if r.Intn(10) != 0 {
-		v192 := uint64(uint64(r.Uint32()))
-		this.MemTotalBytes = &v192
+		v190 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v190 *= -1
+		}
+		this.NetTCPTimeWaitConnections = &v190
+	}
+	if r.Intn(10) != 0 {
+		v191 := uint32(r.Uint32())
+		this.Processes = &v191
+	}
+	if r.Intn(10) != 0 {
+		v192 := uint32(r.Uint32())
+		this.Threads = &v192
 	}
 	if r.Intn(10) != 0 {
 		v193 := uint64(uint64(r.Uint32()))
-		this.MemTotalMemswBytes = &v193
+		this.MemLowPressureCounter = &v193
 	}
 	if r.Intn(10) != 0 {
 		v194 := uint64(uint64(r.Uint32()))
-		this.MemSoftLimitBytes = &v194
+		this.MemMediumPressureCounter = &v194
 	}
 	if r.Intn(10) != 0 {
 		v195 := uint64(uint64(r.Uint32()))
-		this.MemCacheBytes = &v195
+		this.MemCriticalPressureCounter = &v195
 	}
 	if r.Intn(10) != 0 {
-		v196 := uint64(uint64(r.Uint32()))
-		this.MemSwapBytes = &v196
+		v196 := r.Intn(5)
+		this.NetTrafficControlStatistics = make([]TrafficControlStatistics, v196)
+		for i := 0; i < v196; i++ {
+			v197 := NewPopulatedTrafficControlStatistics(r, easy)
+			this.NetTrafficControlStatistics[i] = *v197
+		}
 	}
 	if r.Intn(10) != 0 {
-		v197 := uint64(uint64(r.Uint32()))
-		this.MemUnevictableBytes = &v197
+		v198 := uint64(uint64(r.Uint32()))
+		this.MemTotalBytes = &v198
+	}
+	if r.Intn(10) != 0 {
+		v199 := uint64(uint64(r.Uint32()))
+		this.MemTotalMemswBytes = &v199
+	}
+	if r.Intn(10) != 0 {
+		v200 := uint64(uint64(r.Uint32()))
+		this.MemSoftLimitBytes = &v200
+	}
+	if r.Intn(10) != 0 {
+		v201 := uint64(uint64(r.Uint32()))
+		this.MemCacheBytes = &v201
+	}
+	if r.Intn(10) != 0 {
+		v202 := uint64(uint64(r.Uint32()))
+		this.MemSwapBytes = &v202
+	}
+	if r.Intn(10) != 0 {
+		v203 := uint64(uint64(r.Uint32()))
+		this.MemUnevictableBytes = &v203
 	}
 	if r.Intn(10) != 0 {
 		this.NetSNMPStatistics = NewPopulatedSNMPStatistics(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v198 := r.Intn(5)
-		this.DiskStatistics = make([]DiskStatistics, v198)
-		for i := 0; i < v198; i++ {
-			v199 := NewPopulatedDiskStatistics(r, easy)
-			this.DiskStatistics[i] = *v199
+		v204 := r.Intn(5)
+		this.DiskStatistics = make([]DiskStatistics, v204)
+		for i := 0; i < v204; i++ {
+			v205 := NewPopulatedDiskStatistics(r, easy)
+			this.DiskStatistics[i] = *v205
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -35712,19 +37826,19 @@ func NewPopulatedResourceStatistics(r randyMesos, easy bool) *ResourceStatistics
 func NewPopulatedResourceUsage(r randyMesos, easy bool) *ResourceUsage {
 	this := &ResourceUsage{}
 	if r.Intn(10) == 0 {
-		v200 := r.Intn(5)
-		this.Executors = make([]ResourceUsage_Executor, v200)
-		for i := 0; i < v200; i++ {
-			v201 := NewPopulatedResourceUsage_Executor(r, easy)
-			this.Executors[i] = *v201
+		v206 := r.Intn(5)
+		this.Executors = make([]ResourceUsage_Executor, v206)
+		for i := 0; i < v206; i++ {
+			v207 := NewPopulatedResourceUsage_Executor(r, easy)
+			this.Executors[i] = *v207
 		}
 	}
 	if r.Intn(10) != 0 {
-		v202 := r.Intn(5)
-		this.Total = make([]Resource, v202)
-		for i := 0; i < v202; i++ {
-			v203 := NewPopulatedResource(r, easy)
-			this.Total[i] = *v203
+		v208 := r.Intn(5)
+		this.Total = make([]Resource, v208)
+		for i := 0; i < v208; i++ {
+			v209 := NewPopulatedResource(r, easy)
+			this.Total[i] = *v209
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -35734,27 +37848,27 @@ func NewPopulatedResourceUsage(r randyMesos, easy bool) *ResourceUsage {
 
 func NewPopulatedResourceUsage_Executor(r randyMesos, easy bool) *ResourceUsage_Executor {
 	this := &ResourceUsage_Executor{}
-	v204 := NewPopulatedExecutorInfo(r, easy)
-	this.ExecutorInfo = *v204
+	v210 := NewPopulatedExecutorInfo(r, easy)
+	this.ExecutorInfo = *v210
 	if r.Intn(10) != 0 {
-		v205 := r.Intn(5)
-		this.Allocated = make([]Resource, v205)
-		for i := 0; i < v205; i++ {
-			v206 := NewPopulatedResource(r, easy)
-			this.Allocated[i] = *v206
+		v211 := r.Intn(5)
+		this.Allocated = make([]Resource, v211)
+		for i := 0; i < v211; i++ {
+			v212 := NewPopulatedResource(r, easy)
+			this.Allocated[i] = *v212
 		}
 	}
 	if r.Intn(10) != 0 {
 		this.Statistics = NewPopulatedResourceStatistics(r, easy)
 	}
-	v207 := NewPopulatedContainerID(r, easy)
-	this.ContainerID = *v207
+	v213 := NewPopulatedContainerID(r, easy)
+	this.ContainerID = *v213
 	if r.Intn(10) != 0 {
-		v208 := r.Intn(5)
-		this.Tasks = make([]ResourceUsage_Executor_Task, v208)
-		for i := 0; i < v208; i++ {
-			v209 := NewPopulatedResourceUsage_Executor_Task(r, easy)
-			this.Tasks[i] = *v209
+		v214 := r.Intn(5)
+		this.Tasks = make([]ResourceUsage_Executor_Task, v214)
+		for i := 0; i < v214; i++ {
+			v215 := NewPopulatedResourceUsage_Executor_Task(r, easy)
+			this.Tasks[i] = *v215
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -35765,14 +37879,14 @@ func NewPopulatedResourceUsage_Executor(r randyMesos, easy bool) *ResourceUsage_
 func NewPopulatedResourceUsage_Executor_Task(r randyMesos, easy bool) *ResourceUsage_Executor_Task {
 	this := &ResourceUsage_Executor_Task{}
 	this.Name = string(randStringMesos(r))
-	v210 := NewPopulatedTaskID(r, easy)
-	this.ID = *v210
+	v216 := NewPopulatedTaskID(r, easy)
+	this.ID = *v216
 	if r.Intn(10) != 0 {
-		v211 := r.Intn(5)
-		this.Resources = make([]Resource, v211)
-		for i := 0; i < v211; i++ {
-			v212 := NewPopulatedResource(r, easy)
-			this.Resources[i] = *v212
+		v217 := r.Intn(5)
+		this.Resources = make([]Resource, v217)
+		for i := 0; i < v217; i++ {
+			v218 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v218
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -35794,214 +37908,214 @@ func NewPopulatedPerfStatistics(r randyMesos, easy bool) *PerfStatistics {
 		this.Duration *= -1
 	}
 	if r.Intn(10) != 0 {
-		v213 := uint64(uint64(r.Uint32()))
-		this.Cycles = &v213
-	}
-	if r.Intn(10) != 0 {
-		v214 := uint64(uint64(r.Uint32()))
-		this.StalledCyclesFrontend = &v214
-	}
-	if r.Intn(10) != 0 {
-		v215 := uint64(uint64(r.Uint32()))
-		this.StalledCyclesBackend = &v215
-	}
-	if r.Intn(10) != 0 {
-		v216 := uint64(uint64(r.Uint32()))
-		this.Instructions = &v216
-	}
-	if r.Intn(10) != 0 {
-		v217 := uint64(uint64(r.Uint32()))
-		this.CacheReferences = &v217
-	}
-	if r.Intn(10) != 0 {
-		v218 := uint64(uint64(r.Uint32()))
-		this.CacheMisses = &v218
-	}
-	if r.Intn(10) != 0 {
 		v219 := uint64(uint64(r.Uint32()))
-		this.Branches = &v219
+		this.Cycles = &v219
 	}
 	if r.Intn(10) != 0 {
 		v220 := uint64(uint64(r.Uint32()))
-		this.BranchMisses = &v220
+		this.StalledCyclesFrontend = &v220
 	}
 	if r.Intn(10) != 0 {
 		v221 := uint64(uint64(r.Uint32()))
-		this.BusCycles = &v221
+		this.StalledCyclesBackend = &v221
 	}
 	if r.Intn(10) != 0 {
 		v222 := uint64(uint64(r.Uint32()))
-		this.RefCycles = &v222
+		this.Instructions = &v222
 	}
 	if r.Intn(10) != 0 {
-		v223 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v223 *= -1
-		}
-		this.CPUClock = &v223
+		v223 := uint64(uint64(r.Uint32()))
+		this.CacheReferences = &v223
 	}
 	if r.Intn(10) != 0 {
-		v224 := float64(r.Float64())
-		if r.Intn(2) == 0 {
-			v224 *= -1
-		}
-		this.TaskClock = &v224
+		v224 := uint64(uint64(r.Uint32()))
+		this.CacheMisses = &v224
 	}
 	if r.Intn(10) != 0 {
 		v225 := uint64(uint64(r.Uint32()))
-		this.PageFaults = &v225
+		this.Branches = &v225
 	}
 	if r.Intn(10) != 0 {
 		v226 := uint64(uint64(r.Uint32()))
-		this.MinorFaults = &v226
+		this.BranchMisses = &v226
 	}
 	if r.Intn(10) != 0 {
 		v227 := uint64(uint64(r.Uint32()))
-		this.MajorFaults = &v227
+		this.BusCycles = &v227
 	}
 	if r.Intn(10) != 0 {
 		v228 := uint64(uint64(r.Uint32()))
-		this.ContextSwitches = &v228
+		this.RefCycles = &v228
 	}
 	if r.Intn(10) != 0 {
-		v229 := uint64(uint64(r.Uint32()))
-		this.CPUMigrations = &v229
+		v229 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v229 *= -1
+		}
+		this.CPUClock = &v229
 	}
 	if r.Intn(10) != 0 {
-		v230 := uint64(uint64(r.Uint32()))
-		this.AlignmentFaults = &v230
+		v230 := float64(r.Float64())
+		if r.Intn(2) == 0 {
+			v230 *= -1
+		}
+		this.TaskClock = &v230
 	}
 	if r.Intn(10) != 0 {
 		v231 := uint64(uint64(r.Uint32()))
-		this.EmulationFaults = &v231
+		this.PageFaults = &v231
 	}
 	if r.Intn(10) != 0 {
 		v232 := uint64(uint64(r.Uint32()))
-		this.L1DcacheLoads = &v232
+		this.MinorFaults = &v232
 	}
 	if r.Intn(10) != 0 {
 		v233 := uint64(uint64(r.Uint32()))
-		this.L1DcacheLoadMisses = &v233
+		this.MajorFaults = &v233
 	}
 	if r.Intn(10) != 0 {
 		v234 := uint64(uint64(r.Uint32()))
-		this.L1DcacheStores = &v234
+		this.ContextSwitches = &v234
 	}
 	if r.Intn(10) != 0 {
 		v235 := uint64(uint64(r.Uint32()))
-		this.L1DcacheStoreMisses = &v235
+		this.CPUMigrations = &v235
 	}
 	if r.Intn(10) != 0 {
 		v236 := uint64(uint64(r.Uint32()))
-		this.L1DcachePrefetches = &v236
+		this.AlignmentFaults = &v236
 	}
 	if r.Intn(10) != 0 {
 		v237 := uint64(uint64(r.Uint32()))
-		this.L1DcachePrefetchMisses = &v237
+		this.EmulationFaults = &v237
 	}
 	if r.Intn(10) != 0 {
 		v238 := uint64(uint64(r.Uint32()))
-		this.L1IcacheLoads = &v238
+		this.L1DcacheLoads = &v238
 	}
 	if r.Intn(10) != 0 {
 		v239 := uint64(uint64(r.Uint32()))
-		this.L1IcacheLoadMisses = &v239
+		this.L1DcacheLoadMisses = &v239
 	}
 	if r.Intn(10) != 0 {
 		v240 := uint64(uint64(r.Uint32()))
-		this.L1IcachePrefetches = &v240
+		this.L1DcacheStores = &v240
 	}
 	if r.Intn(10) != 0 {
 		v241 := uint64(uint64(r.Uint32()))
-		this.L1IcachePrefetchMisses = &v241
+		this.L1DcacheStoreMisses = &v241
 	}
 	if r.Intn(10) != 0 {
 		v242 := uint64(uint64(r.Uint32()))
-		this.LLCLoads = &v242
+		this.L1DcachePrefetches = &v242
 	}
 	if r.Intn(10) != 0 {
 		v243 := uint64(uint64(r.Uint32()))
-		this.LLCLoadMisses = &v243
+		this.L1DcachePrefetchMisses = &v243
 	}
 	if r.Intn(10) != 0 {
 		v244 := uint64(uint64(r.Uint32()))
-		this.LLCStores = &v244
+		this.L1IcacheLoads = &v244
 	}
 	if r.Intn(10) != 0 {
 		v245 := uint64(uint64(r.Uint32()))
-		this.LLCStoreMisses = &v245
+		this.L1IcacheLoadMisses = &v245
 	}
 	if r.Intn(10) != 0 {
 		v246 := uint64(uint64(r.Uint32()))
-		this.LLCPrefetches = &v246
+		this.L1IcachePrefetches = &v246
 	}
 	if r.Intn(10) != 0 {
 		v247 := uint64(uint64(r.Uint32()))
-		this.LLCPrefetchMisses = &v247
+		this.L1IcachePrefetchMisses = &v247
 	}
 	if r.Intn(10) != 0 {
 		v248 := uint64(uint64(r.Uint32()))
-		this.DTLBLoads = &v248
+		this.LLCLoads = &v248
 	}
 	if r.Intn(10) != 0 {
 		v249 := uint64(uint64(r.Uint32()))
-		this.DTLBLoadMisses = &v249
+		this.LLCLoadMisses = &v249
 	}
 	if r.Intn(10) != 0 {
 		v250 := uint64(uint64(r.Uint32()))
-		this.DTLBStores = &v250
+		this.LLCStores = &v250
 	}
 	if r.Intn(10) != 0 {
 		v251 := uint64(uint64(r.Uint32()))
-		this.DTLBStoreMisses = &v251
+		this.LLCStoreMisses = &v251
 	}
 	if r.Intn(10) != 0 {
 		v252 := uint64(uint64(r.Uint32()))
-		this.DTLBPrefetches = &v252
+		this.LLCPrefetches = &v252
 	}
 	if r.Intn(10) != 0 {
 		v253 := uint64(uint64(r.Uint32()))
-		this.DTLBPrefetchMisses = &v253
+		this.LLCPrefetchMisses = &v253
 	}
 	if r.Intn(10) != 0 {
 		v254 := uint64(uint64(r.Uint32()))
-		this.ITLBLoads = &v254
+		this.DTLBLoads = &v254
 	}
 	if r.Intn(10) != 0 {
 		v255 := uint64(uint64(r.Uint32()))
-		this.ITLBLoadMisses = &v255
+		this.DTLBLoadMisses = &v255
 	}
 	if r.Intn(10) != 0 {
 		v256 := uint64(uint64(r.Uint32()))
-		this.BranchLoads = &v256
+		this.DTLBStores = &v256
 	}
 	if r.Intn(10) != 0 {
 		v257 := uint64(uint64(r.Uint32()))
-		this.BranchLoadMisses = &v257
+		this.DTLBStoreMisses = &v257
 	}
 	if r.Intn(10) != 0 {
 		v258 := uint64(uint64(r.Uint32()))
-		this.NodeLoads = &v258
+		this.DTLBPrefetches = &v258
 	}
 	if r.Intn(10) != 0 {
 		v259 := uint64(uint64(r.Uint32()))
-		this.NodeLoadMisses = &v259
+		this.DTLBPrefetchMisses = &v259
 	}
 	if r.Intn(10) != 0 {
 		v260 := uint64(uint64(r.Uint32()))
-		this.NodeStores = &v260
+		this.ITLBLoads = &v260
 	}
 	if r.Intn(10) != 0 {
 		v261 := uint64(uint64(r.Uint32()))
-		this.NodeStoreMisses = &v261
+		this.ITLBLoadMisses = &v261
 	}
 	if r.Intn(10) != 0 {
 		v262 := uint64(uint64(r.Uint32()))
-		this.NodePrefetches = &v262
+		this.BranchLoads = &v262
 	}
 	if r.Intn(10) != 0 {
 		v263 := uint64(uint64(r.Uint32()))
-		this.NodePrefetchMisses = &v263
+		this.BranchLoadMisses = &v263
+	}
+	if r.Intn(10) != 0 {
+		v264 := uint64(uint64(r.Uint32()))
+		this.NodeLoads = &v264
+	}
+	if r.Intn(10) != 0 {
+		v265 := uint64(uint64(r.Uint32()))
+		this.NodeLoadMisses = &v265
+	}
+	if r.Intn(10) != 0 {
+		v266 := uint64(uint64(r.Uint32()))
+		this.NodeStores = &v266
+	}
+	if r.Intn(10) != 0 {
+		v267 := uint64(uint64(r.Uint32()))
+		this.NodeStoreMisses = &v267
+	}
+	if r.Intn(10) != 0 {
+		v268 := uint64(uint64(r.Uint32()))
+		this.NodePrefetches = &v268
+	}
+	if r.Intn(10) != 0 {
+		v269 := uint64(uint64(r.Uint32()))
+		this.NodePrefetchMisses = &v269
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36014,11 +38128,11 @@ func NewPopulatedRequest(r randyMesos, easy bool) *Request {
 		this.AgentID = NewPopulatedAgentID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v264 := r.Intn(5)
-		this.Resources = make([]Resource, v264)
-		for i := 0; i < v264; i++ {
-			v265 := NewPopulatedResource(r, easy)
-			this.Resources[i] = *v265
+		v270 := r.Intn(5)
+		this.Resources = make([]Resource, v270)
+		for i := 0; i < v270; i++ {
+			v271 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v271
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36028,35 +38142,35 @@ func NewPopulatedRequest(r randyMesos, easy bool) *Request {
 
 func NewPopulatedOffer(r randyMesos, easy bool) *Offer {
 	this := &Offer{}
-	v266 := NewPopulatedOfferID(r, easy)
-	this.ID = *v266
-	v267 := NewPopulatedFrameworkID(r, easy)
-	this.FrameworkID = *v267
-	v268 := NewPopulatedAgentID(r, easy)
-	this.AgentID = *v268
+	v272 := NewPopulatedOfferID(r, easy)
+	this.ID = *v272
+	v273 := NewPopulatedFrameworkID(r, easy)
+	this.FrameworkID = *v273
+	v274 := NewPopulatedAgentID(r, easy)
+	this.AgentID = *v274
 	this.Hostname = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v269 := r.Intn(5)
-		this.Resources = make([]Resource, v269)
-		for i := 0; i < v269; i++ {
-			v270 := NewPopulatedResource(r, easy)
-			this.Resources[i] = *v270
+		v275 := r.Intn(5)
+		this.Resources = make([]Resource, v275)
+		for i := 0; i < v275; i++ {
+			v276 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v276
 		}
 	}
 	if r.Intn(10) != 0 {
-		v271 := r.Intn(5)
-		this.ExecutorIDs = make([]ExecutorID, v271)
-		for i := 0; i < v271; i++ {
-			v272 := NewPopulatedExecutorID(r, easy)
-			this.ExecutorIDs[i] = *v272
+		v277 := r.Intn(5)
+		this.ExecutorIDs = make([]ExecutorID, v277)
+		for i := 0; i < v277; i++ {
+			v278 := NewPopulatedExecutorID(r, easy)
+			this.ExecutorIDs[i] = *v278
 		}
 	}
 	if r.Intn(10) != 0 {
-		v273 := r.Intn(5)
-		this.Attributes = make([]Attribute, v273)
-		for i := 0; i < v273; i++ {
-			v274 := NewPopulatedAttribute(r, easy)
-			this.Attributes[i] = *v274
+		v279 := r.Intn(5)
+		this.Attributes = make([]Attribute, v279)
+		for i := 0; i < v279; i++ {
+			v280 := NewPopulatedAttribute(r, easy)
+			this.Attributes[i] = *v280
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -36078,7 +38192,7 @@ func NewPopulatedOffer(r randyMesos, easy bool) *Offer {
 
 func NewPopulatedOffer_Operation(r randyMesos, easy bool) *Offer_Operation {
 	this := &Offer_Operation{}
-	this.Type = Offer_Operation_Type([]int32{0, 1, 6, 2, 3, 4, 5}[r.Intn(7)])
+	this.Type = Offer_Operation_Type([]int32{0, 1, 6, 2, 3, 4, 5, 7, 8, 9, 10}[r.Intn(11)])
 	if r.Intn(10) != 0 {
 		this.Launch = NewPopulatedOffer_Operation_Launch(r, easy)
 	}
@@ -36097,6 +38211,21 @@ func NewPopulatedOffer_Operation(r randyMesos, easy bool) *Offer_Operation {
 	if r.Intn(10) != 0 {
 		this.LaunchGroup = NewPopulatedOffer_Operation_LaunchGroup(r, easy)
 	}
+	if r.Intn(10) != 0 {
+		this.CreateVolume = NewPopulatedOffer_Operation_CreateVolume(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.DestroyVolume = NewPopulatedOffer_Operation_DestroyVolume(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.CreateBlock = NewPopulatedOffer_Operation_CreateBlock(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.DestroyBlock = NewPopulatedOffer_Operation_DestroyBlock(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.ID = NewPopulatedOfferOperationID(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -36105,11 +38234,11 @@ func NewPopulatedOffer_Operation(r randyMesos, easy bool) *Offer_Operation {
 func NewPopulatedOffer_Operation_Launch(r randyMesos, easy bool) *Offer_Operation_Launch {
 	this := &Offer_Operation_Launch{}
 	if r.Intn(10) != 0 {
-		v275 := r.Intn(5)
-		this.TaskInfos = make([]TaskInfo, v275)
-		for i := 0; i < v275; i++ {
-			v276 := NewPopulatedTaskInfo(r, easy)
-			this.TaskInfos[i] = *v276
+		v281 := r.Intn(5)
+		this.TaskInfos = make([]TaskInfo, v281)
+		for i := 0; i < v281; i++ {
+			v282 := NewPopulatedTaskInfo(r, easy)
+			this.TaskInfos[i] = *v282
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36119,10 +38248,10 @@ func NewPopulatedOffer_Operation_Launch(r randyMesos, easy bool) *Offer_Operatio
 
 func NewPopulatedOffer_Operation_LaunchGroup(r randyMesos, easy bool) *Offer_Operation_LaunchGroup {
 	this := &Offer_Operation_LaunchGroup{}
-	v277 := NewPopulatedExecutorInfo(r, easy)
-	this.Executor = *v277
-	v278 := NewPopulatedTaskGroupInfo(r, easy)
-	this.TaskGroup = *v278
+	v283 := NewPopulatedExecutorInfo(r, easy)
+	this.Executor = *v283
+	v284 := NewPopulatedTaskGroupInfo(r, easy)
+	this.TaskGroup = *v284
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -36131,11 +38260,11 @@ func NewPopulatedOffer_Operation_LaunchGroup(r randyMesos, easy bool) *Offer_Ope
 func NewPopulatedOffer_Operation_Reserve(r randyMesos, easy bool) *Offer_Operation_Reserve {
 	this := &Offer_Operation_Reserve{}
 	if r.Intn(10) != 0 {
-		v279 := r.Intn(5)
-		this.Resources = make([]Resource, v279)
-		for i := 0; i < v279; i++ {
-			v280 := NewPopulatedResource(r, easy)
-			this.Resources[i] = *v280
+		v285 := r.Intn(5)
+		this.Resources = make([]Resource, v285)
+		for i := 0; i < v285; i++ {
+			v286 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v286
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36146,11 +38275,11 @@ func NewPopulatedOffer_Operation_Reserve(r randyMesos, easy bool) *Offer_Operati
 func NewPopulatedOffer_Operation_Unreserve(r randyMesos, easy bool) *Offer_Operation_Unreserve {
 	this := &Offer_Operation_Unreserve{}
 	if r.Intn(10) != 0 {
-		v281 := r.Intn(5)
-		this.Resources = make([]Resource, v281)
-		for i := 0; i < v281; i++ {
-			v282 := NewPopulatedResource(r, easy)
-			this.Resources[i] = *v282
+		v287 := r.Intn(5)
+		this.Resources = make([]Resource, v287)
+		for i := 0; i < v287; i++ {
+			v288 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v288
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36161,11 +38290,11 @@ func NewPopulatedOffer_Operation_Unreserve(r randyMesos, easy bool) *Offer_Opera
 func NewPopulatedOffer_Operation_Create(r randyMesos, easy bool) *Offer_Operation_Create {
 	this := &Offer_Operation_Create{}
 	if r.Intn(10) != 0 {
-		v283 := r.Intn(5)
-		this.Volumes = make([]Resource, v283)
-		for i := 0; i < v283; i++ {
-			v284 := NewPopulatedResource(r, easy)
-			this.Volumes[i] = *v284
+		v289 := r.Intn(5)
+		this.Volumes = make([]Resource, v289)
+		for i := 0; i < v289; i++ {
+			v290 := NewPopulatedResource(r, easy)
+			this.Volumes[i] = *v290
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36176,11 +38305,11 @@ func NewPopulatedOffer_Operation_Create(r randyMesos, easy bool) *Offer_Operatio
 func NewPopulatedOffer_Operation_Destroy(r randyMesos, easy bool) *Offer_Operation_Destroy {
 	this := &Offer_Operation_Destroy{}
 	if r.Intn(10) != 0 {
-		v285 := r.Intn(5)
-		this.Volumes = make([]Resource, v285)
-		for i := 0; i < v285; i++ {
-			v286 := NewPopulatedResource(r, easy)
-			this.Volumes[i] = *v286
+		v291 := r.Intn(5)
+		this.Volumes = make([]Resource, v291)
+		for i := 0; i < v291; i++ {
+			v292 := NewPopulatedResource(r, easy)
+			this.Volumes[i] = *v292
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36188,26 +38317,63 @@ func NewPopulatedOffer_Operation_Destroy(r randyMesos, easy bool) *Offer_Operati
 	return this
 }
 
+func NewPopulatedOffer_Operation_CreateVolume(r randyMesos, easy bool) *Offer_Operation_CreateVolume {
+	this := &Offer_Operation_CreateVolume{}
+	v293 := NewPopulatedResource(r, easy)
+	this.Source = *v293
+	this.TargetType = Resource_DiskInfo_Source_Type([]int32{0, 1, 2, 3, 4}[r.Intn(5)])
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedOffer_Operation_DestroyVolume(r randyMesos, easy bool) *Offer_Operation_DestroyVolume {
+	this := &Offer_Operation_DestroyVolume{}
+	v294 := NewPopulatedResource(r, easy)
+	this.Volume = *v294
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedOffer_Operation_CreateBlock(r randyMesos, easy bool) *Offer_Operation_CreateBlock {
+	this := &Offer_Operation_CreateBlock{}
+	v295 := NewPopulatedResource(r, easy)
+	this.Source = *v295
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedOffer_Operation_DestroyBlock(r randyMesos, easy bool) *Offer_Operation_DestroyBlock {
+	this := &Offer_Operation_DestroyBlock{}
+	v296 := NewPopulatedResource(r, easy)
+	this.Block = *v296
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
 func NewPopulatedInverseOffer(r randyMesos, easy bool) *InverseOffer {
 	this := &InverseOffer{}
-	v287 := NewPopulatedOfferID(r, easy)
-	this.OfferID = *v287
+	v297 := NewPopulatedOfferID(r, easy)
+	this.OfferID = *v297
 	if r.Intn(10) != 0 {
 		this.URL = NewPopulatedURL(r, easy)
 	}
-	v288 := NewPopulatedFrameworkID(r, easy)
-	this.FrameworkID = *v288
+	v298 := NewPopulatedFrameworkID(r, easy)
+	this.FrameworkID = *v298
 	if r.Intn(10) != 0 {
 		this.AgentID = NewPopulatedAgentID(r, easy)
 	}
-	v289 := NewPopulatedUnavailability(r, easy)
-	this.Unavailability = *v289
+	v299 := NewPopulatedUnavailability(r, easy)
+	this.Unavailability = *v299
 	if r.Intn(10) != 0 {
-		v290 := r.Intn(5)
-		this.Resources = make([]Resource, v290)
-		for i := 0; i < v290; i++ {
-			v291 := NewPopulatedResource(r, easy)
-			this.Resources[i] = *v291
+		v300 := r.Intn(5)
+		this.Resources = make([]Resource, v300)
+		for i := 0; i < v300; i++ {
+			v301 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v301
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36218,25 +38384,25 @@ func NewPopulatedInverseOffer(r randyMesos, easy bool) *InverseOffer {
 func NewPopulatedTaskInfo(r randyMesos, easy bool) *TaskInfo {
 	this := &TaskInfo{}
 	this.Name = string(randStringMesos(r))
-	v292 := NewPopulatedTaskID(r, easy)
-	this.TaskID = *v292
-	v293 := NewPopulatedAgentID(r, easy)
-	this.AgentID = *v293
+	v302 := NewPopulatedTaskID(r, easy)
+	this.TaskID = *v302
+	v303 := NewPopulatedAgentID(r, easy)
+	this.AgentID = *v303
 	if r.Intn(10) != 0 {
-		v294 := r.Intn(5)
-		this.Resources = make([]Resource, v294)
-		for i := 0; i < v294; i++ {
-			v295 := NewPopulatedResource(r, easy)
-			this.Resources[i] = *v295
+		v304 := r.Intn(5)
+		this.Resources = make([]Resource, v304)
+		for i := 0; i < v304; i++ {
+			v305 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v305
 		}
 	}
 	if r.Intn(10) != 0 {
 		this.Executor = NewPopulatedExecutorInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v296 := r.Intn(100)
-		this.Data = make([]byte, v296)
-		for i := 0; i < v296; i++ {
+		v306 := r.Intn(100)
+		this.Data = make([]byte, v306)
+		for i := 0; i < v306; i++ {
 			this.Data[i] = byte(r.Intn(256))
 		}
 	}
@@ -36269,11 +38435,11 @@ func NewPopulatedTaskInfo(r randyMesos, easy bool) *TaskInfo {
 func NewPopulatedTaskGroupInfo(r randyMesos, easy bool) *TaskGroupInfo {
 	this := &TaskGroupInfo{}
 	if r.Intn(10) != 0 {
-		v297 := r.Intn(5)
-		this.Tasks = make([]TaskInfo, v297)
-		for i := 0; i < v297; i++ {
-			v298 := NewPopulatedTaskInfo(r, easy)
-			this.Tasks[i] = *v298
+		v307 := r.Intn(5)
+		this.Tasks = make([]TaskInfo, v307)
+		for i := 0; i < v307; i++ {
+			v308 := NewPopulatedTaskInfo(r, easy)
+			this.Tasks[i] = *v308
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36284,41 +38450,41 @@ func NewPopulatedTaskGroupInfo(r randyMesos, easy bool) *TaskGroupInfo {
 func NewPopulatedTask(r randyMesos, easy bool) *Task {
 	this := &Task{}
 	this.Name = string(randStringMesos(r))
-	v299 := NewPopulatedTaskID(r, easy)
-	this.TaskID = *v299
-	v300 := NewPopulatedFrameworkID(r, easy)
-	this.FrameworkID = *v300
+	v309 := NewPopulatedTaskID(r, easy)
+	this.TaskID = *v309
+	v310 := NewPopulatedFrameworkID(r, easy)
+	this.FrameworkID = *v310
 	if r.Intn(10) != 0 {
 		this.ExecutorID = NewPopulatedExecutorID(r, easy)
 	}
-	v301 := NewPopulatedAgentID(r, easy)
-	this.AgentID = *v301
-	v302 := TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 7, 5, 9, 10, 11, 12, 13}[r.Intn(14)])
-	this.State = &v302
+	v311 := NewPopulatedAgentID(r, easy)
+	this.AgentID = *v311
+	v312 := TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 7, 5, 9, 10, 11, 12, 13}[r.Intn(14)])
+	this.State = &v312
 	if r.Intn(10) != 0 {
-		v303 := r.Intn(5)
-		this.Resources = make([]Resource, v303)
-		for i := 0; i < v303; i++ {
-			v304 := NewPopulatedResource(r, easy)
-			this.Resources[i] = *v304
+		v313 := r.Intn(5)
+		this.Resources = make([]Resource, v313)
+		for i := 0; i < v313; i++ {
+			v314 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v314
 		}
 	}
 	if r.Intn(10) == 0 {
-		v305 := r.Intn(5)
-		this.Statuses = make([]TaskStatus, v305)
-		for i := 0; i < v305; i++ {
-			v306 := NewPopulatedTaskStatus(r, easy)
-			this.Statuses[i] = *v306
+		v315 := r.Intn(5)
+		this.Statuses = make([]TaskStatus, v315)
+		for i := 0; i < v315; i++ {
+			v316 := NewPopulatedTaskStatus(r, easy)
+			this.Statuses[i] = *v316
 		}
 	}
 	if r.Intn(10) != 0 {
-		v307 := TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 7, 5, 9, 10, 11, 12, 13}[r.Intn(14)])
-		this.StatusUpdateState = &v307
+		v317 := TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 7, 5, 9, 10, 11, 12, 13}[r.Intn(14)])
+		this.StatusUpdateState = &v317
 	}
 	if r.Intn(10) != 0 {
-		v308 := r.Intn(100)
-		this.StatusUpdateUUID = make([]byte, v308)
-		for i := 0; i < v308; i++ {
+		v318 := r.Intn(100)
+		this.StatusUpdateUUID = make([]byte, v318)
+		for i := 0; i < v318; i++ {
 			this.StatusUpdateUUID[i] = byte(r.Intn(256))
 		}
 	}
@@ -36332,8 +38498,77 @@ func NewPopulatedTask(r randyMesos, easy bool) *Task {
 		this.Container = NewPopulatedContainerInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v309 := string(randStringMesos(r))
-		this.User = &v309
+		v319 := string(randStringMesos(r))
+		this.User = &v319
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedTaskResourceLimitation(r randyMesos, easy bool) *TaskResourceLimitation {
+	this := &TaskResourceLimitation{}
+	if r.Intn(10) != 0 {
+		v320 := r.Intn(5)
+		this.Resources = make([]Resource, v320)
+		for i := 0; i < v320; i++ {
+			v321 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v321
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedOfferOperation(r randyMesos, easy bool) *OfferOperation {
+	this := &OfferOperation{}
+	v322 := NewPopulatedFrameworkID(r, easy)
+	this.FrameworkID = *v322
+	v323 := NewPopulatedOffer_Operation(r, easy)
+	this.Info = *v323
+	if r.Intn(10) != 0 {
+		v324 := r.Intn(5)
+		this.Statuses = make([]OfferOperationStatus, v324)
+		for i := 0; i < v324; i++ {
+			v325 := NewPopulatedOfferOperationStatus(r, easy)
+			this.Statuses[i] = *v325
+		}
+	}
+	v326 := r.Intn(100)
+	this.OperationUUID = make([]byte, v326)
+	for i := 0; i < v326; i++ {
+		this.OperationUUID[i] = byte(r.Intn(256))
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedOfferOperationStatus(r randyMesos, easy bool) *OfferOperationStatus {
+	this := &OfferOperationStatus{}
+	if r.Intn(10) != 0 {
+		this.OperationID = NewPopulatedOfferOperationID(r, easy)
+	}
+	this.State = OfferOperationState([]int32{0, 1, 2, 3, 4}[r.Intn(5)])
+	if r.Intn(10) != 0 {
+		v327 := string(randStringMesos(r))
+		this.Message = &v327
+	}
+	if r.Intn(10) != 0 {
+		v328 := r.Intn(5)
+		this.ConvertedResources = make([]Resource, v328)
+		for i := 0; i < v328; i++ {
+			v329 := NewPopulatedResource(r, easy)
+			this.ConvertedResources[i] = *v329
+		}
+	}
+	if r.Intn(10) != 0 {
+		v330 := r.Intn(100)
+		this.StatusUUID = make([]byte, v330)
+		for i := 0; i < v330; i++ {
+			this.StatusUUID[i] = byte(r.Intn(256))
+		}
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36343,8 +38578,8 @@ func NewPopulatedTask(r randyMesos, easy bool) *Task {
 func NewPopulatedCheckStatusInfo(r randyMesos, easy bool) *CheckStatusInfo {
 	this := &CheckStatusInfo{}
 	if r.Intn(10) != 0 {
-		v310 := CheckInfo_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
-		this.Type = &v310
+		v331 := CheckInfo_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
+		this.Type = &v331
 	}
 	if r.Intn(10) != 0 {
 		this.Command = NewPopulatedCheckStatusInfo_Command(r, easy)
@@ -36363,11 +38598,11 @@ func NewPopulatedCheckStatusInfo(r randyMesos, easy bool) *CheckStatusInfo {
 func NewPopulatedCheckStatusInfo_Command(r randyMesos, easy bool) *CheckStatusInfo_Command {
 	this := &CheckStatusInfo_Command{}
 	if r.Intn(10) != 0 {
-		v311 := int32(r.Int31())
+		v332 := int32(r.Int31())
 		if r.Intn(2) == 0 {
-			v311 *= -1
+			v332 *= -1
 		}
-		this.ExitCode = &v311
+		this.ExitCode = &v332
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36377,8 +38612,8 @@ func NewPopulatedCheckStatusInfo_Command(r randyMesos, easy bool) *CheckStatusIn
 func NewPopulatedCheckStatusInfo_Http(r randyMesos, easy bool) *CheckStatusInfo_Http {
 	this := &CheckStatusInfo_Http{}
 	if r.Intn(10) != 0 {
-		v312 := uint32(r.Uint32())
-		this.StatusCode = &v312
+		v333 := uint32(r.Uint32())
+		this.StatusCode = &v333
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36388,8 +38623,8 @@ func NewPopulatedCheckStatusInfo_Http(r randyMesos, easy bool) *CheckStatusInfo_
 func NewPopulatedCheckStatusInfo_Tcp(r randyMesos, easy bool) *CheckStatusInfo_Tcp {
 	this := &CheckStatusInfo_Tcp{}
 	if r.Intn(10) != 0 {
-		v313 := bool(bool(r.Intn(2) == 0))
-		this.Succeeded = &v313
+		v334 := bool(bool(r.Intn(2) == 0))
+		this.Succeeded = &v334
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36398,50 +38633,50 @@ func NewPopulatedCheckStatusInfo_Tcp(r randyMesos, easy bool) *CheckStatusInfo_T
 
 func NewPopulatedTaskStatus(r randyMesos, easy bool) *TaskStatus {
 	this := &TaskStatus{}
-	v314 := NewPopulatedTaskID(r, easy)
-	this.TaskID = *v314
-	v315 := TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 7, 5, 9, 10, 11, 12, 13}[r.Intn(14)])
-	this.State = &v315
+	v335 := NewPopulatedTaskID(r, easy)
+	this.TaskID = *v335
+	v336 := TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 7, 5, 9, 10, 11, 12, 13}[r.Intn(14)])
+	this.State = &v336
 	if r.Intn(10) != 0 {
-		v316 := r.Intn(100)
-		this.Data = make([]byte, v316)
-		for i := 0; i < v316; i++ {
+		v337 := r.Intn(100)
+		this.Data = make([]byte, v337)
+		for i := 0; i < v337; i++ {
 			this.Data[i] = byte(r.Intn(256))
 		}
 	}
 	if r.Intn(10) != 0 {
-		v317 := string(randStringMesos(r))
-		this.Message = &v317
+		v338 := string(randStringMesos(r))
+		this.Message = &v338
 	}
 	if r.Intn(10) != 0 {
 		this.AgentID = NewPopulatedAgentID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v318 := float64(r.Float64())
+		v339 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v318 *= -1
+			v339 *= -1
 		}
-		this.Timestamp = &v318
+		this.Timestamp = &v339
 	}
 	if r.Intn(10) != 0 {
 		this.ExecutorID = NewPopulatedExecutorID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v319 := bool(bool(r.Intn(2) == 0))
-		this.Healthy = &v319
+		v340 := bool(bool(r.Intn(2) == 0))
+		this.Healthy = &v340
 	}
 	if r.Intn(10) != 0 {
-		v320 := TaskStatus_Source([]int32{0, 1, 2}[r.Intn(3)])
-		this.Source = &v320
+		v341 := TaskStatus_Source([]int32{0, 1, 2}[r.Intn(3)])
+		this.Source = &v341
 	}
 	if r.Intn(10) != 0 {
-		v321 := TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 23, 24, 1, 2, 3, 4, 5, 6, 27, 7, 9, 18, 10, 11, 12, 13, 30, 28, 29, 25, 26, 14, 15, 16}[r.Intn(31)])
-		this.Reason = &v321
+		v342 := TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 23, 24, 1, 2, 3, 4, 5, 6, 27, 7, 9, 18, 10, 11, 31, 12, 13, 30, 28, 29, 25, 26, 14, 15, 16}[r.Intn(32)])
+		this.Reason = &v342
 	}
 	if r.Intn(10) != 0 {
-		v322 := r.Intn(100)
-		this.UUID = make([]byte, v322)
-		for i := 0; i < v322; i++ {
+		v343 := r.Intn(100)
+		this.UUID = make([]byte, v343)
+		for i := 0; i < v343; i++ {
 			this.UUID[i] = byte(r.Intn(256))
 		}
 	}
@@ -36457,6 +38692,9 @@ func NewPopulatedTaskStatus(r randyMesos, easy bool) *TaskStatus {
 	if r.Intn(10) != 0 {
 		this.CheckStatus = NewPopulatedCheckStatusInfo(r, easy)
 	}
+	if r.Intn(10) != 0 {
+		this.Limitation = NewPopulatedTaskResourceLimitation(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -36465,11 +38703,11 @@ func NewPopulatedTaskStatus(r randyMesos, easy bool) *TaskStatus {
 func NewPopulatedFilters(r randyMesos, easy bool) *Filters {
 	this := &Filters{}
 	if r.Intn(10) != 0 {
-		v323 := float64(r.Float64())
+		v344 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v323 *= -1
+			v344 *= -1
 		}
-		this.RefuseSeconds = &v323
+		this.RefuseSeconds = &v344
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36479,11 +38717,11 @@ func NewPopulatedFilters(r randyMesos, easy bool) *Filters {
 func NewPopulatedEnvironment(r randyMesos, easy bool) *Environment {
 	this := &Environment{}
 	if r.Intn(10) != 0 {
-		v324 := r.Intn(5)
-		this.Variables = make([]Environment_Variable, v324)
-		for i := 0; i < v324; i++ {
-			v325 := NewPopulatedEnvironment_Variable(r, easy)
-			this.Variables[i] = *v325
+		v345 := r.Intn(5)
+		this.Variables = make([]Environment_Variable, v345)
+		for i := 0; i < v345; i++ {
+			v346 := NewPopulatedEnvironment_Variable(r, easy)
+			this.Variables[i] = *v346
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36495,12 +38733,12 @@ func NewPopulatedEnvironment_Variable(r randyMesos, easy bool) *Environment_Vari
 	this := &Environment_Variable{}
 	this.Name = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v326 := string(randStringMesos(r))
-		this.Value = &v326
+		v347 := string(randStringMesos(r))
+		this.Value = &v347
 	}
 	if r.Intn(10) != 0 {
-		v327 := Environment_Variable_Type([]int32{0, 1, 2}[r.Intn(3)])
-		this.Type = &v327
+		v348 := Environment_Variable_Type([]int32{0, 1, 2}[r.Intn(3)])
+		this.Type = &v348
 	}
 	if r.Intn(10) != 0 {
 		this.Secret = NewPopulatedSecret(r, easy)
@@ -36522,11 +38760,11 @@ func NewPopulatedParameter(r randyMesos, easy bool) *Parameter {
 func NewPopulatedParameters(r randyMesos, easy bool) *Parameters {
 	this := &Parameters{}
 	if r.Intn(10) != 0 {
-		v328 := r.Intn(5)
-		this.Parameter = make([]Parameter, v328)
-		for i := 0; i < v328; i++ {
-			v329 := NewPopulatedParameter(r, easy)
-			this.Parameter[i] = *v329
+		v349 := r.Intn(5)
+		this.Parameter = make([]Parameter, v349)
+		for i := 0; i < v349; i++ {
+			v350 := NewPopulatedParameter(r, easy)
+			this.Parameter[i] = *v350
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36538,8 +38776,8 @@ func NewPopulatedCredential(r randyMesos, easy bool) *Credential {
 	this := &Credential{}
 	this.Principal = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v330 := string(randStringMesos(r))
-		this.Secret = &v330
+		v351 := string(randStringMesos(r))
+		this.Secret = &v351
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36549,11 +38787,11 @@ func NewPopulatedCredential(r randyMesos, easy bool) *Credential {
 func NewPopulatedCredentials(r randyMesos, easy bool) *Credentials {
 	this := &Credentials{}
 	if r.Intn(10) != 0 {
-		v331 := r.Intn(5)
-		this.Credentials = make([]Credential, v331)
-		for i := 0; i < v331; i++ {
-			v332 := NewPopulatedCredential(r, easy)
-			this.Credentials[i] = *v332
+		v352 := r.Intn(5)
+		this.Credentials = make([]Credential, v352)
+		for i := 0; i < v352; i++ {
+			v353 := NewPopulatedCredential(r, easy)
+			this.Credentials[i] = *v353
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36579,8 +38817,8 @@ func NewPopulatedSecret_Reference(r randyMesos, easy bool) *Secret_Reference {
 	this := &Secret_Reference{}
 	this.Name = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v333 := string(randStringMesos(r))
-		this.Key = &v333
+		v354 := string(randStringMesos(r))
+		this.Key = &v354
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36589,9 +38827,9 @@ func NewPopulatedSecret_Reference(r randyMesos, easy bool) *Secret_Reference {
 
 func NewPopulatedSecret_Value(r randyMesos, easy bool) *Secret_Value {
 	this := &Secret_Value{}
-	v334 := r.Intn(100)
-	this.Data = make([]byte, v334)
-	for i := 0; i < v334; i++ {
+	v355 := r.Intn(100)
+	this.Data = make([]byte, v355)
+	for i := 0; i < v355; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36602,16 +38840,16 @@ func NewPopulatedSecret_Value(r randyMesos, easy bool) *Secret_Value {
 func NewPopulatedRateLimit(r randyMesos, easy bool) *RateLimit {
 	this := &RateLimit{}
 	if r.Intn(10) != 0 {
-		v335 := float64(r.Float64())
+		v356 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v335 *= -1
+			v356 *= -1
 		}
-		this.QPS = &v335
+		this.QPS = &v356
 	}
 	this.Principal = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v336 := uint64(uint64(r.Uint32()))
-		this.Capacity = &v336
+		v357 := uint64(uint64(r.Uint32()))
+		this.Capacity = &v357
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36621,23 +38859,23 @@ func NewPopulatedRateLimit(r randyMesos, easy bool) *RateLimit {
 func NewPopulatedRateLimits(r randyMesos, easy bool) *RateLimits {
 	this := &RateLimits{}
 	if r.Intn(10) != 0 {
-		v337 := r.Intn(5)
-		this.Limits = make([]RateLimit, v337)
-		for i := 0; i < v337; i++ {
-			v338 := NewPopulatedRateLimit(r, easy)
-			this.Limits[i] = *v338
+		v358 := r.Intn(5)
+		this.Limits = make([]RateLimit, v358)
+		for i := 0; i < v358; i++ {
+			v359 := NewPopulatedRateLimit(r, easy)
+			this.Limits[i] = *v359
 		}
 	}
 	if r.Intn(10) != 0 {
-		v339 := float64(r.Float64())
+		v360 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v339 *= -1
+			v360 *= -1
 		}
-		this.AggregateDefaultQPS = &v339
+		this.AggregateDefaultQPS = &v360
 	}
 	if r.Intn(10) != 0 {
-		v340 := uint64(uint64(r.Uint32()))
-		this.AggregateDefaultCapacity = &v340
+		v361 := uint64(uint64(r.Uint32()))
+		this.AggregateDefaultCapacity = &v361
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36646,8 +38884,8 @@ func NewPopulatedRateLimits(r randyMesos, easy bool) *RateLimits {
 
 func NewPopulatedImage(r randyMesos, easy bool) *Image {
 	this := &Image{}
-	v341 := Image_Type([]int32{1, 2}[r.Intn(2)])
-	this.Type = &v341
+	v362 := Image_Type([]int32{1, 2}[r.Intn(2)])
+	this.Type = &v362
 	if r.Intn(10) != 0 {
 		this.Appc = NewPopulatedImage_Appc(r, easy)
 	}
@@ -36655,8 +38893,8 @@ func NewPopulatedImage(r randyMesos, easy bool) *Image {
 		this.Docker = NewPopulatedImage_Docker(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v342 := bool(bool(r.Intn(2) == 0))
-		this.Cached = &v342
+		v363 := bool(bool(r.Intn(2) == 0))
+		this.Cached = &v363
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36667,8 +38905,8 @@ func NewPopulatedImage_Appc(r randyMesos, easy bool) *Image_Appc {
 	this := &Image_Appc{}
 	this.Name = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v343 := string(randStringMesos(r))
-		this.ID = &v343
+		v364 := string(randStringMesos(r))
+		this.ID = &v364
 	}
 	if r.Intn(10) != 0 {
 		this.Labels = NewPopulatedLabels(r, easy)
@@ -36696,11 +38934,11 @@ func NewPopulatedVolume(r randyMesos, easy bool) *Volume {
 	this := &Volume{}
 	this.ContainerPath = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v344 := string(randStringMesos(r))
-		this.HostPath = &v344
+		v365 := string(randStringMesos(r))
+		this.HostPath = &v365
 	}
-	v345 := Volume_Mode([]int32{1, 2}[r.Intn(2)])
-	this.Mode = &v345
+	v366 := Volume_Mode([]int32{1, 2}[r.Intn(2)])
+	this.Mode = &v366
 	if r.Intn(10) != 0 {
 		this.Image = NewPopulatedImage(r, easy)
 	}
@@ -36714,7 +38952,7 @@ func NewPopulatedVolume(r randyMesos, easy bool) *Volume {
 
 func NewPopulatedVolume_Source(r randyMesos, easy bool) *Volume_Source {
 	this := &Volume_Source{}
-	this.Type = Volume_Source_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
+	this.Type = Volume_Source_Type([]int32{0, 1, 4, 2, 3}[r.Intn(5)])
 	if r.Intn(10) != 0 {
 		this.DockerVolume = NewPopulatedVolume_Source_DockerVolume(r, easy)
 	}
@@ -36724,6 +38962,9 @@ func NewPopulatedVolume_Source(r randyMesos, easy bool) *Volume_Source {
 	if r.Intn(10) != 0 {
 		this.Secret = NewPopulatedSecret(r, easy)
 	}
+	if r.Intn(10) != 0 {
+		this.HostPath = NewPopulatedVolume_Source_HostPath(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -36732,13 +38973,21 @@ func NewPopulatedVolume_Source(r randyMesos, easy bool) *Volume_Source {
 func NewPopulatedVolume_Source_DockerVolume(r randyMesos, easy bool) *Volume_Source_DockerVolume {
 	this := &Volume_Source_DockerVolume{}
 	if r.Intn(10) != 0 {
-		v346 := string(randStringMesos(r))
-		this.Driver = &v346
+		v367 := string(randStringMesos(r))
+		this.Driver = &v367
 	}
 	this.Name = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
 		this.DriverOptions = NewPopulatedParameters(r, easy)
 	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedVolume_Source_HostPath(r randyMesos, easy bool) *Volume_Source_HostPath {
+	this := &Volume_Source_HostPath{}
+	this.Path = string(randStringMesos(r))
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -36756,9 +39005,9 @@ func NewPopulatedVolume_Source_SandboxPath(r randyMesos, easy bool) *Volume_Sour
 func NewPopulatedNetworkInfo(r randyMesos, easy bool) *NetworkInfo {
 	this := &NetworkInfo{}
 	if r.Intn(10) != 0 {
-		v347 := r.Intn(10)
-		this.Groups = make([]string, v347)
-		for i := 0; i < v347; i++ {
+		v368 := r.Intn(10)
+		this.Groups = make([]string, v368)
+		for i := 0; i < v368; i++ {
 			this.Groups[i] = string(randStringMesos(r))
 		}
 	}
@@ -36766,23 +39015,23 @@ func NewPopulatedNetworkInfo(r randyMesos, easy bool) *NetworkInfo {
 		this.Labels = NewPopulatedLabels(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v348 := r.Intn(5)
-		this.IPAddresses = make([]NetworkInfo_IPAddress, v348)
-		for i := 0; i < v348; i++ {
-			v349 := NewPopulatedNetworkInfo_IPAddress(r, easy)
-			this.IPAddresses[i] = *v349
+		v369 := r.Intn(5)
+		this.IPAddresses = make([]NetworkInfo_IPAddress, v369)
+		for i := 0; i < v369; i++ {
+			v370 := NewPopulatedNetworkInfo_IPAddress(r, easy)
+			this.IPAddresses[i] = *v370
 		}
 	}
 	if r.Intn(10) != 0 {
-		v350 := string(randStringMesos(r))
-		this.Name = &v350
+		v371 := string(randStringMesos(r))
+		this.Name = &v371
 	}
 	if r.Intn(10) != 0 {
-		v351 := r.Intn(5)
-		this.PortMappings = make([]NetworkInfo_PortMapping, v351)
-		for i := 0; i < v351; i++ {
-			v352 := NewPopulatedNetworkInfo_PortMapping(r, easy)
-			this.PortMappings[i] = *v352
+		v372 := r.Intn(5)
+		this.PortMappings = make([]NetworkInfo_PortMapping, v372)
+		for i := 0; i < v372; i++ {
+			v373 := NewPopulatedNetworkInfo_PortMapping(r, easy)
+			this.PortMappings[i] = *v373
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36793,12 +39042,12 @@ func NewPopulatedNetworkInfo(r randyMesos, easy bool) *NetworkInfo {
 func NewPopulatedNetworkInfo_IPAddress(r randyMesos, easy bool) *NetworkInfo_IPAddress {
 	this := &NetworkInfo_IPAddress{}
 	if r.Intn(10) != 0 {
-		v353 := NetworkInfo_Protocol([]int32{1, 2}[r.Intn(2)])
-		this.Protocol = &v353
+		v374 := NetworkInfo_Protocol([]int32{1, 2}[r.Intn(2)])
+		this.Protocol = &v374
 	}
 	if r.Intn(10) != 0 {
-		v354 := string(randStringMesos(r))
-		this.IPAddress = &v354
+		v375 := string(randStringMesos(r))
+		this.IPAddress = &v375
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36810,8 +39059,8 @@ func NewPopulatedNetworkInfo_PortMapping(r randyMesos, easy bool) *NetworkInfo_P
 	this.HostPort = uint32(r.Uint32())
 	this.ContainerPort = uint32(r.Uint32())
 	if r.Intn(10) != 0 {
-		v355 := string(randStringMesos(r))
-		this.Protocol = &v355
+		v376 := string(randStringMesos(r))
+		this.Protocol = &v376
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36821,9 +39070,9 @@ func NewPopulatedNetworkInfo_PortMapping(r randyMesos, easy bool) *NetworkInfo_P
 func NewPopulatedCapabilityInfo(r randyMesos, easy bool) *CapabilityInfo {
 	this := &CapabilityInfo{}
 	if r.Intn(10) != 0 {
-		v356 := r.Intn(10)
-		this.Capabilities = make([]CapabilityInfo_Capability, v356)
-		for i := 0; i < v356; i++ {
+		v377 := r.Intn(10)
+		this.Capabilities = make([]CapabilityInfo_Capability, v377)
+		for i := 0; i < v377; i++ {
 			this.Capabilities[i] = CapabilityInfo_Capability([]int32{0, 1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037}[r.Intn(39)])
 		}
 	}
@@ -36844,8 +39093,8 @@ func NewPopulatedLinuxInfo(r randyMesos, easy bool) *LinuxInfo {
 		this.EffectiveCapabilities = NewPopulatedCapabilityInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v357 := bool(bool(r.Intn(2) == 0))
-		this.SharePIDNamespace = &v357
+		v378 := bool(bool(r.Intn(2) == 0))
+		this.SharePIDNamespace = &v378
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36855,11 +39104,11 @@ func NewPopulatedLinuxInfo(r randyMesos, easy bool) *LinuxInfo {
 func NewPopulatedRLimitInfo(r randyMesos, easy bool) *RLimitInfo {
 	this := &RLimitInfo{}
 	if r.Intn(10) != 0 {
-		v358 := r.Intn(5)
-		this.Rlimits = make([]RLimitInfo_RLimit, v358)
-		for i := 0; i < v358; i++ {
-			v359 := NewPopulatedRLimitInfo_RLimit(r, easy)
-			this.Rlimits[i] = *v359
+		v379 := r.Intn(5)
+		this.Rlimits = make([]RLimitInfo_RLimit, v379)
+		for i := 0; i < v379; i++ {
+			v380 := NewPopulatedRLimitInfo_RLimit(r, easy)
+			this.Rlimits[i] = *v380
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -36871,12 +39120,12 @@ func NewPopulatedRLimitInfo_RLimit(r randyMesos, easy bool) *RLimitInfo_RLimit {
 	this := &RLimitInfo_RLimit{}
 	this.Type = RLimitInfo_RLimit_Type([]int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}[r.Intn(17)])
 	if r.Intn(10) != 0 {
-		v360 := uint64(uint64(r.Uint32()))
-		this.Hard = &v360
+		v381 := uint64(uint64(r.Uint32()))
+		this.Hard = &v381
 	}
 	if r.Intn(10) != 0 {
-		v361 := uint64(uint64(r.Uint32()))
-		this.Soft = &v361
+		v382 := uint64(uint64(r.Uint32()))
+		this.Soft = &v382
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36904,32 +39153,32 @@ func NewPopulatedTTYInfo_WindowSize(r randyMesos, easy bool) *TTYInfo_WindowSize
 
 func NewPopulatedContainerInfo(r randyMesos, easy bool) *ContainerInfo {
 	this := &ContainerInfo{}
-	v362 := ContainerInfo_Type([]int32{1, 2}[r.Intn(2)])
-	this.Type = &v362
+	v383 := ContainerInfo_Type([]int32{1, 2}[r.Intn(2)])
+	this.Type = &v383
 	if r.Intn(10) != 0 {
-		v363 := r.Intn(5)
-		this.Volumes = make([]Volume, v363)
-		for i := 0; i < v363; i++ {
-			v364 := NewPopulatedVolume(r, easy)
-			this.Volumes[i] = *v364
+		v384 := r.Intn(5)
+		this.Volumes = make([]Volume, v384)
+		for i := 0; i < v384; i++ {
+			v385 := NewPopulatedVolume(r, easy)
+			this.Volumes[i] = *v385
 		}
 	}
 	if r.Intn(10) != 0 {
 		this.Docker = NewPopulatedContainerInfo_DockerInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v365 := string(randStringMesos(r))
-		this.Hostname = &v365
+		v386 := string(randStringMesos(r))
+		this.Hostname = &v386
 	}
 	if r.Intn(10) != 0 {
 		this.Mesos = NewPopulatedContainerInfo_MesosInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v366 := r.Intn(5)
-		this.NetworkInfos = make([]NetworkInfo, v366)
-		for i := 0; i < v366; i++ {
-			v367 := NewPopulatedNetworkInfo(r, easy)
-			this.NetworkInfos[i] = *v367
+		v387 := r.Intn(5)
+		this.NetworkInfos = make([]NetworkInfo, v387)
+		for i := 0; i < v387; i++ {
+			v388 := NewPopulatedNetworkInfo(r, easy)
+			this.NetworkInfos[i] = *v388
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -36950,36 +39199,36 @@ func NewPopulatedContainerInfo_DockerInfo(r randyMesos, easy bool) *ContainerInf
 	this := &ContainerInfo_DockerInfo{}
 	this.Image = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v368 := ContainerInfo_DockerInfo_Network([]int32{1, 2, 3, 4}[r.Intn(4)])
-		this.Network = &v368
+		v389 := ContainerInfo_DockerInfo_Network([]int32{1, 2, 3, 4}[r.Intn(4)])
+		this.Network = &v389
 	}
 	if r.Intn(10) != 0 {
-		v369 := r.Intn(5)
-		this.PortMappings = make([]ContainerInfo_DockerInfo_PortMapping, v369)
-		for i := 0; i < v369; i++ {
-			v370 := NewPopulatedContainerInfo_DockerInfo_PortMapping(r, easy)
-			this.PortMappings[i] = *v370
+		v390 := r.Intn(5)
+		this.PortMappings = make([]ContainerInfo_DockerInfo_PortMapping, v390)
+		for i := 0; i < v390; i++ {
+			v391 := NewPopulatedContainerInfo_DockerInfo_PortMapping(r, easy)
+			this.PortMappings[i] = *v391
 		}
 	}
 	if r.Intn(10) != 0 {
-		v371 := bool(bool(r.Intn(2) == 0))
-		this.Privileged = &v371
+		v392 := bool(bool(r.Intn(2) == 0))
+		this.Privileged = &v392
 	}
 	if r.Intn(10) != 0 {
-		v372 := r.Intn(5)
-		this.Parameters = make([]Parameter, v372)
-		for i := 0; i < v372; i++ {
-			v373 := NewPopulatedParameter(r, easy)
-			this.Parameters[i] = *v373
+		v393 := r.Intn(5)
+		this.Parameters = make([]Parameter, v393)
+		for i := 0; i < v393; i++ {
+			v394 := NewPopulatedParameter(r, easy)
+			this.Parameters[i] = *v394
 		}
 	}
 	if r.Intn(10) != 0 {
-		v374 := bool(bool(r.Intn(2) == 0))
-		this.ForcePullImage = &v374
+		v395 := bool(bool(r.Intn(2) == 0))
+		this.ForcePullImage = &v395
 	}
 	if r.Intn(10) != 0 {
-		v375 := string(randStringMesos(r))
-		this.VolumeDriver = &v375
+		v396 := string(randStringMesos(r))
+		this.VolumeDriver = &v396
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -36991,8 +39240,8 @@ func NewPopulatedContainerInfo_DockerInfo_PortMapping(r randyMesos, easy bool) *
 	this.HostPort = uint32(r.Uint32())
 	this.ContainerPort = uint32(r.Uint32())
 	if r.Intn(10) != 0 {
-		v376 := string(randStringMesos(r))
-		this.Protocol = &v376
+		v397 := string(randStringMesos(r))
+		this.Protocol = &v397
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37012,19 +39261,19 @@ func NewPopulatedContainerInfo_MesosInfo(r randyMesos, easy bool) *ContainerInfo
 func NewPopulatedContainerStatus(r randyMesos, easy bool) *ContainerStatus {
 	this := &ContainerStatus{}
 	if r.Intn(10) != 0 {
-		v377 := r.Intn(5)
-		this.NetworkInfos = make([]NetworkInfo, v377)
-		for i := 0; i < v377; i++ {
-			v378 := NewPopulatedNetworkInfo(r, easy)
-			this.NetworkInfos[i] = *v378
+		v398 := r.Intn(5)
+		this.NetworkInfos = make([]NetworkInfo, v398)
+		for i := 0; i < v398; i++ {
+			v399 := NewPopulatedNetworkInfo(r, easy)
+			this.NetworkInfos[i] = *v399
 		}
 	}
 	if r.Intn(10) != 0 {
 		this.CgroupInfo = NewPopulatedCgroupInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v379 := uint32(r.Uint32())
-		this.ExecutorPID = &v379
+		v400 := uint32(r.Uint32())
+		this.ExecutorPID = &v400
 	}
 	if r.Intn(10) == 0 {
 		this.ContainerID = NewPopulatedContainerID(r, easy)
@@ -37054,12 +39303,12 @@ func NewPopulatedCgroupInfo_Blkio(r randyMesos, easy bool) *CgroupInfo_Blkio {
 func NewPopulatedCgroupInfo_Blkio_Value(r randyMesos, easy bool) *CgroupInfo_Blkio_Value {
 	this := &CgroupInfo_Blkio_Value{}
 	if r.Intn(10) != 0 {
-		v380 := CgroupInfo_Blkio_Operation([]int32{0, 1, 2, 3, 4, 5}[r.Intn(6)])
-		this.Op = &v380
+		v401 := CgroupInfo_Blkio_Operation([]int32{0, 1, 2, 3, 4, 5}[r.Intn(6)])
+		this.Op = &v401
 	}
 	if r.Intn(10) != 0 {
-		v381 := uint64(uint64(r.Uint32()))
-		this.Value = &v381
+		v402 := uint64(uint64(r.Uint32()))
+		this.Value = &v402
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37079,59 +39328,59 @@ func NewPopulatedCgroupInfo_Blkio_CFQ_Statistics(r randyMesos, easy bool) *Cgrou
 		this.Device = NewPopulatedDevice_Number(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v382 := uint64(uint64(r.Uint32()))
-		this.Sectors = &v382
+		v403 := uint64(uint64(r.Uint32()))
+		this.Sectors = &v403
 	}
 	if r.Intn(10) != 0 {
-		v383 := uint64(uint64(r.Uint32()))
-		this.Time = &v383
+		v404 := uint64(uint64(r.Uint32()))
+		this.Time = &v404
 	}
 	if r.Intn(10) != 0 {
-		v384 := r.Intn(5)
-		this.IOServiced = make([]CgroupInfo_Blkio_Value, v384)
-		for i := 0; i < v384; i++ {
-			v385 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
-			this.IOServiced[i] = *v385
+		v405 := r.Intn(5)
+		this.IOServiced = make([]CgroupInfo_Blkio_Value, v405)
+		for i := 0; i < v405; i++ {
+			v406 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
+			this.IOServiced[i] = *v406
 		}
 	}
 	if r.Intn(10) != 0 {
-		v386 := r.Intn(5)
-		this.IOServiceBytes = make([]CgroupInfo_Blkio_Value, v386)
-		for i := 0; i < v386; i++ {
-			v387 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
-			this.IOServiceBytes[i] = *v387
+		v407 := r.Intn(5)
+		this.IOServiceBytes = make([]CgroupInfo_Blkio_Value, v407)
+		for i := 0; i < v407; i++ {
+			v408 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
+			this.IOServiceBytes[i] = *v408
 		}
 	}
 	if r.Intn(10) != 0 {
-		v388 := r.Intn(5)
-		this.IOServiceTime = make([]CgroupInfo_Blkio_Value, v388)
-		for i := 0; i < v388; i++ {
-			v389 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
-			this.IOServiceTime[i] = *v389
+		v409 := r.Intn(5)
+		this.IOServiceTime = make([]CgroupInfo_Blkio_Value, v409)
+		for i := 0; i < v409; i++ {
+			v410 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
+			this.IOServiceTime[i] = *v410
 		}
 	}
 	if r.Intn(10) != 0 {
-		v390 := r.Intn(5)
-		this.IOWaitTime = make([]CgroupInfo_Blkio_Value, v390)
-		for i := 0; i < v390; i++ {
-			v391 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
-			this.IOWaitTime[i] = *v391
+		v411 := r.Intn(5)
+		this.IOWaitTime = make([]CgroupInfo_Blkio_Value, v411)
+		for i := 0; i < v411; i++ {
+			v412 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
+			this.IOWaitTime[i] = *v412
 		}
 	}
 	if r.Intn(10) != 0 {
-		v392 := r.Intn(5)
-		this.IOMerged = make([]CgroupInfo_Blkio_Value, v392)
-		for i := 0; i < v392; i++ {
-			v393 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
-			this.IOMerged[i] = *v393
+		v413 := r.Intn(5)
+		this.IOMerged = make([]CgroupInfo_Blkio_Value, v413)
+		for i := 0; i < v413; i++ {
+			v414 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
+			this.IOMerged[i] = *v414
 		}
 	}
 	if r.Intn(10) != 0 {
-		v394 := r.Intn(5)
-		this.IOQueued = make([]CgroupInfo_Blkio_Value, v394)
-		for i := 0; i < v394; i++ {
-			v395 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
-			this.IOQueued[i] = *v395
+		v415 := r.Intn(5)
+		this.IOQueued = make([]CgroupInfo_Blkio_Value, v415)
+		for i := 0; i < v415; i++ {
+			v416 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
+			this.IOQueued[i] = *v416
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -37152,19 +39401,19 @@ func NewPopulatedCgroupInfo_Blkio_Throttling_Statistics(r randyMesos, easy bool)
 		this.Device = NewPopulatedDevice_Number(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v396 := r.Intn(5)
-		this.IOServiced = make([]CgroupInfo_Blkio_Value, v396)
-		for i := 0; i < v396; i++ {
-			v397 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
-			this.IOServiced[i] = *v397
+		v417 := r.Intn(5)
+		this.IOServiced = make([]CgroupInfo_Blkio_Value, v417)
+		for i := 0; i < v417; i++ {
+			v418 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
+			this.IOServiced[i] = *v418
 		}
 	}
 	if r.Intn(10) != 0 {
-		v398 := r.Intn(5)
-		this.IOServiceBytes = make([]CgroupInfo_Blkio_Value, v398)
-		for i := 0; i < v398; i++ {
-			v399 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
-			this.IOServiceBytes[i] = *v399
+		v419 := r.Intn(5)
+		this.IOServiceBytes = make([]CgroupInfo_Blkio_Value, v419)
+		for i := 0; i < v419; i++ {
+			v420 := NewPopulatedCgroupInfo_Blkio_Value(r, easy)
+			this.IOServiceBytes[i] = *v420
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -37175,25 +39424,25 @@ func NewPopulatedCgroupInfo_Blkio_Throttling_Statistics(r randyMesos, easy bool)
 func NewPopulatedCgroupInfo_Blkio_Statistics(r randyMesos, easy bool) *CgroupInfo_Blkio_Statistics {
 	this := &CgroupInfo_Blkio_Statistics{}
 	if r.Intn(10) != 0 {
-		v400 := r.Intn(5)
-		this.CFQ = make([]CgroupInfo_Blkio_CFQ_Statistics, v400)
-		for i := 0; i < v400; i++ {
-			v401 := NewPopulatedCgroupInfo_Blkio_CFQ_Statistics(r, easy)
-			this.CFQ[i] = *v401
+		v421 := r.Intn(5)
+		this.CFQ = make([]CgroupInfo_Blkio_CFQ_Statistics, v421)
+		for i := 0; i < v421; i++ {
+			v422 := NewPopulatedCgroupInfo_Blkio_CFQ_Statistics(r, easy)
+			this.CFQ[i] = *v422
 		}
 	}
 	if r.Intn(10) != 0 {
-		v402 := r.Intn(5)
-		this.CFQRecursive = make([]CgroupInfo_Blkio_CFQ_Statistics, v402)
-		for i := 0; i < v402; i++ {
-			v403 := NewPopulatedCgroupInfo_Blkio_CFQ_Statistics(r, easy)
-			this.CFQRecursive[i] = *v403
+		v423 := r.Intn(5)
+		this.CFQRecursive = make([]CgroupInfo_Blkio_CFQ_Statistics, v423)
+		for i := 0; i < v423; i++ {
+			v424 := NewPopulatedCgroupInfo_Blkio_CFQ_Statistics(r, easy)
+			this.CFQRecursive[i] = *v424
 		}
 	}
 	if r.Intn(10) != 0 {
-		v404 := r.Intn(5)
-		this.Throttling = make([]*CgroupInfo_Blkio_Throttling_Statistics, v404)
-		for i := 0; i < v404; i++ {
+		v425 := r.Intn(5)
+		this.Throttling = make([]*CgroupInfo_Blkio_Throttling_Statistics, v425)
+		for i := 0; i < v425; i++ {
 			this.Throttling[i] = NewPopulatedCgroupInfo_Blkio_Throttling_Statistics(r, easy)
 		}
 	}
@@ -37205,8 +39454,8 @@ func NewPopulatedCgroupInfo_Blkio_Statistics(r randyMesos, easy bool) *CgroupInf
 func NewPopulatedCgroupInfo_NetCls(r randyMesos, easy bool) *CgroupInfo_NetCls {
 	this := &CgroupInfo_NetCls{}
 	if r.Intn(10) != 0 {
-		v405 := uint32(r.Uint32())
-		this.ClassID = &v405
+		v426 := uint32(r.Uint32())
+		this.ClassID = &v426
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37216,11 +39465,11 @@ func NewPopulatedCgroupInfo_NetCls(r randyMesos, easy bool) *CgroupInfo_NetCls {
 func NewPopulatedLabels(r randyMesos, easy bool) *Labels {
 	this := &Labels{}
 	if r.Intn(10) != 0 {
-		v406 := r.Intn(5)
-		this.Labels = make([]Label, v406)
-		for i := 0; i < v406; i++ {
-			v407 := NewPopulatedLabel(r, easy)
-			this.Labels[i] = *v407
+		v427 := r.Intn(5)
+		this.Labels = make([]Label, v427)
+		for i := 0; i < v427; i++ {
+			v428 := NewPopulatedLabel(r, easy)
+			this.Labels[i] = *v428
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -37232,8 +39481,8 @@ func NewPopulatedLabel(r randyMesos, easy bool) *Label {
 	this := &Label{}
 	this.Key = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v408 := string(randStringMesos(r))
-		this.Value = &v408
+		v429 := string(randStringMesos(r))
+		this.Value = &v429
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37244,16 +39493,16 @@ func NewPopulatedPort(r randyMesos, easy bool) *Port {
 	this := &Port{}
 	this.Number = uint32(r.Uint32())
 	if r.Intn(10) != 0 {
-		v409 := string(randStringMesos(r))
-		this.Name = &v409
+		v430 := string(randStringMesos(r))
+		this.Name = &v430
 	}
 	if r.Intn(10) != 0 {
-		v410 := string(randStringMesos(r))
-		this.Protocol = &v410
+		v431 := string(randStringMesos(r))
+		this.Protocol = &v431
 	}
 	if r.Intn(10) != 0 {
-		v411 := DiscoveryInfo_Visibility([]int32{0, 1, 2}[r.Intn(3)])
-		this.Visibility = &v411
+		v432 := DiscoveryInfo_Visibility([]int32{0, 1, 2}[r.Intn(3)])
+		this.Visibility = &v432
 	}
 	if r.Intn(10) != 0 {
 		this.Labels = NewPopulatedLabels(r, easy)
@@ -37266,11 +39515,11 @@ func NewPopulatedPort(r randyMesos, easy bool) *Port {
 func NewPopulatedPorts(r randyMesos, easy bool) *Ports {
 	this := &Ports{}
 	if r.Intn(10) != 0 {
-		v412 := r.Intn(5)
-		this.Ports = make([]Port, v412)
-		for i := 0; i < v412; i++ {
-			v413 := NewPopulatedPort(r, easy)
-			this.Ports[i] = *v413
+		v433 := r.Intn(5)
+		this.Ports = make([]Port, v433)
+		for i := 0; i < v433; i++ {
+			v434 := NewPopulatedPort(r, easy)
+			this.Ports[i] = *v434
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -37282,20 +39531,20 @@ func NewPopulatedDiscoveryInfo(r randyMesos, easy bool) *DiscoveryInfo {
 	this := &DiscoveryInfo{}
 	this.Visibility = DiscoveryInfo_Visibility([]int32{0, 1, 2}[r.Intn(3)])
 	if r.Intn(10) != 0 {
-		v414 := string(randStringMesos(r))
-		this.Name = &v414
+		v435 := string(randStringMesos(r))
+		this.Name = &v435
 	}
 	if r.Intn(10) != 0 {
-		v415 := string(randStringMesos(r))
-		this.Environment = &v415
+		v436 := string(randStringMesos(r))
+		this.Environment = &v436
 	}
 	if r.Intn(10) != 0 {
-		v416 := string(randStringMesos(r))
-		this.Location = &v416
+		v437 := string(randStringMesos(r))
+		this.Location = &v437
 	}
 	if r.Intn(10) != 0 {
-		v417 := string(randStringMesos(r))
-		this.Version = &v417
+		v438 := string(randStringMesos(r))
+		this.Version = &v438
 	}
 	if r.Intn(10) != 0 {
 		this.Ports = NewPopulatedPorts(r, easy)
@@ -37315,8 +39564,8 @@ func NewPopulatedWeightInfo(r randyMesos, easy bool) *WeightInfo {
 		this.Weight *= -1
 	}
 	if r.Intn(10) != 0 {
-		v418 := string(randStringMesos(r))
-		this.Role = &v418
+		v439 := string(randStringMesos(r))
+		this.Role = &v439
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37327,31 +39576,31 @@ func NewPopulatedVersionInfo(r randyMesos, easy bool) *VersionInfo {
 	this := &VersionInfo{}
 	this.Version = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v419 := string(randStringMesos(r))
-		this.BuildDate = &v419
+		v440 := string(randStringMesos(r))
+		this.BuildDate = &v440
 	}
 	if r.Intn(10) != 0 {
-		v420 := float64(r.Float64())
+		v441 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v420 *= -1
+			v441 *= -1
 		}
-		this.BuildTime = &v420
+		this.BuildTime = &v441
 	}
 	if r.Intn(10) != 0 {
-		v421 := string(randStringMesos(r))
-		this.BuildUser = &v421
+		v442 := string(randStringMesos(r))
+		this.BuildUser = &v442
 	}
 	if r.Intn(10) != 0 {
-		v422 := string(randStringMesos(r))
-		this.GitSHA = &v422
+		v443 := string(randStringMesos(r))
+		this.GitSHA = &v443
 	}
 	if r.Intn(10) != 0 {
-		v423 := string(randStringMesos(r))
-		this.GitBranch = &v423
+		v444 := string(randStringMesos(r))
+		this.GitBranch = &v444
 	}
 	if r.Intn(10) != 0 {
-		v424 := string(randStringMesos(r))
-		this.GitTag = &v424
+		v445 := string(randStringMesos(r))
+		this.GitTag = &v445
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37362,8 +39611,8 @@ func NewPopulatedFlag(r randyMesos, easy bool) *Flag {
 	this := &Flag{}
 	this.Name = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v425 := string(randStringMesos(r))
-		this.Value = &v425
+		v446 := string(randStringMesos(r))
+		this.Value = &v446
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37378,19 +39627,19 @@ func NewPopulatedRole(r randyMesos, easy bool) *Role {
 		this.Weight *= -1
 	}
 	if r.Intn(10) != 0 {
-		v426 := r.Intn(5)
-		this.Frameworks = make([]FrameworkID, v426)
-		for i := 0; i < v426; i++ {
-			v427 := NewPopulatedFrameworkID(r, easy)
-			this.Frameworks[i] = *v427
+		v447 := r.Intn(5)
+		this.Frameworks = make([]FrameworkID, v447)
+		for i := 0; i < v447; i++ {
+			v448 := NewPopulatedFrameworkID(r, easy)
+			this.Frameworks[i] = *v448
 		}
 	}
 	if r.Intn(10) != 0 {
-		v428 := r.Intn(5)
-		this.Resources = make([]Resource, v428)
-		for i := 0; i < v428; i++ {
-			v429 := NewPopulatedResource(r, easy)
-			this.Resources[i] = *v429
+		v449 := r.Intn(5)
+		this.Resources = make([]Resource, v449)
+		for i := 0; i < v449; i++ {
+			v450 := NewPopulatedResource(r, easy)
+			this.Resources[i] = *v450
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -37402,11 +39651,11 @@ func NewPopulatedMetric(r randyMesos, easy bool) *Metric {
 	this := &Metric{}
 	this.Name = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v430 := float64(r.Float64())
+		v451 := float64(r.Float64())
 		if r.Intn(2) == 0 {
-			v430 *= -1
+			v451 *= -1
 		}
-		this.Value = &v430
+		this.Value = &v451
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37417,30 +39666,30 @@ func NewPopulatedFileInfo(r randyMesos, easy bool) *FileInfo {
 	this := &FileInfo{}
 	this.Path = string(randStringMesos(r))
 	if r.Intn(10) != 0 {
-		v431 := int32(r.Int31())
+		v452 := int32(r.Int31())
 		if r.Intn(2) == 0 {
-			v431 *= -1
+			v452 *= -1
 		}
-		this.Nlink = &v431
+		this.Nlink = &v452
 	}
 	if r.Intn(10) != 0 {
-		v432 := uint64(uint64(r.Uint32()))
-		this.Size = &v432
+		v453 := uint64(uint64(r.Uint32()))
+		this.Size = &v453
 	}
 	if r.Intn(10) != 0 {
 		this.Mtime = NewPopulatedTimeInfo(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v433 := uint32(r.Uint32())
-		this.Mode = &v433
+		v454 := uint32(r.Uint32())
+		this.Mode = &v454
 	}
 	if r.Intn(10) != 0 {
-		v434 := string(randStringMesos(r))
-		this.UID = &v434
+		v455 := string(randStringMesos(r))
+		this.UID = &v455
 	}
 	if r.Intn(10) != 0 {
-		v435 := string(randStringMesos(r))
-		this.GID = &v435
+		v456 := string(randStringMesos(r))
+		this.GID = &v456
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37450,8 +39699,8 @@ func NewPopulatedFileInfo(r randyMesos, easy bool) *FileInfo {
 func NewPopulatedDevice(r randyMesos, easy bool) *Device {
 	this := &Device{}
 	if r.Intn(10) != 0 {
-		v436 := string(randStringMesos(r))
-		this.Path = &v436
+		v457 := string(randStringMesos(r))
+		this.Path = &v457
 	}
 	if r.Intn(10) != 0 {
 		this.Number = NewPopulatedDevice_Number(r, easy)
@@ -37463,10 +39712,10 @@ func NewPopulatedDevice(r randyMesos, easy bool) *Device {
 
 func NewPopulatedDevice_Number(r randyMesos, easy bool) *Device_Number {
 	this := &Device_Number{}
-	v437 := uint64(uint64(r.Uint32()))
-	this.MajorNumber = &v437
-	v438 := uint64(uint64(r.Uint32()))
-	this.MinorNumber = &v438
+	v458 := uint64(uint64(r.Uint32()))
+	this.MajorNumber = &v458
+	v459 := uint64(uint64(r.Uint32()))
+	this.MinorNumber = &v459
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -37474,10 +39723,10 @@ func NewPopulatedDevice_Number(r randyMesos, easy bool) *Device_Number {
 
 func NewPopulatedDeviceAccess(r randyMesos, easy bool) *DeviceAccess {
 	this := &DeviceAccess{}
-	v439 := NewPopulatedDevice(r, easy)
-	this.Device = *v439
-	v440 := NewPopulatedDeviceAccess_Access(r, easy)
-	this.Access = *v440
+	v460 := NewPopulatedDevice(r, easy)
+	this.Device = *v460
+	v461 := NewPopulatedDeviceAccess_Access(r, easy)
+	this.Access = *v461
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -37486,16 +39735,16 @@ func NewPopulatedDeviceAccess(r randyMesos, easy bool) *DeviceAccess {
 func NewPopulatedDeviceAccess_Access(r randyMesos, easy bool) *DeviceAccess_Access {
 	this := &DeviceAccess_Access{}
 	if r.Intn(10) != 0 {
-		v441 := bool(bool(r.Intn(2) == 0))
-		this.Read = &v441
+		v462 := bool(bool(r.Intn(2) == 0))
+		this.Read = &v462
 	}
 	if r.Intn(10) != 0 {
-		v442 := bool(bool(r.Intn(2) == 0))
-		this.Write = &v442
+		v463 := bool(bool(r.Intn(2) == 0))
+		this.Write = &v463
 	}
 	if r.Intn(10) != 0 {
-		v443 := bool(bool(r.Intn(2) == 0))
-		this.Mknod = &v443
+		v464 := bool(bool(r.Intn(2) == 0))
+		this.Mknod = &v464
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -37505,11 +39754,11 @@ func NewPopulatedDeviceAccess_Access(r randyMesos, easy bool) *DeviceAccess_Acce
 func NewPopulatedDeviceWhitelist(r randyMesos, easy bool) *DeviceWhitelist {
 	this := &DeviceWhitelist{}
 	if r.Intn(10) != 0 {
-		v444 := r.Intn(5)
-		this.AllowedDevices = make([]DeviceAccess, v444)
-		for i := 0; i < v444; i++ {
-			v445 := NewPopulatedDeviceAccess(r, easy)
-			this.AllowedDevices[i] = *v445
+		v465 := r.Intn(5)
+		this.AllowedDevices = make([]DeviceAccess, v465)
+		for i := 0; i < v465; i++ {
+			v466 := NewPopulatedDeviceAccess(r, easy)
+			this.AllowedDevices[i] = *v466
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -37536,9 +39785,9 @@ func randUTF8RuneMesos(r randyMesos) rune {
 	return rune(ru + 61)
 }
 func randStringMesos(r randyMesos) string {
-	v446 := r.Intn(100)
-	tmps := make([]rune, v446)
-	for i := 0; i < v446; i++ {
+	v467 := r.Intn(100)
+	tmps := make([]rune, v467)
+	for i := 0; i < v467; i++ {
 		tmps[i] = randUTF8RuneMesos(r)
 	}
 	return string(tmps)
@@ -37560,11 +39809,11 @@ func randFieldMesos(dAtA []byte, r randyMesos, fieldNumber int, wire int) []byte
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateMesos(dAtA, uint64(key))
-		v447 := r.Int63()
+		v468 := r.Int63()
 		if r.Intn(2) == 0 {
-			v447 *= -1
+			v468 *= -1
 		}
-		dAtA = encodeVarintPopulateMesos(dAtA, uint64(v447))
+		dAtA = encodeVarintPopulateMesos(dAtA, uint64(v468))
 	case 1:
 		dAtA = encodeVarintPopulateMesos(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -37642,6 +39891,14 @@ func (m *ContainerID) ProtoSize() (n int) {
 }
 
 func (m *ResourceProviderID) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = len(m.Value)
+	n += 1 + l + sovMesos(uint64(l))
+	return n
+}
+
+func (m *OfferOperationID) ProtoSize() (n int) {
 	var l int
 	_ = l
 	l = len(m.Value)
@@ -38138,6 +40395,26 @@ func (m *AgentInfo_Capability) ProtoSize() (n int) {
 	return n
 }
 
+func (m *CSIPluginInfo) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = len(m.Name)
+	n += 1 + l + sovMesos(uint64(l))
+	l = m.Command.ProtoSize()
+	n += 1 + l + sovMesos(uint64(l))
+	if len(m.Resources) > 0 {
+		for _, e := range m.Resources {
+			l = e.ProtoSize()
+			n += 1 + l + sovMesos(uint64(l))
+		}
+	}
+	if m.Container != nil {
+		l = m.Container.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	return n
+}
+
 func (m *ResourceProviderInfo) ProtoSize() (n int) {
 	var l int
 	_ = l
@@ -38154,6 +40431,26 @@ func (m *ResourceProviderInfo) ProtoSize() (n int) {
 	l = len(m.Type)
 	n += 1 + l + sovMesos(uint64(l))
 	l = len(m.Name)
+	n += 1 + l + sovMesos(uint64(l))
+	if m.Storage != nil {
+		l = m.Storage.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	return n
+}
+
+func (m *ResourceProviderInfo_StorageInfo) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if len(m.CsiPlugins) > 0 {
+		for _, e := range m.CsiPlugins {
+			l = e.ProtoSize()
+			n += 1 + l + sovMesos(uint64(l))
+		}
+	}
+	l = len(m.ControllerPlugin)
+	n += 1 + l + sovMesos(uint64(l))
+	l = len(m.NodePlugin)
 	n += 1 + l + sovMesos(uint64(l))
 	return n
 }
@@ -38381,6 +40678,16 @@ func (m *Resource_DiskInfo_Source) ProtoSize() (n int) {
 	}
 	if m.Mount != nil {
 		l = m.Mount.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	l = len(m.ID)
+	n += 1 + l + sovMesos(uint64(l))
+	if m.Metadata != nil {
+		l = m.Metadata.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	if m.Profile != nil {
+		l = len(*m.Profile)
 		n += 1 + l + sovMesos(uint64(l))
 	}
 	return n
@@ -39188,6 +41495,26 @@ func (m *Offer_Operation) ProtoSize() (n int) {
 		l = m.LaunchGroup.ProtoSize()
 		n += 1 + l + sovMesos(uint64(l))
 	}
+	if m.CreateVolume != nil {
+		l = m.CreateVolume.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	if m.DestroyVolume != nil {
+		l = m.DestroyVolume.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	if m.CreateBlock != nil {
+		l = m.CreateBlock.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	if m.DestroyBlock != nil {
+		l = m.DestroyBlock.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	if m.ID != nil {
+		l = m.ID.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
 	return n
 }
 
@@ -39258,6 +41585,39 @@ func (m *Offer_Operation_Destroy) ProtoSize() (n int) {
 			n += 1 + l + sovMesos(uint64(l))
 		}
 	}
+	return n
+}
+
+func (m *Offer_Operation_CreateVolume) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.Source.ProtoSize()
+	n += 1 + l + sovMesos(uint64(l))
+	n += 1 + sovMesos(uint64(m.TargetType))
+	return n
+}
+
+func (m *Offer_Operation_DestroyVolume) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.Volume.ProtoSize()
+	n += 1 + l + sovMesos(uint64(l))
+	return n
+}
+
+func (m *Offer_Operation_CreateBlock) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.Source.ProtoSize()
+	n += 1 + l + sovMesos(uint64(l))
+	return n
+}
+
+func (m *Offer_Operation_DestroyBlock) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.Block.ProtoSize()
+	n += 1 + l + sovMesos(uint64(l))
 	return n
 }
 
@@ -39409,6 +41769,63 @@ func (m *Task) ProtoSize() (n int) {
 	return n
 }
 
+func (m *TaskResourceLimitation) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if len(m.Resources) > 0 {
+		for _, e := range m.Resources {
+			l = e.ProtoSize()
+			n += 1 + l + sovMesos(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *OfferOperation) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.FrameworkID.ProtoSize()
+	n += 1 + l + sovMesos(uint64(l))
+	l = m.Info.ProtoSize()
+	n += 1 + l + sovMesos(uint64(l))
+	if len(m.Statuses) > 0 {
+		for _, e := range m.Statuses {
+			l = e.ProtoSize()
+			n += 1 + l + sovMesos(uint64(l))
+		}
+	}
+	if m.OperationUUID != nil {
+		l = len(m.OperationUUID)
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	return n
+}
+
+func (m *OfferOperationStatus) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if m.OperationID != nil {
+		l = m.OperationID.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	n += 1 + sovMesos(uint64(m.State))
+	if m.Message != nil {
+		l = len(*m.Message)
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	if len(m.ConvertedResources) > 0 {
+		for _, e := range m.ConvertedResources {
+			l = e.ProtoSize()
+			n += 1 + l + sovMesos(uint64(l))
+		}
+	}
+	if m.StatusUUID != nil {
+		l = len(m.StatusUUID)
+		n += 1 + l + sovMesos(uint64(l))
+	}
+	return n
+}
+
 func (m *CheckStatusInfo) ProtoSize() (n int) {
 	var l int
 	_ = l
@@ -39512,6 +41929,10 @@ func (m *TaskStatus) ProtoSize() (n int) {
 	if m.CheckStatus != nil {
 		l = m.CheckStatus.ProtoSize()
 		n += 1 + l + sovMesos(uint64(l))
+	}
+	if m.Limitation != nil {
+		l = m.Limitation.ProtoSize()
+		n += 2 + l + sovMesos(uint64(l))
 	}
 	return n
 }
@@ -39762,6 +42183,10 @@ func (m *Volume_Source) ProtoSize() (n int) {
 		l = m.Secret.ProtoSize()
 		n += 1 + l + sovMesos(uint64(l))
 	}
+	if m.HostPath != nil {
+		l = m.HostPath.ProtoSize()
+		n += 1 + l + sovMesos(uint64(l))
+	}
 	return n
 }
 
@@ -39778,6 +42203,14 @@ func (m *Volume_Source_DockerVolume) ProtoSize() (n int) {
 		l = m.DriverOptions.ProtoSize()
 		n += 1 + l + sovMesos(uint64(l))
 	}
+	return n
+}
+
+func (m *Volume_Source_HostPath) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = len(m.Path)
+	n += 1 + l + sovMesos(uint64(l))
 	return n
 }
 
@@ -40543,6 +42976,16 @@ func (this *ResourceProviderID) String() string {
 	}, "")
 	return s
 }
+func (this *OfferOperationID) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&OfferOperationID{`,
+		`Value:` + fmt.Sprintf("%v", this.Value) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *TimeInfo) String() string {
 	if this == nil {
 		return "nil"
@@ -40885,6 +43328,19 @@ func (this *AgentInfo_Capability) String() string {
 	}, "")
 	return s
 }
+func (this *CSIPluginInfo) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&CSIPluginInfo{`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`Command:` + strings.Replace(strings.Replace(this.Command.String(), "CommandInfo", "CommandInfo", 1), `&`, ``, 1) + `,`,
+		`Resources:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1), `&`, ``, 1) + `,`,
+		`Container:` + strings.Replace(fmt.Sprintf("%v", this.Container), "ContainerInfo", "ContainerInfo", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *ResourceProviderInfo) String() string {
 	if this == nil {
 		return "nil"
@@ -40894,6 +43350,19 @@ func (this *ResourceProviderInfo) String() string {
 		`Attributes:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Attributes), "Attribute", "Attribute", 1), `&`, ``, 1) + `,`,
 		`Type:` + fmt.Sprintf("%v", this.Type) + `,`,
 		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`Storage:` + strings.Replace(fmt.Sprintf("%v", this.Storage), "ResourceProviderInfo_StorageInfo", "ResourceProviderInfo_StorageInfo", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ResourceProviderInfo_StorageInfo) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ResourceProviderInfo_StorageInfo{`,
+		`CsiPlugins:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.CsiPlugins), "CSIPluginInfo", "CSIPluginInfo", 1), `&`, ``, 1) + `,`,
+		`ControllerPlugin:` + fmt.Sprintf("%v", this.ControllerPlugin) + `,`,
+		`NodePlugin:` + fmt.Sprintf("%v", this.NodePlugin) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -41054,6 +43523,9 @@ func (this *Resource_DiskInfo_Source) String() string {
 		`Type:` + fmt.Sprintf("%v", this.Type) + `,`,
 		`Path:` + strings.Replace(fmt.Sprintf("%v", this.Path), "Resource_DiskInfo_Source_Path", "Resource_DiskInfo_Source_Path", 1) + `,`,
 		`Mount:` + strings.Replace(fmt.Sprintf("%v", this.Mount), "Resource_DiskInfo_Source_Mount", "Resource_DiskInfo_Source_Mount", 1) + `,`,
+		`ID:` + fmt.Sprintf("%v", this.ID) + `,`,
+		`Metadata:` + strings.Replace(fmt.Sprintf("%v", this.Metadata), "Labels", "Labels", 1) + `,`,
+		`Profile:` + valueToStringMesos(this.Profile) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -41442,6 +43914,11 @@ func (this *Offer_Operation) String() string {
 		`Create:` + strings.Replace(fmt.Sprintf("%v", this.Create), "Offer_Operation_Create", "Offer_Operation_Create", 1) + `,`,
 		`Destroy:` + strings.Replace(fmt.Sprintf("%v", this.Destroy), "Offer_Operation_Destroy", "Offer_Operation_Destroy", 1) + `,`,
 		`LaunchGroup:` + strings.Replace(fmt.Sprintf("%v", this.LaunchGroup), "Offer_Operation_LaunchGroup", "Offer_Operation_LaunchGroup", 1) + `,`,
+		`CreateVolume:` + strings.Replace(fmt.Sprintf("%v", this.CreateVolume), "Offer_Operation_CreateVolume", "Offer_Operation_CreateVolume", 1) + `,`,
+		`DestroyVolume:` + strings.Replace(fmt.Sprintf("%v", this.DestroyVolume), "Offer_Operation_DestroyVolume", "Offer_Operation_DestroyVolume", 1) + `,`,
+		`CreateBlock:` + strings.Replace(fmt.Sprintf("%v", this.CreateBlock), "Offer_Operation_CreateBlock", "Offer_Operation_CreateBlock", 1) + `,`,
+		`DestroyBlock:` + strings.Replace(fmt.Sprintf("%v", this.DestroyBlock), "Offer_Operation_DestroyBlock", "Offer_Operation_DestroyBlock", 1) + `,`,
+		`ID:` + strings.Replace(fmt.Sprintf("%v", this.ID), "OfferOperationID", "OfferOperationID", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -41503,6 +43980,47 @@ func (this *Offer_Operation_Destroy) String() string {
 	}
 	s := strings.Join([]string{`&Offer_Operation_Destroy{`,
 		`Volumes:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Volumes), "Resource", "Resource", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Offer_Operation_CreateVolume) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Offer_Operation_CreateVolume{`,
+		`Source:` + strings.Replace(strings.Replace(this.Source.String(), "Resource", "Resource", 1), `&`, ``, 1) + `,`,
+		`TargetType:` + fmt.Sprintf("%v", this.TargetType) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Offer_Operation_DestroyVolume) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Offer_Operation_DestroyVolume{`,
+		`Volume:` + strings.Replace(strings.Replace(this.Volume.String(), "Resource", "Resource", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Offer_Operation_CreateBlock) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Offer_Operation_CreateBlock{`,
+		`Source:` + strings.Replace(strings.Replace(this.Source.String(), "Resource", "Resource", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Offer_Operation_DestroyBlock) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Offer_Operation_DestroyBlock{`,
+		`Block:` + strings.Replace(strings.Replace(this.Block.String(), "Resource", "Resource", 1), `&`, ``, 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -41577,6 +44095,43 @@ func (this *Task) String() string {
 	}, "")
 	return s
 }
+func (this *TaskResourceLimitation) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&TaskResourceLimitation{`,
+		`Resources:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "Resource", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *OfferOperation) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&OfferOperation{`,
+		`FrameworkID:` + strings.Replace(strings.Replace(this.FrameworkID.String(), "FrameworkID", "FrameworkID", 1), `&`, ``, 1) + `,`,
+		`Info:` + strings.Replace(strings.Replace(this.Info.String(), "Offer_Operation", "Offer_Operation", 1), `&`, ``, 1) + `,`,
+		`Statuses:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Statuses), "OfferOperationStatus", "OfferOperationStatus", 1), `&`, ``, 1) + `,`,
+		`OperationUUID:` + valueToStringMesos(this.OperationUUID) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *OfferOperationStatus) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&OfferOperationStatus{`,
+		`OperationID:` + strings.Replace(fmt.Sprintf("%v", this.OperationID), "OfferOperationID", "OfferOperationID", 1) + `,`,
+		`State:` + fmt.Sprintf("%v", this.State) + `,`,
+		`Message:` + valueToStringMesos(this.Message) + `,`,
+		`ConvertedResources:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.ConvertedResources), "Resource", "Resource", 1), `&`, ``, 1) + `,`,
+		`StatusUUID:` + valueToStringMesos(this.StatusUUID) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *CheckStatusInfo) String() string {
 	if this == nil {
 		return "nil"
@@ -41640,6 +44195,7 @@ func (this *TaskStatus) String() string {
 		`ContainerStatus:` + strings.Replace(fmt.Sprintf("%v", this.ContainerStatus), "ContainerStatus", "ContainerStatus", 1) + `,`,
 		`UnreachableTime:` + strings.Replace(fmt.Sprintf("%v", this.UnreachableTime), "TimeInfo", "TimeInfo", 1) + `,`,
 		`CheckStatus:` + strings.Replace(fmt.Sprintf("%v", this.CheckStatus), "CheckStatusInfo", "CheckStatusInfo", 1) + `,`,
+		`Limitation:` + strings.Replace(fmt.Sprintf("%v", this.Limitation), "TaskResourceLimitation", "TaskResourceLimitation", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -41836,6 +44392,7 @@ func (this *Volume_Source) String() string {
 		`DockerVolume:` + strings.Replace(fmt.Sprintf("%v", this.DockerVolume), "Volume_Source_DockerVolume", "Volume_Source_DockerVolume", 1) + `,`,
 		`SandboxPath:` + strings.Replace(fmt.Sprintf("%v", this.SandboxPath), "Volume_Source_SandboxPath", "Volume_Source_SandboxPath", 1) + `,`,
 		`Secret:` + strings.Replace(fmt.Sprintf("%v", this.Secret), "Secret", "Secret", 1) + `,`,
+		`HostPath:` + strings.Replace(fmt.Sprintf("%v", this.HostPath), "Volume_Source_HostPath", "Volume_Source_HostPath", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -41848,6 +44405,16 @@ func (this *Volume_Source_DockerVolume) String() string {
 		`Driver:` + valueToStringMesos(this.Driver) + `,`,
 		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
 		`DriverOptions:` + strings.Replace(fmt.Sprintf("%v", this.DriverOptions), "Parameters", "Parameters", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Volume_Source_HostPath) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Volume_Source_HostPath{`,
+		`Path:` + fmt.Sprintf("%v", this.Path) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -42902,6 +45469,90 @@ func (m *ResourceProviderID) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: ResourceProviderID: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Value = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OfferOperationID) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OfferOperationID: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OfferOperationID: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -47175,6 +49826,188 @@ func (m *AgentInfo_Capability) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *CSIPluginInfo) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CSIPluginInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CSIPluginInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Command", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Command.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000002)
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Resources = append(m.Resources, Resource{})
+			if err := m.Resources[len(m.Resources)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Container", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Container == nil {
+				m.Container = &ContainerInfo{}
+			}
+			if err := m.Container.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
+	}
+	if hasFields[0]&uint64(0x00000002) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("command")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *ResourceProviderInfo) Unmarshal(dAtA []byte) error {
 	var hasFields [1]uint64
 	l := len(dAtA)
@@ -47329,6 +50162,39 @@ func (m *ResourceProviderInfo) Unmarshal(dAtA []byte) error {
 			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 			hasFields[0] |= uint64(0x00000002)
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Storage", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Storage == nil {
+				m.Storage = &ResourceProviderInfo_StorageInfo{}
+			}
+			if err := m.Storage.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMesos(dAtA[iNdEx:])
@@ -47349,6 +50215,154 @@ func (m *ResourceProviderInfo) Unmarshal(dAtA []byte) error {
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ResourceProviderInfo_StorageInfo) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: StorageInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: StorageInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CsiPlugins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CsiPlugins = append(m.CsiPlugins, CSIPluginInfo{})
+			if err := m.CsiPlugins[len(m.CsiPlugins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ControllerPlugin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ControllerPlugin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NodePlugin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NodePlugin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000002)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("controller_plugin")
+	}
+	if hasFields[0]&uint64(0x00000002) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("node_plugin")
 	}
 
 	if iNdEx > l {
@@ -49302,6 +52316,98 @@ func (m *Resource_DiskInfo_Source) Unmarshal(dAtA []byte) error {
 			if err := m.Mount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Metadata == nil {
+				m.Metadata = &Labels{}
+			}
+			if err := m.Metadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Profile", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(dAtA[iNdEx:postIndex])
+			m.Profile = &s
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -55145,6 +58251,171 @@ func (m *Offer_Operation) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreateVolume", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.CreateVolume == nil {
+				m.CreateVolume = &Offer_Operation_CreateVolume{}
+			}
+			if err := m.CreateVolume.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DestroyVolume", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DestroyVolume == nil {
+				m.DestroyVolume = &Offer_Operation_DestroyVolume{}
+			}
+			if err := m.DestroyVolume.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CreateBlock", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.CreateBlock == nil {
+				m.CreateBlock = &Offer_Operation_CreateBlock{}
+			}
+			if err := m.CreateBlock.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DestroyBlock", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DestroyBlock == nil {
+				m.DestroyBlock = &Offer_Operation_DestroyBlock{}
+			}
+			if err := m.DestroyBlock.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ID == nil {
+				m.ID = &OfferOperationID{}
+			}
+			if err := m.ID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMesos(dAtA[iNdEx:])
@@ -55683,6 +58954,369 @@ func (m *Offer_Operation_Destroy) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx += skippy
 		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Offer_Operation_CreateVolume) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CreateVolume: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CreateVolume: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Source.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TargetType", wireType)
+			}
+			m.TargetType = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TargetType |= (Resource_DiskInfo_Source_Type(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			hasFields[0] |= uint64(0x00000002)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("source")
+	}
+	if hasFields[0]&uint64(0x00000002) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("target_type")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Offer_Operation_DestroyVolume) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DestroyVolume: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DestroyVolume: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Volume", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Volume.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("volume")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Offer_Operation_CreateBlock) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CreateBlock: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CreateBlock: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Source.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("source")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Offer_Operation_DestroyBlock) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DestroyBlock: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DestroyBlock: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Block", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Block.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("block")
 	}
 
 	if iNdEx > l {
@@ -56984,6 +60618,471 @@ func (m *Task) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *TaskResourceLimitation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TaskResourceLimitation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TaskResourceLimitation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Resources = append(m.Resources, Resource{})
+			if err := m.Resources[len(m.Resources)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OfferOperation) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OfferOperation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OfferOperation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FrameworkID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.FrameworkID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Info", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Info.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000002)
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Statuses", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Statuses = append(m.Statuses, OfferOperationStatus{})
+			if err := m.Statuses[len(m.Statuses)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OperationUUID", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OperationUUID = append(m.OperationUUID[:0], dAtA[iNdEx:postIndex]...)
+			if m.OperationUUID == nil {
+				m.OperationUUID = []byte{}
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000004)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
+	}
+	if hasFields[0]&uint64(0x00000002) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("info")
+	}
+	if hasFields[0]&uint64(0x00000004) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("operation_uuid")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OfferOperationStatus) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OfferOperationStatus: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OfferOperationStatus: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OperationID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.OperationID == nil {
+				m.OperationID = &OfferOperationID{}
+			}
+			if err := m.OperationID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			m.State = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.State |= (OfferOperationState(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			hasFields[0] |= uint64(0x00000001)
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Message", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(dAtA[iNdEx:postIndex])
+			m.Message = &s
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ConvertedResources", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ConvertedResources = append(m.ConvertedResources, Resource{})
+			if err := m.ConvertedResources[len(m.ConvertedResources)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StatusUUID", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StatusUUID = append(m.StatusUUID[:0], dAtA[iNdEx:postIndex]...)
+			if m.StatusUUID == nil {
+				m.StatusUUID = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *CheckStatusInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -57813,6 +61912,39 @@ func (m *TaskStatus) Unmarshal(dAtA []byte) error {
 				m.CheckStatus = &CheckStatusInfo{}
 			}
 			if err := m.CheckStatus.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 16:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Limitation", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Limitation == nil {
+				m.Limitation = &TaskResourceLimitation{}
+			}
+			if err := m.Limitation.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -59941,6 +64073,39 @@ func (m *Volume_Source) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HostPath", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.HostPath == nil {
+				m.HostPath = &Volume_Source_HostPath{}
+			}
+			if err := m.HostPath.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMesos(dAtA[iNdEx:])
@@ -60102,6 +64267,90 @@ func (m *Volume_Source_DockerVolume) Unmarshal(dAtA []byte) error {
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Volume_Source_HostPath) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowMesos
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: HostPath: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: HostPath: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Path", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowMesos
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthMesos
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Path = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipMesos(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthMesos
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("path")
 	}
 
 	if iNdEx > l {
@@ -65566,693 +69815,734 @@ var (
 func init() { proto.RegisterFile("mesos.proto", fileDescriptorMesos) }
 
 var fileDescriptorMesos = []byte{
-	// 11008 bytes of a gzipped FileDescriptorProto
+	// 11663 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x7d, 0x5b, 0x90, 0x1b, 0x49,
-	0x72, 0xd8, 0xe2, 0x0d, 0x24, 0x80, 0x99, 0x66, 0x0d, 0x39, 0x0b, 0x82, 0xe4, 0x0c, 0x17, 0x4b,
-	0x72, 0xb9, 0x4b, 0xee, 0x90, 0xcb, 0x5d, 0xee, 0x2d, 0xb9, 0xb7, 0xbb, 0x87, 0x01, 0x7a, 0x66,
-	0xfa, 0x88, 0xd7, 0x16, 0x00, 0x72, 0xf7, 0x42, 0x11, 0x88, 0x1e, 0xa0, 0x67, 0xa6, 0x45, 0x00,
-	0x8d, 0xed, 0x6e, 0x0c, 0xc9, 0xfb, 0xf1, 0xd9, 0x96, 0x6c, 0xc9, 0x96, 0x1c, 0xfe, 0xb0, 0x1d,
-	0x7e, 0x7d, 0xc8, 0x56, 0x84, 0xad, 0x0f, 0xcb, 0x21, 0xf9, 0x15, 0xfe, 0x50, 0xd8, 0xfe, 0x91,
-	0xad, 0x3f, 0xdf, 0x85, 0xc3, 0x11, 0xfa, 0xa2, 0x7d, 0x23, 0x39, 0x7c, 0xb2, 0x65, 0xeb, 0x2c,
-	0xcb, 0x3e, 0xd9, 0x96, 0x25, 0x47, 0x3d, 0xbb, 0x1a, 0xc0, 0xcc, 0x90, 0x7b, 0xba, 0xf0, 0x17,
-	0xba, 0xb2, 0x32, 0xb3, 0xaa, 0xb2, 0xb2, 0xaa, 0x32, 0xeb, 0x91, 0x80, 0xec, 0xc8, 0xf2, 0x1c,
-	0x6f, 0x63, 0xe2, 0x3a, 0xbe, 0x83, 0x12, 0x34, 0x51, 0x7c, 0x7b, 0xdf, 0xf6, 0x0f, 0xa6, 0xbb,
-	0x1b, 0x7d, 0x67, 0x74, 0x6b, 0xdf, 0xd9, 0x77, 0x6e, 0xd1, 0xdc, 0xdd, 0xe9, 0x1e, 0x4d, 0xd1,
-	0x04, 0xfd, 0x62, 0x54, 0xa5, 0x37, 0x21, 0xbb, 0xe5, 0x9a, 0x23, 0xeb, 0x89, 0xe3, 0x3e, 0x36,
-	0xaa, 0xa8, 0x08, 0x89, 0x43, 0x73, 0x38, 0xb5, 0x0a, 0x91, 0xcb, 0xd1, 0xeb, 0x99, 0xcd, 0xf8,
-	0xaf, 0x3d, 0x5f, 0x7f, 0x05, 0x33, 0x50, 0xe9, 0x2a, 0xa4, 0x9a, 0x7b, 0x7b, 0x96, 0x7b, 0x3a,
-	0x5a, 0x79, 0xdf, 0x1a, 0xfb, 0xa7, 0xa0, 0x5d, 0x81, 0x64, 0xc7, 0xf4, 0x4e, 0x2b, 0xf3, 0x3a,
-	0x80, 0xfe, 0xd4, 0xea, 0x4f, 0x7d, 0xe7, 0xb4, 0x62, 0xbb, 0x90, 0xad, 0x38, 0x63, 0xdf, 0xb4,
-	0xc7, 0xa7, 0xd5, 0x10, 0xbd, 0x05, 0xc9, 0x89, 0xe9, 0x5a, 0x63, 0xbf, 0x10, 0xbd, 0x1c, 0xb9,
-	0x9e, 0xbd, 0x83, 0x36, 0x98, 0x1c, 0x15, 0x7a, 0xcc, 0x31, 0x4a, 0xb7, 0x01, 0x61, 0xcb, 0x73,
-	0xa6, 0x6e, 0xdf, 0x6a, 0xb9, 0xce, 0xa1, 0x3d, 0x38, 0xb5, 0xfd, 0x77, 0x20, 0xdd, 0xb1, 0x47,
-	0x96, 0x31, 0xde, 0x73, 0xd0, 0x35, 0xc8, 0x8e, 0xcd, 0xb1, 0xe3, 0x59, 0x7d, 0x67, 0x3c, 0xf0,
-	0x28, 0x76, 0x8c, 0x63, 0xab, 0x19, 0xa5, 0xf7, 0x21, 0x57, 0x9d, 0xba, 0xa6, 0x6f, 0x3b, 0xe3,
-	0x97, 0xa2, 0x7b, 0x04, 0xa9, 0xf2, 0x60, 0xe0, 0x5a, 0x9e, 0x87, 0x8a, 0x90, 0x3e, 0x70, 0x3c,
-	0x7f, 0x6c, 0x8e, 0x48, 0xad, 0x22, 0xd7, 0x33, 0x58, 0xa6, 0xd1, 0x2a, 0x44, 0xed, 0x09, 0x6d,
-	0x6c, 0x66, 0x33, 0x79, 0xf4, 0x7c, 0x3d, 0x6a, 0xb4, 0x70, 0xd4, 0x9e, 0xa0, 0x02, 0xc4, 0x27,
-	0x8e, 0xeb, 0x17, 0x62, 0x97, 0xa3, 0xd7, 0x13, 0x9c, 0x3f, 0x85, 0x94, 0x7e, 0x39, 0x02, 0xb1,
-	0x2e, 0xae, 0xa1, 0x8b, 0x90, 0xf4, 0xfa, 0x07, 0xd6, 0x28, 0xdc, 0x52, 0x0e, 0x43, 0x1b, 0x90,
-	0x32, 0x59, 0xf1, 0x85, 0xe8, 0xe5, 0xe8, 0xf5, 0xec, 0x9d, 0x25, 0x2e, 0x49, 0x5e, 0x29, 0x8e,
-	0x2e, 0x90, 0x10, 0x82, 0xf8, 0xc4, 0xf4, 0x0f, 0x0a, 0x31, 0x5a, 0x3f, 0xfa, 0x8d, 0x6e, 0x42,
-	0xe2, 0x8b, 0xa9, 0xe5, 0x3e, 0x2b, 0xc4, 0x2f, 0xc7, 0xae, 0x67, 0xef, 0x68, 0x9c, 0x43, 0xcb,
-	0x24, 0x5a, 0xe9, 0x5b, 0xae, 0x10, 0x2e, 0x45, 0x22, 0xad, 0xdc, 0x73, 0xcd, 0xfd, 0x11, 0xe9,
-	0xbc, 0x04, 0x6b, 0xa5, 0x48, 0x97, 0xc6, 0xb0, 0xd4, 0x1d, 0x9b, 0x87, 0xa6, 0x3d, 0x34, 0x77,
-	0xed, 0xa1, 0xed, 0x3f, 0x43, 0x37, 0x20, 0xe1, 0xf9, 0xa6, 0xeb, 0xd3, 0xca, 0x67, 0xef, 0x2c,
-	0x73, 0xde, 0xa2, 0x7b, 0x04, 0x6b, 0x8a, 0x83, 0x6e, 0x41, 0x7a, 0xc0, 0xfb, 0x80, 0xeb, 0xc5,
-	0x0a, 0xc7, 0x57, 0xbb, 0x06, 0x4b, 0xa4, 0xd2, 0x27, 0x90, 0xa9, 0x9b, 0xfd, 0x03, 0x7b, 0x6c,
-	0x51, 0x8d, 0x78, 0x69, 0xf1, 0x97, 0xfe, 0x75, 0x04, 0xb2, 0x82, 0x03, 0xe9, 0xf5, 0x9b, 0x10,
-	0xb5, 0x07, 0xbc, 0xae, 0x42, 0x0e, 0xb2, 0x84, 0x4d, 0x20, 0x95, 0xa5, 0xd4, 0x55, 0x1c, 0xb5,
-	0x07, 0xe8, 0x06, 0xc4, 0x47, 0xce, 0xc0, 0xa2, 0x7c, 0x97, 0xee, 0xbc, 0x3a, 0x83, 0x3f, 0xde,
-	0x73, 0x36, 0xea, 0xce, 0xc0, 0xc2, 0x14, 0x09, 0x7d, 0x04, 0x4b, 0xd3, 0x90, 0x6c, 0x68, 0x1f,
-	0x64, 0xef, 0x9c, 0xe3, 0x64, 0x61, 0xc1, 0xe1, 0x19, 0xe4, 0xd2, 0x35, 0x88, 0x13, 0x66, 0x28,
-	0x09, 0xd1, 0x6e, 0x4b, 0x8b, 0xa0, 0x1c, 0xa4, 0xab, 0xb8, 0x6c, 0x34, 0x8c, 0xc6, 0xb6, 0x16,
-	0x45, 0x69, 0x88, 0x57, 0x9b, 0x8f, 0x1a, 0x5a, 0xac, 0xf4, 0x9b, 0x09, 0xc8, 0x07, 0xd3, 0x09,
-	0x69, 0x53, 0x01, 0xe2, 0x53, 0xcf, 0x72, 0x43, 0xea, 0x43, 0x21, 0x24, 0x87, 0x4a, 0x2b, 0xaa,
-	0xe6, 0x50, 0x79, 0xbd, 0x45, 0xe5, 0x10, 0x0b, 0x8d, 0x4d, 0x65, 0x92, 0xe2, 0x32, 0x64, 0x52,
-	0xb8, 0x09, 0xda, 0x9e, 0x69, 0x0f, 0x9d, 0x43, 0xcb, 0xed, 0xf9, 0xf6, 0xc8, 0x72, 0xa6, 0x7e,
-	0x21, 0x7e, 0x39, 0x72, 0x3d, 0x72, 0x3f, 0x72, 0x1b, 0x2f, 0x8b, 0xac, 0x0e, 0xcb, 0x41, 0x57,
-	0x01, 0xfa, 0x07, 0x56, 0xff, 0xf1, 0xc4, 0xb1, 0xb9, 0x02, 0xa5, 0xef, 0x27, 0xf6, 0xcc, 0xa1,
-	0x67, 0x61, 0x25, 0x03, 0x9d, 0x87, 0xb8, 0xeb, 0x0c, 0xad, 0x42, 0x92, 0x74, 0xd9, 0xfd, 0xc8,
-	0x5b, 0x9b, 0xd1, 0x42, 0x04, 0x53, 0x50, 0xa8, 0x9f, 0x53, 0x33, 0xfd, 0x7c, 0x11, 0x32, 0x13,
-	0xd7, 0x1e, 0xf7, 0xed, 0x89, 0x39, 0x2c, 0xa4, 0x69, 0x66, 0x00, 0x40, 0x6f, 0x42, 0xe6, 0x89,
-	0xb5, 0x3b, 0xb5, 0x7b, 0x53, 0x77, 0x58, 0xc8, 0x50, 0x65, 0xc8, 0x1d, 0x3d, 0x5f, 0x4f, 0x3f,
-	0xb2, 0x76, 0xbb, 0x76, 0x17, 0xd7, 0x70, 0x9a, 0x66, 0x77, 0xdd, 0x21, 0x32, 0x20, 0xd7, 0x37,
-	0x27, 0x4c, 0xf8, 0xb6, 0xe5, 0x15, 0x80, 0x0e, 0x8d, 0xf5, 0x39, 0x51, 0x90, 0x4e, 0xae, 0x08,
-	0xc4, 0x67, 0x5c, 0x86, 0x21, 0x52, 0x74, 0x15, 0x92, 0x43, 0x73, 0xd7, 0x1a, 0x7a, 0x85, 0x2c,
-	0x95, 0x67, 0x9e, 0x33, 0xa9, 0x51, 0x20, 0xe6, 0x99, 0xe8, 0x2c, 0x24, 0x48, 0xf3, 0xbc, 0x42,
-	0xee, 0x72, 0xec, 0x7a, 0x06, 0xb3, 0x44, 0xf1, 0x2f, 0x47, 0x01, 0x02, 0xfe, 0xe8, 0x63, 0x88,
-	0xfb, 0xcf, 0x26, 0x4c, 0xbf, 0x97, 0xee, 0x5c, 0x39, 0xa5, 0x3a, 0x1b, 0x9d, 0x67, 0x13, 0x4b,
-	0xf4, 0x2b, 0xa1, 0x2b, 0xfd, 0xcb, 0x08, 0xc4, 0x09, 0x10, 0x65, 0x21, 0xd5, 0x6d, 0x3c, 0x68,
-	0x10, 0x9d, 0x79, 0x05, 0xbd, 0x0a, 0x2b, 0x58, 0x7f, 0xd8, 0xac, 0x94, 0x37, 0x6b, 0x7a, 0x0f,
-	0xeb, 0xed, 0x66, 0x17, 0x57, 0xf4, 0xb6, 0x16, 0x41, 0xab, 0x80, 0x3a, 0xe5, 0xf6, 0x83, 0xde,
-	0x03, 0xa3, 0x56, 0x33, 0x1a, 0xdb, 0xbd, 0x76, 0xa7, 0xdc, 0xd1, 0xb5, 0x28, 0x3a, 0x03, 0xf9,
-	0xed, 0x56, 0x57, 0x41, 0x8d, 0xa1, 0xb3, 0xa0, 0xb5, 0x77, 0xca, 0x58, 0xaf, 0x2a, 0xd0, 0x38,
-	0x5a, 0x81, 0xe5, 0x56, 0x19, 0x77, 0x8c, 0x8e, 0xd1, 0x6c, 0xf4, 0xca, 0x8f, 0xca, 0x58, 0xd7,
-	0x12, 0x68, 0x09, 0xa0, 0xde, 0xad, 0x75, 0x8c, 0x1e, 0x6e, 0xd6, 0x74, 0x2d, 0x89, 0x8a, 0xb0,
-	0x8a, 0xf5, 0xb6, 0x8e, 0x1f, 0x96, 0x29, 0x1a, 0xd6, 0xb7, 0x8c, 0x86, 0x5e, 0xd7, 0x1b, 0x1d,
-	0x2d, 0x85, 0x34, 0xc8, 0x61, 0x7d, 0x3b, 0xa0, 0x4e, 0x17, 0xe3, 0x3f, 0xf5, 0xf3, 0x6b, 0x91,
-	0xd2, 0xdf, 0x8b, 0x43, 0xa6, 0x42, 0xd4, 0x85, 0xaa, 0xf8, 0xad, 0x90, 0x58, 0xc4, 0x88, 0x92,
-	0xf9, 0x73, 0x72, 0x40, 0x77, 0x20, 0xd5, 0x77, 0x46, 0x23, 0x73, 0x3c, 0xe0, 0x13, 0x4d, 0x61,
-	0x8e, 0xa6, 0xc2, 0xf2, 0xb1, 0x40, 0x44, 0xef, 0x42, 0xfc, 0xc0, 0xf7, 0x27, 0x33, 0xc3, 0x36,
-	0x20, 0xd8, 0xf1, 0xfd, 0xc9, 0x66, 0xfa, 0xe8, 0xf9, 0x7a, 0x7c, 0xa7, 0xd3, 0x69, 0x61, 0x8a,
-	0x8c, 0xde, 0x80, 0xfc, 0xc0, 0x1a, 0x9a, 0xcf, 0x7a, 0x62, 0x21, 0x61, 0x23, 0x23, 0xfa, 0xce,
-	0x5d, 0x9c, 0xa3, 0x19, 0x6d, 0x06, 0x47, 0x6f, 0x83, 0x66, 0x8f, 0x7d, 0xcb, 0x3d, 0x34, 0x87,
-	0x12, 0x37, 0xc1, 0x71, 0x6f, 0xe3, 0x65, 0x91, 0x27, 0xd0, 0x6f, 0xc0, 0x32, 0x1f, 0x6b, 0x12,
-	0x3b, 0xc9, 0xb0, 0xef, 0xdc, 0xc6, 0x4b, 0x3c, 0x4b, 0x20, 0xdf, 0x82, 0x98, 0xdf, 0x9f, 0xd0,
-	0xc1, 0x92, 0xbd, 0x73, 0x76, 0x5e, 0x3a, 0xfd, 0xc9, 0x66, 0xea, 0xe8, 0xf9, 0x7a, 0xac, 0x53,
-	0x69, 0x61, 0x82, 0x59, 0xfc, 0x08, 0x52, 0xbc, 0xf9, 0xaa, 0xa4, 0xd8, 0xb4, 0x18, 0x2c, 0xd5,
-	0x14, 0xaa, 0xcc, 0xe2, 0x02, 0xb1, 0xf8, 0x1e, 0xc4, 0x89, 0x30, 0xe4, 0xe2, 0x46, 0x08, 0xf3,
-	0xea, 0xe2, 0x26, 0x97, 0xa1, 0x68, 0xb0, 0x0c, 0x15, 0xd7, 0x21, 0xd6, 0xe9, 0x9f, 0x40, 0x54,
-	0xba, 0xb7, 0x48, 0x77, 0xb3, 0x90, 0xaa, 0x34, 0xeb, 0xf5, 0x72, 0xa3, 0xaa, 0x45, 0xc8, 0x34,
-	0x48, 0x64, 0xaf, 0x45, 0x51, 0x0a, 0x48, 0x6b, 0xb4, 0x18, 0x57, 0x97, 0x7f, 0x98, 0x80, 0xec,
-	0x8e, 0x65, 0x0e, 0xfd, 0x03, 0xda, 0x6c, 0x32, 0x8e, 0x68, 0x5f, 0x46, 0xa8, 0x48, 0x2e, 0xf3,
-	0x26, 0x29, 0x18, 0x1b, 0x84, 0x8f, 0x14, 0xd1, 0xe9, 0xdd, 0x1a, 0x7d, 0x89, 0x6e, 0x8d, 0xbd,
-	0x54, 0xb7, 0xc6, 0x8f, 0xed, 0xd6, 0xf7, 0xe0, 0x6c, 0xdf, 0x19, 0x7b, 0xc4, 0x36, 0xb3, 0x0f,
-	0xad, 0x1e, 0x99, 0x69, 0xa7, 0xae, 0xc5, 0xd4, 0x26, 0x7f, 0x3f, 0xf2, 0x2e, 0x5e, 0x51, 0xb2,
-	0xb7, 0x78, 0x2e, 0xa1, 0xda, 0x77, 0xcd, 0xbe, 0xd5, 0x9b, 0x58, 0xae, 0xed, 0x0c, 0x66, 0xd5,
-	0xe7, 0x9d, 0xdb, 0x18, 0xd1, 0xfc, 0x16, 0xcd, 0x16, 0x65, 0xdd, 0x0c, 0xd4, 0x20, 0x35, 0x63,
-	0xb1, 0x49, 0x35, 0x08, 0x86, 0xca, 0x3b, 0x7c, 0x3c, 0xa6, 0x43, 0x0b, 0xa3, 0x2a, 0xde, 0xb9,
-	0x11, 0x79, 0x9f, 0xe9, 0x68, 0x86, 0x32, 0x5f, 0x5f, 0x44, 0x51, 0x51, 0xfa, 0x23, 0xac, 0xae,
-	0x5f, 0x40, 0x3e, 0xd4, 0x5d, 0x2f, 0xa7, 0x78, 0x68, 0x55, 0x5a, 0x58, 0xcc, 0x2a, 0x12, 0xb6,
-	0x55, 0x11, 0xd2, 0x9e, 0x6f, 0xfa, 0x53, 0xcf, 0xf2, 0xa8, 0x69, 0x94, 0xc7, 0x32, 0x5d, 0xbc,
-	0x0e, 0x39, 0xb5, 0x42, 0x3f, 0x1a, 0xad, 0xad, 0x02, 0x3c, 0xb0, 0x87, 0xc3, 0x96, 0x33, 0xb4,
-	0xfb, 0xcf, 0xd0, 0xfb, 0x90, 0x53, 0x3b, 0x8e, 0xeb, 0xee, 0x42, 0x0b, 0x29, 0xab, 0xf4, 0x60,
-	0xe9, 0x0f, 0xa2, 0xc4, 0x2e, 0x97, 0xbd, 0x84, 0x3e, 0x80, 0xf8, 0xd4, 0xb5, 0x89, 0x49, 0x4b,
-	0x96, 0xb4, 0xd5, 0xf9, 0x7e, 0xdc, 0xe8, 0x62, 0x63, 0x33, 0xc7, 0x6d, 0x9d, 0x78, 0x17, 0x1b,
-	0x1e, 0xa6, 0x14, 0xe8, 0x3d, 0xc8, 0x5a, 0xe3, 0x43, 0xdb, 0x75, 0xc6, 0xa3, 0x79, 0xd3, 0x5d,
-	0x0f, 0x72, 0xb0, 0x8a, 0x46, 0x16, 0x36, 0x66, 0xa9, 0x33, 0xe9, 0x72, 0x0f, 0x00, 0x71, 0xab,
-	0x84, 0x99, 0x90, 0xcc, 0x1e, 0x29, 0x42, 0xc2, 0x3b, 0xb0, 0x86, 0x43, 0xaa, 0x8b, 0xe9, 0xfb,
-	0x71, 0xdf, 0x9d, 0x5a, 0x98, 0x81, 0xc8, 0xca, 0x6e, 0xba, 0xfb, 0x53, 0xc2, 0xd1, 0x2b, 0xa4,
-	0xe8, 0x12, 0x19, 0x00, 0x8a, 0x7f, 0x95, 0x1a, 0xcb, 0xc6, 0x89, 0x3e, 0xc7, 0x1a, 0x80, 0x45,
-	0x1d, 0x19, 0x73, 0x77, 0xc8, 0x6c, 0xb6, 0x34, 0x56, 0x20, 0x68, 0x0d, 0x52, 0xd6, 0x53, 0xdf,
-	0x35, 0xfb, 0x3e, 0xad, 0xa9, 0x28, 0x5f, 0x00, 0x49, 0x3b, 0xfa, 0x66, 0xff, 0xc0, 0xa2, 0x23,
-	0x32, 0x8d, 0x59, 0x02, 0xad, 0x43, 0xd6, 0x99, 0xfa, 0x93, 0xa9, 0xdf, 0xdb, 0xb3, 0x87, 0x16,
-	0x6f, 0x0e, 0x30, 0xd0, 0x96, 0x3d, 0xb4, 0x4a, 0x3f, 0x99, 0x80, 0x9c, 0x74, 0xa0, 0x88, 0xfc,
-	0xb7, 0x20, 0x6b, 0xf1, 0x74, 0x4f, 0x1a, 0x9b, 0x67, 0x84, 0x14, 0xa5, 0xab, 0xb5, 0x89, 0x78,
-	0x0f, 0x28, 0xee, 0x97, 0xa8, 0xaf, 0xe3, 0x1a, 0x03, 0x22, 0xc1, 0x81, 0xe9, 0x9b, 0xb4, 0x3a,
-	0x39, 0x4c, 0xbf, 0xd1, 0xbb, 0x90, 0x71, 0xb9, 0xaf, 0x44, 0xe6, 0x81, 0x98, 0x62, 0x72, 0x0b,
-	0x1f, 0x8a, 0x0b, 0x25, 0xc0, 0x7b, 0xc9, 0xb1, 0xbd, 0x05, 0xb9, 0x3d, 0x61, 0x6f, 0x90, 0xfa,
-	0xa7, 0x8f, 0x35, 0x12, 0x97, 0x8f, 0x9e, 0xaf, 0xab, 0xae, 0x2d, 0xce, 0x4a, 0x42, 0x56, 0x7d,
-	0x6a, 0xc2, 0x65, 0x98, 0x02, 0x50, 0xf3, 0xad, 0x08, 0x49, 0x56, 0xa9, 0x02, 0x50, 0xeb, 0x8c,
-	0x18, 0x7d, 0x1c, 0x82, 0xee, 0x40, 0xa6, 0x2f, 0xbc, 0x43, 0x6e, 0x49, 0x9d, 0x9d, 0xf3, 0x1a,
-	0x49, 0x4d, 0x03, 0x34, 0x42, 0x33, 0xb0, 0xbd, 0x3e, 0xb1, 0x3f, 0x9f, 0x15, 0x72, 0x21, 0x9a,
-	0xaa, 0x80, 0x33, 0x1a, 0x89, 0x86, 0xb6, 0xe1, 0x9c, 0x77, 0x30, 0xf5, 0x07, 0xce, 0x93, 0x71,
-	0x2f, 0x34, 0xde, 0xf2, 0xc7, 0x8f, 0xb7, 0x15, 0x41, 0xb1, 0x1d, 0x8c, 0x3b, 0xc5, 0xee, 0x5b,
-	0x3a, 0xc9, 0xee, 0xbb, 0xc3, 0xe7, 0xca, 0x65, 0x3a, 0x57, 0x16, 0x66, 0xf5, 0x60, 0x91, 0xf9,
-	0x52, 0xba, 0x73, 0xcc, 0x9c, 0x52, 0xd5, 0xb7, 0xca, 0xdd, 0x5a, 0x47, 0x8b, 0x20, 0x80, 0x64,
-	0xa5, 0xdb, 0xee, 0x34, 0xeb, 0x5a, 0x94, 0x4f, 0x26, 0xff, 0x24, 0x0a, 0x50, 0x75, 0x46, 0xa6,
-	0xcd, 0xfc, 0xdb, 0xaf, 0x41, 0x6e, 0xcf, 0x9c, 0x0e, 0xfd, 0xde, 0x80, 0xc2, 0xf8, 0x6c, 0x72,
-	0x49, 0xb4, 0x4e, 0x22, 0x6e, 0x6c, 0x11, 0x2c, 0x96, 0xc6, 0xd9, 0xbd, 0x20, 0x51, 0xfc, 0x0f,
-	0x11, 0xc8, 0x2a, 0x99, 0x68, 0x0b, 0x92, 0xae, 0xb5, 0x4f, 0x7c, 0x37, 0xa6, 0xd2, 0xd7, 0x4f,
-	0xe4, 0xb5, 0x81, 0x29, 0xae, 0x62, 0x3e, 0x70, 0x6a, 0xf4, 0x35, 0x88, 0x7f, 0xd3, 0x19, 0x5b,
-	0xdc, 0x9f, 0xbd, 0x76, 0x32, 0x97, 0x6f, 0x38, 0x63, 0xd5, 0x91, 0xa4, 0x94, 0xc5, 0x6b, 0x00,
-	0x01, 0x77, 0xe9, 0xe5, 0x44, 0x66, 0xbd, 0x9c, 0xe2, 0x15, 0x48, 0x0b, 0xfa, 0xe3, 0xb1, 0x4a,
-	0x3f, 0x11, 0x05, 0xa8, 0x9b, 0x9e, 0xcf, 0xd4, 0x0b, 0x15, 0xa5, 0x8b, 0x98, 0x99, 0x73, 0x08,
-	0x8b, 0xdc, 0xcd, 0x24, 0x6b, 0x40, 0x90, 0x37, 0xef, 0xe9, 0xe7, 0xef, 0xc7, 0xef, 0xde, 0xbe,
-	0x7b, 0x9b, 0xaf, 0x49, 0xe7, 0x21, 0x36, 0xb1, 0x07, 0x74, 0x1c, 0x67, 0xd8, 0xca, 0xd6, 0x32,
-	0xaa, 0x98, 0xc0, 0x42, 0xbe, 0x4e, 0x62, 0xc6, 0xd7, 0x29, 0x40, 0xea, 0xd0, 0x72, 0x3d, 0x22,
-	0x70, 0xea, 0x25, 0x61, 0x91, 0x44, 0xd7, 0x83, 0x4d, 0x01, 0x36, 0xa0, 0x67, 0x36, 0x05, 0x82,
-	0xed, 0x80, 0x37, 0x21, 0xc9, 0xfb, 0x9f, 0x0d, 0xe3, 0x33, 0x73, 0xd2, 0xc6, 0x1c, 0xa1, 0xf4,
-	0x4b, 0x31, 0xc8, 0xb0, 0x5d, 0x25, 0x22, 0x85, 0xcb, 0x21, 0x67, 0x3b, 0x10, 0x59, 0x50, 0xbd,
-	0xd0, 0x54, 0x14, 0x7b, 0xc1, 0xa9, 0xe8, 0x7d, 0x00, 0xd3, 0xf7, 0x5d, 0x7b, 0x77, 0xea, 0xcb,
-	0x09, 0x4c, 0xf8, 0xe1, 0x65, 0x91, 0xc1, 0xc9, 0x14, 0x4c, 0x74, 0x8d, 0x76, 0x4a, 0x32, 0xdc,
-	0x58, 0xb6, 0x05, 0x16, 0xf2, 0x55, 0x45, 0x27, 0x90, 0xd6, 0x26, 0x68, 0x27, 0xbc, 0xc3, 0x3b,
-	0x21, 0x90, 0x04, 0x9c, 0x22, 0x89, 0xe2, 0xdf, 0x89, 0x84, 0x7c, 0xb2, 0xfb, 0x21, 0xe7, 0xe3,
-	0x72, 0xa8, 0xf4, 0xd3, 0xfc, 0xb1, 0x1f, 0x5b, 0x34, 0x90, 0xc3, 0xfe, 0x51, 0x04, 0x9d, 0x83,
-	0x33, 0x3b, 0x86, 0x8e, 0xcb, 0xb8, 0xb2, 0x63, 0x54, 0xca, 0x35, 0x06, 0x8e, 0x9e, 0xe0, 0x36,
-	0x09, 0xfb, 0xe1, 0x1f, 0x47, 0xe0, 0xec, 0xdc, 0xd6, 0x19, 0xe9, 0xbd, 0x77, 0xb8, 0x0e, 0x93,
-	0x86, 0x9e, 0x9f, 0xe9, 0x94, 0x60, 0x8f, 0x2d, 0x24, 0xb9, 0x70, 0xcf, 0x44, 0x5f, 0xb8, 0x67,
-	0x0a, 0x5c, 0x3a, 0x31, 0x75, 0x5c, 0x51, 0x8b, 0x4f, 0x8c, 0xb8, 0xf8, 0xdc, 0x88, 0xfb, 0x5e,
-	0x0c, 0x12, 0x0f, 0xe9, 0x9a, 0x7d, 0x43, 0xca, 0x36, 0x7a, 0x7d, 0x49, 0xf6, 0x09, 0xcd, 0x9b,
-	0x37, 0x21, 0x6f, 0x10, 0x3b, 0xce, 0x1c, 0x9a, 0xee, 0xcc, 0xe6, 0x11, 0x43, 0x6f, 0xd3, 0x2c,
-	0xcc, 0x51, 0x08, 0xb2, 0x6b, 0x8e, 0xf7, 0x2d, 0x8f, 0xfb, 0x73, 0x61, 0x64, 0x4c, 0xb3, 0x30,
-	0x47, 0x41, 0x25, 0x88, 0x79, 0x16, 0xdb, 0xd5, 0x08, 0x5a, 0xcd, 0xd9, 0x5a, 0x3e, 0x26, 0x99,
-	0xe8, 0x2a, 0xc4, 0x7d, 0xeb, 0x29, 0xdb, 0xd2, 0xc8, 0xce, 0x56, 0xd5, 0x7a, 0xea, 0x63, 0x9a,
-	0x5d, 0xbc, 0x02, 0x49, 0x56, 0x93, 0xb0, 0xad, 0x12, 0x09, 0xd9, 0x2a, 0xc5, 0x0f, 0x21, 0x41,
-	0xab, 0x40, 0x90, 0x76, 0xad, 0x7d, 0x9b, 0xcd, 0xa9, 0x71, 0x81, 0x44, 0x41, 0x68, 0x15, 0x62,
-	0x16, 0x75, 0x60, 0x83, 0x1c, 0x02, 0x28, 0x7e, 0x00, 0x49, 0x56, 0x7f, 0xb4, 0x01, 0x09, 0xda,
-	0x02, 0x6e, 0xeb, 0xa1, 0xf9, 0x36, 0x0a, 0x8e, 0x14, 0xad, 0x78, 0x1e, 0x62, 0x6d, 0x8b, 0x1a,
-	0xc9, 0xb6, 0x6f, 0x8d, 0x28, 0x55, 0x06, 0xd3, 0xef, 0x62, 0x09, 0xe2, 0xa4, 0x15, 0x27, 0xee,
-	0xbb, 0xbe, 0xc3, 0xb5, 0x19, 0x20, 0xd9, 0xae, 0x94, 0x6b, 0x65, 0xac, 0xbd, 0x42, 0xbe, 0x71,
-	0xb9, 0xb1, 0x4d, 0xb7, 0x13, 0x52, 0x10, 0x6b, 0xeb, 0x1d, 0xb6, 0x5d, 0xd5, 0xd1, 0x3f, 0xeb,
-	0x68, 0xb1, 0xd2, 0x0f, 0x22, 0x90, 0x91, 0xea, 0x73, 0xfc, 0x24, 0x2c, 0x15, 0x21, 0xfa, 0x72,
-	0x8a, 0x10, 0x7b, 0x19, 0x45, 0x88, 0x9f, 0xae, 0x08, 0x2f, 0xd6, 0xc9, 0x42, 0x5f, 0x92, 0x27,
-	0xe8, 0x4b, 0xe9, 0xb7, 0xb2, 0x90, 0x16, 0x63, 0xee, 0x84, 0x86, 0x5f, 0x3d, 0xa5, 0xe1, 0x3f,
-	0xf2, 0x26, 0xf3, 0xb6, 0x24, 0x4e, 0xd2, 0xfd, 0x13, 0x76, 0xeb, 0x6e, 0x42, 0x7c, 0x60, 0x7b,
-	0x8f, 0xf9, 0x42, 0x54, 0x98, 0x99, 0x6c, 0x88, 0x19, 0x46, 0x1d, 0x28, 0x4c, 0xb1, 0x50, 0x19,
-	0xb2, 0xae, 0xe5, 0x11, 0x97, 0x98, 0x6e, 0x02, 0xa7, 0x43, 0xde, 0xa0, 0x24, 0xc2, 0x01, 0x0a,
-	0x73, 0x77, 0x14, 0x1a, 0xf4, 0x21, 0x59, 0x77, 0x0e, 0x9d, 0x3e, 0xb5, 0xf2, 0x33, 0x21, 0xab,
-	0x46, 0x61, 0xc0, 0x11, 0x98, 0xf1, 0x27, 0xf1, 0xd1, 0x1d, 0x48, 0x7a, 0x07, 0xa6, 0x6b, 0x0d,
-	0xf8, 0x2a, 0x50, 0x9c, 0xa5, 0x6c, 0xd3, 0x5c, 0xb6, 0x1c, 0x30, 0x4c, 0xb4, 0x0d, 0xcb, 0xe6,
-	0x70, 0xe8, 0xf4, 0x69, 0xf1, 0x3d, 0x7b, 0xbc, 0xe7, 0x70, 0xf3, 0x74, 0x6d, 0x96, 0xb8, 0x2c,
-	0xd1, 0x28, 0x83, 0x25, 0x33, 0x94, 0x46, 0x5f, 0x87, 0xec, 0x84, 0x4f, 0xbe, 0xc4, 0xb0, 0xce,
-	0x9d, 0x36, 0x3d, 0x2f, 0x11, 0xe7, 0x20, 0x48, 0x63, 0x10, 0xd4, 0xc6, 0x00, 0x19, 0x90, 0x53,
-	0x84, 0xe2, 0x15, 0xf2, 0xa1, 0xfd, 0xcb, 0xe3, 0x24, 0x29, 0xf6, 0x2f, 0x55, 0xd2, 0xe2, 0x15,
-	0x58, 0x0a, 0x57, 0x9c, 0xcc, 0x0f, 0xb4, 0xbb, 0xd9, 0x2e, 0x3b, 0xfd, 0x2e, 0xfe, 0x7a, 0x04,
-	0x96, 0x67, 0xb8, 0x85, 0x77, 0x63, 0x23, 0xb3, 0xbb, 0xb1, 0x81, 0x7d, 0x1c, 0x3d, 0xc9, 0x3e,
-	0x16, 0x85, 0xc5, 0x82, 0xc2, 0x88, 0x0b, 0x4b, 0x07, 0x45, 0x3c, 0xb4, 0x0d, 0x7a, 0x5c, 0xab,
-	0x94, 0x71, 0xb2, 0xd8, 0x72, 0x26, 0xf3, 0x55, 0xa7, 0xdc, 0x31, 0x2a, 0x5a, 0x84, 0x5a, 0xd1,
-	0x9f, 0x37, 0xca, 0x75, 0xa3, 0x22, 0x2c, 0xe7, 0xe2, 0xcf, 0xc5, 0x21, 0x2d, 0xf4, 0x94, 0x78,
-	0x6f, 0x13, 0x62, 0x66, 0x79, 0xbe, 0x35, 0xee, 0x5b, 0x7c, 0x0d, 0xbd, 0x72, 0x9c, 0x5a, 0x6f,
-	0xb4, 0x02, 0x5c, 0xac, 0x12, 0x92, 0xd6, 0x1f, 0x3a, 0xc3, 0xe9, 0xc8, 0x9a, 0x69, 0xfd, 0x43,
-	0x0a, 0xc4, 0x3c, 0x13, 0x7d, 0x45, 0x7a, 0x44, 0xb1, 0xc5, 0x63, 0x41, 0x96, 0xd4, 0xa6, 0x69,
-	0xe1, 0x2e, 0x15, 0xb7, 0x21, 0xab, 0x94, 0x7d, 0xa2, 0xd5, 0x1a, 0xea, 0xa6, 0xe8, 0x4c, 0x37,
-	0x15, 0xff, 0x76, 0x14, 0x92, 0x8c, 0xb7, 0xb2, 0xfb, 0x1c, 0x5d, 0x24, 0xf6, 0x99, 0xaa, 0xcc,
-	0xcf, 0xcb, 0x1f, 0x28, 0x9b, 0x2f, 0xd9, 0xd3, 0xe9, 0x5b, 0xa6, 0x7f, 0xc0, 0xb7, 0x68, 0x3e,
-	0x84, 0xc4, 0xc8, 0x99, 0x8e, 0x7d, 0x2e, 0x85, 0xab, 0xa7, 0x91, 0xd6, 0x09, 0x32, 0x66, 0x34,
-	0xc5, 0x22, 0xc4, 0x09, 0x2b, 0xa6, 0x49, 0x8e, 0x1f, 0xa8, 0xad, 0xe3, 0x17, 0x2f, 0x40, 0x82,
-	0xe2, 0x2e, 0xca, 0x2c, 0x5d, 0x5f, 0xa4, 0x2c, 0x69, 0x88, 0xb7, 0xca, 0x9d, 0x1d, 0x2d, 0x82,
-	0x32, 0x90, 0xa8, 0x37, 0xbb, 0x8d, 0x8e, 0x16, 0x2d, 0x2e, 0x43, 0x3e, 0x34, 0xa7, 0x14, 0x73,
-	0x00, 0xc1, 0x54, 0x51, 0xfa, 0x47, 0x51, 0x28, 0x74, 0x5c, 0x73, 0x6f, 0xcf, 0xee, 0x13, 0x5f,
-	0xd5, 0x75, 0x86, 0x6d, 0xdf, 0xf4, 0x6d, 0xcf, 0xb7, 0xfb, 0xde, 0x89, 0x5d, 0x53, 0x80, 0xd4,
-	0xae, 0xd9, 0x7f, 0x3c, 0x74, 0xf6, 0xa9, 0xd0, 0xe2, 0x58, 0x24, 0xd1, 0x59, 0x48, 0xec, 0x3e,
-	0xf3, 0xb9, 0xf9, 0x12, 0xc7, 0x2c, 0x41, 0xa0, 0x03, 0xd7, 0x99, 0xb0, 0x89, 0x3d, 0x8e, 0x59,
-	0x02, 0xad, 0x01, 0x10, 0xdf, 0x76, 0x68, 0x8f, 0x6c, 0x9f, 0x6d, 0x0f, 0xc6, 0xb1, 0x02, 0x21,
-	0xa5, 0x4c, 0xcc, 0xfe, 0x63, 0xcb, 0x67, 0xbb, 0x80, 0x71, 0x2c, 0x92, 0x44, 0x2a, 0x5f, 0x0c,
-	0xad, 0x31, 0x9d, 0xbd, 0xe3, 0x98, 0x7e, 0xa3, 0xab, 0x90, 0x72, 0x4d, 0xdf, 0xda, 0x9d, 0x78,
-	0x74, 0x7e, 0x8e, 0x6f, 0x66, 0x8f, 0x9e, 0xaf, 0xa7, 0xb0, 0xe9, 0x5b, 0x9b, 0xad, 0x36, 0x16,
-	0x79, 0x02, 0x6d, 0x32, 0xf1, 0xe8, 0x2c, 0xac, 0xa0, 0xb5, 0x04, 0xda, 0x64, 0x42, 0x0f, 0x4d,
-	0x5d, 0xeb, 0x8b, 0xa9, 0x35, 0xa5, 0x87, 0x2c, 0xa4, 0x14, 0x99, 0x2e, 0xfd, 0x44, 0x02, 0x72,
-	0xc6, 0x44, 0x11, 0xd5, 0x1a, 0xc0, 0x96, 0xe3, 0x3e, 0x31, 0xdd, 0x81, 0x3d, 0xde, 0xa7, 0x5d,
-	0x15, 0xc3, 0x0a, 0x84, 0xe4, 0x57, 0x2d, 0xea, 0xa3, 0x76, 0x3a, 0x35, 0x2a, 0xb1, 0x18, 0x56,
-	0x20, 0x24, 0xdf, 0x18, 0x63, 0xab, 0x6f, 0xd9, 0x87, 0x5c, 0x72, 0x31, 0xac, 0x40, 0xd0, 0x65,
-	0xc8, 0x1a, 0xe3, 0x9d, 0x81, 0xab, 0xbb, 0xae, 0xe3, 0x32, 0x21, 0xc6, 0xb0, 0x0a, 0x42, 0x25,
-	0xc8, 0x19, 0x63, 0xe2, 0x46, 0x71, 0x94, 0x04, 0x45, 0x09, 0xc1, 0xd0, 0x15, 0xc8, 0x93, 0x3a,
-	0x55, 0x4d, 0xdf, 0xdc, 0x77, 0xcd, 0x11, 0x13, 0x6a, 0x0c, 0x87, 0x81, 0xe8, 0x3a, 0x2c, 0x1b,
-	0xe3, 0xee, 0xf8, 0xf1, 0xd8, 0x79, 0x32, 0x6e, 0xb9, 0x8e, 0xef, 0x30, 0x67, 0x2d, 0x86, 0x67,
-	0xc1, 0xac, 0xd6, 0x55, 0xdb, 0xeb, 0x9b, 0xee, 0x80, 0xc9, 0x9c, 0xd6, 0x5a, 0x40, 0x78, 0xbe,
-	0x35, 0xb4, 0x89, 0xff, 0x47, 0x85, 0xcd, 0xf2, 0x39, 0x84, 0xb4, 0xaa, 0x39, 0xf5, 0x31, 0x91,
-	0xaa, 0xe7, 0x33, 0x29, 0xc7, 0xb0, 0x0a, 0xe2, 0x18, 0xb2, 0x88, 0xac, 0xc4, 0x90, 0x65, 0x30,
-	0x8c, 0x86, 0x83, 0x1d, 0x6a, 0xff, 0xe7, 0x24, 0x86, 0x00, 0x11, 0xc9, 0x60, 0xcb, 0xf4, 0x46,
-	0xfc, 0xa0, 0x8f, 0x6e, 0x97, 0xc4, 0x70, 0x08, 0x46, 0x6a, 0x4a, 0xd3, 0xd8, 0xfa, 0x62, 0xc0,
-	0xb6, 0x45, 0x62, 0x58, 0x81, 0x10, 0x65, 0xa0, 0xa9, 0xe6, 0x03, 0x8f, 0xee, 0x87, 0xc4, 0xb0,
-	0x4c, 0x4b, 0xda, 0x2d, 0xd3, 0x1e, 0x7a, 0x05, 0x4d, 0xa1, 0xa5, 0x10, 0xa2, 0xc4, 0x5b, 0xae,
-	0xb9, 0x4f, 0x48, 0xcf, 0xd0, 0x4c, 0x91, 0x24, 0xf3, 0x1b, 0xf9, 0x64, 0x84, 0x88, 0xe6, 0x05,
-	0x00, 0xd2, 0x32, 0x92, 0xa8, 0xb8, 0x96, 0x49, 0x5a, 0xb6, 0xc2, 0x5a, 0xa6, 0x80, 0x4a, 0xff,
-	0x2c, 0x05, 0x4b, 0x46, 0x7f, 0xa4, 0x2a, 0xe2, 0x2a, 0x24, 0x8d, 0x71, 0xdd, 0xdb, 0xf7, 0xb8,
-	0x12, 0xf2, 0x14, 0x69, 0x80, 0x31, 0xe6, 0xaa, 0xc1, 0xd4, 0x4f, 0xa6, 0x99, 0xea, 0x54, 0xbc,
-	0xe9, 0x88, 0xe7, 0xc7, 0x84, 0xea, 0x04, 0x30, 0x74, 0x0d, 0x96, 0x48, 0xc7, 0x79, 0x7e, 0x77,
-	0xec, 0x5a, 0x66, 0xff, 0x40, 0xe8, 0xe0, 0x0c, 0x94, 0x29, 0x2a, 0x91, 0xaa, 0xfe, 0xb4, 0x3f,
-	0x10, 0x5a, 0xa8, 0x82, 0x18, 0x46, 0xcb, 0x74, 0x47, 0x2d, 0xd7, 0xd9, 0x15, 0x2a, 0xa8, 0x82,
-	0x58, 0x7d, 0xda, 0x6e, 0xff, 0xd3, 0xa9, 0x35, 0x26, 0x25, 0xa5, 0x44, 0x7d, 0x02, 0x18, 0xe3,
-	0x82, 0xad, 0x81, 0xed, 0x5a, 0x7d, 0x5f, 0xe8, 0x9e, 0x0a, 0x22, 0x62, 0x37, 0xc6, 0x7a, 0xff,
-	0xc0, 0x11, 0x9a, 0x27, 0x92, 0x4c, 0x2d, 0xc9, 0x27, 0xb6, 0x26, 0x42, 0xeb, 0x14, 0x08, 0x2b,
-	0x9f, 0x54, 0xd8, 0xf3, 0xcd, 0xd1, 0x44, 0x68, 0x5d, 0x08, 0xc6, 0x06, 0x89, 0x4c, 0x53, 0x46,
-	0x39, 0x31, 0x48, 0x42, 0x60, 0x56, 0x53, 0x32, 0x08, 0xeb, 0xa6, 0xf7, 0xd8, 0xe3, 0xda, 0xa7,
-	0x82, 0x98, 0x6c, 0x45, 0x92, 0xb2, 0x5a, 0x12, 0xb2, 0x55, 0xa1, 0xa4, 0x45, 0xcd, 0xa9, 0x4f,
-	0x3b, 0x97, 0xe9, 0xa0, 0x48, 0x12, 0x45, 0x6a, 0x4e, 0x7d, 0xde, 0x7d, 0x4c, 0x03, 0x03, 0x00,
-	0xa9, 0x2b, 0x19, 0x31, 0x6a, 0xe7, 0x31, 0x45, 0x9c, 0x05, 0x93, 0x96, 0x37, 0xa7, 0x7e, 0xd0,
-	0x7d, 0x4c, 0x27, 0x43, 0x30, 0x8e, 0x13, 0x74, 0xe0, 0x8a, 0xc4, 0x09, 0x7a, 0xf0, 0x0a, 0xe4,
-	0x9b, 0x53, 0x5f, 0xe9, 0xc2, 0xb3, 0x6c, 0xa2, 0x09, 0x01, 0x39, 0xa7, 0xa0, 0x13, 0xcf, 0x49,
-	0x4e, 0x41, 0x2f, 0x16, 0x21, 0x4d, 0x1a, 0x42, 0xbb, 0x71, 0x95, 0xe9, 0xad, 0x48, 0xf3, 0xa1,
-	0x2f, 0x3b, 0xf2, 0x55, 0x39, 0xf4, 0x65, 0x4f, 0xb2, 0x7a, 0x28, 0x5d, 0x59, 0x90, 0xf5, 0x50,
-	0xfa, 0xf2, 0x2d, 0xd0, 0x54, 0x00, 0x65, 0x76, 0x9e, 0x22, 0xce, 0xc1, 0x79, 0x9d, 0x83, 0xee,
-	0x2c, 0xca, 0x3a, 0x07, 0xfd, 0xc9, 0xe4, 0x1d, 0xea, 0xd0, 0x0b, 0x52, 0xde, 0x2a, 0xb8, 0xf4,
-	0x9d, 0x18, 0xe4, 0x3b, 0x7d, 0x75, 0xfc, 0x92, 0xc9, 0xca, 0x77, 0xca, 0xc3, 0x7d, 0xc7, 0xb5,
-	0xfd, 0x83, 0x11, 0x1f, 0xc5, 0x21, 0x18, 0x19, 0xe3, 0xd8, 0x77, 0xea, 0xf6, 0x98, 0x8f, 0x64,
-	0x9e, 0x12, 0x70, 0xf3, 0x29, 0x1f, 0xc1, 0x3c, 0x45, 0xf4, 0xa6, 0x6e, 0x3e, 0xad, 0x38, 0xe3,
-	0x31, 0x1f, 0xb4, 0x22, 0x49, 0x24, 0x58, 0xee, 0xfb, 0xf6, 0xa1, 0xd5, 0x9c, 0x58, 0x63, 0x39,
-	0x5a, 0x15, 0x10, 0xa9, 0x4f, 0xcb, 0xf4, 0x3c, 0x89, 0xc2, 0x86, 0x6b, 0x08, 0x46, 0x70, 0xca,
-	0xbe, 0x6f, 0x8d, 0x26, 0x3e, 0x9b, 0xc9, 0xf8, 0x78, 0x55, 0x61, 0xa4, 0x24, 0xdd, 0xf3, 0xcd,
-	0x5d, 0x62, 0x01, 0x07, 0xe3, 0x55, 0x01, 0x11, 0x1d, 0xae, 0x4c, 0x5d, 0x97, 0x82, 0xf8, 0x88,
-	0x0d, 0x00, 0x6c, 0x5e, 0x6b, 0x5b, 0xfb, 0x62, 0xbc, 0xf2, 0x14, 0x1f, 0x13, 0x34, 0x23, 0x2b,
-	0xc7, 0x04, 0xcd, 0xb9, 0x0c, 0x59, 0x6c, 0xf9, 0xae, 0x39, 0xf6, 0x68, 0x2e, 0x5f, 0x18, 0x14,
-	0x10, 0xe3, 0xa9, 0xbb, 0xae, 0x18, 0x94, 0x3c, 0xc5, 0x79, 0x62, 0xb2, 0x24, 0x2d, 0x49, 0x9e,
-	0x24, 0x39, 0x37, 0x53, 0x2e, 0xcf, 0xcf, 0x94, 0xa5, 0xbf, 0x11, 0x85, 0x7c, 0x77, 0xa0, 0xf6,
-	0x29, 0x9d, 0x01, 0x82, 0x45, 0x37, 0x22, 0x66, 0x80, 0x60, 0xc9, 0x2d, 0x40, 0xaa, 0xe1, 0xb4,
-	0x1c, 0xd7, 0x17, 0x93, 0xb3, 0x48, 0x86, 0xe6, 0xed, 0xd8, 0xfc, 0xbc, 0x4d, 0x06, 0xb0, 0x64,
-	0x1c, 0x97, 0xba, 0x18, 0x70, 0x26, 0xfa, 0xd4, 0x3f, 0xdc, 0x9d, 0xee, 0x85, 0xcd, 0x02, 0x15,
-	0x46, 0x70, 0xda, 0xe3, 0x41, 0x80, 0xc3, 0xfb, 0x58, 0x85, 0xcd, 0xb5, 0x3c, 0xb5, 0x60, 0x8d,
-	0x20, 0x38, 0xfb, 0x63, 0xc7, 0xb5, 0x06, 0xf5, 0xe9, 0xd0, 0xb7, 0x79, 0x27, 0x87, 0x60, 0xa5,
-	0xbf, 0x14, 0x85, 0xa5, 0x76, 0xa3, 0xde, 0x52, 0xc4, 0xf3, 0x21, 0xa4, 0xed, 0x49, 0xcf, 0xf3,
-	0x4d, 0xdf, 0x9b, 0x39, 0x3a, 0x54, 0x4d, 0x2c, 0x66, 0xa5, 0x19, 0x94, 0xd0, 0xc3, 0x29, 0x9b,
-	0x66, 0x79, 0xa8, 0x02, 0x60, 0xf7, 0x47, 0x82, 0x3c, 0x1a, 0xba, 0x01, 0x11, 0x5e, 0x1a, 0x37,
-	0xf3, 0x47, 0xcf, 0xd7, 0x33, 0x46, 0xa5, 0xce, 0x59, 0x64, 0x6c, 0x9e, 0xed, 0xa1, 0x4f, 0x20,
-	0xe3, 0xf7, 0x05, 0x8f, 0x58, 0xe8, 0x34, 0x26, 0x34, 0x3a, 0xd9, 0xa5, 0x9c, 0x4e, 0x85, 0x73,
-	0x48, 0xfb, 0xfd, 0x80, 0xc1, 0x74, 0x20, 0x18, 0xc4, 0x43, 0x0c, 0x42, 0xaa, 0xc0, 0x18, 0x74,
-	0xab, 0x82, 0xc1, 0x94, 0x65, 0x7a, 0xa5, 0xef, 0x44, 0x60, 0x89, 0xb8, 0x0a, 0x8a, 0x58, 0x02,
-	0x07, 0x2b, 0xf2, 0x52, 0x0e, 0xd6, 0xac, 0x23, 0x18, 0xfd, 0xb2, 0x8e, 0xe0, 0x3a, 0x64, 0xa9,
-	0x19, 0xde, 0x53, 0xcd, 0x79, 0xa0, 0xa0, 0x4d, 0x6a, 0xd3, 0x5f, 0x02, 0x98, 0x7a, 0xd6, 0x80,
-	0xe7, 0x33, 0xc3, 0x3e, 0x43, 0x20, 0x34, 0xbb, 0xf4, 0x0f, 0x56, 0x82, 0xfb, 0x91, 0xa1, 0x19,
-	0x2e, 0xe3, 0x8b, 0x29, 0x35, 0xb4, 0xc3, 0x18, 0x80, 0x51, 0x05, 0x56, 0xfa, 0x93, 0xa9, 0xd7,
-	0x9b, 0x7a, 0xfc, 0xea, 0x56, 0xcf, 0xb3, 0xfa, 0xfc, 0x2e, 0xc3, 0xe6, 0xd9, 0xa3, 0xe7, 0xeb,
-	0x5a, 0xa5, 0xd5, 0xf5, 0xba, 0x1e, 0xbb, 0xbd, 0xd5, 0xb6, 0xfa, 0x1e, 0xd6, 0x08, 0x81, 0x0a,
-	0x41, 0x06, 0x9c, 0xa3, 0x4c, 0xbc, 0x67, 0x9e, 0x6f, 0x8d, 0x14, 0x36, 0xf4, 0x9a, 0xc3, 0xe6,
-	0xea, 0xd1, 0xf3, 0x75, 0x44, 0xd8, 0xb4, 0x69, 0xbe, 0x64, 0x84, 0x08, 0x51, 0x18, 0x86, 0x6e,
-	0x02, 0x50, 0x56, 0xb4, 0xf1, 0xec, 0xe2, 0x03, 0x53, 0x27, 0x42, 0x5f, 0x23, 0x40, 0x9c, 0x21,
-	0x08, 0xf4, 0x13, 0xbd, 0x0b, 0xf9, 0x91, 0x35, 0xea, 0xb9, 0x9e, 0xc7, 0x45, 0x43, 0x1d, 0x1b,
-	0x76, 0xea, 0x58, 0xb7, 0x46, 0xb8, 0xdd, 0xa6, 0x02, 0xc2, 0xd9, 0x91, 0x35, 0xc2, 0x9e, 0xc7,
-	0x84, 0x79, 0x0d, 0x96, 0x09, 0x91, 0x2a, 0x71, 0xe6, 0xf2, 0x10, 0x5e, 0xb5, 0x40, 0xe8, 0xf7,
-	0x60, 0x99, 0x56, 0x65, 0xec, 0xf2, 0xe3, 0x3f, 0x36, 0x16, 0xf3, 0x9b, 0x67, 0x8e, 0x9e, 0xaf,
-	0xe7, 0x49, 0x7d, 0x1a, 0x2e, 0x3b, 0xe7, 0xf3, 0x70, 0x9e, 0x60, 0xca, 0x24, 0xfa, 0x04, 0xce,
-	0x08, 0x52, 0xff, 0xc0, 0x75, 0x7c, 0x7f, 0x68, 0xb1, 0x53, 0xd2, 0xfc, 0xe6, 0xca, 0xd1, 0xf3,
-	0xf5, 0x65, 0x46, 0xdc, 0x11, 0x59, 0x78, 0x99, 0x91, 0x4b, 0x00, 0xc2, 0x50, 0xa0, 0x0c, 0x24,
-	0xb5, 0x22, 0xd4, 0x0c, 0x15, 0xca, 0xf9, 0xa3, 0xe7, 0xeb, 0xe7, 0x08, 0x1f, 0x49, 0x24, 0xe5,
-	0x4a, 0x3b, 0x63, 0x0e, 0x8c, 0xae, 0xc0, 0x12, 0x69, 0xf7, 0x9e, 0x3d, 0xb4, 0x78, 0xb3, 0x99,
-	0xb3, 0x95, 0x1b, 0x59, 0xa3, 0x2d, 0x7b, 0x68, 0xb1, 0x56, 0x73, 0x2c, 0x73, 0xec, 0x8c, 0x39,
-	0x56, 0x56, 0x62, 0x95, 0xc7, 0xce, 0x98, 0x61, 0xbd, 0x03, 0xe7, 0x08, 0xd6, 0xc8, 0x9c, 0x4c,
-	0xac, 0x81, 0xca, 0x32, 0x47, 0x91, 0xd1, 0xc8, 0x1a, 0xd5, 0x69, 0x5e, 0xc0, 0xf8, 0x4d, 0x88,
-	0x4f, 0x2c, 0x77, 0x8f, 0x9f, 0xa1, 0x8a, 0x99, 0xa3, 0x65, 0xb9, 0x7b, 0x81, 0xca, 0x62, 0x8a,
-	0x42, 0xea, 0x30, 0xb6, 0xfc, 0x9e, 0xfb, 0xb4, 0x27, 0x7c, 0xd2, 0x25, 0x56, 0x87, 0xb1, 0xe5,
-	0xe3, 0xa7, 0x2d, 0xee, 0x98, 0x5e, 0x86, 0x1c, 0xc7, 0x62, 0x45, 0x2f, 0xb3, 0x61, 0x43, 0x71,
-	0x58, 0x91, 0x25, 0xc8, 0x73, 0x0c, 0x2b, 0x30, 0xd8, 0xe2, 0x38, 0x4b, 0x51, 0xa4, 0xa7, 0x26,
-	0xca, 0x22, 0x8e, 0xf2, 0xc4, 0x1a, 0x50, 0x8b, 0x4d, 0x94, 0x55, 0x65, 0x30, 0x81, 0xe5, 0x07,
-	0x35, 0x42, 0x12, 0xab, 0x33, 0x5b, 0x23, 0x5f, 0xd4, 0x68, 0x45, 0xd6, 0xa8, 0x13, 0xae, 0x91,
-	0x2f, 0x6b, 0x74, 0x56, 0xd6, 0xa8, 0x33, 0x53, 0x23, 0x3f, 0xa8, 0xd1, 0x39, 0xa5, 0x2c, 0x51,
-	0xa3, 0x36, 0x9c, 0xa7, 0x58, 0xfd, 0x49, 0xcf, 0xf5, 0xfd, 0xde, 0xc8, 0xee, 0xbb, 0x0e, 0x51,
-	0x8f, 0xde, 0xe4, 0xee, 0x6d, 0x6a, 0xbf, 0x71, 0x15, 0x69, 0x58, 0x7e, 0xa7, 0xd2, 0xc2, 0xbe,
-	0x5f, 0x17, 0x18, 0xad, 0xbb, 0xb7, 0xf1, 0x39, 0xc2, 0xab, 0x3f, 0x99, 0x01, 0x9f, 0xc0, 0xf4,
-	0xde, 0x6d, 0x6a, 0xf5, 0x1d, 0xcf, 0xf4, 0xde, 0x62, 0xa6, 0xf7, 0x4e, 0x64, 0x7a, 0x97, 0x9a,
-	0x89, 0x27, 0x30, 0xbd, 0xbb, 0x98, 0xe9, 0xdd, 0x93, 0x98, 0xde, 0xa3, 0x26, 0xe5, 0x09, 0x4c,
-	0xef, 0x2d, 0x66, 0x7a, 0x0f, 0x5d, 0x07, 0x6d, 0x60, 0x7b, 0x8f, 0x43, 0x53, 0x43, 0x91, 0xca,
-	0x7e, 0x89, 0xc0, 0x95, 0xb9, 0xe1, 0x1a, 0x2c, 0x53, 0x4c, 0x65, 0x56, 0xbe, 0xc0, 0xe6, 0x10,
-	0x02, 0xee, 0x8a, 0x99, 0x19, 0x7d, 0x06, 0x45, 0x51, 0x4d, 0x93, 0xda, 0x7a, 0xbd, 0xbe, 0x33,
-	0x1e, 0x5b, 0x7d, 0xb6, 0x23, 0x7b, 0x91, 0xd6, 0xf3, 0xc2, 0xd1, 0xf3, 0xf5, 0x57, 0x59, 0x3d,
-	0x99, 0x3d, 0x58, 0x09, 0x50, 0xf0, 0xab, 0xac, 0xa6, 0x73, 0x19, 0xa8, 0x07, 0x97, 0x04, 0x67,
-	0x3a, 0x35, 0x3c, 0x31, 0x6d, 0x3f, 0xc4, 0xfc, 0x12, 0x65, 0x7e, 0xe9, 0xe8, 0xf9, 0xfa, 0x79,
-	0xc6, 0x9c, 0x4c, 0x04, 0x8f, 0x4c, 0xdb, 0x57, 0xd9, 0x9f, 0x67, 0xec, 0x17, 0x64, 0xb1, 0x2d,
-	0x41, 0xa7, 0x6f, 0x79, 0x9e, 0xe5, 0x15, 0xd6, 0xc8, 0xdc, 0x85, 0x03, 0x00, 0xb1, 0xa3, 0xfc,
-	0x03, 0xd7, 0x32, 0x07, 0x5e, 0x61, 0x9d, 0xe6, 0x89, 0x24, 0xfa, 0x0a, 0x14, 0xe8, 0xf4, 0xea,
-	0x3c, 0xe9, 0x4d, 0x5c, 0xcb, 0xf3, 0xa6, 0x2e, 0x69, 0xf4, 0x74, 0xec, 0x5b, 0x6e, 0xe1, 0x32,
-	0x95, 0x11, 0x99, 0x3a, 0x6a, 0xce, 0x93, 0x16, 0xcf, 0xad, 0xb0, 0x4c, 0xf4, 0x11, 0x5c, 0xa0,
-	0x73, 0x8a, 0x35, 0xb0, 0xa7, 0xa3, 0x79, 0xda, 0xd7, 0x28, 0x2d, 0xe1, 0x5d, 0xa7, 0x18, 0xb3,
-	0xe4, 0x65, 0xb8, 0x44, 0xc8, 0xfb, 0xae, 0xed, 0xdb, 0x7d, 0x73, 0x38, 0xcf, 0xa0, 0x44, 0x19,
-	0x14, 0x47, 0xd6, 0xa8, 0xc2, 0x71, 0x66, 0x59, 0xfc, 0x38, 0xac, 0x51, 0x99, 0xb2, 0x6d, 0x3a,
-	0x22, 0x4d, 0xdf, 0x75, 0x86, 0xd4, 0xd8, 0x60, 0xf3, 0x53, 0xe1, 0xf5, 0xd0, 0x1e, 0xfa, 0x71,
-	0xfb, 0x79, 0x7c, 0x99, 0xbd, 0x40, 0x84, 0x7b, 0xdc, 0x96, 0x1f, 0x5f, 0x85, 0x7c, 0xc7, 0x37,
-	0x87, 0x5c, 0x83, 0xae, 0xc8, 0x55, 0xa8, 0x43, 0xa0, 0xa1, 0x99, 0x96, 0xe1, 0x8d, 0xac, 0x91,
-	0xf7, 0x84, 0x63, 0x5f, 0x95, 0x33, 0x2d, 0xc5, 0xae, 0x93, 0x2c, 0x46, 0x72, 0x0b, 0xce, 0x12,
-	0x12, 0xcf, 0xd9, 0xf3, 0x43, 0xaa, 0x7c, 0x8d, 0x52, 0x9c, 0x19, 0x59, 0xa3, 0xb6, 0xb3, 0xe7,
-	0x87, 0xb5, 0x99, 0x8a, 0xce, 0xec, 0x1f, 0x88, 0x79, 0xfc, 0x0d, 0x59, 0x97, 0x0a, 0x81, 0x86,
-	0xd6, 0x06, 0xef, 0x89, 0x39, 0xe1, 0x68, 0xd7, 0xe5, 0xda, 0xd0, 0x7e, 0x62, 0x4e, 0x18, 0xd6,
-	0x1d, 0x56, 0xe3, 0xe9, 0xd8, 0x3a, 0xb4, 0xfb, 0xf4, 0x5e, 0x15, 0x47, 0x7e, 0x93, 0x22, 0xaf,
-	0x8c, 0xac, 0x51, 0x37, 0xc8, 0x63, 0x34, 0x3f, 0x06, 0x2b, 0x44, 0xf2, 0xde, 0x98, 0x1b, 0x98,
-	0x5c, 0xdc, 0x6f, 0x85, 0xd6, 0x8a, 0xb0, 0x35, 0xbb, 0x79, 0xee, 0xe8, 0xf9, 0xfa, 0x99, 0x86,
-	0xe5, 0x87, 0xc1, 0xf8, 0xcc, 0xd8, 0xf2, 0xdb, 0xe3, 0xd0, 0x56, 0x4d, 0x95, 0x8f, 0x56, 0x85,
-	0xf3, 0x0d, 0xda, 0x91, 0xe7, 0x82, 0x9b, 0x40, 0x8f, 0xe7, 0xba, 0x8f, 0x8e, 0x79, 0x85, 0x4b,
-	0x1d, 0xb4, 0xdd, 0xe1, 0x63, 0xdb, 0x51, 0xd9, 0xdc, 0xa4, 0x15, 0x2c, 0x89, 0x4b, 0x48, 0xfb,
-	0xae, 0x33, 0x9d, 0x50, 0x5b, 0x6f, 0x93, 0x60, 0x6e, 0x28, 0xd5, 0x5a, 0xa6, 0xb4, 0x01, 0xa0,
-	0xf4, 0xbb, 0x71, 0xc8, 0x0b, 0xa3, 0xad, 0xeb, 0x99, 0xfb, 0x16, 0x2a, 0x43, 0x46, 0xdc, 0xed,
-	0x12, 0x57, 0xf3, 0x66, 0x8f, 0xad, 0x28, 0xa2, 0xbc, 0x19, 0x24, 0xcc, 0x39, 0x49, 0x85, 0x6e,
-	0x40, 0x82, 0x6a, 0x0a, 0x3f, 0x9d, 0x3f, 0xe6, 0xb6, 0x05, 0xc3, 0x29, 0x7e, 0x3f, 0x06, 0x69,
-	0xc1, 0x0a, 0x7d, 0x0c, 0xf9, 0xe0, 0x4a, 0xda, 0x78, 0xcf, 0xe1, 0x37, 0x78, 0x56, 0x16, 0x5c,
-	0x46, 0x12, 0x47, 0x44, 0x96, 0x7a, 0xa5, 0xed, 0x5d, 0xc8, 0xf0, 0xb3, 0x2c, 0x6b, 0x70, 0x72,
-	0xe9, 0x01, 0x1e, 0xba, 0x07, 0xa0, 0x08, 0x33, 0xb6, 0xf0, 0xb4, 0x4b, 0x91, 0xa1, 0x82, 0x8c,
-	0xbe, 0x0e, 0x39, 0x79, 0xc9, 0xab, 0x47, 0xaf, 0xce, 0x44, 0x17, 0x3f, 0x22, 0xda, 0x5c, 0xe1,
-	0x1b, 0xea, 0xea, 0xcb, 0x24, 0x9c, 0x95, 0xc4, 0xc6, 0x00, 0x7d, 0x0c, 0x09, 0x9f, 0xee, 0x31,
-	0xb0, 0xdb, 0x26, 0xa5, 0x13, 0x85, 0xbe, 0xd1, 0x31, 0xbd, 0xc7, 0x52, 0x90, 0x84, 0xac, 0xf8,
-	0x77, 0x23, 0x10, 0x27, 0xd0, 0x13, 0xce, 0x70, 0xdf, 0xa4, 0x3b, 0xfc, 0xec, 0x3e, 0x93, 0x38,
-	0xe7, 0x61, 0x2f, 0xaf, 0xe6, 0x36, 0xfc, 0xbf, 0xd4, 0xad, 0x99, 0xe0, 0x24, 0x2d, 0x7e, 0xc2,
-	0x49, 0x5a, 0xe9, 0x2f, 0xac, 0xc0, 0x52, 0xd8, 0xe4, 0x7a, 0x21, 0x2f, 0xe1, 0x72, 0xe8, 0x55,
-	0x4e, 0x80, 0x22, 0xa1, 0xc4, 0xc3, 0xef, 0x3f, 0xeb, 0x0f, 0xa5, 0xf7, 0xc2, 0x53, 0xe8, 0x7d,
-	0x78, 0xd5, 0xf3, 0xcd, 0x21, 0xb1, 0x60, 0x19, 0xa4, 0xb7, 0xe7, 0x3a, 0x63, 0xdf, 0x1a, 0x0f,
-	0xb8, 0x1b, 0x73, 0x8e, 0x67, 0x57, 0x68, 0xee, 0x16, 0xcf, 0x44, 0xef, 0xc1, 0xea, 0x0c, 0xdd,
-	0x2e, 0x31, 0xb2, 0xc6, 0x03, 0x7e, 0x76, 0x71, 0x36, 0x44, 0xb6, 0xc9, 0xf2, 0x88, 0x5f, 0x6c,
-	0x8f, 0x3d, 0xdf, 0x9d, 0xf2, 0x35, 0x90, 0xd9, 0xf5, 0x21, 0x18, 0x7a, 0x13, 0x34, 0x36, 0xd1,
-	0xb9, 0xd6, 0x9e, 0xe5, 0x12, 0xff, 0xcb, 0xe3, 0x67, 0x1b, 0xcb, 0x14, 0x8e, 0x25, 0x18, 0xbd,
-	0x06, 0x39, 0x86, 0x3a, 0xb2, 0xe9, 0x2a, 0x98, 0x66, 0xc6, 0x1a, 0x85, 0xd5, 0x29, 0x08, 0x15,
-	0x21, 0xbd, 0xeb, 0x9a, 0xe3, 0xfe, 0x81, 0xc5, 0xcf, 0x38, 0xb0, 0x4c, 0xa3, 0xd7, 0x21, 0xcf,
-	0xbe, 0x05, 0x3d, 0xb7, 0xb7, 0x19, 0x90, 0x33, 0xb8, 0x04, 0xb0, 0x3b, 0xf5, 0x78, 0x23, 0xb9,
-	0xad, 0x9d, 0xd9, 0x9d, 0x7a, 0xac, 0x61, 0x24, 0xdb, 0xb5, 0xf6, 0x44, 0x36, 0xb3, 0xae, 0x33,
-	0xae, 0xb5, 0xc7, 0xb3, 0xdf, 0x04, 0xe2, 0x0d, 0xf5, 0xfa, 0x43, 0xa7, 0xff, 0x98, 0x5a, 0xd6,
-	0x11, 0xe6, 0xf8, 0x56, 0x5a, 0xdd, 0x0a, 0x81, 0xe1, 0x74, 0x7f, 0x32, 0xa5, 0x5f, 0x84, 0x13,
-	0xd1, 0x56, 0x8e, 0x4b, 0x0c, 0xea, 0x08, 0xce, 0x10, 0x08, 0xcb, 0x5e, 0x87, 0xec, 0xc4, 0xdc,
-	0xb7, 0x7a, 0xf4, 0xa0, 0x44, 0x1a, 0xd3, 0x04, 0x44, 0xef, 0xda, 0x51, 0x61, 0x8c, 0xec, 0xb1,
-	0xe3, 0x0a, 0x0c, 0x6e, 0x4b, 0x53, 0x98, 0x82, 0x62, 0xfe, 0x78, 0x80, 0x72, 0x86, 0xa3, 0x10,
-	0x18, 0x47, 0x21, 0xd2, 0x27, 0x5d, 0xfc, 0xd4, 0xef, 0x79, 0x4f, 0x6c, 0x9f, 0xca, 0x0d, 0x71,
-	0xe9, 0x33, 0x78, 0x9b, 0x83, 0xd1, 0x07, 0xb0, 0x44, 0xda, 0x36, 0xb2, 0xf7, 0x5d, 0x7e, 0x82,
-	0x4d, 0xed, 0x69, 0xe9, 0x7e, 0xd5, 0x65, 0x06, 0x75, 0xbf, 0x82, 0x24, 0x29, 0xc4, 0x1c, 0xda,
-	0xfb, 0xf4, 0xee, 0xb1, 0xa8, 0x0b, 0x33, 0xb4, 0x97, 0x25, 0x3c, 0xa8, 0x8f, 0x35, 0x9a, 0x0e,
-	0xd9, 0xc1, 0x3d, 0x47, 0x65, 0xe6, 0xf6, 0xb2, 0x84, 0x73, 0xd4, 0x6b, 0xb0, 0x3c, 0x7c, 0xa7,
-	0x37, 0x60, 0x1a, 0x31, 0x74, 0x88, 0xe9, 0xb3, 0xca, 0x56, 0xc9, 0xe1, 0x3b, 0x55, 0x0a, 0xad,
-	0x11, 0x20, 0x59, 0xb1, 0xc3, 0x78, 0xa2, 0xfb, 0x5f, 0x65, 0x2b, 0xb6, 0x8a, 0xcd, 0x95, 0xe0,
-	0x3a, 0x68, 0x01, 0x89, 0xe7, 0x3b, 0xae, 0xc5, 0x36, 0x50, 0xe3, 0x78, 0x49, 0x60, 0xb7, 0x29,
-	0x14, 0xbd, 0x0b, 0xab, 0x33, 0x98, 0x82, 0xfb, 0x79, 0xb6, 0xba, 0x86, 0xf0, 0x39, 0xfb, 0xdb,
-	0x70, 0x36, 0x20, 0x9a, 0x10, 0xbd, 0x67, 0x82, 0x2f, 0x86, 0x2b, 0xd4, 0x92, 0x39, 0xe8, 0x1e,
-	0x9c, 0x9f, 0xa7, 0x10, 0x25, 0x31, 0x4b, 0x77, 0x75, 0x96, 0x8c, 0x17, 0xc6, 0xc4, 0x64, 0xab,
-	0x62, 0xba, 0x28, 0xc4, 0x64, 0xcc, 0x89, 0xc9, 0x9e, 0x17, 0xd3, 0x25, 0x51, 0x2b, 0x63, 0x56,
-	0x4c, 0xac, 0x1d, 0xf6, 0x5c, 0x3b, 0xd6, 0xc2, 0x14, 0x73, 0xed, 0xb0, 0x17, 0xb7, 0x63, 0x5d,
-	0xb4, 0xc3, 0x58, 0xd4, 0x8e, 0x37, 0x21, 0x33, 0x1c, 0xf6, 0x79, 0x0b, 0xa8, 0xe1, 0xca, 0x86,
-	0x56, 0xad, 0x56, 0xa1, 0x0d, 0xc0, 0xe9, 0xe1, 0xb0, 0xcf, 0x9a, 0x72, 0x0f, 0x96, 0x05, 0xaa,
-	0xe0, 0xfd, 0x5a, 0xa0, 0xaa, 0x9c, 0x80, 0xb1, 0xc5, 0x79, 0x4e, 0xc5, 0x4b, 0xb9, 0x09, 0x40,
-	0x48, 0x79, 0x9f, 0x53, 0x13, 0x95, 0xed, 0x77, 0xd4, 0x6a, 0x15, 0xd6, 0xe5, 0x98, 0x54, 0x83,
-	0xf7, 0xfe, 0x57, 0x41, 0x93, 0xd8, 0xa2, 0xa4, 0xd7, 0x29, 0x0d, 0x3a, 0x7a, 0xbe, 0xbe, 0x24,
-	0x68, 0x78, 0x51, 0x4b, 0x82, 0x90, 0x97, 0xf5, 0x01, 0x10, 0x88, 0x2a, 0xb8, 0x2b, 0xa1, 0x5a,
-	0x06, 0x72, 0xa3, 0xb5, 0x54, 0xc4, 0xa8, 0xc3, 0x8a, 0x4a, 0x29, 0x8a, 0xa6, 0x26, 0x28, 0xb3,
-	0xc3, 0x14, 0x72, 0x5e, 0xfa, 0x19, 0x85, 0x45, 0xd0, 0xd8, 0x81, 0x3f, 0xdc, 0xe5, 0x32, 0xbd,
-	0x16, 0x34, 0xb6, 0xda, 0xa9, 0x6d, 0x32, 0xa1, 0x66, 0x08, 0x02, 0x93, 0xea, 0x57, 0x41, 0x93,
-	0xd8, 0xa2, 0xc4, 0x37, 0x82, 0xc6, 0x0a, 0x1a, 0xd1, 0x58, 0x41, 0xc8, 0xcb, 0xba, 0x05, 0x59,
-	0x4a, 0xcd, 0x25, 0x4b, 0x0d, 0x55, 0x76, 0x5d, 0x86, 0x10, 0x72, 0xd1, 0xd2, 0xea, 0x70, 0xd9,
-	0x7e, 0x02, 0x67, 0x02, 0x02, 0x51, 0x1e, 0x35, 0x59, 0xd9, 0x9e, 0x8d, 0x24, 0xe3, 0x05, 0x2e,
-	0x4b, 0x5a, 0x5e, 0xe2, 0x87, 0x40, 0x41, 0xaa, 0x7c, 0xdf, 0x0a, 0x57, 0x57, 0x11, 0x30, 0xad,
-	0xae, 0x22, 0xe1, 0x1d, 0x38, 0x1b, 0x22, 0x16, 0x15, 0xb8, 0x41, 0x39, 0xd0, 0x1d, 0x34, 0x95,
-	0x03, 0xaf, 0x03, 0x52, 0xb9, 0x04, 0x42, 0xb6, 0x03, 0x21, 0xdf, 0x0c, 0x84, 0x6c, 0x04, 0x42,
-	0xb6, 0x55, 0x21, 0xdb, 0xb3, 0x42, 0x7e, 0x3b, 0xa8, 0xb5, 0x31, 0x23, 0x64, 0x3b, 0x2c, 0xe4,
-	0xd7, 0x80, 0x2f, 0x66, 0xbc, 0xb4, 0x0d, 0x36, 0xe1, 0x33, 0x18, 0x2b, 0xe0, 0x26, 0x20, 0x05,
-	0x45, 0x14, 0x71, 0x8b, 0x22, 0x6a, 0x01, 0x62, 0xb0, 0x1a, 0x8e, 0x9d, 0x81, 0x98, 0x37, 0x6e,
-	0xb3, 0xe5, 0x8e, 0x40, 0x18, 0xb3, 0xeb, 0xa0, 0xc9, 0x6c, 0xc1, 0xea, 0x1d, 0x36, 0x4f, 0x0a,
-	0x24, 0xce, 0x68, 0x1d, 0xb2, 0x14, 0x93, 0x77, 0xff, 0x1d, 0xbe, 0x13, 0xe3, 0x0c, 0xc4, 0x44,
-	0xfa, 0x16, 0x9c, 0x09, 0x10, 0x04, 0xaf, 0x77, 0xd9, 0xcc, 0x2f, 0xd1, 0x38, 0xb3, 0x37, 0x80,
-	0x82, 0xd4, 0x9e, 0x7d, 0x2f, 0x28, 0x55, 0xe9, 0xc5, 0xdb, 0x70, 0x36, 0x84, 0x28, 0xf8, 0xde,
-	0x65, 0x13, 0x94, 0x8a, 0xcd, 0x58, 0x97, 0x0e, 0x21, 0xc5, 0x8f, 0xe0, 0xd1, 0xfb, 0x90, 0x36,
-	0xf7, 0xc9, 0x8a, 0x25, 0xef, 0xe5, 0xce, 0x5e, 0x63, 0xa6, 0x1b, 0xf3, 0x3c, 0x81, 0x53, 0x14,
-	0xd9, 0x98, 0xb1, 0x17, 0xa3, 0x2f, 0x66, 0x2f, 0x96, 0x7e, 0x35, 0x07, 0x09, 0x1a, 0x47, 0x80,
-	0xbf, 0xf3, 0x8d, 0x84, 0x5e, 0x8e, 0xf3, 0x08, 0x03, 0x73, 0xa6, 0xe9, 0xd7, 0x67, 0x1e, 0x7e,
-	0x44, 0x43, 0x46, 0xb7, 0xfa, 0xf0, 0x43, 0x1a, 0xdd, 0xc7, 0x3e, 0xfe, 0xb8, 0xaf, 0x34, 0x37,
-	0x16, 0x7e, 0xb7, 0xce, 0x9b, 0xbb, 0xcc, 0x79, 0xcc, 0x37, 0x59, 0xbd, 0x7a, 0x1e, 0x3f, 0xfd,
-	0xea, 0xf9, 0x8b, 0xbe, 0x82, 0x31, 0x20, 0xa7, 0x3c, 0xcb, 0x21, 0xe6, 0x63, 0x6c, 0xf1, 0xbb,
-	0x1c, 0xd9, 0xba, 0x00, 0xe6, 0xe1, 0x6c, 0xf0, 0x30, 0x67, 0xf6, 0x16, 0x7b, 0xea, 0x85, 0xef,
-	0x4a, 0x5f, 0x85, 0xd8, 0xd4, 0x1d, 0xf2, 0x5b, 0x8f, 0x20, 0x4e, 0x36, 0x70, 0x8d, 0x3d, 0x0a,
-	0xe8, 0xe2, 0x1a, 0x26, 0xf9, 0x0b, 0x5e, 0x92, 0x67, 0x5e, 0xe2, 0x25, 0xf9, 0xa2, 0xfb, 0x8a,
-	0xf0, 0xa5, 0xee, 0x2b, 0x06, 0x57, 0xe6, 0xb3, 0xa7, 0x5d, 0x99, 0xff, 0x37, 0x29, 0xc8, 0x34,
-	0x27, 0x16, 0xf7, 0x17, 0xee, 0x86, 0x6e, 0xcc, 0x5f, 0x50, 0xf5, 0x6e, 0x43, 0x62, 0xcd, 0x5f,
-	0x1f, 0xbb, 0x4b, 0xdc, 0x9c, 0xe9, 0xb8, 0x2f, 0x2e, 0x90, 0x5d, 0x3a, 0x86, 0xb0, 0x46, 0x91,
-	0x30, 0x47, 0x46, 0x1f, 0x40, 0x8a, 0xdd, 0x67, 0x14, 0x77, 0xe8, 0xd6, 0x8e, 0xa1, 0x63, 0xd7,
-	0x06, 0x2d, 0x2c, 0xd0, 0xd1, 0xc7, 0x90, 0x99, 0x8e, 0x05, 0x6d, 0x3c, 0xf4, 0x54, 0x74, 0x96,
-	0xb6, 0x2b, 0xf0, 0x70, 0x40, 0x42, 0x2a, 0xdc, 0xa7, 0x77, 0x48, 0xf8, 0xed, 0xd9, 0xe3, 0x2a,
-	0xcc, 0x2e, 0x9a, 0x60, 0x8e, 0x4c, 0x2a, 0x3c, 0xb0, 0x3c, 0xdf, 0x75, 0x9e, 0xf1, 0x1b, 0xc4,
-	0xc7, 0x55, 0xb8, 0xca, 0xb0, 0xb0, 0x40, 0x47, 0x3a, 0xe4, 0x58, 0xa3, 0x7b, 0x74, 0x33, 0x82,
-	0x5f, 0xba, 0x2d, 0x9d, 0x28, 0xa7, 0x6d, 0x82, 0x89, 0xb3, 0xc3, 0x20, 0x51, 0xfc, 0x18, 0x92,
-	0x2c, 0x0f, 0xbd, 0xc7, 0xfd, 0x06, 0xa2, 0x25, 0x62, 0x5b, 0x62, 0x59, 0xf5, 0x60, 0x83, 0x1d,
-	0x01, 0xea, 0x4e, 0x90, 0xb4, 0x57, 0xfc, 0x13, 0x90, 0x55, 0x78, 0xa3, 0xbb, 0x90, 0x16, 0xa3,
-	0xe3, 0xf4, 0x8d, 0x05, 0x89, 0x8a, 0xee, 0xf1, 0xb2, 0x59, 0x53, 0xd8, 0x6c, 0x73, 0x56, 0x29,
-	0x7b, 0x5b, 0xec, 0xb7, 0xa8, 0x15, 0x10, 0x0d, 0x48, 0xf1, 0xce, 0x0c, 0xcf, 0x05, 0x91, 0x17,
-	0x9b, 0x0b, 0x8a, 0x5f, 0x83, 0x8c, 0xec, 0xd0, 0x2f, 0xc7, 0xe1, 0x1e, 0x24, 0x59, 0xaf, 0xa2,
-	0x5b, 0x90, 0x62, 0x77, 0x39, 0x4f, 0x21, 0x16, 0x58, 0xc5, 0xfb, 0x90, 0xe2, 0x1d, 0xfb, 0xd2,
-	0xb4, 0xa5, 0xe1, 0x31, 0xd7, 0x5b, 0x6b, 0xe5, 0x6e, 0xa3, 0xb2, 0xa3, 0x45, 0x90, 0x06, 0x39,
-	0xf6, 0xdd, 0xdb, 0xc6, 0xcd, 0x6e, 0x4b, 0x4b, 0x12, 0x54, 0xf6, 0x8c, 0x44, 0xd7, 0xa2, 0x28,
-	0x0f, 0x99, 0x6e, 0x43, 0x24, 0x63, 0xf4, 0x15, 0x19, 0xd6, 0xcb, 0x1d, 0x5d, 0x8b, 0xb3, 0xe7,
-	0x65, 0xed, 0x0e, 0x6e, 0x7e, 0xae, 0x25, 0xf8, 0xfb, 0x92, 0xdf, 0x8c, 0x42, 0xce, 0x18, 0x1f,
-	0x5a, 0xae, 0x67, 0xb1, 0xe5, 0xe4, 0xd6, 0x09, 0xcb, 0x89, 0x9c, 0xd0, 0x39, 0x80, 0xae, 0x29,
-	0x7c, 0xc6, 0x8b, 0x9e, 0x32, 0xe3, 0xcd, 0x2e, 0x3d, 0xb1, 0x1f, 0x62, 0xe9, 0x51, 0x57, 0xda,
-	0xf8, 0x4b, 0xac, 0xb4, 0x95, 0xb9, 0x59, 0x37, 0x41, 0x6b, 0xb1, 0x78, 0xd6, 0x15, 0xdb, 0x88,
-	0x33, 0x73, 0x6f, 0x48, 0x97, 0x92, 0x2f, 0xb8, 0x5c, 0x1f, 0xc5, 0x21, 0x2d, 0x06, 0xdb, 0x09,
-	0xbb, 0x4c, 0xef, 0x43, 0x8a, 0x8d, 0xd5, 0x63, 0xb6, 0x9a, 0x96, 0xb8, 0x68, 0x78, 0xd0, 0x1f,
-	0x9c, 0xa4, 0x03, 0xf6, 0x87, 0x5b, 0x8b, 0x43, 0xed, 0x89, 0xbf, 0xe0, 0x4a, 0x7b, 0x4b, 0x99,
-	0x0f, 0x12, 0xa1, 0x9b, 0x08, 0xea, 0x7c, 0xa0, 0xcc, 0x04, 0xe2, 0xa5, 0x6b, 0x52, 0x79, 0xe9,
-	0xfa, 0x72, 0x8f, 0x56, 0xef, 0x42, 0xee, 0x80, 0xbe, 0x25, 0xef, 0xd1, 0x18, 0x23, 0x33, 0x8f,
-	0x56, 0x95, 0x67, 0xe6, 0x38, 0x7b, 0xa0, 0x84, 0x09, 0x08, 0xbd, 0x39, 0xcd, 0xbc, 0xd8, 0x9b,
-	0xd3, 0x60, 0x33, 0x0e, 0x4e, 0x7e, 0xf6, 0xa9, 0x3c, 0x4d, 0xcd, 0xbe, 0xd8, 0xd3, 0xd4, 0x3b,
-	0x90, 0x7d, 0x6c, 0x0f, 0x87, 0xbd, 0x09, 0x7d, 0x10, 0xce, 0x1f, 0x08, 0x88, 0x55, 0x37, 0x78,
-	0x29, 0x8e, 0xe1, 0x71, 0xf0, 0x6a, 0xfc, 0x1a, 0x24, 0x58, 0x93, 0xf3, 0xa1, 0x07, 0x1c, 0xf2,
-	0xe5, 0x3a, 0x66, 0xd9, 0xa5, 0xaf, 0x42, 0x3e, 0x34, 0xa9, 0xd2, 0xdd, 0x64, 0xba, 0x2f, 0x7a,
-	0xe2, 0xac, 0xcf, 0x70, 0x4a, 0xff, 0x2e, 0x71, 0xea, 0x26, 0xe8, 0x97, 0x55, 0xcf, 0x3f, 0xce,
-	0xb1, 0xbf, 0x19, 0x7e, 0x7a, 0x1d, 0x0f, 0x09, 0x50, 0x31, 0xf1, 0x96, 0x4e, 0x78, 0x76, 0xad,
-	0x0e, 0x97, 0xc4, 0x4b, 0x0e, 0x97, 0x6b, 0x34, 0x1a, 0x92, 0x6f, 0x15, 0x92, 0xf4, 0x06, 0xbd,
-	0xa6, 0x48, 0xa0, 0x4d, 0xe0, 0x98, 0x65, 0x87, 0x87, 0x55, 0xea, 0x05, 0x87, 0xd5, 0xbb, 0x4a,
-	0xb8, 0x82, 0x74, 0xc8, 0x78, 0x15, 0xfc, 0xa7, 0xe2, 0x74, 0x43, 0x22, 0xa2, 0xaf, 0xc1, 0x0a,
-	0xfb, 0xee, 0x4d, 0x27, 0x03, 0xd3, 0xb7, 0x7a, 0xac, 0x7e, 0x19, 0x6a, 0x99, 0xcd, 0xd7, 0xef,
-	0x0c, 0x43, 0xee, 0x52, 0x5c, 0x0a, 0x42, 0x9b, 0x80, 0xc2, 0x1c, 0xa6, 0x53, 0x9b, 0x3d, 0x9f,
-	0xc9, 0xb1, 0x3b, 0x24, 0x6d, 0x85, 0xa4, 0xdb, 0x35, 0xaa, 0x58, 0x53, 0x99, 0x74, 0xa7, 0xf6,
-	0xe0, 0x45, 0x43, 0xe4, 0x7c, 0x99, 0xe7, 0xdc, 0xa1, 0x21, 0x9c, 0x7f, 0xb1, 0x21, 0x2c, 0x62,
-	0x13, 0x2c, 0x05, 0xb1, 0x09, 0x4a, 0xcf, 0xa3, 0xb0, 0x4c, 0x07, 0x0d, 0x6b, 0x0e, 0x37, 0x80,
-	0x4f, 0x0f, 0x3b, 0x23, 0x9f, 0x3e, 0xcc, 0x04, 0x9c, 0x59, 0x53, 0xb1, 0x03, 0x9e, 0xf3, 0x61,
-	0x67, 0xee, 0x85, 0xc2, 0xce, 0x5c, 0x38, 0x86, 0x6c, 0x61, 0xf0, 0x99, 0xbb, 0x2c, 0xa6, 0x46,
-	0x3c, 0xf4, 0x94, 0x69, 0x96, 0x72, 0x3e, 0xfa, 0xcb, 0xb5, 0x20, 0xfa, 0xcb, 0x05, 0xc8, 0x58,
-	0x4f, 0xe9, 0xd9, 0xf2, 0x80, 0x35, 0x33, 0x41, 0xa6, 0x65, 0xdb, 0xaf, 0x38, 0x03, 0xab, 0xf8,
-	0x06, 0x0f, 0xf3, 0xb2, 0x0e, 0x59, 0xae, 0x01, 0x12, 0x2d, 0xcf, 0x8e, 0x6b, 0xa6, 0x1e, 0x45,
-	0x7c, 0x9d, 0x45, 0x76, 0xb9, 0x08, 0x19, 0x6f, 0xda, 0xef, 0x5b, 0xd6, 0xc0, 0x62, 0x4e, 0x6e,
-	0x1a, 0x07, 0x80, 0xd2, 0x0f, 0xf2, 0x00, 0x81, 0xa2, 0xaa, 0xd3, 0x45, 0xe4, 0x65, 0xa6, 0x0b,
-	0x39, 0xc4, 0xa2, 0x27, 0x0f, 0x31, 0xb1, 0xa6, 0xc4, 0x94, 0x35, 0xa5, 0x00, 0xa9, 0x91, 0xe5,
-	0x79, 0xe6, 0x3e, 0xb3, 0xf6, 0x33, 0x58, 0x24, 0x43, 0x46, 0x43, 0xe2, 0x25, 0x8c, 0x86, 0x8b,
-	0xea, 0xf9, 0x4a, 0x92, 0x6f, 0xbb, 0xcb, 0x93, 0x95, 0x99, 0xe9, 0x28, 0xf5, 0x65, 0xa6, 0xa3,
-	0x02, 0xa4, 0xd8, 0x8a, 0xf5, 0x8c, 0x2e, 0x6a, 0x69, 0x2c, 0x92, 0xe8, 0xb6, 0xbc, 0xd9, 0x96,
-	0x09, 0x85, 0x16, 0x08, 0x84, 0x3c, 0x7b, 0xa5, 0xed, 0x36, 0x24, 0x5d, 0xcb, 0xf4, 0x1c, 0xf6,
-	0x06, 0x7a, 0x21, 0x05, 0xa6, 0xf9, 0x98, 0xe3, 0xa1, 0x8b, 0x10, 0xa7, 0xc3, 0x3d, 0x4b, 0x87,
-	0x3b, 0xd5, 0x3f, 0x3a, 0xc4, 0x29, 0x54, 0x19, 0xd6, 0xb9, 0x93, 0x86, 0x75, 0x99, 0x1d, 0x0b,
-	0xb0, 0xd3, 0x3c, 0xa6, 0x36, 0x7c, 0xa4, 0xae, 0xce, 0x8e, 0x54, 0x56, 0x0b, 0x76, 0x5c, 0xa0,
-	0x00, 0xd0, 0x7d, 0xd0, 0xa6, 0xec, 0x76, 0x35, 0x3d, 0x72, 0x26, 0x22, 0xe6, 0x51, 0x17, 0x66,
-	0x23, 0xce, 0xe1, 0x65, 0x05, 0x91, 0x00, 0xd1, 0x3d, 0xc8, 0xd1, 0x25, 0x50, 0x14, 0xbd, 0x1c,
-	0x2e, 0x3a, 0x3c, 0x5c, 0x70, 0xb6, 0x1f, 0x00, 0x4a, 0x9b, 0xf2, 0x69, 0xd4, 0x19, 0xc8, 0xb3,
-	0xa8, 0x57, 0xbd, 0x7a, 0xb9, 0xdd, 0xd1, 0xb1, 0xf6, 0x0a, 0x31, 0xb5, 0x39, 0xa8, 0xbc, 0xad,
-	0x37, 0x3a, 0x5a, 0x04, 0xad, 0xc0, 0x32, 0x87, 0xe8, 0x9f, 0xe9, 0x95, 0x6e, 0xa7, 0x89, 0xb5,
-	0x68, 0xe9, 0x8f, 0x52, 0x90, 0x64, 0x52, 0x45, 0x25, 0x58, 0xc3, 0x7a, 0xb9, 0xdd, 0x6c, 0xf4,
-	0x78, 0x70, 0x18, 0x89, 0xd7, 0xdb, 0x2a, 0x1b, 0x35, 0xbd, 0xaa, 0xbd, 0x12, 0xc2, 0x69, 0x74,
-	0xca, 0x46, 0x43, 0xc7, 0x3d, 0x6e, 0xd1, 0x73, 0x9c, 0x73, 0x68, 0x1d, 0x2e, 0xcc, 0xe3, 0x18,
-	0x75, 0xa3, 0x43, 0x5f, 0x8a, 0x6b, 0x2b, 0xe8, 0x0a, 0x5c, 0x3e, 0x01, 0xa1, 0x57, 0x35, 0xda,
-	0x0f, 0xb4, 0xb3, 0xe8, 0x1a, 0x94, 0x4e, 0xc2, 0xaa, 0xeb, 0xf5, 0x26, 0xfe, 0x5c, 0x4b, 0xa3,
-	0x35, 0x28, 0xce, 0xe1, 0xb5, 0xb0, 0xae, 0xd7, 0x5b, 0x1d, 0xbd, 0xaa, 0x9d, 0x59, 0x58, 0xe5,
-	0x6e, 0xab, 0x5a, 0xee, 0xe8, 0xa2, 0xca, 0xab, 0xe8, 0x3a, 0x5c, 0xe1, 0x38, 0xb2, 0xc9, 0x58,
-	0xdf, 0x36, 0xda, 0x1d, 0xcc, 0x0a, 0xeb, 0x18, 0x75, 0xbd, 0xd9, 0xed, 0x68, 0xaf, 0xa2, 0xb7,
-	0xe0, 0xda, 0x3c, 0xe6, 0x42, 0xdc, 0x82, 0x52, 0x33, 0x89, 0xdb, 0xd1, 0x71, 0xdd, 0x68, 0x94,
-	0x49, 0xcd, 0x22, 0xe8, 0x32, 0x5c, 0x9c, 0xcd, 0x27, 0xee, 0x0f, 0xe1, 0xa5, 0x63, 0xbd, 0xaa,
-	0x45, 0xd1, 0x45, 0x28, 0x70, 0x8c, 0x2d, 0x5c, 0xae, 0xeb, 0x8f, 0x9a, 0xf8, 0x41, 0x0f, 0xeb,
-	0xf5, 0xe6, 0x43, 0xbd, 0xaa, 0xc5, 0x48, 0x87, 0xf2, 0xdc, 0xed, 0x4a, 0x4f, 0xc7, 0xb8, 0x89,
-	0xb5, 0xb8, 0x52, 0xa8, 0xd1, 0x78, 0x58, 0xae, 0x19, 0xd5, 0x80, 0xd4, 0xa8, 0x6a, 0x09, 0x74,
-	0x1e, 0xce, 0xcd, 0xe4, 0x37, 0xb7, 0xb6, 0x74, 0xdc, 0xd6, 0x92, 0x4a, 0x7d, 0x8c, 0x66, 0xaf,
-	0xfd, 0xc8, 0xe8, 0x54, 0x76, 0x36, 0x9b, 0x65, 0x4c, 0xf4, 0xc0, 0x20, 0x35, 0xbe, 0xa0, 0x30,
-	0x67, 0x7a, 0x46, 0xfa, 0xaa, 0xd2, 0x6c, 0x34, 0xf4, 0x0a, 0xc9, 0x4f, 0x29, 0xcc, 0xb1, 0x5e,
-	0x69, 0x36, 0x2a, 0x46, 0xcd, 0x60, 0x9d, 0x9e, 0x51, 0x9a, 0x22, 0x23, 0xb4, 0xf5, 0x84, 0x93,
-	0x88, 0xd0, 0x25, 0x38, 0xcf, 0x73, 0xa9, 0xb6, 0x86, 0xf9, 0x02, 0x2a, 0xc0, 0xd9, 0x50, 0xb6,
-	0x90, 0x41, 0x96, 0x85, 0x21, 0x08, 0xe5, 0xb4, 0x3b, 0x65, 0x4c, 0xa8, 0x72, 0x73, 0x54, 0xa2,
-	0xb8, 0xbc, 0xa2, 0x81, 0x32, 0xc0, 0x9c, 0x5e, 0xed, 0x55, 0xbb, 0xd8, 0x68, 0x6c, 0x73, 0x7d,
-	0xd6, 0xd6, 0x66, 0xb1, 0x2a, 0x3b, 0x7a, 0xe5, 0x01, 0x0d, 0x42, 0xd7, 0x6d, 0x73, 0x0d, 0xaa,
-	0x6a, 0x17, 0xd1, 0x0d, 0x78, 0x43, 0xc5, 0xda, 0xd1, 0xcb, 0xb5, 0xce, 0xce, 0x62, 0xe4, 0x4b,
-	0x4a, 0x3b, 0x29, 0x32, 0xf5, 0x82, 0x45, 0x47, 0x68, 0xe7, 0x15, 0x5d, 0x55, 0xb2, 0xbb, 0x8d,
-	0x72, 0xb7, 0xb3, 0xd3, 0xc4, 0xc6, 0x37, 0xf4, 0xaa, 0x56, 0x64, 0xe1, 0xf2, 0x02, 0x1c, 0x41,
-	0xbc, 0xa4, 0x48, 0x98, 0x66, 0x84, 0xc8, 0x96, 0x67, 0xc9, 0x84, 0x2c, 0xb4, 0xd2, 0xbb, 0x90,
-	0xda, 0xb2, 0x87, 0xbe, 0x45, 0xdf, 0x90, 0x2c, 0xb9, 0xd6, 0xde, 0xd4, 0xb3, 0x7a, 0x41, 0xe0,
-	0x51, 0x1a, 0x49, 0xf1, 0x2e, 0xce, 0xb3, 0x0c, 0x1e, 0x90, 0xab, 0xf4, 0xb7, 0xa2, 0x90, 0x55,
-	0x42, 0x2e, 0xa1, 0x4f, 0x20, 0x73, 0x68, 0xba, 0x36, 0x99, 0xd5, 0x84, 0xc9, 0x7e, 0x61, 0x3e,
-	0x32, 0xd3, 0xc6, 0x43, 0x8e, 0x23, 0xcc, 0x47, 0x49, 0x53, 0xfc, 0x76, 0x04, 0xd2, 0x22, 0xf7,
-	0x04, 0x33, 0x5e, 0x46, 0x73, 0x8a, 0xaa, 0xd1, 0x9c, 0x3e, 0x94, 0x51, 0x1e, 0xd4, 0x18, 0x18,
-	0x8b, 0x0a, 0xa6, 0x46, 0xd1, 0xfd, 0xc4, 0xc3, 0x72, 0xad, 0xab, 0x73, 0xdb, 0xe8, 0x2a, 0x24,
-	0x3d, 0xab, 0xef, 0xca, 0x00, 0x0b, 0x62, 0x99, 0x68, 0x53, 0x20, 0xe6, 0x99, 0xa5, 0xdb, 0x8b,
-	0xf6, 0x36, 0x32, 0xc0, 0x58, 0xb1, 0x90, 0x37, 0x6d, 0xbd, 0x82, 0xf5, 0x8e, 0x0c, 0x79, 0xf3,
-	0x09, 0x64, 0x64, 0x10, 0x53, 0xb4, 0x0a, 0xb1, 0xc7, 0xd6, 0xb3, 0x50, 0x8b, 0x08, 0x20, 0x08,
-	0x68, 0x10, 0x9d, 0x0f, 0x68, 0xb0, 0x09, 0x20, 0x19, 0x78, 0xe8, 0x3d, 0xc8, 0x4c, 0x44, 0x8a,
-	0x8b, 0xf8, 0xb8, 0x58, 0xa9, 0x01, 0x62, 0x69, 0x07, 0xa0, 0xe2, 0x5a, 0x03, 0x6b, 0xec, 0xdb,
-	0xe6, 0x10, 0x95, 0xc2, 0x4f, 0xa2, 0x83, 0x12, 0x95, 0x87, 0xd1, 0xab, 0x52, 0x1e, 0x51, 0x1e,
-	0x8f, 0x8c, 0x09, 0x60, 0x07, 0xb2, 0x01, 0x27, 0x0f, 0xdd, 0x83, 0x6c, 0x3f, 0x48, 0xf2, 0x0a,
-	0x09, 0xeb, 0x21, 0x40, 0x14, 0x41, 0x6b, 0x15, 0xdc, 0xd2, 0xcf, 0x47, 0x21, 0xc9, 0xa4, 0x8b,
-	0x6e, 0x86, 0x6c, 0x58, 0x14, 0x12, 0xfd, 0xa2, 0x2d, 0xd8, 0x8c, 0xbc, 0x39, 0xc1, 0x0d, 0xd9,
-	0x57, 0xc3, 0x24, 0xf2, 0x06, 0x05, 0x0e, 0x30, 0xd1, 0x9b, 0x6a, 0x08, 0xb0, 0xc0, 0xdd, 0xe7,
-	0x24, 0x34, 0x98, 0x80, 0x88, 0x7c, 0xf1, 0x15, 0xc8, 0x48, 0x16, 0x27, 0xa8, 0xa1, 0xc6, 0x7a,
-	0x93, 0x09, 0x88, 0x7c, 0x16, 0x2f, 0x88, 0x98, 0x21, 0xc2, 0xb2, 0x23, 0x44, 0xdc, 0xb2, 0x2b,
-	0xbd, 0xbb, 0x48, 0x77, 0xf2, 0x90, 0xc1, 0xfa, 0x96, 0x8e, 0xf5, 0x46, 0x45, 0x67, 0xcf, 0x79,
-	0x99, 0x2a, 0x09, 0xf5, 0xd9, 0x83, 0x0c, 0x36, 0x7d, 0x8b, 0xdd, 0x36, 0x3f, 0x0f, 0xb1, 0x2f,
-	0x26, 0x7c, 0x38, 0x32, 0x7b, 0xf9, 0xd3, 0x56, 0x1b, 0x13, 0x58, 0xb8, 0x4f, 0xa3, 0x8b, 0xfb,
-	0xb4, 0x08, 0xe9, 0xbe, 0x39, 0x31, 0xfb, 0x22, 0xee, 0x6b, 0x1c, 0xcb, 0x74, 0xe9, 0x5f, 0x45,
-	0x00, 0x64, 0x41, 0x1e, 0xda, 0x80, 0x24, 0x7f, 0xa9, 0x1b, 0xd6, 0x31, 0x89, 0x22, 0xe2, 0x25,
-	0xf1, 0xd7, 0xbb, 0x0f, 0xe0, 0x9c, 0xb9, 0xbf, 0xef, 0x5a, 0xfb, 0xc4, 0xf9, 0x1a, 0xb0, 0xc7,
-	0xae, 0x3d, 0x52, 0x57, 0x76, 0x8f, 0xff, 0xd5, 0xa3, 0xe7, 0xeb, 0x2b, 0x65, 0x81, 0xc0, 0x1f,
-	0xc3, 0x92, 0xba, 0xaf, 0x98, 0xb3, 0xc0, 0x89, 0x87, 0xbe, 0x0a, 0xc5, 0x79, 0x66, 0x33, 0x35,
-	0x2f, 0xcc, 0x12, 0x56, 0x44, 0x4b, 0x7e, 0x21, 0x06, 0x09, 0x63, 0x44, 0x0c, 0xe6, 0xab, 0x0b,
-	0x03, 0xb7, 0xd0, 0x3c, 0xd5, 0x2d, 0xba, 0x0a, 0x71, 0x73, 0x32, 0xe9, 0x73, 0x55, 0x0a, 0xa3,
-	0x95, 0x27, 0x93, 0x3e, 0xa6, 0xd9, 0xe8, 0x06, 0x24, 0x07, 0x4e, 0xff, 0xb1, 0x35, 0x1b, 0xdd,
-	0x82, 0x21, 0x56, 0x69, 0x16, 0xe6, 0x28, 0xe8, 0x22, 0x24, 0xe9, 0x91, 0x3e, 0xf3, 0xef, 0x45,
-	0x18, 0x37, 0x0e, 0x2b, 0xf6, 0x20, 0x4e, 0x18, 0x9f, 0xa0, 0x5a, 0xab, 0xfc, 0xb6, 0x56, 0x10,
-	0x2b, 0x58, 0xec, 0x55, 0x0a, 0x6b, 0x36, 0x76, 0x82, 0x35, 0x5b, 0xfc, 0x56, 0x04, 0x92, 0xac,
-	0x46, 0x27, 0x94, 0x71, 0x17, 0x20, 0x18, 0x8f, 0x33, 0xad, 0x57, 0x86, 0x6e, 0xb4, 0x10, 0xc1,
-	0x0a, 0x22, 0xa9, 0x42, 0xdf, 0x19, 0xef, 0xd9, 0xfb, 0x33, 0x55, 0x10, 0x33, 0x25, 0xcb, 0x2c,
-	0x95, 0xb8, 0xb6, 0xa7, 0x21, 0x5e, 0x6e, 0xb5, 0x2a, 0x6c, 0x6e, 0xac, 0x36, 0x2b, 0x0f, 0x74,
-	0x2c, 0x95, 0xfb, 0x57, 0x92, 0x90, 0x64, 0xb1, 0x06, 0xd0, 0x0d, 0x58, 0x0a, 0xec, 0x6f, 0xfa,
-	0x40, 0x5f, 0xad, 0x70, 0x5e, 0xe6, 0xd1, 0x47, 0xf4, 0x17, 0x20, 0x73, 0xe0, 0x78, 0x7e, 0x4f,
-	0x89, 0xa2, 0x48, 0x0f, 0xde, 0x68, 0xe6, 0x35, 0x1e, 0x10, 0x39, 0x46, 0x7b, 0x1d, 0x85, 0x42,
-	0x1a, 0xa8, 0xb1, 0x90, 0x4b, 0x90, 0xb0, 0x47, 0xc2, 0xcd, 0xca, 0xde, 0xc9, 0xa9, 0xdd, 0x89,
-	0x59, 0x16, 0xba, 0x29, 0xdd, 0x97, 0x44, 0xc8, 0x6b, 0xe7, 0xdc, 0x66, 0xc2, 0x1d, 0xfc, 0xdb,
-	0xb8, 0x34, 0xc5, 0xdf, 0x0d, 0xcd, 0x68, 0xe7, 0x17, 0x91, 0xcd, 0x4f, 0x6c, 0x5b, 0x90, 0x67,
-	0xea, 0xd3, 0x0b, 0x45, 0x65, 0x78, 0x6d, 0x21, 0x35, 0xeb, 0x5e, 0x1e, 0xa9, 0x21, 0x37, 0x50,
-	0x52, 0xa8, 0x02, 0x39, 0xcf, 0x1c, 0x0f, 0x76, 0x9d, 0xa7, 0x3d, 0x19, 0x67, 0x3b, 0x38, 0x35,
-	0x0a, 0xb3, 0x69, 0x33, 0x44, 0x1a, 0xe6, 0x20, 0xeb, 0x05, 0x89, 0x17, 0x5c, 0x10, 0x8b, 0xdf,
-	0x84, 0x9c, 0x5a, 0x13, 0xb2, 0x6e, 0x0c, 0x5c, 0xfb, 0x90, 0x2e, 0x4e, 0x74, 0xdd, 0x60, 0xa9,
-	0x13, 0xc2, 0x3c, 0x7f, 0x00, 0x4b, 0x0c, 0xa7, 0xe7, 0x4c, 0xd8, 0x2d, 0xab, 0x58, 0x48, 0x15,
-	0x83, 0xc5, 0x0f, 0xe7, 0x19, 0x62, 0x93, 0xe1, 0x15, 0xff, 0x5a, 0x04, 0xb2, 0x4a, 0xfd, 0xd1,
-	0x27, 0x21, 0xa1, 0x5f, 0x3d, 0xad, 0xbd, 0xf3, 0x1d, 0x50, 0x90, 0xb1, 0x21, 0x94, 0x4a, 0x12,
-	0x48, 0xe9, 0xd6, 0x31, 0x51, 0x18, 0xda, 0x7a, 0x6d, 0x8b, 0xa9, 0x76, 0xab, 0x8c, 0xf5, 0x46,
-	0xb0, 0xec, 0x7f, 0x7d, 0x11, 0xc1, 0x19, 0xc8, 0xb3, 0x11, 0xd0, 0x7b, 0xd8, 0xac, 0x75, 0xeb,
-	0x3a, 0x3b, 0x0b, 0x69, 0x97, 0x1b, 0xd5, 0xcd, 0xe6, 0x67, 0x3d, 0x1a, 0xd1, 0x21, 0xaa, 0x98,
-	0x10, 0x22, 0x84, 0xd6, 0x6a, 0x10, 0x76, 0x1b, 0x3f, 0xd2, 0x22, 0xf4, 0xb7, 0xa9, 0x45, 0x4b,
-	0x7f, 0x25, 0x0e, 0xd9, 0x86, 0xe5, 0xcb, 0x20, 0xdb, 0xab, 0x90, 0xa4, 0xe7, 0x54, 0xec, 0xd2,
-	0x66, 0x06, 0xf3, 0xd4, 0x0b, 0x5e, 0xcd, 0x44, 0x1d, 0xc8, 0xd9, 0x93, 0x1e, 0x8f, 0xca, 0x26,
-	0x0f, 0xad, 0x2f, 0x72, 0x64, 0xa5, 0xa0, 0x0d, 0xa3, 0x25, 0x22, 0xbb, 0xcb, 0xed, 0x4e, 0x09,
-	0xb2, 0x3c, 0x9c, 0xb5, 0x27, 0x32, 0x21, 0x43, 0x2c, 0x26, 0x95, 0x10, 0x8b, 0x06, 0xe4, 0x27,
-	0x8e, 0xeb, 0xd3, 0xd7, 0x3b, 0xf6, 0x78, 0x5f, 0x6c, 0x2f, 0xae, 0x2d, 0x28, 0xaa, 0xe5, 0xb8,
-	0x7e, 0x9d, 0xa1, 0x89, 0x5b, 0xbf, 0x93, 0x00, 0xe4, 0x15, 0x9f, 0x42, 0x46, 0x16, 0x8d, 0x3e,
-	0x82, 0x34, 0xfd, 0x3b, 0x83, 0xbe, 0x33, 0x9c, 0x39, 0xd7, 0x0d, 0xb1, 0xe4, 0x28, 0xf7, 0xe3,
-	0x46, 0xeb, 0xf0, 0x3d, 0x2c, 0x49, 0xe8, 0xc5, 0x15, 0x29, 0x00, 0x3e, 0xf9, 0xb2, 0x8b, 0x2b,
-	0xa2, 0x04, 0x9c, 0x91, 0x4d, 0x2b, 0x3e, 0x83, 0xac, 0x52, 0x39, 0xf4, 0x9a, 0x98, 0x93, 0x66,
-	0x23, 0xb0, 0xb2, 0x99, 0xc9, 0x71, 0xfd, 0x99, 0x39, 0x8e, 0xe0, 0x45, 0x15, 0x3c, 0x65, 0x8e,
-	0x23, 0xc8, 0x45, 0xa5, 0x2d, 0x2c, 0xec, 0x8c, 0x4c, 0x97, 0xd6, 0x20, 0x2d, 0x1a, 0x41, 0x94,
-	0x90, 0x34, 0x83, 0x85, 0x70, 0x35, 0x5a, 0x87, 0xef, 0x6b, 0xd1, 0xd2, 0x51, 0x02, 0x96, 0x82,
-	0x88, 0x6f, 0x54, 0x37, 0xaa, 0x33, 0xb1, 0xc4, 0xc9, 0xb2, 0x1e, 0x18, 0xc9, 0x61, 0x64, 0x25,
-	0x19, 0x0e, 0x23, 0x5e, 0xfa, 0xe9, 0x44, 0x28, 0xea, 0xdc, 0xcc, 0x09, 0x5f, 0xa2, 0xb2, 0x43,
-	0x3e, 0xbf, 0x97, 0x42, 0x67, 0x20, 0x57, 0x2d, 0x57, 0x7a, 0xcd, 0x87, 0x3a, 0xc6, 0x46, 0x55,
-	0xd7, 0x7e, 0x2b, 0x85, 0xce, 0xc2, 0x32, 0x01, 0x61, 0xbd, 0x5c, 0xed, 0xb5, 0xf5, 0x32, 0xae,
-	0xec, 0x68, 0xff, 0x29, 0x85, 0xb2, 0x90, 0xdc, 0x6a, 0x3e, 0x6a, 0xe8, 0x58, 0xfb, 0xcf, 0x2c,
-	0xd1, 0xd6, 0x3b, 0x46, 0x55, 0xfb, 0xed, 0x14, 0xca, 0x40, 0x9c, 0x38, 0x64, 0xda, 0x7f, 0xa1,
-	0xf0, 0xb6, 0xde, 0xd9, 0x36, 0xaa, 0xda, 0x7f, 0x15, 0x89, 0xae, 0x51, 0xd5, 0x7e, 0x27, 0x85,
-	0x72, 0x90, 0x6a, 0xeb, 0x9d, 0x56, 0xa5, 0xdc, 0xd2, 0xbe, 0x4f, 0x8b, 0xa8, 0x19, 0x8d, 0xee,
-	0x67, 0x3d, 0xa3, 0x5e, 0xef, 0x76, 0xca, 0x9b, 0x35, 0x5d, 0xfb, 0x6f, 0x29, 0x74, 0x0e, 0xb4,
-	0x86, 0xde, 0xe9, 0x6d, 0x1a, 0x0d, 0x52, 0x30, 0x7e, 0x68, 0x54, 0x74, 0xed, 0x77, 0x53, 0x08,
-	0x41, 0x9e, 0x82, 0x71, 0xb3, 0x5c, 0xad, 0x94, 0xdb, 0x1d, 0xed, 0xbf, 0xa7, 0xd0, 0x12, 0x64,
-	0x08, 0xac, 0x5c, 0xad, 0x1b, 0x0d, 0xed, 0xf7, 0x28, 0x7b, 0x92, 0xc6, 0xe5, 0x47, 0xda, 0xff,
-	0x48, 0xa1, 0x3c, 0xa4, 0x8d, 0x56, 0xa5, 0x57, 0x6b, 0x56, 0x1e, 0x68, 0xff, 0x93, 0x22, 0x93,
-	0x24, 0xab, 0xfd, 0x0f, 0x52, 0x68, 0x19, 0xa0, 0xfd, 0x79, 0xbb, 0x57, 0x6f, 0x56, 0xbb, 0x35,
-	0x5d, 0xfb, 0x7d, 0x8a, 0x40, 0x00, 0xb8, 0xfc, 0xc8, 0x68, 0x6a, 0xff, 0x4b, 0x22, 0x54, 0x76,
-	0x70, 0xb3, 0xd9, 0xd1, 0xfe, 0xb7, 0x04, 0xb4, 0x3a, 0xb8, 0x5c, 0xd1, 0xb5, 0xff, 0x23, 0x29,
-	0x5a, 0xe5, 0x4a, 0xa5, 0xa3, 0xfd, 0x81, 0x4c, 0xb3, 0xfa, 0xfc, 0x5f, 0x5a, 0x03, 0x92, 0xde,
-	0x24, 0xf4, 0x7f, 0x28, 0x93, 0x0d, 0xd2, 0xa2, 0x3f, 0xa2, 0x42, 0xa7, 0xe5, 0x71, 0xc7, 0x5a,
-	0xfb, 0x56, 0x5a, 0x60, 0x74, 0x8c, 0xba, 0xae, 0xfd, 0xc9, 0x34, 0x5a, 0x81, 0x25, 0x9a, 0xec,
-	0x7c, 0xde, 0xab, 0x34, 0x1b, 0x5b, 0xc6, 0xb6, 0xf6, 0xa7, 0xd2, 0xa4, 0xdf, 0xea, 0x0f, 0x1a,
-	0xcd, 0xaa, 0xf6, 0xa7, 0xe9, 0x77, 0x4d, 0x2f, 0xb7, 0x75, 0xed, 0x27, 0xd2, 0x48, 0x83, 0x6c,
-	0xb9, 0x5b, 0x35, 0x3a, 0xbd, 0x47, 0xd8, 0xe8, 0xe8, 0xda, 0x4f, 0xa6, 0x89, 0xc8, 0x18, 0xa4,
-	0xd2, 0x6c, 0x74, 0x70, 0xb3, 0xa6, 0xfd, 0x99, 0x34, 0xef, 0x81, 0x2d, 0xd2, 0x03, 0x7f, 0x36,
-	0x4d, 0xaa, 0x50, 0x57, 0xfb, 0xfd, 0xa7, 0xd2, 0xa4, 0x0d, 0x04, 0xc4, 0xda, 0xf0, 0xd3, 0x69,
-	0xda, 0x7f, 0x9f, 0xb7, 0x6b, 0xcd, 0x6d, 0xed, 0xcf, 0xa5, 0x89, 0x04, 0x1e, 0x95, 0x1f, 0xe8,
-	0xbd, 0x72, 0xad, 0x8c, 0xeb, 0xda, 0x9f, 0xa7, 0x45, 0x6c, 0x12, 0x01, 0xf7, 0xda, 0xdd, 0x76,
-	0x4b, 0x6f, 0x54, 0xb5, 0x9f, 0xa1, 0x48, 0xac, 0x58, 0xa2, 0x3b, 0xda, 0xcf, 0x8a, 0xe8, 0xeb,
-	0xbf, 0x14, 0x85, 0x4c, 0xcd, 0x1e, 0x4f, 0x9f, 0x52, 0xfd, 0xde, 0x84, 0x65, 0xa9, 0xa9, 0xcf,
-	0xc4, 0xfb, 0x81, 0x50, 0x8c, 0xf4, 0x90, 0x8a, 0x53, 0xab, 0x66, 0xa9, 0x1f, 0x1e, 0x23, 0x5f,
-	0x87, 0x73, 0xbb, 0xce, 0x74, 0x3c, 0xb0, 0xc7, 0xfb, 0xbd, 0xd0, 0x60, 0x89, 0x9e, 0xc0, 0x09,
-	0x9f, 0x15, 0x34, 0x15, 0x35, 0xe0, 0x7e, 0x0d, 0x56, 0xad, 0xbd, 0x3d, 0x8b, 0x3f, 0xb9, 0x52,
-	0x99, 0xc5, 0x4e, 0x62, 0x76, 0x4e, 0x12, 0x85, 0xb8, 0xe9, 0xb0, 0x42, 0x03, 0x7d, 0xf5, 0x26,
-	0xf6, 0xa0, 0x47, 0xa6, 0x50, 0x6f, 0x62, 0xf6, 0x79, 0x10, 0x60, 0x76, 0xfd, 0x91, 0x06, 0xfa,
-	0x69, 0x19, 0xd5, 0x86, 0xc8, 0xc4, 0x67, 0x28, 0x45, 0xcb, 0x1e, 0x48, 0x50, 0xe9, 0x3b, 0x31,
-	0x00, 0x4c, 0xcd, 0x77, 0x1e, 0x84, 0x39, 0xe5, 0x86, 0xac, 0x7c, 0x19, 0x19, 0x4d, 0xe2, 0xf0,
-	0x4f, 0x71, 0xc4, 0xcf, 0xd1, 0x8b, 0x3f, 0x15, 0x83, 0x24, 0xcb, 0x41, 0x5f, 0x09, 0x2d, 0xba,
-	0x97, 0x8e, 0xe3, 0x30, 0xbf, 0xd8, 0x22, 0x88, 0x1f, 0x98, 0xee, 0x80, 0xc7, 0x14, 0xa2, 0xdf,
-	0x04, 0xe6, 0x39, 0x7b, 0x3e, 0xb7, 0xf1, 0xe9, 0x77, 0xe9, 0x6f, 0x46, 0x8f, 0x09, 0x34, 0x8b,
-	0x6b, 0xf5, 0x4e, 0xaf, 0xdc, 0xd6, 0x22, 0xd4, 0x89, 0x22, 0x89, 0x4a, 0x13, 0xeb, 0x5a, 0x14,
-	0xe5, 0x20, 0xcd, 0x92, 0xad, 0xae, 0x16, 0x93, 0x99, 0xd5, 0x72, 0xa7, 0xac, 0xc5, 0xd1, 0x12,
-	0x11, 0x41, 0xbd, 0xd3, 0xdb, 0x6a, 0x1b, 0xdf, 0xe0, 0x7f, 0x04, 0x40, 0xd3, 0x44, 0xeb, 0xda,
-	0x5a, 0x92, 0x06, 0xfb, 0x27, 0xe9, 0xba, 0x5e, 0xa7, 0x23, 0x9d, 0x8c, 0xab, 0x3c, 0x83, 0xb4,
-	0xb7, 0x3f, 0xed, 0xea, 0x5d, 0x5d, 0x4b, 0x4b, 0x9e, 0x74, 0xe8, 0x65, 0xd0, 0x32, 0x64, 0x59,
-	0xb2, 0xb9, 0x65, 0xd4, 0x74, 0x0d, 0x24, 0xd3, 0x46, 0x0b, 0x37, 0x2b, 0x5a, 0x56, 0xd6, 0x08,
-	0xb7, 0xdb, 0x5a, 0x4e, 0xa2, 0xe3, 0x4e, 0x0b, 0x1b, 0x4d, 0x2d, 0xaf, 0x00, 0xe8, 0x48, 0x5d,
-	0xa2, 0x7b, 0x7a, 0x04, 0xd0, 0x36, 0xb6, 0xc9, 0x28, 0x30, 0x1a, 0xdb, 0xda, 0xb2, 0x64, 0xda,
-	0xee, 0x94, 0x2b, 0x0f, 0x34, 0x8d, 0x0f, 0x83, 0x9f, 0x8d, 0x40, 0xaa, 0xd3, 0xf9, 0x9c, 0x76,
-	0xe8, 0x7d, 0xc8, 0x3e, 0xb1, 0xc7, 0x03, 0xe7, 0x49, 0xcf, 0xb3, 0xbf, 0x69, 0xcd, 0xc4, 0xd6,
-	0xe4, 0x48, 0x1b, 0x8f, 0x28, 0x46, 0xdb, 0xfe, 0xa6, 0x85, 0xe1, 0x89, 0xfc, 0x2e, 0x6e, 0x01,
-	0x04, 0x39, 0xc4, 0x12, 0x72, 0x9d, 0x27, 0x5e, 0x38, 0x94, 0x38, 0x81, 0xa0, 0x35, 0x48, 0xf5,
-	0x89, 0x45, 0x35, 0xf6, 0x42, 0xab, 0x97, 0x00, 0x96, 0x9e, 0xa7, 0x21, 0x1f, 0x3a, 0xd4, 0x42,
-	0x6f, 0x87, 0xdc, 0xb0, 0xf3, 0x8b, 0x0e, 0xbe, 0x54, 0x77, 0xec, 0xed, 0xe0, 0xbe, 0x09, 0xbb,
-	0x4b, 0x18, 0x8e, 0x4a, 0x36, 0x73, 0xdb, 0x04, 0x7d, 0x65, 0xc6, 0x2d, 0x5b, 0x5f, 0xc8, 0x9f,
-	0xd9, 0xa8, 0xe2, 0x3a, 0x18, 0x75, 0x8c, 0x8a, 0xa1, 0x2b, 0x7c, 0xe1, 0xb0, 0xb6, 0xef, 0x01,
-	0xfb, 0x1b, 0x25, 0x6e, 0xf6, 0xaf, 0x2d, 0xe4, 0x59, 0x27, 0x30, 0x76, 0x7c, 0x4d, 0xb3, 0xd1,
-	0x47, 0xf4, 0x6d, 0x2d, 0x3b, 0x23, 0xa6, 0x77, 0x95, 0x52, 0xa1, 0x88, 0x97, 0x8a, 0x0d, 0x22,
-	0x4c, 0x99, 0x71, 0x00, 0xf2, 0xd0, 0x2d, 0x80, 0x21, 0x99, 0xcf, 0xd8, 0xec, 0x95, 0x0e, 0x1d,
-	0x95, 0xcb, 0x89, 0x0e, 0x67, 0x86, 0x72, 0xce, 0xbb, 0x03, 0x59, 0x36, 0x20, 0x19, 0x45, 0x26,
-	0x64, 0x36, 0x07, 0x23, 0x10, 0x03, 0xc3, 0xa2, 0x34, 0xef, 0x43, 0xda, 0x17, 0x13, 0x24, 0x84,
-	0x0e, 0x91, 0xb8, 0x7e, 0xb0, 0x43, 0x24, 0x9e, 0xc0, 0x29, 0x9f, 0x4d, 0x4c, 0xc5, 0x5f, 0x8e,
-	0x03, 0x04, 0x42, 0x44, 0x45, 0xe1, 0x3c, 0x85, 0x22, 0x70, 0x32, 0xa7, 0x69, 0x1b, 0x52, 0xbc,
-	0x5d, 0xfc, 0x4f, 0x69, 0xde, 0x38, 0xa5, 0x4b, 0x84, 0x64, 0xee, 0xc7, 0x77, 0x9a, 0xed, 0x0e,
-	0x16, 0xd4, 0xe8, 0xe1, 0xac, 0x99, 0xc8, 0xde, 0x22, 0xdd, 0x38, 0x8d, 0xdd, 0x29, 0x36, 0x23,
-	0xba, 0x0a, 0x30, 0x71, 0xed, 0x43, 0x7b, 0x68, 0xed, 0x4b, 0x07, 0x5d, 0xfc, 0xfd, 0x4b, 0x90,
-	0x81, 0xde, 0x07, 0x90, 0x3b, 0x68, 0xb3, 0x71, 0x80, 0x67, 0xf7, 0xda, 0x14, 0x4c, 0x74, 0x1d,
-	0xb4, 0x3d, 0xc7, 0xed, 0x5b, 0xbd, 0xc9, 0x74, 0x38, 0xec, 0x31, 0x31, 0xd1, 0x60, 0xf2, 0x78,
-	0x89, 0xc2, 0x5b, 0xd3, 0xe1, 0x90, 0x6d, 0x50, 0xbc, 0x01, 0x79, 0xa6, 0xc6, 0x3d, 0xee, 0x33,
-	0xa5, 0x64, 0xc4, 0xf1, 0x1c, 0xcb, 0xa8, 0x52, 0xf8, 0xff, 0x4f, 0x5b, 0xf3, 0x1e, 0xa4, 0x78,
-	0xf7, 0xd0, 0xff, 0x08, 0x68, 0xb6, 0x79, 0x64, 0xef, 0x4d, 0x6c, 0x54, 0xb7, 0x75, 0x16, 0x47,
-	0xb5, 0xd1, 0x6c, 0xe8, 0x5a, 0x8c, 0x7c, 0x75, 0xdb, 0x3a, 0xd6, 0xe2, 0x3c, 0x66, 0xe1, 0x2d,
-	0xc8, 0xc8, 0x31, 0x12, 0xb8, 0xdb, 0x91, 0x63, 0xdd, 0xed, 0xd2, 0xeb, 0x41, 0xec, 0x56, 0xbe,
-	0x53, 0xc0, 0x02, 0xdc, 0xe9, 0xed, 0x66, 0x5b, 0x7a, 0x56, 0xdf, 0x8a, 0xc2, 0xf2, 0xcc, 0x59,
-	0xdc, 0xfc, 0xc8, 0x8b, 0xbc, 0xd4, 0xc8, 0xbb, 0x03, 0xd9, 0x3e, 0xf5, 0x95, 0xd8, 0xb8, 0x98,
-	0xd9, 0x0a, 0x91, 0x6f, 0x2a, 0x31, 0xf4, 0xe5, 0x37, 0xba, 0xa3, 0x5c, 0xd5, 0x9d, 0xf0, 0xff,
-	0x29, 0xca, 0xb3, 0xc0, 0x0f, 0xe2, 0x94, 0xb4, 0x65, 0x54, 0x83, 0x3b, 0xb9, 0x2d, 0x9b, 0x86,
-	0xad, 0x9f, 0x79, 0x32, 0x78, 0xcc, 0xff, 0x8e, 0x31, 0x3e, 0xc7, 0x3d, 0x17, 0x2c, 0xfd, 0x62,
-	0x16, 0x20, 0xa8, 0x16, 0xfa, 0x88, 0x0e, 0xb8, 0x5e, 0x7f, 0x28, 0x82, 0xaa, 0x14, 0xe6, 0x9f,
-	0x83, 0x36, 0x2c, 0xbf, 0x32, 0xf4, 0x36, 0xe1, 0xe8, 0xf9, 0x7a, 0x92, 0x7c, 0xd7, 0xda, 0x38,
-	0x39, 0xa6, 0xb0, 0xe2, 0xdf, 0x07, 0x48, 0xd0, 0xd7, 0xa2, 0xc5, 0x96, 0xd8, 0xbe, 0x7c, 0x07,
-	0xa2, 0xce, 0x84, 0x2f, 0xe9, 0xaf, 0x1d, 0xf7, 0xb6, 0x54, 0x5e, 0xe2, 0xc4, 0x51, 0x67, 0x12,
-	0xde, 0x93, 0x8f, 0x8b, 0x9d, 0xd4, 0xdf, 0x8b, 0x43, 0xac, 0xb2, 0xf5, 0x69, 0xf1, 0xb7, 0xe3,
-	0x00, 0xca, 0x93, 0xbf, 0x9b, 0x90, 0x1c, 0x58, 0x87, 0xb6, 0x0c, 0x78, 0x22, 0x6f, 0x50, 0x50,
-	0xe0, 0x46, 0x63, 0x3a, 0xda, 0xa5, 0x9b, 0x69, 0x34, 0x89, 0x0a, 0x90, 0xf2, 0xac, 0xbe, 0x2f,
-	0xe2, 0x99, 0xc5, 0xb1, 0x48, 0x12, 0x7b, 0x81, 0x1e, 0xb3, 0x72, 0x7b, 0x81, 0x7c, 0x23, 0x0c,
-	0x59, 0xdb, 0xe9, 0x79, 0x96, 0x4b, 0x68, 0x07, 0xfc, 0x42, 0xd8, 0xa5, 0xe3, 0x1a, 0x41, 0xdb,
-	0x1b, 0xfc, 0xcd, 0x81, 0xd1, 0x6c, 0x73, 0x42, 0x0c, 0xb6, 0x23, 0xbe, 0x51, 0x0f, 0xb4, 0x80,
-	0xa7, 0x8c, 0xf4, 0xf1, 0x02, 0x8c, 0x57, 0x39, 0xe3, 0x25, 0xc9, 0x98, 0xc5, 0x03, 0x59, 0x92,
-	0xcc, 0xc5, 0xf3, 0xe3, 0x65, 0xa5, 0x00, 0xda, 0xa6, 0xe4, 0x8b, 0xf0, 0x3f, 0xc7, 0xf9, 0xe7,
-	0x25, 0xff, 0x8e, 0x3d, 0xb2, 0x70, 0x5e, 0xb2, 0xa7, 0xa7, 0xcb, 0x6d, 0xc8, 0xd9, 0x0e, 0x7b,
-	0xa0, 0x4f, 0x59, 0xa7, 0x5e, 0x52, 0x26, 0x8f, 0x4c, 0x9b, 0xc6, 0xc6, 0x22, 0x32, 0x11, 0xdf,
-	0xa8, 0x06, 0x19, 0xdb, 0xe9, 0x8d, 0x2c, 0x77, 0x9f, 0x86, 0x16, 0x79, 0x01, 0x8e, 0x1a, 0xe7,
-	0x98, 0x36, 0x9a, 0x75, 0x4a, 0x86, 0xd3, 0xb6, 0xc3, 0xbe, 0x38, 0x37, 0x1a, 0x73, 0x71, 0x50,
-	0xc8, 0xbc, 0x24, 0xb7, 0x4f, 0x29, 0x19, 0xe1, 0xc6, 0xbe, 0x8a, 0x7f, 0x18, 0x01, 0xe0, 0xf1,
-	0x47, 0xec, 0xf1, 0x7e, 0xf1, 0x77, 0x22, 0x3f, 0x84, 0xf6, 0xcd, 0xe8, 0x53, 0xf4, 0x47, 0xa5,
-	0x4f, 0xb1, 0x3f, 0x46, 0x7d, 0x2a, 0xfe, 0x64, 0x34, 0xd4, 0x62, 0x1d, 0x62, 0xfd, 0xbd, 0x2f,
-	0xf8, 0xac, 0x78, 0xed, 0xb8, 0x22, 0x2a, 0x5b, 0x9f, 0x6e, 0xa8, 0x51, 0x98, 0x78, 0x59, 0x64,
-	0x00, 0x63, 0x42, 0x8f, 0x4c, 0xc8, 0xf7, 0xf7, 0xbe, 0xe8, 0xb9, 0x56, 0x7f, 0xea, 0x7a, 0xf6,
-	0xa1, 0xc5, 0x85, 0xf1, 0xa2, 0x0c, 0xcf, 0x72, 0x86, 0x39, 0xc2, 0x50, 0xf0, 0xc0, 0xb9, 0xfe,
-	0xde, 0x17, 0x32, 0x85, 0xea, 0x00, 0xbe, 0xec, 0x38, 0x2e, 0x93, 0xb7, 0x8f, 0xe3, 0x1f, 0x74,
-	0xb1, 0xfa, 0xd0, 0x5d, 0x61, 0x50, 0x6a, 0xab, 0x57, 0xfe, 0x67, 0x0f, 0xed, 0x3a, 0xcd, 0x4e,
-	0xb9, 0xc6, 0x36, 0x4e, 0xa8, 0x6b, 0x19, 0x25, 0x40, 0xe6, 0xed, 0xd2, 0xc5, 0xac, 0xfd, 0x79,
-	0xa3, 0xa2, 0xc5, 0x09, 0xb0, 0x4c, 0x3f, 0x13, 0x72, 0x5d, 0x4b, 0xb2, 0xe9, 0x14, 0x5d, 0x85,
-	0x54, 0x7f, 0x68, 0x7a, 0x1e, 0x7f, 0x30, 0x93, 0x67, 0xc6, 0x53, 0x85, 0x80, 0x8c, 0x2a, 0x16,
-	0x79, 0xa5, 0xf7, 0x20, 0xc9, 0xf6, 0xda, 0xd0, 0x5b, 0x72, 0x2b, 0x8e, 0xf5, 0x45, 0x4e, 0xdd,
-	0x8a, 0x93, 0x67, 0x2a, 0xec, 0xa9, 0xf4, 0x5d, 0x48, 0x50, 0xf0, 0xb1, 0xa7, 0x86, 0x0b, 0x8f,
-	0x41, 0x4b, 0xbf, 0x12, 0x81, 0x38, 0x5d, 0xd5, 0x2f, 0x42, 0x72, 0x4c, 0x55, 0x39, 0x64, 0x22,
-	0x70, 0x98, 0xdc, 0x97, 0x8b, 0x86, 0xfe, 0xfa, 0xe4, 0x58, 0x3b, 0x00, 0x7d, 0x02, 0x70, 0x68,
-	0x7b, 0x36, 0xbf, 0x76, 0xcc, 0x82, 0x1e, 0xaf, 0x2f, 0xba, 0xf8, 0xb6, 0xf1, 0x50, 0xa2, 0x61,
-	0x85, 0x44, 0xd9, 0x85, 0x4c, 0x9c, 0xf4, 0x40, 0xfc, 0x36, 0x24, 0x58, 0x38, 0xb4, 0x37, 0x20,
-	0x31, 0xa1, 0x61, 0xd2, 0x98, 0xa4, 0xb2, 0xc2, 0xf2, 0x72, 0x5c, 0xe1, 0x8e, 0xb2, 0xfc, 0xd2,
-	0xaf, 0x46, 0x21, 0x1f, 0xaa, 0x01, 0xd2, 0x43, 0x75, 0x65, 0x7e, 0xc7, 0x69, 0x75, 0x15, 0x86,
-	0x9c, 0x52, 0xe3, 0x45, 0x22, 0xba, 0x1c, 0xfe, 0xfb, 0x21, 0x26, 0xa5, 0xd0, 0x5f, 0x0d, 0x15,
-	0x21, 0x2d, 0x5e, 0xa8, 0x08, 0xbf, 0x42, 0xa4, 0xd5, 0xbf, 0xcb, 0x48, 0x84, 0xff, 0x2e, 0xa3,
-	0x24, 0x5a, 0x9b, 0x0c, 0x99, 0x47, 0x54, 0x14, 0xbc, 0xa1, 0x8a, 0x04, 0x53, 0x27, 0x49, 0xf0,
-	0x7d, 0x80, 0xa0, 0x59, 0xc4, 0x55, 0x95, 0x57, 0x3f, 0xf8, 0x9f, 0x3e, 0xd5, 0xba, 0xf4, 0x76,
-	0x10, 0xfd, 0xff, 0x46, 0xfd, 0xb3, 0x8e, 0x8e, 0x1b, 0xe5, 0x9a, 0x16, 0x2d, 0x7d, 0x0c, 0xf0,
-	0xc8, 0xb2, 0xf7, 0x0f, 0x7c, 0x1e, 0x37, 0x3b, 0xf9, 0x84, 0xa6, 0x42, 0x4f, 0xf2, 0x39, 0x4c,
-	0x06, 0xc4, 0x8e, 0x06, 0x01, 0xb1, 0x4b, 0xff, 0x31, 0x02, 0xd9, 0x87, 0xac, 0x39, 0x94, 0xc3,
-	0x5a, 0xd0, 0x58, 0x55, 0x75, 0x65, 0x93, 0xe9, 0xc3, 0x73, 0x7b, 0x38, 0xe8, 0x0d, 0xd8, 0x55,
-	0x39, 0x1a, 0xf3, 0x99, 0x42, 0xaa, 0xa6, 0x6f, 0x05, 0xd9, 0x72, 0x85, 0x8f, 0xf0, 0x6c, 0xba,
-	0xfc, 0xc8, 0x6c, 0x7a, 0x4b, 0x32, 0xae, 0x50, 0x77, 0x3d, 0xcb, 0x45, 0xaf, 0x43, 0x6a, 0xdf,
-	0xf6, 0x7b, 0xde, 0x81, 0xc9, 0x24, 0xcd, 0x2c, 0x9f, 0x6d, 0xdb, 0x6f, 0xef, 0x94, 0x71, 0x72,
-	0xdf, 0xf6, 0xdb, 0x07, 0x26, 0xe1, 0x41, 0x90, 0xd8, 0x23, 0x40, 0xbe, 0x43, 0x9d, 0xd9, 0xb7,
-	0xfd, 0x4d, 0x0a, 0x40, 0xaf, 0x32, 0x1e, 0xbe, 0xb9, 0xcf, 0xff, 0xe3, 0x91, 0xd0, 0x75, 0xcc,
-	0xfd, 0xd2, 0xfb, 0x10, 0xdf, 0x1a, 0x9a, 0xfb, 0x2f, 0x7b, 0x43, 0xa1, 0xf4, 0x8b, 0x11, 0x88,
-	0x63, 0xe7, 0xc4, 0xab, 0x0d, 0x81, 0xd8, 0xa3, 0x0b, 0xc4, 0xfe, 0x01, 0x80, 0xbc, 0x4a, 0x2c,
-	0x56, 0x8c, 0x45, 0xb7, 0x90, 0xb9, 0x2e, 0x07, 0xb8, 0x5f, 0xea, 0x92, 0x7c, 0xe9, 0x03, 0x48,
-	0xd6, 0x2d, 0xdf, 0xb5, 0xfb, 0x2f, 0xda, 0xd2, 0x88, 0x68, 0xe9, 0x3f, 0x8f, 0x40, 0x7a, 0xcb,
-	0x1e, 0xca, 0xbf, 0xb5, 0x99, 0x3b, 0xd1, 0x63, 0x21, 0xb5, 0xcf, 0x42, 0x62, 0x3c, 0xb4, 0xc7,
-	0xcc, 0x51, 0x4c, 0x60, 0x96, 0xa0, 0xbb, 0x40, 0xf6, 0x37, 0xa5, 0x55, 0x47, 0xbe, 0xd1, 0x55,
-	0x48, 0x8c, 0xa8, 0x22, 0xc4, 0x17, 0xdf, 0xa8, 0x63, 0xb9, 0x84, 0x94, 0x1e, 0xfe, 0xd1, 0xbf,
-	0x9f, 0xe3, 0x07, 0x7d, 0xe7, 0x21, 0x36, 0xe5, 0x7f, 0xcc, 0xc2, 0xff, 0xda, 0xa6, 0x6b, 0x54,
-	0x31, 0x81, 0x91, 0xac, 0x7d, 0x7e, 0xe9, 0x91, 0x67, 0x6d, 0x93, 0xac, 0x7d, 0x7b, 0x50, 0xfa,
-	0xeb, 0x11, 0x48, 0x32, 0x83, 0x40, 0xfe, 0x5f, 0x5b, 0x24, 0xf4, 0x7f, 0xb5, 0x62, 0x72, 0x8d,
-	0x9e, 0x64, 0x43, 0x30, 0x9c, 0x62, 0x03, 0x92, 0x0c, 0x12, 0x44, 0x28, 0x50, 0xa6, 0x66, 0x11,
-	0xa1, 0x40, 0x41, 0xa1, 0x71, 0x0e, 0x64, 0x01, 0x51, 0x19, 0xe7, 0x80, 0xa1, 0x10, 0xf1, 0xe6,
-	0x58, 0x49, 0xe5, 0x7e, 0xdf, 0xf2, 0x3c, 0x7a, 0x38, 0x2d, 0x4c, 0x1a, 0xf5, 0xa2, 0x2a, 0x43,
-	0x12, 0x5a, 0xc4, 0x2d, 0x9a, 0x0f, 0x20, 0x69, 0x52, 0x32, 0x7e, 0x09, 0xbe, 0x18, 0x42, 0x66,
-	0x1c, 0x37, 0xd8, 0x8f, 0xa0, 0x64, 0xf8, 0xc5, 0x1d, 0x48, 0xf2, 0x02, 0xc9, 0x04, 0x60, 0x99,
-	0xe2, 0x0a, 0x2d, 0xfd, 0x26, 0xbd, 0xf9, 0xc4, 0xb5, 0x7d, 0xf1, 0xbf, 0x66, 0x2c, 0x41, 0xa0,
-	0xa3, 0xc7, 0x63, 0x87, 0x79, 0x48, 0x69, 0xcc, 0x12, 0xa5, 0x2e, 0x2c, 0xb3, 0xe2, 0x1e, 0x1d,
-	0xd8, 0xbe, 0x35, 0xb4, 0x3d, 0x1f, 0x6d, 0xb2, 0x37, 0x81, 0x4f, 0xac, 0x41, 0x8f, 0x55, 0x54,
-	0x4c, 0xfd, 0x2b, 0x0b, 0xea, 0x27, 0xde, 0xb6, 0x70, 0x0a, 0x96, 0xe5, 0xbd, 0xf5, 0x63, 0x90,
-	0xe4, 0x2e, 0xe1, 0x2a, 0xa0, 0x2a, 0x36, 0x1e, 0xea, 0xb8, 0xd7, 0x68, 0xd2, 0x3d, 0x33, 0xcc,
-	0xae, 0xdb, 0x21, 0x58, 0xe2, 0x70, 0xdc, 0x6d, 0xf0, 0x7f, 0xae, 0x0d, 0x60, 0xe5, 0xcd, 0x26,
-	0xc5, 0x8b, 0x29, 0xb0, 0x76, 0xa7, 0xd9, 0x6a, 0xe9, 0x55, 0x2d, 0xfe, 0xd6, 0xcf, 0x44, 0x21,
-	0x23, 0x2f, 0xf1, 0x22, 0x0d, 0x72, 0xf4, 0x12, 0x55, 0xbb, 0x53, 0xde, 0x26, 0x7c, 0x92, 0xe8,
-	0x0c, 0xe4, 0x05, 0x04, 0x77, 0x08, 0xe8, 0x15, 0x89, 0x24, 0x0a, 0x8b, 0x48, 0x08, 0xff, 0x3f,
-	0x53, 0x2d, 0x2d, 0xc9, 0xb6, 0x8c, 0x86, 0xd1, 0xde, 0xa1, 0x57, 0xfe, 0x96, 0x21, 0xcb, 0x40,
-	0xec, 0x6e, 0x62, 0x4c, 0x02, 0xd8, 0x25, 0x35, 0xb6, 0x8f, 0x49, 0x01, 0xec, 0xc6, 0x5f, 0x8a,
-	0xcc, 0xf3, 0x34, 0x5d, 0x23, 0x1e, 0x7a, 0x42, 0x96, 0x52, 0xc5, 0xac, 0xf2, 0x19, 0x74, 0x16,
-	0x34, 0x7e, 0xe7, 0x0b, 0xeb, 0xe5, 0xca, 0x0e, 0x3d, 0x1e, 0x01, 0x49, 0xb6, 0x4d, 0x5c, 0xf8,
-	0x2c, 0x3a, 0x0f, 0xe7, 0x64, 0xb2, 0xb7, 0xf9, 0x79, 0xaf, 0xd9, 0xd2, 0x71, 0xb9, 0xd3, 0xc4,
-	0x5a, 0x4e, 0x72, 0x94, 0xf7, 0xe7, 0x36, 0x2b, 0xdf, 0xfe, 0xee, 0xda, 0x2b, 0xbf, 0xfe, 0xdd,
-	0xb5, 0x57, 0xfe, 0xfd, 0x77, 0xd7, 0x22, 0xdf, 0xff, 0xee, 0x5a, 0xe4, 0xf7, 0xbf, 0xbb, 0x16,
-	0xf9, 0xd6, 0xd1, 0x5a, 0xe4, 0x17, 0x8e, 0xd6, 0x22, 0xff, 0xf4, 0x68, 0x2d, 0xf2, 0x2f, 0x8e,
-	0xd6, 0x22, 0xbf, 0x76, 0xb4, 0x16, 0xf9, 0xf6, 0xd1, 0x5a, 0xe4, 0x7b, 0x47, 0x6b, 0xaf, 0x7c,
-	0xff, 0x68, 0x2d, 0xf2, 0x17, 0x7f, 0x63, 0xed, 0x95, 0x9f, 0xfb, 0x8d, 0xb5, 0xc8, 0x37, 0xd8,
-	0xa6, 0xd9, 0xff, 0x0b, 0x00, 0x00, 0xff, 0xff, 0x20, 0x62, 0xfc, 0xce, 0xbd, 0x7c, 0x00, 0x00,
+	0x72, 0xd8, 0xe2, 0x0d, 0x24, 0x80, 0x99, 0x66, 0x0d, 0x39, 0x1c, 0x82, 0xe4, 0x0c, 0x17, 0x4b,
+	0x72, 0xb9, 0x4b, 0x2e, 0xc9, 0xe5, 0x2e, 0xf7, 0x96, 0xdc, 0xdb, 0xdd, 0xc3, 0x00, 0x3d, 0x33,
+	0x7d, 0xc4, 0xeb, 0x0a, 0x00, 0xb9, 0x7b, 0xa1, 0x08, 0x44, 0x0f, 0xd0, 0x33, 0xd3, 0x22, 0x80,
+	0xc6, 0x76, 0x37, 0x86, 0xe4, 0xfd, 0xf8, 0x6c, 0x4b, 0xd6, 0xc3, 0x92, 0xc3, 0x1f, 0x96, 0xdf,
+	0x11, 0xb6, 0x43, 0x76, 0x58, 0x1f, 0x96, 0xc2, 0xb2, 0x1c, 0x0e, 0x7d, 0xf8, 0xf9, 0x61, 0x49,
+	0x7f, 0x96, 0xfe, 0xf4, 0xe1, 0xa0, 0x7d, 0x23, 0x39, 0x2c, 0xdb, 0xb2, 0x75, 0x96, 0x65, 0x4b,
+	0xb6, 0x65, 0xd9, 0x51, 0xcf, 0xae, 0x06, 0x30, 0x98, 0xe1, 0x9e, 0x2e, 0xfc, 0x05, 0x54, 0x56,
+	0x66, 0x56, 0x55, 0x56, 0x56, 0x55, 0x66, 0x3d, 0xb2, 0x21, 0x3b, 0xb4, 0x3c, 0xc7, 0xbb, 0x3d,
+	0x76, 0x1d, 0xdf, 0x41, 0x09, 0x9a, 0x28, 0xbc, 0xb3, 0x6f, 0xfb, 0x07, 0x93, 0xdd, 0xdb, 0x3d,
+	0x67, 0x78, 0x67, 0xdf, 0xd9, 0x77, 0xee, 0xd0, 0xdc, 0xdd, 0xc9, 0x1e, 0x4d, 0xd1, 0x04, 0xfd,
+	0xc7, 0xa8, 0x8a, 0x6f, 0x41, 0x76, 0xcb, 0x35, 0x87, 0xd6, 0x33, 0xc7, 0x7d, 0x6a, 0x54, 0x50,
+	0x01, 0x12, 0x87, 0xe6, 0x60, 0x62, 0xad, 0x45, 0xae, 0x44, 0x6f, 0x64, 0x36, 0xe3, 0xbf, 0xf2,
+	0x72, 0xe3, 0x35, 0xcc, 0x40, 0xc5, 0x6b, 0x90, 0x6a, 0xec, 0xed, 0x59, 0xee, 0xc9, 0x68, 0xa5,
+	0x7d, 0x6b, 0xe4, 0x9f, 0x80, 0x76, 0x15, 0x92, 0x6d, 0xd3, 0x3b, 0xa9, 0xcc, 0x1b, 0x00, 0xfa,
+	0x73, 0xab, 0x37, 0xf1, 0x9d, 0x93, 0x8a, 0xed, 0x40, 0xb6, 0xec, 0x8c, 0x7c, 0xd3, 0x1e, 0x9d,
+	0x54, 0x43, 0xf4, 0x36, 0x24, 0xc7, 0xa6, 0x6b, 0x8d, 0xfc, 0xb5, 0xe8, 0x95, 0xc8, 0x8d, 0xec,
+	0x3d, 0x74, 0x9b, 0xc9, 0x51, 0xa1, 0xc7, 0x1c, 0xa3, 0x78, 0x17, 0x10, 0xb6, 0x3c, 0x67, 0xe2,
+	0xf6, 0xac, 0xa6, 0xeb, 0x1c, 0xda, 0xfd, 0x13, 0xdb, 0x7f, 0x1b, 0x34, 0x2a, 0xa6, 0xc6, 0xd8,
+	0x72, 0x4d, 0xdf, 0x76, 0x46, 0x27, 0xe0, 0xdf, 0x83, 0x74, 0xdb, 0x1e, 0x5a, 0xc6, 0x68, 0xcf,
+	0x41, 0xd7, 0x21, 0x3b, 0x32, 0x47, 0x8e, 0x67, 0xf5, 0x9c, 0x51, 0xdf, 0xa3, 0xd8, 0x31, 0x8e,
+	0xad, 0x66, 0x14, 0x3f, 0x80, 0x5c, 0x65, 0xc2, 0xb9, 0xbf, 0x0a, 0xdd, 0x13, 0x48, 0x95, 0xfa,
+	0x7d, 0xd7, 0xf2, 0x3c, 0x54, 0x80, 0xf4, 0x81, 0xe3, 0xf9, 0x23, 0x73, 0x48, 0x6a, 0x15, 0xb9,
+	0x91, 0xc1, 0x32, 0x8d, 0x56, 0x21, 0x6a, 0x8f, 0xa9, 0x70, 0x32, 0x9b, 0xc9, 0xa3, 0x97, 0x1b,
+	0x51, 0xa3, 0x89, 0xa3, 0xf6, 0x18, 0xad, 0x41, 0x7c, 0xec, 0xb8, 0xfe, 0x5a, 0xec, 0x4a, 0xf4,
+	0x46, 0x82, 0xf3, 0xa7, 0x90, 0xe2, 0xcf, 0x47, 0x20, 0xd6, 0xc1, 0x55, 0x74, 0x09, 0x92, 0x5e,
+	0xef, 0xc0, 0x1a, 0x86, 0x5b, 0xca, 0x61, 0xe8, 0x36, 0xa4, 0x4c, 0x56, 0xfc, 0x5a, 0xf4, 0x4a,
+	0xf4, 0x46, 0xf6, 0xde, 0x12, 0x97, 0x3c, 0xaf, 0x14, 0x47, 0x17, 0x48, 0x08, 0x41, 0x7c, 0x6c,
+	0xfa, 0x07, 0x6b, 0x31, 0x5a, 0x3f, 0xfa, 0x1f, 0xdd, 0x82, 0xc4, 0x17, 0x13, 0xcb, 0x7d, 0xb1,
+	0x16, 0xbf, 0x12, 0xbb, 0x91, 0xbd, 0xa7, 0x71, 0x0e, 0x4d, 0x93, 0x68, 0xb1, 0x6f, 0xb9, 0x42,
+	0xb8, 0x14, 0x89, 0xb4, 0x72, 0xcf, 0x35, 0xf7, 0x87, 0xa4, 0xb3, 0x13, 0xac, 0x95, 0x22, 0x5d,
+	0x1c, 0xc1, 0x52, 0x67, 0x64, 0x1e, 0x9a, 0xf6, 0xc0, 0xdc, 0xb5, 0x07, 0xb6, 0xff, 0x02, 0xdd,
+	0x84, 0x84, 0xe7, 0x9b, 0xae, 0x4f, 0x2b, 0x9f, 0xbd, 0xb7, 0xcc, 0x79, 0x8b, 0xee, 0x11, 0xac,
+	0x29, 0x0e, 0xba, 0x03, 0xe9, 0x3e, 0xef, 0x03, 0xae, 0x47, 0x2b, 0x1c, 0x5f, 0xed, 0x1a, 0x2c,
+	0x91, 0x8a, 0x9f, 0x42, 0xa6, 0x66, 0xf6, 0x0e, 0xec, 0x91, 0x45, 0x35, 0xe2, 0x95, 0xc5, 0x5f,
+	0xfc, 0x57, 0x11, 0xc8, 0x0a, 0x0e, 0xa4, 0xd7, 0x6f, 0x41, 0xd4, 0xee, 0xf3, 0xba, 0x0a, 0x39,
+	0xc8, 0x12, 0x36, 0x81, 0x54, 0x96, 0x52, 0x57, 0x70, 0xd4, 0xee, 0xa3, 0x9b, 0x10, 0x1f, 0x3a,
+	0x7d, 0x8b, 0xf2, 0x5d, 0xba, 0x77, 0x7e, 0x0a, 0x7f, 0xb4, 0xe7, 0xdc, 0xae, 0x39, 0x7d, 0x0b,
+	0x53, 0x24, 0xf4, 0x31, 0x2c, 0x4d, 0x42, 0xb2, 0xa1, 0x7d, 0x90, 0xbd, 0x77, 0x8e, 0x93, 0x85,
+	0x05, 0x87, 0xa7, 0x90, 0x8b, 0xd7, 0x21, 0x4e, 0x98, 0xa1, 0x24, 0x44, 0x3b, 0x4d, 0x2d, 0x82,
+	0x72, 0x90, 0xae, 0xe0, 0x92, 0x51, 0x37, 0xea, 0xdb, 0x5a, 0x14, 0xa5, 0x21, 0x5e, 0x69, 0x3c,
+	0xa9, 0x6b, 0xb1, 0xe2, 0x6f, 0x26, 0x20, 0x1f, 0x4c, 0x3f, 0xa4, 0x4d, 0x6b, 0x10, 0x9f, 0x78,
+	0x96, 0x1b, 0x52, 0x1f, 0x0a, 0x21, 0x39, 0x54, 0x5a, 0x51, 0x35, 0x87, 0xca, 0xeb, 0x6d, 0x2a,
+	0x87, 0x58, 0x68, 0x2c, 0x2b, 0x93, 0x1a, 0x97, 0x21, 0x93, 0xc2, 0x2d, 0xd0, 0xf6, 0x4c, 0x7b,
+	0xe0, 0x1c, 0x5a, 0x6e, 0xd7, 0xb7, 0x87, 0x96, 0x33, 0xf1, 0xd7, 0xe2, 0x57, 0x22, 0x37, 0x22,
+	0x0f, 0x23, 0x77, 0xf1, 0xb2, 0xc8, 0x6a, 0xb3, 0x1c, 0x74, 0x0d, 0xa0, 0x77, 0x60, 0xf5, 0x9e,
+	0x8e, 0x1d, 0x9b, 0x2b, 0x50, 0xfa, 0x61, 0x62, 0xcf, 0x1c, 0x78, 0x16, 0x56, 0x32, 0xd0, 0x05,
+	0x88, 0xbb, 0xce, 0xc0, 0x5a, 0x4b, 0x92, 0x2e, 0x7b, 0x18, 0x79, 0x7b, 0x33, 0xba, 0x16, 0xc1,
+	0x14, 0x14, 0xea, 0xe7, 0xd4, 0x54, 0x3f, 0x5f, 0x82, 0xcc, 0xd8, 0xb5, 0x47, 0x3d, 0x7b, 0x6c,
+	0x0e, 0xd6, 0xd2, 0x34, 0x33, 0x00, 0xa0, 0xb7, 0x20, 0xf3, 0xcc, 0xda, 0x9d, 0xd8, 0xdd, 0x89,
+	0x3b, 0x58, 0xcb, 0x50, 0x65, 0xc8, 0x1d, 0xbd, 0xdc, 0x48, 0x3f, 0xb1, 0x76, 0x3b, 0x76, 0x07,
+	0x57, 0x71, 0x9a, 0x66, 0x77, 0xdc, 0x01, 0x32, 0x20, 0xd7, 0x33, 0xc7, 0x4c, 0xf8, 0xb6, 0xe5,
+	0xad, 0x01, 0x1d, 0x1a, 0x1b, 0x33, 0xa2, 0x20, 0x9d, 0x5c, 0x16, 0x88, 0x2f, 0xb8, 0x0c, 0x43,
+	0xa4, 0xe8, 0x1a, 0x24, 0x07, 0xe6, 0xae, 0x35, 0xf0, 0xd6, 0xb2, 0x54, 0x9e, 0x79, 0xce, 0xa4,
+	0x4a, 0x81, 0x98, 0x67, 0xa2, 0xb3, 0x90, 0x20, 0xcd, 0xf3, 0xd6, 0x72, 0x57, 0x62, 0x37, 0x32,
+	0x98, 0x25, 0x0a, 0x3f, 0x15, 0x05, 0x08, 0xf8, 0xa3, 0x4f, 0x20, 0xee, 0xbf, 0x18, 0x33, 0xfd,
+	0x5e, 0xba, 0x77, 0xf5, 0x84, 0xea, 0xdc, 0x6e, 0xbf, 0x18, 0x5b, 0xa2, 0x5f, 0x09, 0x5d, 0xf1,
+	0x97, 0x22, 0x10, 0x27, 0x40, 0x94, 0x85, 0x54, 0xa7, 0xfe, 0xa8, 0x4e, 0x74, 0xe6, 0x35, 0x74,
+	0x1e, 0x56, 0xb0, 0xfe, 0xb8, 0x51, 0x2e, 0x6d, 0x56, 0xf5, 0x2e, 0xd6, 0x5b, 0x8d, 0x0e, 0x2e,
+	0xeb, 0x2d, 0x2d, 0x82, 0x56, 0x01, 0xb5, 0x4b, 0xad, 0x47, 0xdd, 0x47, 0x46, 0xb5, 0x6a, 0xd4,
+	0xb7, 0xbb, 0xad, 0x76, 0xa9, 0xad, 0x6b, 0x51, 0x74, 0x06, 0xf2, 0xdb, 0xcd, 0x8e, 0x82, 0x1a,
+	0x43, 0x67, 0x41, 0x6b, 0xed, 0x94, 0xb0, 0x5e, 0x51, 0xa0, 0x71, 0xb4, 0x02, 0xcb, 0xcd, 0x12,
+	0x6e, 0x1b, 0x6d, 0xa3, 0x51, 0xef, 0x96, 0x9e, 0x94, 0xb0, 0xae, 0x25, 0xd0, 0x12, 0x40, 0xad,
+	0x53, 0x6d, 0x1b, 0x5d, 0xdc, 0xa8, 0xea, 0x5a, 0x12, 0x15, 0x60, 0x15, 0xeb, 0x2d, 0x1d, 0x3f,
+	0x2e, 0x51, 0x34, 0xac, 0x6f, 0x19, 0x75, 0xbd, 0xa6, 0xd7, 0xdb, 0x5a, 0x0a, 0x69, 0x90, 0xc3,
+	0xfa, 0x76, 0x40, 0x9d, 0x2e, 0xc4, 0x7f, 0xf4, 0xa7, 0xd7, 0x23, 0xc5, 0xbf, 0x17, 0x87, 0x4c,
+	0x99, 0xa8, 0x0b, 0x55, 0xf1, 0x3b, 0x21, 0xb1, 0x88, 0x11, 0x25, 0xf3, 0x67, 0xe4, 0x80, 0xee,
+	0x41, 0xaa, 0xe7, 0x0c, 0x87, 0xe6, 0xa8, 0xcf, 0x27, 0x9a, 0xb5, 0x19, 0x9a, 0x32, 0xcb, 0xc7,
+	0x02, 0x11, 0xbd, 0x07, 0xf1, 0x03, 0xdf, 0x1f, 0x4f, 0x0d, 0xdb, 0x80, 0x60, 0xc7, 0xf7, 0xc7,
+	0x9b, 0xe9, 0xa3, 0x97, 0x1b, 0xf1, 0x9d, 0x76, 0xbb, 0x89, 0x29, 0x32, 0x7a, 0x13, 0xf2, 0x7d,
+	0x6b, 0x60, 0xbe, 0xe8, 0x8a, 0x85, 0x84, 0x8d, 0x8c, 0xe8, 0xbb, 0xf7, 0x71, 0x8e, 0x66, 0xb4,
+	0x18, 0x1c, 0xbd, 0x03, 0x9a, 0x3d, 0xf2, 0x2d, 0xf7, 0xd0, 0x1c, 0x48, 0xdc, 0x04, 0xc7, 0xbd,
+	0x8b, 0x97, 0x45, 0x9e, 0x40, 0xbf, 0x09, 0xcb, 0x7c, 0xac, 0x49, 0xec, 0x24, 0xc3, 0xbe, 0x77,
+	0x17, 0x2f, 0xf1, 0x2c, 0x81, 0x7c, 0x07, 0x62, 0x7e, 0x6f, 0x4c, 0x07, 0x4b, 0xf6, 0xde, 0xd9,
+	0x59, 0xe9, 0xf4, 0xc6, 0x9b, 0xa9, 0xa3, 0x97, 0x1b, 0xb1, 0x76, 0xb9, 0x89, 0x09, 0x66, 0xe1,
+	0x63, 0x48, 0xf1, 0xe6, 0xab, 0x92, 0x62, 0xd3, 0x62, 0xb0, 0xb4, 0x53, 0xa8, 0x32, 0x8b, 0x0b,
+	0xc4, 0xc2, 0xfb, 0x10, 0x27, 0xc2, 0x90, 0x8b, 0x1b, 0x21, 0xcc, 0xab, 0x8b, 0x9b, 0x5c, 0x86,
+	0xa2, 0xc1, 0x32, 0x54, 0xd8, 0x80, 0x58, 0xbb, 0xb7, 0x80, 0xa8, 0xf8, 0x60, 0x9e, 0xee, 0x66,
+	0x21, 0x55, 0x6e, 0xd4, 0x6a, 0xa5, 0x7a, 0x45, 0x8b, 0x90, 0x69, 0x90, 0xc8, 0x5e, 0x8b, 0xa2,
+	0x14, 0x90, 0xd6, 0x68, 0x31, 0xae, 0x2e, 0xbf, 0x90, 0x80, 0xec, 0x8e, 0x65, 0x0e, 0xfc, 0x03,
+	0xda, 0x6c, 0x32, 0x8e, 0x68, 0x5f, 0x46, 0xa8, 0x48, 0xae, 0xf0, 0x26, 0x29, 0x18, 0xb7, 0x09,
+	0x1f, 0x29, 0xa2, 0x93, 0xbb, 0x35, 0xfa, 0x0a, 0xdd, 0x1a, 0x7b, 0xa5, 0x6e, 0x8d, 0x1f, 0xdb,
+	0xad, 0xef, 0xc3, 0xd9, 0x9e, 0x33, 0xf2, 0x88, 0x2d, 0x67, 0x1f, 0x5a, 0x5d, 0x32, 0xd3, 0x4e,
+	0x5c, 0x8b, 0xa9, 0x4d, 0xfe, 0x61, 0xe4, 0x3d, 0xbc, 0xa2, 0x64, 0x6f, 0xf1, 0x5c, 0x42, 0xb5,
+	0xef, 0x9a, 0x3d, 0xab, 0x3b, 0xb6, 0x5c, 0xdb, 0xe9, 0x4f, 0xab, 0xcf, 0xbb, 0x77, 0x31, 0xa2,
+	0xf9, 0x4d, 0x9a, 0x2d, 0xca, 0xba, 0x15, 0xa8, 0x41, 0x6a, 0xca, 0xc2, 0x93, 0x6a, 0x10, 0x0c,
+	0x95, 0x77, 0xf9, 0x78, 0x4c, 0x87, 0x16, 0x46, 0x55, 0xbc, 0x33, 0x23, 0xf2, 0x21, 0xd3, 0xd1,
+	0x0c, 0x65, 0xbe, 0x31, 0x8f, 0xa2, 0xac, 0xf4, 0x47, 0x58, 0x5d, 0xbf, 0x80, 0x7c, 0xa8, 0xbb,
+	0x5e, 0x4d, 0xf1, 0xd0, 0xaa, 0xb4, 0xb0, 0x98, 0x55, 0x24, 0x6c, 0xab, 0x02, 0xa4, 0x3d, 0xdf,
+	0xf4, 0x27, 0x9e, 0xe5, 0x51, 0xd3, 0x28, 0x8f, 0x65, 0xba, 0x70, 0x03, 0x72, 0x6a, 0x85, 0xbe,
+	0x3f, 0x5a, 0x5b, 0x01, 0x78, 0x64, 0x0f, 0x06, 0x4d, 0x67, 0x60, 0xf7, 0x5e, 0xa0, 0x0f, 0x20,
+	0xa7, 0x76, 0x1c, 0xd7, 0xdd, 0xb9, 0x16, 0x52, 0x56, 0xe9, 0xc1, 0xe2, 0x1f, 0x46, 0x89, 0x1d,
+	0x2f, 0x7b, 0x09, 0x7d, 0x08, 0xf1, 0x89, 0x6b, 0x13, 0x93, 0x96, 0x2c, 0x69, 0xab, 0xb3, 0xfd,
+	0x78, 0xbb, 0x83, 0x8d, 0xcd, 0x1c, 0xb7, 0x75, 0xe2, 0x1d, 0x6c, 0x78, 0x98, 0x52, 0xa0, 0xf7,
+	0x21, 0x6b, 0x8d, 0x0e, 0x6d, 0xd7, 0x19, 0x0d, 0x67, 0x4d, 0x7d, 0x3d, 0xc8, 0xc1, 0x2a, 0x1a,
+	0x59, 0xd8, 0x98, 0xa5, 0xce, 0xa4, 0xcb, 0x3d, 0x06, 0xc4, 0xad, 0x12, 0x66, 0x42, 0x32, 0x7b,
+	0xa4, 0x00, 0x09, 0xef, 0xc0, 0x1a, 0x0c, 0xa8, 0x2e, 0xa6, 0x1f, 0xc6, 0x7d, 0x77, 0x62, 0x61,
+	0x06, 0x22, 0x2b, 0xbb, 0xe9, 0xee, 0x4f, 0x08, 0x47, 0x6f, 0x2d, 0x45, 0x97, 0xc8, 0x00, 0x50,
+	0xf8, 0xcb, 0xd4, 0x58, 0x36, 0x16, 0xfa, 0x28, 0xeb, 0x00, 0x16, 0x75, 0x7c, 0xcc, 0xdd, 0x01,
+	0xb3, 0xd9, 0xd2, 0x58, 0x81, 0xa0, 0x75, 0x48, 0x59, 0xcf, 0x7d, 0xd7, 0xec, 0xf9, 0xb4, 0xa6,
+	0xa2, 0x7c, 0x01, 0x24, 0xed, 0xe8, 0x99, 0xbd, 0x03, 0x8b, 0x8e, 0xc8, 0x34, 0x66, 0x09, 0xb4,
+	0x01, 0x59, 0x67, 0xe2, 0x8f, 0x27, 0x7e, 0x77, 0xcf, 0x1e, 0x58, 0xbc, 0x39, 0xc0, 0x40, 0x5b,
+	0xf6, 0xc0, 0x2a, 0xfe, 0x70, 0x02, 0x72, 0xd2, 0xe1, 0x22, 0xf2, 0xdf, 0x82, 0xac, 0xc5, 0xd3,
+	0x5d, 0x69, 0x6c, 0x9e, 0x11, 0x52, 0x94, 0xae, 0xd9, 0x26, 0xe2, 0x3d, 0xa0, 0xb8, 0x6b, 0xa2,
+	0xbe, 0x8e, 0x6b, 0xf4, 0x89, 0x04, 0xfb, 0xa6, 0x6f, 0xd2, 0xea, 0xe4, 0x30, 0xfd, 0x8f, 0xde,
+	0x83, 0x8c, 0xcb, 0x7d, 0x2b, 0x32, 0x0f, 0xc4, 0x14, 0x93, 0x5b, 0xf8, 0x5c, 0x5c, 0x28, 0x01,
+	0xde, 0x2b, 0x8e, 0xed, 0x2d, 0xc8, 0xed, 0x09, 0x7b, 0x83, 0xd4, 0x3f, 0x7d, 0xac, 0x91, 0xb8,
+	0x7c, 0xf4, 0x72, 0x43, 0x75, 0x85, 0x71, 0x56, 0x12, 0xb2, 0xea, 0x53, 0x13, 0x2e, 0xc3, 0x14,
+	0x80, 0x9a, 0x6f, 0x05, 0x48, 0xb2, 0x4a, 0xad, 0x01, 0xb5, 0xce, 0x88, 0xd1, 0xc7, 0x21, 0xe8,
+	0x1e, 0x64, 0x7a, 0xc2, 0x9b, 0xe4, 0x96, 0xd4, 0xd9, 0x19, 0x2f, 0x93, 0xd4, 0x34, 0x40, 0x23,
+	0x34, 0x7d, 0xdb, 0xeb, 0x11, 0xfb, 0xf3, 0xc5, 0x5a, 0x2e, 0x44, 0x53, 0x11, 0x70, 0x46, 0x23,
+	0xd1, 0xd0, 0x36, 0x9c, 0xf3, 0x0e, 0x26, 0x7e, 0xdf, 0x79, 0x36, 0xea, 0x86, 0xc6, 0x5b, 0xfe,
+	0xf8, 0xf1, 0xb6, 0x22, 0x28, 0xb6, 0x83, 0x71, 0xa7, 0xd8, 0x7d, 0x4b, 0x8b, 0xec, 0xbe, 0x7b,
+	0x7c, 0xae, 0x5c, 0xa6, 0x73, 0xe5, 0xda, 0xb4, 0x1e, 0xcc, 0x33, 0x5f, 0x8a, 0xf7, 0x8e, 0x99,
+	0x53, 0x2a, 0xfa, 0x56, 0xa9, 0x53, 0x6d, 0x6b, 0x11, 0x04, 0x90, 0x2c, 0x77, 0x5a, 0xed, 0x46,
+	0x4d, 0x8b, 0xf2, 0xc9, 0xe4, 0x1f, 0x45, 0x01, 0x2a, 0xce, 0xd0, 0xb4, 0x99, 0x7f, 0xfb, 0x35,
+	0xc8, 0xed, 0x99, 0x93, 0x81, 0xdf, 0xed, 0x53, 0x18, 0x9f, 0x4d, 0x2e, 0x8b, 0xd6, 0x49, 0xc4,
+	0xdb, 0x5b, 0x04, 0x8b, 0xa5, 0x71, 0x76, 0x2f, 0x48, 0x14, 0xfe, 0x5d, 0x04, 0xb2, 0x4a, 0x26,
+	0xda, 0x82, 0xa4, 0x6b, 0xed, 0x13, 0xdf, 0x8d, 0xa9, 0xf4, 0x8d, 0x85, 0xbc, 0x6e, 0x63, 0x8a,
+	0xab, 0x98, 0x0f, 0x9c, 0x1a, 0x7d, 0x0d, 0xe2, 0xdf, 0x72, 0x46, 0x16, 0xf7, 0x67, 0xaf, 0x2f,
+	0xe6, 0xf2, 0x4d, 0x67, 0xa4, 0x3a, 0x92, 0x94, 0xb2, 0x70, 0x1d, 0x20, 0xe0, 0x2e, 0xbd, 0x9c,
+	0xc8, 0xb4, 0x97, 0x53, 0xb8, 0x0a, 0x69, 0x41, 0x7f, 0x3c, 0x56, 0xf1, 0x87, 0xa2, 0x00, 0x35,
+	0xd3, 0xf3, 0x99, 0x7a, 0xa1, 0x82, 0x74, 0x11, 0x33, 0x33, 0x0e, 0x61, 0x81, 0xbb, 0x99, 0x64,
+	0x0d, 0x08, 0xf2, 0x66, 0x3d, 0xfd, 0xfc, 0xc3, 0xf8, 0xfd, 0xbb, 0xf7, 0xef, 0xf2, 0x35, 0xe9,
+	0x02, 0xc4, 0xc6, 0x76, 0x9f, 0x8e, 0xe3, 0x0c, 0x5b, 0xd9, 0x9a, 0x46, 0x05, 0x13, 0x58, 0xc8,
+	0xd7, 0x49, 0x4c, 0xf9, 0x3a, 0x6b, 0x90, 0x3a, 0xb4, 0x5c, 0x8f, 0x08, 0x9c, 0x7a, 0x49, 0x58,
+	0x24, 0xd1, 0x8d, 0x60, 0x53, 0x80, 0x0d, 0xe8, 0xa9, 0x4d, 0x81, 0x60, 0x3b, 0xe0, 0x2d, 0x48,
+	0xf2, 0xfe, 0x67, 0xc3, 0xf8, 0xcc, 0x8c, 0xb4, 0x31, 0x47, 0x28, 0xfe, 0x72, 0x0c, 0x32, 0x6c,
+	0x17, 0x8a, 0x48, 0xe1, 0x4a, 0xc8, 0xd9, 0x0e, 0x44, 0x16, 0x54, 0x2f, 0x34, 0x15, 0xc5, 0x4e,
+	0x39, 0x15, 0x7d, 0x00, 0x60, 0xfa, 0xbe, 0x6b, 0xef, 0x4e, 0x7c, 0x39, 0x81, 0x09, 0x3f, 0xbc,
+	0x24, 0x32, 0x38, 0x99, 0x82, 0x89, 0xae, 0xd3, 0x4e, 0x49, 0x86, 0x1b, 0xcb, 0xb6, 0xcc, 0x42,
+	0xbe, 0xaa, 0xe8, 0x04, 0xd2, 0xda, 0x04, 0xed, 0x84, 0x77, 0x79, 0x27, 0x04, 0x92, 0x80, 0x13,
+	0x24, 0x51, 0xf8, 0x27, 0x91, 0x90, 0x4f, 0xf6, 0x30, 0xe4, 0x7c, 0x5c, 0x09, 0x95, 0x7e, 0x92,
+	0x3f, 0xe6, 0xcd, 0x1b, 0xc8, 0x61, 0xff, 0x28, 0x82, 0xce, 0xc1, 0x99, 0x1d, 0x43, 0xc7, 0x25,
+	0x5c, 0xde, 0x31, 0xca, 0xa5, 0x2a, 0x03, 0x47, 0x17, 0xb8, 0x4d, 0x31, 0x42, 0x22, 0xdc, 0xb0,
+	0x6e, 0x13, 0x37, 0x1e, 0x1b, 0x15, 0x1d, 0x6b, 0x71, 0x3e, 0x13, 0xfc, 0x52, 0x04, 0xf2, 0xe5,
+	0x96, 0xd1, 0x1c, 0x4c, 0xf6, 0xed, 0x13, 0x86, 0x48, 0xd8, 0x51, 0x3a, 0x9d, 0xf9, 0xff, 0xe5,
+	0x7a, 0x3e, 0x34, 0xbd, 0xc7, 0x4f, 0x35, 0xbd, 0x17, 0xff, 0x46, 0x0c, 0xce, 0xce, 0x6c, 0x25,
+	0x92, 0xf6, 0xbc, 0xcb, 0xc7, 0x28, 0xe1, 0x72, 0x61, 0xaa, 0xe8, 0x60, 0xcf, 0x31, 0xa4, 0x19,
+	0x61, 0xcd, 0x8b, 0x9e, 0x5a, 0xf3, 0xd6, 0x78, 0xef, 0xc7, 0x54, 0xd1, 0x51, 0x8b, 0x56, 0x08,
+	0x35, 0x3e, 0x23, 0xd4, 0x12, 0xa4, 0x3c, 0xdf, 0x71, 0xcd, 0x7d, 0x36, 0xa8, 0xb3, 0xf7, 0xde,
+	0x3c, 0xae, 0x8e, 0x44, 0x7f, 0x5a, 0x0c, 0x95, 0xad, 0xc2, 0x9c, 0xae, 0xf0, 0xb7, 0x23, 0x90,
+	0x55, 0x32, 0xd0, 0x47, 0x90, 0xed, 0x79, 0x76, 0x77, 0x4c, 0xfb, 0x54, 0xd8, 0x76, 0x52, 0x80,
+	0x6a, 0x67, 0x8b, 0x36, 0xf4, 0x3c, 0x9b, 0x01, 0x3d, 0xf4, 0x2e, 0x9c, 0x21, 0x42, 0x75, 0x9d,
+	0xc1, 0xc0, 0x72, 0x39, 0x8f, 0xd0, 0xa6, 0x90, 0x16, 0x64, 0x33, 0x1a, 0x74, 0x0d, 0xb2, 0x23,
+	0xa7, 0x6f, 0x09, 0x64, 0xb5, 0xf5, 0x40, 0x32, 0x18, 0x5a, 0xf1, 0xb7, 0x62, 0x90, 0x78, 0x4c,
+	0xad, 0xaf, 0x9b, 0x72, 0x94, 0x44, 0x6f, 0x2c, 0xc9, 0xd1, 0x45, 0xf3, 0x66, 0x9d, 0x81, 0x9b,
+	0xc4, 0x22, 0x37, 0x07, 0xa6, 0x3b, 0xb5, 0x0d, 0xc8, 0xd0, 0x5b, 0x34, 0x0b, 0x73, 0x14, 0x82,
+	0xec, 0x9a, 0xa3, 0x7d, 0xcb, 0xe3, 0x9e, 0x79, 0x18, 0x19, 0xd3, 0x2c, 0xcc, 0x51, 0x50, 0x11,
+	0x62, 0x9e, 0xe5, 0x73, 0x05, 0xd3, 0xc2, 0x6c, 0x2d, 0x1f, 0x93, 0x4c, 0x74, 0x0d, 0xe2, 0xbe,
+	0xf5, 0xdc, 0xe7, 0x7d, 0x33, 0x55, 0x55, 0xeb, 0xb9, 0x8f, 0x69, 0x76, 0xe1, 0x2a, 0x24, 0x59,
+	0x4d, 0xc2, 0x56, 0x67, 0x24, 0x64, 0x75, 0x16, 0x3e, 0x82, 0x04, 0xad, 0x02, 0x41, 0xda, 0xb5,
+	0xf6, 0x6d, 0xb6, 0x3a, 0xc6, 0x05, 0x12, 0x05, 0xa1, 0x55, 0x88, 0x59, 0x7c, 0x84, 0x89, 0x1c,
+	0x02, 0x28, 0x7c, 0x08, 0x49, 0x56, 0x7f, 0x74, 0x1b, 0x12, 0xb4, 0x05, 0xbc, 0x67, 0xd1, 0x6c,
+	0x1b, 0x05, 0x47, 0x8a, 0x56, 0xb8, 0x00, 0xb1, 0x96, 0x45, 0xdd, 0x1d, 0xdb, 0xb7, 0x86, 0x94,
+	0x2a, 0x83, 0xe9, 0xff, 0x42, 0x11, 0xe2, 0xa4, 0x15, 0x0b, 0x77, 0xd0, 0xdf, 0xe5, 0xf3, 0x12,
+	0x40, 0xb2, 0x55, 0x2e, 0x55, 0x4b, 0x58, 0x7b, 0x8d, 0xfc, 0xc7, 0xa5, 0xfa, 0x36, 0xdd, 0x18,
+	0x4a, 0x41, 0xac, 0xa5, 0xb7, 0xd9, 0xc6, 0x63, 0x5b, 0xff, 0xac, 0xad, 0xc5, 0x8a, 0xbf, 0x1f,
+	0x81, 0x8c, 0x1c, 0x28, 0x0b, 0x66, 0x14, 0xa1, 0x08, 0xd1, 0x57, 0x53, 0x84, 0xd8, 0xab, 0x28,
+	0x42, 0xfc, 0x64, 0x45, 0x38, 0x5d, 0x27, 0x0b, 0x7d, 0x49, 0x2e, 0xd0, 0x97, 0xe2, 0xcb, 0x1c,
+	0xa4, 0xc5, 0xc8, 0x5d, 0xd0, 0xf0, 0x6b, 0x27, 0x34, 0xfc, 0xfb, 0xde, 0x64, 0xde, 0x96, 0xc4,
+	0x22, 0xdd, 0x5f, 0xb0, 0xef, 0x7a, 0x0b, 0xe2, 0x7d, 0xdb, 0x7b, 0xca, 0x4d, 0x8a, 0xb5, 0xa9,
+	0x29, 0x8b, 0x18, 0xd4, 0xd4, 0x15, 0xc6, 0x14, 0x0b, 0x95, 0x20, 0xeb, 0x5a, 0x9e, 0xe5, 0x1e,
+	0xb2, 0xed, 0xfc, 0x74, 0xc8, 0xaf, 0x97, 0x44, 0x38, 0x40, 0x61, 0x8e, 0xab, 0x42, 0x83, 0x3e,
+	0x22, 0xeb, 0xc8, 0xa1, 0xd3, 0xa3, 0xfe, 0x5a, 0x26, 0x64, 0x9f, 0x2a, 0x0c, 0x38, 0x02, 0x5b,
+	0x1b, 0x24, 0x3e, 0xba, 0x07, 0x49, 0xef, 0xc0, 0x74, 0xad, 0x3e, 0x5f, 0xcf, 0x0b, 0xd3, 0x94,
+	0x2d, 0x9a, 0xcb, 0x16, 0x76, 0x86, 0x89, 0xb6, 0x61, 0xd9, 0x1c, 0x0c, 0x9c, 0x1e, 0x2d, 0xbe,
+	0x6b, 0x8f, 0xf6, 0x1c, 0xee, 0x68, 0xac, 0x4f, 0x13, 0x97, 0x24, 0x1a, 0x65, 0xb0, 0x64, 0x86,
+	0xd2, 0xe8, 0xeb, 0x90, 0x1d, 0xf3, 0x29, 0x9c, 0xb8, 0x48, 0xb9, 0x93, 0x16, 0xa2, 0x25, 0xe2,
+	0xe6, 0x05, 0x69, 0x0c, 0x82, 0xda, 0xe8, 0x23, 0x03, 0x72, 0x8a, 0x50, 0xbc, 0xb5, 0x7c, 0x68,
+	0x27, 0xfa, 0x38, 0x49, 0x8a, 0x9d, 0x68, 0x95, 0xb4, 0x70, 0x15, 0x96, 0xc2, 0x15, 0x27, 0xf3,
+	0x03, 0xed, 0x6e, 0x76, 0x5e, 0x42, 0xff, 0x17, 0x7e, 0x3d, 0x02, 0xcb, 0x53, 0xdc, 0xc2, 0xfb,
+	0xea, 0x91, 0xe9, 0x7d, 0xf5, 0xc0, 0xd3, 0x89, 0x2e, 0xf2, 0x74, 0x44, 0x61, 0xb1, 0xa0, 0x30,
+	0xf4, 0x21, 0x1f, 0x14, 0xf1, 0xd0, 0x86, 0xf6, 0x71, 0xad, 0x52, 0xc6, 0xc9, 0x7c, 0x1f, 0x88,
+	0xcc, 0x57, 0xed, 0x52, 0xdb, 0x28, 0x6b, 0x11, 0xea, 0x0f, 0x7d, 0x5e, 0x2f, 0xd5, 0x8c, 0xb2,
+	0xf0, 0x81, 0x0a, 0x3f, 0x95, 0x80, 0xb4, 0xd0, 0x53, 0xe2, 0x87, 0x8f, 0x89, 0xc1, 0xec, 0xf9,
+	0xd6, 0xa8, 0x67, 0x71, 0x6b, 0xe1, 0xea, 0x71, 0x6a, 0x7d, 0xbb, 0x19, 0xe0, 0x62, 0x95, 0x90,
+	0xb4, 0xfe, 0xd0, 0x19, 0x4c, 0x86, 0xd6, 0x54, 0xeb, 0x1f, 0x53, 0x20, 0xe6, 0x99, 0xe8, 0x2b,
+	0xd2, 0xb7, 0x8d, 0xcd, 0x1f, 0x0b, 0xb2, 0xa4, 0x16, 0x4d, 0x0b, 0xc7, 0xb7, 0xb0, 0x0d, 0x59,
+	0xa5, 0xec, 0x85, 0xfe, 0x47, 0xa8, 0x9b, 0xa2, 0x53, 0xdd, 0x54, 0xf8, 0x4b, 0x31, 0x48, 0x32,
+	0xde, 0xca, 0x39, 0x42, 0x74, 0x9e, 0xd8, 0xa7, 0xaa, 0x32, 0x3b, 0x2f, 0x7f, 0xa8, 0x6c, 0xa3,
+	0x65, 0x4f, 0xa6, 0x6f, 0x9a, 0xfe, 0x01, 0xdf, 0x6c, 0xfb, 0x08, 0x12, 0x43, 0x67, 0x32, 0xf2,
+	0xb9, 0x14, 0xae, 0x9d, 0x44, 0x5a, 0x23, 0xc8, 0x98, 0xd1, 0xf0, 0xb6, 0x33, 0x47, 0x69, 0xba,
+	0xed, 0x6f, 0x41, 0x7a, 0x68, 0xf9, 0x26, 0xdd, 0x12, 0x49, 0xcc, 0x53, 0x43, 0x99, 0x4d, 0x3c,
+	0xa7, 0xb1, 0xeb, 0xd0, 0xfd, 0x1a, 0xee, 0x39, 0xf1, 0x64, 0xa1, 0x00, 0x71, 0x52, 0x57, 0xa6,
+	0xaa, 0x8e, 0x1f, 0x8c, 0x0b, 0xc7, 0x2f, 0x5c, 0x84, 0x04, 0xad, 0xcc, 0xbc, 0xcc, 0xe2, 0x57,
+	0xe7, 0x69, 0x63, 0x1a, 0xe2, 0xcd, 0x52, 0x7b, 0x47, 0x8b, 0xa0, 0x0c, 0x24, 0x6a, 0x8d, 0x4e,
+	0x9d, 0xac, 0x98, 0x19, 0x48, 0x6c, 0x56, 0x1b, 0xe5, 0x47, 0x5a, 0x8c, 0xac, 0xa2, 0xb8, 0xf4,
+	0x44, 0x8b, 0x17, 0x96, 0x21, 0x1f, 0x9a, 0xc8, 0x0a, 0x39, 0x80, 0x60, 0x7e, 0x2a, 0xfe, 0xc3,
+	0x28, 0xac, 0xb5, 0x5d, 0x73, 0x6f, 0xcf, 0xee, 0x95, 0x99, 0x21, 0xd6, 0xf2, 0x4d, 0xdf, 0xf6,
+	0x7c, 0xbb, 0xe7, 0x2d, 0xd4, 0x87, 0x35, 0x48, 0xed, 0x9a, 0xbd, 0xa7, 0x03, 0x67, 0x9f, 0xf6,
+	0x54, 0x1c, 0x8b, 0x24, 0x3a, 0x0b, 0x89, 0xdd, 0x17, 0x3e, 0xb7, 0x99, 0xe2, 0x98, 0x25, 0x08,
+	0xb4, 0xef, 0x3a, 0x63, 0xb6, 0x9a, 0xc4, 0x31, 0x4b, 0xa0, 0x75, 0x00, 0xe7, 0xd0, 0x72, 0x07,
+	0xf6, 0xd0, 0xf6, 0xd9, 0xee, 0x72, 0x1c, 0x2b, 0x10, 0x2a, 0x4e, 0xb3, 0xf7, 0xd4, 0xf2, 0xd9,
+	0x26, 0x72, 0x1c, 0x8b, 0x24, 0x91, 0xd4, 0x17, 0x03, 0x6b, 0x44, 0x97, 0x8c, 0x38, 0xa6, 0xff,
+	0xd1, 0x35, 0x48, 0xb9, 0xa6, 0x6f, 0xed, 0x8e, 0x3d, 0xba, 0x28, 0xc4, 0x37, 0xb3, 0x47, 0x2f,
+	0x37, 0x52, 0xd8, 0xf4, 0xad, 0xcd, 0x66, 0x0b, 0x8b, 0x3c, 0x81, 0x36, 0x1e, 0x7b, 0x74, 0xea,
+	0x57, 0xd0, 0x9a, 0x02, 0x6d, 0x3c, 0xa6, 0x67, 0xee, 0xae, 0xf5, 0xc5, 0xc4, 0x9a, 0xd0, 0x33,
+	0x3a, 0x52, 0x8a, 0x4c, 0x17, 0x7f, 0x28, 0x01, 0x39, 0x63, 0xac, 0x88, 0x6a, 0x1d, 0x60, 0xcb,
+	0x71, 0x9f, 0x99, 0x6e, 0xdf, 0x1e, 0xed, 0xd3, 0xee, 0x8b, 0x61, 0x05, 0x42, 0xf2, 0x2b, 0x16,
+	0xdd, 0xe2, 0x68, 0xb7, 0xab, 0x54, 0x62, 0x31, 0xac, 0x40, 0x48, 0xbe, 0x31, 0xc2, 0x56, 0xcf,
+	0xb2, 0x0f, 0xb9, 0xe4, 0x62, 0x58, 0x81, 0xa0, 0x2b, 0x90, 0x35, 0x46, 0x3b, 0x7d, 0x57, 0x77,
+	0x5d, 0xc7, 0x65, 0x42, 0x8c, 0x61, 0x15, 0x84, 0x8a, 0x90, 0x33, 0x46, 0xc4, 0x0b, 0xe7, 0x28,
+	0x09, 0x8a, 0x12, 0x82, 0xa1, 0xab, 0x90, 0x27, 0x75, 0xaa, 0x98, 0xbe, 0xb9, 0xef, 0x9a, 0x43,
+	0x26, 0xd4, 0x18, 0x0e, 0x03, 0xd1, 0x0d, 0x58, 0x36, 0x46, 0x9d, 0xd1, 0xd3, 0x91, 0xf3, 0x6c,
+	0xd4, 0x74, 0x1d, 0xdf, 0x61, 0xbe, 0x7e, 0x0c, 0x4f, 0x83, 0x59, 0xad, 0x2b, 0xb6, 0xd7, 0x33,
+	0xdd, 0x3e, 0x93, 0x39, 0xad, 0xb5, 0x80, 0xf0, 0x7c, 0x6b, 0x60, 0x1f, 0x5a, 0x2e, 0x13, 0x36,
+	0xcb, 0xe7, 0x10, 0xd2, 0xaa, 0xc6, 0xc4, 0xc7, 0x44, 0xaa, 0x9e, 0xcf, 0xa4, 0x1c, 0xc3, 0x2a,
+	0x88, 0x63, 0xc8, 0x22, 0xb2, 0x12, 0x43, 0x96, 0xc1, 0x30, 0xea, 0x0e, 0x76, 0xa8, 0x7b, 0x95,
+	0x93, 0x18, 0x02, 0x44, 0x24, 0x83, 0x2d, 0xd3, 0x1b, 0xf2, 0x73, 0x62, 0xba, 0xdb, 0x16, 0xc3,
+	0x21, 0x18, 0xa9, 0x29, 0x4d, 0x63, 0xeb, 0x8b, 0x3e, 0xdb, 0x55, 0x8b, 0x61, 0x05, 0x42, 0x94,
+	0x81, 0xa6, 0x1a, 0x8f, 0x3c, 0xba, 0x9d, 0x16, 0xc3, 0x32, 0x2d, 0x69, 0xb7, 0x4c, 0x7b, 0xe0,
+	0xad, 0x69, 0x0a, 0x2d, 0x85, 0x10, 0x25, 0xde, 0x72, 0xcd, 0x7d, 0x42, 0x7a, 0x86, 0x66, 0x8a,
+	0x24, 0x99, 0x54, 0xc9, 0x5f, 0x46, 0x88, 0x68, 0x5e, 0x00, 0x20, 0x2d, 0x23, 0x89, 0xb2, 0x6b,
+	0x99, 0xa4, 0x65, 0x2b, 0xac, 0x65, 0x0a, 0xa8, 0xf8, 0x4f, 0x53, 0xb0, 0x64, 0xf4, 0x86, 0xaa,
+	0x22, 0xae, 0x42, 0xd2, 0x18, 0xd5, 0xbc, 0x7d, 0x8f, 0x2b, 0x21, 0x4f, 0x91, 0x06, 0x18, 0x23,
+	0xae, 0x1a, 0x4c, 0xfd, 0x64, 0x9a, 0xa9, 0x4e, 0xd9, 0x9b, 0x0c, 0x79, 0x7e, 0x4c, 0xa8, 0x4e,
+	0x00, 0x43, 0xd7, 0x61, 0x89, 0x74, 0x9c, 0xe7, 0x77, 0x46, 0xae, 0x65, 0xf6, 0x0e, 0x84, 0x0e,
+	0x4e, 0x41, 0x99, 0xa2, 0x12, 0xa9, 0xea, 0xcf, 0x7b, 0x7d, 0xa1, 0x85, 0x2a, 0x88, 0x61, 0x34,
+	0x4d, 0x77, 0xd8, 0x74, 0x9d, 0x5d, 0xa1, 0x82, 0x2a, 0x88, 0xd5, 0xa7, 0xe5, 0xf6, 0xbe, 0x31,
+	0xb1, 0x46, 0xa4, 0xa4, 0x94, 0xa8, 0x4f, 0x00, 0x63, 0x5c, 0xb0, 0xd5, 0xb7, 0x5d, 0xab, 0xe7,
+	0x0b, 0xdd, 0x53, 0x41, 0x44, 0xec, 0xc6, 0x48, 0xef, 0x1d, 0x38, 0x42, 0xf3, 0x44, 0x92, 0xa9,
+	0x25, 0xf9, 0x8b, 0xad, 0xb1, 0xd0, 0x3a, 0x05, 0xc2, 0xca, 0x27, 0x15, 0xf6, 0x7c, 0x73, 0x38,
+	0x16, 0x5a, 0x17, 0x82, 0xb1, 0x41, 0x22, 0xd3, 0x94, 0x51, 0x4e, 0x0c, 0x92, 0x10, 0x98, 0xd5,
+	0x94, 0x0c, 0xc2, 0x9a, 0xe9, 0x3d, 0xf5, 0xb8, 0xf6, 0xa9, 0x20, 0x26, 0x5b, 0x91, 0xa4, 0xac,
+	0x96, 0x84, 0x6c, 0x55, 0x28, 0x69, 0x51, 0x63, 0xe2, 0xd3, 0xce, 0x65, 0x3a, 0x28, 0x92, 0x44,
+	0x91, 0x1a, 0x13, 0x9f, 0x77, 0x1f, 0xd3, 0xc0, 0x00, 0x40, 0xea, 0x4a, 0x46, 0x8c, 0xda, 0x79,
+	0x4c, 0x11, 0xa7, 0xc1, 0xa4, 0xe5, 0x8d, 0x89, 0x1f, 0x74, 0x1f, 0xd3, 0xc9, 0x10, 0x8c, 0xe3,
+	0x04, 0x1d, 0xb8, 0x22, 0x71, 0x82, 0x1e, 0xbc, 0x0a, 0xf9, 0xc6, 0xc4, 0x57, 0xba, 0xf0, 0x2c,
+	0x9b, 0x68, 0x42, 0x40, 0xce, 0x29, 0xe8, 0xc4, 0x73, 0x92, 0x53, 0xd0, 0x8b, 0x05, 0x48, 0x93,
+	0x86, 0xd0, 0x6e, 0x5c, 0x65, 0x7a, 0x2b, 0xd2, 0x7c, 0xe8, 0xcb, 0x8e, 0x3c, 0x2f, 0x87, 0xbe,
+	0xec, 0x49, 0x56, 0x0f, 0xa5, 0x2b, 0xd7, 0x64, 0x3d, 0x94, 0xbe, 0x7c, 0x1b, 0x34, 0x15, 0x40,
+	0x99, 0x5d, 0xa0, 0x88, 0x33, 0x70, 0x5e, 0xe7, 0xa0, 0x3b, 0x0b, 0xb2, 0xce, 0x41, 0x7f, 0x32,
+	0x79, 0x87, 0x3a, 0xf4, 0xa2, 0x94, 0xb7, 0x0a, 0x2e, 0xfe, 0x5a, 0x0c, 0xf2, 0xed, 0x9e, 0x3a,
+	0x7e, 0xc9, 0x64, 0xe5, 0x3b, 0xa5, 0xc1, 0xbe, 0xe3, 0xda, 0xfe, 0xc1, 0x90, 0x8f, 0xe2, 0x10,
+	0x8c, 0x8c, 0x71, 0xec, 0x3b, 0x35, 0x7b, 0xc4, 0x47, 0x32, 0x4f, 0x09, 0xb8, 0xf9, 0x9c, 0x8f,
+	0x60, 0x9e, 0x22, 0x7a, 0x53, 0x33, 0x9f, 0x97, 0x9d, 0xd1, 0x88, 0x0f, 0x5a, 0x91, 0x24, 0x12,
+	0x2c, 0xf5, 0x7c, 0xfb, 0xd0, 0x6a, 0x8c, 0xad, 0x91, 0x1c, 0xad, 0x0a, 0x88, 0xd4, 0xa7, 0x69,
+	0x7a, 0x9e, 0x44, 0x61, 0xc3, 0x35, 0x04, 0x23, 0x38, 0x25, 0xdf, 0xb7, 0x86, 0x63, 0x9f, 0xcd,
+	0x64, 0x7c, 0xbc, 0xaa, 0x30, 0x52, 0x92, 0xee, 0xf9, 0xe6, 0x2e, 0x31, 0xbb, 0x83, 0xf1, 0xaa,
+	0x80, 0x88, 0x0e, 0x97, 0x27, 0xae, 0x4b, 0x41, 0x7c, 0xc4, 0x06, 0x00, 0x36, 0xaf, 0xb5, 0xac,
+	0x7d, 0x31, 0x5e, 0x79, 0x8a, 0x8f, 0x09, 0x9a, 0x91, 0x95, 0x63, 0x82, 0xe6, 0x5c, 0x81, 0x2c,
+	0xb6, 0x7c, 0xd7, 0x1c, 0x79, 0x34, 0x97, 0x2f, 0x0c, 0x0a, 0x88, 0xf1, 0xd4, 0x5d, 0x57, 0x0c,
+	0x4a, 0x9e, 0xe2, 0x3c, 0x31, 0x59, 0x92, 0x96, 0x24, 0x4f, 0x92, 0x9c, 0x99, 0x29, 0x97, 0x67,
+	0x67, 0xca, 0xe2, 0x5f, 0x8b, 0x42, 0xbe, 0xd3, 0x57, 0xfb, 0x94, 0xce, 0x00, 0xc1, 0xa2, 0x1b,
+	0x11, 0x33, 0x40, 0xb0, 0xe4, 0xae, 0x41, 0xaa, 0xee, 0x34, 0x1d, 0xd7, 0x17, 0x93, 0xb3, 0x48,
+	0x86, 0xe6, 0xed, 0xd8, 0xec, 0xbc, 0x4d, 0x06, 0xb0, 0x64, 0x1c, 0x97, 0xba, 0x18, 0x70, 0x26,
+	0xfa, 0xd4, 0x3b, 0xdc, 0x9d, 0xec, 0x85, 0xcd, 0x02, 0x15, 0x46, 0x70, 0x5a, 0xa3, 0x7e, 0x80,
+	0xc3, 0xfb, 0x58, 0x85, 0xcd, 0xb4, 0x3c, 0x35, 0x67, 0x8d, 0x20, 0x38, 0xfb, 0x23, 0xc7, 0xb5,
+	0xfa, 0xb5, 0xc9, 0xc0, 0xb7, 0x79, 0x27, 0x87, 0x60, 0xc5, 0xbf, 0x10, 0x85, 0xa5, 0x56, 0xbd,
+	0xd6, 0x54, 0xc4, 0xf3, 0x11, 0xa4, 0xed, 0x71, 0xd7, 0xf3, 0x4d, 0xdf, 0x9b, 0x3a, 0x79, 0x56,
+	0x4d, 0x2c, 0x66, 0xa5, 0x19, 0x94, 0xd0, 0xc3, 0x29, 0x9b, 0x66, 0x79, 0xa8, 0x0c, 0x60, 0xf7,
+	0x86, 0x82, 0x3c, 0x1a, 0xba, 0x40, 0x13, 0x5e, 0x1a, 0x37, 0xf3, 0x47, 0x2f, 0x37, 0x32, 0x46,
+	0xb9, 0xc6, 0x59, 0x64, 0x6c, 0x9e, 0xed, 0xa1, 0x4f, 0x21, 0xe3, 0xf7, 0x04, 0x8f, 0x58, 0x68,
+	0x87, 0x38, 0x34, 0x3a, 0xd9, 0x9d, 0xae, 0x76, 0x99, 0x73, 0x48, 0xfb, 0xbd, 0x80, 0xc1, 0xa4,
+	0x2f, 0x18, 0x84, 0xb7, 0x98, 0x43, 0xaa, 0xc0, 0x18, 0x74, 0x2a, 0x82, 0xc1, 0x84, 0x65, 0x7a,
+	0xc5, 0x5f, 0x8b, 0xc0, 0x12, 0xf1, 0x4f, 0x14, 0xb1, 0x04, 0x5e, 0x5d, 0xe4, 0x95, 0xbc, 0xba,
+	0x69, 0xef, 0x33, 0xfa, 0x65, 0xbd, 0xcf, 0x0d, 0xc8, 0x52, 0x33, 0xbc, 0xab, 0x9a, 0xf3, 0x40,
+	0x41, 0x9b, 0xd4, 0xa6, 0xbf, 0x0c, 0x30, 0xf1, 0xac, 0x3e, 0xcf, 0x67, 0x86, 0x7d, 0x86, 0x40,
+	0x68, 0x76, 0xf1, 0x1f, 0xac, 0x04, 0xd7, 0x71, 0x43, 0x33, 0x5c, 0xc6, 0x17, 0x53, 0x6a, 0x68,
+	0x5b, 0x33, 0x00, 0xa3, 0x32, 0xac, 0xf4, 0xc6, 0x13, 0xaf, 0x3b, 0xf1, 0xf8, 0xcd, 0xbf, 0xae,
+	0x67, 0xf5, 0xf8, 0x55, 0x98, 0xcd, 0xb3, 0x47, 0x2f, 0x37, 0xb4, 0x72, 0xb3, 0xe3, 0x75, 0x3c,
+	0x76, 0xf9, 0xaf, 0x65, 0xf5, 0x3c, 0xac, 0x11, 0x02, 0x15, 0x82, 0x0c, 0x38, 0x47, 0x99, 0x78,
+	0x2f, 0x3c, 0xdf, 0x1a, 0x2a, 0x6c, 0xe8, 0x2d, 0x99, 0xcd, 0xd5, 0xa3, 0x97, 0x1b, 0x88, 0xb0,
+	0x69, 0xd1, 0x7c, 0xc9, 0x08, 0x11, 0xa2, 0x30, 0x0c, 0xdd, 0x02, 0xa0, 0xac, 0x68, 0xe3, 0xd9,
+	0xbd, 0x19, 0xa6, 0x4e, 0x84, 0xbe, 0x4a, 0x80, 0x38, 0x43, 0x10, 0xe8, 0x5f, 0xf4, 0x1e, 0xe4,
+	0x87, 0xd6, 0xb0, 0xeb, 0x7a, 0x1e, 0x17, 0x0d, 0x75, 0x6c, 0xd8, 0xa1, 0x75, 0xcd, 0x1a, 0xe2,
+	0x56, 0x8b, 0x0a, 0x08, 0x67, 0x87, 0xd6, 0x10, 0x7b, 0x1e, 0x13, 0xe6, 0x75, 0x58, 0x26, 0x44,
+	0xaa, 0xc4, 0x99, 0xcb, 0x43, 0x78, 0x55, 0x03, 0xa1, 0x3f, 0x80, 0x65, 0x5a, 0x95, 0x91, 0xcb,
+	0x4f, 0x8f, 0xd9, 0x58, 0xcc, 0x6f, 0x9e, 0x39, 0x7a, 0xb9, 0x91, 0x27, 0xf5, 0xa9, 0xbb, 0xec,
+	0x98, 0xd8, 0xc3, 0x79, 0x82, 0x29, 0x93, 0xe8, 0x53, 0x38, 0x23, 0x48, 0xfd, 0x03, 0xd7, 0xf1,
+	0xfd, 0x81, 0xc5, 0x0e, 0xd9, 0xf3, 0x9b, 0x2b, 0x47, 0x2f, 0x37, 0x96, 0x19, 0x71, 0x5b, 0x64,
+	0xe1, 0x65, 0x46, 0x2e, 0x01, 0x08, 0xc3, 0x1a, 0x65, 0x20, 0xa9, 0x15, 0xa1, 0x66, 0xa8, 0x50,
+	0x2e, 0x1c, 0xbd, 0xdc, 0x38, 0x47, 0xf8, 0x48, 0x22, 0x29, 0x57, 0xda, 0x19, 0x33, 0x60, 0x74,
+	0x15, 0x96, 0x48, 0xbb, 0x89, 0x8f, 0xcc, 0x9b, 0xcd, 0x9c, 0xad, 0xdc, 0xd0, 0x1a, 0x6e, 0xd9,
+	0x03, 0x8b, 0xb5, 0x9a, 0x63, 0x99, 0x23, 0x67, 0xc4, 0xb1, 0xb2, 0x12, 0xab, 0x34, 0x72, 0x46,
+	0x0c, 0xeb, 0x5d, 0x38, 0x47, 0xb0, 0x86, 0xe6, 0x78, 0x6c, 0xf5, 0x55, 0x96, 0x39, 0x8a, 0x8c,
+	0x86, 0xd6, 0xb0, 0x46, 0xf3, 0x02, 0xc6, 0x6f, 0x41, 0x7c, 0x6c, 0xb9, 0x7b, 0xfc, 0x08, 0x5e,
+	0xcc, 0x1c, 0x4d, 0xcb, 0xdd, 0x0b, 0x54, 0x16, 0x53, 0x14, 0x52, 0x87, 0x91, 0xe5, 0x77, 0xdd,
+	0xe7, 0x5d, 0xe1, 0x93, 0x2e, 0xb1, 0x3a, 0x8c, 0x2c, 0x1f, 0x3f, 0x6f, 0x72, 0xc7, 0xf4, 0x0a,
+	0xe4, 0x38, 0x16, 0x2b, 0x7a, 0x99, 0x0d, 0x1b, 0x8a, 0xc3, 0x8a, 0x2c, 0x42, 0x9e, 0x63, 0x58,
+	0x81, 0xc1, 0x16, 0xc7, 0x59, 0x8a, 0x22, 0x3d, 0x35, 0x51, 0x16, 0x71, 0x94, 0xc7, 0x56, 0x9f,
+	0x5a, 0x6c, 0xa2, 0xac, 0x0a, 0x83, 0x09, 0x2c, 0x3f, 0xa8, 0x11, 0x92, 0x58, 0xed, 0xe9, 0x1a,
+	0xf9, 0xa2, 0x46, 0x2b, 0xb2, 0x46, 0xed, 0x70, 0x8d, 0x7c, 0x59, 0xa3, 0xb3, 0xb2, 0x46, 0xed,
+	0xa9, 0x1a, 0xf9, 0x41, 0x8d, 0xce, 0x29, 0x65, 0x89, 0x1a, 0xb5, 0xe0, 0x02, 0xc5, 0xea, 0x8d,
+	0xbb, 0xae, 0xef, 0x77, 0x87, 0x76, 0xcf, 0x75, 0x88, 0x7a, 0x74, 0xc7, 0xf7, 0xef, 0x52, 0xfb,
+	0x8d, 0xab, 0x48, 0xdd, 0xf2, 0xdb, 0xe5, 0x26, 0xf6, 0xfd, 0x9a, 0xc0, 0x68, 0xde, 0xbf, 0x8b,
+	0xcf, 0x11, 0x5e, 0xbd, 0xf1, 0x14, 0x78, 0x01, 0xd3, 0x07, 0x77, 0xa9, 0xd5, 0x77, 0x3c, 0xd3,
+	0x07, 0xf3, 0x99, 0x3e, 0x58, 0xc8, 0xf4, 0x3e, 0x35, 0x13, 0x17, 0x30, 0xbd, 0x3f, 0x9f, 0xe9,
+	0xfd, 0x45, 0x4c, 0x1f, 0x50, 0x93, 0x72, 0x01, 0xd3, 0x07, 0xf3, 0x99, 0x3e, 0x40, 0x37, 0x40,
+	0xeb, 0xdb, 0xde, 0xd3, 0xd0, 0xd4, 0x50, 0xa0, 0xb2, 0x5f, 0x22, 0x70, 0x65, 0x6e, 0xb8, 0x0e,
+	0xcb, 0x14, 0x53, 0x99, 0x95, 0x2f, 0xb2, 0x39, 0x84, 0x80, 0x3b, 0x62, 0x66, 0x46, 0x9f, 0x41,
+	0x41, 0x54, 0xd3, 0xa4, 0xb6, 0x5e, 0xb7, 0xe7, 0x8c, 0x46, 0x56, 0x8f, 0x6d, 0x03, 0x5f, 0xa2,
+	0xf5, 0xbc, 0x78, 0xf4, 0x72, 0xe3, 0x3c, 0xab, 0x27, 0xb3, 0x07, 0xcb, 0x01, 0x0a, 0x3e, 0xcf,
+	0x6a, 0x3a, 0x93, 0x81, 0xba, 0x70, 0x59, 0x70, 0xa6, 0x53, 0xc3, 0x33, 0xd3, 0xf6, 0x43, 0xcc,
+	0x2f, 0x53, 0xe6, 0x97, 0x8f, 0x5e, 0x6e, 0x5c, 0x60, 0xcc, 0xc9, 0x44, 0xf0, 0xc4, 0xb4, 0x7d,
+	0x95, 0xfd, 0x05, 0xc6, 0x7e, 0x4e, 0x16, 0xdb, 0x87, 0x74, 0x7a, 0x96, 0xe7, 0x59, 0xde, 0xda,
+	0x3a, 0x99, 0xbb, 0x70, 0x00, 0x20, 0x76, 0x94, 0x7f, 0xe0, 0x5a, 0x66, 0xdf, 0x5b, 0xdb, 0xa0,
+	0x79, 0x22, 0x89, 0xbe, 0x02, 0x6b, 0x74, 0x7a, 0x75, 0x9e, 0x75, 0xc7, 0xae, 0xe5, 0x79, 0x13,
+	0x97, 0x34, 0x7a, 0x32, 0xf2, 0x2d, 0x77, 0xed, 0x0a, 0x95, 0x11, 0x99, 0x3a, 0xaa, 0xce, 0xb3,
+	0x26, 0xcf, 0x2d, 0xb3, 0x4c, 0xf4, 0x31, 0x5c, 0xa4, 0x73, 0x8a, 0xd5, 0xb7, 0x27, 0xc3, 0x59,
+	0xda, 0xd7, 0x29, 0x2d, 0xe1, 0x5d, 0xa3, 0x18, 0xd3, 0xe4, 0x25, 0xb8, 0x4c, 0xc8, 0x7b, 0xae,
+	0xed, 0xdb, 0x3d, 0x73, 0x30, 0xcb, 0xa0, 0x48, 0x19, 0x14, 0x86, 0xd6, 0xb0, 0xcc, 0x71, 0xa6,
+	0x59, 0xfc, 0x20, 0xac, 0x53, 0x99, 0xb2, 0x6d, 0xba, 0x2e, 0x3f, 0x30, 0xa5, 0xc6, 0x06, 0x9b,
+	0x9f, 0xd6, 0xde, 0x08, 0x6d, 0xdc, 0x1f, 0xb7, 0x9f, 0xc7, 0x97, 0xd9, 0x8b, 0x44, 0xb8, 0xc7,
+	0x6d, 0xf9, 0xf1, 0x55, 0xc8, 0x77, 0x7c, 0x73, 0xc0, 0x35, 0xe8, 0xaa, 0x5c, 0x85, 0xda, 0x04,
+	0x1a, 0x9a, 0x69, 0x19, 0xde, 0xd0, 0x1a, 0x7a, 0xcf, 0x38, 0xf6, 0x35, 0x39, 0xd3, 0x52, 0xec,
+	0x1a, 0xc9, 0x62, 0x24, 0x77, 0xe0, 0x2c, 0x21, 0xf1, 0x9c, 0x3d, 0x3f, 0xa4, 0xca, 0xd7, 0x29,
+	0xc5, 0x99, 0xa1, 0x35, 0x6c, 0x39, 0x7b, 0x7e, 0x58, 0x9b, 0xa9, 0xe8, 0xcc, 0xde, 0x81, 0x98,
+	0xc7, 0xdf, 0x94, 0x75, 0x29, 0x13, 0x68, 0x68, 0x6d, 0xf0, 0x9e, 0x99, 0x63, 0x8e, 0x76, 0x43,
+	0xae, 0x0d, 0xad, 0x67, 0xe6, 0x98, 0x61, 0xdd, 0x63, 0x35, 0x9e, 0x8c, 0xac, 0x43, 0xbb, 0x47,
+	0xaf, 0xe5, 0x71, 0xe4, 0xb7, 0x28, 0xf2, 0xca, 0xd0, 0x1a, 0x76, 0x82, 0x3c, 0x46, 0xf3, 0x03,
+	0xb0, 0x42, 0x24, 0xef, 0x8d, 0xb8, 0x81, 0xc9, 0xc5, 0xfd, 0x76, 0x68, 0xad, 0x08, 0x5b, 0xb3,
+	0x9b, 0xe7, 0x8e, 0x5e, 0x6e, 0x9c, 0xa9, 0x5b, 0x7e, 0x18, 0x8c, 0xcf, 0x8c, 0x2c, 0xbf, 0x35,
+	0x0a, 0x6d, 0xd5, 0x54, 0xf8, 0x68, 0x55, 0x38, 0xdf, 0xa4, 0x1d, 0x79, 0x2e, 0xb8, 0x48, 0xf6,
+	0x74, 0xa6, 0xfb, 0xe8, 0x98, 0x57, 0xb8, 0xd4, 0x40, 0xdb, 0x1d, 0x3c, 0xb5, 0x1d, 0x95, 0xcd,
+	0x2d, 0x5a, 0xc1, 0xa2, 0x38, 0xa3, 0xdf, 0x77, 0x9d, 0xc9, 0x98, 0xda, 0x7a, 0x9b, 0x04, 0xf3,
+	0xb6, 0x52, 0xad, 0x65, 0x4a, 0x1b, 0x00, 0x8a, 0xbf, 0x1b, 0x87, 0xbc, 0x30, 0xda, 0x3a, 0x9e,
+	0xb9, 0x6f, 0xa1, 0x12, 0x64, 0xc4, 0xd5, 0x40, 0x71, 0xfa, 0x3f, 0x7d, 0x56, 0x46, 0x11, 0xe5,
+	0xc5, 0x32, 0x61, 0xce, 0x49, 0x2a, 0x74, 0x13, 0x12, 0x54, 0x53, 0xf8, 0xe5, 0x87, 0x63, 0xae,
+	0x6c, 0x30, 0x9c, 0xc2, 0x77, 0x63, 0x90, 0x16, 0xac, 0xd0, 0x27, 0x90, 0x0f, 0x6e, 0x34, 0x8e,
+	0xf6, 0x1c, 0x7e, 0x01, 0x6c, 0x65, 0xce, 0x5d, 0x36, 0x71, 0x2e, 0x65, 0xa9, 0x37, 0x22, 0xdf,
+	0x83, 0x0c, 0x3f, 0x40, 0xb3, 0xfa, 0x8b, 0x4b, 0x0f, 0xf0, 0xd0, 0x03, 0x00, 0x45, 0x98, 0xb1,
+	0xb9, 0x47, 0x6c, 0x8a, 0x0c, 0x15, 0x64, 0xf4, 0x75, 0xc8, 0xc9, 0x4b, 0x24, 0x5d, 0x7a, 0xa0,
+	0x10, 0x9d, 0xff, 0x66, 0x6d, 0x73, 0x85, 0x6f, 0xa8, 0xab, 0x0f, 0xe1, 0x70, 0x56, 0x12, 0x1b,
+	0x7d, 0xf4, 0x09, 0x24, 0x7c, 0xba, 0xc7, 0xc0, 0x2e, 0x2b, 0x15, 0x17, 0x0a, 0xfd, 0x76, 0xdb,
+	0xf4, 0x9e, 0x4a, 0x41, 0x12, 0xb2, 0xc2, 0xdf, 0x8d, 0x40, 0x9c, 0x40, 0x17, 0x1c, 0x1c, 0xbf,
+	0x45, 0x77, 0xf8, 0xd9, 0xf5, 0x1b, 0x71, 0xa6, 0xc1, 0x1e, 0xfa, 0xcd, 0x6c, 0xf8, 0x7f, 0xa9,
+	0xab, 0x37, 0xc1, 0xf1, 0x5d, 0x7c, 0xc1, 0xf1, 0x5d, 0xf1, 0xcf, 0xad, 0xc0, 0x52, 0xd8, 0xe4,
+	0x3a, 0x95, 0x97, 0x70, 0x25, 0xf4, 0xa8, 0x2b, 0x40, 0x91, 0x50, 0xe2, 0xe1, 0xf7, 0x5e, 0xf4,
+	0x06, 0xd2, 0x7b, 0xe1, 0x29, 0xf4, 0x01, 0x9c, 0xf7, 0x7c, 0x73, 0x40, 0x2c, 0x58, 0x06, 0xe9,
+	0xee, 0xb9, 0xce, 0xc8, 0xb7, 0x46, 0x7d, 0xee, 0xc6, 0x9c, 0xe3, 0xd9, 0x65, 0x9a, 0xbb, 0xc5,
+	0x33, 0xd1, 0xfb, 0xb0, 0x3a, 0x45, 0xb7, 0x4b, 0x8c, 0xac, 0x51, 0x9f, 0x9f, 0x5d, 0x9c, 0x0d,
+	0x91, 0x6d, 0xb2, 0x3c, 0xe2, 0x17, 0xdb, 0x23, 0xcf, 0x77, 0x27, 0x7c, 0x0d, 0x64, 0x76, 0x7d,
+	0x08, 0x86, 0xde, 0x02, 0x8d, 0x4d, 0x74, 0xae, 0xb5, 0x67, 0xb9, 0xc4, 0xff, 0xf2, 0xf8, 0xd9,
+	0xc6, 0x32, 0x85, 0x63, 0x09, 0x46, 0xaf, 0x43, 0x8e, 0xa1, 0x0e, 0x6d, 0xba, 0x0a, 0xa6, 0x99,
+	0xb1, 0x46, 0x61, 0x35, 0x0a, 0x42, 0x05, 0x48, 0xef, 0xba, 0xe6, 0xa8, 0x77, 0x60, 0xf1, 0x33,
+	0x0e, 0x2c, 0xd3, 0xe8, 0x0d, 0xc8, 0xb3, 0xff, 0x82, 0x9e, 0xdb, 0xdb, 0x0c, 0xc8, 0x19, 0x5c,
+	0x06, 0xd8, 0x9d, 0x78, 0xbc, 0x91, 0xdc, 0xd6, 0xce, 0xec, 0x4e, 0x3c, 0xd6, 0x30, 0x92, 0xed,
+	0x5a, 0x7b, 0x22, 0x9b, 0x59, 0xd7, 0x19, 0xd7, 0xda, 0xe3, 0xd9, 0x6f, 0x01, 0xf1, 0x86, 0xba,
+	0xbd, 0x81, 0xd3, 0x7b, 0x4a, 0x2d, 0xeb, 0x08, 0x73, 0x7c, 0xcb, 0xcd, 0x4e, 0x99, 0xc0, 0x70,
+	0xba, 0x37, 0x9e, 0xd0, 0x7f, 0x84, 0x13, 0xd1, 0x56, 0x8e, 0x4b, 0x0c, 0xea, 0x08, 0xce, 0x10,
+	0x08, 0xcb, 0xde, 0x80, 0xec, 0xd8, 0xdc, 0xb7, 0xba, 0xf4, 0xa0, 0x44, 0x1a, 0xd3, 0x04, 0x44,
+	0xaf, 0x6a, 0x52, 0x61, 0x0c, 0xed, 0x91, 0xe3, 0x0a, 0x0c, 0x6e, 0x4b, 0x53, 0x98, 0x82, 0x62,
+	0xfe, 0x60, 0x80, 0x72, 0x86, 0xa3, 0x10, 0x18, 0x47, 0x21, 0xd2, 0x27, 0x5d, 0xfc, 0xdc, 0xef,
+	0x7a, 0xcf, 0x6c, 0x9f, 0xca, 0x0d, 0x71, 0xe9, 0x33, 0x78, 0x8b, 0x83, 0xd1, 0x87, 0xb0, 0x44,
+	0xda, 0x36, 0xb4, 0xf7, 0x5d, 0x7e, 0x6c, 0x4e, 0xed, 0x69, 0xe9, 0x7e, 0xd5, 0x64, 0x06, 0x75,
+	0xbf, 0x82, 0x24, 0x29, 0xc4, 0x1c, 0xd8, 0xfb, 0xf4, 0xea, 0xba, 0xa8, 0x0b, 0x33, 0xb4, 0x97,
+	0x25, 0x3c, 0xa8, 0x8f, 0x35, 0x9c, 0x0c, 0xd8, 0x6d, 0x01, 0x8e, 0xca, 0xcc, 0xed, 0x65, 0x09,
+	0xe7, 0xa8, 0xd7, 0x61, 0x79, 0xf0, 0x6e, 0xb7, 0xcf, 0x34, 0x62, 0xe0, 0x10, 0xd3, 0x67, 0x95,
+	0xad, 0x92, 0x83, 0x77, 0x2b, 0x14, 0x5a, 0x25, 0x40, 0xb2, 0x62, 0x87, 0xf1, 0x44, 0xf7, 0x9f,
+	0x67, 0x2b, 0xb6, 0x8a, 0xcd, 0x95, 0xe0, 0x06, 0x68, 0x01, 0x89, 0xe7, 0x3b, 0xae, 0xc5, 0x36,
+	0x50, 0xe3, 0x78, 0x49, 0x60, 0xb7, 0x28, 0x14, 0xbd, 0x07, 0xab, 0x53, 0x98, 0x82, 0xfb, 0x05,
+	0xb6, 0xba, 0x86, 0xf0, 0x39, 0xfb, 0xbb, 0x70, 0x36, 0x20, 0x1a, 0x13, 0xbd, 0x67, 0x82, 0x2f,
+	0x84, 0x2b, 0xd4, 0x94, 0x39, 0xe8, 0x01, 0x5c, 0x98, 0xa5, 0x10, 0x25, 0x31, 0x4b, 0x77, 0x75,
+	0x9a, 0x8c, 0x17, 0xc6, 0xc4, 0x64, 0xab, 0x62, 0xba, 0x24, 0xc4, 0x64, 0xcc, 0x88, 0xc9, 0x9e,
+	0x15, 0xd3, 0x65, 0x51, 0x2b, 0x63, 0x5a, 0x4c, 0xac, 0x1d, 0xf6, 0x4c, 0x3b, 0xd6, 0xc3, 0x14,
+	0x33, 0xed, 0xb0, 0xe7, 0xb7, 0x63, 0x43, 0xb4, 0xc3, 0x98, 0xd7, 0x8e, 0xb7, 0x20, 0x33, 0x18,
+	0xf4, 0x78, 0x0b, 0xa8, 0xe1, 0xca, 0x86, 0x56, 0xb5, 0x5a, 0xa6, 0x0d, 0xc0, 0xe9, 0xc1, 0xa0,
+	0xc7, 0x9a, 0xf2, 0x00, 0x96, 0x05, 0xaa, 0xe0, 0xfd, 0x7a, 0xa0, 0xaa, 0x9c, 0x80, 0xb1, 0xc5,
+	0x79, 0x4e, 0xc5, 0x4b, 0xb9, 0x05, 0x40, 0x48, 0x79, 0x9f, 0x53, 0x13, 0x95, 0xed, 0x77, 0x54,
+	0xab, 0x65, 0xd6, 0xe5, 0x98, 0x54, 0x83, 0xf7, 0xfe, 0x57, 0x41, 0x93, 0xd8, 0xa2, 0xa4, 0x37,
+	0x28, 0x0d, 0x3a, 0x7a, 0xb9, 0xb1, 0x24, 0x68, 0x78, 0x51, 0x4b, 0x82, 0x90, 0x97, 0xf5, 0x21,
+	0x10, 0x88, 0x2a, 0xb8, 0xab, 0xa1, 0x5a, 0x06, 0x72, 0xa3, 0xb5, 0x54, 0xc4, 0xa8, 0xc3, 0x8a,
+	0x4a, 0x29, 0x8a, 0xa6, 0x26, 0x28, 0xb3, 0xc3, 0x14, 0x72, 0x5e, 0xfa, 0x19, 0x85, 0x45, 0xd0,
+	0xd8, 0xbe, 0x3f, 0xd8, 0xe5, 0x32, 0xbd, 0x1e, 0x34, 0xb6, 0xd2, 0xae, 0x6e, 0x32, 0xa1, 0x66,
+	0x08, 0x02, 0x93, 0xea, 0x57, 0x41, 0x93, 0xd8, 0xa2, 0xc4, 0x37, 0x83, 0xc6, 0x0a, 0x1a, 0xd1,
+	0x58, 0x41, 0xc8, 0xcb, 0xba, 0x03, 0x59, 0x4a, 0xcd, 0x25, 0x4b, 0x0d, 0x55, 0x76, 0x47, 0x87,
+	0x10, 0x72, 0xd1, 0xd2, 0xea, 0x70, 0xd9, 0x7e, 0x0a, 0x67, 0x02, 0x02, 0x51, 0x1e, 0x35, 0x59,
+	0xd9, 0x9e, 0x8d, 0x24, 0xe3, 0x05, 0x2e, 0x4b, 0x5a, 0x5e, 0xe2, 0x47, 0x40, 0x41, 0xaa, 0x7c,
+	0xdf, 0x0e, 0x57, 0x57, 0x11, 0x30, 0xad, 0xae, 0x22, 0xe1, 0x1d, 0x38, 0x1b, 0x22, 0x16, 0x15,
+	0xb8, 0x49, 0x39, 0xd0, 0x1d, 0x34, 0x95, 0x03, 0xaf, 0x03, 0x52, 0xb9, 0x04, 0x42, 0xb6, 0x03,
+	0x21, 0xdf, 0x0a, 0x84, 0x6c, 0x04, 0x42, 0xb6, 0x55, 0x21, 0xdb, 0xd3, 0x42, 0x7e, 0x27, 0xa8,
+	0xb5, 0x31, 0x25, 0x64, 0x3b, 0x2c, 0xe4, 0xd7, 0x81, 0x2f, 0x66, 0xbc, 0xb4, 0xdb, 0x6c, 0xc2,
+	0x67, 0x30, 0x56, 0xc0, 0x2d, 0x40, 0x0a, 0x8a, 0x28, 0xe2, 0x0e, 0x45, 0xd4, 0x02, 0xc4, 0x60,
+	0x35, 0xa4, 0x57, 0x52, 0x19, 0xbb, 0xbb, 0x6c, 0xb9, 0x23, 0x10, 0xc6, 0xec, 0x06, 0x68, 0x32,
+	0x5b, 0xb0, 0x7a, 0x97, 0xcd, 0x93, 0x02, 0x89, 0x33, 0xda, 0xe0, 0x77, 0x5b, 0x79, 0xf7, 0xdf,
+	0xe3, 0x3b, 0x31, 0x4e, 0x5f, 0x4c, 0xa4, 0x6f, 0xc3, 0x99, 0x00, 0x41, 0xf0, 0x7a, 0x8f, 0xcd,
+	0xfc, 0x12, 0x8d, 0x33, 0x7b, 0x13, 0x96, 0xd9, 0x45, 0xd9, 0xa0, 0x67, 0xdf, 0x0f, 0x4a, 0x55,
+	0x7a, 0xf1, 0x2e, 0x9c, 0x0d, 0x21, 0x0a, 0xbe, 0xf7, 0xd9, 0x04, 0xa5, 0x62, 0x33, 0xd6, 0xc5,
+	0x43, 0x48, 0xf1, 0x23, 0x78, 0xf4, 0x01, 0xa4, 0xcd, 0x7d, 0xb2, 0x62, 0xc9, 0x6b, 0xcf, 0xd3,
+	0xb7, 0xe0, 0xe9, 0xc6, 0x3c, 0x4f, 0xe0, 0x14, 0x45, 0x36, 0xa6, 0xec, 0xc5, 0xe8, 0xe9, 0xec,
+	0xc5, 0xe2, 0x2f, 0x20, 0x48, 0xd0, 0x78, 0x0c, 0xfc, 0x99, 0x78, 0x24, 0x14, 0x78, 0x80, 0x07,
+	0xb4, 0x98, 0x31, 0x4d, 0xbf, 0x3e, 0xf5, 0x6e, 0x28, 0x7c, 0x9d, 0x5c, 0x7d, 0x37, 0x24, 0x8d,
+	0xee, 0x63, 0xdf, 0x0e, 0x3d, 0x54, 0x9a, 0x1b, 0x0b, 0x87, 0x3d, 0xe0, 0xcd, 0x5d, 0xe6, 0x3c,
+	0x66, 0x9b, 0xac, 0xbe, 0x5c, 0x88, 0x9f, 0xfc, 0x72, 0xe1, 0xb4, 0x8f, 0xa8, 0x0c, 0xc8, 0x29,
+	0xaf, 0xba, 0x88, 0xf9, 0x18, 0x9b, 0xff, 0xac, 0x4b, 0xb6, 0x2e, 0x80, 0x79, 0x38, 0x1b, 0xbc,
+	0xeb, 0x9a, 0x7e, 0x04, 0x91, 0x3a, 0xf5, 0x55, 0xf4, 0x6b, 0x10, 0x9b, 0xb8, 0x03, 0x7e, 0xd5,
+	0x12, 0xc4, 0xc9, 0x06, 0xae, 0xb2, 0x37, 0x25, 0x1d, 0x5c, 0xc5, 0x24, 0x7f, 0x4e, 0x20, 0x82,
+	0xcc, 0x2b, 0x04, 0x22, 0x98, 0x77, 0x49, 0x12, 0xbe, 0xd4, 0x25, 0xc9, 0xe0, 0xc5, 0x45, 0xf6,
+	0xa4, 0x17, 0x17, 0xff, 0x22, 0x0f, 0x19, 0x19, 0xfc, 0x03, 0xdd, 0x0f, 0x3d, 0xb8, 0xb8, 0xa8,
+	0xea, 0xdd, 0x6d, 0x89, 0x35, 0x7b, 0x67, 0xed, 0x3e, 0x71, 0x73, 0x26, 0xa3, 0x9e, 0xb8, 0xb5,
+	0x76, 0xf9, 0x18, 0xc2, 0x2a, 0x45, 0xc2, 0x1c, 0x19, 0x7d, 0x08, 0x29, 0x76, 0x89, 0x52, 0x5c,
+	0xdc, 0x5b, 0x3f, 0x86, 0x8e, 0xdd, 0x55, 0xb4, 0xb0, 0x40, 0x47, 0x9f, 0x40, 0x66, 0x32, 0x12,
+	0xb4, 0xf1, 0xd0, 0x4b, 0xe3, 0x69, 0xda, 0x8e, 0xc0, 0xc3, 0x01, 0x09, 0xa9, 0x70, 0x8f, 0xde,
+	0x21, 0xe1, 0xf7, 0xd9, 0x8e, 0xab, 0x30, 0xbb, 0x68, 0x82, 0x39, 0x32, 0xa9, 0x70, 0xdf, 0xf2,
+	0x7c, 0xd7, 0x79, 0xc1, 0xaf, 0x2d, 0x1f, 0x57, 0xe1, 0x0a, 0xc3, 0xc2, 0x02, 0x1d, 0xe9, 0x90,
+	0x63, 0x8d, 0xee, 0xd2, 0xcd, 0x08, 0x7e, 0xd3, 0xb7, 0xb8, 0x50, 0x4e, 0xdb, 0x04, 0x13, 0x67,
+	0x07, 0x41, 0x02, 0xed, 0x40, 0x9e, 0x55, 0xa5, 0xcb, 0xef, 0x45, 0x32, 0x8d, 0x7c, 0x63, 0x61,
+	0xf5, 0xf9, 0x6d, 0xc9, 0x5c, 0x4f, 0x49, 0xa1, 0x47, 0xb0, 0xc4, 0xeb, 0x26, 0x58, 0x65, 0x42,
+	0xe7, 0x64, 0xc7, 0xb4, 0x88, 0xf3, 0xca, 0xf7, 0xd5, 0x24, 0x69, 0x1d, 0xaf, 0xd6, 0x2e, 0x75,
+	0x63, 0x60, 0x61, 0xeb, 0x58, 0xad, 0x36, 0xa9, 0x23, 0x94, 0xed, 0x05, 0x09, 0xd2, 0x3a, 0x51,
+	0x27, 0xc6, 0x27, 0xbb, 0xb0, 0x75, 0xbc, 0x4a, 0x8c, 0x51, 0xae, 0xaf, 0xa4, 0xd0, 0x1d, 0x3a,
+	0x7b, 0xb2, 0xcb, 0xc1, 0xe7, 0x55, 0x72, 0x25, 0xce, 0x8d, 0xfa, 0x46, 0xa5, 0xf0, 0x09, 0x24,
+	0x99, 0xd0, 0xd1, 0xfb, 0xdc, 0x21, 0x23, 0xc3, 0x4f, 0xec, 0xf7, 0x2c, 0xab, 0x5b, 0x03, 0xc1,
+	0x56, 0x0b, 0xf5, 0xd3, 0x48, 0xda, 0x2b, 0xfc, 0x09, 0xc8, 0x2a, 0x9d, 0x86, 0xee, 0x43, 0x5a,
+	0x4c, 0x3b, 0x27, 0xef, 0xd8, 0x48, 0x54, 0xf4, 0x80, 0x97, 0xcd, 0x74, 0x84, 0x4d, 0xe3, 0x67,
+	0x95, 0xb2, 0xb7, 0xc5, 0x46, 0x96, 0x5a, 0x01, 0x0a, 0x2c, 0x7c, 0x42, 0x56, 0x2c, 0xa6, 0xdc,
+	0xa1, 0x49, 0x36, 0x72, 0xba, 0x49, 0xb6, 0xf0, 0x35, 0xc8, 0xc8, 0x91, 0xf2, 0xe5, 0x38, 0x3c,
+	0x80, 0x24, 0xeb, 0x59, 0x74, 0x07, 0x52, 0x4c, 0xa7, 0x4e, 0x20, 0x16, 0x58, 0x85, 0x87, 0x90,
+	0xe2, 0x9d, 0xf9, 0xea, 0xb4, 0x3f, 0x1e, 0x81, 0x9c, 0xaa, 0xe7, 0xe8, 0x1d, 0xe5, 0xdc, 0x38,
+	0x7a, 0x3c, 0x03, 0x71, 0x5a, 0xfc, 0x08, 0xb2, 0xbe, 0xe9, 0xee, 0x5b, 0x7e, 0x57, 0x79, 0x42,
+	0xf0, 0x2a, 0xd7, 0x76, 0x81, 0x91, 0x13, 0x48, 0xe1, 0x13, 0xc8, 0x87, 0x06, 0x0a, 0xa9, 0x0c,
+	0x1f, 0x5e, 0x8b, 0x2b, 0xc3, 0x90, 0x0a, 0x5f, 0x85, 0xac, 0x32, 0x3a, 0x5e, 0xb1, 0x29, 0x85,
+	0x8f, 0x20, 0xa7, 0x8e, 0x09, 0x74, 0x13, 0x12, 0x6c, 0x1c, 0x2d, 0xa4, 0x66, 0x38, 0xc5, 0x5f,
+	0x8c, 0x1c, 0x73, 0xeb, 0xbb, 0x5a, 0xea, 0xd4, 0xcb, 0x3b, 0x5a, 0x04, 0x69, 0x90, 0x63, 0xff,
+	0xbb, 0xdb, 0xb8, 0xd1, 0x69, 0x6a, 0x49, 0x82, 0xca, 0xde, 0xc9, 0xe9, 0x5a, 0x14, 0xe5, 0x21,
+	0xd3, 0xa9, 0x8b, 0x64, 0x8c, 0x3e, 0x93, 0xc5, 0x7a, 0xa9, 0xad, 0x6b, 0x71, 0xf6, 0x7e, 0xb6,
+	0xd5, 0xc6, 0x8d, 0xcf, 0xb5, 0x04, 0x3a, 0x03, 0x79, 0x96, 0xd1, 0x7d, 0xdc, 0xa8, 0x76, 0x6a,
+	0xba, 0x96, 0x42, 0x08, 0x96, 0x78, 0xbe, 0x80, 0xa5, 0x49, 0x69, 0x1c, 0x8d, 0xdd, 0xe9, 0xcd,
+	0x10, 0x42, 0x81, 0xc5, 0x40, 0xc0, 0x5f, 0xdd, 0xfd, 0x66, 0x14, 0x72, 0xc6, 0xe8, 0xd0, 0x72,
+	0x3d, 0x8b, 0x19, 0x4f, 0x77, 0x16, 0x18, 0x4f, 0xd2, 0x7c, 0xe1, 0x00, 0x6a, 0x41, 0xf1, 0xf5,
+	0x3d, 0x7a, 0xc2, 0xfa, 0x3e, 0x6d, 0x68, 0xc5, 0xbe, 0x07, 0x43, 0x4b, 0xb5, 0x2b, 0xe3, 0xaf,
+	0x60, 0x57, 0x96, 0x67, 0x6c, 0x8c, 0x04, 0xad, 0xc5, 0x7c, 0x1b, 0x43, 0x6c, 0x9a, 0x4f, 0x59,
+	0x1a, 0xa1, 0x01, 0x9e, 0x3c, 0xa5, 0x71, 0x7a, 0x14, 0x87, 0xb4, 0x98, 0x01, 0x17, 0xec, 0xa9,
+	0x7e, 0x00, 0x29, 0x36, 0x81, 0x1e, 0xb3, 0xb1, 0xba, 0xc4, 0x45, 0xc3, 0x23, 0xaa, 0xe1, 0x24,
+	0x9d, 0x45, 0xbf, 0x37, 0xcb, 0x33, 0xd4, 0x9e, 0xf8, 0x29, 0xed, 0xca, 0x3b, 0xca, 0x24, 0x9d,
+	0x08, 0xdd, 0xbb, 0x51, 0x27, 0x69, 0x65, 0x7a, 0x16, 0x61, 0x01, 0x92, 0x4a, 0x58, 0x80, 0x57,
+	0x7b, 0xe1, 0x7f, 0x1f, 0x72, 0x07, 0x34, 0xf0, 0x46, 0x97, 0x06, 0x64, 0x9a, 0x7a, 0xe1, 0xaf,
+	0xc4, 0xe4, 0xc0, 0xd9, 0x03, 0x25, 0xa6, 0x4a, 0xe8, 0x05, 0x67, 0xe6, 0x74, 0x0f, 0xf4, 0x83,
+	0xad, 0x67, 0x58, 0xfc, 0x46, 0x5e, 0x79, 0xc7, 0x9f, 0x3d, 0xdd, 0x3b, 0xfe, 0x7b, 0x90, 0x7d,
+	0x6a, 0x0f, 0x06, 0xdd, 0x31, 0x8d, 0x9e, 0xc1, 0x97, 0x59, 0x61, 0x63, 0x06, 0x61, 0x35, 0x30,
+	0x3c, 0x0d, 0x42, 0x6c, 0x5c, 0x87, 0x04, 0x6b, 0x72, 0x3e, 0xf4, 0x46, 0x4a, 0x86, 0xf9, 0xc0,
+	0x2c, 0xbb, 0xf8, 0x55, 0xc8, 0x87, 0x56, 0x3a, 0x7a, 0x76, 0x42, 0x4f, 0x01, 0x16, 0x2e, 0xc5,
+	0x0c, 0xa7, 0xf8, 0x6f, 0x12, 0x27, 0x6e, 0xf9, 0x7f, 0x59, 0xf5, 0xfc, 0xe3, 0x1c, 0xfb, 0x9b,
+	0xe1, 0x38, 0x15, 0xf1, 0x90, 0x00, 0x15, 0x87, 0x66, 0x69, 0x41, 0x8c, 0x0a, 0x75, 0xb8, 0x24,
+	0x5e, 0x71, 0xb8, 0x5c, 0xa7, 0xa1, 0xe3, 0x7c, 0x6b, 0x2d, 0x49, 0x57, 0x3b, 0x4d, 0x91, 0x40,
+	0x8b, 0xc0, 0x31, 0xcb, 0x0e, 0x0f, 0xab, 0xd4, 0x29, 0x87, 0xd5, 0x7b, 0x4a, 0x6c, 0x97, 0x74,
+	0xc8, 0x55, 0x13, 0xfc, 0x27, 0xe2, 0x2c, 0x4f, 0x22, 0xa2, 0xaf, 0xc1, 0x0a, 0xfb, 0xdf, 0x9d,
+	0x8c, 0xfb, 0xc4, 0x90, 0x64, 0xf5, 0xcb, 0x50, 0x3f, 0x64, 0xb6, 0x7e, 0x67, 0x18, 0x72, 0x87,
+	0xe2, 0x52, 0x10, 0xda, 0x04, 0x14, 0xe6, 0x30, 0x99, 0xd8, 0xec, 0x85, 0x5a, 0x8e, 0xdd, 0x98,
+	0x6a, 0x29, 0x24, 0x9d, 0x8e, 0x51, 0xc1, 0x9a, 0xca, 0xa4, 0x33, 0xb1, 0xfb, 0xa7, 0x8d, 0x27,
+	0xf6, 0x65, 0x62, 0x5f, 0x84, 0x86, 0x70, 0xfe, 0x74, 0x43, 0x58, 0x04, 0x72, 0x59, 0x0a, 0x02,
+	0xb9, 0x14, 0x6b, 0xb0, 0xda, 0xa6, 0xb7, 0x67, 0x99, 0xb8, 0xe9, 0x71, 0x31, 0xf3, 0xdd, 0xbe,
+	0x8c, 0xd1, 0x56, 0xfc, 0x91, 0x28, 0x2c, 0x85, 0x0d, 0xe3, 0x19, 0x45, 0x8f, 0x7c, 0x0f, 0x8a,
+	0x7e, 0x17, 0xe2, 0xd4, 0x8d, 0x65, 0x23, 0x6d, 0x75, 0xbe, 0x21, 0x2f, 0x86, 0x27, 0xc1, 0x44,
+	0x1f, 0x2b, 0xda, 0xc3, 0x4e, 0xd9, 0x2e, 0xce, 0xb5, 0xdf, 0x8f, 0xd1, 0xa3, 0x0f, 0x61, 0xc9,
+	0x11, 0x28, 0x4c, 0x03, 0xe2, 0x57, 0xa2, 0x37, 0x72, 0x6c, 0x33, 0x55, 0x12, 0xd3, 0xee, 0xcf,
+	0x4b, 0x44, 0xd2, 0xf7, 0xc5, 0x9f, 0x8b, 0xc2, 0xd9, 0x79, 0x45, 0xa0, 0x47, 0x90, 0x0b, 0x58,
+	0xca, 0x4d, 0xa0, 0x63, 0xbd, 0x0a, 0x7a, 0xcb, 0x4d, 0x01, 0xe0, 0xac, 0xa4, 0xa6, 0xab, 0x3e,
+	0x1f, 0x79, 0xcc, 0xce, 0x2c, 0x1c, 0xdb, 0x36, 0x4b, 0x89, 0xdf, 0x48, 0x1f, 0xfd, 0xa6, 0x86,
+	0x96, 0xe7, 0x99, 0xfb, 0xe2, 0x8d, 0x9f, 0x48, 0xa2, 0x2d, 0x58, 0xe9, 0x39, 0xc4, 0xf8, 0xf1,
+	0xad, 0x7e, 0xf7, 0x94, 0x8b, 0x20, 0x92, 0x14, 0x58, 0x59, 0x0d, 0xb3, 0x62, 0xfc, 0x4c, 0x6c,
+	0x76, 0x9e, 0x97, 0x63, 0x13, 0x10, 0x1f, 0x38, 0x44, 0x66, 0xc0, 0x87, 0x0c, 0x11, 0xd8, 0xcb,
+	0x28, 0x2c, 0xd3, 0xe9, 0x9b, 0xe5, 0xf3, 0x8d, 0x87, 0x93, 0xa3, 0xc5, 0xc9, 0x77, 0x6e, 0x53,
+	0x71, 0xe2, 0xd6, 0x55, 0xec, 0x80, 0xe7, 0x6c, 0xb4, 0xb8, 0x07, 0xa1, 0x68, 0x71, 0x17, 0x8f,
+	0x21, 0x9b, 0x1b, 0x33, 0xee, 0x3e, 0x0b, 0x85, 0x15, 0x0f, 0xbd, 0x5b, 0x9d, 0xa6, 0x9c, 0x0d,
+	0xda, 0x76, 0x3d, 0x08, 0xda, 0x76, 0x11, 0x32, 0xd6, 0x73, 0x7a, 0xa7, 0xa7, 0xcf, 0x9a, 0x99,
+	0x20, 0x06, 0x82, 0xed, 0x97, 0x9d, 0xbe, 0x55, 0x78, 0x93, 0x47, 0x67, 0xdb, 0x90, 0xb2, 0x94,
+	0x68, 0x79, 0x21, 0x3b, 0x8a, 0xf8, 0x06, 0x0b, 0xc8, 0x76, 0x09, 0x32, 0xde, 0xa4, 0xd7, 0xb3,
+	0xac, 0xbe, 0xc5, 0xf4, 0x2a, 0x8d, 0x03, 0x40, 0xf1, 0x5f, 0x2f, 0x01, 0x04, 0x53, 0xa6, 0xba,
+	0x70, 0x45, 0x5e, 0x65, 0xe1, 0xba, 0x1e, 0x56, 0xb9, 0x63, 0x27, 0x7b, 0x61, 0xdd, 0xc4, 0x14,
+	0xeb, 0x46, 0x51, 0xbb, 0x78, 0x58, 0xed, 0x3e, 0x08, 0x2d, 0x3f, 0xa7, 0x37, 0x5f, 0x2f, 0xa9,
+	0xe7, 0xda, 0x49, 0x7e, 0xdc, 0x29, 0x4f, 0xb4, 0xa7, 0x16, 0xc6, 0xd4, 0x97, 0x59, 0x18, 0xd7,
+	0x20, 0xc5, 0x6c, 0xa7, 0x17, 0xd4, 0xbc, 0x4a, 0x63, 0x91, 0x44, 0x77, 0xa5, 0x3b, 0x95, 0x09,
+	0x45, 0x04, 0x0a, 0x84, 0x3c, 0x7d, 0x95, 0xf8, 0x2e, 0x24, 0x5d, 0xcb, 0xf4, 0x1c, 0x16, 0xba,
+	0x64, 0x2e, 0x05, 0xa6, 0xf9, 0x98, 0xe3, 0xa1, 0x4b, 0x10, 0xa7, 0xe3, 0x27, 0x4b, 0xc7, 0x0f,
+	0xd5, 0x3f, 0x3a, 0x72, 0x28, 0x54, 0x59, 0x60, 0x72, 0x8b, 0x16, 0x98, 0x12, 0x3b, 0x8e, 0x65,
+	0xb7, 0x28, 0x98, 0xda, 0xf0, 0x35, 0x63, 0x75, 0x7a, 0xcd, 0x60, 0xb5, 0x60, 0xc7, 0xb4, 0x0a,
+	0x00, 0x3d, 0x04, 0x6d, 0xc2, 0x5e, 0xb5, 0xd0, 0xab, 0x3e, 0x44, 0xc4, 0x3c, 0x58, 0xd2, 0x74,
+	0xa0, 0x58, 0xbc, 0xac, 0x20, 0x12, 0x20, 0x7a, 0x00, 0x39, 0x6a, 0x8c, 0x89, 0xa2, 0x97, 0xc3,
+	0x45, 0x87, 0x87, 0x0b, 0xce, 0xf6, 0x02, 0x00, 0xfa, 0x18, 0xd8, 0x05, 0x69, 0x76, 0x29, 0x41,
+	0x0b, 0x6d, 0xae, 0xcd, 0x5f, 0xb7, 0xb0, 0x42, 0x50, 0xdc, 0x94, 0xcf, 0x68, 0xcf, 0x40, 0x9e,
+	0x07, 0x59, 0xa9, 0x95, 0x5a, 0x6d, 0x1d, 0x6b, 0xaf, 0x11, 0x8f, 0x90, 0x83, 0x4a, 0xdb, 0x7a,
+	0xbd, 0xad, 0x45, 0xd0, 0x0a, 0x2c, 0x73, 0x88, 0xfe, 0x99, 0x5e, 0xee, 0xb4, 0x1b, 0x58, 0x8b,
+	0x16, 0xff, 0x4e, 0x1a, 0x92, 0xac, 0x53, 0x50, 0x11, 0xd6, 0xb1, 0x5e, 0x6a, 0x35, 0xea, 0x5d,
+	0x1e, 0x12, 0x4e, 0xe2, 0x75, 0xb7, 0x4a, 0x46, 0x55, 0xaf, 0x68, 0xaf, 0x85, 0x70, 0xea, 0xed,
+	0x92, 0x51, 0xd7, 0x71, 0x97, 0xbb, 0xb9, 0x1c, 0xe7, 0x1c, 0xda, 0x80, 0x8b, 0xb3, 0x38, 0x46,
+	0xcd, 0x68, 0xd3, 0xf8, 0x30, 0xda, 0x0a, 0xba, 0x0a, 0x57, 0x16, 0x20, 0x74, 0x2b, 0x46, 0xeb,
+	0x91, 0x76, 0x16, 0x5d, 0x87, 0xe2, 0x22, 0xac, 0x9a, 0x5e, 0x6b, 0xe0, 0xcf, 0xb5, 0x34, 0x5a,
+	0x87, 0xc2, 0x0c, 0x5e, 0x13, 0xeb, 0x7a, 0xad, 0xd9, 0xd6, 0x2b, 0xda, 0x99, 0xb9, 0x55, 0xee,
+	0x34, 0x2b, 0xc4, 0x57, 0xe6, 0x55, 0x5e, 0x45, 0x37, 0xe0, 0x2a, 0xc7, 0x91, 0x4d, 0xc6, 0xfa,
+	0xb6, 0xd1, 0x6a, 0x63, 0x56, 0x58, 0xdb, 0xa8, 0xe9, 0x8d, 0x4e, 0x5b, 0x3b, 0x8f, 0xde, 0x86,
+	0xeb, 0xb3, 0x98, 0x73, 0x71, 0xd7, 0x94, 0x9a, 0x49, 0xdc, 0xb6, 0x8e, 0x6b, 0x46, 0xbd, 0x44,
+	0x6a, 0x16, 0x41, 0x57, 0xe0, 0xd2, 0x74, 0x7e, 0xa7, 0xce, 0x78, 0xe9, 0x58, 0xaf, 0x68, 0x51,
+	0x74, 0x09, 0xd6, 0x38, 0xc6, 0x16, 0x2e, 0xd5, 0xf4, 0x27, 0x0d, 0xfc, 0xa8, 0x8b, 0xf5, 0x5a,
+	0xe3, 0xb1, 0x5e, 0xd1, 0x62, 0xa4, 0x43, 0x79, 0xee, 0x76, 0xb9, 0xab, 0x63, 0xdc, 0xc0, 0x5a,
+	0x5c, 0x29, 0xd4, 0xa8, 0x3f, 0x2e, 0x55, 0x8d, 0x4a, 0x40, 0x6a, 0x54, 0xb4, 0x04, 0xba, 0x00,
+	0xe7, 0xa6, 0xf2, 0x1b, 0x5b, 0x5b, 0x3a, 0x6e, 0x69, 0x49, 0xa5, 0x3e, 0x46, 0xa3, 0xdb, 0x7a,
+	0x62, 0xb4, 0xcb, 0x3b, 0x9b, 0x8d, 0x12, 0x26, 0x7a, 0x60, 0x90, 0x1a, 0x5f, 0x54, 0x98, 0x33,
+	0x3d, 0x23, 0x7d, 0x55, 0x6e, 0xd4, 0xeb, 0x7a, 0x99, 0xe4, 0xa7, 0x14, 0xe6, 0x58, 0x2f, 0x37,
+	0xea, 0x65, 0xa3, 0x6a, 0xb0, 0x4e, 0xcf, 0x28, 0x4d, 0x91, 0x71, 0x59, 0xbb, 0x62, 0xe7, 0x04,
+	0xa1, 0xcb, 0x70, 0x81, 0xe7, 0x52, 0x6d, 0x0d, 0xf3, 0x05, 0xb4, 0x06, 0x67, 0x43, 0xd9, 0x42,
+	0x06, 0x59, 0x45, 0x97, 0x42, 0x39, 0xdd, 0xcd, 0xcf, 0xbb, 0x8d, 0xa6, 0x8e, 0x4b, 0x44, 0xcb,
+	0x37, 0x58, 0x88, 0xa2, 0x10, 0x56, 0xab, 0x5d, 0xc2, 0x84, 0x77, 0x6e, 0x86, 0xb7, 0xa8, 0x54,
+	0x5e, 0xe1, 0x2d, 0x83, 0xcf, 0xea, 0x95, 0x6e, 0xa5, 0x83, 0x8d, 0xfa, 0x36, 0xd7, 0x7a, 0x6d,
+	0x7d, 0x1a, 0xab, 0xbc, 0xa3, 0x97, 0x1f, 0xd1, 0x00, 0xb5, 0x9d, 0x16, 0xd7, 0xb3, 0x8a, 0x76,
+	0x09, 0xdd, 0x84, 0x37, 0x55, 0xac, 0x1d, 0xbd, 0x54, 0x6d, 0xef, 0xcc, 0x47, 0xbe, 0xac, 0x48,
+	0x83, 0x22, 0xd3, 0x0d, 0x24, 0xd1, 0x5d, 0xda, 0x05, 0x45, 0xa3, 0x95, 0xec, 0x4e, 0xbd, 0xd4,
+	0x69, 0xef, 0x34, 0xb0, 0xf1, 0x4d, 0xbd, 0xa2, 0x15, 0x58, 0x28, 0xdd, 0x00, 0x47, 0x10, 0x2f,
+	0x29, 0xfd, 0x40, 0x33, 0x42, 0x64, 0xcb, 0xd3, 0x64, 0x42, 0x16, 0x5a, 0xf1, 0x3d, 0x48, 0x6d,
+	0xd9, 0x03, 0xdf, 0xa2, 0x0f, 0x04, 0x97, 0x5c, 0x6b, 0x6f, 0xe2, 0x59, 0xdd, 0x20, 0x28, 0x39,
+	0x8d, 0xb2, 0x7c, 0x1f, 0xe7, 0x59, 0x06, 0x0f, 0xd6, 0x59, 0xfc, 0x5b, 0x51, 0xc8, 0x2a, 0xe1,
+	0x18, 0xd1, 0xa7, 0x90, 0x39, 0x34, 0x5d, 0x9b, 0x4c, 0x9d, 0xc2, 0xe8, 0xbe, 0x38, 0x1b, 0xb5,
+	0xf1, 0xf6, 0x63, 0x8e, 0x23, 0x0c, 0x70, 0x49, 0x53, 0xf8, 0xd5, 0x08, 0xa4, 0x45, 0xee, 0x02,
+	0xaf, 0x55, 0x46, 0x7a, 0x8c, 0xaa, 0x91, 0x1e, 0x3f, 0x92, 0x11, 0x92, 0xd4, 0xf8, 0x58, 0xf3,
+	0x0a, 0xa6, 0x96, 0xd7, 0xc3, 0xc4, 0xe3, 0x52, 0xb5, 0xa3, 0x73, 0x03, 0xec, 0x1a, 0x24, 0x3d,
+	0xab, 0xe7, 0xca, 0x90, 0x3d, 0x62, 0x2d, 0x6a, 0x51, 0x20, 0xe6, 0x99, 0xc5, 0xbb, 0xf3, 0xb6,
+	0x05, 0x33, 0xc0, 0x58, 0xb1, 0x70, 0x78, 0x2d, 0xbd, 0x8c, 0xf5, 0xb6, 0x0c, 0x87, 0xf7, 0x29,
+	0x64, 0x64, 0x80, 0x73, 0xb4, 0x0a, 0xb1, 0xa7, 0xd6, 0x8b, 0x50, 0x8b, 0x08, 0x20, 0x08, 0x91,
+	0x13, 0x9d, 0x0d, 0x91, 0xb3, 0x09, 0x20, 0x19, 0x78, 0xe8, 0x7d, 0xc8, 0x8c, 0x45, 0x8a, 0x8b,
+	0xf8, 0xb8, 0x38, 0xea, 0x01, 0x62, 0x71, 0x07, 0xa0, 0xec, 0x5a, 0x7d, 0x6b, 0xe4, 0xdb, 0xe6,
+	0x00, 0x15, 0xc3, 0x41, 0x36, 0x82, 0x12, 0x95, 0x50, 0x1b, 0xab, 0x52, 0x1e, 0x51, 0x1e, 0xab,
+	0x94, 0x09, 0x60, 0x87, 0xee, 0xc9, 0x72, 0x4e, 0x1e, 0x7a, 0x00, 0xd9, 0x5e, 0x90, 0xe4, 0x15,
+	0x12, 0x26, 0x4a, 0x80, 0x28, 0x02, 0xda, 0x2b, 0xb8, 0xc5, 0x9f, 0x8e, 0x42, 0x92, 0x49, 0x17,
+	0xdd, 0x0a, 0x19, 0xca, 0x28, 0x24, 0xfa, 0x79, 0xe7, 0x6b, 0x19, 0x79, 0x2d, 0x8e, 0x5b, 0xcb,
+	0xe7, 0xc3, 0x24, 0xf2, 0x7a, 0x1c, 0x0e, 0x30, 0xd1, 0x5b, 0x6a, 0x78, 0xd0, 0x60, 0x77, 0x8b,
+	0x93, 0xd0, 0xf0, 0x34, 0x22, 0x96, 0xd2, 0x57, 0x20, 0x23, 0x59, 0x2c, 0x50, 0x43, 0x8d, 0xf5,
+	0x26, 0x13, 0x10, 0xf9, 0x5b, 0xb8, 0x28, 0xa2, 0x50, 0x09, 0xf3, 0x91, 0x10, 0x71, 0xf3, 0xb1,
+	0xf8, 0xde, 0x3c, 0xdd, 0xc9, 0x43, 0x06, 0xeb, 0x5b, 0x3a, 0xd6, 0xeb, 0x65, 0x9d, 0xc5, 0x6f,
+	0x60, 0xaa, 0x24, 0xd4, 0x67, 0x0f, 0x32, 0xd8, 0xf4, 0x99, 0x85, 0x80, 0x2e, 0x40, 0xec, 0x8b,
+	0x31, 0x1f, 0x8e, 0xcc, 0x28, 0xff, 0x46, 0xb3, 0x85, 0x09, 0x2c, 0xdc, 0xa7, 0xd1, 0xf9, 0x7d,
+	0x5a, 0x80, 0x74, 0xcf, 0x1c, 0x9b, 0x3d, 0x11, 0x13, 0x3e, 0x8e, 0x65, 0xba, 0xf8, 0xcb, 0x11,
+	0x00, 0x59, 0x90, 0x87, 0x6e, 0x43, 0x92, 0x87, 0x61, 0x08, 0xeb, 0x98, 0x44, 0x11, 0x9b, 0xed,
+	0x3c, 0x34, 0xc3, 0x23, 0x38, 0x67, 0xee, 0xef, 0xbb, 0xd6, 0xbe, 0xe9, 0x5b, 0xdd, 0x3e, 0x8b,
+	0x64, 0xd0, 0x25, 0x75, 0x65, 0x8f, 0xb4, 0xce, 0x1f, 0xbd, 0xdc, 0x58, 0x29, 0x09, 0x04, 0x1e,
+	0xe9, 0x80, 0xd4, 0x7d, 0xc5, 0x9c, 0x06, 0x8e, 0x3d, 0xf4, 0x55, 0x28, 0xcc, 0x32, 0x9b, 0xaa,
+	0xf9, 0xda, 0x34, 0x61, 0x59, 0xb4, 0xe4, 0x67, 0x62, 0x90, 0x30, 0x86, 0xc4, 0x2a, 0xbf, 0x36,
+	0x37, 0x14, 0x18, 0xcd, 0x53, 0x7d, 0xaf, 0x6b, 0x10, 0x37, 0xc7, 0xe3, 0x1e, 0x57, 0xa5, 0x30,
+	0x5a, 0x69, 0x3c, 0xee, 0x61, 0x9a, 0x8d, 0x6e, 0x42, 0xb2, 0xef, 0xf4, 0x9e, 0x5a, 0xd3, 0xf1,
+	0x92, 0x18, 0x62, 0x85, 0x66, 0x61, 0x8e, 0x82, 0x2e, 0x41, 0x92, 0xde, 0xd7, 0x62, 0xdb, 0x59,
+	0x22, 0xc4, 0x2b, 0x87, 0x15, 0xba, 0x10, 0x27, 0x8c, 0x17, 0xa8, 0xd6, 0x2a, 0xbf, 0x8a, 0x1b,
+	0x7c, 0x47, 0x40, 0x6c, 0xcd, 0x0b, 0x93, 0x39, 0xb6, 0xc0, 0x64, 0x2e, 0x7c, 0x3b, 0x02, 0x49,
+	0x56, 0xa3, 0x05, 0x65, 0xdc, 0x07, 0x08, 0xc6, 0xe3, 0x54, 0xeb, 0x95, 0xa1, 0x1b, 0x5d, 0x8b,
+	0x60, 0x05, 0x91, 0x54, 0xa1, 0xe7, 0x8c, 0xf6, 0xec, 0xfd, 0xa9, 0x2a, 0x88, 0x99, 0x92, 0x65,
+	0x16, 0x8b, 0x5c, 0xdb, 0xd3, 0x10, 0x2f, 0x35, 0x9b, 0x65, 0x36, 0x37, 0x56, 0x1a, 0xe5, 0x47,
+	0x3a, 0x96, 0xca, 0xfd, 0xb3, 0x29, 0x48, 0xf2, 0xa3, 0xa1, 0x9b, 0xb0, 0x14, 0x18, 0xf9, 0x34,
+	0xe4, 0x8b, 0x5a, 0xe1, 0xbc, 0xcc, 0xa3, 0x51, 0x53, 0x2e, 0x42, 0xe6, 0xc0, 0xf1, 0xfc, 0xae,
+	0x12, 0x61, 0x99, 0xde, 0xaa, 0xa0, 0x99, 0xd7, 0xf9, 0xc7, 0x12, 0x62, 0xb4, 0xd7, 0x51, 0x28,
+	0x48, 0x8e, 0xfa, 0x9d, 0x84, 0x22, 0x24, 0xec, 0xa1, 0xf0, 0xe5, 0xb2, 0xf7, 0x72, 0x6a, 0x77,
+	0x62, 0x96, 0x85, 0x6e, 0x49, 0x1f, 0x29, 0x11, 0xda, 0xa4, 0xe2, 0xdc, 0xa6, 0x02, 0xe8, 0xfc,
+	0x52, 0x42, 0x1a, 0xec, 0xef, 0x85, 0x66, 0xb4, 0x0b, 0xf3, 0xc8, 0x66, 0x27, 0xb6, 0x2d, 0xc8,
+	0x33, 0xf5, 0xe9, 0x86, 0xe2, 0xfc, 0xbc, 0x3e, 0x97, 0x9a, 0x75, 0xaf, 0x38, 0xcd, 0xee, 0x2b,
+	0x29, 0x54, 0x86, 0x9c, 0x67, 0x8e, 0xfa, 0xbb, 0xce, 0xf3, 0xae, 0xfc, 0x06, 0x47, 0x70, 0x25,
+	0x20, 0xcc, 0xa6, 0xc5, 0x10, 0x69, 0xe0, 0x9c, 0xac, 0x17, 0x24, 0x4e, 0xb9, 0x20, 0xa2, 0x87,
+	0x6a, 0x57, 0x84, 0xaf, 0x0f, 0x84, 0x0b, 0xda, 0xe1, 0xfd, 0x13, 0xf4, 0x54, 0xe1, 0x5b, 0x90,
+	0x53, 0x5b, 0x41, 0xd6, 0x9c, 0xbe, 0x6b, 0x1f, 0xd2, 0x85, 0x8d, 0xae, 0x39, 0x2c, 0xb5, 0xe0,
+	0xf3, 0x11, 0x1f, 0xc2, 0x12, 0xc3, 0xe9, 0x3a, 0x63, 0x76, 0xfd, 0x36, 0x16, 0x52, 0xe3, 0x60,
+	0xe1, 0xc4, 0x79, 0x86, 0xd8, 0x18, 0x8b, 0x10, 0x55, 0x69, 0x51, 0x23, 0x1a, 0xac, 0x73, 0x5a,
+	0xe3, 0x58, 0xa8, 0xf8, 0xbf, 0x12, 0x81, 0xac, 0x22, 0x21, 0xf4, 0x69, 0xa8, 0x5b, 0xaf, 0x9d,
+	0x24, 0xd1, 0xd9, 0x2e, 0x5e, 0x93, 0xf1, 0x8c, 0xa6, 0x8a, 0x2a, 0xde, 0x39, 0x26, 0xb0, 0x4f,
+	0x4b, 0xaf, 0x6e, 0xb1, 0xc1, 0xd3, 0x2c, 0x61, 0xe2, 0xe8, 0x89, 0xc1, 0xf3, 0xf9, 0x3c, 0x82,
+	0x33, 0x90, 0x67, 0x63, 0x4c, 0x1c, 0x1d, 0x46, 0xc8, 0x0a, 0xb3, 0xd3, 0x68, 0xb5, 0xbb, 0x34,
+	0x42, 0x50, 0x9c, 0xfa, 0x8d, 0xa5, 0x7a, 0x65, 0xb3, 0xf1, 0x19, 0x83, 0x44, 0x15, 0x9b, 0x45,
+	0xc4, 0x03, 0x5f, 0x0d, 0xbe, 0x01, 0x82, 0x9f, 0x68, 0x11, 0xfa, 0xdb, 0xd0, 0xa2, 0xc5, 0xbf,
+	0x18, 0x87, 0x6c, 0xdd, 0xf2, 0xe5, 0x17, 0x3f, 0x56, 0x21, 0x49, 0x0f, 0xe7, 0xd9, 0xe6, 0x64,
+	0x06, 0xf3, 0xd4, 0x29, 0x2f, 0xfa, 0xa3, 0x36, 0xe4, 0xec, 0x71, 0x97, 0x87, 0x88, 0x95, 0x57,
+	0xa0, 0x2e, 0x71, 0x64, 0xa5, 0xa0, 0xdb, 0x46, 0x53, 0x7c, 0x66, 0x46, 0xee, 0xb2, 0x4a, 0x90,
+	0xe5, 0xe1, 0xac, 0x3d, 0x96, 0x09, 0x19, 0xef, 0x39, 0xa9, 0xc4, 0x7b, 0x36, 0x20, 0x3f, 0x76,
+	0x5c, 0x9f, 0xbe, 0x05, 0xb5, 0x47, 0xfb, 0x62, 0xfb, 0x7e, 0x7d, 0x4e, 0x51, 0x4d, 0xc7, 0xf5,
+	0x6b, 0x0c, 0x4d, 0xbc, 0x21, 0x19, 0x07, 0x20, 0xaf, 0xf0, 0x1c, 0x32, 0xb2, 0x68, 0xf4, 0x31,
+	0xa4, 0xe9, 0xb7, 0x98, 0x7a, 0xce, 0x60, 0xea, 0x96, 0x50, 0x88, 0x25, 0x47, 0x79, 0x18, 0x37,
+	0x9a, 0x87, 0xef, 0x63, 0x49, 0x42, 0xaf, 0x41, 0x4a, 0x01, 0xf0, 0xd9, 0x9e, 0x5d, 0x83, 0x14,
+	0x25, 0xe0, 0x8c, 0x6c, 0x5a, 0xe1, 0x05, 0x64, 0x95, 0xca, 0xa1, 0xd7, 0xc5, 0xc8, 0x9b, 0x0e,
+	0x07, 0xcf, 0x06, 0x98, 0xe3, 0xfa, 0x53, 0x93, 0x2a, 0xc1, 0x8b, 0x2a, 0x78, 0xca, 0xa4, 0x4a,
+	0x90, 0x0b, 0x4a, 0x5b, 0xd8, 0xae, 0xaa, 0x4c, 0x17, 0xd7, 0x21, 0x2d, 0x1a, 0x41, 0x74, 0x92,
+	0x34, 0x83, 0xc5, 0x93, 0x37, 0x9a, 0x87, 0x1f, 0x68, 0xd1, 0xe2, 0x51, 0x02, 0x96, 0x82, 0xf0,
+	0xb3, 0x54, 0x37, 0x2a, 0x53, 0x1f, 0x36, 0x21, 0x76, 0x44, 0x60, 0x95, 0x87, 0x91, 0x95, 0x64,
+	0xf8, 0x9b, 0x26, 0xc5, 0x1f, 0x4b, 0x84, 0x42, 0xe0, 0x4e, 0x9d, 0xc6, 0x27, 0xca, 0x3b, 0xe4,
+	0xef, 0x6f, 0xa5, 0xd0, 0x19, 0xc8, 0x55, 0x4a, 0xe5, 0x6e, 0xe3, 0xb1, 0x8e, 0xb1, 0x51, 0xd1,
+	0xb5, 0xff, 0x90, 0x42, 0x67, 0x61, 0x99, 0x80, 0xb0, 0x5e, 0xaa, 0x74, 0x5b, 0x7a, 0x09, 0x97,
+	0x77, 0xb4, 0xff, 0x98, 0x42, 0x59, 0x48, 0x6e, 0x35, 0x9e, 0xd4, 0x75, 0xac, 0xfd, 0x27, 0x96,
+	0x68, 0xe9, 0x6d, 0xa3, 0xa2, 0xfd, 0x76, 0x0a, 0x65, 0x20, 0x4e, 0x3c, 0x40, 0xed, 0x3f, 0x53,
+	0x78, 0x4b, 0x6f, 0x6f, 0x1b, 0x15, 0xed, 0xbf, 0x88, 0x44, 0xc7, 0xa8, 0x68, 0xbf, 0x93, 0x42,
+	0x39, 0x48, 0xb5, 0xf4, 0x76, 0xb3, 0x5c, 0x6a, 0x6a, 0xdf, 0xa5, 0x45, 0x54, 0x8d, 0x7a, 0xe7,
+	0xb3, 0xae, 0x51, 0xab, 0x75, 0xda, 0xa5, 0xcd, 0xaa, 0xae, 0xfd, 0xd7, 0x14, 0x3a, 0x07, 0x5a,
+	0x5d, 0x6f, 0x77, 0x37, 0x8d, 0x3a, 0x29, 0x18, 0x3f, 0x36, 0xca, 0xba, 0xf6, 0xbb, 0x29, 0x84,
+	0x20, 0x4f, 0xc1, 0xb8, 0x51, 0xaa, 0x94, 0x4b, 0xad, 0xb6, 0xf6, 0xdf, 0x52, 0x68, 0x09, 0x32,
+	0x04, 0x56, 0xaa, 0xd4, 0x8c, 0xba, 0xf6, 0x7b, 0x94, 0x3d, 0x49, 0xe3, 0xd2, 0x13, 0xed, 0xbf,
+	0xa7, 0x50, 0x1e, 0xd2, 0x46, 0xb3, 0xdc, 0xa5, 0xa7, 0xfb, 0xff, 0x83, 0x22, 0x93, 0x24, 0xab,
+	0xfd, 0xef, 0xa7, 0xd0, 0x32, 0x40, 0xeb, 0xf3, 0x56, 0xb7, 0xd6, 0xa8, 0x74, 0xaa, 0xba, 0xf6,
+	0x07, 0x14, 0x81, 0x00, 0x70, 0xe9, 0x89, 0xd1, 0xd0, 0xfe, 0xa7, 0x44, 0x28, 0xef, 0xe0, 0x46,
+	0xa3, 0xad, 0xfd, 0x2f, 0x09, 0x68, 0xb6, 0x71, 0xa9, 0xac, 0x6b, 0xff, 0x5b, 0x52, 0x34, 0x4b,
+	0xe5, 0x72, 0x5b, 0xfb, 0x43, 0x99, 0x66, 0xf5, 0xf9, 0x3f, 0xb4, 0x06, 0x24, 0xbd, 0x49, 0xe8,
+	0xff, 0x48, 0x26, 0xeb, 0xa4, 0x45, 0xff, 0x97, 0x0a, 0x9d, 0x96, 0xc7, 0xfd, 0x7d, 0xed, 0xdb,
+	0x69, 0x81, 0xd1, 0x36, 0x6a, 0xba, 0xf6, 0x27, 0xd3, 0x68, 0x05, 0x96, 0x68, 0xb2, 0xfd, 0x79,
+	0xb7, 0xdc, 0xa8, 0x6f, 0x19, 0xdb, 0xda, 0x9f, 0x4a, 0x93, 0x7e, 0xab, 0x3d, 0xaa, 0x37, 0x2a,
+	0xda, 0x9f, 0xa6, 0xff, 0xab, 0x7a, 0xa9, 0xa5, 0x6b, 0x3f, 0x94, 0x46, 0x1a, 0x64, 0x4b, 0x9d,
+	0x8a, 0xd1, 0xee, 0x3e, 0xc1, 0x46, 0x5b, 0xd7, 0x7e, 0x38, 0x4d, 0x44, 0xc6, 0x20, 0xe5, 0x46,
+	0xbd, 0x8d, 0x1b, 0x55, 0xed, 0xcf, 0xa4, 0x79, 0x0f, 0x6c, 0x91, 0x1e, 0xf8, 0x91, 0x34, 0xa9,
+	0x42, 0x4d, 0xed, 0xf7, 0x1f, 0x4d, 0x93, 0x36, 0x10, 0x10, 0x6b, 0xc3, 0x8f, 0xa5, 0x69, 0xff,
+	0x7d, 0xde, 0xaa, 0x36, 0xb6, 0xb5, 0x1f, 0x4f, 0x13, 0x09, 0x3c, 0x29, 0x3d, 0xd2, 0xbb, 0xa5,
+	0x6a, 0x09, 0xd7, 0xb4, 0x3f, 0x4b, 0x8b, 0xa0, 0xd7, 0x27, 0xba, 0xad, 0x4e, 0xab, 0xa9, 0xd7,
+	0x2b, 0xda, 0x4f, 0x50, 0x24, 0x56, 0x2c, 0xd1, 0x1d, 0xed, 0x27, 0xc5, 0xa7, 0x60, 0xfe, 0x7e,
+	0x14, 0x32, 0x55, 0x7b, 0x34, 0x79, 0x4e, 0xf5, 0x7b, 0x13, 0x96, 0xa5, 0xa6, 0xbe, 0x10, 0xaf,
+	0xd1, 0x42, 0x1f, 0x6c, 0x09, 0xa9, 0x38, 0x35, 0xa3, 0x96, 0x7a, 0xe1, 0x31, 0xf2, 0x75, 0x38,
+	0xb7, 0xeb, 0x4c, 0x46, 0x7d, 0x7b, 0xb4, 0xdf, 0x0d, 0x0d, 0x96, 0xe8, 0x02, 0x4e, 0xf8, 0xac,
+	0xa0, 0x29, 0xab, 0x5f, 0xff, 0xa9, 0xc2, 0xaa, 0xb5, 0xb7, 0x67, 0xf1, 0x07, 0xbc, 0x2a, 0xb3,
+	0xd8, 0x22, 0x66, 0xe7, 0x24, 0x51, 0x88, 0x9b, 0x0e, 0x2b, 0x34, 0x56, 0x65, 0x77, 0x6c, 0xf7,
+	0xbb, 0x64, 0x0a, 0xf5, 0xc6, 0x66, 0x8f, 0x7f, 0x91, 0x80, 0x5d, 0xa6, 0xa7, 0x61, 0xe3, 0x9a,
+	0x46, 0xa5, 0x2e, 0x32, 0xf1, 0x19, 0x4a, 0xd1, 0xb4, 0xfb, 0x12, 0x54, 0xfc, 0xb5, 0x18, 0x00,
+	0xa6, 0xfe, 0x02, 0xff, 0x22, 0x44, 0xca, 0x0d, 0xb9, 0x15, 0x32, 0xb8, 0xa7, 0xc4, 0xe1, 0x7f,
+	0xc5, 0xbd, 0x26, 0x8e, 0x5e, 0xf8, 0xd1, 0x18, 0x24, 0x59, 0x0e, 0xfa, 0x4a, 0x68, 0x0d, 0xbe,
+	0x7c, 0x1c, 0x87, 0xd9, 0xb5, 0x17, 0x41, 0xfc, 0xc0, 0x74, 0xfb, 0x3c, 0x42, 0x1d, 0xfd, 0x4f,
+	0x60, 0x9e, 0xb3, 0xe7, 0x73, 0xa7, 0x82, 0xfe, 0x2f, 0xfe, 0xf5, 0xe8, 0x31, 0x51, 0xef, 0x71,
+	0xb5, 0xd6, 0xee, 0x96, 0x5a, 0x6c, 0x4d, 0xa5, 0x89, 0x72, 0x03, 0xeb, 0x5a, 0x14, 0xe5, 0x20,
+	0xcd, 0x92, 0xcd, 0x8e, 0x16, 0x93, 0x99, 0x95, 0x52, 0xbb, 0xa4, 0xc5, 0xd1, 0x12, 0x11, 0x41,
+	0xad, 0xdd, 0xdd, 0x6a, 0x19, 0xdf, 0xe4, 0x5f, 0x25, 0xa2, 0x69, 0xa2, 0x75, 0x2d, 0x2d, 0x49,
+	0xbf, 0x3c, 0x44, 0xd2, 0x35, 0xbd, 0x46, 0x47, 0x3a, 0x19, 0x57, 0x79, 0x06, 0x69, 0x6d, 0x7f,
+	0xa3, 0xa3, 0x77, 0x74, 0x2d, 0x2d, 0x79, 0xd2, 0xa1, 0x97, 0x41, 0xcb, 0x90, 0x65, 0xc9, 0xc6,
+	0x96, 0x51, 0xd5, 0x35, 0x90, 0x4c, 0xeb, 0x4d, 0xdc, 0x28, 0x6b, 0x59, 0x59, 0x23, 0xdc, 0x6a,
+	0x69, 0x39, 0x89, 0x8e, 0xdb, 0x4d, 0x6c, 0x34, 0xb4, 0xbc, 0x02, 0xa0, 0x23, 0x75, 0x89, 0x6e,
+	0x35, 0x12, 0x40, 0xcb, 0xd8, 0x26, 0xa3, 0xc0, 0xa8, 0x6f, 0x6b, 0xcb, 0x92, 0x69, 0xab, 0x5d,
+	0x2a, 0x3f, 0xd2, 0x34, 0x3e, 0x0c, 0x7e, 0x32, 0x02, 0xa9, 0x76, 0xfb, 0x73, 0xda, 0xa1, 0x0f,
+	0x21, 0xfb, 0xcc, 0x1e, 0xf5, 0x9d, 0x67, 0x5d, 0xcf, 0xfe, 0x96, 0x35, 0x15, 0x08, 0x9b, 0x23,
+	0xdd, 0x7e, 0x42, 0x31, 0x5a, 0xf6, 0xb7, 0x2c, 0x0c, 0xcf, 0xe4, 0xff, 0xc2, 0x16, 0x40, 0x90,
+	0x43, 0x0c, 0x23, 0xd7, 0x79, 0xe6, 0x85, 0xbf, 0x6b, 0x42, 0x20, 0x68, 0x1d, 0x52, 0x3d, 0x62,
+	0x60, 0x8d, 0xbc, 0xd0, 0xea, 0x25, 0x80, 0xc5, 0x97, 0x69, 0xc8, 0x87, 0x0e, 0x8d, 0xd1, 0x3b,
+	0x21, 0xbf, 0xef, 0xc2, 0xbc, 0x83, 0x65, 0xd5, 0xff, 0x7b, 0x27, 0xb8, 0x64, 0xc7, 0x6e, 0xa6,
+	0x87, 0x03, 0x6b, 0x4e, 0x5d, 0xb1, 0x43, 0x5f, 0x99, 0xf2, 0x03, 0x37, 0xe6, 0xf2, 0x67, 0x86,
+	0xad, 0xb8, 0x5c, 0x4c, 0x3d, 0xb1, 0x42, 0xe8, 0x42, 0x78, 0x38, 0xc6, 0xfe, 0xfb, 0xc0, 0xbe,
+	0x01, 0xc9, 0x4d, 0xe8, 0xf5, 0xb9, 0x3c, 0x6b, 0x04, 0xc6, 0xae, 0x87, 0xd0, 0x6c, 0xf4, 0x31,
+	0x8d, 0xd4, 0xc0, 0x8e, 0xa6, 0xe9, 0x05, 0xcd, 0x54, 0x28, 0x68, 0xb3, 0x62, 0x83, 0x08, 0x53,
+	0x66, 0x14, 0x80, 0x3c, 0x74, 0x07, 0x60, 0x40, 0xe6, 0x33, 0x36, 0x7b, 0xa5, 0x43, 0x57, 0x51,
+	0xe4, 0x44, 0x87, 0x33, 0x03, 0x39, 0xe7, 0xdd, 0x83, 0x2c, 0x1b, 0x90, 0x8c, 0x22, 0x13, 0xb2,
+	0xb5, 0x83, 0x11, 0x88, 0x81, 0x61, 0x51, 0x9a, 0x0f, 0x20, 0xed, 0x8b, 0x09, 0x12, 0x42, 0x47,
+	0x63, 0x5c, 0x3f, 0xd8, 0xd1, 0x18, 0x4f, 0xe0, 0x94, 0xcf, 0x26, 0xa6, 0xc2, 0xcf, 0xc7, 0x01,
+	0x02, 0x21, 0xa2, 0x82, 0xf0, 0xd6, 0x42, 0x41, 0xa4, 0x99, 0x97, 0xb6, 0x0d, 0x29, 0xde, 0x2e,
+	0xfe, 0x85, 0xbc, 0x37, 0x4f, 0xe8, 0x12, 0x21, 0x99, 0x87, 0x71, 0x62, 0x19, 0x63, 0x41, 0x8d,
+	0x1e, 0x4f, 0x9b, 0x89, 0xec, 0xcc, 0xfd, 0xe6, 0x49, 0xec, 0x4e, 0xb0, 0x19, 0xd1, 0x35, 0x80,
+	0xb1, 0x6b, 0x1f, 0xda, 0x03, 0x6b, 0x5f, 0xee, 0x08, 0x88, 0x6f, 0xd1, 0x05, 0x19, 0xe8, 0x03,
+	0x00, 0xb9, 0x65, 0x37, 0xfd, 0x51, 0x82, 0xe9, 0xcd, 0x3d, 0x05, 0x13, 0xdd, 0x00, 0x6d, 0xcf,
+	0x71, 0x7b, 0x56, 0x77, 0x3c, 0x19, 0x0c, 0xba, 0x4c, 0x4c, 0xf4, 0xcb, 0x36, 0x78, 0x89, 0xc2,
+	0x9b, 0x93, 0xc1, 0x80, 0xed, 0x88, 0xbc, 0x09, 0x79, 0xa6, 0xc6, 0x5d, 0xee, 0x68, 0xa5, 0xe4,
+	0xe7, 0x4f, 0x72, 0x2c, 0xa3, 0x42, 0xe1, 0xff, 0x3f, 0x6d, 0xcd, 0x07, 0x90, 0xe2, 0xdd, 0x43,
+	0x3f, 0x58, 0xd4, 0x68, 0xf1, 0xcf, 0x8c, 0x6c, 0x62, 0xa3, 0xb2, 0xad, 0xb3, 0x50, 0xe0, 0xf5,
+	0x46, 0x5d, 0xd7, 0x62, 0xe4, 0x5f, 0xa7, 0x15, 0x7c, 0x70, 0xa0, 0x70, 0x07, 0x32, 0x72, 0x8c,
+	0x04, 0xfe, 0x7d, 0xe4, 0x58, 0xff, 0xbe, 0xf8, 0x46, 0x10, 0x7e, 0x9c, 0x6f, 0x4d, 0xb0, 0x10,
+	0xaa, 0x7a, 0xab, 0xd1, 0x92, 0x8e, 0xd6, 0xb7, 0xa3, 0xb0, 0x3c, 0x75, 0xc2, 0x38, 0x3b, 0xf2,
+	0x22, 0xaf, 0x34, 0xf2, 0xee, 0x41, 0xb6, 0x47, 0x7d, 0xa5, 0x2e, 0xbf, 0x10, 0x12, 0xda, 0x7b,
+	0x91, 0x2f, 0xf4, 0x31, 0xf4, 0xe4, 0x7f, 0x74, 0x4f, 0x79, 0xf8, 0x31, 0xe6, 0x1f, 0x4d, 0xcc,
+	0xb3, 0x0b, 0x16, 0xe2, 0xec, 0xb7, 0x69, 0x54, 0x82, 0x17, 0x1e, 0x4d, 0x9b, 0x7e, 0x43, 0x67,
+	0xea, 0x01, 0xfa, 0x31, 0x1f, 0x4d, 0x65, 0x7c, 0x8e, 0x7b, 0x7c, 0x5e, 0xfc, 0xd9, 0x2c, 0x40,
+	0x50, 0x2d, 0xf4, 0x31, 0x1d, 0x70, 0xdd, 0xde, 0x40, 0x84, 0xe8, 0x5a, 0x9b, 0x0d, 0x2e, 0x50,
+	0xb7, 0xfc, 0xf2, 0xc0, 0xdb, 0x84, 0xa3, 0x97, 0x1b, 0x49, 0xf2, 0xbf, 0xda, 0xc2, 0xc9, 0x11,
+	0x85, 0x15, 0x7e, 0x0e, 0x20, 0x41, 0x63, 0x0f, 0x14, 0x9a, 0x62, 0xbf, 0xf4, 0x5d, 0x88, 0x3a,
+	0x63, 0xbe, 0xa4, 0xbf, 0x7e, 0x5c, 0xa4, 0x02, 0x79, 0x25, 0x04, 0x47, 0x9d, 0x71, 0xf8, 0x10,
+	0x20, 0x2e, 0xb6, 0x6e, 0x7f, 0x2f, 0x0e, 0xb1, 0xf2, 0xd6, 0x37, 0x0a, 0xbf, 0x1d, 0x07, 0x50,
+	0x1e, 0x90, 0xdf, 0x82, 0x64, 0xdf, 0x3a, 0xb4, 0x65, 0xf8, 0x2c, 0x79, 0x43, 0x89, 0x02, 0x6f,
+	0xd7, 0x27, 0xc3, 0x5d, 0xba, 0x7b, 0x47, 0x93, 0x68, 0x0d, 0x52, 0x9e, 0xd5, 0xf3, 0x45, 0x74,
+	0xcc, 0x38, 0x16, 0x49, 0x62, 0x2f, 0xd0, 0xc3, 0x63, 0x6e, 0x2f, 0x90, 0xff, 0x08, 0x43, 0xd6,
+	0x76, 0xba, 0x9e, 0xe5, 0x12, 0xda, 0x3e, 0xbf, 0x6b, 0x72, 0xf9, 0xb8, 0x46, 0xd0, 0xf6, 0x06,
+	0xdf, 0x5c, 0x32, 0x1a, 0x2d, 0x4e, 0x88, 0xc1, 0x76, 0xc4, 0x7f, 0xd4, 0x05, 0x2d, 0xe0, 0x29,
+	0xe3, 0x46, 0x9d, 0x82, 0xf1, 0x2a, 0x67, 0xbc, 0x24, 0x19, 0xb3, 0xe8, 0x52, 0x4b, 0x92, 0xb9,
+	0x08, 0x66, 0xb1, 0xac, 0x14, 0x40, 0xdb, 0x94, 0x3c, 0x0d, 0xff, 0x73, 0x9c, 0x7f, 0x5e, 0xf2,
+	0x6f, 0xdb, 0x43, 0x0b, 0xe7, 0x25, 0x7b, 0x7a, 0x66, 0xde, 0x82, 0x9c, 0xed, 0xb0, 0x70, 0x2f,
+	0x94, 0x75, 0xea, 0x15, 0x65, 0xf2, 0xc4, 0xb4, 0x69, 0xa4, 0x45, 0x22, 0x13, 0xf1, 0x1f, 0x55,
+	0x21, 0x63, 0x3b, 0xdd, 0xa1, 0xe5, 0xee, 0xd3, 0x40, 0x55, 0xa7, 0xe0, 0xa8, 0x71, 0x8e, 0x69,
+	0xa3, 0x51, 0xa3, 0x64, 0x38, 0x6d, 0x3b, 0xec, 0x1f, 0xe7, 0x46, 0x23, 0xf8, 0xf6, 0xd7, 0x32,
+	0xaf, 0xc8, 0xed, 0x1b, 0x94, 0x8c, 0x70, 0x63, 0xff, 0x0a, 0x7f, 0x14, 0x01, 0xe0, 0xd1, 0xac,
+	0xec, 0xd1, 0x7e, 0xe1, 0x77, 0x22, 0xdf, 0x83, 0xf6, 0x4d, 0xe9, 0x53, 0xf4, 0xfb, 0xa5, 0x4f,
+	0xb1, 0x3f, 0x46, 0x7d, 0x2a, 0xfc, 0x70, 0x34, 0xd4, 0x62, 0x1d, 0x62, 0xbd, 0xbd, 0x2f, 0xf8,
+	0xac, 0x78, 0xfd, 0xb8, 0x22, 0xca, 0x5b, 0xdf, 0xb8, 0xad, 0xc6, 0xf4, 0xe3, 0x65, 0x91, 0x01,
+	0x8c, 0x09, 0x3d, 0x32, 0x21, 0xdf, 0xdb, 0xfb, 0xa2, 0xeb, 0x5a, 0xbd, 0x89, 0xeb, 0xd9, 0x87,
+	0x16, 0x17, 0xc6, 0x69, 0x19, 0x9e, 0xe5, 0x0c, 0x73, 0x84, 0xa1, 0xe0, 0x81, 0x73, 0xbd, 0xbd,
+	0x2f, 0x64, 0x0a, 0xd5, 0x00, 0x7c, 0xd9, 0x71, 0x5c, 0x26, 0xef, 0x1c, 0xc7, 0x3f, 0xe8, 0x62,
+	0x35, 0x6c, 0x8a, 0xc2, 0xa0, 0xd8, 0x52, 0x1f, 0x90, 0x4d, 0x9f, 0x12, 0xb6, 0x1b, 0xed, 0x52,
+	0x95, 0x6d, 0x9c, 0x50, 0xd7, 0x92, 0x06, 0xe9, 0x66, 0xde, 0x2e, 0x5d, 0xcc, 0x5a, 0x9f, 0xd7,
+	0xcb, 0x5a, 0x9c, 0x00, 0x4b, 0xf4, 0x6f, 0x42, 0xae, 0x6b, 0x49, 0x36, 0x9d, 0xa2, 0x6b, 0x90,
+	0xea, 0x0d, 0x4c, 0xcf, 0xe3, 0x37, 0xef, 0xf2, 0xcc, 0x78, 0x2a, 0x13, 0x90, 0x51, 0xc1, 0x22,
+	0xaf, 0xf8, 0x3e, 0x24, 0xd9, 0x5e, 0x1b, 0x7a, 0x5b, 0x6e, 0xc5, 0xb1, 0xbe, 0xc8, 0xa9, 0x5b,
+	0x71, 0xf2, 0x10, 0x87, 0x05, 0xde, 0xb8, 0x0f, 0x09, 0x0a, 0x3e, 0xf6, 0x98, 0x72, 0xee, 0xb9,
+	0x6b, 0xf1, 0x1f, 0x47, 0x20, 0x4e, 0x57, 0xf5, 0x4b, 0x90, 0x1c, 0x51, 0x55, 0x0e, 0x99, 0x08,
+	0x1c, 0x26, 0xf7, 0xe5, 0xa2, 0xa1, 0xef, 0xb0, 0x1d, 0x6b, 0x07, 0xa0, 0x4f, 0x01, 0x0e, 0x6d,
+	0xcf, 0xe6, 0xd7, 0xfa, 0x59, 0xdc, 0xfe, 0x8d, 0x79, 0x17, 0x4b, 0x6f, 0x3f, 0x96, 0x68, 0x58,
+	0x21, 0x51, 0x76, 0x21, 0x13, 0x8b, 0xc2, 0x8d, 0xdc, 0x85, 0x04, 0x0b, 0xae, 0xf9, 0x26, 0x24,
+	0xc6, 0x34, 0xe8, 0x26, 0x93, 0x54, 0x56, 0x58, 0x5e, 0x8e, 0x2b, 0xdc, 0x51, 0x96, 0x5f, 0xfc,
+	0x97, 0x51, 0xc8, 0x87, 0x6a, 0x80, 0xf4, 0x50, 0x5d, 0x99, 0xdf, 0x71, 0x52, 0x5d, 0x85, 0x21,
+	0xa7, 0xd4, 0x78, 0x9e, 0x88, 0xae, 0x84, 0xbf, 0x85, 0xc8, 0xa4, 0x14, 0xfa, 0xee, 0x61, 0x01,
+	0xd2, 0xe2, 0xbd, 0xa3, 0xf0, 0x2b, 0x44, 0x5a, 0xfd, 0x76, 0x57, 0x22, 0xfc, 0xed, 0xae, 0xa2,
+	0x68, 0x6d, 0x32, 0x64, 0x1e, 0x51, 0x51, 0xf0, 0x86, 0x2a, 0x12, 0x4c, 0x2d, 0x92, 0xe0, 0x07,
+	0x00, 0x41, 0xb3, 0x88, 0xab, 0x2a, 0x6f, 0xa4, 0xf0, 0x2f, 0x50, 0x56, 0x3b, 0xf4, 0xd2, 0x12,
+	0xfd, 0x98, 0xb4, 0xfe, 0x59, 0x5b, 0xc7, 0xf5, 0x52, 0x55, 0x8b, 0x16, 0x3f, 0x01, 0x78, 0x62,
+	0xd9, 0xfb, 0x07, 0x3e, 0xff, 0xf4, 0x43, 0xf2, 0x19, 0x4d, 0x85, 0x02, 0xbc, 0x70, 0x98, 0xfc,
+	0xa6, 0x43, 0x34, 0xf8, 0xa6, 0x43, 0xf1, 0xdf, 0x47, 0x20, 0xfb, 0x98, 0x35, 0x87, 0x72, 0x58,
+	0x0f, 0x1a, 0xab, 0xaa, 0xae, 0x6c, 0x32, 0x0d, 0x63, 0x62, 0x0f, 0xfa, 0xdd, 0x3e, 0xbb, 0x00,
+	0x48, 0x3f, 0x5b, 0x40, 0x21, 0x15, 0xd3, 0xb7, 0x82, 0x6c, 0xb9, 0xc2, 0x47, 0x78, 0x36, 0x5d,
+	0x7e, 0x64, 0x36, 0xbd, 0x85, 0x1c, 0x57, 0xa8, 0x3b, 0x9e, 0xe5, 0xa2, 0x37, 0x20, 0xb5, 0x6f,
+	0xfb, 0x5d, 0xef, 0x80, 0x7d, 0x15, 0x20, 0xc3, 0x2c, 0x9f, 0x6d, 0xdb, 0x6f, 0xed, 0x94, 0x70,
+	0x72, 0xdf, 0xf6, 0x5b, 0x07, 0x26, 0xe1, 0x41, 0x90, 0xd8, 0x93, 0x72, 0xbe, 0x43, 0x9d, 0xd9,
+	0xb7, 0xfd, 0x4d, 0x0a, 0x40, 0xe7, 0x19, 0x0f, 0xdf, 0xdc, 0xe7, 0x1f, 0x9c, 0x26, 0x74, 0x6d,
+	0x73, 0xbf, 0xf8, 0x01, 0xc4, 0xb7, 0x06, 0xe6, 0xfe, 0xab, 0x5e, 0x89, 0x28, 0xfe, 0x6c, 0x04,
+	0xe2, 0xd8, 0x59, 0x78, 0x97, 0x22, 0x10, 0x7b, 0x74, 0x8e, 0xd8, 0x3f, 0x04, 0x90, 0x37, 0x98,
+	0xc5, 0x8a, 0x31, 0xef, 0xf2, 0x33, 0xd7, 0xe5, 0x00, 0xf7, 0x4b, 0x3d, 0x42, 0x29, 0x7e, 0x08,
+	0xc9, 0x9a, 0xe5, 0xbb, 0x76, 0xef, 0xb4, 0x2d, 0x8d, 0x88, 0x96, 0xfe, 0xb3, 0x08, 0xa4, 0xb7,
+	0xec, 0x81, 0xfc, 0xc6, 0xde, 0xfc, 0x03, 0x1d, 0x42, 0x3c, 0x1a, 0xd8, 0x23, 0xe6, 0x28, 0x26,
+	0x30, 0x4b, 0xd0, 0x5d, 0x20, 0xfb, 0x5b, 0xd2, 0xaa, 0x23, 0xff, 0xd1, 0x35, 0x48, 0x0c, 0xa9,
+	0x22, 0xc4, 0xe7, 0xdf, 0x13, 0x64, 0xb9, 0x84, 0x94, 0x9e, 0x36, 0xd2, 0x6f, 0xe1, 0xf2, 0x93,
+	0xc5, 0x0b, 0x10, 0x9b, 0xf0, 0xaf, 0xc4, 0xf1, 0xef, 0xec, 0x75, 0x8c, 0x0a, 0x26, 0x30, 0x92,
+	0xb5, 0xcf, 0xaf, 0x72, 0xf2, 0xac, 0x6d, 0x92, 0xb5, 0x6f, 0xf7, 0x8b, 0x7f, 0x35, 0x02, 0x49,
+	0x66, 0x10, 0xc8, 0x8f, 0xc7, 0x46, 0x42, 0x1f, 0xcf, 0x17, 0x93, 0x6b, 0x74, 0x91, 0x0d, 0xc1,
+	0x70, 0x0a, 0x75, 0x48, 0x32, 0x48, 0x10, 0xef, 0x46, 0x99, 0x9a, 0x45, 0xbc, 0x1b, 0x05, 0x85,
+	0x46, 0xcd, 0x91, 0x05, 0x44, 0x65, 0xd4, 0x1c, 0x86, 0x42, 0xc4, 0x9b, 0x63, 0x25, 0x95, 0x7a,
+	0x3d, 0xcb, 0xf3, 0xe8, 0x69, 0xb8, 0x30, 0x69, 0xd4, 0xeb, 0xb7, 0x0c, 0x49, 0x68, 0x11, 0xb7,
+	0x68, 0x3e, 0x84, 0xa4, 0x49, 0xc9, 0xf8, 0xd5, 0xf7, 0x42, 0x08, 0x99, 0x71, 0xbc, 0xcd, 0x7e,
+	0x04, 0x25, 0xc3, 0x2f, 0xec, 0x40, 0x92, 0x17, 0x48, 0x26, 0x00, 0xcb, 0x14, 0x17, 0x83, 0xe9,
+	0x7f, 0xd2, 0x9b, 0xcf, 0x5c, 0xdb, 0x17, 0x1f, 0x59, 0x65, 0x09, 0x02, 0x1d, 0x3e, 0x1d, 0x39,
+	0xcc, 0x43, 0x4a, 0x63, 0x96, 0x28, 0x76, 0x60, 0x99, 0x15, 0xf7, 0xe4, 0xc0, 0xf6, 0xad, 0x81,
+	0xed, 0xf9, 0x68, 0x93, 0xbd, 0x30, 0x7f, 0x66, 0xf5, 0xbb, 0xac, 0xa2, 0x62, 0xea, 0x5f, 0x99,
+	0x53, 0x3f, 0xf1, 0x76, 0x8c, 0x53, 0xb0, 0x2c, 0xef, 0xed, 0x1f, 0x80, 0x24, 0x77, 0x09, 0x57,
+	0x01, 0x55, 0xb0, 0xf1, 0x58, 0xc7, 0xdd, 0x7a, 0x83, 0xee, 0x99, 0x61, 0x76, 0x0b, 0x10, 0xc1,
+	0x12, 0x87, 0xe3, 0x4e, 0x9d, 0x7f, 0x46, 0x3f, 0x80, 0x95, 0x36, 0x1b, 0x14, 0x2f, 0xa6, 0xc0,
+	0x5a, 0xed, 0x46, 0xb3, 0xa9, 0x57, 0xb4, 0xf8, 0xdb, 0x3f, 0x11, 0x85, 0x8c, 0xbc, 0x9a, 0x8c,
+	0x34, 0xc8, 0xd1, 0x5b, 0x5b, 0xad, 0x76, 0x69, 0x9b, 0xf0, 0x49, 0xa2, 0x33, 0x90, 0x17, 0x10,
+	0xdc, 0x26, 0xa0, 0xd7, 0x24, 0x92, 0x28, 0x2c, 0x22, 0x21, 0xfc, 0xe3, 0xea, 0x5a, 0x5a, 0x92,
+	0x6d, 0x19, 0x75, 0xa3, 0xb5, 0x43, 0x6f, 0x22, 0x2e, 0x43, 0x96, 0x81, 0xd8, 0x95, 0xc9, 0x98,
+	0x04, 0xb0, 0x5b, 0x71, 0x6c, 0x1f, 0x93, 0x02, 0xd8, 0x45, 0xc4, 0x14, 0x99, 0xe7, 0x69, 0xba,
+	0x4a, 0x3c, 0xf4, 0x84, 0x2c, 0xa5, 0x82, 0x59, 0xe5, 0x33, 0xe8, 0x2c, 0x68, 0xfc, 0x92, 0x19,
+	0xd6, 0x4b, 0xe5, 0x1d, 0x7a, 0x3c, 0x02, 0x92, 0x6c, 0x9b, 0xb8, 0xf0, 0x59, 0x74, 0x01, 0xce,
+	0xc9, 0x64, 0xe8, 0x52, 0x5f, 0x4e, 0x72, 0x94, 0x17, 0xf6, 0xde, 0xfe, 0x99, 0x08, 0xac, 0xcc,
+	0x79, 0x1c, 0x80, 0x36, 0xe0, 0x22, 0xbd, 0xe4, 0xc8, 0xa9, 0x8d, 0x46, 0xbd, 0xdb, 0xa9, 0xb7,
+	0x3a, 0xcd, 0x26, 0x93, 0xed, 0x6b, 0xe8, 0x22, 0x9c, 0x9f, 0x46, 0x10, 0xdb, 0x9c, 0x11, 0x74,
+	0x09, 0xd6, 0xa6, 0x33, 0x15, 0xc1, 0x14, 0x60, 0x75, 0x26, 0x57, 0xc8, 0xe8, 0x02, 0x9c, 0x9b,
+	0xce, 0xe3, 0xd7, 0x34, 0x37, 0xcb, 0xbf, 0xfa, 0x9d, 0xf5, 0xd7, 0x7e, 0xfd, 0x3b, 0xeb, 0xaf,
+	0xfd, 0xdb, 0xef, 0xac, 0x47, 0xbe, 0xfb, 0x9d, 0xf5, 0xc8, 0x1f, 0x7c, 0x67, 0x3d, 0xf2, 0xed,
+	0xa3, 0xf5, 0xc8, 0xcf, 0x1c, 0xad, 0x47, 0x7e, 0xf1, 0x68, 0x3d, 0xf2, 0xcf, 0x8f, 0xd6, 0x23,
+	0xbf, 0x72, 0xb4, 0x1e, 0xf9, 0xd5, 0xa3, 0xf5, 0xc8, 0x6f, 0x1d, 0xad, 0xbf, 0xf6, 0xdd, 0xa3,
+	0xf5, 0xc8, 0x9f, 0xff, 0x8d, 0xf5, 0xd7, 0xfe, 0xe6, 0x6f, 0xac, 0x47, 0xbe, 0xc9, 0xf6, 0xf7,
+	0xfe, 0x5f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x76, 0x62, 0x59, 0x8f, 0x25, 0x86, 0x00, 0x00,
 }

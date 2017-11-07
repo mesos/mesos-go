@@ -93,13 +93,17 @@ func DiskWithSource(persistenceID, containerPath, source string, sourceType meso
 		if persistenceID != "" {
 			r.Disk.Persistence = &mesos.Resource_DiskInfo_Persistence{ID: persistenceID}
 		}
-		if source != "" {
+		if sourceType != mesos.Resource_DiskInfo_Source_UNKNOWN {
 			r.Disk.Source = &mesos.Resource_DiskInfo_Source{Type: sourceType}
 			switch sourceType {
-			case mesos.PATH:
-				r.Disk.Source.Path = &mesos.Resource_DiskInfo_Source_Path{Root: &source}
-			case mesos.MOUNT:
-				r.Disk.Source.Mount = &mesos.Resource_DiskInfo_Source_Mount{Root: &source}
+			case mesos.Resource_DiskInfo_Source_PATH:
+				if source != "" {
+					r.Disk.Source.Path = &mesos.Resource_DiskInfo_Source_Path{Root: &source}
+				}
+			case mesos.Resource_DiskInfo_Source_MOUNT:
+				if source != "" {
+					r.Disk.Source.Mount = &mesos.Resource_DiskInfo_Source_Mount{Root: &source}
+				}
 			}
 		}
 	}

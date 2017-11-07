@@ -103,6 +103,9 @@ message Call {
     SET_QUOTA = 29;          // See 'SetQuota' below.
     REMOVE_QUOTA = 30;       // See 'RemoveQuota' below.
 
+    TEARDOWN = 31;       // See 'Teardown' below.
+
+    MARK_AGENT_GONE = 32; // See 'MarkAgentGone' below.
     option (gogoproto.goproto_enum_prefix) = true;
   }
 
@@ -205,6 +208,27 @@ message Call {
     required string role = 1 [(gogoproto.nullable) = false];
   }
 
+  // Tears down a running framework by shutting down all tasks/executors and
+  // removing the framework.
+  message Teardown {
+    required FrameworkID framework_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "FrameworkID"];
+  }
+
+  // Mark an agent as gone. This can be used by an operator to assert
+  // that the agent instance has failed and is never coming back (e.g.,
+  // ephemeral instance from cloud provider). The master would shutdown
+  // the agent and send 'TASK_GONE_BY_OPERATOR' updates for all the running
+  // tasks. The persistent volumes/reservations on the agent won't be
+  // accessible anymore.
+  //
+  // NOTE: It is possible that the tasks might still be running
+  // if the operator's assertion was wrong and the agent was partitioned
+  // away from the master. The agent would be shutdown when it tries to
+  // re-register with the master when the partition heals.
+  message MarkAgentGone {
+    required AgentID agent_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "AgentID"];
+  }
+
   optional Type type = 1 [(gogoproto.nullable) = false];
 
   optional GetMetrics get_metrics = 2;
@@ -221,6 +245,8 @@ message Call {
   optional StopMaintenance stop_maintenance = 13;
   optional SetQuota set_quota = 14;
   optional RemoveQuota remove_quota = 15;
+  optional Teardown teardown = 16;
+  optional MarkAgentGone mark_agent_gone = 17;
 }
 
 
@@ -379,7 +405,7 @@ message Response {
     // `recovered` field set to true.
     //
     // TODO(neilc): Remove this field in Mesos 2.0.
-    repeated FrameworkInfo recovered_frameworks = 3 [(gogoproto.nullable) = false];
+    repeated FrameworkInfo recovered_frameworks = 3 [deprecated=true, (gogoproto.nullable) = false];
   }
 
   // Lists information about all the executors known to the master at the
@@ -396,7 +422,7 @@ message Response {
     // As of Mesos 1.3.0, this field is deprecated and will always be empty.
     //
     // TODO(neilc): Remove this field in Mesos 2.0.
-    repeated Executor orphan_executors = 2 [(gogoproto.nullable) = false];
+    repeated Executor orphan_executors = 2 [deprecated=true, (gogoproto.nullable) = false];
   }
 
   // Lists information about all the tasks known to the master at the current
@@ -428,7 +454,7 @@ message Response {
     // As of Mesos 1.3.0, this field is deprecated and will always be empty.
     //
     // TODO(neilc): Remove this field in Mesos 2.0.
-    repeated Task orphan_tasks = 4 [(gogoproto.nullable) = false];
+    repeated Task orphan_tasks = 4 [deprecated=true, (gogoproto.nullable) = false];
   }
 
   // Provides information about every role that is on the role whitelist (if
@@ -501,7 +527,14 @@ message Event {
     FRAMEWORK_UPDATED = 7; // See `FrameworkUpdated` below.
     FRAMEWORK_REMOVED = 8; // See `FrameworkRemoved` below.
 
-    // TODO(vinod): Fill in more events.
+    // Periodic message sent by the master to the subscriber according to
+    // 'Subscribed.heartbeat_interval_seconds'. If the subscriber does not
+    // receive any events (including heartbeats) for an extended period of
+    // time (e.g., 5 x heartbeat_interval_seconds), it is likely that the
+    // connection is lost or there is a network partition. In that case,
+    // the subscriber should close the existing subscription connection and
+    // resubscribe using a backoff strategy.
+    HEARTBEAT = 9;
 
     option (gogoproto.goproto_enum_prefix) = true;
   }
@@ -511,6 +544,10 @@ message Event {
     // Snapshot of the entire cluster state. Further updates to the
     // cluster state are sent as separate events on the stream.
     optional Response.GetState get_state = 1;
+
+    // This value will be set if the master is sending heartbeats to
+    // subscribers. See the comment above on 'HEARTBEAT' for more details.
+    optional double heartbeat_interval_seconds = 2;
   }
 
   // Forwarded by the master when a task becomes known to it. This can happen

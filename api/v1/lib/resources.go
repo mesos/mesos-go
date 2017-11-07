@@ -228,12 +228,12 @@ func (resources Resources) String() string {
 			buf.WriteString("[")
 			if s := d.GetSource(); s != nil {
 				switch s.GetType() {
-				case PATH:
+				case Resource_DiskInfo_Source_PATH:
 					buf.WriteString("PATH:")
 					if p := s.GetPath(); p != nil {
 						buf.WriteString(p.GetRoot())
 					}
-				case MOUNT:
+				case Resource_DiskInfo_Source_MOUNT:
 					buf.WriteString("MOUNT:")
 					if m := s.GetMount(); m != nil {
 						buf.WriteString(m.GetRoot())

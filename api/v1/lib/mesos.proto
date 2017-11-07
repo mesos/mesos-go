@@ -1375,6 +1375,8 @@ message Resource {
         MOUNT = 2;
         BLOCK = 3;
         RAW = 4;
+
+        option (gogoproto.goproto_enum_prefix) = true;
       }
 
       // A folder that can be located on a separate disk device. This
@@ -1398,7 +1400,7 @@ message Resource {
 
       // An identifier for this source. This field maps onto CSI
       // volume IDs and is not expected to be set by frameworks.
-      optional string id = 4 [(gogoproto.nullable) = false, (gogoproto.customname) = "ID"]; // EXPERIMENTAL.
+      optional string id = 4 [(gogoproto.customname) = "ID"]; // EXPERIMENTAL.
 
       // Additional metadata for this source. This field maps onto CSI
       // volume metadata and is not expected to be set by frameworks.

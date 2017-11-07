@@ -291,3 +291,23 @@ func RemoveQuota(role string) *master.Call {
 		},
 	}
 }
+
+// MarkAgentGone removes the quota for a particular role.
+func MarkAgentGone(id mesos.AgentID) *master.Call {
+	return &master.Call{
+		Type: master.Call_MARK_AGENT_GONE,
+		MarkAgentGone: &master.Call_MarkAgentGone{
+			AgentID: id,
+		},
+	}
+}
+
+// Teardown removes the quota for a particular role.
+func Teardown(id mesos.FrameworkID) *master.Call {
+	return &master.Call{
+		Type: master.Call_TEARDOWN,
+		Teardown: &master.Call_Teardown{
+			FrameworkID: id,
+		},
+	}
+}

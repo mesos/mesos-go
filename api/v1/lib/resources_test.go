@@ -1,8 +1,10 @@
 package mesos_test
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/api/v1/lib"
 	"github.com/mesos/mesos-go/api/v1/lib/resourcefilters"
 	rez "github.com/mesos/mesos-go/api/v1/lib/resources"
@@ -510,5 +512,93 @@ func TestResources_Plus(t *testing.T) {
 		} else if mem != tc.wantsMemory {
 			t.Errorf("test case %d failed: wants mem (%v) != r1 mem (%v)", i, tc.wantsMemory, mem)
 		}
+	}
+}
+
+func TestDiskTypeIdentityProfile(t *testing.T) {
+	var (
+		id      = "id"
+		profile = "profile"
+	)
+	for ti, tc := range []struct {
+		t          mesos.Resource_DiskInfo_Source_Type
+		hasID      bool
+		hasProfile bool
+	}{
+		{t: mesos.Resource_DiskInfo_Source_RAW, hasID: false, hasProfile: false},
+		{t: mesos.Resource_DiskInfo_Source_RAW, hasID: false, hasProfile: true},
+		{t: mesos.Resource_DiskInfo_Source_RAW, hasID: true, hasProfile: false},
+		{t: mesos.Resource_DiskInfo_Source_RAW, hasID: true, hasProfile: true},
+		{t: mesos.Resource_DiskInfo_Source_BLOCK, hasID: false, hasProfile: false},
+		{t: mesos.Resource_DiskInfo_Source_BLOCK, hasID: false, hasProfile: true},
+		{t: mesos.Resource_DiskInfo_Source_BLOCK, hasID: true, hasProfile: false},
+		{t: mesos.Resource_DiskInfo_Source_BLOCK, hasID: true, hasProfile: true},
+		{t: mesos.Resource_DiskInfo_Source_MOUNT, hasID: false, hasProfile: false},
+		{t: mesos.Resource_DiskInfo_Source_MOUNT, hasID: false, hasProfile: true},
+		{t: mesos.Resource_DiskInfo_Source_MOUNT, hasID: true, hasProfile: false},
+		{t: mesos.Resource_DiskInfo_Source_MOUNT, hasID: true, hasProfile: true},
+		{t: mesos.Resource_DiskInfo_Source_PATH, hasID: false, hasProfile: false},
+		{t: mesos.Resource_DiskInfo_Source_PATH, hasID: false, hasProfile: true},
+		{t: mesos.Resource_DiskInfo_Source_PATH, hasID: true, hasProfile: false},
+		{t: mesos.Resource_DiskInfo_Source_PATH, hasID: true, hasProfile: true},
+	} {
+		t.Run(fmt.Sprintf("test case %d", ti), func(t *testing.T) {
+			disk1 := Resource(Name("disk"), ValueScalar(1), Role("*"), DiskWithSource("", "", "", tc.t))
+			if tc.hasID {
+				disk1.GetDisk().GetSource().ID = &id
+			}
+			if tc.hasProfile {
+				disk1.GetDisk().GetSource().Profile = &profile
+			}
+			r1 := Resources(disk1)
+			if !rez.Contains(r1, disk1) {
+				t.Errorf("expected %v to contain %v", r1, disk1)
+			}
+
+			disk2 := Resource(Name("disk"), ValueScalar(2), Role("*"), DiskWithSource("", "", "", tc.t))
+			disk2.Disk.Source = proto.Clone(disk1.Disk.Source).(*mesos.Resource_DiskInfo_Source)
+			r2 := Resources(disk2)
+
+			r3 := r1.Plus(r1...)
+			sz := len(r3)
+
+			switch tc.t {
+			case mesos.Resource_DiskInfo_Source_RAW:
+				if tc.hasID {
+					// `RAW` resources with source identity cannot be added or split.
+					assertf(t, !rez.ContainsAll(r2, r1), "expected %v to NOT contain %v", r2, r1)
+					assertf(t, !rez.Equivalent(r2, r3), "expected r2 != r1+r1")
+					assertf(t, sz == 2, "expected size(r1+r1) == 2 instead of %d", sz)
+				} else {
+					// `RAW` resources without source identity can be added and split.
+					assertf(t, rez.ContainsAll(r2, r1), "expected %v to contain %v", r2, r1)
+					assertf(t, rez.Equivalent(r2, r3), "expected r2 == r1+r1")
+					assertf(t, sz == 1, "expected size(r1+r1) == 1 instead of %d", sz)
+				}
+
+			case mesos.Resource_DiskInfo_Source_BLOCK,
+				mesos.Resource_DiskInfo_Source_MOUNT:
+				// `BLOCK` or `MOUNT` resources cannot be added or split,
+				// regardless of identity.
+				assertf(t, !rez.ContainsAll(r2, r1), "expected %v to NOT contain %v", r2, r1)
+				assertf(t, !rez.Equivalent(r2, r3), "expected r2 != r1+r1")
+				assertf(t, sz == 2, "expected size(r1+r1) == 2 instead of %d", sz)
+
+			case mesos.Resource_DiskInfo_Source_PATH:
+				// `PATH` resources can be added and split, regardless of identity.
+				assertf(t, rez.ContainsAll(r2, r1), "expected %v to contain %v", r2, r1)
+				assertf(t, rez.Equivalent(r2, r3), "expected r2 == r1+r1")
+				assertf(t, sz == 1, "expected size(r1+r1) == 1 instead of %d", sz)
+
+			case mesos.Resource_DiskInfo_Source_UNKNOWN:
+				t.Fatalf("unexpected disk source type: UNKNOWN")
+			}
+		})
+	}
+}
+
+func assertf(t *testing.T, cond bool, msg string, args ...interface{}) {
+	if !cond {
+		t.Errorf(msg, args...)
 	}
 }

@@ -200,6 +200,43 @@ func OpDestroy(rs ...mesos.Resource) mesos.Offer_Operation {
 	}
 }
 
+func OpCreateVolume(src mesos.Resource, t mesos.Resource_DiskInfo_Source_Type) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.Offer_Operation_CREATE_VOLUME,
+		CreateVolume: &mesos.Offer_Operation_CreateVolume{
+			Source:     src,
+			TargetType: t,
+		},
+	}
+}
+
+func OpDestroyVolume(vol mesos.Resource) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.Offer_Operation_DESTROY_VOLUME,
+		DestroyVolume: &mesos.Offer_Operation_DestroyVolume{
+			Volume: vol,
+		},
+	}
+}
+
+func OpCreateBlock(src mesos.Resource) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.Offer_Operation_CREATE_BLOCK,
+		CreateBlock: &mesos.Offer_Operation_CreateBlock{
+			Source: src,
+		},
+	}
+}
+
+func OpDestroyBlock(blk mesos.Resource) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.Offer_Operation_DESTROY_BLOCK,
+		DestroyBlock: &mesos.Offer_Operation_DestroyBlock{
+			Block: blk,
+		},
+	}
+}
+
 // Revive returns a revive call.
 // Callers are expected to fill in the FrameworkID.
 func Revive() *scheduler.Call {
@@ -339,6 +376,57 @@ func optionalAgentID(agentID string) *mesos.AgentID {
 	return &mesos.AgentID{Value: agentID}
 }
 
+func optionalResourceProviderID(id string) *mesos.ResourceProviderID {
+	if id == "" {
+		return nil
+	}
+	return &mesos.ResourceProviderID{Value: id}
+}
+
 func errInvalidCall(reason string) error {
 	return errors.New("invalid call: " + reason)
+}
+
+// AcknowledgeOfferOperationUpdate acks the receipt of an offer operation status update. Schedulers are responsible for
+// explicitly acknowledging the receipt of updates which have the 'OfferOperationStatusUpdate.status().status_uuid()'
+// field set. Such status updates are retried by the agent or resource provider until they are acknowledged by the scheduler.
+// agentID and resourceProviderID are optional, the remaining fields are required.
+func AcknowledgeOfferOperationUpdate(agentID, resourceProviderID string, statusUUID []byte, operationID string) *scheduler.Call {
+	return &scheduler.Call{
+		Type: scheduler.Call_ACKNOWLEDGE_OFFER_OPERATION_UPDATE,
+		AcknowledgeOfferOperationUpdate: &scheduler.Call_AcknowledgeOfferOperationUpdate{
+			AgentID:            optionalAgentID(agentID),
+			ResourceProviderID: optionalResourceProviderID(resourceProviderID),
+			StatusUUID:         statusUUID,
+			OperationID:        mesos.OfferOperationID{Value: operationID},
+		},
+	}
+}
+
+// ReconcileOperationRequest is a convenience type for which each instance maps to an instance of
+// scheduler.Call_ReconcileOfferOperations_Operation.
+type ReconcileOperationRequest struct {
+	OperationID        string // OperationID is required
+	AgentID            string // AgentID is optional
+	ResourceProviderID string // ResourceProviderID is optional
+}
+
+// ReconcileOfferOperations allows the scheduler to query the status of offer operations. This causes the master to send
+// back the latest status for each offer operation in 'req', if possible. If 'req' is empty, then the master will send
+// the latest status for each operation currently known.
+func ReconcileOfferOperations(req []ReconcileOperationRequest) *scheduler.Call {
+	var operations []scheduler.Call_ReconcileOfferOperations_Operation
+	for i := range req {
+		operations = append(operations, scheduler.Call_ReconcileOfferOperations_Operation{
+			OperationID:        mesos.OfferOperationID{Value: req[i].OperationID},
+			AgentID:            optionalAgentID(req[i].AgentID),
+			ResourceProviderID: optionalResourceProviderID(req[i].ResourceProviderID),
+		})
+	}
+	return &scheduler.Call{
+		Type: scheduler.Call_RECONCILE_OFFER_OPERATIONS,
+		ReconcileOfferOperations: &scheduler.Call_ReconcileOfferOperations{
+			Operations: operations,
+		},
+	}
 }

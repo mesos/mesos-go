@@ -20,7 +20,7 @@ func TestOpCreate(t *testing.T) {
 		volume2 = Resource(Name("disk"), ValueScalar(2000), Role("role"), Disk("1", "path"))
 	)
 	op := Create(Resources(volume1))
-	rs, err := operations.Apply(op, total)
+	rs, err := operations.Apply(op, total, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %+v", err)
 	}
@@ -36,7 +36,7 @@ func TestOpCreate(t *testing.T) {
 
 	// check the case of insufficient disk resources
 	op = Create(Resources(volume2))
-	_, err = operations.Apply(op, total)
+	_, err = operations.Apply(op, total, nil)
 	if err == nil {
 		t.Fatalf("expected an error due to insufficient disk resources")
 	}
@@ -62,7 +62,7 @@ func TestOpUnreserve(t *testing.T) {
 	t.Log("unreservedCPU=" + mesos.Resources(unreservedCPU).String())
 
 	wantsUnreserved := reservedMem.Plus(unreservedCPU...)
-	actualUnreserved, err := operations.Apply(Unreserve(reservedCPU), reserved)
+	actualUnreserved, err := operations.Apply(Unreserve(reservedCPU), reserved, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestOpUnreserve(t *testing.T) {
 			ValueScalar(2),
 			Role("role"),
 			Reservation(ReservedBy("principal"))))
-	_, err = operations.Apply(Unreserve(reservedCPU2), reserved)
+	_, err = operations.Apply(Unreserve(reservedCPU2), reserved, nil)
 	if err == nil {
 		t.Fatalf("expected reservation error")
 	}
@@ -93,7 +93,7 @@ func TestOpReserve(t *testing.T) {
 
 	// test case 1: reserve an amount of CPU that's available
 	wantsReserved := unreservedMem.Plus(reservedCPU1...)
-	actualReserved, err := operations.Apply(Reserve(reservedCPU1), unreserved)
+	actualReserved, err := operations.Apply(Reserve(reservedCPU1), unreserved, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -107,7 +107,7 @@ func TestOpReserve(t *testing.T) {
 			ValueScalar(2),
 			Role("role"),
 			Reservation(ReservedBy("principal"))))
-	_, err = operations.Apply(Reserve(reservedCPU2), unreserved)
+	_, err = operations.Apply(Reserve(reservedCPU2), unreserved, nil)
 	if err == nil {
 		t.Fatalf("expected reservation error")
 	}

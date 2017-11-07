@@ -192,10 +192,10 @@ func TestResources_Equivalent(t *testing.T) {
 		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path1")),
 		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path2")),
 		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2")),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.PATH)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.PATH)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.MOUNT)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.MOUNT)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.Resource_DiskInfo_Source_PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.Resource_DiskInfo_Source_PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.Resource_DiskInfo_Source_MOUNT)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.Resource_DiskInfo_Source_MOUNT)),
 	}
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources

@@ -47292,9 +47292,13 @@ func (mj *Resource_DiskInfo_Source) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 			buf.WriteByte(',')
 		}
 	}
-	buf.WriteString(`"id":`)
-	fflib.WriteJsonString(buf, string(mj.ID))
-	buf.WriteByte(',')
+	if mj.ID != nil {
+		if true {
+			buf.WriteString(`"id":`)
+			fflib.WriteJsonString(buf, string(*mj.ID))
+			buf.WriteByte(',')
+		}
+	}
 	if mj.Metadata != nil {
 		if true {
 			buf.WriteString(`"metadata":`)
@@ -47633,11 +47637,15 @@ handle_ID:
 
 		if tok == fflib.FFTok_null {
 
+			uj.ID = nil
+
 		} else {
 
+			var tval string
 			outBuf := fs.Output.Bytes()
 
-			uj.ID = string(string(outBuf))
+			tval = string(string(outBuf))
+			uj.ID = &tval
 
 		}
 	}

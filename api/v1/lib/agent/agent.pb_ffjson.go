@@ -10477,6 +10477,60 @@ func (mj *Response_WaitNestedContainer) MarshalJSONBuf(buf fflib.EncodingBuffer)
 			buf.WriteByte(',')
 		}
 	}
+	if mj.State != nil {
+		if true {
+			buf.WriteString(`"state":`)
+
+			{
+
+				obj, err = mj.State.MarshalJSON()
+				if err != nil {
+					return err
+				}
+				buf.Write(obj)
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.Reason != nil {
+		if true {
+			buf.WriteString(`"reason":`)
+
+			{
+
+				obj, err = mj.Reason.MarshalJSON()
+				if err != nil {
+					return err
+				}
+				buf.Write(obj)
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.Limitation != nil {
+		if true {
+			buf.WriteString(`"limitation":`)
+
+			{
+
+				err = mj.Limitation.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.Message != nil {
+		if true {
+			buf.WriteString(`"message":`)
+			fflib.WriteJsonString(buf, string(*mj.Message))
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -10487,9 +10541,25 @@ const (
 	ffj_t_Response_WaitNestedContainerno_such_key
 
 	ffj_t_Response_WaitNestedContainer_ExitStatus
+
+	ffj_t_Response_WaitNestedContainer_State
+
+	ffj_t_Response_WaitNestedContainer_Reason
+
+	ffj_t_Response_WaitNestedContainer_Limitation
+
+	ffj_t_Response_WaitNestedContainer_Message
 )
 
 var ffj_key_Response_WaitNestedContainer_ExitStatus = []byte("exit_status")
+
+var ffj_key_Response_WaitNestedContainer_State = []byte("state")
+
+var ffj_key_Response_WaitNestedContainer_Reason = []byte("reason")
+
+var ffj_key_Response_WaitNestedContainer_Limitation = []byte("limitation")
+
+var ffj_key_Response_WaitNestedContainer_Message = []byte("message")
 
 func (uj *Response_WaitNestedContainer) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -10558,6 +10628,62 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'l':
+
+					if bytes.Equal(ffj_key_Response_WaitNestedContainer_Limitation, kn) {
+						currentKey = ffj_t_Response_WaitNestedContainer_Limitation
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'm':
+
+					if bytes.Equal(ffj_key_Response_WaitNestedContainer_Message, kn) {
+						currentKey = ffj_t_Response_WaitNestedContainer_Message
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'r':
+
+					if bytes.Equal(ffj_key_Response_WaitNestedContainer_Reason, kn) {
+						currentKey = ffj_t_Response_WaitNestedContainer_Reason
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 's':
+
+					if bytes.Equal(ffj_key_Response_WaitNestedContainer_State, kn) {
+						currentKey = ffj_t_Response_WaitNestedContainer_State
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Response_WaitNestedContainer_Message, kn) {
+					currentKey = ffj_t_Response_WaitNestedContainer_Message
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_Response_WaitNestedContainer_Limitation, kn) {
+					currentKey = ffj_t_Response_WaitNestedContainer_Limitation
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Response_WaitNestedContainer_Reason, kn) {
+					currentKey = ffj_t_Response_WaitNestedContainer_Reason
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Response_WaitNestedContainer_State, kn) {
+					currentKey = ffj_t_Response_WaitNestedContainer_State
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Response_WaitNestedContainer_ExitStatus, kn) {
@@ -10585,6 +10711,18 @@ mainparse:
 
 				case ffj_t_Response_WaitNestedContainer_ExitStatus:
 					goto handle_ExitStatus
+
+				case ffj_t_Response_WaitNestedContainer_State:
+					goto handle_State
+
+				case ffj_t_Response_WaitNestedContainer_Reason:
+					goto handle_Reason
+
+				case ffj_t_Response_WaitNestedContainer_Limitation:
+					goto handle_Limitation
+
+				case ffj_t_Response_WaitNestedContainer_Message:
+					goto handle_Message
 
 				case ffj_t_Response_WaitNestedContainerno_such_key:
 					err = fs.SkipField(tok)
@@ -10626,6 +10764,127 @@ handle_ExitStatus:
 
 			ttypval := int32(tval)
 			uj.ExitStatus = &ttypval
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_State:
+
+	/* handler: uj.State type=mesos.TaskState kind=int32 quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.State = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		tbuf, err := fs.CaptureField(tok)
+		if err != nil {
+			return fs.WrapErr(err)
+		}
+
+		if uj.State == nil {
+			uj.State = new(mesos.TaskState)
+		}
+
+		err = uj.State.UnmarshalJSON(tbuf)
+		if err != nil {
+			return fs.WrapErr(err)
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Reason:
+
+	/* handler: uj.Reason type=mesos.TaskStatus_Reason kind=int32 quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.Reason = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		tbuf, err := fs.CaptureField(tok)
+		if err != nil {
+			return fs.WrapErr(err)
+		}
+
+		if uj.Reason == nil {
+			uj.Reason = new(mesos.TaskStatus_Reason)
+		}
+
+		err = uj.Reason.UnmarshalJSON(tbuf)
+		if err != nil {
+			return fs.WrapErr(err)
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Limitation:
+
+	/* handler: uj.Limitation type=mesos.TaskResourceLimitation kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.Limitation = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.Limitation == nil {
+			uj.Limitation = new(mesos.TaskResourceLimitation)
+		}
+
+		err = uj.Limitation.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Message:
+
+	/* handler: uj.Message type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+			uj.Message = nil
+
+		} else {
+
+			var tval string
+			outBuf := fs.Output.Bytes()
+
+			tval = string(string(outBuf))
+			uj.Message = &tval
 
 		}
 	}

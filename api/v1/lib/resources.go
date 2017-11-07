@@ -3,6 +3,7 @@ package mesos
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strconv"
 
 	"github.com/gogo/protobuf/proto"
@@ -228,12 +229,16 @@ func (resources Resources) String() string {
 			buf.WriteString("[")
 			if s := d.GetSource(); s != nil {
 				switch s.GetType() {
-				case PATH:
+				case Resource_DiskInfo_Source_BLOCK:
+					buf.WriteString("BLOCK")
+				case Resource_DiskInfo_Source_RAW:
+					buf.WriteString("RAW")
+				case Resource_DiskInfo_Source_PATH:
 					buf.WriteString("PATH:")
 					if p := s.GetPath(); p != nil {
 						buf.WriteString(p.GetRoot())
 					}
-				case MOUNT:
+				case Resource_DiskInfo_Source_MOUNT:
 					buf.WriteString("MOUNT:")
 					if m := s.GetMount(); m != nil {
 						buf.WriteString(m.GetRoot())
@@ -392,6 +397,18 @@ func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
 		} else if aa.GetRoot() != bb.GetRoot() {
 			return false
 		}
+		if aa, bb := a.GetID(), b.GetID(); aa != bb {
+			return false
+		}
+		if aa, bb := a.GetProfile(), b.GetProfile(); aa != bb {
+			return false
+		}
+		if aa, bb := a.GetMetadata(), b.GetMetadata(); (aa == nil) != (bb == nil) {
+			return false
+		} else if !reflect.DeepEqual(aa.GetLabels(), bb.GetLabels()) {
+			// TODO(jdef) can we do better than DeepEqual here?
+			return false
+		}
 	}
 
 	if a, b := left.GetPersistence(), right.GetPersistence(); (a == nil) != (b == nil) {
@@ -449,6 +466,26 @@ func (left *Resource) Addable(right Resource) bool {
 		return false
 	}
 
+	if ls := left.GetDisk().GetSource(); ls != nil {
+		switch ls.GetType() {
+		case Resource_DiskInfo_Source_PATH:
+			// Two PATH resources can be added if their disks are identical
+		case Resource_DiskInfo_Source_BLOCK,
+			Resource_DiskInfo_Source_MOUNT:
+			// Two resources that represent exclusive 'MOUNT' or 'RAW' disks
+			// cannot be added together; this would defeat the exclusivity.
+			return false
+		case Resource_DiskInfo_Source_RAW:
+			// We can only add resources representing 'RAW' disks if
+			// they have no identity or are identical.
+			if ls.GetID() != "" {
+				return false
+			}
+		case Resource_DiskInfo_Source_UNKNOWN:
+			panic("unreachable")
+		}
+	}
+
 	// from apache/mesos: src/common/resources.cpp
 	// TODO(jieyu): Even if two Resource objects with DiskInfo have the
 	// same persistence ID, they cannot be added together. In fact, this
@@ -482,6 +519,29 @@ func (left *Resource) Subtractable(right Resource) bool {
 	}
 	if !left.GetDisk().Equivalent(right.GetDisk()) {
 		return false
+	}
+
+	if ls := left.GetDisk().GetSource(); ls != nil {
+		switch ls.GetType() {
+		case Resource_DiskInfo_Source_PATH:
+			// Two PATH resources can be subtracted if their disks are identical
+		case Resource_DiskInfo_Source_BLOCK,
+			Resource_DiskInfo_Source_MOUNT:
+			// Two resources that represent exclusive 'MOUNT' or 'RAW' disks
+			// cannot be substracted from each other if they are not the same;
+			// this would defeat the exclusivity.
+			if !left.Equivalent(right) {
+				return false
+			}
+		case Resource_DiskInfo_Source_RAW:
+			// We can only add resources representing 'RAW' disks if
+			// they have no identity or refer to the same disk.
+			if ls.GetID() != "" && !left.Equivalent(right) {
+				return false
+			}
+		case Resource_DiskInfo_Source_UNKNOWN:
+			panic("unreachable")
+		}
 	}
 
 	// NOTE: For Resource objects that have DiskInfo, we can only do
@@ -595,4 +655,19 @@ func (left *Resource) IsRevocable() bool {
 // IsPersistentVolume returns true if this is a disk resource with a non-nil Persistence descriptor
 func (left *Resource) IsPersistentVolume() bool {
 	return left.GetDisk().GetPersistence() != nil
+}
+
+// IsDisk returns true if this is a disk resource of the specified type.
+func (left *Resource) IsDisk(t Resource_DiskInfo_Source_Type) bool {
+	if d := left.Disk; d != nil {
+		if s := d.Source; s != nil {
+			return s.GetType() == t
+		}
+	}
+	return false
+}
+
+// HasResourceProvider returns true if the given Resource object is provided by a resource provider.
+func (left *Resource) HasResourceProvider() bool {
+	return left.ProviderID != nil
 }

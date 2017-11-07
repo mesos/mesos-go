@@ -18,24 +18,34 @@ type (
 		cause     error
 	}
 
-	offerResourceOp func(*mesos.Offer_Operation, mesos.Resources) (mesos.Resources, error)
+	offerResourceOp func(_ *mesos.Offer_Operation, res mesos.Resources, converted mesos.Resources) (mesos.Resources, error)
 	opErrorHandler  func(cause error) error
 )
 
 const (
 	operationErrorTypeInvalid operationErrorType = iota
 	operationErrorTypeUnknown
+	operationErrorTypeMayNotBeApplied
 )
 
 var (
-	opNoop             = func(_ *mesos.Offer_Operation, _ mesos.Resources) (_ mesos.Resources, _ error) { return }
+	opError = func(t mesos.Offer_Operation_Type) offerResourceOp {
+		return func(_ *mesos.Offer_Operation, _ mesos.Resources, _ mesos.Resources) (_ mesos.Resources, err error) {
+			err = mayNotBeApplied(t)
+			return
+		}
+	}
 	offerResourceOpMap = map[mesos.Offer_Operation_Type]offerResourceOp{
-		mesos.Offer_Operation_LAUNCH:       opNoop,
-		mesos.Offer_Operation_LAUNCH_GROUP: opNoop,
-		mesos.Offer_Operation_RESERVE:      handleOpErrors(invalidOp(mesos.Offer_Operation_RESERVE), validateOpTotals(opReserve)),
-		mesos.Offer_Operation_UNRESERVE:    handleOpErrors(invalidOp(mesos.Offer_Operation_UNRESERVE), validateOpTotals(opUnreserve)),
-		mesos.Offer_Operation_CREATE:       handleOpErrors(invalidOp(mesos.Offer_Operation_CREATE), validateOpTotals(opCreate)),
-		mesos.Offer_Operation_DESTROY:      handleOpErrors(invalidOp(mesos.Offer_Operation_DESTROY), validateOpTotals(opDestroy)),
+		mesos.Offer_Operation_LAUNCH:         opError(mesos.Offer_Operation_LAUNCH),
+		mesos.Offer_Operation_LAUNCH_GROUP:   opError(mesos.Offer_Operation_LAUNCH_GROUP),
+		mesos.Offer_Operation_RESERVE:        handleOpErrors(invalidOp(mesos.Offer_Operation_RESERVE), validateOpTotals(opReserve)),
+		mesos.Offer_Operation_UNRESERVE:      handleOpErrors(invalidOp(mesos.Offer_Operation_UNRESERVE), validateOpTotals(opUnreserve)),
+		mesos.Offer_Operation_CREATE:         handleOpErrors(invalidOp(mesos.Offer_Operation_CREATE), validateOpTotals(opCreate)),
+		mesos.Offer_Operation_DESTROY:        handleOpErrors(invalidOp(mesos.Offer_Operation_DESTROY), validateOpTotals(opDestroy)),
+		mesos.Offer_Operation_CREATE_VOLUME:  handleOpErrors(invalidOp(mesos.Offer_Operation_CREATE_VOLUME), validateOpTotals(opCreateVolume)),
+		mesos.Offer_Operation_DESTROY_VOLUME: handleOpErrors(invalidOp(mesos.Offer_Operation_DESTROY_VOLUME), validateOpTotals(opDestroyVolume)),
+		mesos.Offer_Operation_CREATE_BLOCK:   handleOpErrors(invalidOp(mesos.Offer_Operation_CREATE_BLOCK), validateOpTotals(opCreateBlock)),
+		mesos.Offer_Operation_DESTROY_BLOCK:  handleOpErrors(invalidOp(mesos.Offer_Operation_DESTROY_BLOCK), validateOpTotals(opDestroyBlock)),
 	}
 )
 
@@ -60,9 +70,13 @@ func invalidOp(t mesos.Offer_Operation_Type) opErrorHandler {
 	}
 }
 
+func mayNotBeApplied(t mesos.Offer_Operation_Type) error {
+	return &operationError{errorType: operationErrorTypeMayNotBeApplied, opType: t}
+}
+
 func handleOpErrors(f opErrorHandler, op offerResourceOp) offerResourceOp {
-	return func(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
-		result, err := op(operation, resources)
+	return func(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+		result, err := op(operation, resources, conv)
 		if err != nil {
 			err = f(err)
 		}
@@ -71,8 +85,8 @@ func handleOpErrors(f opErrorHandler, op offerResourceOp) offerResourceOp {
 }
 
 func validateOpTotals(f offerResourceOp) offerResourceOp {
-	return func(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
-		result, err := f(operation, resources)
+	return func(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+		result, err := f(operation, resources, conv)
 		if err == nil {
 			// sanity CHECK, same as apache/mesos does
 			if !rez.SumAndCompare(resources, result...) {
@@ -83,7 +97,10 @@ func validateOpTotals(f offerResourceOp) offerResourceOp {
 	}
 }
 
-func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
+func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) > 0 {
+		return nil, fmt.Errorf("converted resources not expected")
+	}
 	result := resources.Clone()
 	opRes := operation.GetReserve().GetResources()
 	err := rez.Validate(opRes...)
@@ -107,7 +124,10 @@ func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources) (mes
 	return result, nil
 }
 
-func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
+func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) > 0 {
+		return nil, fmt.Errorf("converted resources not expected")
+	}
 	result := resources.Clone()
 	opRes := operation.GetUnreserve().GetResources()
 	err := rez.Validate(opRes...)
@@ -131,7 +151,10 @@ func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources) (m
 	return result, nil
 }
 
-func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
+func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) > 0 {
+		return nil, fmt.Errorf("converted resources not expected")
+	}
 	result := resources.Clone()
 	volumes := operation.GetCreate().GetVolumes()
 	err := rez.Validate(volumes...)
@@ -163,7 +186,10 @@ func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources) (meso
 	return result, nil
 }
 
-func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
+func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) > 0 {
+		return nil, fmt.Errorf("converted resources not expected")
+	}
 	result := resources.Clone()
 	volumes := operation.GetDestroy().GetVolumes()
 	err := rez.Validate(volumes...)
@@ -188,7 +214,79 @@ func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources) (mes
 	return result, nil
 }
 
-func Apply(operation *mesos.Offer_Operation, resources []mesos.Resource) ([]mesos.Resource, error) {
+func opCreateVolume(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := operation.GetCreateVolume().GetSource()
+
+	if !rez.Contains(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract1(consumed)
+	result.Add(conv...)
+
+	return result, nil
+}
+
+func opDestroyVolume(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := operation.GetDestroyVolume().GetVolume()
+
+	if !rez.Contains(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract1(consumed)
+	result.Add(conv...)
+
+	return result, nil
+}
+
+func opCreateBlock(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := operation.GetCreateBlock().GetSource()
+
+	if !rez.Contains(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract1(consumed)
+	result.Add(conv...)
+
+	return result, nil
+}
+
+func opDestroyBlock(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := operation.GetDestroyBlock().GetBlock()
+
+	if !rez.Contains(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract1(consumed)
+	result.Add(conv...)
+
+	return result, nil
+}
+
+func Apply(operation *mesos.Offer_Operation, resources []mesos.Resource, convertedResources []mesos.Resource) ([]mesos.Resource, error) {
 	f, ok := offerResourceOpMap[operation.GetType()]
 	if !ok {
 		return nil, &operationError{
@@ -196,5 +294,5 @@ func Apply(operation *mesos.Offer_Operation, resources []mesos.Resource) ([]meso
 			cause:     errors.New("unknown offer operation: " + operation.GetType().String()),
 		}
 	}
-	return f(operation, resources)
+	return f(operation, resources, convertedResources)
 }

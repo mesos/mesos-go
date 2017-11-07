@@ -198,6 +198,21 @@ func (mj *Call) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.AcknowledgeOfferOperationUpdate != nil {
+		if true {
+			buf.WriteString(`"acknowledge_offer_operation_update":`)
+
+			{
+
+				err = mj.AcknowledgeOfferOperationUpdate.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	if mj.Reconcile != nil {
 		if true {
 			buf.WriteString(`"reconcile":`)
@@ -205,6 +220,21 @@ func (mj *Call) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			{
 
 				err = mj.Reconcile.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.ReconcileOfferOperations != nil {
+		if true {
+			buf.WriteString(`"reconcile_offer_operations":`)
+
+			{
+
+				err = mj.ReconcileOfferOperations.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -289,7 +319,11 @@ const (
 
 	ffj_t_Call_Acknowledge
 
+	ffj_t_Call_AcknowledgeOfferOperationUpdate
+
 	ffj_t_Call_Reconcile
+
+	ffj_t_Call_ReconcileOfferOperations
 
 	ffj_t_Call_Message
 
@@ -320,7 +354,11 @@ var ffj_key_Call_Shutdown = []byte("shutdown")
 
 var ffj_key_Call_Acknowledge = []byte("acknowledge")
 
+var ffj_key_Call_AcknowledgeOfferOperationUpdate = []byte("acknowledge_offer_operation_update")
+
 var ffj_key_Call_Reconcile = []byte("reconcile")
+
+var ffj_key_Call_ReconcileOfferOperations = []byte("reconcile_offer_operations")
 
 var ffj_key_Call_Message = []byte("message")
 
@@ -403,6 +441,11 @@ mainparse:
 						currentKey = ffj_t_Call_Acknowledge
 						state = fflib.FFParse_want_colon
 						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Call_AcknowledgeOfferOperationUpdate, kn) {
+						currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate
+						state = fflib.FFParse_want_colon
+						goto mainparse
 					}
 
 				case 'd':
@@ -451,6 +494,11 @@ mainparse:
 
 					} else if bytes.Equal(ffj_key_Call_Reconcile, kn) {
 						currentKey = ffj_t_Call_Reconcile
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Call_ReconcileOfferOperations, kn) {
+						currentKey = ffj_t_Call_ReconcileOfferOperations
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
@@ -506,8 +554,20 @@ mainparse:
 					goto mainparse
 				}
 
+				if fflib.EqualFoldRight(ffj_key_Call_ReconcileOfferOperations, kn) {
+					currentKey = ffj_t_Call_ReconcileOfferOperations
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
 				if fflib.SimpleLetterEqualFold(ffj_key_Call_Reconcile, kn) {
 					currentKey = ffj_t_Call_Reconcile
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_AcknowledgeOfferOperationUpdate, kn) {
+					currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -628,8 +688,14 @@ mainparse:
 				case ffj_t_Call_Acknowledge:
 					goto handle_Acknowledge
 
+				case ffj_t_Call_AcknowledgeOfferOperationUpdate:
+					goto handle_AcknowledgeOfferOperationUpdate
+
 				case ffj_t_Call_Reconcile:
 					goto handle_Reconcile
+
+				case ffj_t_Call_ReconcileOfferOperations:
+					goto handle_ReconcileOfferOperations
 
 				case ffj_t_Call_Message:
 					goto handle_Message
@@ -950,6 +1016,33 @@ handle_Acknowledge:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
+handle_AcknowledgeOfferOperationUpdate:
+
+	/* handler: uj.AcknowledgeOfferOperationUpdate type=scheduler.Call_AcknowledgeOfferOperationUpdate kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.AcknowledgeOfferOperationUpdate = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.AcknowledgeOfferOperationUpdate == nil {
+			uj.AcknowledgeOfferOperationUpdate = new(Call_AcknowledgeOfferOperationUpdate)
+		}
+
+		err = uj.AcknowledgeOfferOperationUpdate.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
 handle_Reconcile:
 
 	/* handler: uj.Reconcile type=scheduler.Call_Reconcile kind=struct quoted=false*/
@@ -968,6 +1061,33 @@ handle_Reconcile:
 		}
 
 		err = uj.Reconcile.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_ReconcileOfferOperations:
+
+	/* handler: uj.ReconcileOfferOperations type=scheduler.Call_ReconcileOfferOperations kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.ReconcileOfferOperations = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.ReconcileOfferOperations == nil {
+			uj.ReconcileOfferOperations = new(Call_ReconcileOfferOperations)
+		}
+
+		err = uj.ReconcileOfferOperations.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -2105,6 +2225,391 @@ handle_UUID:
 			v.SetBytes(b[0:n])
 
 		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Call_AcknowledgeOfferOperationUpdate) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Call_AcknowledgeOfferOperationUpdate) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteByte('{')
+	if mj.AgentID != nil {
+		if true {
+			buf.WriteString(`"agent_id":`)
+
+			{
+
+				err = mj.AgentID.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.ResourceProviderID != nil {
+		if true {
+			buf.WriteString(`"resource_provider_id":`)
+
+			{
+
+				err = mj.ResourceProviderID.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if len(mj.StatusUUID) != 0 {
+		buf.WriteString(`"status_uuid":`)
+		if mj.StatusUUID != nil {
+			buf.WriteString(`"`)
+			{
+				enc := base64.NewEncoder(base64.StdEncoding, buf)
+				enc.Write(reflect.Indirect(reflect.ValueOf(mj.StatusUUID)).Bytes())
+				enc.Close()
+			}
+			buf.WriteString(`"`)
+		} else {
+			buf.WriteString(`null`)
+		}
+		buf.WriteByte(',')
+	}
+	buf.WriteString(`"operation_id":`)
+
+	{
+
+		err = mj.OperationID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Call_AcknowledgeOfferOperationUpdatebase = iota
+	ffj_t_Call_AcknowledgeOfferOperationUpdateno_such_key
+
+	ffj_t_Call_AcknowledgeOfferOperationUpdate_AgentID
+
+	ffj_t_Call_AcknowledgeOfferOperationUpdate_ResourceProviderID
+
+	ffj_t_Call_AcknowledgeOfferOperationUpdate_StatusUUID
+
+	ffj_t_Call_AcknowledgeOfferOperationUpdate_OperationID
+)
+
+var ffj_key_Call_AcknowledgeOfferOperationUpdate_AgentID = []byte("agent_id")
+
+var ffj_key_Call_AcknowledgeOfferOperationUpdate_ResourceProviderID = []byte("resource_provider_id")
+
+var ffj_key_Call_AcknowledgeOfferOperationUpdate_StatusUUID = []byte("status_uuid")
+
+var ffj_key_Call_AcknowledgeOfferOperationUpdate_OperationID = []byte("operation_id")
+
+func (uj *Call_AcknowledgeOfferOperationUpdate) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Call_AcknowledgeOfferOperationUpdate) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Call_AcknowledgeOfferOperationUpdatebase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdateno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'a':
+
+					if bytes.Equal(ffj_key_Call_AcknowledgeOfferOperationUpdate_AgentID, kn) {
+						currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate_AgentID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'o':
+
+					if bytes.Equal(ffj_key_Call_AcknowledgeOfferOperationUpdate_OperationID, kn) {
+						currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate_OperationID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'r':
+
+					if bytes.Equal(ffj_key_Call_AcknowledgeOfferOperationUpdate_ResourceProviderID, kn) {
+						currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate_ResourceProviderID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 's':
+
+					if bytes.Equal(ffj_key_Call_AcknowledgeOfferOperationUpdate_StatusUUID, kn) {
+						currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate_StatusUUID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Call_AcknowledgeOfferOperationUpdate_OperationID, kn) {
+					currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate_OperationID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_AcknowledgeOfferOperationUpdate_StatusUUID, kn) {
+					currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate_StatusUUID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_AcknowledgeOfferOperationUpdate_ResourceProviderID, kn) {
+					currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate_ResourceProviderID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Call_AcknowledgeOfferOperationUpdate_AgentID, kn) {
+					currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdate_AgentID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Call_AcknowledgeOfferOperationUpdateno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Call_AcknowledgeOfferOperationUpdate_AgentID:
+					goto handle_AgentID
+
+				case ffj_t_Call_AcknowledgeOfferOperationUpdate_ResourceProviderID:
+					goto handle_ResourceProviderID
+
+				case ffj_t_Call_AcknowledgeOfferOperationUpdate_StatusUUID:
+					goto handle_StatusUUID
+
+				case ffj_t_Call_AcknowledgeOfferOperationUpdate_OperationID:
+					goto handle_OperationID
+
+				case ffj_t_Call_AcknowledgeOfferOperationUpdateno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_AgentID:
+
+	/* handler: uj.AgentID type=mesos.AgentID kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.AgentID = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.AgentID == nil {
+			uj.AgentID = new(mesos.AgentID)
+		}
+
+		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_ResourceProviderID:
+
+	/* handler: uj.ResourceProviderID type=mesos.ResourceProviderID kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.ResourceProviderID = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.ResourceProviderID == nil {
+			uj.ResourceProviderID = new(mesos.ResourceProviderID)
+		}
+
+		err = uj.ResourceProviderID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_StatusUUID:
+
+	/* handler: uj.StatusUUID type=[]uint8 kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.StatusUUID = nil
+		} else {
+			b := make([]byte, base64.StdEncoding.DecodedLen(fs.Output.Len()))
+			n, err := base64.StdEncoding.Decode(b, fs.Output.Bytes())
+			if err != nil {
+				return fs.WrapErr(err)
+			}
+
+			v := reflect.ValueOf(&uj.StatusUUID).Elem()
+			v.SetBytes(b[0:n])
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_OperationID:
+
+	/* handler: uj.OperationID type=mesos.OfferOperationID kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.OperationID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value
@@ -3620,6 +4125,577 @@ handle_Tasks:
 				wantVal = false
 			}
 		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Call_ReconcileOfferOperations) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Call_ReconcileOfferOperations) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"operations":`)
+	if mj.Operations != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Operations {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Call_ReconcileOfferOperationsbase = iota
+	ffj_t_Call_ReconcileOfferOperationsno_such_key
+
+	ffj_t_Call_ReconcileOfferOperations_Operations
+)
+
+var ffj_key_Call_ReconcileOfferOperations_Operations = []byte("operations")
+
+func (uj *Call_ReconcileOfferOperations) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Call_ReconcileOfferOperations) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Call_ReconcileOfferOperationsbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Call_ReconcileOfferOperationsno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'o':
+
+					if bytes.Equal(ffj_key_Call_ReconcileOfferOperations_Operations, kn) {
+						currentKey = ffj_t_Call_ReconcileOfferOperations_Operations
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_ReconcileOfferOperations_Operations, kn) {
+					currentKey = ffj_t_Call_ReconcileOfferOperations_Operations
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Call_ReconcileOfferOperationsno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Call_ReconcileOfferOperations_Operations:
+					goto handle_Operations
+
+				case ffj_t_Call_ReconcileOfferOperationsno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_Operations:
+
+	/* handler: uj.Operations type=[]scheduler.Call_ReconcileOfferOperations_Operation kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.Operations = nil
+		} else {
+
+			uj.Operations = []Call_ReconcileOfferOperations_Operation{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__Operations Call_ReconcileOfferOperations_Operation
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__Operations type=scheduler.Call_ReconcileOfferOperations_Operation kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__Operations.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.Operations = append(uj.Operations, tmp_uj__Operations)
+
+				wantVal = false
+			}
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Call_ReconcileOfferOperations_Operation) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Call_ReconcileOfferOperations_Operation) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{ "operation_id":`)
+
+	{
+
+		err = mj.OperationID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte(',')
+	if mj.AgentID != nil {
+		if true {
+			buf.WriteString(`"agent_id":`)
+
+			{
+
+				err = mj.AgentID.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.ResourceProviderID != nil {
+		if true {
+			buf.WriteString(`"resource_provider_id":`)
+
+			{
+
+				err = mj.ResourceProviderID.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	buf.Rewind(1)
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Call_ReconcileOfferOperations_Operationbase = iota
+	ffj_t_Call_ReconcileOfferOperations_Operationno_such_key
+
+	ffj_t_Call_ReconcileOfferOperations_Operation_OperationID
+
+	ffj_t_Call_ReconcileOfferOperations_Operation_AgentID
+
+	ffj_t_Call_ReconcileOfferOperations_Operation_ResourceProviderID
+)
+
+var ffj_key_Call_ReconcileOfferOperations_Operation_OperationID = []byte("operation_id")
+
+var ffj_key_Call_ReconcileOfferOperations_Operation_AgentID = []byte("agent_id")
+
+var ffj_key_Call_ReconcileOfferOperations_Operation_ResourceProviderID = []byte("resource_provider_id")
+
+func (uj *Call_ReconcileOfferOperations_Operation) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Call_ReconcileOfferOperations_Operation) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Call_ReconcileOfferOperations_Operationbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Call_ReconcileOfferOperations_Operationno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'a':
+
+					if bytes.Equal(ffj_key_Call_ReconcileOfferOperations_Operation_AgentID, kn) {
+						currentKey = ffj_t_Call_ReconcileOfferOperations_Operation_AgentID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'o':
+
+					if bytes.Equal(ffj_key_Call_ReconcileOfferOperations_Operation_OperationID, kn) {
+						currentKey = ffj_t_Call_ReconcileOfferOperations_Operation_OperationID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'r':
+
+					if bytes.Equal(ffj_key_Call_ReconcileOfferOperations_Operation_ResourceProviderID, kn) {
+						currentKey = ffj_t_Call_ReconcileOfferOperations_Operation_ResourceProviderID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_ReconcileOfferOperations_Operation_ResourceProviderID, kn) {
+					currentKey = ffj_t_Call_ReconcileOfferOperations_Operation_ResourceProviderID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Call_ReconcileOfferOperations_Operation_AgentID, kn) {
+					currentKey = ffj_t_Call_ReconcileOfferOperations_Operation_AgentID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Call_ReconcileOfferOperations_Operation_OperationID, kn) {
+					currentKey = ffj_t_Call_ReconcileOfferOperations_Operation_OperationID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Call_ReconcileOfferOperations_Operationno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Call_ReconcileOfferOperations_Operation_OperationID:
+					goto handle_OperationID
+
+				case ffj_t_Call_ReconcileOfferOperations_Operation_AgentID:
+					goto handle_AgentID
+
+				case ffj_t_Call_ReconcileOfferOperations_Operation_ResourceProviderID:
+					goto handle_ResourceProviderID
+
+				case ffj_t_Call_ReconcileOfferOperations_Operationno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_OperationID:
+
+	/* handler: uj.OperationID type=mesos.OfferOperationID kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.OperationID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_AgentID:
+
+	/* handler: uj.AgentID type=mesos.AgentID kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.AgentID = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.AgentID == nil {
+			uj.AgentID = new(mesos.AgentID)
+		}
+
+		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_ResourceProviderID:
+
+	/* handler: uj.ResourceProviderID type=mesos.ResourceProviderID kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.ResourceProviderID = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.ResourceProviderID == nil {
+			uj.ResourceProviderID = new(mesos.ResourceProviderID)
+		}
+
+		err = uj.ResourceProviderID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value
@@ -5340,6 +6416,21 @@ func (mj *Event) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.OfferOperationUpdate != nil {
+		if true {
+			buf.WriteString(`"offer_operation_update":`)
+
+			{
+
+				err = mj.OfferOperationUpdate.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	if mj.Message != nil {
 		if true {
 			buf.WriteString(`"message":`)
@@ -5408,6 +6499,8 @@ const (
 
 	ffj_t_Event_Update
 
+	ffj_t_Event_OfferOperationUpdate
+
 	ffj_t_Event_Message
 
 	ffj_t_Event_Failure
@@ -5428,6 +6521,8 @@ var ffj_key_Event_Rescind = []byte("rescind")
 var ffj_key_Event_RescindInverseOffer = []byte("rescind_inverse_offer")
 
 var ffj_key_Event_Update = []byte("update")
+
+var ffj_key_Event_OfferOperationUpdate = []byte("offer_operation_update")
 
 var ffj_key_Event_Message = []byte("message")
 
@@ -5532,6 +6627,11 @@ mainparse:
 						currentKey = ffj_t_Event_Offers
 						state = fflib.FFParse_want_colon
 						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Event_OfferOperationUpdate, kn) {
+						currentKey = ffj_t_Event_OfferOperationUpdate
+						state = fflib.FFParse_want_colon
+						goto mainparse
 					}
 
 				case 'r':
@@ -5587,6 +6687,12 @@ mainparse:
 
 				if fflib.EqualFoldRight(ffj_key_Event_Message, kn) {
 					currentKey = ffj_t_Event_Message
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Event_OfferOperationUpdate, kn) {
+					currentKey = ffj_t_Event_OfferOperationUpdate
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -5670,6 +6776,9 @@ mainparse:
 
 				case ffj_t_Event_Update:
 					goto handle_Update
+
+				case ffj_t_Event_OfferOperationUpdate:
+					goto handle_OfferOperationUpdate
 
 				case ffj_t_Event_Message:
 					goto handle_Message
@@ -5873,6 +6982,33 @@ handle_Update:
 		}
 
 		err = uj.Update.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_OfferOperationUpdate:
+
+	/* handler: uj.OfferOperationUpdate type=scheduler.Event_OfferOperationUpdate kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.OfferOperationUpdate = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.OfferOperationUpdate == nil {
+			uj.OfferOperationUpdate = new(Event_OfferOperationUpdate)
+		}
+
+		err = uj.OfferOperationUpdate.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -7039,6 +8175,198 @@ handle_Data:
 			v.SetBytes(b[0:n])
 
 		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Event_OfferOperationUpdate) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Event_OfferOperationUpdate) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"status":`)
+
+	{
+
+		err = mj.Status.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Event_OfferOperationUpdatebase = iota
+	ffj_t_Event_OfferOperationUpdateno_such_key
+
+	ffj_t_Event_OfferOperationUpdate_Status
+)
+
+var ffj_key_Event_OfferOperationUpdate_Status = []byte("status")
+
+func (uj *Event_OfferOperationUpdate) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Event_OfferOperationUpdate) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Event_OfferOperationUpdatebase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Event_OfferOperationUpdateno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 's':
+
+					if bytes.Equal(ffj_key_Event_OfferOperationUpdate_Status, kn) {
+						currentKey = ffj_t_Event_OfferOperationUpdate_Status
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_OfferOperationUpdate_Status, kn) {
+					currentKey = ffj_t_Event_OfferOperationUpdate_Status
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Event_OfferOperationUpdateno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Event_OfferOperationUpdate_Status:
+					goto handle_Status
+
+				case ffj_t_Event_OfferOperationUpdateno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_Status:
+
+	/* handler: uj.Status type=mesos.OfferOperationStatus kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.Status.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value

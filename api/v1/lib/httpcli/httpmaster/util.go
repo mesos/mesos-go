@@ -53,7 +53,9 @@ func classifyResponse(c *master.Call) (rc client.ResponseClass, err error) {
 		master.Call_START_MAINTENANCE,
 		master.Call_STOP_MAINTENANCE,
 		master.Call_SET_QUOTA,
-		master.Call_REMOVE_QUOTA:
+		master.Call_REMOVE_QUOTA,
+		master.Call_MARK_AGENT_GONE,
+		master.Call_TEARDOWN:
 		rc = client.ResponseClassNoData
 
 	default:

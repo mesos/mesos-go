@@ -37,7 +37,8 @@ type (
 
 	client struct {
 		*httpcli.Client
-		redirect RedirectSettings
+		redirect       RedirectSettings
+		allowReconnect bool // feature flag
 	}
 
 	// Caller is the public interface a framework scheduler's should consume
@@ -93,6 +94,14 @@ func MaxRedirects(mr int) Option {
 		old := c.redirect.MaxAttempts
 		c.redirect.MaxAttempts = mr
 		return MaxRedirects(old)
+	}
+}
+
+func AllowReconnection(v bool) Option {
+	return func(c *client) Option {
+		old := c.allowReconnect
+		c.allowReconnect = v
+		return AllowReconnection(old)
 	}
 }
 

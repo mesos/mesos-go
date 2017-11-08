@@ -189,18 +189,29 @@ func errorIndicatesSubscriptionLoss(err error) (result bool) {
 func connectedFn(ctx context.Context, state *state) stateFn {
 	// (a) validate call != SUBSCRIBE
 	if state.call.GetType() == scheduler.Call_SUBSCRIBE {
-		state.resp = nil
+		if state.client.allowReconnect {
+			// Reset internal state back to DISCONNECTED and re-execute the SUBSCRIBE call.
+			// Mesos will hangup on the old SUBSCRIBE socket after this one completes.
+			state.caller = nil
+			state.resp = nil
+			state.err = nil
+			state.fn = disconnectedFn
 
-		// TODO(jdef) not super happy with this error: I don't think that mesos minds if we issue
-		// redundant subscribe calls. However, the state tracking mechanism in this module can't
-		// cope with it (e.g. we'll need to track a new stream-id, etc).
-		// We make a best effort to transition to a disconnected state if we detect protocol errors,
-		// error events, or mesos-generated "not subscribed" errors. But we don't handle things such
-		// as, for example, authentication errors. Granted, the initial subscribe call should fail
-		// if authentication is an issue, so we should never end up here. I'm not convinced there's
-		// not other edge cases though with respect to other error codes.
-		state.err = errAlreadySubscribed
-		return connectedFn
+			return state.fn(ctx, state)
+		} else {
+			state.resp = nil
+
+			// TODO(jdef) not super happy with this error: I don't think that mesos minds if we issue
+			// redundant subscribe calls. However, the state tracking mechanism in this module can't
+			// cope with it (e.g. we'll need to track a new stream-id, etc).
+			// We make a best effort to transition to a disconnected state if we detect protocol errors,
+			// error events, or mesos-generated "not subscribed" errors. But we don't handle things such
+			// as, for example, authentication errors. Granted, the initial subscribe call should fail
+			// if authentication is an issue, so we should never end up here. I'm not convinced there's
+			// not other edge cases though with respect to other error codes.
+			state.err = errAlreadySubscribed
+			return connectedFn
+		}
 	}
 
 	// (b) execute call, save the result in resp, err

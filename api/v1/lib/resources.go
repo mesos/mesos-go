@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/mesos/mesos-go/api/v1/lib/roles"
 )
 
 type (
@@ -29,6 +30,7 @@ const (
 	resourceErrorTypeIllegalSet
 	resourceErrorTypeIllegalDisk
 	resourceErrorTypeIllegalReservation
+	resourceErrorTypeIllegalShare
 
 	noReason = "" // make error generation code more readable
 )
@@ -43,6 +45,7 @@ var (
 		resourceErrorTypeIllegalSet:         "illegal set resource",
 		resourceErrorTypeIllegalDisk:        "illegal disk resource",
 		resourceErrorTypeIllegalReservation: "illegal resource reservation",
+		resourceErrorTypeIllegalShare:       "illegal shared resource",
 	}
 )
 
@@ -351,13 +354,137 @@ func (left *Resource) Validate() error {
 	}
 
 	// check for disk resource
-	if left.GetDisk() != nil && left.GetName() != "disk" {
-		return resourceErrorTypeIllegalDisk.Generate("DiskInfo should not be set for \"" + left.GetName() + "\" resource")
+	if disk := left.GetDisk(); disk != nil {
+		if left.GetName() != "disk" {
+			return resourceErrorTypeIllegalDisk.Generate("DiskInfo should not be set for \"" + left.GetName() + "\" resource")
+		}
+		if s := disk.GetSource(); s != nil {
+			switch s.GetType() {
+			case Resource_DiskInfo_Source_PATH,
+				Resource_DiskInfo_Source_MOUNT:
+				// these only contain optional members
+			case Resource_DiskInfo_Source_BLOCK,
+				Resource_DiskInfo_Source_RAW:
+				// TODO(jdef): update w/ validation once the format of BLOCK and RAW
+				// disks is known.
+			case Resource_DiskInfo_Source_UNKNOWN:
+				return resourceErrorTypeIllegalDisk.Generate(fmt.Sprintf("unsupported DiskInfo.Source.Type in %q", s))
+			}
+		}
 	}
 
-	// check for invalid state of (role,reservation) pair
-	if left.GetRole() == "*" && left.GetReservation() != nil {
-		return resourceErrorTypeIllegalReservation.Generate("default role cannot be dynamically assigned")
+	if rs := left.GetReservations(); len(rs) == 0 {
+		// check for "pre-reservation-refinement" format
+		if _, err := roles.Parse(left.GetRole()); err != nil {
+			return resourceErrorTypeIllegalReservation.Generate(err.Error())
+		}
+
+		if r := left.GetReservation(); r != nil {
+			if r.Type != nil {
+				return resourceErrorTypeIllegalReservation.Generate(
+					"Resource.ReservationInfo.type must not be set for the Resource.reservation field")
+			}
+			if r.Role != nil {
+				return resourceErrorTypeIllegalReservation.Generate(
+					"Resource.ReservationInfo.role must not be set for the Resource.reservation field")
+			}
+			// check for invalid state of (role,reservation) pair
+			if left.GetRole() == "*" {
+				return resourceErrorTypeIllegalReservation.Generate("default role cannot be dynamically reserved")
+			}
+		}
+	} else {
+		// check for "post-reservation-refinement" format
+		for i := range rs {
+			r := &rs[i]
+			if r.Type == nil {
+				return resourceErrorTypeIllegalReservation.Generate(
+					"Resource.ReservationInfo.type must be set")
+			}
+			if r.Role == nil {
+				return resourceErrorTypeIllegalReservation.Generate(
+					"Resource.ReservationInfo.role must be set")
+			}
+			if _, err := roles.Parse(r.GetRole()); err != nil {
+				return resourceErrorTypeIllegalReservation.Generate(err.Error())
+			}
+			if r.GetRole() == "*" {
+				return resourceErrorTypeIllegalReservation.Generate(
+					"role '*' cannot be reserved")
+			}
+		}
+		// check that reservations are correctly refined
+		ancestor := rs[0].GetRole()
+		for i := 1; i < len(rs); i++ {
+			r := &rs[i]
+			if r.GetType() == Resource_ReservationInfo_STATIC {
+				return resourceErrorTypeIllegalReservation.Generate(
+					"a refined reservation cannot be STATIC")
+			}
+			child := r.GetRole()
+			if !roles.IsStrictSubroleOf(child, ancestor) {
+				return resourceErrorTypeIllegalReservation.Generate(fmt.Sprintf(
+					"role %q is not a refinement of %q", child, ancestor))
+			}
+		}
+
+		// Additionally, we allow the "pre-reservation-refinement" format to be set
+		// as long as there is only one reservation, and the `Resource.role` and
+		// `Resource.reservation` fields are consistent with the reservation.
+		if len(rs) == 1 {
+			if r := left.Role; r != nil && *r != rs[0].GetRole() {
+				return resourceErrorTypeIllegalReservation.Generate(fmt.Sprintf(
+					"'Resource.role' field with %q does not match the role %q in 'Resource.reservations'",
+					*r, rs[0].GetRole()))
+			}
+
+			switch rs[0].GetType() {
+			case Resource_ReservationInfo_STATIC:
+				return resourceErrorTypeIllegalReservation.Generate(
+					"'Resource.reservation' must not be set if the single reservation in 'Resource.reservations' is STATIC")
+			case Resource_ReservationInfo_DYNAMIC:
+				if (left.Role == nil) != (left.GetReservation() == nil) {
+					return resourceErrorTypeIllegalReservation.Generate(
+						"'Resource.role' and 'Resource.reservation' must both be set or both not be set if the single reservation in 'Resource.reservations' is DYNAMIC")
+				}
+				if r := left.GetReservation(); r != nil && r.GetPrincipal() != rs[0].GetPrincipal() {
+					return resourceErrorTypeIllegalReservation.Generate(fmt.Sprintf(
+						"'Resource.reservation.principal' with %q does not match the principal %q in 'Resource.reservations'",
+						r.GetPrincipal(), rs[0].GetPrincipal()))
+				}
+				// TODO(jdef) come up with a better way to compare labels
+				if r := left.GetReservation(); r != nil && !reflect.DeepEqual(r.GetLabels(), rs[0].GetLabels()) {
+					return resourceErrorTypeIllegalReservation.Generate(fmt.Sprintf(
+						"'Resource.reservation.labels' with %q does not match the labels %q in 'Resource.reservations'",
+						r.GetLabels(), rs[0].GetLabels()))
+				}
+			case Resource_ReservationInfo_UNKNOWN:
+				return resourceErrorTypeIllegalReservation.Generate("Unsupported 'Resource.ReservationInfo.type'")
+			}
+		} else {
+			if r := left.Role; r != nil {
+				return resourceErrorTypeIllegalReservation.Generate(
+					"'Resource.role' must not be set if there is more than one reservation in 'Resource.reservations'")
+			}
+			if r := left.GetReservation(); r != nil {
+				return resourceErrorTypeIllegalReservation.Generate(
+					"'Resource.reservation' must not be set if there is more than one reservation in 'Resource.reservations'")
+			}
+		}
+	}
+
+	// Check that shareability is enabled for supported resource types.
+	// For now, it is for persistent volumes only.
+	// NOTE: We need to modify this once we extend shareability to other
+	// resource types.
+	if s := left.GetShared(); s != nil {
+		if left.GetName() != "disk" {
+			return resourceErrorTypeIllegalShare.Generate(fmt.Sprintf(
+				"Resource %q cannot be shared", left.GetName()))
+		}
+		if p := left.GetDisk().GetPersistence(); p == nil {
+			return resourceErrorTypeIllegalShare.Generate("only persistent volumes can be shared")
+		}
 	}
 
 	return nil
@@ -629,22 +756,48 @@ func (left *Resource) IsUnreserved() bool {
 	// role != RoleDefault     -> static reservation
 	// GetReservation() != nil -> dynamic reservation
 	// return {no-static-reservation} && {no-dynamic-reservation}
-	return left.GetRole() == "*" && left.GetReservation() == nil
+	return (left.Role == nil || left.GetRole() == "*") && left.GetReservation() == nil && len(left.GetReservations()) == 0
 }
 
 // IsReserved returns true if this resource has been reserved for the given role.
 // If role=="" then return true if there are no static or dynamic reservations for this resource.
 // It's expected that this Resource has already been validated (see Validate).
 func (left *Resource) IsReserved(role string) bool {
-	if role != "" {
-		return !left.IsUnreserved() && role == left.GetRole()
+	return !left.IsUnreserved() && (role == "" || role == left.ReservationRole())
+}
+
+// ReservationRole returns the role for which the resource is reserved. Callers should check the
+// reservation status of the resource via IsReserved prior to invoking this func.
+func (r *Resource) ReservationRole() string {
+	// if using reservation refinement, return the role of the last refinement
+	rs := r.GetReservations()
+	if x := len(rs); x > 0 {
+		return rs[x-1].GetRole()
 	}
-	return !left.IsUnreserved()
+	// if using the old reservation API, role is a first class field of Resource
+	// (and it's never stored in Resource.Reservation).
+	return r.GetRole()
+}
+
+// IsAllocatableTo returns true if the resource may be allocated to the given role.
+func (left *Resource) IsAllocatableTo(role string) bool {
+	if left.IsUnreserved() {
+		return true
+	}
+	r := left.ReservationRole()
+	return role == r || roles.IsStrictSubroleOf(role, r)
 }
 
 // IsDynamicallyReserved returns true if this resource has a non-nil reservation descriptor
 func (left *Resource) IsDynamicallyReserved() bool {
-	return left.GetReservation() != nil
+	if left.IsReserved("") {
+		if left.GetReservation() != nil {
+			return true
+		}
+		rs := left.GetReservations()
+		return rs[len(rs)-1].GetType() == Resource_ReservationInfo_DYNAMIC
+	}
+	return false
 }
 
 // IsRevocable returns true if this resource has a non-nil revocable descriptor
@@ -659,15 +812,29 @@ func (left *Resource) IsPersistentVolume() bool {
 
 // IsDisk returns true if this is a disk resource of the specified type.
 func (left *Resource) IsDisk(t Resource_DiskInfo_Source_Type) bool {
-	if d := left.Disk; d != nil {
-		if s := d.Source; s != nil {
-			return s.GetType() == t
-		}
+	if s := left.GetDisk().GetSource(); s != nil {
+		return s.GetType() == t
 	}
 	return false
 }
 
 // HasResourceProvider returns true if the given Resource object is provided by a resource provider.
 func (left *Resource) HasResourceProvider() bool {
-	return left.ProviderID != nil
+	return left.GetProviderID() != nil
+}
+
+// ToUnreserved returns a (cloned) view of the Resources w/o any reservation data. It does not modify
+// the receiver.
+func (rs Resources) ToUnreserved() (result Resources) {
+	if rs == nil {
+		return nil
+	}
+	for i := range rs {
+		r := rs[i] // intentionally shallow-copy
+		r.Reservations = nil
+		r.Reservation = nil
+		r.Role = nil
+		result.Add1(r)
+	}
+	return
 }

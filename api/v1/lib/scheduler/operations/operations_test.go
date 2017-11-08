@@ -6,6 +6,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib"
 	rez "github.com/mesos/mesos-go/api/v1/lib/resources"
 	. "github.com/mesos/mesos-go/api/v1/lib/resourcetest"
+	"github.com/mesos/mesos-go/api/v1/lib/roles"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/operations"
 )
 
@@ -88,7 +89,7 @@ func TestOpReserve(t *testing.T) {
 		unreservedCPU = Resources(Resource(Name("cpus"), ValueScalar(1)))
 		unreservedMem = Resources(Resource(Name("mem"), ValueScalar(512)))
 		unreserved    = unreservedCPU.Plus(unreservedMem...)
-		reservedCPU1  = rez.Flatten(unreservedCPU, rez.Role("role").Assign(), ReservedBy("principal").Assign())
+		reservedCPU1  = rez.Flatten(unreservedCPU, roles.Role("role").Assign(), ReservedBy("principal").Assign())
 	)
 
 	// test case 1: reserve an amount of CPU that's available

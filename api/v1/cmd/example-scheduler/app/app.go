@@ -16,6 +16,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
 	"github.com/mesos/mesos-go/api/v1/lib/resources"
+	"github.com/mesos/mesos-go/api/v1/lib/roles"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
@@ -186,7 +187,7 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 					AgentID:  offers[i].AgentID,
 					Executor: state.executor,
 					Resources: resources.Find(
-						resources.Flatten(state.wantsTaskResources, resources.Role(state.role).Assign()),
+						resources.Flatten(state.wantsTaskResources, roles.Role(state.role).Assign()),
 						remaining...,
 					),
 				}

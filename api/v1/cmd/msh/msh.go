@@ -33,6 +33,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpsched"
 	"github.com/mesos/mesos-go/api/v1/lib/resources"
+	"github.com/mesos/mesos-go/api/v1/lib/roles"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
@@ -47,7 +48,7 @@ var (
 	TaskName      = "msh"
 	MesosMaster   = "127.0.0.1:5050"
 	User          = "root"
-	Role          = resources.Role("*")
+	Role          = roles.Role("*")
 	CPUs          = float64(0.010)
 	Memory        = float64(64)
 

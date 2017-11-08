@@ -3,7 +3,6 @@ package mesos
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"strconv"
 
 	"github.com/gogo/protobuf/proto"
@@ -452,8 +451,7 @@ func (left *Resource) Validate() error {
 						"'Resource.reservation.principal' with %q does not match the principal %q in 'Resource.reservations'",
 						r.GetPrincipal(), rs[0].GetPrincipal()))
 				}
-				// TODO(jdef) come up with a better way to compare labels
-				if r := left.GetReservation(); r != nil && !reflect.DeepEqual(r.GetLabels(), rs[0].GetLabels()) {
+				if r := left.GetReservation(); r != nil && !r.GetLabels().Equivalent(rs[0].GetLabels()) {
 					return resourceErrorTypeIllegalReservation.Generate(fmt.Sprintf(
 						"'Resource.reservation.labels' with %q does not match the labels %q in 'Resource.reservations'",
 						r.GetLabels(), rs[0].GetLabels()))
@@ -532,8 +530,7 @@ func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
 		}
 		if aa, bb := a.GetMetadata(), b.GetMetadata(); (aa == nil) != (bb == nil) {
 			return false
-		} else if !reflect.DeepEqual(aa.GetLabels(), bb.GetLabels()) {
-			// TODO(jdef) can we do better than DeepEqual here?
+		} else if !labelList(aa.GetLabels()).Equivalent(labelList(bb.GetLabels())) {
 			return false
 		}
 	}

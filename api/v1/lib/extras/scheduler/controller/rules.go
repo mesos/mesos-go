@@ -134,3 +134,62 @@ func LogEvents(f func(*scheduler.Event)) Rule {
 		return chain(ctx, e, err)
 	})
 }
+
+// AckOperationUpdates acknowledges an offer operation status update sent to the scheduler by the master.
+// The AgentID isn't part of the event reported by the master, so it cannot be included in the generated ACK.
+func AckOperationUpdates(caller calls.Caller) Rule {
+	return AckOperationUpdatesF(func() calls.Caller { return caller })
+}
+
+// AckOperationUpdatesF is a functional adapter for AckOperationUpdates, useful for cases where the caller may
+// change over time. An error that occurs while ack'ing the status update is returned as a calls.AckError.
+func AckOperationUpdatesF(callerLookup func() calls.Caller) Rule {
+	return func(ctx context.Context, e *scheduler.Event, err error, chain Chain) (context.Context, *scheduler.Event, error) {
+		// aggressively attempt to ack updates: even if there's pre-existing error state attempt
+		// to acknowledge all offer operation status updates.
+		origErr := err
+		if e.GetType() == scheduler.Event_OFFER_OPERATION_UPDATE {
+			var (
+				s    = e.GetOfferOperationUpdate().GetStatus()
+				uuid = s.GetStatusUUID()
+			)
+			// only ACK non-empty UUID's, as per mesos scheduler spec.
+			if len(uuid) > 0 {
+				// the fact that we're receiving this offer operation status update means that the
+				// framework supplied an operation_id to the master when executing the offer operation,
+				// therefore the operation_id included in the status object here should be non-empty.
+				opID := s.GetOperationID().GetValue()
+				if opID == "" {
+					panic("expected non-empty offer operation ID for offer operation status update")
+				}
+				// try to extract a resource provider ID; we can safely assume that all converted resources
+				// are for the same provider ID (including a non-specified one).
+				rpID := ""
+				conv := s.GetConvertedResources()
+				for i := range conv {
+					id := conv[i].GetProviderID().GetValue()
+					if id != "" {
+						rpID = id
+						break
+					}
+				}
+				ack := calls.AcknowledgeOfferOperationUpdate(
+					"",   // agentID: optional
+					rpID, // optional
+					uuid,
+					opID,
+				)
+				err = calls.CallNoData(ctx, callerLookup(), ack)
+				if err != nil {
+					// TODO(jdef): not sure how important this is; if there's an error ack'ing
+					// because we became disconnected, then we'll just reconnect later and
+					// Mesos will ask us to ACK anyway -- why pay special attention to these
+					// call failures vs others?
+					err = &calls.AckError{Ack: ack, Cause: err}
+					return ctx, e, Error2(origErr, err) // drop (do not propagate to chain)
+				}
+			}
+		}
+		return chain(ctx, e, origErr)
+	}
+}

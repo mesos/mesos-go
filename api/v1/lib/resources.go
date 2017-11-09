@@ -9,6 +9,8 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/roles"
 )
 
+const DefaultRole = "*"
+
 type (
 	Resources         []Resource
 	resourceErrorType int

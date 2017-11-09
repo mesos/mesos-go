@@ -297,7 +297,7 @@ func TestResources_Minus(t *testing.T) {
 			wants:    Resources(Resource(Name("cpus"), ValueScalar(1), Role("*"), Revocable())),
 			wantsCPU: 1,
 		},
-		// reserved
+		// reserved (pre-refinement)
 		{
 			r1: Resources(
 				Resource(Name("cpus"), ValueScalar(8), Role("role")),
@@ -310,6 +310,22 @@ func TestResources_Minus(t *testing.T) {
 			wants: Resources(
 				Resource(Name("cpus"), ValueScalar(6), Role("role")),
 				Resource(Name("cpus"), ValueScalar(4), Role("role"), Reservation(ReservedBy("principal"))),
+			),
+			wantsCPU: 10,
+		},
+		// reserved (post-refinement)
+		{
+			r1: Resources(
+				Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("role", ""))),
+				Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", "principal"))),
+			),
+			r2: Resources(
+				Resource(Name("cpus"), ValueScalar(2), Reservations(StaticReservation("role", ""))),
+				Resource(Name("cpus"), ValueScalar(4), Reservations(DynamicReservation("role", "principal"))),
+			),
+			wants: Resources(
+				Resource(Name("cpus"), ValueScalar(6), Reservations(StaticReservation("role", ""))),
+				Resource(Name("cpus"), ValueScalar(4), Reservations(DynamicReservation("role", "principal"))),
 			),
 			wantsCPU: 10,
 		},
@@ -467,18 +483,49 @@ func TestResources_Plus(t *testing.T) {
 			wants:    Resources(Resource(Name("cpus"), ValueScalar(2), Role("*"), Revocable())),
 			wantsCPU: 2,
 		},
-		// statically reserved
+		// statically reserved (pre-refinement)
 		{
 			r1:       Resources(Resource(Name("cpus"), ValueScalar(8), Role("role"))),
 			r2:       Resources(Resource(Name("cpus"), ValueScalar(4), Role("role"))),
 			wants:    Resources(Resource(Name("cpus"), ValueScalar(12), Role("role"))),
 			wantsCPU: 12,
 		},
-		// dynamically reserved
+		// dynamically reserved (pre-refinement)
 		{
 			r1:       Resources(Resource(Name("cpus"), ValueScalar(8), Role("role"), Reservation(ReservedBy("principal")))),
 			r2:       Resources(Resource(Name("cpus"), ValueScalar(4), Role("role"), Reservation(ReservedBy("principal")))),
 			wants:    Resources(Resource(Name("cpus"), ValueScalar(12), Role("role"), Reservation(ReservedBy("principal")))),
+			wantsCPU: 12,
+		},
+		// statically reserved (post-refinement)
+		{
+			r1:       Resources(Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("role", "")))),
+			r2:       Resources(Resource(Name("cpus"), ValueScalar(4), Reservations(StaticReservation("role", "")))),
+			wants:    Resources(Resource(Name("cpus"), ValueScalar(12), Reservations(StaticReservation("role", "")))),
+			wantsCPU: 12,
+		},
+		// dynamically reserved (post-refinement)
+		{
+			r1:       Resources(Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", "principal")))),
+			r2:       Resources(Resource(Name("cpus"), ValueScalar(4), Reservations(DynamicReservation("role", "principal")))),
+			wants:    Resources(Resource(Name("cpus"), ValueScalar(12), Reservations(DynamicReservation("role", "principal")))),
+			wantsCPU: 12,
+		},
+		// dynamically reserved (post-refinement), same labels
+		{
+			r1:       Resources(Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", "principal", Label("a", "b"))))),
+			r2:       Resources(Resource(Name("cpus"), ValueScalar(4), Reservations(DynamicReservation("role", "principal", Label("a", "b"))))),
+			wants:    Resources(Resource(Name("cpus"), ValueScalar(12), Reservations(DynamicReservation("role", "principal", Label("a", "b"))))),
+			wantsCPU: 12,
+		},
+		// dynamically reserved (post-refinement), different labels
+		{
+			r1: Resources(Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", "principal", Label("a", "b"))))),
+			r2: Resources(Resource(Name("cpus"), ValueScalar(4), Reservations(DynamicReservation("role", "principal", Label("a", "e"))))),
+			wants: Resources(
+				Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", "principal", Label("a", "b")))),
+				Resource(Name("cpus"), ValueScalar(4), Reservations(DynamicReservation("role", "principal", Label("a", "e")))),
+			),
 			wantsCPU: 12,
 		},
 	} {
@@ -600,5 +647,189 @@ func TestDiskTypeIdentityProfile(t *testing.T) {
 func assertf(t *testing.T, cond bool, msg string, args ...interface{}) {
 	if !cond {
 		t.Errorf(msg, args...)
+	}
+}
+
+func TestPushReservation(t *testing.T) {
+	var (
+		ports         = Resource(Name("ports"), ValueRange(Span(20000, 40000)))
+		ri            = StaticReservation("role", "bob")
+		reservedPorts = Resource(Name("ports"), ValueRange(Span(20000, 40000)), Reservations(ri))
+		r1, r2        = Resources(ports), Resources(reservedPorts)
+	)
+	r3 := r1.PushReservation(ri)
+	if !rez.Equivalent(r3, r2) {
+		t.Errorf("push resv failed, expected %q instead of %q", r2, r3)
+	}
+}
+
+func TestPopReservation(t *testing.T) {
+	var (
+		ports         = Resource(Name("ports"), ValueRange(Span(20000, 40000)))
+		ri            = StaticReservation("role", "bob")
+		reservedPorts = Resource(Name("ports"), ValueRange(Span(20000, 40000)), Reservations(ri))
+		r1, r2        = Resources(ports), Resources(reservedPorts)
+	)
+	r3 := r2.PopReservation()
+	if !rez.Equivalent(r3, r1) {
+		t.Errorf("pop resv failed, expected %q instead of %q", r1, r3)
+	}
+}
+
+func TestReservedResources_Validation(t *testing.T) {
+	for ti, tc := range []struct {
+		r        mesos.Resource
+		wantsErr bool
+	}{
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations())}, // unreserved
+
+		// refinements format only
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("role", "")))},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("role", "principal")))},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", "")))},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", "principal")))},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", "", Label("a", "b"))))},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", "principal", Label("a", "b"))))},
+
+		// STATIC refined w/ DYNAMIC
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(
+			StaticReservation("role", ""),
+			DynamicReservation("role/subrole", ""),
+		))},
+
+		// DYNAMIC refined w/ DYNAMIC
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(
+			DynamicReservation("role", ""),
+			DynamicReservation("role/subrole", ""),
+		))},
+
+		// rejected: DYNAMIC refined w/ STATIC
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(
+			DynamicReservation("role", ""),
+			StaticReservation("role/subrole", ""),
+		)), wantsErr: true},
+
+		// rejected: STATIC refined w/ DYNAMIC, same role
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(
+			StaticReservation("role", ""),
+			DynamicReservation("role", ""),
+		)), wantsErr: true},
+
+		// rejected: STATIC refined w/ DYNAMIC, orthogonal roles
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(
+			StaticReservation("role1", ""),
+			DynamicReservation("role2", ""),
+		)), wantsErr: true},
+
+		// rejected: role is always required
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("", ""))), wantsErr: true},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("", "principal"))), wantsErr: true},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("", ""))), wantsErr: true},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("", "principal"))), wantsErr: true},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("", "", Label("a", "b")))), wantsErr: true},
+		{r: Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("", "principal", Label("a", "b")))), wantsErr: true},
+
+		// must not mix pre- and post-refinement formats w/ STATIC
+		{r: Resource(Name("cpus"), ValueScalar(8), Role("role"),
+			Reservation(ReservedBy("principal")), Reservations(StaticReservation("role", "principal"))), wantsErr: true},
+
+		// DYNAMIC allows redundant pre- and post-refinement formats if they match
+		{r: Resource(Name("cpus"), ValueScalar(8), Role("role"),
+			Reservation(ReservedBy("principal")), Reservations(DynamicReservation("role", "principal")))},
+
+		// DYNAMIC rejects redundant pre- and post-refinement formats w/ refinements
+		{r: Resource(Name("cpus"), ValueScalar(8), Role("role/a"),
+			Reservation(ReservedBy("principal")),
+			Reservations(
+				DynamicReservation("role", "principal"),
+				DynamicReservation("role/a", "principal"),
+			),
+		), wantsErr: true},
+
+		// DYNAMIC rejects redundant pre- and post-refinement formats if roles are different
+		{r: Resource(Name("cpus"), ValueScalar(8), Role("role1"),
+			Reservation(ReservedBy("principal")), Reservations(DynamicReservation("role2", "principal"))), wantsErr: true},
+
+		// DYNAMIC rejects redundant pre- and post-refinement formats if principals are different
+		{r: Resource(Name("cpus"), ValueScalar(8), Role("role"),
+			Reservation(ReservedBy("principal1")), Reservations(DynamicReservation("role", "principal2"))), wantsErr: true},
+
+		// DYNAMIC rejects redundant pre- and post-refinement formats if labels are different
+		{r: Resource(Name("cpus"), ValueScalar(8), Role("role"),
+			Reservation(ReservedBy("principal")), Reservations(DynamicReservation("role", "principal", Label("a", "b")))), wantsErr: true},
+	} {
+		err := tc.r.Validate()
+		if tc.wantsErr != (err != nil) {
+			if tc.wantsErr {
+				// expected failure
+				t.Errorf("test case %d failed: expected validation failure for %q", ti, tc.r)
+			} else {
+				// unexpected failure
+				t.Errorf("test case %d failed: unexpected validation error for %q: %+v", ti, tc.r, err)
+			}
+		}
+	}
+}
+
+func TestReservedResources_Equivalence(t *testing.T) {
+	var (
+		label1 = Label("foo", "bar")
+		label2 = Label("foo", "baz")
+		unique = []mesos.Resource{
+			Resource(Name("cpus"), ValueScalar(8)), // unreserved
+
+			// statically reserved for role (pre-refinement); for now these are considered unique from the
+			// post-refinement formatted resources.
+			Resource(Name("cpus"), ValueScalar(8), Role("role1")),
+			Resource(Name("cpus"), ValueScalar(8), Role("role2")),
+
+			// dynamically reserved for role (pre-refinement); for now these are considered unique from the
+			// post-refinement formatted resources.
+			Resource(Name("cpus"), ValueScalar(8), Role("role1"), Reservation(ReservedBy("principal1"))),
+			Resource(Name("cpus"), ValueScalar(8), Role("role1"), Reservation(ReservedBy("principal2"))),
+			Resource(Name("cpus"), ValueScalar(8), Role("role2"), Reservation(ReservedBy("principal1"))),
+			Resource(Name("cpus"), ValueScalar(8), Role("role2"), Reservation(ReservedBy("principal2"))),
+
+			// dynamically reserved for role, both pre-refinement and post-refinement; for now these are
+			// considered unique from the post-refinement resources.
+			Resource(Name("cpus"), ValueScalar(8), Role("role1"),
+				Reservation(ReservedBy("principal1")),
+				Reservations(DynamicReservation("role1", "principal1")),
+			),
+
+			// statically reserved for role
+			Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("role1", ""))),
+			Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("role2", ""))),
+
+			// dynamically reserved for role
+			Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role1", "principal1"))),
+			Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role1", "principal2"))),
+			Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role2", "principal1"))),
+			Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role2", "principal2"))),
+
+			// dynamically reserved for role w/ labels
+			Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role1", "principal2", label1))),
+			Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role1", "principal2", label2))),
+		}
+	)
+	// test that all resources in `unique` are considered different
+	for i := range unique {
+		left := &unique[i]
+		// sanity check for our test subjects
+		if err := left.Validate(); err != nil {
+			t.Fatal(err)
+		}
+		for j := range unique {
+			left := &unique[i]
+			if i == j {
+				if !left.Equivalent(unique[j]) {
+					t.Errorf("equivalence failed for identical resources: %q", left)
+				}
+				continue
+			}
+			if left.Equivalent(unique[j]) {
+				t.Errorf("unexpected equivalence for resources: %q and %q", left, unique[j])
+			}
+		}
 	}
 }

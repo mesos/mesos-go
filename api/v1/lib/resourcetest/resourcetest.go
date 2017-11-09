@@ -66,9 +66,17 @@ func Resources(r ...mesos.Resource) (result mesos.Resources) {
 	return result.Add(r...)
 }
 
+// Reservation should only be used for pre-reservation-refinement testing
 func Reservation(ri *mesos.Resource_ReservationInfo) Opt {
 	return func(r *mesos.Resource) {
 		r.Reservation = ri
+	}
+}
+
+// Reservations should only be used for post-reservation-refinement testing
+func Reservations(ri ...mesos.Resource_ReservationInfo) Opt {
+	return func(r *mesos.Resource) {
+		r.Reservations = ri
 	}
 }
 
@@ -109,12 +117,43 @@ func DiskWithSource(persistenceID, containerPath, source string, sourceType meso
 	}
 }
 
+// ReservedBy returns a reservation for the given principal, if specified; intended for use with
+// pre-reservation-refinement resources.
 func ReservedBy(principal string) *mesos.Resource_ReservationInfo {
 	result := &mesos.Resource_ReservationInfo{}
 	if principal != "" {
 		result.Principal = &principal
 	}
 	return result
+}
+
+func optionalString(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func makeReservation(t *mesos.Resource_ReservationInfo_Type, role, principal string, labels ...mesos.Label) (ri mesos.Resource_ReservationInfo) {
+	ri.Type = t
+	ri.Role = optionalString(role)
+	ri.Principal = optionalString(principal)
+	if len(labels) > 0 {
+		ri.Labels = &mesos.Labels{Labels: labels}
+	}
+	return
+}
+
+func Label(k, v string) mesos.Label { return mesos.Label{Key: k, Value: optionalString(v)} }
+
+func DynamicReservation(role, principal string, labels ...mesos.Label) (ri mesos.Resource_ReservationInfo) {
+	ri = makeReservation(mesos.Resource_ReservationInfo_DYNAMIC.Enum(), role, principal, labels...)
+	return
+}
+
+func StaticReservation(role, principal string, labels ...mesos.Label) (ri mesos.Resource_ReservationInfo) {
+	ri = makeReservation(mesos.Resource_ReservationInfo_STATIC.Enum(), role, principal, labels...)
+	return
 }
 
 func Reserve(r mesos.Resources) *mesos.Offer_Operation {

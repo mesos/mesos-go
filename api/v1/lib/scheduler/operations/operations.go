@@ -81,8 +81,32 @@ func (err *operationError) Error() string {
 	}
 }
 
+// popReservation works for both pre- and post-reservation-refinement resources.
+// Returns a shallow (mutated) copy of the resource.
+func popReservation(r mesos.Resource) mesos.Resource {
+	switch x := len(r.Reservations); {
+	case x == 0:
+		// pre-refinement format.
+		r.Role = nil
+		r.Reservation = nil
+	case x == 1:
+		// handle the special case whereby both formats are used redundantly
+		r.Role = nil
+		r.Reservation = nil
+		r.Reservations = nil
+	case x > 1:
+		// post-refinement format.
+		// duplicate the slice, truncated. we don't want the optimized form of
+		// the "delete the last object from a slice" because it would mutate the
+		// contents of the original reservation (in an attempt to avoid a mem leak).
+		rs := make([]mesos.Resource_ReservationInfo, 0, x-1)
+		copy(rs, r.Reservations[:x-1])
+		r.Reservations = rs
+	}
+	return r
+}
+
 func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
-	// TODO(jdef) sync this w/ mesos: consider reservation refinements and shared resources
 	if len(conv) > 0 {
 		return nil, fmt.Errorf("converted resources not expected")
 	}
@@ -96,21 +120,23 @@ func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources, conv
 		if !opRes[i].IsReserved("") {
 			return nil, errors.New("Resource must be reserved")
 		}
-		if opRes[i].GetReservation() == nil {
-			return nil, errors.New("missing 'reservation'")
+		if !opRes[i].IsDynamicallyReserved() {
+			return nil, errors.New("Resource must be dynamically reserved")
 		}
-		unreserved := rez.Flatten(mesos.Resources{opRes[i]})
-		if !rez.ContainsAll(result, unreserved) {
-			return nil, fmt.Errorf("%+v does not contain %+v", result, unreserved)
+
+		lessReserved := popReservation(opRes[i])
+
+		if !rez.Contains(result, lessReserved) {
+			return nil, fmt.Errorf("%+v does not contain %+v", result, lessReserved)
 		}
-		result.Subtract(unreserved...)
+
+		result.Subtract(lessReserved)
 		result.Add1(opRes[i])
 	}
 	return result, nil
 }
 
 func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
-	// TODO(jdef) sync this w/ mesos: consider reservation refinements and shared resources
 	if len(conv) > 0 {
 		return nil, fmt.Errorf("converted resources not expected")
 	}
@@ -124,21 +150,20 @@ func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources, co
 		if !opRes[i].IsReserved("") {
 			return nil, errors.New("Resource is not reserved")
 		}
-		if opRes[i].GetReservation() == nil {
-			return nil, errors.New("missing 'reservation'")
+		if !opRes[i].IsDynamicallyReserved() {
+			return nil, errors.New("Resource must be dynamically reserved")
 		}
 		if !rez.Contains(result, opRes[i]) {
 			return nil, errors.New("resources do not contain unreserve amount") //TODO(jdef) should output nicely formatted resource quantities here
 		}
-		unreserved := rez.Flatten(mesos.Resources{opRes[i]})
+		lessReserved := popReservation(opRes[i])
 		result.Subtract1(opRes[i])
-		result.Add(unreserved...)
+		result.Add(lessReserved)
 	}
 	return result, nil
 }
 
 func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
-	// TODO(jdef) sync this w/ mesos: consider reservation refinements and shared resources
 	if len(conv) > 0 {
 		return nil, fmt.Errorf("converted resources not expected")
 	}
@@ -163,9 +188,19 @@ func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources, conv 
 		// disk resources. Revisit this once we start to support
 		// non-persistent volumes.
 		stripped := proto.Clone(&volumes[i]).(*mesos.Resource)
-		stripped.Disk = nil
+		if stripped.Disk.Source != nil {
+			stripped.Disk.Persistence = nil
+			stripped.Disk.Volume = nil
+		} else {
+			stripped.Disk = nil
+		}
+
+		// Since we only allow persistent volumes to be shared, the
+		// original resource must be non-shared.
+		stripped.Shared = nil
+
 		if !rez.Contains(result, *stripped) {
-			return nil, errors.New("invalid CREATE operation: insufficient disk resources")
+			return nil, errors.New("insufficient disk resources")
 		}
 		result.Subtract1(*stripped)
 		result.Add1(volumes[i])
@@ -174,7 +209,6 @@ func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources, conv 
 }
 
 func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
-	// TODO(jdef) sync this w/ mesos: consider reservation refinements and shared resources
 	if len(conv) > 0 {
 		return nil, fmt.Errorf("converted resources not expected")
 	}
@@ -194,9 +228,28 @@ func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources, conv
 		if !rez.Contains(result, volumes[i]) {
 			return nil, errors.New("persistent volume does not exist")
 		}
-		stripped := proto.Clone(&volumes[i]).(*mesos.Resource)
-		stripped.Disk = nil
+
 		result.Subtract1(volumes[i])
+
+		if rez.Contains(result, volumes[i]) {
+			return nil, fmt.Errorf(
+				"persistent volume %q cannot be removed due to additional shared copies", volumes[i])
+		}
+
+		// Strip the disk info so that we can subtract it from the
+		// original resources.
+		stripped := proto.Clone(&volumes[i]).(*mesos.Resource)
+		if stripped.Disk.Source != nil {
+			stripped.Disk.Persistence = nil
+			stripped.Disk.Volume = nil
+		} else {
+			stripped.Disk = nil
+		}
+
+		// Since we only allow persistent volumes to be shared, we
+		// return the resource to non-shared state after destroy.
+		stripped.Shared = nil
+
 		result.Add1(*stripped)
 	}
 	return result, nil

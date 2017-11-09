@@ -530,14 +530,28 @@ func (left *Resource) Validate() error {
 	return nil
 }
 
+func (left *Resource_AllocationInfo) Equivalent(right *Resource_AllocationInfo) bool {
+	if (left == nil) != (right == nil) {
+		return false
+	} else if left == nil {
+		return true
+	}
+	if (left.Role == nil) != (right.Role == nil) {
+		return false
+	}
+	if left.Role != nil && *left.Role != *right.Role {
+		return false
+	}
+	return true
+}
+
 func (r *Resource_ReservationInfo) Equivalent(right *Resource_ReservationInfo) bool {
 	// TODO(jdef) should we consider equivalency of both pre- and post-refinement formats,
 	// such that a pre-refinement format could be the equivalent of a post-refinement format
 	// if defined just the right way?
 	if (r == nil) != (right == nil) {
 		return false
-	}
-	if r == nil {
+	} else if r == nil {
 		return true
 	}
 	if (r.Type == nil) != (right.Type == nil) {
@@ -621,10 +635,9 @@ func (left *Resource) Equivalent(right Resource) bool {
 		left.GetRole() != right.GetRole() {
 		return false
 	}
-	if (left.AllocationInfo == nil) != (right.AllocationInfo == nil) {
+	if a, b := left.GetAllocationInfo(), right.GetAllocationInfo(); !a.Equivalent(b) {
 		return false
 	}
-	// TODO: compare AllocationInfo
 	if a, b := left.GetReservations(), right.GetReservations(); len(a) != len(b) {
 		return false
 	} else {
@@ -670,7 +683,7 @@ func (left *Resource) Equivalent(right Resource) bool {
 // different name, type or role are not addable.
 func (left *Resource) Addable(right Resource) bool {
 	if left == nil {
-		return right.IsEmpty()
+		return true
 	}
 	if left.GetName() != right.GetName() ||
 		left.GetType() != right.GetType() ||
@@ -678,16 +691,14 @@ func (left *Resource) Addable(right Resource) bool {
 		return false
 	}
 
-	if a, b := left.Shared, right.Shared; (a == nil) != (b == nil) {
+	if a, b := left.GetShared(), right.GetShared(); (a == nil) != (b == nil) {
 		// shared has no fields
 		return false
 	}
 
-	if a, b := left.AllocationInfo, right.AllocationInfo; (a == nil) != (b == nil) {
+	if a, b := left.GetAllocationInfo(), right.GetAllocationInfo(); !a.Equivalent(b) {
 		return false
 	}
-
-	// TODO(jdef): check allocation-info equivalence
 
 	if !left.GetReservation().Equivalent(right.GetReservation()) {
 		return false
@@ -736,10 +747,10 @@ func (left *Resource) Addable(right Resource) bool {
 	if left.GetDisk().GetPersistence() != nil {
 		return false
 	}
-	if (left.Revocable == nil) != (right.Revocable == nil) {
+	if (left.GetRevocable() == nil) != (right.GetRevocable() == nil) {
 		return false
 	}
-	if a, b := left.ProviderID, right.ProviderID; (a == nil) != (b == nil) {
+	if a, b := left.GetProviderID(), right.GetProviderID(); (a == nil) != (b == nil) {
 		return false
 	} else if a != nil && a.Value != b.Value {
 		return false
@@ -756,28 +767,19 @@ func (left *Resource) Addable(right Resource) bool {
 // subtractable because "left - right = {1}". However, "left" does not
 // contain "right".
 func (left *Resource) Subtractable(right Resource) bool {
-	if right.IsEmpty() {
-		return true
-	}
-	if left == nil {
-		return false
-	}
-
 	if left.GetName() != right.GetName() ||
 		left.GetType() != right.GetType() ||
 		left.GetRole() != right.GetRole() {
 		return false
 	}
-	if a, b := left.Shared, right.Shared; (a == nil) != (b == nil) {
+	if a, b := left.GetShared(), right.GetShared(); (a == nil) != (b == nil) {
 		// shared has no fields
 		return false
 	}
 
-	if a, b := left.AllocationInfo, right.AllocationInfo; (a == nil) != (b == nil) {
+	if a, b := left.GetAllocationInfo(), right.GetAllocationInfo(); !a.Equivalent(b) {
 		return false
 	}
-
-	// TODO(jdef): check allocation-info equivalence
 
 	if !left.GetReservation().Equivalent(right.GetReservation()) {
 		return false
@@ -825,10 +827,10 @@ func (left *Resource) Subtractable(right Resource) bool {
 	if left.GetDisk().GetPersistence() != nil && !left.Equivalent(right) {
 		return false
 	}
-	if (left.Revocable == nil) != (right.Revocable == nil) {
+	if (left.GetRevocable() == nil) != (right.GetRevocable() == nil) {
 		return false
 	}
-	if a, b := left.ProviderID, right.ProviderID; (a == nil) != (b == nil) {
+	if a, b := left.GetProviderID(), right.GetProviderID(); (a == nil) != (b == nil) {
 		return false
 	} else if a != nil && a.Value != b.Value {
 		return false

@@ -6,12 +6,13 @@ import (
 	"unicode"
 )
 
+// Role is a deprecated type.
 type Role string
 
-const Default = Role("*")
+const defaultRole = Role("*")
 
 func (r Role) IsDefault() bool {
-	return r == Default
+	return r == defaultRole
 }
 
 func (r Role) Assign() func(interface{}) {
@@ -41,9 +42,9 @@ var illegalComponents = map[string]struct{}{
 	"*":  struct{}{},
 }
 
-func Parse(s string) (Role, error) {
-	if s == string(Default) {
-		return Default, nil
+func Parse(s string) (string, error) {
+	if s == string(defaultRole) {
+		return s, nil
 	}
 	if strings.HasPrefix(s, "/") {
 		return "", fmt.Errorf("role %q cannot start with a slash", s)
@@ -67,7 +68,7 @@ func Parse(s string) (Role, error) {
 			return "", fmt.Errorf("role component %q is invalid because it contains backspace or whitespace", part)
 		}
 	}
-	return Role(s), nil
+	return s, nil
 }
 
 func Validate(roles ...string) error {

@@ -2,7 +2,6 @@ package resources
 
 import (
 	"github.com/mesos/mesos-go/api/v1/lib"
-	"github.com/mesos/mesos-go/api/v1/lib/roles"
 )
 
 func (n Name) Sum(resources ...mesos.Resource) (*mesos.Resource, bool) {
@@ -135,7 +134,7 @@ func Flatten(resources []mesos.Resource, opts ...FlattenOpt) []mesos.Resource {
 		f(fc)
 	}
 	if fc.role == "" {
-		fc.role = string(roles.Default)
+		fc.role = mesos.DefaultRole
 	}
 	// we intentionally manipulate a copy 'r' of the item in resources
 	for _, r := range resources {

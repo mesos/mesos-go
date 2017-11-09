@@ -65,7 +65,7 @@ var (
 		resources.NewCPUs(0.01).Resource,
 		resources.NewMemory(32).Resource,
 		resources.NewDisk(5).Resource,
-	}
+	}.Allocate(string(Role))
 	agentDirectory = make(map[mesos.AgentID]string)
 	uponExit       = new(cleanups)
 )
@@ -100,7 +100,8 @@ func main() {
 	wantsResources = mesos.Resources{
 		resources.NewCPUs(CPUs).Resource,
 		resources.NewMemory(Memory).Resource,
-	}
+	}.Allocate(string(Role))
+
 	taskPrototype = mesos.TaskInfo{
 		Name: TaskName,
 		Command: &mesos.CommandInfo{

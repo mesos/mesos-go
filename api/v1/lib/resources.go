@@ -220,13 +220,47 @@ func (resources Resources) String() string {
 		}
 		r := &resources[i]
 		buf.WriteString(r.Name)
-		buf.WriteString("(")
-		buf.WriteString(r.GetRole())
-		if ri := r.GetReservation(); ri != nil {
-			buf.WriteString(", ")
-			buf.WriteString(ri.GetPrincipal())
+		if r.AllocationInfo != nil {
+			buf.WriteString("(allocated: ")
+			buf.WriteString(r.AllocationInfo.GetRole())
+			buf.WriteString(")")
 		}
-		buf.WriteString(")")
+		if res := r.Reservations; len(res) > 0 || (r.Role != nil && *r.Role != "*") {
+			if len(res) == 0 {
+				res = make([]Resource_ReservationInfo, 0, 1)
+				if r.Reservation == nil {
+					res = append(res, Resource_ReservationInfo{
+						Type: Resource_ReservationInfo_STATIC.Enum(),
+						Role: r.Role,
+					})
+				} else {
+					res = append(res, *r.Reservation) // copy!
+					res[0].Type = Resource_ReservationInfo_DYNAMIC.Enum()
+					res[0].Role = r.Role
+				}
+			}
+			buf.WriteString("(reservations: [")
+			for j := range res {
+				if j > 0 {
+					buf.WriteString(",")
+				}
+				rr := &res[j]
+				buf.WriteString("(")
+				buf.WriteString(rr.GetType().String())
+				buf.WriteString(",")
+				buf.WriteString(rr.GetRole())
+				if rr.Principal != nil {
+					buf.WriteString(",")
+					buf.WriteString(*rr.Principal)
+				}
+				if rr.Labels != nil {
+					buf.WriteString(",")
+					buf.WriteString(rr.GetLabels().String())
+				}
+				buf.WriteString(")")
+			}
+			buf.WriteString("])")
+		}
 		if d := r.GetDisk(); d != nil {
 			buf.WriteString("[")
 			if s := d.GetSource(); s != nil {
@@ -272,6 +306,12 @@ func (resources Resources) String() string {
 				buf.WriteString(vconfig)
 			}
 			buf.WriteString("]")
+		}
+		if r.Revocable != nil {
+			buf.WriteString("{REV}")
+		}
+		if r.Shared != nil {
+			buf.WriteString("<SHARED>")
 		}
 		buf.WriteString(":")
 		switch r.GetType() {
@@ -439,8 +479,10 @@ func (left *Resource) Validate() error {
 
 			switch rs[0].GetType() {
 			case Resource_ReservationInfo_STATIC:
-				return resourceErrorTypeIllegalReservation.Generate(
-					"'Resource.reservation' must not be set if the single reservation in 'Resource.reservations' is STATIC")
+				if left.Reservation != nil {
+					return resourceErrorTypeIllegalReservation.Generate(
+						"'Resource.reservation' must not be set if the single reservation in 'Resource.reservations' is STATIC")
+				}
 			case Resource_ReservationInfo_DYNAMIC:
 				if (left.Role == nil) != (left.GetReservation() == nil) {
 					return resourceErrorTypeIllegalReservation.Generate(
@@ -489,10 +531,34 @@ func (left *Resource) Validate() error {
 }
 
 func (r *Resource_ReservationInfo) Equivalent(right *Resource_ReservationInfo) bool {
+	// TODO(jdef) should we consider equivalency of both pre- and post-refinement formats,
+	// such that a pre-refinement format could be the equivalent of a post-refinement format
+	// if defined just the right way?
 	if (r == nil) != (right == nil) {
 		return false
 	}
-	return r.GetPrincipal() == right.GetPrincipal()
+	if r == nil {
+		return true
+	}
+	if (r.Type == nil) != (right.Type == nil) {
+		return false
+	}
+	if r.Type != nil && *r.Type != *right.Type {
+		return false
+	}
+	if (r.Role == nil) != (right.Role == nil) {
+		return false
+	}
+	if r.Role != nil && *r.Role != *right.Role {
+		return false
+	}
+	if (r.Principal == nil) != (right.Principal == nil) {
+		return false
+	}
+	if r.Principal != nil && *r.Principal != *right.Principal {
+		return false
+	}
+	return r.Labels.Equivalent(right.Labels)
 }
 
 func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
@@ -547,10 +613,27 @@ func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
 // Equivalent returns true if right is equivalent to left (differs from Equal in that
 // deeply nested values are test for equivalence, not equality).
 func (left *Resource) Equivalent(right Resource) bool {
+	if left == nil {
+		return right.IsEmpty()
+	}
 	if left.GetName() != right.GetName() ||
 		left.GetType() != right.GetType() ||
 		left.GetRole() != right.GetRole() {
 		return false
+	}
+	if (left.AllocationInfo == nil) != (right.AllocationInfo == nil) {
+		return false
+	}
+	// TODO: compare AllocationInfo
+	if a, b := left.GetReservations(), right.GetReservations(); len(a) != len(b) {
+		return false
+	} else {
+		for i := range a {
+			ri := &a[i]
+			if !ri.Equivalent(&b[i]) {
+				return false
+			}
+		}
 	}
 	if !left.GetReservation().Equivalent(right.GetReservation()) {
 		return false
@@ -559,6 +642,14 @@ func (left *Resource) Equivalent(right Resource) bool {
 		return false
 	}
 	if (left.Revocable == nil) != (right.Revocable == nil) {
+		return false
+	}
+	if a, b := left.ProviderID, right.ProviderID; (a == nil) != (b == nil) {
+		return false
+	} else if a != nil && a.Value != b.Value {
+		return false
+	}
+	if a, b := left.Shared, right.Shared; (a == nil) != (b == nil) {
 		return false
 	}
 
@@ -578,14 +669,41 @@ func (left *Resource) Equivalent(right Resource) bool {
 // valid Resource object. For example, two Resource objects with
 // different name, type or role are not addable.
 func (left *Resource) Addable(right Resource) bool {
+	if left == nil {
+		return right.IsEmpty()
+	}
 	if left.GetName() != right.GetName() ||
 		left.GetType() != right.GetType() ||
 		left.GetRole() != right.GetRole() {
 		return false
 	}
+
+	if a, b := left.Shared, right.Shared; (a == nil) != (b == nil) {
+		// shared has no fields
+		return false
+	}
+
+	if a, b := left.AllocationInfo, right.AllocationInfo; (a == nil) != (b == nil) {
+		return false
+	}
+
+	// TODO(jdef): check allocation-info equivalence
+
 	if !left.GetReservation().Equivalent(right.GetReservation()) {
 		return false
 	}
+
+	if a, b := left.Reservations, right.Reservations; len(a) != len(b) {
+		return false
+	} else {
+		for i := range a {
+			aa := &a[i]
+			if !aa.Equivalent(&b[i]) {
+				return false
+			}
+		}
+	}
+
 	if !left.GetDisk().Equivalent(right.GetDisk()) {
 		return false
 	}
@@ -621,6 +739,11 @@ func (left *Resource) Addable(right Resource) bool {
 	if (left.Revocable == nil) != (right.Revocable == nil) {
 		return false
 	}
+	if a, b := left.ProviderID, right.ProviderID; (a == nil) != (b == nil) {
+		return false
+	} else if a != nil && a.Value != b.Value {
+		return false
+	}
 	return true
 }
 
@@ -633,14 +756,43 @@ func (left *Resource) Addable(right Resource) bool {
 // subtractable because "left - right = {1}". However, "left" does not
 // contain "right".
 func (left *Resource) Subtractable(right Resource) bool {
+	if right.IsEmpty() {
+		return true
+	}
+	if left == nil {
+		return false
+	}
+
 	if left.GetName() != right.GetName() ||
 		left.GetType() != right.GetType() ||
 		left.GetRole() != right.GetRole() {
 		return false
 	}
+	if a, b := left.Shared, right.Shared; (a == nil) != (b == nil) {
+		// shared has no fields
+		return false
+	}
+
+	if a, b := left.AllocationInfo, right.AllocationInfo; (a == nil) != (b == nil) {
+		return false
+	}
+
+	// TODO(jdef): check allocation-info equivalence
+
 	if !left.GetReservation().Equivalent(right.GetReservation()) {
 		return false
 	}
+	if a, b := left.Reservations, right.Reservations; len(a) != len(b) {
+		return false
+	} else {
+		for i := range a {
+			aa := &a[i]
+			if !aa.Equivalent(&b[i]) {
+				return false
+			}
+		}
+	}
+
 	if !left.GetDisk().Equivalent(right.GetDisk()) {
 		return false
 	}
@@ -674,6 +826,11 @@ func (left *Resource) Subtractable(right Resource) bool {
 		return false
 	}
 	if (left.Revocable == nil) != (right.Revocable == nil) {
+		return false
+	}
+	if a, b := left.ProviderID, right.ProviderID; (a == nil) != (b == nil) {
+		return false
+	} else if a != nil && a.Value != b.Value {
 		return false
 	}
 	return true
@@ -834,4 +991,100 @@ func (rs Resources) ToUnreserved() (result Resources) {
 		result.Add1(r)
 	}
 	return
+}
+
+// PushReservation returns a cloned set of Resources w/ the given resource refinement.
+// Panics if resources become invalid as a result of pushing the reservation (e.g. pre- and post-
+// refinement modes are mixed).
+func (rs Resources) PushReservation(ri Resource_ReservationInfo) (result Resources) {
+push_next:
+	for i := range rs {
+		if rs[i].IsEmpty() {
+			continue
+		}
+		r := proto.Clone(&rs[i]).(*Resource) // we don't want to impact rs
+		r.Reservations = append(r.Reservations, *(proto.Clone(&ri).(*Resource_ReservationInfo)))
+
+		if err := r.Validate(); err != nil {
+			panic(err)
+		}
+
+		// unroll Add1 to avoid additional calls to Clone
+		rr := *r
+		for j := range result {
+			r2 := &result[j]
+			if r2.Addable(rr) {
+				r2.Add(rr)
+				continue push_next
+			}
+		}
+		// cannot be combined with an existing resource
+		result = append(result, rr)
+	}
+	return
+}
+
+// PopReservation returns a cloned set of Resources wherein the most recent reservation refeinement has been
+// removed. Panics if for any resource in the collection there is no "last refinement" to remove.
+func (rs Resources) PopReservation() (result Resources) {
+pop_next:
+	for i := range rs {
+		r := &rs[i]
+		ls := len(r.Reservations)
+		if ls == 0 {
+			panic(fmt.Sprintf("no reservations exist for resource %q", r))
+		}
+
+		r = proto.Clone(r).(*Resource)                    // avoid modifying rs
+		r.Reservations[ls-1] = Resource_ReservationInfo{} // don't leak nested pointers
+		r.Reservations = r.Reservations[:ls-1]            // shrink the slice
+
+		// unroll Add1 to avoid additional calls to Clone
+		rr := *r
+		for j := range result {
+			r2 := &result[j]
+			if r2.Addable(rr) {
+				r2.Add(rr)
+				continue pop_next
+			}
+		}
+
+		// cannot be combined with an existing resource
+		result = append(result, rr)
+	}
+	return
+}
+
+// Allocate sets the AllocationInfo for the resource, panics if role is "".
+func (r *Resource) Allocate(role string) {
+	if role == "" {
+		panic(fmt.Sprintf("cannot allocate resource to an empty-string role: %q", r))
+	}
+	r.AllocationInfo = &Resource_AllocationInfo{Role: &role}
+}
+
+// Unallocate clears the AllocationInfo for the resource.
+func (r *Resource) Unallocate() {
+	r.AllocationInfo = nil
+}
+
+// Allocate sets the AllocationInfo for all the resources.
+// Returns a reference to the receiver to allow for chaining.
+func (rs Resources) Allocate(role string) Resources {
+	if role == "" {
+		panic(fmt.Sprintf("cannot allocate resources to an empty-string role: %q", rs))
+	}
+	for i := range rs {
+		rs[i].AllocationInfo = &Resource_AllocationInfo{Role: &role}
+	}
+	return rs
+}
+
+// Unallocate clears the AllocationInfo for all the resources.
+// Returns a reference to the receiver to allow for chaining.
+func (rs Resources) Unallocate() Resources {
+	for i := range rs {
+		rs[i].AllocationInfo = nil
+	}
+	return rs
 }

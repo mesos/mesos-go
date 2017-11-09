@@ -16,7 +16,6 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/extras/scheduler/eventrules"
 	"github.com/mesos/mesos-go/api/v1/lib/extras/store"
 	"github.com/mesos/mesos-go/api/v1/lib/resources"
-	"github.com/mesos/mesos-go/api/v1/lib/roles"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
@@ -161,7 +160,7 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 				wantsExecutorResources = mesos.Resources(state.executor.Resources)
 			}
 
-			flattened := resources.Flatten(remaining)
+			flattened := remaining.ToUnreserved()
 
 			// avoid the expense of computing these if we can...
 			if state.config.summaryMetrics && state.config.resourceTypeMetrics {
@@ -175,6 +174,21 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 
 			taskWantsResources := state.wantsTaskResources.Plus(wantsExecutorResources...)
 			for state.tasksLaunched < state.totalTasks && resources.ContainsAll(flattened, taskWantsResources) {
+				found := func() mesos.Resources {
+					if state.config.role == "*" {
+						return resources.Find(state.wantsTaskResources, remaining...)
+					}
+					reservation := mesos.Resource_ReservationInfo{
+						Type: mesos.Resource_ReservationInfo_STATIC.Enum(),
+						Role: &state.config.role,
+					}
+					return resources.Find(state.wantsTaskResources.PushReservation(reservation))
+				}()
+
+				if len(found) == 0 {
+					panic("illegal state: failed to find the resources that were supposedly contained")
+				}
+
 				state.tasksLaunched++
 				taskID := state.tasksLaunched
 
@@ -183,20 +197,16 @@ func resourceOffers(state *internalState) events.HandlerFunc {
 				}
 
 				task := mesos.TaskInfo{
-					TaskID:   mesos.TaskID{Value: strconv.Itoa(taskID)},
-					AgentID:  offers[i].AgentID,
-					Executor: state.executor,
-					Resources: resources.Find(
-						resources.Flatten(state.wantsTaskResources, roles.Role(state.role).Assign()),
-						remaining...,
-					),
+					TaskID:    mesos.TaskID{Value: strconv.Itoa(taskID)},
+					AgentID:   offers[i].AgentID,
+					Executor:  state.executor,
+					Resources: found,
 				}
 				task.Name = "Task " + task.TaskID.Value
-
-				remaining.Subtract(task.Resources...)
 				tasks = append(tasks, task)
 
-				flattened = resources.Flatten(remaining)
+				remaining.Subtract(task.Resources...)
+				flattened = remaining.ToUnreserved()
 			}
 
 			// build Accept call to launch all of the tasks we've assembled

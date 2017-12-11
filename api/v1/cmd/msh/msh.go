@@ -33,6 +33,7 @@ import (
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpagent"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/httpsched"
 	"github.com/mesos/mesos-go/api/v1/lib/resources"
+	"github.com/mesos/mesos-go/api/v1/lib/roles"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/calls"
 	"github.com/mesos/mesos-go/api/v1/lib/scheduler/events"
@@ -47,7 +48,7 @@ var (
 	TaskName      = "msh"
 	MesosMaster   = "127.0.0.1:5050"
 	User          = "root"
-	Role          = resources.Role("*")
+	Role          = roles.Role("*")
 	CPUs          = float64(0.010)
 	Memory        = float64(64)
 
@@ -64,7 +65,7 @@ var (
 		resources.NewCPUs(0.01).Resource,
 		resources.NewMemory(32).Resource,
 		resources.NewDisk(5).Resource,
-	}
+	}.Allocate(string(Role)) // TODO(jdef): we didn't opt-in to MULTI_ROLE, should not need to Allocate anything (for resource matching); remove once https://issues.apache.org/jira/browse/MESOS-8237 lands in a release
 	agentDirectory = make(map[mesos.AgentID]string)
 	uponExit       = new(cleanups)
 )
@@ -99,7 +100,8 @@ func main() {
 	wantsResources = mesos.Resources{
 		resources.NewCPUs(CPUs).Resource,
 		resources.NewMemory(Memory).Resource,
-	}
+	}.Allocate(string(Role))
+
 	taskPrototype = mesos.TaskInfo{
 		Name: TaskName,
 		Command: &mesos.CommandInfo{

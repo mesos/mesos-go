@@ -50,16 +50,17 @@ const (
 	// ensure that if 'type' is not set, the default value
 	// is UNKNOWN. This enables enum values to be added
 	// in a backwards-compatible way. See: MESOS-4997.
-	Event_UNKNOWN               Event_Type = 0
-	Event_SUBSCRIBED            Event_Type = 1
-	Event_OFFERS                Event_Type = 2
-	Event_INVERSE_OFFERS        Event_Type = 9
-	Event_RESCIND               Event_Type = 3
-	Event_RESCIND_INVERSE_OFFER Event_Type = 10
-	Event_UPDATE                Event_Type = 4
-	Event_MESSAGE               Event_Type = 5
-	Event_FAILURE               Event_Type = 6
-	Event_ERROR                 Event_Type = 7
+	Event_UNKNOWN                Event_Type = 0
+	Event_SUBSCRIBED             Event_Type = 1
+	Event_OFFERS                 Event_Type = 2
+	Event_INVERSE_OFFERS         Event_Type = 9
+	Event_RESCIND                Event_Type = 3
+	Event_RESCIND_INVERSE_OFFER  Event_Type = 10
+	Event_UPDATE                 Event_Type = 4
+	Event_OFFER_OPERATION_UPDATE Event_Type = 11
+	Event_MESSAGE                Event_Type = 5
+	Event_FAILURE                Event_Type = 6
+	Event_ERROR                  Event_Type = 7
 	// Periodic message sent by the Mesos master according to
 	// 'Subscribed.heartbeat_interval_seconds'. If the scheduler does
 	// not receive any events (including heartbeats) for an extended
@@ -78,23 +79,25 @@ var Event_Type_name = map[int32]string{
 	3:  "RESCIND",
 	10: "RESCIND_INVERSE_OFFER",
 	4:  "UPDATE",
+	11: "OFFER_OPERATION_UPDATE",
 	5:  "MESSAGE",
 	6:  "FAILURE",
 	7:  "ERROR",
 	8:  "HEARTBEAT",
 }
 var Event_Type_value = map[string]int32{
-	"UNKNOWN":               0,
-	"SUBSCRIBED":            1,
-	"OFFERS":                2,
-	"INVERSE_OFFERS":        9,
-	"RESCIND":               3,
-	"RESCIND_INVERSE_OFFER": 10,
-	"UPDATE":                4,
-	"MESSAGE":               5,
-	"FAILURE":               6,
-	"ERROR":                 7,
-	"HEARTBEAT":             8,
+	"UNKNOWN":                0,
+	"SUBSCRIBED":             1,
+	"OFFERS":                 2,
+	"INVERSE_OFFERS":         9,
+	"RESCIND":                3,
+	"RESCIND_INVERSE_OFFER":  10,
+	"UPDATE":                 4,
+	"OFFER_OPERATION_UPDATE": 11,
+	"MESSAGE":                5,
+	"FAILURE":                6,
+	"ERROR":                  7,
+	"HEARTBEAT":              8,
 }
 
 func (x Event_Type) Enum() *Event_Type {
@@ -121,21 +124,23 @@ type Call_Type int32
 
 const (
 	// See comments above on `Event::Type` for more details on this enum value.
-	Call_UNKNOWN                Call_Type = 0
-	Call_SUBSCRIBE              Call_Type = 1
-	Call_TEARDOWN               Call_Type = 2
-	Call_ACCEPT                 Call_Type = 3
-	Call_DECLINE                Call_Type = 4
-	Call_ACCEPT_INVERSE_OFFERS  Call_Type = 13
-	Call_DECLINE_INVERSE_OFFERS Call_Type = 14
-	Call_REVIVE                 Call_Type = 5
-	Call_KILL                   Call_Type = 6
-	Call_SHUTDOWN               Call_Type = 7
-	Call_ACKNOWLEDGE            Call_Type = 8
-	Call_RECONCILE              Call_Type = 9
-	Call_MESSAGE                Call_Type = 10
-	Call_REQUEST                Call_Type = 11
-	Call_SUPPRESS               Call_Type = 12
+	Call_UNKNOWN                            Call_Type = 0
+	Call_SUBSCRIBE                          Call_Type = 1
+	Call_TEARDOWN                           Call_Type = 2
+	Call_ACCEPT                             Call_Type = 3
+	Call_DECLINE                            Call_Type = 4
+	Call_ACCEPT_INVERSE_OFFERS              Call_Type = 13
+	Call_DECLINE_INVERSE_OFFERS             Call_Type = 14
+	Call_REVIVE                             Call_Type = 5
+	Call_KILL                               Call_Type = 6
+	Call_SHUTDOWN                           Call_Type = 7
+	Call_ACKNOWLEDGE                        Call_Type = 8
+	Call_ACKNOWLEDGE_OFFER_OPERATION_UPDATE Call_Type = 15
+	Call_RECONCILE                          Call_Type = 9
+	Call_RECONCILE_OFFER_OPERATIONS         Call_Type = 16
+	Call_MESSAGE                            Call_Type = 10
+	Call_REQUEST                            Call_Type = 11
+	Call_SUPPRESS                           Call_Type = 12
 )
 
 var Call_Type_name = map[int32]string{
@@ -150,27 +155,31 @@ var Call_Type_name = map[int32]string{
 	6:  "KILL",
 	7:  "SHUTDOWN",
 	8:  "ACKNOWLEDGE",
+	15: "ACKNOWLEDGE_OFFER_OPERATION_UPDATE",
 	9:  "RECONCILE",
+	16: "RECONCILE_OFFER_OPERATIONS",
 	10: "MESSAGE",
 	11: "REQUEST",
 	12: "SUPPRESS",
 }
 var Call_Type_value = map[string]int32{
-	"UNKNOWN":                0,
-	"SUBSCRIBE":              1,
-	"TEARDOWN":               2,
-	"ACCEPT":                 3,
-	"DECLINE":                4,
-	"ACCEPT_INVERSE_OFFERS":  13,
-	"DECLINE_INVERSE_OFFERS": 14,
-	"REVIVE":                 5,
-	"KILL":                   6,
-	"SHUTDOWN":               7,
-	"ACKNOWLEDGE":            8,
-	"RECONCILE":              9,
-	"MESSAGE":                10,
-	"REQUEST":                11,
-	"SUPPRESS":               12,
+	"UNKNOWN":                            0,
+	"SUBSCRIBE":                          1,
+	"TEARDOWN":                           2,
+	"ACCEPT":                             3,
+	"DECLINE":                            4,
+	"ACCEPT_INVERSE_OFFERS":              13,
+	"DECLINE_INVERSE_OFFERS":             14,
+	"REVIVE":                             5,
+	"KILL":                               6,
+	"SHUTDOWN":                           7,
+	"ACKNOWLEDGE":                        8,
+	"ACKNOWLEDGE_OFFER_OPERATION_UPDATE": 15,
+	"RECONCILE":                          9,
+	"RECONCILE_OFFER_OPERATIONS":         16,
+	"MESSAGE":                            10,
+	"REQUEST":                            11,
+	"SUPPRESS":                           12,
 }
 
 func (x Call_Type) Enum() *Call_Type {
@@ -201,16 +210,17 @@ type Event struct {
 	// Type of the event, indicates which optional field below should be
 	// present if that type has a nested message definition.
 	// Enum fields should be optional, see: MESOS-4997.
-	Type                Event_Type                 `protobuf:"varint,1,opt,name=type,enum=mesos.scheduler.Event_Type" json:"type"`
-	Subscribed          *Event_Subscribed          `protobuf:"bytes,2,opt,name=subscribed" json:"subscribed,omitempty"`
-	Offers              *Event_Offers              `protobuf:"bytes,3,opt,name=offers" json:"offers,omitempty"`
-	InverseOffers       *Event_InverseOffers       `protobuf:"bytes,9,opt,name=inverse_offers,json=inverseOffers" json:"inverse_offers,omitempty"`
-	Rescind             *Event_Rescind             `protobuf:"bytes,4,opt,name=rescind" json:"rescind,omitempty"`
-	RescindInverseOffer *Event_RescindInverseOffer `protobuf:"bytes,10,opt,name=rescind_inverse_offer,json=rescindInverseOffer" json:"rescind_inverse_offer,omitempty"`
-	Update              *Event_Update              `protobuf:"bytes,5,opt,name=update" json:"update,omitempty"`
-	Message             *Event_Message             `protobuf:"bytes,6,opt,name=message" json:"message,omitempty"`
-	Failure             *Event_Failure             `protobuf:"bytes,7,opt,name=failure" json:"failure,omitempty"`
-	Error               *Event_Error               `protobuf:"bytes,8,opt,name=error" json:"error,omitempty"`
+	Type                 Event_Type                  `protobuf:"varint,1,opt,name=type,enum=mesos.scheduler.Event_Type" json:"type"`
+	Subscribed           *Event_Subscribed           `protobuf:"bytes,2,opt,name=subscribed" json:"subscribed,omitempty"`
+	Offers               *Event_Offers               `protobuf:"bytes,3,opt,name=offers" json:"offers,omitempty"`
+	InverseOffers        *Event_InverseOffers        `protobuf:"bytes,9,opt,name=inverse_offers,json=inverseOffers" json:"inverse_offers,omitempty"`
+	Rescind              *Event_Rescind              `protobuf:"bytes,4,opt,name=rescind" json:"rescind,omitempty"`
+	RescindInverseOffer  *Event_RescindInverseOffer  `protobuf:"bytes,10,opt,name=rescind_inverse_offer,json=rescindInverseOffer" json:"rescind_inverse_offer,omitempty"`
+	Update               *Event_Update               `protobuf:"bytes,5,opt,name=update" json:"update,omitempty"`
+	OfferOperationUpdate *Event_OfferOperationUpdate `protobuf:"bytes,11,opt,name=offer_operation_update,json=offerOperationUpdate" json:"offer_operation_update,omitempty"`
+	Message              *Event_Message              `protobuf:"bytes,6,opt,name=message" json:"message,omitempty"`
+	Failure              *Event_Failure              `protobuf:"bytes,7,opt,name=failure" json:"failure,omitempty"`
+	Error                *Event_Error                `protobuf:"bytes,8,opt,name=error" json:"error,omitempty"`
 }
 
 func (m *Event) Reset()                    { *m = Event{} }
@@ -262,6 +272,13 @@ func (m *Event) GetRescindInverseOffer() *Event_RescindInverseOffer {
 func (m *Event) GetUpdate() *Event_Update {
 	if m != nil {
 		return m.Update
+	}
+	return nil
+}
+
+func (m *Event) GetOfferOperationUpdate() *Event_OfferOperationUpdate {
+	if m != nil {
+		return m.OfferOperationUpdate
 	}
 	return nil
 }
@@ -433,6 +450,30 @@ func (m *Event_Update) GetStatus() mesos.TaskStatus {
 	return mesos.TaskStatus{}
 }
 
+// Received when there is an offer operation status update generated by the
+// master, agent, or resource provider. These updates are only sent to the
+// framework for operations which had the offer operation ID set by the
+// framework. It is the responsibility of the scheduler to explicitly
+// acknowledge the receipt of a status update. See
+// 'AcknowledgeOfferOperationUpdate' in the 'Call' section below for the
+// semantics.
+type Event_OfferOperationUpdate struct {
+	Status mesos.OfferOperationStatus `protobuf:"bytes,1,req,name=status" json:"status"`
+}
+
+func (m *Event_OfferOperationUpdate) Reset()      { *m = Event_OfferOperationUpdate{} }
+func (*Event_OfferOperationUpdate) ProtoMessage() {}
+func (*Event_OfferOperationUpdate) Descriptor() ([]byte, []int) {
+	return fileDescriptorScheduler, []int{0, 6}
+}
+
+func (m *Event_OfferOperationUpdate) GetStatus() mesos.OfferOperationStatus {
+	if m != nil {
+		return m.Status
+	}
+	return mesos.OfferOperationStatus{}
+}
+
 // Received when a custom message generated by the executor is
 // forwarded by the master. Note that this message is not
 // interpreted by Mesos and is only forwarded (without reliability
@@ -446,7 +487,7 @@ type Event_Message struct {
 
 func (m *Event_Message) Reset()                    { *m = Event_Message{} }
 func (*Event_Message) ProtoMessage()               {}
-func (*Event_Message) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{0, 6} }
+func (*Event_Message) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{0, 7} }
 
 func (m *Event_Message) GetAgentID() mesos.AgentID {
 	if m != nil {
@@ -499,7 +540,7 @@ type Event_Failure struct {
 
 func (m *Event_Failure) Reset()                    { *m = Event_Failure{} }
 func (*Event_Failure) ProtoMessage()               {}
-func (*Event_Failure) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{0, 7} }
+func (*Event_Failure) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{0, 8} }
 
 func (m *Event_Failure) GetAgentID() *mesos.AgentID {
 	if m != nil {
@@ -531,7 +572,7 @@ type Event_Error struct {
 
 func (m *Event_Error) Reset()                    { *m = Event_Error{} }
 func (*Event_Error) ProtoMessage()               {}
-func (*Event_Error) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{0, 8} }
+func (*Event_Error) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{0, 9} }
 
 func (m *Event_Error) GetMessage() string {
 	if m != nil {
@@ -556,20 +597,22 @@ type Call struct {
 	// Type of the call, indicates which optional field below should be
 	// present if that type has a nested message definition.
 	// See comments on `Event::Type` above on the reasoning behind this field being optional.
-	Type                 Call_Type                  `protobuf:"varint,2,opt,name=type,enum=mesos.scheduler.Call_Type" json:"type"`
-	Subscribe            *Call_Subscribe            `protobuf:"bytes,3,opt,name=subscribe" json:"subscribe,omitempty"`
-	Accept               *Call_Accept               `protobuf:"bytes,4,opt,name=accept" json:"accept,omitempty"`
-	Decline              *Call_Decline              `protobuf:"bytes,5,opt,name=decline" json:"decline,omitempty"`
-	AcceptInverseOffers  *Call_AcceptInverseOffers  `protobuf:"bytes,13,opt,name=accept_inverse_offers,json=acceptInverseOffers" json:"accept_inverse_offers,omitempty"`
-	DeclineInverseOffers *Call_DeclineInverseOffers `protobuf:"bytes,14,opt,name=decline_inverse_offers,json=declineInverseOffers" json:"decline_inverse_offers,omitempty"`
-	Revive               *Call_Revive               `protobuf:"bytes,15,opt,name=revive" json:"revive,omitempty"`
-	Kill                 *Call_Kill                 `protobuf:"bytes,6,opt,name=kill" json:"kill,omitempty"`
-	Shutdown             *Call_Shutdown             `protobuf:"bytes,7,opt,name=shutdown" json:"shutdown,omitempty"`
-	Acknowledge          *Call_Acknowledge          `protobuf:"bytes,8,opt,name=acknowledge" json:"acknowledge,omitempty"`
-	Reconcile            *Call_Reconcile            `protobuf:"bytes,9,opt,name=reconcile" json:"reconcile,omitempty"`
-	Message              *Call_Message              `protobuf:"bytes,10,opt,name=message" json:"message,omitempty"`
-	Request              *Call_Request              `protobuf:"bytes,11,opt,name=request" json:"request,omitempty"`
-	Suppress             *Call_Suppress             `protobuf:"bytes,16,opt,name=suppress" json:"suppress,omitempty"`
+	Type                            Call_Type                             `protobuf:"varint,2,opt,name=type,enum=mesos.scheduler.Call_Type" json:"type"`
+	Subscribe                       *Call_Subscribe                       `protobuf:"bytes,3,opt,name=subscribe" json:"subscribe,omitempty"`
+	Accept                          *Call_Accept                          `protobuf:"bytes,4,opt,name=accept" json:"accept,omitempty"`
+	Decline                         *Call_Decline                         `protobuf:"bytes,5,opt,name=decline" json:"decline,omitempty"`
+	AcceptInverseOffers             *Call_AcceptInverseOffers             `protobuf:"bytes,13,opt,name=accept_inverse_offers,json=acceptInverseOffers" json:"accept_inverse_offers,omitempty"`
+	DeclineInverseOffers            *Call_DeclineInverseOffers            `protobuf:"bytes,14,opt,name=decline_inverse_offers,json=declineInverseOffers" json:"decline_inverse_offers,omitempty"`
+	Revive                          *Call_Revive                          `protobuf:"bytes,15,opt,name=revive" json:"revive,omitempty"`
+	Kill                            *Call_Kill                            `protobuf:"bytes,6,opt,name=kill" json:"kill,omitempty"`
+	Shutdown                        *Call_Shutdown                        `protobuf:"bytes,7,opt,name=shutdown" json:"shutdown,omitempty"`
+	Acknowledge                     *Call_Acknowledge                     `protobuf:"bytes,8,opt,name=acknowledge" json:"acknowledge,omitempty"`
+	AcknowledgeOfferOperationUpdate *Call_AcknowledgeOfferOperationUpdate `protobuf:"bytes,17,opt,name=acknowledge_offer_operation_update,json=acknowledgeOfferOperationUpdate" json:"acknowledge_offer_operation_update,omitempty"`
+	Reconcile                       *Call_Reconcile                       `protobuf:"bytes,9,opt,name=reconcile" json:"reconcile,omitempty"`
+	ReconcileOfferOperations        *Call_ReconcileOfferOperations        `protobuf:"bytes,18,opt,name=reconcile_offer_operations,json=reconcileOfferOperations" json:"reconcile_offer_operations,omitempty"`
+	Message                         *Call_Message                         `protobuf:"bytes,10,opt,name=message" json:"message,omitempty"`
+	Request                         *Call_Request                         `protobuf:"bytes,11,opt,name=request" json:"request,omitempty"`
+	Suppress                        *Call_Suppress                        `protobuf:"bytes,16,opt,name=suppress" json:"suppress,omitempty"`
 }
 
 func (m *Call) Reset()                    { *m = Call{} }
@@ -653,9 +696,23 @@ func (m *Call) GetAcknowledge() *Call_Acknowledge {
 	return nil
 }
 
+func (m *Call) GetAcknowledgeOfferOperationUpdate() *Call_AcknowledgeOfferOperationUpdate {
+	if m != nil {
+		return m.AcknowledgeOfferOperationUpdate
+	}
+	return nil
+}
+
 func (m *Call) GetReconcile() *Call_Reconcile {
 	if m != nil {
 		return m.Reconcile
+	}
+	return nil
+}
+
+func (m *Call) GetReconcileOfferOperations() *Call_ReconcileOfferOperations {
+	if m != nil {
+		return m.ReconcileOfferOperations
 	}
 	return nil
 }
@@ -979,6 +1036,52 @@ func (m *Call_Acknowledge) GetUUID() []byte {
 	return nil
 }
 
+// Acknowledges the receipt of an offer operation status update. Schedulers
+// are responsible for explicitly acknowledging the receipt of updates which
+// have the 'OfferOperationStatusUpdate.status().status_uuid()' field set.
+// Such status updates are retried by the agent or resource provider until
+// they are acknowledged by the scheduler.
+type Call_AcknowledgeOfferOperationUpdate struct {
+	AgentID            *mesos.AgentID            `protobuf:"bytes,1,opt,name=agent_id,json=agentId" json:"agent_id,omitempty"`
+	ResourceProviderID *mesos.ResourceProviderID `protobuf:"bytes,2,opt,name=resource_provider_id,json=resourceProviderId" json:"resource_provider_id,omitempty"`
+	StatusUUID         []byte                    `protobuf:"bytes,3,req,name=status_uuid,json=statusUuid" json:"status_uuid,omitempty"`
+	OperationID        mesos.OfferOperationID    `protobuf:"bytes,4,req,name=operation_id,json=operationId" json:"operation_id"`
+}
+
+func (m *Call_AcknowledgeOfferOperationUpdate) Reset()      { *m = Call_AcknowledgeOfferOperationUpdate{} }
+func (*Call_AcknowledgeOfferOperationUpdate) ProtoMessage() {}
+func (*Call_AcknowledgeOfferOperationUpdate) Descriptor() ([]byte, []int) {
+	return fileDescriptorScheduler, []int{1, 9}
+}
+
+func (m *Call_AcknowledgeOfferOperationUpdate) GetAgentID() *mesos.AgentID {
+	if m != nil {
+		return m.AgentID
+	}
+	return nil
+}
+
+func (m *Call_AcknowledgeOfferOperationUpdate) GetResourceProviderID() *mesos.ResourceProviderID {
+	if m != nil {
+		return m.ResourceProviderID
+	}
+	return nil
+}
+
+func (m *Call_AcknowledgeOfferOperationUpdate) GetStatusUUID() []byte {
+	if m != nil {
+		return m.StatusUUID
+	}
+	return nil
+}
+
+func (m *Call_AcknowledgeOfferOperationUpdate) GetOperationID() mesos.OfferOperationID {
+	if m != nil {
+		return m.OperationID
+	}
+	return mesos.OfferOperationID{}
+}
+
 // Allows the scheduler to query the status for non-terminal tasks.
 // This causes the master to send back the latest task status for
 // each task in 'tasks', if possible. Tasks that are no longer known
@@ -991,7 +1094,7 @@ type Call_Reconcile struct {
 
 func (m *Call_Reconcile) Reset()                    { *m = Call_Reconcile{} }
 func (*Call_Reconcile) ProtoMessage()               {}
-func (*Call_Reconcile) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{1, 9} }
+func (*Call_Reconcile) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{1, 10} }
 
 func (m *Call_Reconcile) GetTasks() []Call_Reconcile_Task {
 	if m != nil {
@@ -1009,7 +1112,7 @@ type Call_Reconcile_Task struct {
 func (m *Call_Reconcile_Task) Reset()      { *m = Call_Reconcile_Task{} }
 func (*Call_Reconcile_Task) ProtoMessage() {}
 func (*Call_Reconcile_Task) Descriptor() ([]byte, []int) {
-	return fileDescriptorScheduler, []int{1, 9, 0}
+	return fileDescriptorScheduler, []int{1, 10, 0}
 }
 
 func (m *Call_Reconcile_Task) GetTaskID() mesos.TaskID {
@@ -1026,6 +1129,62 @@ func (m *Call_Reconcile_Task) GetAgentID() *mesos.AgentID {
 	return nil
 }
 
+// Allows the scheduler to query the status of offer operations. This causes
+// the master to send back the latest status for each offer operation in
+// 'operations', if possible. If 'operations' is empty, then the master will
+// send the latest status for each operation currently known.
+type Call_ReconcileOfferOperations struct {
+	Operations []Call_ReconcileOfferOperations_Operation `protobuf:"bytes,1,rep,name=operations" json:"operations"`
+}
+
+func (m *Call_ReconcileOfferOperations) Reset()      { *m = Call_ReconcileOfferOperations{} }
+func (*Call_ReconcileOfferOperations) ProtoMessage() {}
+func (*Call_ReconcileOfferOperations) Descriptor() ([]byte, []int) {
+	return fileDescriptorScheduler, []int{1, 11}
+}
+
+func (m *Call_ReconcileOfferOperations) GetOperations() []Call_ReconcileOfferOperations_Operation {
+	if m != nil {
+		return m.Operations
+	}
+	return nil
+}
+
+type Call_ReconcileOfferOperations_Operation struct {
+	OperationID        mesos.OfferOperationID    `protobuf:"bytes,1,req,name=operation_id,json=operationId" json:"operation_id"`
+	AgentID            *mesos.AgentID            `protobuf:"bytes,2,opt,name=agent_id,json=agentId" json:"agent_id,omitempty"`
+	ResourceProviderID *mesos.ResourceProviderID `protobuf:"bytes,3,opt,name=resource_provider_id,json=resourceProviderId" json:"resource_provider_id,omitempty"`
+}
+
+func (m *Call_ReconcileOfferOperations_Operation) Reset() {
+	*m = Call_ReconcileOfferOperations_Operation{}
+}
+func (*Call_ReconcileOfferOperations_Operation) ProtoMessage() {}
+func (*Call_ReconcileOfferOperations_Operation) Descriptor() ([]byte, []int) {
+	return fileDescriptorScheduler, []int{1, 11, 0}
+}
+
+func (m *Call_ReconcileOfferOperations_Operation) GetOperationID() mesos.OfferOperationID {
+	if m != nil {
+		return m.OperationID
+	}
+	return mesos.OfferOperationID{}
+}
+
+func (m *Call_ReconcileOfferOperations_Operation) GetAgentID() *mesos.AgentID {
+	if m != nil {
+		return m.AgentID
+	}
+	return nil
+}
+
+func (m *Call_ReconcileOfferOperations_Operation) GetResourceProviderID() *mesos.ResourceProviderID {
+	if m != nil {
+		return m.ResourceProviderID
+	}
+	return nil
+}
+
 // Sends arbitrary binary data to the executor. Note that Mesos
 // neither interprets this data nor makes any guarantees about the
 // delivery of this message to the executor.
@@ -1037,7 +1196,7 @@ type Call_Message struct {
 
 func (m *Call_Message) Reset()                    { *m = Call_Message{} }
 func (*Call_Message) ProtoMessage()               {}
-func (*Call_Message) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{1, 10} }
+func (*Call_Message) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{1, 12} }
 
 func (m *Call_Message) GetAgentID() mesos.AgentID {
 	if m != nil {
@@ -1072,7 +1231,7 @@ type Call_Request struct {
 
 func (m *Call_Request) Reset()                    { *m = Call_Request{} }
 func (*Call_Request) ProtoMessage()               {}
-func (*Call_Request) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{1, 11} }
+func (*Call_Request) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{1, 13} }
 
 func (m *Call_Request) GetRequests() []mesos.Request {
 	if m != nil {
@@ -1090,7 +1249,7 @@ type Call_Suppress struct {
 
 func (m *Call_Suppress) Reset()                    { *m = Call_Suppress{} }
 func (*Call_Suppress) ProtoMessage()               {}
-func (*Call_Suppress) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{1, 12} }
+func (*Call_Suppress) Descriptor() ([]byte, []int) { return fileDescriptorScheduler, []int{1, 14} }
 
 func (m *Call_Suppress) GetRoles() []string {
 	if m != nil {
@@ -1107,6 +1266,7 @@ func init() {
 	proto.RegisterType((*Event_Rescind)(nil), "mesos.scheduler.Event.Rescind")
 	proto.RegisterType((*Event_RescindInverseOffer)(nil), "mesos.scheduler.Event.RescindInverseOffer")
 	proto.RegisterType((*Event_Update)(nil), "mesos.scheduler.Event.Update")
+	proto.RegisterType((*Event_OfferOperationUpdate)(nil), "mesos.scheduler.Event.OfferOperationUpdate")
 	proto.RegisterType((*Event_Message)(nil), "mesos.scheduler.Event.Message")
 	proto.RegisterType((*Event_Failure)(nil), "mesos.scheduler.Event.Failure")
 	proto.RegisterType((*Event_Error)(nil), "mesos.scheduler.Event.Error")
@@ -1120,8 +1280,11 @@ func init() {
 	proto.RegisterType((*Call_Kill)(nil), "mesos.scheduler.Call.Kill")
 	proto.RegisterType((*Call_Shutdown)(nil), "mesos.scheduler.Call.Shutdown")
 	proto.RegisterType((*Call_Acknowledge)(nil), "mesos.scheduler.Call.Acknowledge")
+	proto.RegisterType((*Call_AcknowledgeOfferOperationUpdate)(nil), "mesos.scheduler.Call.AcknowledgeOfferOperationUpdate")
 	proto.RegisterType((*Call_Reconcile)(nil), "mesos.scheduler.Call.Reconcile")
 	proto.RegisterType((*Call_Reconcile_Task)(nil), "mesos.scheduler.Call.Reconcile.Task")
+	proto.RegisterType((*Call_ReconcileOfferOperations)(nil), "mesos.scheduler.Call.ReconcileOfferOperations")
+	proto.RegisterType((*Call_ReconcileOfferOperations_Operation)(nil), "mesos.scheduler.Call.ReconcileOfferOperations.Operation")
 	proto.RegisterType((*Call_Message)(nil), "mesos.scheduler.Call.Message")
 	proto.RegisterType((*Call_Request)(nil), "mesos.scheduler.Call.Request")
 	proto.RegisterType((*Call_Suppress)(nil), "mesos.scheduler.Call.Suppress")
@@ -1188,6 +1351,9 @@ func (this *Event) VerboseEqual(that interface{}) error {
 	if !this.Update.Equal(that1.Update) {
 		return fmt.Errorf("Update this(%v) Not Equal that(%v)", this.Update, that1.Update)
 	}
+	if !this.OfferOperationUpdate.Equal(that1.OfferOperationUpdate) {
+		return fmt.Errorf("OfferOperationUpdate this(%v) Not Equal that(%v)", this.OfferOperationUpdate, that1.OfferOperationUpdate)
+	}
 	if !this.Message.Equal(that1.Message) {
 		return fmt.Errorf("Message this(%v) Not Equal that(%v)", this.Message, that1.Message)
 	}
@@ -1243,6 +1409,9 @@ func (this *Event) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.Update.Equal(that1.Update) {
+		return false
+	}
+	if !this.OfferOperationUpdate.Equal(that1.OfferOperationUpdate) {
 		return false
 	}
 	if !this.Message.Equal(that1.Message) {
@@ -1660,6 +1829,66 @@ func (this *Event_Update) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *Event_OfferOperationUpdate) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Event_OfferOperationUpdate)
+	if !ok {
+		that2, ok := that.(Event_OfferOperationUpdate)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Event_OfferOperationUpdate")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Event_OfferOperationUpdate but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Event_OfferOperationUpdate but is not nil && this == nil")
+	}
+	if !this.Status.Equal(&that1.Status) {
+		return fmt.Errorf("Status this(%v) Not Equal that(%v)", this.Status, that1.Status)
+	}
+	return nil
+}
+func (this *Event_OfferOperationUpdate) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Event_OfferOperationUpdate)
+	if !ok {
+		that2, ok := that.(Event_OfferOperationUpdate)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Status.Equal(&that1.Status) {
+		return false
+	}
+	return true
+}
 func (this *Event_Message) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -1934,8 +2163,14 @@ func (this *Call) VerboseEqual(that interface{}) error {
 	if !this.Acknowledge.Equal(that1.Acknowledge) {
 		return fmt.Errorf("Acknowledge this(%v) Not Equal that(%v)", this.Acknowledge, that1.Acknowledge)
 	}
+	if !this.AcknowledgeOfferOperationUpdate.Equal(that1.AcknowledgeOfferOperationUpdate) {
+		return fmt.Errorf("AcknowledgeOfferOperationUpdate this(%v) Not Equal that(%v)", this.AcknowledgeOfferOperationUpdate, that1.AcknowledgeOfferOperationUpdate)
+	}
 	if !this.Reconcile.Equal(that1.Reconcile) {
 		return fmt.Errorf("Reconcile this(%v) Not Equal that(%v)", this.Reconcile, that1.Reconcile)
+	}
+	if !this.ReconcileOfferOperations.Equal(that1.ReconcileOfferOperations) {
+		return fmt.Errorf("ReconcileOfferOperations this(%v) Not Equal that(%v)", this.ReconcileOfferOperations, that1.ReconcileOfferOperations)
 	}
 	if !this.Message.Equal(that1.Message) {
 		return fmt.Errorf("Message this(%v) Not Equal that(%v)", this.Message, that1.Message)
@@ -2006,7 +2241,13 @@ func (this *Call) Equal(that interface{}) bool {
 	if !this.Acknowledge.Equal(that1.Acknowledge) {
 		return false
 	}
+	if !this.AcknowledgeOfferOperationUpdate.Equal(that1.AcknowledgeOfferOperationUpdate) {
+		return false
+	}
 	if !this.Reconcile.Equal(that1.Reconcile) {
+		return false
+	}
+	if !this.ReconcileOfferOperations.Equal(that1.ReconcileOfferOperations) {
 		return false
 	}
 	if !this.Message.Equal(that1.Message) {
@@ -2696,6 +2937,84 @@ func (this *Call_Acknowledge) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *Call_AcknowledgeOfferOperationUpdate) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_AcknowledgeOfferOperationUpdate)
+	if !ok {
+		that2, ok := that.(Call_AcknowledgeOfferOperationUpdate)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_AcknowledgeOfferOperationUpdate")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_AcknowledgeOfferOperationUpdate but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_AcknowledgeOfferOperationUpdate but is not nil && this == nil")
+	}
+	if !this.AgentID.Equal(that1.AgentID) {
+		return fmt.Errorf("AgentID this(%v) Not Equal that(%v)", this.AgentID, that1.AgentID)
+	}
+	if !this.ResourceProviderID.Equal(that1.ResourceProviderID) {
+		return fmt.Errorf("ResourceProviderID this(%v) Not Equal that(%v)", this.ResourceProviderID, that1.ResourceProviderID)
+	}
+	if !bytes.Equal(this.StatusUUID, that1.StatusUUID) {
+		return fmt.Errorf("StatusUUID this(%v) Not Equal that(%v)", this.StatusUUID, that1.StatusUUID)
+	}
+	if !this.OperationID.Equal(&that1.OperationID) {
+		return fmt.Errorf("OperationID this(%v) Not Equal that(%v)", this.OperationID, that1.OperationID)
+	}
+	return nil
+}
+func (this *Call_AcknowledgeOfferOperationUpdate) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_AcknowledgeOfferOperationUpdate)
+	if !ok {
+		that2, ok := that.(Call_AcknowledgeOfferOperationUpdate)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.AgentID.Equal(that1.AgentID) {
+		return false
+	}
+	if !this.ResourceProviderID.Equal(that1.ResourceProviderID) {
+		return false
+	}
+	if !bytes.Equal(this.StatusUUID, that1.StatusUUID) {
+		return false
+	}
+	if !this.OperationID.Equal(&that1.OperationID) {
+		return false
+	}
+	return true
+}
 func (this *Call_Reconcile) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -2828,6 +3147,148 @@ func (this *Call_Reconcile_Task) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.AgentID.Equal(that1.AgentID) {
+		return false
+	}
+	return true
+}
+func (this *Call_ReconcileOfferOperations) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_ReconcileOfferOperations)
+	if !ok {
+		that2, ok := that.(Call_ReconcileOfferOperations)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_ReconcileOfferOperations")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_ReconcileOfferOperations but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_ReconcileOfferOperations but is not nil && this == nil")
+	}
+	if len(this.Operations) != len(that1.Operations) {
+		return fmt.Errorf("Operations this(%v) Not Equal that(%v)", len(this.Operations), len(that1.Operations))
+	}
+	for i := range this.Operations {
+		if !this.Operations[i].Equal(&that1.Operations[i]) {
+			return fmt.Errorf("Operations this[%v](%v) Not Equal that[%v](%v)", i, this.Operations[i], i, that1.Operations[i])
+		}
+	}
+	return nil
+}
+func (this *Call_ReconcileOfferOperations) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_ReconcileOfferOperations)
+	if !ok {
+		that2, ok := that.(Call_ReconcileOfferOperations)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if len(this.Operations) != len(that1.Operations) {
+		return false
+	}
+	for i := range this.Operations {
+		if !this.Operations[i].Equal(&that1.Operations[i]) {
+			return false
+		}
+	}
+	return true
+}
+func (this *Call_ReconcileOfferOperations_Operation) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_ReconcileOfferOperations_Operation)
+	if !ok {
+		that2, ok := that.(Call_ReconcileOfferOperations_Operation)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_ReconcileOfferOperations_Operation")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_ReconcileOfferOperations_Operation but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_ReconcileOfferOperations_Operation but is not nil && this == nil")
+	}
+	if !this.OperationID.Equal(&that1.OperationID) {
+		return fmt.Errorf("OperationID this(%v) Not Equal that(%v)", this.OperationID, that1.OperationID)
+	}
+	if !this.AgentID.Equal(that1.AgentID) {
+		return fmt.Errorf("AgentID this(%v) Not Equal that(%v)", this.AgentID, that1.AgentID)
+	}
+	if !this.ResourceProviderID.Equal(that1.ResourceProviderID) {
+		return fmt.Errorf("ResourceProviderID this(%v) Not Equal that(%v)", this.ResourceProviderID, that1.ResourceProviderID)
+	}
+	return nil
+}
+func (this *Call_ReconcileOfferOperations_Operation) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_ReconcileOfferOperations_Operation)
+	if !ok {
+		that2, ok := that.(Call_ReconcileOfferOperations_Operation)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.OperationID.Equal(&that1.OperationID) {
+		return false
+	}
+	if !this.AgentID.Equal(that1.AgentID) {
+		return false
+	}
+	if !this.ResourceProviderID.Equal(that1.ResourceProviderID) {
 		return false
 	}
 	return true
@@ -3048,7 +3509,7 @@ func (this *Event) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 14)
+	s := make([]string, 0, 15)
 	s = append(s, "&scheduler.Event{")
 	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
 	if this.Subscribed != nil {
@@ -3068,6 +3529,9 @@ func (this *Event) GoString() string {
 	}
 	if this.Update != nil {
 		s = append(s, "Update: "+fmt.Sprintf("%#v", this.Update)+",\n")
+	}
+	if this.OfferOperationUpdate != nil {
+		s = append(s, "OfferOperationUpdate: "+fmt.Sprintf("%#v", this.OfferOperationUpdate)+",\n")
 	}
 	if this.Message != nil {
 		s = append(s, "Message: "+fmt.Sprintf("%#v", this.Message)+",\n")
@@ -3153,6 +3617,16 @@ func (this *Event_Update) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *Event_OfferOperationUpdate) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Event_OfferOperationUpdate{")
+	s = append(s, "Status: "+strings.Replace(this.Status.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func (this *Event_Message) GoString() string {
 	if this == nil {
 		return "nil"
@@ -3199,7 +3673,7 @@ func (this *Call) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 19)
+	s := make([]string, 0, 21)
 	s = append(s, "&scheduler.Call{")
 	if this.FrameworkID != nil {
 		s = append(s, "FrameworkID: "+fmt.Sprintf("%#v", this.FrameworkID)+",\n")
@@ -3232,8 +3706,14 @@ func (this *Call) GoString() string {
 	if this.Acknowledge != nil {
 		s = append(s, "Acknowledge: "+fmt.Sprintf("%#v", this.Acknowledge)+",\n")
 	}
+	if this.AcknowledgeOfferOperationUpdate != nil {
+		s = append(s, "AcknowledgeOfferOperationUpdate: "+fmt.Sprintf("%#v", this.AcknowledgeOfferOperationUpdate)+",\n")
+	}
 	if this.Reconcile != nil {
 		s = append(s, "Reconcile: "+fmt.Sprintf("%#v", this.Reconcile)+",\n")
+	}
+	if this.ReconcileOfferOperations != nil {
+		s = append(s, "ReconcileOfferOperations: "+fmt.Sprintf("%#v", this.ReconcileOfferOperations)+",\n")
 	}
 	if this.Message != nil {
 		s = append(s, "Message: "+fmt.Sprintf("%#v", this.Message)+",\n")
@@ -3378,6 +3858,25 @@ func (this *Call_Acknowledge) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *Call_AcknowledgeOfferOperationUpdate) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 8)
+	s = append(s, "&scheduler.Call_AcknowledgeOfferOperationUpdate{")
+	if this.AgentID != nil {
+		s = append(s, "AgentID: "+fmt.Sprintf("%#v", this.AgentID)+",\n")
+	}
+	if this.ResourceProviderID != nil {
+		s = append(s, "ResourceProviderID: "+fmt.Sprintf("%#v", this.ResourceProviderID)+",\n")
+	}
+	if this.StatusUUID != nil {
+		s = append(s, "StatusUUID: "+valueToGoStringScheduler(this.StatusUUID, "byte")+",\n")
+	}
+	s = append(s, "OperationID: "+strings.Replace(this.OperationID.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func (this *Call_Reconcile) GoString() string {
 	if this == nil {
 		return "nil"
@@ -3399,6 +3898,34 @@ func (this *Call_Reconcile_Task) GoString() string {
 	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
 	if this.AgentID != nil {
 		s = append(s, "AgentID: "+fmt.Sprintf("%#v", this.AgentID)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_ReconcileOfferOperations) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&scheduler.Call_ReconcileOfferOperations{")
+	if this.Operations != nil {
+		s = append(s, "Operations: "+fmt.Sprintf("%#v", this.Operations)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_ReconcileOfferOperations_Operation) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&scheduler.Call_ReconcileOfferOperations_Operation{")
+	s = append(s, "OperationID: "+strings.Replace(this.OperationID.GoString(), `&`, ``, 1)+",\n")
+	if this.AgentID != nil {
+		s = append(s, "AgentID: "+fmt.Sprintf("%#v", this.AgentID)+",\n")
+	}
+	if this.ResourceProviderID != nil {
+		s = append(s, "ResourceProviderID: "+fmt.Sprintf("%#v", this.ResourceProviderID)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -3557,6 +4084,16 @@ func (m *Event) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n9
 	}
+	if m.OfferOperationUpdate != nil {
+		dAtA[i] = 0x5a
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(m.OfferOperationUpdate.ProtoSize()))
+		n10, err := m.OfferOperationUpdate.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n10
+	}
 	return i, nil
 }
 
@@ -3581,11 +4118,11 @@ func (m *Event_Subscribed) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.FrameworkID.ProtoSize()))
-		n10, err := m.FrameworkID.MarshalTo(dAtA[i:])
+		n11, err := m.FrameworkID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n10
+		i += n11
 	}
 	if m.HeartbeatIntervalSeconds != nil {
 		dAtA[i] = 0x11
@@ -3596,11 +4133,11 @@ func (m *Event_Subscribed) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.MasterInfo.ProtoSize()))
-		n11, err := m.MasterInfo.MarshalTo(dAtA[i:])
+		n12, err := m.MasterInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n11
+		i += n12
 	}
 	return i, nil
 }
@@ -3683,11 +4220,11 @@ func (m *Event_Rescind) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.OfferID.ProtoSize()))
-	n12, err := m.OfferID.MarshalTo(dAtA[i:])
+	n13, err := m.OfferID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n12
+	i += n13
 	return i, nil
 }
 
@@ -3709,11 +4246,11 @@ func (m *Event_RescindInverseOffer) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.InverseOfferID.ProtoSize()))
-	n13, err := m.InverseOfferID.MarshalTo(dAtA[i:])
+	n14, err := m.InverseOfferID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n13
+	i += n14
 	return i, nil
 }
 
@@ -3735,11 +4272,37 @@ func (m *Event_Update) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.Status.ProtoSize()))
-	n14, err := m.Status.MarshalTo(dAtA[i:])
+	n15, err := m.Status.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n14
+	i += n15
+	return i, nil
+}
+
+func (m *Event_OfferOperationUpdate) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Event_OfferOperationUpdate) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintScheduler(dAtA, i, uint64(m.Status.ProtoSize()))
+	n16, err := m.Status.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n16
 	return i, nil
 }
 
@@ -3761,19 +4324,19 @@ func (m *Event_Message) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.AgentID.ProtoSize()))
-	n15, err := m.AgentID.MarshalTo(dAtA[i:])
+	n17, err := m.AgentID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n15
+	i += n17
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.ExecutorID.ProtoSize()))
-	n16, err := m.ExecutorID.MarshalTo(dAtA[i:])
+	n18, err := m.ExecutorID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n16
+	i += n18
 	if m.Data == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
 	} else {
@@ -3804,21 +4367,21 @@ func (m *Event_Failure) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.AgentID.ProtoSize()))
-		n17, err := m.AgentID.MarshalTo(dAtA[i:])
+		n19, err := m.AgentID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n17
+		i += n19
 	}
 	if m.ExecutorID != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.ExecutorID.ProtoSize()))
-		n18, err := m.ExecutorID.MarshalTo(dAtA[i:])
+		n20, err := m.ExecutorID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n18
+		i += n20
 	}
 	if m.Status != nil {
 		dAtA[i] = 0x18
@@ -3869,11 +4432,11 @@ func (m *Call) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.FrameworkID.ProtoSize()))
-		n19, err := m.FrameworkID.MarshalTo(dAtA[i:])
+		n21, err := m.FrameworkID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n19
+		i += n21
 	}
 	dAtA[i] = 0x10
 	i++
@@ -3882,121 +4445,121 @@ func (m *Call) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.Subscribe.ProtoSize()))
-		n20, err := m.Subscribe.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n20
-	}
-	if m.Accept != nil {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.Accept.ProtoSize()))
-		n21, err := m.Accept.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n21
-	}
-	if m.Decline != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.Decline.ProtoSize()))
-		n22, err := m.Decline.MarshalTo(dAtA[i:])
+		n22, err := m.Subscribe.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n22
 	}
-	if m.Kill != nil {
-		dAtA[i] = 0x32
+	if m.Accept != nil {
+		dAtA[i] = 0x22
 		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.Kill.ProtoSize()))
-		n23, err := m.Kill.MarshalTo(dAtA[i:])
+		i = encodeVarintScheduler(dAtA, i, uint64(m.Accept.ProtoSize()))
+		n23, err := m.Accept.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n23
 	}
-	if m.Shutdown != nil {
-		dAtA[i] = 0x3a
+	if m.Decline != nil {
+		dAtA[i] = 0x2a
 		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.Shutdown.ProtoSize()))
-		n24, err := m.Shutdown.MarshalTo(dAtA[i:])
+		i = encodeVarintScheduler(dAtA, i, uint64(m.Decline.ProtoSize()))
+		n24, err := m.Decline.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n24
 	}
-	if m.Acknowledge != nil {
-		dAtA[i] = 0x42
+	if m.Kill != nil {
+		dAtA[i] = 0x32
 		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.Acknowledge.ProtoSize()))
-		n25, err := m.Acknowledge.MarshalTo(dAtA[i:])
+		i = encodeVarintScheduler(dAtA, i, uint64(m.Kill.ProtoSize()))
+		n25, err := m.Kill.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n25
 	}
-	if m.Reconcile != nil {
-		dAtA[i] = 0x4a
+	if m.Shutdown != nil {
+		dAtA[i] = 0x3a
 		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.Reconcile.ProtoSize()))
-		n26, err := m.Reconcile.MarshalTo(dAtA[i:])
+		i = encodeVarintScheduler(dAtA, i, uint64(m.Shutdown.ProtoSize()))
+		n26, err := m.Shutdown.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n26
 	}
-	if m.Message != nil {
-		dAtA[i] = 0x52
+	if m.Acknowledge != nil {
+		dAtA[i] = 0x42
 		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.Message.ProtoSize()))
-		n27, err := m.Message.MarshalTo(dAtA[i:])
+		i = encodeVarintScheduler(dAtA, i, uint64(m.Acknowledge.ProtoSize()))
+		n27, err := m.Acknowledge.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n27
 	}
-	if m.Request != nil {
-		dAtA[i] = 0x5a
+	if m.Reconcile != nil {
+		dAtA[i] = 0x4a
 		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.Request.ProtoSize()))
-		n28, err := m.Request.MarshalTo(dAtA[i:])
+		i = encodeVarintScheduler(dAtA, i, uint64(m.Reconcile.ProtoSize()))
+		n28, err := m.Reconcile.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n28
 	}
-	if m.AcceptInverseOffers != nil {
-		dAtA[i] = 0x6a
+	if m.Message != nil {
+		dAtA[i] = 0x52
 		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.AcceptInverseOffers.ProtoSize()))
-		n29, err := m.AcceptInverseOffers.MarshalTo(dAtA[i:])
+		i = encodeVarintScheduler(dAtA, i, uint64(m.Message.ProtoSize()))
+		n29, err := m.Message.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n29
 	}
-	if m.DeclineInverseOffers != nil {
-		dAtA[i] = 0x72
+	if m.Request != nil {
+		dAtA[i] = 0x5a
 		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.DeclineInverseOffers.ProtoSize()))
-		n30, err := m.DeclineInverseOffers.MarshalTo(dAtA[i:])
+		i = encodeVarintScheduler(dAtA, i, uint64(m.Request.ProtoSize()))
+		n30, err := m.Request.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n30
 	}
-	if m.Revive != nil {
-		dAtA[i] = 0x7a
+	if m.AcceptInverseOffers != nil {
+		dAtA[i] = 0x6a
 		i++
-		i = encodeVarintScheduler(dAtA, i, uint64(m.Revive.ProtoSize()))
-		n31, err := m.Revive.MarshalTo(dAtA[i:])
+		i = encodeVarintScheduler(dAtA, i, uint64(m.AcceptInverseOffers.ProtoSize()))
+		n31, err := m.AcceptInverseOffers.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n31
+	}
+	if m.DeclineInverseOffers != nil {
+		dAtA[i] = 0x72
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(m.DeclineInverseOffers.ProtoSize()))
+		n32, err := m.DeclineInverseOffers.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n32
+	}
+	if m.Revive != nil {
+		dAtA[i] = 0x7a
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(m.Revive.ProtoSize()))
+		n33, err := m.Revive.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n33
 	}
 	if m.Suppress != nil {
 		dAtA[i] = 0x82
@@ -4004,11 +4567,35 @@ func (m *Call) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.Suppress.ProtoSize()))
-		n32, err := m.Suppress.MarshalTo(dAtA[i:])
+		n34, err := m.Suppress.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n32
+		i += n34
+	}
+	if m.AcknowledgeOfferOperationUpdate != nil {
+		dAtA[i] = 0x8a
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(m.AcknowledgeOfferOperationUpdate.ProtoSize()))
+		n35, err := m.AcknowledgeOfferOperationUpdate.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n35
+	}
+	if m.ReconcileOfferOperations != nil {
+		dAtA[i] = 0x92
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(m.ReconcileOfferOperations.ProtoSize()))
+		n36, err := m.ReconcileOfferOperations.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n36
 	}
 	return i, nil
 }
@@ -4034,11 +4621,11 @@ func (m *Call_Subscribe) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.FrameworkInfo.ProtoSize()))
-		n33, err := m.FrameworkInfo.MarshalTo(dAtA[i:])
+		n37, err := m.FrameworkInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n33
+		i += n37
 	}
 	if len(m.SuppressedRoles) > 0 {
 		for _, s := range m.SuppressedRoles {
@@ -4101,11 +4688,11 @@ func (m *Call_Accept) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.Filters.ProtoSize()))
-		n34, err := m.Filters.MarshalTo(dAtA[i:])
+		n38, err := m.Filters.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n34
+		i += n38
 	}
 	return i, nil
 }
@@ -4141,11 +4728,11 @@ func (m *Call_Decline) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.Filters.ProtoSize()))
-		n35, err := m.Filters.MarshalTo(dAtA[i:])
+		n39, err := m.Filters.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n35
+		i += n39
 	}
 	return i, nil
 }
@@ -4181,11 +4768,11 @@ func (m *Call_AcceptInverseOffers) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.Filters.ProtoSize()))
-		n36, err := m.Filters.MarshalTo(dAtA[i:])
+		n40, err := m.Filters.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n36
+		i += n40
 	}
 	return i, nil
 }
@@ -4221,11 +4808,11 @@ func (m *Call_DeclineInverseOffers) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.Filters.ProtoSize()))
-		n37, err := m.Filters.MarshalTo(dAtA[i:])
+		n41, err := m.Filters.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n37
+		i += n41
 	}
 	return i, nil
 }
@@ -4281,30 +4868,30 @@ func (m *Call_Kill) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.TaskID.ProtoSize()))
-	n38, err := m.TaskID.MarshalTo(dAtA[i:])
+	n42, err := m.TaskID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n38
+	i += n42
 	if m.AgentID != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.AgentID.ProtoSize()))
-		n39, err := m.AgentID.MarshalTo(dAtA[i:])
+		n43, err := m.AgentID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n39
+		i += n43
 	}
 	if m.KillPolicy != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.KillPolicy.ProtoSize()))
-		n40, err := m.KillPolicy.MarshalTo(dAtA[i:])
+		n44, err := m.KillPolicy.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n40
+		i += n44
 	}
 	return i, nil
 }
@@ -4327,19 +4914,19 @@ func (m *Call_Shutdown) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.ExecutorID.ProtoSize()))
-	n41, err := m.ExecutorID.MarshalTo(dAtA[i:])
+	n45, err := m.ExecutorID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n41
+	i += n45
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.AgentID.ProtoSize()))
-	n42, err := m.AgentID.MarshalTo(dAtA[i:])
+	n46, err := m.AgentID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n42
+	i += n46
 	return i, nil
 }
 
@@ -4361,19 +4948,19 @@ func (m *Call_Acknowledge) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.AgentID.ProtoSize()))
-	n43, err := m.AgentID.MarshalTo(dAtA[i:])
+	n47, err := m.AgentID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n43
+	i += n47
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.TaskID.ProtoSize()))
-	n44, err := m.TaskID.MarshalTo(dAtA[i:])
+	n48, err := m.TaskID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n44
+	i += n48
 	if m.UUID == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("uuid")
 	} else {
@@ -4382,6 +4969,60 @@ func (m *Call_Acknowledge) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintScheduler(dAtA, i, uint64(len(m.UUID)))
 		i += copy(dAtA[i:], m.UUID)
 	}
+	return i, nil
+}
+
+func (m *Call_AcknowledgeOfferOperationUpdate) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_AcknowledgeOfferOperationUpdate) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.AgentID != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(m.AgentID.ProtoSize()))
+		n49, err := m.AgentID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n49
+	}
+	if m.ResourceProviderID != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(m.ResourceProviderID.ProtoSize()))
+		n50, err := m.ResourceProviderID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n50
+	}
+	if m.StatusUUID == nil {
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("status_uuid")
+	} else {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(len(m.StatusUUID)))
+		i += copy(dAtA[i:], m.StatusUUID)
+	}
+	dAtA[i] = 0x22
+	i++
+	i = encodeVarintScheduler(dAtA, i, uint64(m.OperationID.ProtoSize()))
+	n51, err := m.OperationID.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n51
 	return i, nil
 }
 
@@ -4433,20 +5074,96 @@ func (m *Call_Reconcile_Task) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.TaskID.ProtoSize()))
-	n45, err := m.TaskID.MarshalTo(dAtA[i:])
+	n52, err := m.TaskID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n45
+	i += n52
 	if m.AgentID != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintScheduler(dAtA, i, uint64(m.AgentID.ProtoSize()))
-		n46, err := m.AgentID.MarshalTo(dAtA[i:])
+		n53, err := m.AgentID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n46
+		i += n53
+	}
+	return i, nil
+}
+
+func (m *Call_ReconcileOfferOperations) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_ReconcileOfferOperations) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Operations) > 0 {
+		for _, msg := range m.Operations {
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintScheduler(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	return i, nil
+}
+
+func (m *Call_ReconcileOfferOperations_Operation) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_ReconcileOfferOperations_Operation) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintScheduler(dAtA, i, uint64(m.OperationID.ProtoSize()))
+	n54, err := m.OperationID.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n54
+	if m.AgentID != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(m.AgentID.ProtoSize()))
+		n55, err := m.AgentID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n55
+	}
+	if m.ResourceProviderID != nil {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintScheduler(dAtA, i, uint64(m.ResourceProviderID.ProtoSize()))
+		n56, err := m.ResourceProviderID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n56
 	}
 	return i, nil
 }
@@ -4469,19 +5186,19 @@ func (m *Call_Message) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.AgentID.ProtoSize()))
-	n47, err := m.AgentID.MarshalTo(dAtA[i:])
+	n57, err := m.AgentID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n47
+	i += n57
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintScheduler(dAtA, i, uint64(m.ExecutorID.ProtoSize()))
-	n48, err := m.ExecutorID.MarshalTo(dAtA[i:])
+	n58, err := m.ExecutorID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n48
+	i += n58
 	if m.Data == nil {
 		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
 	} else {
@@ -4585,7 +5302,7 @@ func encodeVarintScheduler(dAtA []byte, offset int, v uint64) int {
 }
 func NewPopulatedEvent(r randyScheduler, easy bool) *Event {
 	this := &Event{}
-	this.Type = Event_Type([]int32{0, 1, 2, 9, 3, 10, 4, 5, 6, 7, 8}[r.Intn(11)])
+	this.Type = Event_Type([]int32{0, 1, 2, 9, 3, 10, 4, 11, 5, 6, 7, 8}[r.Intn(12)])
 	if r.Intn(10) != 0 {
 		this.Subscribed = NewPopulatedEvent_Subscribed(r, easy)
 	}
@@ -4612,6 +5329,9 @@ func NewPopulatedEvent(r randyScheduler, easy bool) *Event {
 	}
 	if r.Intn(10) != 0 {
 		this.RescindInverseOffer = NewPopulatedEvent_RescindInverseOffer(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.OfferOperationUpdate = NewPopulatedEvent_OfferOperationUpdate(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -4693,15 +5413,24 @@ func NewPopulatedEvent_Update(r randyScheduler, easy bool) *Event_Update {
 	return this
 }
 
+func NewPopulatedEvent_OfferOperationUpdate(r randyScheduler, easy bool) *Event_OfferOperationUpdate {
+	this := &Event_OfferOperationUpdate{}
+	v9 := mesos.NewPopulatedOfferOperationStatus(r, easy)
+	this.Status = *v9
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
 func NewPopulatedEvent_Message(r randyScheduler, easy bool) *Event_Message {
 	this := &Event_Message{}
-	v9 := mesos.NewPopulatedAgentID(r, easy)
-	this.AgentID = *v9
-	v10 := mesos.NewPopulatedExecutorID(r, easy)
-	this.ExecutorID = *v10
-	v11 := r.Intn(100)
-	this.Data = make([]byte, v11)
-	for i := 0; i < v11; i++ {
+	v10 := mesos.NewPopulatedAgentID(r, easy)
+	this.AgentID = *v10
+	v11 := mesos.NewPopulatedExecutorID(r, easy)
+	this.ExecutorID = *v11
+	v12 := r.Intn(100)
+	this.Data = make([]byte, v12)
+	for i := 0; i < v12; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -4718,11 +5447,11 @@ func NewPopulatedEvent_Failure(r randyScheduler, easy bool) *Event_Failure {
 		this.ExecutorID = mesos.NewPopulatedExecutorID(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v12 := int32(r.Int31())
+		v13 := int32(r.Int31())
 		if r.Intn(2) == 0 {
-			v12 *= -1
+			v13 *= -1
 		}
-		this.Status = &v12
+		this.Status = &v13
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -4742,7 +5471,7 @@ func NewPopulatedCall(r randyScheduler, easy bool) *Call {
 	if r.Intn(10) != 0 {
 		this.FrameworkID = mesos.NewPopulatedFrameworkID(r, easy)
 	}
-	this.Type = Call_Type([]int32{0, 1, 2, 3, 4, 13, 14, 5, 6, 7, 8, 9, 10, 11, 12}[r.Intn(15)])
+	this.Type = Call_Type([]int32{0, 1, 2, 3, 4, 13, 14, 5, 6, 7, 8, 15, 9, 16, 10, 11, 12}[r.Intn(17)])
 	if r.Intn(10) != 0 {
 		this.Subscribe = NewPopulatedCall_Subscribe(r, easy)
 	}
@@ -4782,6 +5511,12 @@ func NewPopulatedCall(r randyScheduler, easy bool) *Call {
 	if r.Intn(10) != 0 {
 		this.Suppress = NewPopulatedCall_Suppress(r, easy)
 	}
+	if r.Intn(10) != 0 {
+		this.AcknowledgeOfferOperationUpdate = NewPopulatedCall_AcknowledgeOfferOperationUpdate(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.ReconcileOfferOperations = NewPopulatedCall_ReconcileOfferOperations(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -4791,9 +5526,9 @@ func NewPopulatedCall_Subscribe(r randyScheduler, easy bool) *Call_Subscribe {
 	this := &Call_Subscribe{}
 	this.FrameworkInfo = mesos.NewPopulatedFrameworkInfo(r, easy)
 	if r.Intn(10) != 0 {
-		v13 := r.Intn(10)
-		this.SuppressedRoles = make([]string, v13)
-		for i := 0; i < v13; i++ {
+		v14 := r.Intn(10)
+		this.SuppressedRoles = make([]string, v14)
+		for i := 0; i < v14; i++ {
 			this.SuppressedRoles[i] = string(randStringScheduler(r))
 		}
 	}
@@ -4805,19 +5540,19 @@ func NewPopulatedCall_Subscribe(r randyScheduler, easy bool) *Call_Subscribe {
 func NewPopulatedCall_Accept(r randyScheduler, easy bool) *Call_Accept {
 	this := &Call_Accept{}
 	if r.Intn(10) != 0 {
-		v14 := r.Intn(5)
-		this.OfferIDs = make([]mesos.OfferID, v14)
-		for i := 0; i < v14; i++ {
-			v15 := mesos.NewPopulatedOfferID(r, easy)
-			this.OfferIDs[i] = *v15
+		v15 := r.Intn(5)
+		this.OfferIDs = make([]mesos.OfferID, v15)
+		for i := 0; i < v15; i++ {
+			v16 := mesos.NewPopulatedOfferID(r, easy)
+			this.OfferIDs[i] = *v16
 		}
 	}
 	if r.Intn(10) != 0 {
-		v16 := r.Intn(5)
-		this.Operations = make([]mesos.Offer_Operation, v16)
-		for i := 0; i < v16; i++ {
-			v17 := mesos.NewPopulatedOffer_Operation(r, easy)
-			this.Operations[i] = *v17
+		v17 := r.Intn(5)
+		this.Operations = make([]mesos.Offer_Operation, v17)
+		for i := 0; i < v17; i++ {
+			v18 := mesos.NewPopulatedOffer_Operation(r, easy)
+			this.Operations[i] = *v18
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -4831,11 +5566,11 @@ func NewPopulatedCall_Accept(r randyScheduler, easy bool) *Call_Accept {
 func NewPopulatedCall_Decline(r randyScheduler, easy bool) *Call_Decline {
 	this := &Call_Decline{}
 	if r.Intn(10) != 0 {
-		v18 := r.Intn(5)
-		this.OfferIDs = make([]mesos.OfferID, v18)
-		for i := 0; i < v18; i++ {
-			v19 := mesos.NewPopulatedOfferID(r, easy)
-			this.OfferIDs[i] = *v19
+		v19 := r.Intn(5)
+		this.OfferIDs = make([]mesos.OfferID, v19)
+		for i := 0; i < v19; i++ {
+			v20 := mesos.NewPopulatedOfferID(r, easy)
+			this.OfferIDs[i] = *v20
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -4849,11 +5584,11 @@ func NewPopulatedCall_Decline(r randyScheduler, easy bool) *Call_Decline {
 func NewPopulatedCall_AcceptInverseOffers(r randyScheduler, easy bool) *Call_AcceptInverseOffers {
 	this := &Call_AcceptInverseOffers{}
 	if r.Intn(10) != 0 {
-		v20 := r.Intn(5)
-		this.InverseOfferIDs = make([]mesos.OfferID, v20)
-		for i := 0; i < v20; i++ {
-			v21 := mesos.NewPopulatedOfferID(r, easy)
-			this.InverseOfferIDs[i] = *v21
+		v21 := r.Intn(5)
+		this.InverseOfferIDs = make([]mesos.OfferID, v21)
+		for i := 0; i < v21; i++ {
+			v22 := mesos.NewPopulatedOfferID(r, easy)
+			this.InverseOfferIDs[i] = *v22
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -4867,11 +5602,11 @@ func NewPopulatedCall_AcceptInverseOffers(r randyScheduler, easy bool) *Call_Acc
 func NewPopulatedCall_DeclineInverseOffers(r randyScheduler, easy bool) *Call_DeclineInverseOffers {
 	this := &Call_DeclineInverseOffers{}
 	if r.Intn(10) != 0 {
-		v22 := r.Intn(5)
-		this.InverseOfferIDs = make([]mesos.OfferID, v22)
-		for i := 0; i < v22; i++ {
-			v23 := mesos.NewPopulatedOfferID(r, easy)
-			this.InverseOfferIDs[i] = *v23
+		v23 := r.Intn(5)
+		this.InverseOfferIDs = make([]mesos.OfferID, v23)
+		for i := 0; i < v23; i++ {
+			v24 := mesos.NewPopulatedOfferID(r, easy)
+			this.InverseOfferIDs[i] = *v24
 		}
 	}
 	if r.Intn(10) != 0 {
@@ -4885,9 +5620,9 @@ func NewPopulatedCall_DeclineInverseOffers(r randyScheduler, easy bool) *Call_De
 func NewPopulatedCall_Revive(r randyScheduler, easy bool) *Call_Revive {
 	this := &Call_Revive{}
 	if r.Intn(10) != 0 {
-		v24 := r.Intn(10)
-		this.Roles = make([]string, v24)
-		for i := 0; i < v24; i++ {
+		v25 := r.Intn(10)
+		this.Roles = make([]string, v25)
+		for i := 0; i < v25; i++ {
 			this.Roles[i] = string(randStringScheduler(r))
 		}
 	}
@@ -4898,8 +5633,8 @@ func NewPopulatedCall_Revive(r randyScheduler, easy bool) *Call_Revive {
 
 func NewPopulatedCall_Kill(r randyScheduler, easy bool) *Call_Kill {
 	this := &Call_Kill{}
-	v25 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v25
+	v26 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v26
 	if r.Intn(10) != 0 {
 		this.AgentID = mesos.NewPopulatedAgentID(r, easy)
 	}
@@ -4913,10 +5648,10 @@ func NewPopulatedCall_Kill(r randyScheduler, easy bool) *Call_Kill {
 
 func NewPopulatedCall_Shutdown(r randyScheduler, easy bool) *Call_Shutdown {
 	this := &Call_Shutdown{}
-	v26 := mesos.NewPopulatedExecutorID(r, easy)
-	this.ExecutorID = *v26
-	v27 := mesos.NewPopulatedAgentID(r, easy)
-	this.AgentID = *v27
+	v27 := mesos.NewPopulatedExecutorID(r, easy)
+	this.ExecutorID = *v27
+	v28 := mesos.NewPopulatedAgentID(r, easy)
+	this.AgentID = *v28
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -4924,15 +5659,35 @@ func NewPopulatedCall_Shutdown(r randyScheduler, easy bool) *Call_Shutdown {
 
 func NewPopulatedCall_Acknowledge(r randyScheduler, easy bool) *Call_Acknowledge {
 	this := &Call_Acknowledge{}
-	v28 := mesos.NewPopulatedAgentID(r, easy)
-	this.AgentID = *v28
-	v29 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v29
-	v30 := r.Intn(100)
-	this.UUID = make([]byte, v30)
-	for i := 0; i < v30; i++ {
+	v29 := mesos.NewPopulatedAgentID(r, easy)
+	this.AgentID = *v29
+	v30 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v30
+	v31 := r.Intn(100)
+	this.UUID = make([]byte, v31)
+	for i := 0; i < v31; i++ {
 		this.UUID[i] = byte(r.Intn(256))
 	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedCall_AcknowledgeOfferOperationUpdate(r randyScheduler, easy bool) *Call_AcknowledgeOfferOperationUpdate {
+	this := &Call_AcknowledgeOfferOperationUpdate{}
+	if r.Intn(10) != 0 {
+		this.AgentID = mesos.NewPopulatedAgentID(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.ResourceProviderID = mesos.NewPopulatedResourceProviderID(r, easy)
+	}
+	v32 := r.Intn(100)
+	this.StatusUUID = make([]byte, v32)
+	for i := 0; i < v32; i++ {
+		this.StatusUUID[i] = byte(r.Intn(256))
+	}
+	v33 := mesos.NewPopulatedOfferOperationID(r, easy)
+	this.OperationID = *v33
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -4941,11 +5696,11 @@ func NewPopulatedCall_Acknowledge(r randyScheduler, easy bool) *Call_Acknowledge
 func NewPopulatedCall_Reconcile(r randyScheduler, easy bool) *Call_Reconcile {
 	this := &Call_Reconcile{}
 	if r.Intn(10) != 0 {
-		v31 := r.Intn(5)
-		this.Tasks = make([]Call_Reconcile_Task, v31)
-		for i := 0; i < v31; i++ {
-			v32 := NewPopulatedCall_Reconcile_Task(r, easy)
-			this.Tasks[i] = *v32
+		v34 := r.Intn(5)
+		this.Tasks = make([]Call_Reconcile_Task, v34)
+		for i := 0; i < v34; i++ {
+			v35 := NewPopulatedCall_Reconcile_Task(r, easy)
+			this.Tasks[i] = *v35
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -4955,8 +5710,8 @@ func NewPopulatedCall_Reconcile(r randyScheduler, easy bool) *Call_Reconcile {
 
 func NewPopulatedCall_Reconcile_Task(r randyScheduler, easy bool) *Call_Reconcile_Task {
 	this := &Call_Reconcile_Task{}
-	v33 := mesos.NewPopulatedTaskID(r, easy)
-	this.TaskID = *v33
+	v36 := mesos.NewPopulatedTaskID(r, easy)
+	this.TaskID = *v36
 	if r.Intn(10) != 0 {
 		this.AgentID = mesos.NewPopulatedAgentID(r, easy)
 	}
@@ -4965,15 +5720,45 @@ func NewPopulatedCall_Reconcile_Task(r randyScheduler, easy bool) *Call_Reconcil
 	return this
 }
 
+func NewPopulatedCall_ReconcileOfferOperations(r randyScheduler, easy bool) *Call_ReconcileOfferOperations {
+	this := &Call_ReconcileOfferOperations{}
+	if r.Intn(10) != 0 {
+		v37 := r.Intn(5)
+		this.Operations = make([]Call_ReconcileOfferOperations_Operation, v37)
+		for i := 0; i < v37; i++ {
+			v38 := NewPopulatedCall_ReconcileOfferOperations_Operation(r, easy)
+			this.Operations[i] = *v38
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedCall_ReconcileOfferOperations_Operation(r randyScheduler, easy bool) *Call_ReconcileOfferOperations_Operation {
+	this := &Call_ReconcileOfferOperations_Operation{}
+	v39 := mesos.NewPopulatedOfferOperationID(r, easy)
+	this.OperationID = *v39
+	if r.Intn(10) != 0 {
+		this.AgentID = mesos.NewPopulatedAgentID(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.ResourceProviderID = mesos.NewPopulatedResourceProviderID(r, easy)
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
 func NewPopulatedCall_Message(r randyScheduler, easy bool) *Call_Message {
 	this := &Call_Message{}
-	v34 := mesos.NewPopulatedAgentID(r, easy)
-	this.AgentID = *v34
-	v35 := mesos.NewPopulatedExecutorID(r, easy)
-	this.ExecutorID = *v35
-	v36 := r.Intn(100)
-	this.Data = make([]byte, v36)
-	for i := 0; i < v36; i++ {
+	v40 := mesos.NewPopulatedAgentID(r, easy)
+	this.AgentID = *v40
+	v41 := mesos.NewPopulatedExecutorID(r, easy)
+	this.ExecutorID = *v41
+	v42 := r.Intn(100)
+	this.Data = make([]byte, v42)
+	for i := 0; i < v42; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -4984,11 +5769,11 @@ func NewPopulatedCall_Message(r randyScheduler, easy bool) *Call_Message {
 func NewPopulatedCall_Request(r randyScheduler, easy bool) *Call_Request {
 	this := &Call_Request{}
 	if r.Intn(10) != 0 {
-		v37 := r.Intn(5)
-		this.Requests = make([]mesos.Request, v37)
-		for i := 0; i < v37; i++ {
-			v38 := mesos.NewPopulatedRequest(r, easy)
-			this.Requests[i] = *v38
+		v43 := r.Intn(5)
+		this.Requests = make([]mesos.Request, v43)
+		for i := 0; i < v43; i++ {
+			v44 := mesos.NewPopulatedRequest(r, easy)
+			this.Requests[i] = *v44
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -4999,9 +5784,9 @@ func NewPopulatedCall_Request(r randyScheduler, easy bool) *Call_Request {
 func NewPopulatedCall_Suppress(r randyScheduler, easy bool) *Call_Suppress {
 	this := &Call_Suppress{}
 	if r.Intn(10) != 0 {
-		v39 := r.Intn(10)
-		this.Roles = make([]string, v39)
-		for i := 0; i < v39; i++ {
+		v45 := r.Intn(10)
+		this.Roles = make([]string, v45)
+		for i := 0; i < v45; i++ {
 			this.Roles[i] = string(randStringScheduler(r))
 		}
 	}
@@ -5029,9 +5814,9 @@ func randUTF8RuneScheduler(r randyScheduler) rune {
 	return rune(ru + 61)
 }
 func randStringScheduler(r randyScheduler) string {
-	v40 := r.Intn(100)
-	tmps := make([]rune, v40)
-	for i := 0; i < v40; i++ {
+	v46 := r.Intn(100)
+	tmps := make([]rune, v46)
+	for i := 0; i < v46; i++ {
 		tmps[i] = randUTF8RuneScheduler(r)
 	}
 	return string(tmps)
@@ -5053,11 +5838,11 @@ func randFieldScheduler(dAtA []byte, r randyScheduler, fieldNumber int, wire int
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateScheduler(dAtA, uint64(key))
-		v41 := r.Int63()
+		v47 := r.Int63()
 		if r.Intn(2) == 0 {
-			v41 *= -1
+			v47 *= -1
 		}
-		dAtA = encodeVarintPopulateScheduler(dAtA, uint64(v41))
+		dAtA = encodeVarintPopulateScheduler(dAtA, uint64(v47))
 	case 1:
 		dAtA = encodeVarintPopulateScheduler(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -5122,6 +5907,10 @@ func (m *Event) ProtoSize() (n int) {
 		l = m.RescindInverseOffer.ProtoSize()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
+	if m.OfferOperationUpdate != nil {
+		l = m.OfferOperationUpdate.ProtoSize()
+		n += 1 + l + sovScheduler(uint64(l))
+	}
 	return n
 }
 
@@ -5183,6 +5972,14 @@ func (m *Event_RescindInverseOffer) ProtoSize() (n int) {
 }
 
 func (m *Event_Update) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.Status.ProtoSize()
+	n += 1 + l + sovScheduler(uint64(l))
+	return n
+}
+
+func (m *Event_OfferOperationUpdate) ProtoSize() (n int) {
 	var l int
 	_ = l
 	l = m.Status.ProtoSize()
@@ -5287,6 +6084,14 @@ func (m *Call) ProtoSize() (n int) {
 	}
 	if m.Suppress != nil {
 		l = m.Suppress.ProtoSize()
+		n += 2 + l + sovScheduler(uint64(l))
+	}
+	if m.AcknowledgeOfferOperationUpdate != nil {
+		l = m.AcknowledgeOfferOperationUpdate.ProtoSize()
+		n += 2 + l + sovScheduler(uint64(l))
+	}
+	if m.ReconcileOfferOperations != nil {
+		l = m.ReconcileOfferOperations.ProtoSize()
 		n += 2 + l + sovScheduler(uint64(l))
 	}
 	return n
@@ -5430,6 +6235,26 @@ func (m *Call_Acknowledge) ProtoSize() (n int) {
 	return n
 }
 
+func (m *Call_AcknowledgeOfferOperationUpdate) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if m.AgentID != nil {
+		l = m.AgentID.ProtoSize()
+		n += 1 + l + sovScheduler(uint64(l))
+	}
+	if m.ResourceProviderID != nil {
+		l = m.ResourceProviderID.ProtoSize()
+		n += 1 + l + sovScheduler(uint64(l))
+	}
+	if m.StatusUUID != nil {
+		l = len(m.StatusUUID)
+		n += 1 + l + sovScheduler(uint64(l))
+	}
+	l = m.OperationID.ProtoSize()
+	n += 1 + l + sovScheduler(uint64(l))
+	return n
+}
+
 func (m *Call_Reconcile) ProtoSize() (n int) {
 	var l int
 	_ = l
@@ -5449,6 +6274,34 @@ func (m *Call_Reconcile_Task) ProtoSize() (n int) {
 	n += 1 + l + sovScheduler(uint64(l))
 	if m.AgentID != nil {
 		l = m.AgentID.ProtoSize()
+		n += 1 + l + sovScheduler(uint64(l))
+	}
+	return n
+}
+
+func (m *Call_ReconcileOfferOperations) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if len(m.Operations) > 0 {
+		for _, e := range m.Operations {
+			l = e.ProtoSize()
+			n += 1 + l + sovScheduler(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *Call_ReconcileOfferOperations_Operation) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.OperationID.ProtoSize()
+	n += 1 + l + sovScheduler(uint64(l))
+	if m.AgentID != nil {
+		l = m.AgentID.ProtoSize()
+		n += 1 + l + sovScheduler(uint64(l))
+	}
+	if m.ResourceProviderID != nil {
+		l = m.ResourceProviderID.ProtoSize()
 		n += 1 + l + sovScheduler(uint64(l))
 	}
 	return n
@@ -5520,6 +6373,7 @@ func (this *Event) String() string {
 		`Error:` + strings.Replace(fmt.Sprintf("%v", this.Error), "Event_Error", "Event_Error", 1) + `,`,
 		`InverseOffers:` + strings.Replace(fmt.Sprintf("%v", this.InverseOffers), "Event_InverseOffers", "Event_InverseOffers", 1) + `,`,
 		`RescindInverseOffer:` + strings.Replace(fmt.Sprintf("%v", this.RescindInverseOffer), "Event_RescindInverseOffer", "Event_RescindInverseOffer", 1) + `,`,
+		`OfferOperationUpdate:` + strings.Replace(fmt.Sprintf("%v", this.OfferOperationUpdate), "Event_OfferOperationUpdate", "Event_OfferOperationUpdate", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -5586,6 +6440,16 @@ func (this *Event_Update) String() string {
 	}, "")
 	return s
 }
+func (this *Event_OfferOperationUpdate) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Event_OfferOperationUpdate{`,
+		`Status:` + strings.Replace(strings.Replace(this.Status.String(), "OfferOperationStatus", "mesos.OfferOperationStatus", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *Event_Message) String() string {
 	if this == nil {
 		return "nil"
@@ -5640,6 +6504,8 @@ func (this *Call) String() string {
 		`DeclineInverseOffers:` + strings.Replace(fmt.Sprintf("%v", this.DeclineInverseOffers), "Call_DeclineInverseOffers", "Call_DeclineInverseOffers", 1) + `,`,
 		`Revive:` + strings.Replace(fmt.Sprintf("%v", this.Revive), "Call_Revive", "Call_Revive", 1) + `,`,
 		`Suppress:` + strings.Replace(fmt.Sprintf("%v", this.Suppress), "Call_Suppress", "Call_Suppress", 1) + `,`,
+		`AcknowledgeOfferOperationUpdate:` + strings.Replace(fmt.Sprintf("%v", this.AcknowledgeOfferOperationUpdate), "Call_AcknowledgeOfferOperationUpdate", "Call_AcknowledgeOfferOperationUpdate", 1) + `,`,
+		`ReconcileOfferOperations:` + strings.Replace(fmt.Sprintf("%v", this.ReconcileOfferOperations), "Call_ReconcileOfferOperations", "Call_ReconcileOfferOperations", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -5745,6 +6611,19 @@ func (this *Call_Acknowledge) String() string {
 	}, "")
 	return s
 }
+func (this *Call_AcknowledgeOfferOperationUpdate) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_AcknowledgeOfferOperationUpdate{`,
+		`AgentID:` + strings.Replace(fmt.Sprintf("%v", this.AgentID), "AgentID", "mesos.AgentID", 1) + `,`,
+		`ResourceProviderID:` + strings.Replace(fmt.Sprintf("%v", this.ResourceProviderID), "ResourceProviderID", "mesos.ResourceProviderID", 1) + `,`,
+		`StatusUUID:` + valueToStringScheduler(this.StatusUUID) + `,`,
+		`OperationID:` + strings.Replace(strings.Replace(this.OperationID.String(), "OfferOperationID", "mesos.OfferOperationID", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *Call_Reconcile) String() string {
 	if this == nil {
 		return "nil"
@@ -5762,6 +6641,28 @@ func (this *Call_Reconcile_Task) String() string {
 	s := strings.Join([]string{`&Call_Reconcile_Task{`,
 		`TaskID:` + strings.Replace(strings.Replace(this.TaskID.String(), "TaskID", "mesos.TaskID", 1), `&`, ``, 1) + `,`,
 		`AgentID:` + strings.Replace(fmt.Sprintf("%v", this.AgentID), "AgentID", "mesos.AgentID", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Call_ReconcileOfferOperations) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_ReconcileOfferOperations{`,
+		`Operations:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Operations), "Call_ReconcileOfferOperations_Operation", "Call_ReconcileOfferOperations_Operation", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Call_ReconcileOfferOperations_Operation) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_ReconcileOfferOperations_Operation{`,
+		`OperationID:` + strings.Replace(strings.Replace(this.OperationID.String(), "OfferOperationID", "mesos.OfferOperationID", 1), `&`, ``, 1) + `,`,
+		`AgentID:` + strings.Replace(fmt.Sprintf("%v", this.AgentID), "AgentID", "mesos.AgentID", 1) + `,`,
+		`ResourceProviderID:` + strings.Replace(fmt.Sprintf("%v", this.ResourceProviderID), "ResourceProviderID", "mesos.ResourceProviderID", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -6148,6 +7049,39 @@ func (m *Event) Unmarshal(dAtA []byte) error {
 				m.RescindInverseOffer = &Event_RescindInverseOffer{}
 			}
 			if err := m.RescindInverseOffer.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OfferOperationUpdate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.OfferOperationUpdate == nil {
+				m.OfferOperationUpdate = &Event_OfferOperationUpdate{}
+			}
+			if err := m.OfferOperationUpdate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -6672,6 +7606,91 @@ func (m *Event_Update) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: Update: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Status.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipScheduler(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Event_OfferOperationUpdate) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowScheduler
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OfferOperationUpdate: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OfferOperationUpdate: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -7610,6 +8629,72 @@ func (m *Call) Unmarshal(dAtA []byte) error {
 				m.Suppress = &Call_Suppress{}
 			}
 			if err := m.Suppress.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 17:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AcknowledgeOfferOperationUpdate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.AcknowledgeOfferOperationUpdate == nil {
+				m.AcknowledgeOfferOperationUpdate = &Call_AcknowledgeOfferOperationUpdate{}
+			}
+			if err := m.AcknowledgeOfferOperationUpdate.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 18:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ReconcileOfferOperations", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ReconcileOfferOperations == nil {
+				m.ReconcileOfferOperations = &Call_ReconcileOfferOperations{}
+			}
+			if err := m.ReconcileOfferOperations.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -8741,6 +9826,192 @@ func (m *Call_Acknowledge) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *Call_AcknowledgeOfferOperationUpdate) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowScheduler
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AcknowledgeOfferOperationUpdate: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AcknowledgeOfferOperationUpdate: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AgentID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.AgentID == nil {
+				m.AgentID = &mesos.AgentID{}
+			}
+			if err := m.AgentID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ResourceProviderID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ResourceProviderID == nil {
+				m.ResourceProviderID = &mesos.ResourceProviderID{}
+			}
+			if err := m.ResourceProviderID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StatusUUID", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StatusUUID = append(m.StatusUUID[:0], dAtA[iNdEx:postIndex]...)
+			if m.StatusUUID == nil {
+				m.StatusUUID = []byte{}
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OperationID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.OperationID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000002)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipScheduler(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("status_uuid")
+	}
+	if hasFields[0]&uint64(0x00000002) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("operation_id")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *Call_Reconcile) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -8933,6 +10204,238 @@ func (m *Call_Reconcile_Task) Unmarshal(dAtA []byte) error {
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Call_ReconcileOfferOperations) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowScheduler
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ReconcileOfferOperations: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ReconcileOfferOperations: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Operations", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Operations = append(m.Operations, Call_ReconcileOfferOperations_Operation{})
+			if err := m.Operations[len(m.Operations)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipScheduler(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Call_ReconcileOfferOperations_Operation) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowScheduler
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Operation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Operation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OperationID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.OperationID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AgentID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.AgentID == nil {
+				m.AgentID = &mesos.AgentID{}
+			}
+			if err := m.AgentID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ResourceProviderID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowScheduler
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ResourceProviderID == nil {
+				m.ResourceProviderID = &mesos.ResourceProviderID{}
+			}
+			if err := m.ResourceProviderID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipScheduler(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthScheduler
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("operation_id")
 	}
 
 	if iNdEx > l {
@@ -9362,110 +10865,127 @@ var (
 func init() { proto.RegisterFile("scheduler/scheduler.proto", fileDescriptorScheduler) }
 
 var fileDescriptorScheduler = []byte{
-	// 1676 bytes of a gzipped FileDescriptorProto
+	// 1950 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x57, 0x4d, 0x6c, 0x23, 0x49,
-	0x15, 0x4e, 0x39, 0xfe, 0x7d, 0x1d, 0x3b, 0xbd, 0x95, 0x99, 0xe0, 0x69, 0x86, 0x4e, 0x76, 0xb4,
-	0x12, 0xd9, 0x95, 0xd6, 0x59, 0xac, 0xd9, 0x5d, 0xd8, 0x5d, 0xa4, 0xf5, 0x4f, 0x67, 0xb6, 0x35,
-	0x99, 0x24, 0x5b, 0xb6, 0x07, 0x09, 0x09, 0x4c, 0xc7, 0x5d, 0xf6, 0xb4, 0xd2, 0x71, 0x9b, 0xee,
-	0x76, 0x86, 0xb9, 0x71, 0xe4, 0x84, 0x38, 0xc0, 0x11, 0x01, 0xe2, 0x82, 0xb8, 0x20, 0x6e, 0x1c,
-	0xb9, 0x80, 0xf6, 0xb8, 0xdc, 0x38, 0xa0, 0x88, 0x78, 0x2f, 0x1c, 0x57, 0x9c, 0x38, 0xa2, 0xfa,
-	0xe9, 0x76, 0xfb, 0x17, 0x65, 0x47, 0x02, 0x71, 0xb1, 0xba, 0x5e, 0x7d, 0xdf, 0x7b, 0xaf, 0x5e,
-	0xbd, 0x7a, 0xef, 0x19, 0xee, 0x05, 0xbd, 0x67, 0xd4, 0x1e, 0xbb, 0xd4, 0x3f, 0x8c, 0xbf, 0x2a,
-	0x23, 0xdf, 0x0b, 0x3d, 0xbc, 0x7d, 0x49, 0x03, 0x2f, 0xa8, 0xc4, 0x62, 0xed, 0xad, 0x81, 0x13,
-	0x3e, 0x1b, 0x9f, 0x57, 0x7a, 0xde, 0xe5, 0x21, 0xdf, 0x13, 0xbf, 0x6f, 0x0e, 0xbc, 0x43, 0x6b,
-	0xe4, 0x1c, 0x5e, 0x7d, 0xed, 0xd0, 0x75, 0xce, 0x85, 0x4c, 0xa8, 0xd0, 0xde, 0x4c, 0x30, 0x06,
-	0xde, 0xc0, 0x3b, 0xe4, 0xe2, 0xf3, 0x71, 0x9f, 0xaf, 0xf8, 0x82, 0x7f, 0x09, 0xf8, 0x83, 0xbf,
-	0x15, 0x21, 0x63, 0x5c, 0xd1, 0x61, 0x88, 0xdf, 0x86, 0x74, 0xf8, 0x62, 0x44, 0xcb, 0x68, 0x1f,
-	0x1d, 0x94, 0xaa, 0x5f, 0xae, 0xcc, 0xb9, 0x52, 0xe1, 0xa8, 0x4a, 0xfb, 0xc5, 0x88, 0xd6, 0xd3,
-	0x9f, 0x5c, 0xef, 0x6d, 0x10, 0x0e, 0xc7, 0x35, 0x80, 0x60, 0x7c, 0x1e, 0xf4, 0x7c, 0xe7, 0x9c,
-	0xda, 0xe5, 0xd4, 0x3e, 0x3a, 0x50, 0xaa, 0xaf, 0xae, 0x20, 0xb7, 0x62, 0x20, 0x49, 0x90, 0xf0,
-	0xdb, 0x90, 0xf5, 0xfa, 0x7d, 0xea, 0x07, 0xe5, 0x4d, 0x4e, 0xff, 0xca, 0x0a, 0xfa, 0x29, 0x07,
-	0x11, 0x09, 0xc6, 0x5f, 0x87, 0x9c, 0x4f, 0x83, 0x9e, 0x33, 0xb4, 0xcb, 0x69, 0xce, 0xd3, 0x57,
-	0xf0, 0x88, 0x40, 0x91, 0x08, 0xce, 0x0c, 0x8e, 0x47, 0xb6, 0x15, 0xd2, 0x72, 0x66, 0xad, 0xc1,
-	0x0e, 0x07, 0x11, 0x09, 0x66, 0x06, 0x2f, 0x69, 0x10, 0x58, 0x03, 0x5a, 0xce, 0xae, 0x35, 0xf8,
-	0x44, 0xa0, 0x48, 0x04, 0x67, 0xcc, 0xbe, 0xe5, 0xb8, 0x63, 0x9f, 0x96, 0x73, 0x6b, 0x99, 0x47,
-	0x02, 0x45, 0x22, 0x38, 0xae, 0x42, 0x86, 0xfa, 0xbe, 0xe7, 0x97, 0xf3, 0x9c, 0x77, 0x7f, 0x05,
-	0xcf, 0x60, 0x18, 0x22, 0xa0, 0xf8, 0x31, 0x94, 0x9c, 0xe1, 0x15, 0xf5, 0x03, 0xda, 0x95, 0x71,
-	0x2d, 0x70, 0xf2, 0x6b, 0x2b, 0xc8, 0xa6, 0x00, 0xcb, 0xf0, 0x16, 0x9d, 0xe4, 0x12, 0x7f, 0x17,
-	0xee, 0xca, 0xb0, 0x75, 0x67, 0x94, 0x96, 0x81, 0xeb, 0x7c, 0x63, 0x7d, 0xcc, 0x93, 0xaa, 0xc9,
-	0x8e, 0xbf, 0x28, 0xd4, 0xfe, 0x8c, 0x00, 0xa6, 0x79, 0x81, 0x8f, 0x60, 0xab, 0xef, 0x5b, 0x97,
-	0xf4, 0xb9, 0xe7, 0x5f, 0x74, 0x1d, 0xbb, 0x8c, 0xf6, 0x53, 0x07, 0x4a, 0x15, 0x4b, 0x2b, 0x47,
-	0xd1, 0x96, 0xd9, 0xac, 0x6f, 0x4f, 0xae, 0xf7, 0x94, 0x84, 0x80, 0x28, 0x31, 0xd1, 0xb4, 0xf1,
-	0x07, 0xa0, 0x3d, 0xa3, 0x96, 0x1f, 0x9e, 0x53, 0x2b, 0xec, 0x3a, 0xc3, 0x90, 0xfa, 0x57, 0x96,
-	0xdb, 0x0d, 0x68, 0xcf, 0x1b, 0xda, 0x01, 0x4f, 0x53, 0x44, 0xca, 0x31, 0xc2, 0x94, 0x80, 0x96,
-	0xd8, 0xc7, 0x55, 0x50, 0x2e, 0xad, 0x20, 0xa4, 0x7e, 0xd7, 0x19, 0xf6, 0x3d, 0x99, 0x96, 0xaf,
-	0x48, 0x27, 0x9e, 0xf0, 0x1d, 0x73, 0xd8, 0xf7, 0x08, 0x5c, 0xc6, 0xdf, 0xda, 0x43, 0xc8, 0xca,
-	0x90, 0xbd, 0x11, 0xe7, 0x33, 0xda, 0xdf, 0x3c, 0x50, 0xaa, 0x5b, 0x92, 0xc8, 0xb7, 0xe5, 0xe3,
-	0x91, 0x08, 0xed, 0x63, 0x28, 0xce, 0x84, 0x1f, 0x7f, 0xb8, 0x70, 0x79, 0x42, 0xc9, 0x8e, 0x54,
-	0x92, 0x44, 0x4b, 0x5d, 0xb3, 0x37, 0xa6, 0x19, 0x90, 0x93, 0xd1, 0xc7, 0xef, 0x41, 0x9e, 0x2b,
-	0x99, 0x46, 0xb2, 0x94, 0xf4, 0x85, 0x45, 0x91, 0x69, 0x98, 0x5c, 0xef, 0xe5, 0xa4, 0x80, 0xe4,
-	0x38, 0xc1, 0xb4, 0xb5, 0x01, 0xec, 0x2c, 0xb9, 0x44, 0x7c, 0x06, 0xea, 0x8c, 0x7f, 0xab, 0x55,
-	0xef, 0x4a, 0xd5, 0xa5, 0x24, 0xdf, 0x6c, 0x92, 0x52, 0xd2, 0x5d, 0xd3, 0xd6, 0xbe, 0x01, 0x59,
-	0xf1, 0xd0, 0xf0, 0x21, 0x64, 0x83, 0xd0, 0x0a, 0xc7, 0x81, 0xd4, 0x18, 0x45, 0xbc, 0x6d, 0x05,
-	0x17, 0x2d, 0xbe, 0x11, 0x45, 0x4f, 0xc0, 0xb4, 0x5f, 0x21, 0xc8, 0xc9, 0xc7, 0xc6, 0xce, 0x6a,
-	0x0d, 0xe8, 0x30, 0x5c, 0x74, 0xa8, 0xc6, 0xc4, 0xc9, 0xb3, 0x4a, 0x01, 0xc9, 0x71, 0x82, 0xc9,
-	0xb2, 0x4e, 0xa1, 0x3f, 0xa0, 0xbd, 0x71, 0xe8, 0xf1, 0xf3, 0xa4, 0x66, 0xac, 0x1b, 0x72, 0xc7,
-	0x6c, 0xd6, 0xb1, 0xd4, 0x00, 0x53, 0x19, 0x81, 0x88, 0x69, 0xda, 0x18, 0x43, 0xda, 0xb6, 0x42,
-	0xab, 0xbc, 0xb9, 0x9f, 0x3a, 0xd8, 0x22, 0xfc, 0x5b, 0xfb, 0x39, 0x82, 0x9c, 0x7c, 0xd6, 0xf8,
-	0x9d, 0x19, 0x1f, 0xd1, 0x12, 0x1f, 0x95, 0xa5, 0xfe, 0xd5, 0xe7, 0xfd, 0x43, 0xcb, 0xfd, 0x2b,
-	0xad, 0xf1, 0x6d, 0x37, 0x0e, 0x2e, 0x4b, 0xe7, 0x4c, 0x1c, 0xc3, 0xaf, 0x42, 0x86, 0x57, 0x0f,
-	0xac, 0x4f, 0xcb, 0x1b, 0x8b, 0x5f, 0x41, 0xc6, 0x3a, 0x12, 0x3e, 0xf8, 0x3d, 0x82, 0x34, 0x2b,
-	0xff, 0x58, 0x81, 0x5c, 0xe7, 0xe4, 0xf1, 0xc9, 0xe9, 0xb7, 0x4e, 0xd4, 0x0d, 0x5c, 0x02, 0x68,
-	0x75, 0xea, 0xad, 0x06, 0x31, 0xeb, 0x46, 0x53, 0x45, 0x18, 0x20, 0x7b, 0x7a, 0x74, 0x64, 0x90,
-	0x96, 0x9a, 0xc2, 0x18, 0x4a, 0xe6, 0xc9, 0x53, 0x83, 0xb4, 0x8c, 0xae, 0x94, 0x15, 0x18, 0x99,
-	0x18, 0xad, 0x86, 0x79, 0xd2, 0x54, 0x37, 0xf1, 0x3d, 0xb8, 0x2b, 0x17, 0xdd, 0x19, 0xa0, 0x0a,
-	0x4c, 0x4f, 0xe7, 0xac, 0x59, 0x6b, 0x1b, 0x6a, 0x9a, 0x71, 0x9e, 0x18, 0xad, 0x56, 0xed, 0x91,
-	0xa1, 0x66, 0xd8, 0xe2, 0xa8, 0x66, 0x1e, 0x77, 0x88, 0xa1, 0x66, 0x71, 0x01, 0x32, 0x06, 0x21,
-	0xa7, 0x44, 0xcd, 0xe1, 0x22, 0x14, 0x3e, 0x32, 0x6a, 0xa4, 0x5d, 0x37, 0x6a, 0x6d, 0x35, 0xaf,
-	0xa5, 0x7f, 0xf4, 0x6b, 0x1d, 0x3d, 0xf8, 0xcb, 0x2e, 0xa4, 0x1b, 0x96, 0xeb, 0x2e, 0xa9, 0x2b,
-	0xe8, 0x0b, 0xd5, 0x95, 0x87, 0xb2, 0x4b, 0xa6, 0x78, 0x97, 0xd4, 0x16, 0xaa, 0x1f, 0x33, 0xb6,
-	0xd8, 0x24, 0xbf, 0x09, 0x85, 0xb8, 0xdf, 0xc9, 0x6a, 0xb2, 0xb7, 0x9c, 0x1a, 0x97, 0x42, 0x32,
-	0x65, 0xe0, 0x87, 0x90, 0xb5, 0x7a, 0x3d, 0x3a, 0x0a, 0x65, 0xa3, 0xbb, 0xbf, 0x9c, 0x5b, 0xe3,
-	0x18, 0x22, 0xb1, 0xf8, 0x5d, 0xc8, 0xd9, 0xb4, 0xe7, 0x3a, 0xc3, 0xd5, 0x6d, 0x8e, 0xd3, 0x9a,
-	0x02, 0x44, 0x22, 0x34, 0xae, 0x40, 0xfa, 0xc2, 0x71, 0x5d, 0xd9, 0xe4, 0x56, 0x9c, 0xf1, 0xb1,
-	0xe3, 0xba, 0x84, 0xe3, 0xd8, 0xcb, 0x0b, 0x9e, 0x8d, 0x43, 0xdb, 0x7b, 0x3e, 0x5c, 0xd9, 0xde,
-	0xc4, 0xe1, 0x24, 0x8a, 0xc4, 0x78, 0xdc, 0x00, 0xc5, 0xea, 0x5d, 0x0c, 0xbd, 0xe7, 0x2e, 0xb5,
-	0x07, 0x54, 0x76, 0xb9, 0x57, 0x57, 0x9d, 0x2f, 0x06, 0x92, 0x24, 0x8b, 0x85, 0xd7, 0x67, 0x95,
-	0xbb, 0xe7, 0xb8, 0x54, 0xf6, 0xba, 0x15, 0xe1, 0x25, 0x11, 0x8c, 0x4c, 0x19, 0x2c, 0x50, 0x51,
-	0xe2, 0xc3, 0xba, 0x40, 0x2d, 0xb4, 0xf5, 0x77, 0xd9, 0x04, 0xf2, 0xfd, 0x31, 0x0d, 0xc2, 0xb2,
-	0xb2, 0x8e, 0x48, 0x04, 0x88, 0x44, 0x68, 0xfc, 0x1d, 0xb8, 0x2b, 0x2e, 0xa9, 0x3b, 0x57, 0xeb,
-	0x8b, 0x5c, 0xcd, 0xeb, 0xeb, 0xee, 0x77, 0xb6, 0x5b, 0xef, 0x58, 0x8b, 0x42, 0xfc, 0x3d, 0xd8,
-	0x95, 0x77, 0x39, 0xaf, 0xbf, 0xb4, 0xa2, 0x69, 0x27, 0x13, 0x61, 0xd6, 0xc0, 0x1d, 0x7b, 0x89,
-	0x94, 0x65, 0xa4, 0x4f, 0xaf, 0x9c, 0x2b, 0x5a, 0xde, 0x5e, 0x97, 0x91, 0x84, 0x63, 0x88, 0xc4,
-	0xf2, 0x44, 0x19, 0x8f, 0x46, 0x3e, 0x0d, 0x82, 0xb2, 0xba, 0x36, 0x51, 0x24, 0x8a, 0xc4, 0x78,
-	0x2d, 0x80, 0x42, 0xfc, 0x36, 0xf0, 0xfb, 0x50, 0x4a, 0xbc, 0x66, 0xd6, 0xa2, 0x45, 0xc5, 0xbf,
-	0xb3, 0xf0, 0x9e, 0x59, 0x97, 0x2e, 0xf6, 0x93, 0x4b, 0xfc, 0x3a, 0xa8, 0x91, 0x56, 0x6a, 0x77,
-	0x7d, 0xcf, 0xa5, 0x6c, 0x20, 0xd8, 0x3c, 0x28, 0x90, 0xed, 0xa9, 0x9c, 0x30, 0xb1, 0xf6, 0x3b,
-	0x04, 0x59, 0x11, 0x75, 0x96, 0x63, 0x51, 0xbf, 0x8b, 0x5a, 0xf2, 0x7c, 0xc3, 0x53, 0x65, 0x77,
-	0xc8, 0x4b, 0x41, 0x40, 0xf2, 0xb2, 0x99, 0x06, 0xf8, 0x03, 0x00, 0x6f, 0x44, 0x7d, 0x2b, 0x74,
-	0xbc, 0xa1, 0x30, 0xa7, 0x54, 0x77, 0x93, 0xfc, 0xca, 0x69, 0xb4, 0x2d, 0x2b, 0x47, 0x02, 0x8f,
-	0x0f, 0x20, 0xd7, 0x77, 0xdc, 0x70, 0x3a, 0x22, 0x47, 0xa6, 0x8f, 0x84, 0x94, 0x44, 0xdb, 0x9a,
-	0x0f, 0x39, 0x79, 0x8d, 0x2f, 0xeb, 0x71, 0xc2, 0x66, 0x6a, 0xbd, 0xcd, 0x9f, 0x22, 0xd8, 0x59,
-	0x92, 0x9b, 0xb8, 0x05, 0xaf, 0xcc, 0x8f, 0x0a, 0xab, 0x1c, 0xf9, 0x92, 0x74, 0x64, 0x7b, 0x76,
-	0x56, 0x08, 0xc8, 0xf6, 0xec, 0xb0, 0x70, 0x1b, 0xb7, 0x7e, 0x86, 0xe0, 0xce, 0xb2, 0x94, 0xfe,
-	0x5f, 0xfb, 0xa5, 0x43, 0x56, 0xbc, 0x0b, 0x7c, 0x07, 0x32, 0x22, 0xfd, 0x10, 0x4f, 0x3f, 0xb1,
-	0xd0, 0x7e, 0x8b, 0x20, 0xcd, 0xaa, 0x2b, 0x7e, 0x07, 0x72, 0xa1, 0x15, 0x24, 0xc6, 0xe0, 0x62,
-	0x62, 0x1e, 0x62, 0xdd, 0x5e, 0x3a, 0x97, 0x15, 0x6b, 0x92, 0x65, 0x68, 0xd3, 0x9e, 0x99, 0x32,
-	0x52, 0xb7, 0x98, 0x32, 0xaa, 0xa0, 0xb0, 0x7a, 0xde, 0x1d, 0x79, 0xae, 0xd3, 0x7b, 0x31, 0x37,
-	0xf5, 0x32, 0x8f, 0xce, 0xf8, 0x06, 0x81, 0x8b, 0xf8, 0x5b, 0xfb, 0x31, 0x82, 0x7c, 0x54, 0xd6,
-	0xe7, 0xc7, 0x28, 0xf4, 0x45, 0xc7, 0xa8, 0xf7, 0x66, 0x0e, 0x70, 0xab, 0x51, 0x4e, 0xfb, 0x05,
-	0x02, 0x25, 0xd1, 0x28, 0x5e, 0x6a, 0x2c, 0x4c, 0x5c, 0x40, 0xea, 0x36, 0x17, 0x70, 0x1f, 0xd2,
-	0xe3, 0xb1, 0x63, 0x8b, 0x31, 0xb0, 0x9e, 0x9f, 0x5c, 0xef, 0xa5, 0x3b, 0x1d, 0xb3, 0x49, 0xb8,
-	0x54, 0xfb, 0x13, 0x82, 0x42, 0xdc, 0x87, 0xf0, 0x87, 0x90, 0x61, 0xac, 0x28, 0x01, 0x5f, 0xfb,
-	0x0f, 0x7d, 0x8b, 0x9b, 0x96, 0x15, 0x42, 0x10, 0xb5, 0x2b, 0x48, 0x33, 0xe1, 0x7f, 0x3b, 0x5d,
-	0xfe, 0x2f, 0x86, 0xef, 0xf7, 0xd9, 0x7f, 0x21, 0xd1, 0x73, 0xdf, 0x82, 0xbc, 0x6c, 0xbf, 0xf3,
-	0x8f, 0x5d, 0x22, 0x64, 0x54, 0x63, 0x94, 0xb6, 0x0f, 0xf9, 0xa8, 0x11, 0x2d, 0x7f, 0xaa, 0x0f,
-	0xfe, 0xb9, 0x74, 0x24, 0x2e, 0x42, 0x21, 0x1e, 0x89, 0x55, 0x84, 0xb7, 0x20, 0xdf, 0x36, 0x6a,
-	0xa4, 0xc9, 0x36, 0x53, 0x6c, 0xae, 0xad, 0x35, 0x1a, 0xc6, 0x59, 0x5b, 0xdd, 0x64, 0xac, 0xa6,
-	0xd1, 0x38, 0x36, 0x4f, 0xd8, 0x90, 0x7b, 0x0f, 0xee, 0x8a, 0x8d, 0xee, 0xdc, 0xcc, 0x5c, 0xc4,
-	0x1a, 0xec, 0x4a, 0xdc, 0xfc, 0x5e, 0x89, 0xe9, 0x23, 0xc6, 0x53, 0xf3, 0x29, 0x1b, 0x8d, 0xf3,
-	0x90, 0x7e, 0x6c, 0x1e, 0x1f, 0xab, 0x59, 0x66, 0xb3, 0xf5, 0x51, 0xa7, 0xcd, 0x6d, 0xe6, 0xf0,
-	0x36, 0x28, 0xb5, 0x06, 0xf3, 0xee, 0xd8, 0x68, 0x3e, 0x32, 0xd4, 0x3c, 0xf3, 0x90, 0x18, 0x8d,
-	0xd3, 0x93, 0x86, 0x79, 0x6c, 0x88, 0x99, 0x3c, 0x9a, 0xaf, 0x41, 0x0c, 0xe8, 0x1f, 0x77, 0x8c,
-	0x56, 0x5b, 0x55, 0xb8, 0x9e, 0xce, 0xd9, 0x19, 0x31, 0x5a, 0x2d, 0x75, 0x4b, 0xcc, 0xd4, 0xf5,
-	0x47, 0x9f, 0xde, 0xe8, 0x1b, 0x7f, 0xbd, 0xd1, 0x37, 0xfe, 0x7e, 0xa3, 0xa3, 0xcf, 0x6f, 0x74,
-	0xf4, 0xaf, 0x1b, 0x1d, 0xfd, 0x70, 0xa2, 0xa3, 0xdf, 0x4c, 0x74, 0xf4, 0x87, 0x89, 0x8e, 0xfe,
-	0x38, 0xd1, 0xd1, 0x27, 0x13, 0x1d, 0x7d, 0x3a, 0xd1, 0xd1, 0x3f, 0x26, 0xfa, 0xc6, 0xe7, 0x13,
-	0x1d, 0xfd, 0xe4, 0x33, 0x7d, 0xe3, 0x97, 0x9f, 0xe9, 0xe8, 0xdb, 0x85, 0x38, 0xb3, 0xff, 0x1d,
-	0x00, 0x00, 0xff, 0xff, 0x30, 0xfb, 0x2a, 0xca, 0x09, 0x13, 0x00, 0x00,
+	0xf5, 0x4f, 0x39, 0x8e, 0x3f, 0x5e, 0x27, 0x4e, 0x4f, 0x25, 0x93, 0xed, 0xe9, 0x9d, 0xed, 0x64,
+	0xa3, 0xd5, 0xff, 0x9f, 0x5d, 0xb4, 0xce, 0x12, 0xcd, 0xec, 0x37, 0xd2, 0xfa, 0xa3, 0x33, 0xdb,
+	0x9a, 0x4c, 0x9c, 0x29, 0xdb, 0x83, 0x84, 0xc4, 0x36, 0x1d, 0x77, 0x39, 0xd3, 0x8a, 0xe3, 0x36,
+	0xdd, 0xed, 0x0c, 0x73, 0x43, 0x9c, 0x38, 0x21, 0x0e, 0x70, 0x44, 0x80, 0xb8, 0x20, 0x0e, 0x70,
+	0x45, 0x9c, 0xf6, 0x02, 0x9a, 0x0b, 0xd2, 0x1e, 0x39, 0x45, 0xc4, 0x7b, 0xe1, 0xb8, 0x27, 0x04,
+	0x37, 0x54, 0xd5, 0xd5, 0x9d, 0xf6, 0x47, 0x7b, 0x94, 0x19, 0x04, 0xe2, 0x62, 0xb9, 0x5f, 0xfd,
+	0xde, 0xab, 0x57, 0xaf, 0x5e, 0xbd, 0xf7, 0x7b, 0x70, 0xcb, 0xef, 0x3c, 0xa6, 0xf6, 0xb0, 0x47,
+	0xbd, 0xdd, 0xf8, 0x5f, 0x79, 0xe0, 0xb9, 0x81, 0x8b, 0x57, 0xcf, 0xa8, 0xef, 0xfa, 0xe5, 0x58,
+	0xac, 0xbe, 0x73, 0xe2, 0x04, 0x8f, 0x87, 0xc7, 0xe5, 0x8e, 0x7b, 0xb6, 0xcb, 0xd7, 0xc2, 0xdf,
+	0xb7, 0x4f, 0xdc, 0x5d, 0x6b, 0xe0, 0xec, 0x9e, 0x7f, 0x7d, 0xb7, 0xe7, 0x1c, 0x87, 0xb2, 0xd0,
+	0x84, 0xfa, 0x76, 0x42, 0xe3, 0xc4, 0x3d, 0x71, 0x77, 0xb9, 0xf8, 0x78, 0xd8, 0xe5, 0x5f, 0xfc,
+	0x83, 0xff, 0x0b, 0xe1, 0xdb, 0xbf, 0x5d, 0x85, 0x25, 0xfd, 0x9c, 0xf6, 0x03, 0x7c, 0x17, 0xb2,
+	0xc1, 0xd3, 0x01, 0x55, 0xd0, 0x16, 0xda, 0x29, 0xed, 0xbd, 0x5a, 0x9e, 0x70, 0xa5, 0xcc, 0x51,
+	0xe5, 0xd6, 0xd3, 0x01, 0xad, 0x66, 0x9f, 0x5d, 0x6c, 0x2e, 0x10, 0x0e, 0xc7, 0x15, 0x00, 0x7f,
+	0x78, 0xec, 0x77, 0x3c, 0xe7, 0x98, 0xda, 0x4a, 0x66, 0x0b, 0xed, 0x48, 0x7b, 0xaf, 0xa7, 0x28,
+	0x37, 0x63, 0x20, 0x49, 0x28, 0xe1, 0xbb, 0x90, 0x73, 0xbb, 0x5d, 0xea, 0xf9, 0xca, 0x22, 0x57,
+	0x7f, 0x2d, 0x45, 0xbd, 0xc1, 0x41, 0x44, 0x80, 0xf1, 0xfb, 0x90, 0xf7, 0xa8, 0xdf, 0x71, 0xfa,
+	0xb6, 0x92, 0xe5, 0x7a, 0x5a, 0x8a, 0x1e, 0x09, 0x51, 0x24, 0x82, 0xb3, 0x0d, 0x87, 0x03, 0xdb,
+	0x0a, 0xa8, 0xb2, 0x34, 0x77, 0xc3, 0x36, 0x07, 0x11, 0x01, 0x66, 0x1b, 0x9e, 0x51, 0xdf, 0xb7,
+	0x4e, 0xa8, 0x92, 0x9b, 0xbb, 0xe1, 0x83, 0x10, 0x45, 0x22, 0x38, 0xd3, 0xec, 0x5a, 0x4e, 0x6f,
+	0xe8, 0x51, 0x25, 0x3f, 0x57, 0x73, 0x3f, 0x44, 0x91, 0x08, 0x8e, 0xf7, 0x60, 0x89, 0x7a, 0x9e,
+	0xeb, 0x29, 0x05, 0xae, 0x77, 0x3b, 0x45, 0x4f, 0x67, 0x18, 0x12, 0x42, 0xf1, 0x7d, 0x28, 0x39,
+	0xfd, 0x73, 0xea, 0xf9, 0xd4, 0x14, 0x71, 0x2d, 0x72, 0xe5, 0x37, 0x52, 0x94, 0x8d, 0x10, 0x2c,
+	0xc2, 0xbb, 0xe2, 0x24, 0x3f, 0xf1, 0x67, 0x70, 0x53, 0x84, 0xcd, 0x1c, 0x33, 0xaa, 0x00, 0xb7,
+	0xf9, 0xd6, 0xfc, 0x98, 0x27, 0x4d, 0x93, 0x35, 0x6f, 0x5a, 0x88, 0x2d, 0xd8, 0xe0, 0xf6, 0x4c,
+	0x77, 0x40, 0x3d, 0x2b, 0x70, 0xdc, 0xbe, 0x29, 0xee, 0x46, 0xe2, 0x1b, 0x7c, 0x6d, 0x5e, 0x32,
+	0x34, 0x22, 0x1d, 0x71, 0x53, 0xeb, 0xee, 0x0c, 0xa9, 0xfa, 0x27, 0x04, 0x70, 0x95, 0x7a, 0x78,
+	0x1f, 0x96, 0xbb, 0x9e, 0x75, 0x46, 0x9f, 0xb8, 0xde, 0xa9, 0xe9, 0xd8, 0x0a, 0xda, 0xca, 0xec,
+	0x48, 0x7b, 0x58, 0xec, 0xb3, 0x1f, 0x2d, 0x19, 0xf5, 0xea, 0xea, 0xe8, 0x62, 0x53, 0x4a, 0x08,
+	0x88, 0x14, 0x2b, 0x1a, 0x36, 0xfe, 0x18, 0xd4, 0xc7, 0xd4, 0xf2, 0x82, 0x63, 0x6a, 0x05, 0xa6,
+	0xd3, 0x0f, 0xa8, 0x77, 0x6e, 0xf5, 0x4c, 0x9f, 0x76, 0xdc, 0xbe, 0xed, 0xf3, 0x97, 0x80, 0x88,
+	0x12, 0x23, 0x0c, 0x01, 0x68, 0x86, 0xeb, 0x78, 0x0f, 0xa4, 0x33, 0xcb, 0x0f, 0xa8, 0x67, 0x3a,
+	0xfd, 0xae, 0x2b, 0x32, 0xff, 0x86, 0x70, 0xe2, 0x01, 0x5f, 0x31, 0xfa, 0x5d, 0x97, 0xc0, 0x59,
+	0xfc, 0x5f, 0xbd, 0x03, 0x39, 0x71, 0x2b, 0x6f, 0xc5, 0x4f, 0x06, 0x6d, 0x2d, 0xee, 0x48, 0x7b,
+	0xcb, 0x42, 0x91, 0x2f, 0x8b, 0xf7, 0x29, 0x10, 0xea, 0x43, 0x58, 0x19, 0xbb, 0x61, 0xfc, 0xc9,
+	0x54, 0x7e, 0x84, 0x46, 0xd6, 0x84, 0x91, 0x24, 0x5a, 0xd8, 0x1a, 0x4f, 0x0a, 0x55, 0x87, 0xbc,
+	0xb8, 0x60, 0xfc, 0x21, 0x14, 0xc2, 0xfb, 0x8b, 0x23, 0x59, 0x4a, 0xfa, 0xc2, 0xa2, 0xc8, 0x2c,
+	0x8c, 0x2e, 0x36, 0xf3, 0x42, 0x40, 0xf2, 0x5c, 0xc1, 0xb0, 0xd5, 0x13, 0x58, 0x9b, 0x91, 0x27,
+	0xf8, 0x08, 0xe4, 0x31, 0xff, 0xd2, 0x4d, 0x6f, 0x08, 0xd3, 0xa5, 0xa4, 0xbe, 0x51, 0x27, 0xa5,
+	0xa4, 0xbb, 0x86, 0xad, 0x7e, 0x00, 0xb9, 0x30, 0x17, 0xf0, 0x2e, 0xe4, 0xfc, 0xc0, 0x0a, 0x86,
+	0xbe, 0xb0, 0x18, 0x45, 0xbc, 0x65, 0xf9, 0xa7, 0x4d, 0xbe, 0x10, 0x45, 0x2f, 0x84, 0xa9, 0x0f,
+	0x61, 0x7d, 0x56, 0xaa, 0xe1, 0x0f, 0x26, 0x0c, 0xbd, 0x9a, 0x74, 0x2d, 0x06, 0xcf, 0x34, 0xf9,
+	0x4b, 0x04, 0x79, 0x51, 0x22, 0x58, 0xf8, 0xac, 0x13, 0xda, 0x0f, 0xa6, 0xcf, 0x58, 0x61, 0xe2,
+	0x64, 0xf8, 0x84, 0x80, 0xe4, 0xb9, 0x82, 0xc1, 0x12, 0x59, 0xa2, 0xdf, 0xa3, 0x9d, 0x61, 0xe0,
+	0xf2, 0x10, 0x65, 0xc6, 0x0e, 0xa4, 0x8b, 0x15, 0xa3, 0x5e, 0xc5, 0xc2, 0x02, 0x5c, 0xc9, 0x08,
+	0x44, 0x9a, 0x86, 0x8d, 0x31, 0x64, 0x6d, 0x2b, 0xb0, 0x94, 0xc5, 0xad, 0xcc, 0xce, 0x32, 0xe1,
+	0xff, 0xd5, 0x9f, 0x21, 0xc8, 0x8b, 0x62, 0x84, 0xdf, 0x1d, 0xf3, 0x11, 0xcd, 0xf0, 0x51, 0x9a,
+	0xe9, 0x5f, 0x75, 0xd2, 0x3f, 0x34, 0xdb, 0xbf, 0xd2, 0x1c, 0xdf, 0x36, 0xe2, 0x30, 0xb3, 0x17,
+	0xb2, 0x14, 0xc7, 0xf0, 0xff, 0x61, 0x89, 0xd7, 0x3c, 0xac, 0x5d, 0x15, 0x65, 0x16, 0xbf, 0xa2,
+	0x88, 0x75, 0x24, 0xdc, 0xfe, 0x33, 0x82, 0x2c, 0x6b, 0x5a, 0x58, 0x82, 0x7c, 0xfb, 0xf0, 0xfe,
+	0x61, 0xe3, 0x9b, 0x87, 0xf2, 0x02, 0x2e, 0x01, 0x34, 0xdb, 0xd5, 0x66, 0x8d, 0x18, 0x55, 0xbd,
+	0x2e, 0x23, 0x0c, 0x90, 0x6b, 0xec, 0xef, 0xeb, 0xa4, 0x29, 0x67, 0x30, 0x86, 0x92, 0x71, 0xf8,
+	0x48, 0x27, 0x4d, 0xdd, 0x14, 0xb2, 0x22, 0x53, 0x26, 0x7a, 0xb3, 0x66, 0x1c, 0xd6, 0xe5, 0x45,
+	0x7c, 0x0b, 0x6e, 0x8a, 0x0f, 0x73, 0x0c, 0x28, 0x03, 0xb3, 0xd3, 0x3e, 0xaa, 0x57, 0x5a, 0xba,
+	0x9c, 0xc5, 0x2a, 0x6c, 0x70, 0xb1, 0xd9, 0x38, 0xd2, 0x49, 0xa5, 0x65, 0x34, 0x0e, 0x4d, 0xb1,
+	0x26, 0x31, 0x7b, 0x0f, 0xf4, 0x66, 0xb3, 0x72, 0x4f, 0x97, 0x97, 0xd8, 0xc7, 0x7e, 0xc5, 0x38,
+	0x68, 0x13, 0x5d, 0xce, 0xe1, 0x22, 0x2c, 0xe9, 0x84, 0x34, 0x88, 0x9c, 0xc7, 0x2b, 0x50, 0xfc,
+	0x54, 0xaf, 0x90, 0x56, 0x55, 0xaf, 0xb4, 0xe4, 0x82, 0x9a, 0xfd, 0xe1, 0xaf, 0x34, 0xb4, 0xfd,
+	0x4c, 0x83, 0x6c, 0xcd, 0xea, 0xf5, 0x66, 0x94, 0x31, 0xf4, 0x42, 0x65, 0xec, 0x8e, 0xe8, 0xfb,
+	0x19, 0xde, 0xf7, 0xd5, 0xa9, 0x72, 0xcb, 0x36, 0x9b, 0x6e, 0xfb, 0xdf, 0x80, 0x62, 0xdc, 0xc1,
+	0x45, 0xf1, 0xda, 0x9c, 0xad, 0x1a, 0x57, 0x5e, 0x72, 0xa5, 0x81, 0xef, 0x40, 0xce, 0xea, 0x74,
+	0xe8, 0x20, 0x10, 0xad, 0xfb, 0xf6, 0x6c, 0xdd, 0x0a, 0xc7, 0x10, 0x81, 0xc5, 0xef, 0x41, 0xde,
+	0xa6, 0x9d, 0x9e, 0xd3, 0x4f, 0x6f, 0xdc, 0x5c, 0xad, 0x1e, 0x82, 0x48, 0x84, 0xc6, 0x65, 0xc8,
+	0x9e, 0x3a, 0xbd, 0x9e, 0x68, 0xdb, 0x29, 0x67, 0xbc, 0xef, 0xf4, 0x7a, 0x84, 0xe3, 0xd8, 0xab,
+	0xf4, 0x1f, 0x0f, 0x03, 0xdb, 0x7d, 0xd2, 0x4f, 0x6d, 0xd8, 0xe1, 0xe1, 0x04, 0x8a, 0xc4, 0x78,
+	0x5c, 0x03, 0xc9, 0xea, 0x9c, 0xf6, 0xdd, 0x27, 0x3d, 0x6a, 0x9f, 0x50, 0xd1, 0xb7, 0x5f, 0x4f,
+	0x3b, 0x5f, 0x0c, 0x24, 0x49, 0x2d, 0x16, 0x5e, 0x8f, 0x35, 0x8a, 0x8e, 0xd3, 0xa3, 0xa2, 0x7b,
+	0xa7, 0x84, 0x97, 0x44, 0x30, 0x72, 0xa5, 0xc1, 0x02, 0x15, 0x3d, 0x0a, 0x98, 0x17, 0xa8, 0x29,
+	0xa2, 0xf2, 0x1e, 0xe3, 0x54, 0xdf, 0x1d, 0x52, 0x3f, 0x10, 0xed, 0xf7, 0xb5, 0xb4, 0x5d, 0x39,
+	0x88, 0x44, 0x68, 0xfc, 0x6d, 0xb8, 0x19, 0x5e, 0x92, 0x39, 0xd1, 0x5a, 0x56, 0xb8, 0x99, 0x37,
+	0xe7, 0xdd, 0xef, 0x38, 0xff, 0x58, 0xb3, 0xa6, 0x85, 0xf8, 0x3b, 0xb0, 0x21, 0xee, 0x72, 0xd2,
+	0x7e, 0x29, 0x85, 0x86, 0x24, 0x13, 0x61, 0x7c, 0x83, 0x75, 0x7b, 0x86, 0x94, 0x65, 0xa4, 0x47,
+	0xcf, 0x9d, 0x73, 0xaa, 0xac, 0xce, 0xcb, 0x48, 0xc2, 0x31, 0x44, 0x60, 0x79, 0xa2, 0x0c, 0x07,
+	0x03, 0x8f, 0xfa, 0xbe, 0x22, 0xcf, 0x4d, 0x14, 0x81, 0x22, 0x31, 0x1e, 0xff, 0x00, 0xc1, 0x76,
+	0xe2, 0xce, 0xcd, 0x14, 0x1a, 0x74, 0x83, 0x9b, 0xbd, 0xfb, 0xdc, 0x04, 0x9a, 0x49, 0x88, 0x36,
+	0xad, 0xf9, 0x00, 0xdc, 0x03, 0x35, 0x4e, 0x9b, 0x49, 0x0f, 0x7c, 0x05, 0xf3, 0xbd, 0xcb, 0xcf,
+	0xc9, 0xbc, 0x71, 0xc3, 0x3e, 0x51, 0xbc, 0x94, 0x15, 0xd5, 0x87, 0x62, 0x5c, 0x0e, 0xf0, 0x47,
+	0x50, 0x4a, 0x14, 0x30, 0x46, 0x82, 0xc2, 0x06, 0xb8, 0x3e, 0x55, 0xc2, 0x18, 0x0f, 0x5a, 0xe9,
+	0x26, 0x3f, 0xf1, 0x9b, 0x20, 0x47, 0x81, 0xa4, 0xb6, 0xe9, 0xb9, 0x3d, 0xca, 0x28, 0xd7, 0xe2,
+	0x4e, 0x91, 0xac, 0x5e, 0xc9, 0x09, 0x13, 0xab, 0xbf, 0x43, 0x90, 0x0b, 0x13, 0x8d, 0x3d, 0xab,
+	0x88, 0x51, 0x44, 0xa4, 0x67, 0x92, 0x52, 0xc8, 0xa2, 0x59, 0x16, 0x84, 0xc0, 0x27, 0x05, 0x41,
+	0x57, 0x7c, 0xfc, 0x31, 0x40, 0x22, 0x38, 0x19, 0xae, 0xbf, 0x91, 0xd4, 0x2f, 0xc7, 0x67, 0x15,
+	0xc5, 0x32, 0x81, 0xc7, 0x3b, 0x90, 0xef, 0x3a, 0xbd, 0xe0, 0x6a, 0xce, 0x89, 0xb6, 0xde, 0x0f,
+	0xa5, 0x24, 0x5a, 0x56, 0x3d, 0xc8, 0x8b, 0xcc, 0x7d, 0x59, 0x8f, 0x13, 0x7b, 0x66, 0xe6, 0xef,
+	0xf9, 0x13, 0x04, 0x6b, 0x33, 0x9e, 0x23, 0x6e, 0xc2, 0x8d, 0x49, 0x32, 0x96, 0xe6, 0xc8, 0x2b,
+	0xc2, 0x91, 0xd5, 0x71, 0x36, 0xe6, 0x93, 0xd5, 0x71, 0x3a, 0x76, 0x1d, 0xb7, 0x7e, 0x8a, 0x60,
+	0x7d, 0xd6, 0x2b, 0xfe, 0x6f, 0xfb, 0xa5, 0x41, 0x2e, 0x2c, 0x05, 0x78, 0x1d, 0x96, 0xc2, 0xf4,
+	0x43, 0x3c, 0xfd, 0xc2, 0x0f, 0xf5, 0x37, 0x08, 0xb2, 0xac, 0xa1, 0xe0, 0x77, 0x21, 0x1f, 0x58,
+	0x7e, 0x62, 0xd0, 0x58, 0x49, 0x30, 0x4e, 0x46, 0x7e, 0x84, 0x73, 0xb9, 0xf0, 0x9b, 0xe4, 0x18,
+	0xda, 0xb0, 0xc7, 0x48, 0x57, 0xe6, 0x1a, 0xa4, 0x6b, 0x0f, 0x24, 0xd6, 0xc2, 0xcc, 0x81, 0xdb,
+	0x73, 0x3a, 0x4f, 0x27, 0xe6, 0x0a, 0xe6, 0xd1, 0x11, 0x5f, 0x20, 0x70, 0x1a, 0xff, 0x57, 0x7f,
+	0x84, 0xa0, 0x10, 0x75, 0xb2, 0x49, 0x56, 0x89, 0x5e, 0x94, 0x55, 0x7e, 0x38, 0x76, 0x80, 0x6b,
+	0x31, 0x5b, 0xf5, 0xe7, 0x08, 0xa4, 0x44, 0x69, 0x7b, 0x29, 0x96, 0x9c, 0xb8, 0x80, 0xcc, 0x75,
+	0x2e, 0xe0, 0x36, 0x64, 0x87, 0x43, 0xc7, 0x0e, 0x59, 0x71, 0xb5, 0x30, 0xba, 0xd8, 0xcc, 0xb6,
+	0xdb, 0x46, 0x9d, 0x70, 0xa9, 0xfa, 0x79, 0x06, 0x36, 0x9f, 0x53, 0x7c, 0x5f, 0x98, 0x37, 0x77,
+	0x60, 0xdd, 0xa3, 0xbe, 0x3b, 0xf4, 0x3a, 0xd4, 0x1c, 0x78, 0xee, 0xb9, 0x63, 0xd3, 0x04, 0x81,
+	0xbe, 0x25, 0x6c, 0x10, 0x01, 0x39, 0x12, 0x08, 0x36, 0x0e, 0x8d, 0x2e, 0x36, 0xf1, 0xb4, 0x9c,
+	0x60, 0x6f, 0x52, 0x66, 0xe3, 0x5d, 0x90, 0x42, 0x2a, 0x6d, 0x26, 0x4e, 0xc9, 0x99, 0x78, 0x38,
+	0xb3, 0xf0, 0xb3, 0x42, 0x08, 0x69, 0x0f, 0x1d, 0x1b, 0x37, 0x60, 0xf9, 0xaa, 0x37, 0x39, 0xb6,
+	0x92, 0xe5, 0xc1, 0x7c, 0x65, 0xe6, 0xd8, 0x63, 0xd4, 0xab, 0x6b, 0x22, 0xac, 0x52, 0x42, 0x48,
+	0xa4, 0xd8, 0x82, 0x61, 0xab, 0x7f, 0x44, 0x50, 0x8c, 0x7b, 0x08, 0xfe, 0x04, 0x96, 0x58, 0xe0,
+	0xa3, 0x37, 0xfc, 0xc6, 0x73, 0x7a, 0x0e, 0xbf, 0x3d, 0x51, 0x64, 0x43, 0x45, 0xf5, 0x1c, 0xb2,
+	0x4c, 0xf8, 0x9f, 0x7e, 0x71, 0xea, 0xdf, 0x33, 0xa0, 0xa4, 0xf5, 0x42, 0xfc, 0xd9, 0x58, 0xcb,
+	0x08, 0xcf, 0xf6, 0xfe, 0xf5, 0xfa, 0xe9, 0xbc, 0xa6, 0xa2, 0xfe, 0x13, 0x41, 0x31, 0x5e, 0x9f,
+	0xba, 0x23, 0xf4, 0x92, 0x77, 0xf4, 0xc2, 0x55, 0x28, 0x2d, 0x85, 0x17, 0xff, 0x8d, 0x29, 0xfc,
+	0x3f, 0x31, 0x47, 0x7f, 0x04, 0x79, 0xc1, 0x95, 0xf1, 0x3b, 0x50, 0x10, 0x6c, 0x79, 0xb2, 0x51,
+	0x09, 0x84, 0xb8, 0xde, 0x18, 0xa5, 0x6e, 0x41, 0x21, 0xe2, 0x8d, 0xb3, 0xdb, 0xcc, 0xf6, 0x1f,
+	0x32, 0xb3, 0xa6, 0xdb, 0x15, 0x28, 0xc6, 0xd3, 0xad, 0x8c, 0xf0, 0x32, 0x14, 0x5a, 0x7a, 0x85,
+	0xd4, 0xd9, 0x62, 0x86, 0x8d, 0xa8, 0x95, 0x5a, 0x4d, 0x3f, 0x6a, 0xc9, 0x8b, 0x4c, 0xab, 0xae,
+	0xd7, 0x0e, 0x8c, 0x43, 0x36, 0xaf, 0xde, 0x82, 0x9b, 0xe1, 0x82, 0x39, 0x31, 0xfe, 0xae, 0xb0,
+	0x51, 0x56, 0xe0, 0x26, 0xd7, 0x4a, 0xcc, 0x1e, 0xd1, 0x1f, 0x19, 0x8f, 0xd8, 0x24, 0x5b, 0x80,
+	0xec, 0x7d, 0xe3, 0xe0, 0x40, 0xce, 0xb1, 0x3d, 0x9b, 0x9f, 0xb6, 0x5b, 0x7c, 0xcf, 0x3c, 0x5e,
+	0x05, 0xa9, 0x52, 0x63, 0xde, 0x1d, 0xe8, 0xf5, 0x7b, 0xba, 0x5c, 0xc0, 0xff, 0x07, 0xdb, 0x09,
+	0x81, 0x99, 0x32, 0x27, 0xaf, 0xb2, 0x93, 0x10, 0xbd, 0xd6, 0x38, 0xac, 0x19, 0x07, 0xba, 0x5c,
+	0xc4, 0x1a, 0xa8, 0xf1, 0xe7, 0xa4, 0x52, 0x53, 0x96, 0x93, 0x63, 0x35, 0x84, 0x33, 0xfb, 0xc3,
+	0xb6, 0xde, 0x6c, 0xc9, 0x12, 0xf7, 0xa7, 0x7d, 0x74, 0x44, 0xf4, 0x66, 0x53, 0x5e, 0x0e, 0x47,
+	0xe9, 0xea, 0xbd, 0x2f, 0x2e, 0xb5, 0x85, 0xbf, 0x5c, 0x6a, 0x0b, 0x7f, 0xbd, 0xd4, 0xd0, 0x57,
+	0x97, 0x1a, 0xfa, 0xc7, 0xa5, 0x86, 0xbe, 0x3f, 0xd2, 0xd0, 0xaf, 0x47, 0x1a, 0xfa, 0xfd, 0x48,
+	0x43, 0x9f, 0x8f, 0x34, 0xf4, 0x6c, 0xa4, 0xa1, 0x2f, 0x46, 0x1a, 0xfa, 0xdb, 0x48, 0x5b, 0xf8,
+	0x6a, 0xa4, 0xa1, 0x1f, 0x7f, 0xa9, 0x2d, 0xfc, 0xe2, 0x4b, 0x0d, 0x7d, 0xab, 0x18, 0x3f, 0xdf,
+	0x7f, 0x05, 0x00, 0x00, 0xff, 0xff, 0x0e, 0x84, 0xa5, 0x68, 0xd2, 0x17, 0x00, 0x00,
 }

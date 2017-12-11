@@ -258,6 +258,36 @@ func (mj *Call) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.Teardown != nil {
+		if true {
+			buf.WriteString(`"teardown":`)
+
+			{
+
+				err = mj.Teardown.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.MarkAgentGone != nil {
+		if true {
+			buf.WriteString(`"mark_agent_gone":`)
+
+			{
+
+				err = mj.MarkAgentGone.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -296,6 +326,10 @@ const (
 	ffj_t_Call_SetQuota
 
 	ffj_t_Call_RemoveQuota
+
+	ffj_t_Call_Teardown
+
+	ffj_t_Call_MarkAgentGone
 )
 
 var ffj_key_Call_Type = []byte("type")
@@ -327,6 +361,10 @@ var ffj_key_Call_StopMaintenance = []byte("stop_maintenance")
 var ffj_key_Call_SetQuota = []byte("set_quota")
 
 var ffj_key_Call_RemoveQuota = []byte("remove_quota")
+
+var ffj_key_Call_Teardown = []byte("teardown")
+
+var ffj_key_Call_MarkAgentGone = []byte("mark_agent_gone")
 
 func (uj *Call) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -419,6 +457,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'm':
+
+					if bytes.Equal(ffj_key_Call_MarkAgentGone, kn) {
+						currentKey = ffj_t_Call_MarkAgentGone
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'r':
 
 					if bytes.Equal(ffj_key_Call_ReadFile, kn) {
@@ -466,6 +512,11 @@ mainparse:
 						currentKey = ffj_t_Call_Type
 						state = fflib.FFParse_want_colon
 						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Call_Teardown, kn) {
+						currentKey = ffj_t_Call_Teardown
+						state = fflib.FFParse_want_colon
+						goto mainparse
 					}
 
 				case 'u':
@@ -486,6 +537,18 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_MarkAgentGone, kn) {
+					currentKey = ffj_t_Call_MarkAgentGone
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_Call_Teardown, kn) {
+					currentKey = ffj_t_Call_Teardown
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.AsciiEqualFold(ffj_key_Call_RemoveQuota, kn) {
@@ -639,6 +702,12 @@ mainparse:
 
 				case ffj_t_Call_RemoveQuota:
 					goto handle_RemoveQuota
+
+				case ffj_t_Call_Teardown:
+					goto handle_Teardown
+
+				case ffj_t_Call_MarkAgentGone:
+					goto handle_MarkAgentGone
 
 				case ffj_t_Callno_such_key:
 					err = fs.SkipField(tok)
@@ -1049,6 +1118,60 @@ handle_RemoveQuota:
 		}
 
 		err = uj.RemoveQuota.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Teardown:
+
+	/* handler: uj.Teardown type=master.Call_Teardown kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.Teardown = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.Teardown == nil {
+			uj.Teardown = new(Call_Teardown)
+		}
+
+		err = uj.Teardown.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_MarkAgentGone:
+
+	/* handler: uj.MarkAgentGone type=master.Call_MarkAgentGone kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.MarkAgentGone = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.MarkAgentGone == nil {
+			uj.MarkAgentGone = new(Call_MarkAgentGone)
+		}
+
+		err = uj.MarkAgentGone.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -2053,6 +2176,198 @@ handle_Path:
 			uj.Path = string(string(outBuf))
 
 		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Call_MarkAgentGone) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Call_MarkAgentGone) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"agent_id":`)
+
+	{
+
+		err = mj.AgentID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Call_MarkAgentGonebase = iota
+	ffj_t_Call_MarkAgentGoneno_such_key
+
+	ffj_t_Call_MarkAgentGone_AgentID
+)
+
+var ffj_key_Call_MarkAgentGone_AgentID = []byte("agent_id")
+
+func (uj *Call_MarkAgentGone) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Call_MarkAgentGone) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Call_MarkAgentGonebase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Call_MarkAgentGoneno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'a':
+
+					if bytes.Equal(ffj_key_Call_MarkAgentGone_AgentID, kn) {
+						currentKey = ffj_t_Call_MarkAgentGone_AgentID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Call_MarkAgentGone_AgentID, kn) {
+					currentKey = ffj_t_Call_MarkAgentGone_AgentID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Call_MarkAgentGoneno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Call_MarkAgentGone_AgentID:
+					goto handle_AgentID
+
+				case ffj_t_Call_MarkAgentGoneno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_AgentID:
+
+	/* handler: uj.AgentID type=mesos.AgentID kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.AgentID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value
@@ -3789,6 +4104,198 @@ handle_Machines:
 				wantVal = false
 			}
 		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Call_Teardown) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Call_Teardown) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"framework_id":`)
+
+	{
+
+		err = mj.FrameworkID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Call_Teardownbase = iota
+	ffj_t_Call_Teardownno_such_key
+
+	ffj_t_Call_Teardown_FrameworkID
+)
+
+var ffj_key_Call_Teardown_FrameworkID = []byte("framework_id")
+
+func (uj *Call_Teardown) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Call_Teardown) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Call_Teardownbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Call_Teardownno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'f':
+
+					if bytes.Equal(ffj_key_Call_Teardown_FrameworkID, kn) {
+						currentKey = ffj_t_Call_Teardown_FrameworkID
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_Teardown_FrameworkID, kn) {
+					currentKey = ffj_t_Call_Teardown_FrameworkID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Call_Teardownno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Call_Teardown_FrameworkID:
+					goto handle_FrameworkID
+
+				case ffj_t_Call_Teardownno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_FrameworkID:
+
+	/* handler: uj.FrameworkID type=mesos.FrameworkID kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.FrameworkID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value
@@ -6244,6 +6751,13 @@ func (mj *Event_Subscribed) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.HeartbeatIntervalSeconds != nil {
+		if true {
+			buf.WriteString(`"heartbeat_interval_seconds":`)
+			fflib.AppendFloat(buf, float64(*mj.HeartbeatIntervalSeconds), 'g', -1, 64)
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -6254,9 +6768,13 @@ const (
 	ffj_t_Event_Subscribedno_such_key
 
 	ffj_t_Event_Subscribed_GetState
+
+	ffj_t_Event_Subscribed_HeartbeatIntervalSeconds
 )
 
 var ffj_key_Event_Subscribed_GetState = []byte("get_state")
+
+var ffj_key_Event_Subscribed_HeartbeatIntervalSeconds = []byte("heartbeat_interval_seconds")
 
 func (uj *Event_Subscribed) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -6325,6 +6843,20 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'h':
+
+					if bytes.Equal(ffj_key_Event_Subscribed_HeartbeatIntervalSeconds, kn) {
+						currentKey = ffj_t_Event_Subscribed_HeartbeatIntervalSeconds
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Event_Subscribed_HeartbeatIntervalSeconds, kn) {
+					currentKey = ffj_t_Event_Subscribed_HeartbeatIntervalSeconds
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Event_Subscribed_GetState, kn) {
@@ -6352,6 +6884,9 @@ mainparse:
 
 				case ffj_t_Event_Subscribed_GetState:
 					goto handle_GetState
+
+				case ffj_t_Event_Subscribed_HeartbeatIntervalSeconds:
+					goto handle_HeartbeatIntervalSeconds
 
 				case ffj_t_Event_Subscribedno_such_key:
 					err = fs.SkipField(tok)
@@ -6389,6 +6924,39 @@ handle_GetState:
 			return err
 		}
 		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_HeartbeatIntervalSeconds:
+
+	/* handler: uj.HeartbeatIntervalSeconds type=float64 kind=float64 quoted=false*/
+
+	{
+		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for float64", tok))
+		}
+	}
+
+	{
+
+		if tok == fflib.FFTok_null {
+
+			uj.HeartbeatIntervalSeconds = nil
+
+		} else {
+
+			tval, err := fflib.ParseFloat(fs.Output.Bytes(), 64)
+
+			if err != nil {
+				return fs.WrapErr(err)
+			}
+
+			ttypval := float64(tval)
+			uj.HeartbeatIntervalSeconds = &ttypval
+
+		}
 	}
 
 	state = fflib.FFParse_after_value

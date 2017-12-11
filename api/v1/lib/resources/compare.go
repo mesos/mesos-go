@@ -35,6 +35,7 @@ func Contains(subject []mesos.Resource, that mesos.Resource) bool {
 }
 
 func contains(subject []mesos.Resource, that mesos.Resource) bool {
+	// TODO(jdef): take into account the "count" of shared resources
 	for i := range subject {
 		if subject[i].Contains(that) {
 			return true
@@ -53,7 +54,9 @@ func ContainsAll(subject, that []mesos.Resource) bool {
 		if !contains(remaining, that[i]) {
 			return false
 		}
-		remaining.Subtract1(that[i])
+		if that[i].GetDisk().GetPersistence() != nil {
+			remaining.Subtract1(that[i])
+		}
 	}
 	return true
 }

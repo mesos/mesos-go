@@ -38,11 +38,28 @@ func TestResources_ContainsAll(t *testing.T) {
 		summedRevocables  = Resources(revocables[0]).Plus(revocables[1])
 		summedRevocables2 = Resources(revocables[0]).Plus(revocables[0])
 
+		// pre-refinement
 		possiblyReserved = mesos.Resources{
 			Resource(Name("cpus"), ValueScalar(8), Role("role")),
 			Resource(Name("cpus"), ValueScalar(12), Role("role"), Reservation(ReservedBy("principal"))),
 		}
 		sumPossiblyReserved = Resources(possiblyReserved...)
+
+		// refinement, static
+		possiblyReserved2 = mesos.Resources{
+			Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("role", ""))),
+			Resource(Name("cpus"), ValueScalar(12), Reservations(StaticReservation("role", "principal"))),
+		}
+		sumPossiblyReserved2 = Resources(possiblyReserved2...)
+
+		// refinement, dynamic
+		possiblyReserved3 = mesos.Resources{
+			Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role", ""))),
+			Resource(Name("cpus"), ValueScalar(12), Reservations(DynamicReservation("role", "principal"))),
+		}
+		sumPossiblyReserved3 = Resources(possiblyReserved3...)
+
+		// TODO: dynamic w/ labels
 	)
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources
@@ -137,7 +154,18 @@ func TestResources_ContainsAll(t *testing.T) {
 		{r1: summedRevocables2, r2: summedRevocables2, wants: true},
 		{r1: Resources(possiblyReserved[0]), r2: sumPossiblyReserved, wants: false},
 		{r1: Resources(possiblyReserved[1]), r2: sumPossiblyReserved, wants: false},
+
+		{r1: sumPossiblyReserved, r2: Resources(possiblyReserved[0]), wants: true},
+		{r1: sumPossiblyReserved, r2: Resources(possiblyReserved[1]), wants: true},
 		{r1: sumPossiblyReserved, r2: sumPossiblyReserved, wants: true},
+
+		{r1: sumPossiblyReserved2, r2: Resources(possiblyReserved2[0]), wants: true},
+		{r1: sumPossiblyReserved2, r2: Resources(possiblyReserved2[1]), wants: true},
+		{r1: sumPossiblyReserved2, r2: sumPossiblyReserved2, wants: true},
+
+		{r1: sumPossiblyReserved3, r2: Resources(possiblyReserved3[0]), wants: true},
+		{r1: sumPossiblyReserved3, r2: Resources(possiblyReserved3[1]), wants: true},
+		{r1: sumPossiblyReserved3, r2: sumPossiblyReserved3, wants: true},
 	} {
 		actual := rez.ContainsAll(tc.r1, tc.r2)
 		Expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
@@ -192,10 +220,10 @@ func TestResources_Equivalent(t *testing.T) {
 		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path1")),
 		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("1", "path2")),
 		Resource(Name("disk"), ValueScalar(10), Role("role"), Disk("2", "path2")),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.PATH)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.PATH)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.MOUNT)),
-		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.MOUNT)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.Resource_DiskInfo_Source_PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.Resource_DiskInfo_Source_PATH)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path1", mesos.Resource_DiskInfo_Source_MOUNT)),
+		Resource(Name("disk"), ValueScalar(10), Role("*"), DiskWithSource("", "", "/mnt/path2", mesos.Resource_DiskInfo_Source_MOUNT)),
 	}
 	for i, tc := range []struct {
 		r1, r2 mesos.Resources

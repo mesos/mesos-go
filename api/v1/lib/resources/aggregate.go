@@ -120,9 +120,13 @@ type (
 	}
 )
 
-func (fc *flattenConfig) WithRole(role string)                              { fc.role = role }
+// WithRole is for use w/ pre-reservation-refinement
+func (fc *flattenConfig) WithRole(role string) { fc.role = role }
+
+// WithReservation is for use w/ pre-reservation-refinement
 func (fc *flattenConfig) WithReservation(r *mesos.Resource_ReservationInfo) { fc.reservation = r }
 
+// Flatten is deprecated and should only be used when dealing w/ resources in pre-reservation-refinement format.
 func Flatten(resources []mesos.Resource, opts ...FlattenOpt) []mesos.Resource {
 	var flattened mesos.Resources
 	fc := &flattenConfig{}
@@ -130,7 +134,7 @@ func Flatten(resources []mesos.Resource, opts ...FlattenOpt) []mesos.Resource {
 		f(fc)
 	}
 	if fc.role == "" {
-		fc.role = string(RoleDefault)
+		fc.role = mesos.DefaultRole
 	}
 	// we intentionally manipulate a copy 'r' of the item in resources
 	for _, r := range resources {

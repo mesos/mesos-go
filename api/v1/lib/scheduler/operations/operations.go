@@ -18,25 +18,52 @@ type (
 		cause     error
 	}
 
-	offerResourceOp func(*mesos.Offer_Operation, mesos.Resources) (mesos.Resources, error)
-	opErrorHandler  func(cause error) error
+	offerResourceOp func(_ *mesos.Offer_Operation, res mesos.Resources, converted mesos.Resources) (mesos.Resources, error)
 )
 
 const (
 	operationErrorTypeInvalid operationErrorType = iota
 	operationErrorTypeUnknown
+	operationErrorTypeMayNotBeApplied
 )
 
 var (
-	opNoop             = func(_ *mesos.Offer_Operation, _ mesos.Resources) (_ mesos.Resources, _ error) { return }
-	offerResourceOpMap = map[mesos.Offer_Operation_Type]offerResourceOp{
-		mesos.Offer_Operation_LAUNCH:       opNoop,
-		mesos.Offer_Operation_LAUNCH_GROUP: opNoop,
-		mesos.Offer_Operation_RESERVE:      handleOpErrors(invalidOp(mesos.Offer_Operation_RESERVE), validateOpTotals(opReserve)),
-		mesos.Offer_Operation_UNRESERVE:    handleOpErrors(invalidOp(mesos.Offer_Operation_UNRESERVE), validateOpTotals(opUnreserve)),
-		mesos.Offer_Operation_CREATE:       handleOpErrors(invalidOp(mesos.Offer_Operation_CREATE), validateOpTotals(opCreate)),
-		mesos.Offer_Operation_DESTROY:      handleOpErrors(invalidOp(mesos.Offer_Operation_DESTROY), validateOpTotals(opDestroy)),
-	}
+	offerResourceOpMap = func() (m map[mesos.Offer_Operation_Type]offerResourceOp) {
+		opUnsupported := func(t mesos.Offer_Operation_Type) {
+			m[t] = func(_ *mesos.Offer_Operation, _ mesos.Resources, _ mesos.Resources) (_ mesos.Resources, err error) {
+				err = &operationError{errorType: operationErrorTypeMayNotBeApplied, opType: t}
+				return
+			}
+		}
+		invalidOp := func(t mesos.Offer_Operation_Type, op offerResourceOp) offerResourceOp {
+			return func(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+				r, err := op(operation, resources, conv)
+				if err != nil {
+					err = &operationError{errorType: operationErrorTypeInvalid, opType: t, cause: err}
+				}
+				return r, err
+			}
+		}
+		opRegister := func(t mesos.Offer_Operation_Type, op offerResourceOp) { m[t] = invalidOp(t, op) }
+
+		m = make(map[mesos.Offer_Operation_Type]offerResourceOp)
+
+		opUnsupported(mesos.Offer_Operation_LAUNCH)
+		opUnsupported(mesos.Offer_Operation_LAUNCH_GROUP)
+
+		// TODO(jdef) does it make sense to validate op totals for all operation types?
+
+		opRegister(mesos.Offer_Operation_RESERVE, opReserve)
+		opRegister(mesos.Offer_Operation_UNRESERVE, opUnreserve)
+		opRegister(mesos.Offer_Operation_CREATE, opCreate)
+		opRegister(mesos.Offer_Operation_DESTROY, opDestroy)
+		opRegister(mesos.Offer_Operation_CREATE_VOLUME, opCreateVolume)
+		opRegister(mesos.Offer_Operation_DESTROY_VOLUME, opDestroyVolume)
+		opRegister(mesos.Offer_Operation_CREATE_BLOCK, opCreateBlock)
+		opRegister(mesos.Offer_Operation_DESTROY_BLOCK, opDestroyBlock)
+
+		return
+	}()
 )
 
 func (err *operationError) Cause() error                          { return err.cause }
@@ -54,90 +81,98 @@ func (err *operationError) Error() string {
 	}
 }
 
-func invalidOp(t mesos.Offer_Operation_Type) opErrorHandler {
-	return func(cause error) error {
-		return &operationError{errorType: operationErrorTypeInvalid, opType: t, cause: cause}
+// popReservation works for both pre- and post-reservation-refinement resources.
+// Returns a shallow (mutated) copy of the resource.
+func popReservation(r mesos.Resource) mesos.Resource {
+	switch x := len(r.Reservations); {
+	case x == 0:
+		// pre-refinement format.
+		r.Role = nil
+		r.Reservation = nil
+	case x == 1:
+		// handle the special case whereby both formats are used redundantly
+		r.Role = nil
+		r.Reservation = nil
+		r.Reservations = nil
+	case x > 1:
+		// post-refinement format.
+		// duplicate the slice, truncated. we don't want the optimized form of
+		// the "delete the last object from a slice" because it would mutate the
+		// contents of the original reservation (in an attempt to avoid a mem leak).
+		rs := make([]mesos.Resource_ReservationInfo, 0, x-1)
+		copy(rs, r.Reservations[:x-1])
+		r.Reservations = rs
 	}
+	return r
 }
 
-func handleOpErrors(f opErrorHandler, op offerResourceOp) offerResourceOp {
-	return func(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
-		result, err := op(operation, resources)
-		if err != nil {
-			err = f(err)
-		}
-		return result, err
+func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) > 0 {
+		return nil, fmt.Errorf("converted resources not expected")
 	}
-}
-
-func validateOpTotals(f offerResourceOp) offerResourceOp {
-	return func(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
-		result, err := f(operation, resources)
-		if err == nil {
-			// sanity CHECK, same as apache/mesos does
-			if !rez.SumAndCompare(resources, result...) {
-				panic(fmt.Sprintf("result %+v != resources %+v", result, resources))
-			}
-		}
-		return result, err
-	}
-}
-
-func opReserve(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
-	result := resources.Clone()
 	opRes := operation.GetReserve().GetResources()
 	err := rez.Validate(opRes...)
 	if err != nil {
 		return nil, err
 	}
+	result := resources.Clone()
 	for i := range opRes {
 		if !opRes[i].IsReserved("") {
 			return nil, errors.New("Resource must be reserved")
 		}
-		if opRes[i].GetReservation() == nil {
-			return nil, errors.New("missing 'reservation'")
+		if !opRes[i].IsDynamicallyReserved() {
+			return nil, errors.New("Resource must be dynamically reserved")
 		}
-		unreserved := rez.Flatten(mesos.Resources{opRes[i]})
-		if !rez.ContainsAll(result, unreserved) {
-			return nil, fmt.Errorf("%+v does not contain %+v", result, unreserved)
+
+		lessReserved := popReservation(opRes[i])
+
+		if !rez.Contains(result, lessReserved) {
+			return nil, fmt.Errorf("%+v does not contain %+v", result, lessReserved)
 		}
-		result.Subtract(unreserved...)
+
+		result.Subtract(lessReserved)
 		result.Add1(opRes[i])
 	}
 	return result, nil
 }
 
-func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
-	result := resources.Clone()
+func opUnreserve(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) > 0 {
+		return nil, fmt.Errorf("converted resources not expected")
+	}
 	opRes := operation.GetUnreserve().GetResources()
 	err := rez.Validate(opRes...)
 	if err != nil {
 		return nil, err
 	}
+	result := resources.Clone()
 	for i := range opRes {
 		if !opRes[i].IsReserved("") {
 			return nil, errors.New("Resource is not reserved")
 		}
-		if opRes[i].GetReservation() == nil {
-			return nil, errors.New("missing 'reservation'")
+		if !opRes[i].IsDynamicallyReserved() {
+			return nil, errors.New("Resource must be dynamically reserved")
 		}
 		if !rez.Contains(result, opRes[i]) {
 			return nil, errors.New("resources do not contain unreserve amount") //TODO(jdef) should output nicely formatted resource quantities here
 		}
-		unreserved := rez.Flatten(mesos.Resources{opRes[i]})
+		lessReserved := popReservation(opRes[i])
 		result.Subtract1(opRes[i])
-		result.Add(unreserved...)
+		result.Add(lessReserved)
 	}
 	return result, nil
 }
 
-func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
-	result := resources.Clone()
+func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) > 0 {
+		return nil, fmt.Errorf("converted resources not expected")
+	}
 	volumes := operation.GetCreate().GetVolumes()
 	err := rez.Validate(volumes...)
 	if err != nil {
 		return nil, err
 	}
+	result := resources.Clone()
 	for i := range volumes {
 		if volumes[i].GetDisk() == nil {
 			return nil, errors.New("missing 'disk'")
@@ -153,9 +188,19 @@ func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources) (meso
 		// disk resources. Revisit this once we start to support
 		// non-persistent volumes.
 		stripped := proto.Clone(&volumes[i]).(*mesos.Resource)
-		stripped.Disk = nil
+		if stripped.Disk.Source != nil {
+			stripped.Disk.Persistence = nil
+			stripped.Disk.Volume = nil
+		} else {
+			stripped.Disk = nil
+		}
+
+		// Since we only allow persistent volumes to be shared, the
+		// original resource must be non-shared.
+		stripped.Shared = nil
+
 		if !rez.Contains(result, *stripped) {
-			return nil, errors.New("invalid CREATE operation: insufficient disk resources")
+			return nil, errors.New("insufficient disk resources")
 		}
 		result.Subtract1(*stripped)
 		result.Add1(volumes[i])
@@ -163,13 +208,16 @@ func opCreate(operation *mesos.Offer_Operation, resources mesos.Resources) (meso
 	return result, nil
 }
 
-func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources) (mesos.Resources, error) {
-	result := resources.Clone()
+func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) > 0 {
+		return nil, fmt.Errorf("converted resources not expected")
+	}
 	volumes := operation.GetDestroy().GetVolumes()
 	err := rez.Validate(volumes...)
 	if err != nil {
 		return nil, err
 	}
+	result := resources.Clone()
 	for i := range volumes {
 		if volumes[i].GetDisk() == nil {
 			return nil, errors.New("missing 'disk'")
@@ -180,15 +228,106 @@ func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources) (mes
 		if !rez.Contains(result, volumes[i]) {
 			return nil, errors.New("persistent volume does not exist")
 		}
-		stripped := proto.Clone(&volumes[i]).(*mesos.Resource)
-		stripped.Disk = nil
+
 		result.Subtract1(volumes[i])
+
+		if rez.Contains(result, volumes[i]) {
+			return nil, fmt.Errorf(
+				"persistent volume %q cannot be removed due to additional shared copies", volumes[i])
+		}
+
+		// Strip the disk info so that we can subtract it from the
+		// original resources.
+		stripped := proto.Clone(&volumes[i]).(*mesos.Resource)
+		if stripped.Disk.Source != nil {
+			stripped.Disk.Persistence = nil
+			stripped.Disk.Volume = nil
+		} else {
+			stripped.Disk = nil
+		}
+
+		// Since we only allow persistent volumes to be shared, we
+		// return the resource to non-shared state after destroy.
+		stripped.Shared = nil
+
 		result.Add1(*stripped)
 	}
 	return result, nil
 }
 
-func Apply(operation *mesos.Offer_Operation, resources []mesos.Resource) ([]mesos.Resource, error) {
+func opCreateVolume(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := operation.GetCreateVolume().GetSource()
+
+	if !rez.Contains(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract1(consumed)
+	result.Add(conv...)
+
+	return result, nil
+}
+
+func opDestroyVolume(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := operation.GetDestroyVolume().GetVolume()
+
+	if !rez.Contains(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract1(consumed)
+	result.Add(conv...)
+
+	return result, nil
+}
+
+func opCreateBlock(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := operation.GetCreateBlock().GetSource()
+
+	if !rez.Contains(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract1(consumed)
+	result.Add(conv...)
+
+	return result, nil
+}
+
+func opDestroyBlock(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := operation.GetDestroyBlock().GetBlock()
+
+	if !rez.Contains(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract1(consumed)
+	result.Add(conv...)
+
+	return result, nil
+}
+
+func Apply(operation *mesos.Offer_Operation, resources []mesos.Resource, convertedResources []mesos.Resource) (result []mesos.Resource, err error) {
 	f, ok := offerResourceOpMap[operation.GetType()]
 	if !ok {
 		return nil, &operationError{
@@ -196,5 +335,12 @@ func Apply(operation *mesos.Offer_Operation, resources []mesos.Resource) ([]meso
 			cause:     errors.New("unknown offer operation: " + operation.GetType().String()),
 		}
 	}
-	return f(operation, resources)
+	result, err = f(operation, resources, convertedResources)
+	if err == nil {
+		// sanity CHECK, same as apache/mesos does
+		if !rez.SumAndCompare(resources, result...) {
+			panic(fmt.Sprintf("result %+v != resources %+v", result, resources))
+		}
+	}
+	return result, err
 }

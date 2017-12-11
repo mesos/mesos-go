@@ -75,6 +75,8 @@ func GetTasks() *agent.Call { return &agent.Call{Type: agent.Call_GET_TASKS} }
 
 func GetAgent() *agent.Call { return &agent.Call{Type: agent.Call_GET_AGENT} }
 
+func GetResourceProviders() *agent.Call { return &agent.Call{Type: agent.Call_GET_RESOURCE_PROVIDERS} }
+
 func LaunchNestedContainer(cid mesos.ContainerID, cmd *mesos.CommandInfo, ci *mesos.ContainerInfo) *agent.Call {
 	return &agent.Call{
 		Type: agent.Call_LAUNCH_NESTED_CONTAINER,
@@ -86,10 +88,31 @@ func LaunchNestedContainer(cid mesos.ContainerID, cmd *mesos.CommandInfo, ci *me
 	}
 }
 
+func LaunchContainer(cid mesos.ContainerID, cmd *mesos.CommandInfo, ci *mesos.ContainerInfo, r []mesos.Resource) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_LAUNCH_CONTAINER,
+		LaunchContainer: &agent.Call_LaunchContainer{
+			ContainerID: cid,
+			Command:     cmd,
+			Container:   ci,
+			Resources:   r,
+		},
+	}
+}
+
 func WaitNestedContainer(cid mesos.ContainerID) *agent.Call {
 	return &agent.Call{
 		Type: agent.Call_WAIT_NESTED_CONTAINER,
 		WaitNestedContainer: &agent.Call_WaitNestedContainer{
+			ContainerID: cid,
+		},
+	}
+}
+
+func WaitContainer(cid mesos.ContainerID) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_WAIT_CONTAINER,
+		WaitContainer: &agent.Call_WaitContainer{
 			ContainerID: cid,
 		},
 	}
@@ -104,10 +127,28 @@ func KillNestedContainer(cid mesos.ContainerID) *agent.Call {
 	}
 }
 
+func KillContainer(cid mesos.ContainerID) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_KILL_CONTAINER,
+		KillContainer: &agent.Call_KillContainer{
+			ContainerID: cid,
+		},
+	}
+}
+
 func RemoveNestedContainer(cid mesos.ContainerID) *agent.Call {
 	return &agent.Call{
 		Type: agent.Call_REMOVE_NESTED_CONTAINER,
 		RemoveNestedContainer: &agent.Call_RemoveNestedContainer{
+			ContainerID: cid,
+		},
+	}
+}
+
+func RemoveContainer(cid mesos.ContainerID) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_REMOVE_CONTAINER,
+		RemoveContainer: &agent.Call_RemoveContainer{
 			ContainerID: cid,
 		},
 	}
@@ -173,6 +214,34 @@ func AttachContainerInputTTY(t *mesos.TTYInfo) *agent.Call {
 					TTYInfo: t,
 				},
 			},
+		},
+	}
+}
+
+func AddResourceProviderConfig(rpi mesos.ResourceProviderInfo) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_ADD_RESOURCE_PROVIDER_CONFIG,
+		AddResourceProviderConfig: &agent.Call_AddResourceProviderConfig{
+			Info: rpi,
+		},
+	}
+}
+
+func UpdateResourceProviderConfig(rpi mesos.ResourceProviderInfo) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_UPDATE_RESOURCE_PROVIDER_CONFIG,
+		UpdateResourceProviderConfig: &agent.Call_UpdateResourceProviderConfig{
+			Info: rpi,
+		},
+	}
+}
+
+func RemoveResourceProviderConfig(typ, name string) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_REMOVE_RESOURCE_PROVIDER_CONFIG,
+		RemoveResourceProviderConfig: &agent.Call_RemoveResourceProviderConfig{
+			Type: typ,
+			Name: name,
 		},
 	}
 }

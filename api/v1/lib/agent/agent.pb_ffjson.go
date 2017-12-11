@@ -1222,7 +1222,7 @@ handle_RemoveContainer:
 
 handle_AddResourceProviderConfig:
 
-	/* handler: uj.AddResourceProviderConfig type=agent.Call_UpdateResourceProviderConfig kind=struct quoted=false*/
+	/* handler: uj.AddResourceProviderConfig type=agent.Call_AddResourceProviderConfig kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
@@ -1234,7 +1234,7 @@ handle_AddResourceProviderConfig:
 		}
 
 		if uj.AddResourceProviderConfig == nil {
-			uj.AddResourceProviderConfig = new(Call_UpdateResourceProviderConfig)
+			uj.AddResourceProviderConfig = new(Call_AddResourceProviderConfig)
 		}
 
 		err = uj.AddResourceProviderConfig.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -2255,22 +2255,17 @@ func (mj *Call_KillContainer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.ContainerID != nil {
-		if true {
-			buf.WriteString(`"container_id":`)
+	buf.WriteString(`{ "container_id":`)
 
-			{
+	{
 
-				err = mj.ContainerID.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.ContainerID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
+	buf.WriteByte(',')
 	if mj.Signal != nil {
 		if true {
 			buf.WriteString(`"signal":`)
@@ -2429,14 +2424,8 @@ handle_ContainerID:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.ContainerID = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.ContainerID == nil {
-			uj.ContainerID = new(mesos.ContainerID)
 		}
 
 		err = uj.ContainerID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -2776,22 +2765,17 @@ func (mj *Call_LaunchContainer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.ContainerID != nil {
-		if true {
-			buf.WriteString(`"container_id":`)
+	buf.WriteString(`{ "container_id":`)
 
-			{
+	{
 
-				err = mj.ContainerID.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.ContainerID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
+	buf.WriteByte(',')
 	if mj.Command != nil {
 		if true {
 			buf.WriteString(`"command":`)
@@ -3031,14 +3015,8 @@ handle_ContainerID:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.ContainerID = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.ContainerID == nil {
-			uj.ContainerID = new(mesos.ContainerID)
 		}
 
 		err = uj.ContainerID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -4335,23 +4313,16 @@ func (mj *Call_RemoveContainer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.ContainerID != nil {
-		if true {
-			buf.WriteString(`"container_id":`)
+	buf.WriteString(`{"container_id":`)
 
-			{
+	{
 
-				err = mj.ContainerID.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.ContainerID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -4481,14 +4452,8 @@ handle_ContainerID:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.ContainerID = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.ContainerID == nil {
-			uj.ContainerID = new(mesos.ContainerID)
 		}
 
 		err = uj.ContainerID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
@@ -5407,23 +5372,16 @@ func (mj *Call_WaitContainer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if mj.ContainerID != nil {
-		if true {
-			buf.WriteString(`"container_id":`)
+	buf.WriteString(`{"container_id":`)
 
-			{
+	{
 
-				err = mj.ContainerID.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
+		err = mj.ContainerID.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
 		}
+
 	}
-	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -5553,14 +5511,8 @@ handle_ContainerID:
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.ContainerID = nil
-
 			state = fflib.FFParse_after_value
 			goto mainparse
-		}
-
-		if uj.ContainerID == nil {
-			uj.ContainerID = new(mesos.ContainerID)
 		}
 
 		err = uj.ContainerID.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)

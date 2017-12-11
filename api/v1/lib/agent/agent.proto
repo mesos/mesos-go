@@ -236,7 +236,7 @@ message Call {
     // NOTE: Some characters cannot be used in the ID. All characters
     // must be valid filesystem path characters.  In addition, '/' and '.'
     // are reserved.
-    required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID"];
+    required ContainerID container_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ContainerID"];
 
     optional CommandInfo command = 2;
 
@@ -261,7 +261,7 @@ message Call {
   // Returns 200 OK if and when the container exits.
   // Returns 404 Not Found if the container does not exist.
   message WaitContainer {
-    required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID"];
+    required ContainerID container_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ContainerID"];
   }
 
   // Kills the standalone or nested container. The signal to be sent
@@ -270,7 +270,7 @@ message Call {
   // Returns 200 OK if the signal is sent successfully.
   // Returns 404 Not Found if the container does not exist.
   message KillContainer {
-    required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID"];
+    required ContainerID container_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ContainerID"];
 
     // Defaults to SIGKILL.
     optional int32 signal = 2;
@@ -301,7 +301,7 @@ message Call {
   // Internal Server Error when the user tries to remove a running or
   // nonexistent nested container.
   message RemoveContainer {
-    required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID"];
+    required ContainerID container_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ContainerID"];
   }
 
   // Adds a new resource provider config file.
@@ -381,7 +381,7 @@ message Call {
   optional KillContainer kill_container = 15;
   optional RemoveContainer remove_container = 16;
 
-  optional UpdateResourceProviderConfig add_resource_provider_config = 17;
+  optional AddResourceProviderConfig add_resource_provider_config = 17;
   optional UpdateResourceProviderConfig update_resource_provider_config = 18;
   optional RemoveResourceProviderConfig remove_resource_provider_config = 19;
 }

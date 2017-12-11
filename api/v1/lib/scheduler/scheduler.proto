@@ -223,6 +223,27 @@ message Event {
 
 
 /**
+ * Synchronous responses for calls made to the scheduler API.
+ */
+message Response {
+  // Each of the responses of type `FOO` corresponds to `Foo` message below.
+  enum Type {
+    UNKNOWN = 0;
+
+    RECONCILE_OFFER_OPERATIONS = 1; // See 'ReconcileOfferOperations' below.
+
+    option (gogoproto.goproto_enum_prefix) = true;
+  }
+
+  message ReconcileOfferOperations {
+    repeated OfferOperationStatus offer_operation_statuses = 1 [(gogoproto.nullable) = false];
+  }
+
+  optional ReconcileOfferOperations reconcile_offer_operations = 1;
+}
+
+
+/**
  * Scheduler call API.
  *
  * Like Event, a Call is described using the standard protocol buffer

@@ -44,6 +44,8 @@ func Example() {
 		GetExecutors(),
 		GetTasks(),
 		GetAgent(),
+		GetResourceProviders(),
+		WaitContainer(mesos.ContainerID{}),
 		WaitNestedContainer(mesos.ContainerID{}),
 		LaunchNestedContainerSession(mesos.ContainerID{}, nil, nil),
 	)
@@ -55,10 +57,16 @@ func Example() {
 	}
 	blackhole(
 		SetLoggingLevel(0, d),
+		LaunchContainer(mesos.ContainerID{}, nil, nil, nil),
 		LaunchNestedContainer(mesos.ContainerID{}, nil, nil),
+		KillContainer(mesos.ContainerID{}),
 		KillNestedContainer(mesos.ContainerID{}),
+		RemoveContainer(mesos.ContainerID{}),
 		RemoveNestedContainer(mesos.ContainerID{}),
 		AttachContainerOutput(mesos.ContainerID{}),
+		AddResourceProviderConfig(mesos.ResourceProviderInfo{}),
+		UpdateResourceProviderConfig(mesos.ResourceProviderInfo{}),
+		RemoveResourceProviderConfig("", ""),
 	)
 
 	swallow(sender.Send(ctx, Empty().Push(

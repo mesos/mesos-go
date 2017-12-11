@@ -357,14 +357,16 @@ message FrameworkInfo {
       // Frameworks that enable this capability can define how they
       // would like to handle partitioned tasks. Frameworks will
       // receive TASK_UNREACHABLE for tasks on agents that are
-      // partitioned from the master. If/when a partitioned agent
-      // reregisters, tasks on the agent that were started by
-      // PARTITION_AWARE frameworks will not killed.
+      // partitioned from the master.
       //
       // Without this capability, frameworks will receive TASK_LOST
-      // for tasks on partitioned agents; such tasks will be killed by
-      // Mesos when the agent reregisters (unless the master has
-      // failed over).
+      // for tasks on partitioned agents.
+      // NOTE: Prior to Mesos 1.5, such tasks will be killed by Mesos
+      // when the agent reregisters (unless the master has failed over).
+      // However due to the lack of benefit in maintaining different
+      // behaviors depending on whether the master has failed over
+      // (see MESOS-7215), as of 1.5, Mesos will not kill these
+      // tasks in either case.
       PARTITION_AWARE = 5;
 
       // This expresses the ability for the framework to be
@@ -542,6 +544,8 @@ message HealthCheck {
   // treat return codes between 200 and 399 as success; custom executors
   // may employ a different strategy, e.g. leveraging the `statuses` field.
   message HTTPCheckInfo {
+    optional NetworkInfo.Protocol protocol = 5 [default = IPv4];
+
     // Currently "http" and "https" are supported.
     optional string scheme = 3;
 
@@ -577,6 +581,8 @@ message HealthCheck {
   // Describes a TCP health check, i.e. based on establishing
   // a TCP connection to the specified port.
   message TCPCheckInfo {
+    optional NetworkInfo.Protocol protocol = 2 [default = IPv4];
+
     // Port expected to be open.
     required uint32 port = 1 [(gogoproto.nullable) = false];
   }
@@ -909,6 +915,21 @@ message MasterInfo {
   // The domain that this master belongs to. All masters in a Mesos
   // cluster should belong to the same region.
   optional DomainInfo domain = 8;
+
+  message Capability {
+    enum Type {
+      UNKNOWN = 0;
+
+      // The master can handle slaves whose state
+      // changes after re-registering.
+      AGENT_UPDATE = 1;
+
+      option (gogoproto.goproto_enum_prefix) = true;
+    }
+    optional Type type = 1 [(gogoproto.nullable) = false];
+  }
+
+  repeated Capability capabilities = 9 [(gogoproto.nullable) = false];
 }
 
 
@@ -1007,13 +1028,49 @@ message AgentInfo {
 
 
 /**
+ * Describes the container configuration to run a CSI plugin component.
+ */
+message CSIPluginContainerInfo {
+  enum Service {
+    UNKNOWN = 0;
+    CONTROLLER_SERVICE = 1;
+    NODE_SERVICE = 2;
+
+    option (gogoproto.goproto_enum_prefix) = true;
+  }
+
+  repeated Service services = 1;
+  optional CommandInfo command = 2;
+  repeated Resource resources = 3 [(gogoproto.nullable) = false];
+  optional ContainerInfo container = 4;
+}
+
+
+/**
  * Describes a CSI plugin.
  */
 message CSIPluginInfo {
-  required string name = 1 [(gogoproto.nullable) = false];
-  required CommandInfo command = 2 [(gogoproto.nullable) = false];
-  repeated Resource resources = 3 [(gogoproto.nullable) = false];
-  optional ContainerInfo container = 4;
+  // The type of the CSI service. This uniquely identifies a CSI
+  // implementation. For instance:
+  //     org.apache.mesos.csi.test
+  //
+  // Please follow to Java package naming convention
+  // (https://en.wikipedia.org/wiki/Java_package#Package_naming_conventions)
+  // to avoid conflicts on type names.
+  required string type = 1 [(gogoproto.nullable) = false];
+
+  // The name of the CSI service. There could be mutliple instances of a
+  // type of CSI service. The name field is used to distinguish these
+  // instances. It should be a legal Java identifier
+  // (https://docs.oracle.com/javase/tutorial/java/nutsandbolts/variables.html)
+  // to avoid conflicts on concatenation of type and name.
+  required string name = 2 [(gogoproto.nullable) = false];
+
+  // A list of container configurations to run CSI plugin components.
+  // The controller service will be served by the first configuration
+  // that containers `CONTROLLER_SERVICE`, and the node service will be
+  // served by the first configuration that contains `NODE_SERVICE`.
+  repeated CSIPluginContainerInfo containers = 3 [(gogoproto.nullable) = false];
 }
 
 
@@ -1023,12 +1080,6 @@ message CSIPluginInfo {
  * available here to facilitate re-registration.
  */
 message ResourceProviderInfo {
-  message StorageInfo {
-    repeated CSIPluginInfo csi_plugins = 1 [(gogoproto.nullable) = false];
-    required string controller_plugin = 2 [(gogoproto.nullable) = false];
-    required string node_plugin = 3 [(gogoproto.nullable) = false];
-  }
-
   optional ResourceProviderID id = 1 [(gogoproto.customname) = "ID"];
   repeated Attribute attributes = 2 [(gogoproto.nullable) = false];
 
@@ -1043,10 +1094,28 @@ message ResourceProviderInfo {
 
   // The name of the resource provider. There could be multiple
   // instances of a type of resource provider. The name field is used
-  // to distinguish these instances.
+  // to distinguish these instances. It should be a legal Java identifier
+  // (https://docs.oracle.com/javase/tutorial/java/nutsandbolts/variables.html)
+  // to avoid conflicts on concatenation of type and name.
   required string name = 4 [(gogoproto.nullable) = false];
 
-  optional StorageInfo storage = 5;
+  // The stack of default reservations. If this field is not empty, it
+  // indicates that resources from this resource provider are reserved
+  // by default, except for the resources that have been reserved or
+  // unreserved through offer operations. The first `ReservationInfo`
+  // may have type `STATIC` or `DYNAMIC`, but the rest must have
+  // `DYNAMIC`. One can create a new reservation on top of an existing
+  // one by pushing a new `ReservationInfo` to the back. The last
+  // `ReservationInfo` in this stack is the "current" reservation. The
+  // new reservation's role must be a child of the current one.
+  repeated Resource.ReservationInfo default_reservations = 5 [(gogoproto.nullable) = false]; // EXPERIMENTAL.
+
+  // Storage resource provider related information.
+  message Storage {
+    required CSIPluginInfo plugin = 1 [(gogoproto.nullable) = false];
+  }
+
+  optional Storage storage = 6; // EXPERIMENTAL.
 }
 
 
@@ -1382,7 +1451,8 @@ message Resource {
       // A folder that can be located on a separate disk device. This
       // can be shared and carved up as necessary between frameworks.
       message Path {
-        // Path to the folder (e.g., /mnt/raid/disk0).
+        // Path to the folder (e.g., /mnt/raid/disk0). If the path is a
+        // relative path, it is relative to the agent work directory.
         optional string root = 1;
       }
 
@@ -1390,7 +1460,8 @@ message Resource {
       // can only be used exclusively: a framework cannot accept a
       // partial amount of this disk.
       message Mount {
-        // Path to mount point (e.g., /mnt/raid/disk0).
+        // Path to mount point (e.g., /mnt/raid/disk0). If the path is a
+        // relative path, it is relative to the agent work directory.
         optional string root = 1;
       }
 
@@ -2200,18 +2271,20 @@ message TaskResourceLimitation {
  * some additional information.
  */
 message OfferOperation {
-  required FrameworkID framework_id = 1 [(gogoproto.customname) = "FrameworkID", (gogoproto.nullable) = false];
-  required Offer.Operation info = 2 [(gogoproto.nullable) = false];
+  optional FrameworkID framework_id = 1 [(gogoproto.customname) = "FrameworkID"];
+  optional AgentID agent_id = 2 [(gogoproto.customname) = "AgentID"];
+  required Offer.Operation info = 3 [(gogoproto.nullable) = false];
+  required OfferOperationStatus latest_status = 4 [(gogoproto.nullable) = false];
 
   // All the statuses known to this offer operation. Some of the
   // statuses in this list might not have been acknowledged yet. The
   // statuses are ordered.
-  repeated OfferOperationStatus statuses = 3 [(gogoproto.nullable) = false];
+  repeated OfferOperationStatus statuses = 5 [(gogoproto.nullable) = false];
 
   // This is the internal UUID for the operation, which is kept
   // independently from the framework-specified operation ID, which is
   // optional.
-  required bytes operation_uuid = 4 [(gogoproto.customname) = "OperationUUID"];
+  required bytes operation_uuid = 6 [(gogoproto.customname) = "OperationUUID"];
 }
 
 
@@ -2675,6 +2748,33 @@ message Image {
 
 
 /**
+ * Describes how the mount will be propagated for a volume. See the
+ * following doc for more details about mount propagation:
+ * https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt
+ */
+message MountPropagation {
+  enum Mode {
+    UNKNOWN = 0;
+
+    // The volume in a container will receive new mounts from the host
+    // or other containers, but filesystems mounted inside the
+    // container won't be propagated to the host or other containers.
+    // This is currently the default behavior for all volumes.
+    HOST_TO_CONTAINER = 1;
+
+    // The volume in a container will receive new mounts from the host
+    // or other containers, and its own mounts will be propagated from
+    // the container to the host or other containers.
+    BIDIRECTIONAL = 2;
+
+    option (gogoproto.goproto_enum_prefix) = true;
+  }
+
+  optional Mode mode = 1;
+}
+
+
+/**
  * Describes a volume mapping either from host to container or vice
  * versa. Both paths can either refer to a directory or a file.
  */
@@ -2736,6 +2836,7 @@ message Volume {
     // Absolute path pointing to a directory or file on the host.
     message HostPath {
       required string path = 1 [(gogoproto.nullable) = false];
+      optional MountPropagation mount_propagation = 2;
     }
 
     // Describe a path from a container's sandbox. The container can

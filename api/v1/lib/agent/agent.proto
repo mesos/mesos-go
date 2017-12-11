@@ -68,22 +68,46 @@ message Call {
     GET_STATE = 9;
 
     GET_CONTAINERS = 10;
-    GET_FRAMEWORKS = 11;    // Retrieves the information about known frameworks.
-    GET_EXECUTORS = 12;     // Retrieves the information about known executors.
-    GET_TASKS = 13;         // Retrieves the information about known tasks.
-    GET_AGENT = 20;         // Retrieves the agent information.
+
+    // Retrieves the information about known frameworks.
+    GET_FRAMEWORKS = 11;
+
+    // Retrieves the information about known executors.
+    GET_EXECUTORS = 12;
+
+    // Retrieves the information about known tasks.
+    GET_TASKS = 13;
+
+    // Retrieves the agent information.
+    GET_AGENT = 20;
+
+    // Retrieves the information about known resource providers.
+    GET_RESOURCE_PROVIDERS = 26;
 
     // Calls for managing nested containers underneath an executor's container.
-    LAUNCH_NESTED_CONTAINER = 14;  // See 'LaunchNestedContainer' below.
-    WAIT_NESTED_CONTAINER = 15;    // See 'WaitNestedContainer' below.
-    KILL_NESTED_CONTAINER = 16;    // See 'KillNestedContainer' below.
-    REMOVE_NESTED_CONTAINER = 21;  // See 'RemoveNestedContainer' below.
+    // Some of these calls are deprecated in favor of the calls
+    // for both standalone or nested containers further below.
+    LAUNCH_NESTED_CONTAINER = 14 [deprecated = true];
+    WAIT_NESTED_CONTAINER = 15 [deprecated = true];
+    KILL_NESTED_CONTAINER = 16 [deprecated = true];
+    REMOVE_NESTED_CONTAINER = 21 [deprecated = true];
 
     // See 'LaunchNestedContainerSession' below.
     LAUNCH_NESTED_CONTAINER_SESSION = 17;
 
     ATTACH_CONTAINER_INPUT = 18; // See 'AttachContainerInput' below.
     ATTACH_CONTAINER_OUTPUT = 19; // see 'AttachContainerOutput' below.
+
+    // Calls for managing standalone containers
+    // or containers nested underneath another container.
+    LAUNCH_CONTAINER = 22; // See 'LaunchContainer' below.
+    WAIT_CONTAINER = 23;   // See 'WaitContainer' below.
+    KILL_CONTAINER = 24;   // See 'KillContainer' below.
+    REMOVE_CONTAINER = 25; // See 'RemoveContainer' below.
+
+    ADD_RESOURCE_PROVIDER_CONFIG = 27;    // See 'AddResourceProviderConfig' below. // NOLINT
+    UPDATE_RESOURCE_PROVIDER_CONFIG = 28; // See 'UpdateResourceProviderConfig' below. // NOLINT
+    REMOVE_RESOURCE_PROVIDER_CONFIG = 29; // See 'RemoveResourceProviderConfig' below. // NOLINT
 
     option (gogoproto.goproto_enum_prefix) = true;
   }
@@ -126,28 +150,25 @@ message Call {
     optional uint64 length = 3;
   }
 
-  // Launches a nested container within an executor's tree of containers.
+  // Deprecated in favor of `LaunchContainer`.
   message LaunchNestedContainer {
     required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID", (gogoproto.nullable) = false];
     optional CommandInfo command = 2;
     optional ContainerInfo container = 3;
   }
 
-  // Waits for the nested container to terminate and receives the exit status.
+  // Deprecated in favor of `WaitContainer`.
   message WaitNestedContainer {
     required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID", (gogoproto.nullable) = false];
   }
 
-  // Kills the nested container. The signal (e.g., SIGTERM, SIGKILL, etc.)
-  // to be sent to the container can be specified in the 'signal' field.
-  // If 'signal' is not set, SIGKILL is used by default.
+  // Deprecated in favor of `KillContainer`.
   message KillNestedContainer {
     required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID", (gogoproto.nullable) = false];
     optional int32 signal = 2;
   }
 
-  // Removes a nested container and its artifacts (runtime and sandbox
-  // directories).
+  // Deprecated in favor of `RemoveContainer`.
   message RemoveNestedContainer {
     required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID", (gogoproto.nullable) = false];
   }
@@ -193,19 +214,176 @@ message Call {
     required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID", (gogoproto.nullable) = false];
   }
 
+  // Launches a either a "standalone" container on this agent
+  // or a nested container within another tree of containers.
+  //
+  // A standalone container is launched by specifying a ContainerID
+  // with no parent. Standalone containers bypass the normal offer cycle
+  // between the master and agent. Unlike other containers, a standalone
+  // container does not have an executor or any tasks. This means the
+  // standalone container does not report back to Mesos or any framework
+  // and must be supervised separately.
+  //
+  // A nested container is launched by specifying a ContainerID with
+  // another existing container (including standalone containers)
+  // as the parent.
+  //
+  // Returns 200 OK if the new container launch succeeds.
+  // Returns 202 Accepted if the requested ContainerID is already in use
+  //   by a standalone or nested container.
+  // Returns 400 Bad Request if the container launch fails.
+  message LaunchContainer {
+    // NOTE: Some characters cannot be used in the ID. All characters
+    // must be valid filesystem path characters.  In addition, '/' and '.'
+    // are reserved.
+    required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID"];
+
+    optional CommandInfo command = 2;
+
+    // NOTE: Nested containers may not specify resources and instead
+    // share resources with its parent container.
+    //
+    // TODO(josephw): These resources are purely used for isolation
+    // and are not accounted for by the Mesos master (if connected).
+    // It is the caller's responsibility to ensure that resources are
+    // not overcommitted (e.g. CPU and memory) or conflicting (e.g. ports
+    // and volumes). Once there is support for preempting tasks and a
+    // way to update the resources advertised by the agent, these standalone
+    // container resources should be accounted for by the master.
+    repeated Resource resources = 3 [(gogoproto.nullable) = false];
+
+    optional ContainerInfo container = 4;
+  }
+
+  // Waits for the standalone or nested container to terminate
+  // and returns the exit status.
+  //
+  // Returns 200 OK if and when the container exits.
+  // Returns 404 Not Found if the container does not exist.
+  message WaitContainer {
+    required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID"];
+  }
+
+  // Kills the standalone or nested container. The signal to be sent
+  // to the container can be specified in the 'signal' field.
+  //
+  // Returns 200 OK if the signal is sent successfully.
+  // Returns 404 Not Found if the container does not exist.
+  message KillContainer {
+    required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID"];
+
+    // Defaults to SIGKILL.
+    optional int32 signal = 2;
+  }
+
+  // Removes a container's artifacts (runtime and sandbox directories).
+  //
+  // For nested containers, it is important to use this call if multiple
+  // nested containers are launched under the same parent container, because
+  // garbage collection only takes place at the parent container. Artifacts
+  // belonging to nested containers will not be garbage collected while
+  // the parent container is running.
+  //
+  // TODO(josephw): A standalone container's runtime directory is currently
+  // garbage collected as soon as the container exits. To allow the user to
+  // retrieve the exit status reliably, the runtime directory cannot be
+  // garbage collected immediately. Instead, the user will eventually be
+  // required to make this call after the standalone container has exited.
+  // Also, a standalone container's sandbox directory is currently not
+  // garbage collected and is only deleted via this call.
+  //
+  // Returns 200 OK if the removal is successful or if the parent container
+  //   (for nested containers) does not exist.
+  // Returns 500 Internal Server Error if anything goes wrong, including
+  //   if the container is still running or does not exist.
+  //
+  // TODO(josephw): Consider returning a 400 Bad Request instead of 500
+  // Internal Server Error when the user tries to remove a running or
+  // nonexistent nested container.
+  message RemoveContainer {
+    required ContainerID container_id = 1 [(gogoproto.customname) = "ContainerID"];
+  }
+
+  // Adds a new resource provider config file.
+  //
+  // The content of the 'info' field will be written into a new config
+  // file in the resource provider config directory. The 'info.id' field
+  // should not be set. A resource provider will be launched based on
+  // the new config asynchronously. Note that only config files that
+  // exist at agent startup will be checked against this call.
+  //
+  // Returns 200 OK if a new config file is created.
+  // Returns 400 Bad Request if 'info' is not well-formed.
+  // Returns 403 Forbidden if the call is not authorized.
+  // Returns 409 Conflict if another config file that describes a
+  //   resource provider of the same type and name exists.
+  // Returns 500 Internal Server Error if anything goes wrong.
+  message AddResourceProviderConfig {
+    required ResourceProviderInfo info = 1 [(gogoproto.nullable) = false];
+  }
+
+  // Updates an existing resource provider config file.
+  //
+  // The content of the 'info' field  will be written into an existing
+  // config file that describes a resource provider of the specified
+  // type and name in the resource provider config directory. The
+  // 'info.id' field should not be set. The resource provider will be
+  // relaunched asynchoronously to reflect the changes in its config.
+  // Note that only config files that exist at agent startup can be
+  // updated though this call.
+  //
+  // Returns 200 OK if an existing config file is updated.
+  // Returns 400 Bad Request if 'info' is not well-formed.
+  // Returns 403 Forbidden if the call is not authorized.
+  // Returns 404 Not Found if no config file describes a resource
+  //  provider of the same type and name exists.
+  // Returns 500 Internal Server Error if anything goes wrong.
+  message UpdateResourceProviderConfig {
+    required ResourceProviderInfo info = 1 [(gogoproto.nullable) = false];
+  }
+
+  // Removes a config file from the resource provider config directory.
+  //
+  // The config file that describes the resource provider of the
+  // specified type and name will be removed. The resource provider will
+  // be terminated asynchronously. Note that only config files that
+  // exists at agent startup can be removed though this call.
+  //
+  // Returns 200 OK if the config file is removed.
+  // Returns 403 Forbidden if the call is not authorized.
+  // Returns 404 Not Found if the config file does not exist.
+  // Returns 500 Internal Server Error if anything goes wrong.
+  message RemoveResourceProviderConfig {
+    required string type = 1 [(gogoproto.nullable) = false];
+    required string name = 2 [(gogoproto.nullable) = false];
+  }
+
   optional Type type = 1 [(gogoproto.nullable) = false];
 
   optional GetMetrics get_metrics = 2;
   optional SetLoggingLevel set_logging_level = 3;
   optional ListFiles list_files = 4;
   optional ReadFile read_file = 5;
-  optional LaunchNestedContainer launch_nested_container = 6;
-  optional WaitNestedContainer wait_nested_container = 7;
-  optional KillNestedContainer kill_nested_container = 8;
-  optional RemoveNestedContainer remove_nested_container = 12;
+
+  optional LaunchNestedContainer launch_nested_container = 6
+    [deprecated = true];
+
+  optional WaitNestedContainer wait_nested_container = 7 [deprecated = true];
+  optional KillNestedContainer kill_nested_container = 8 [deprecated = true];
+  optional RemoveNestedContainer remove_nested_container = 12
+    [deprecated = true];
+
   optional LaunchNestedContainerSession launch_nested_container_session = 9;
   optional AttachContainerInput attach_container_input = 10;
   optional AttachContainerOutput attach_container_output = 11;
+  optional LaunchContainer launch_container = 13;
+  optional WaitContainer wait_container = 14;
+  optional KillContainer kill_container = 15;
+  optional RemoveContainer remove_container = 16;
+
+  optional UpdateResourceProviderConfig add_resource_provider_config = 17;
+  optional UpdateResourceProviderConfig update_resource_provider_config = 18;
+  optional RemoveResourceProviderConfig remove_resource_provider_config = 19;
 }
 
 
@@ -234,8 +412,11 @@ message Response {
     GET_EXECUTORS = 11;            // See 'GetExecutors' below.
     GET_TASKS = 12;                // See 'GetTasks' below.
     GET_AGENT = 14;                // See 'GetAgent' below.
+    GET_RESOURCE_PROVIDERS = 16;   // See 'GetResourceProviders' below.
 
-    WAIT_NESTED_CONTAINER = 13;    // See 'WaitNestedContainer' below.
+    WAIT_NESTED_CONTAINER = 13 [deprecated = true];
+    WAIT_CONTAINER = 15;           // See 'WaitContainer' below.
+
     option (gogoproto.goproto_enum_prefix) = true;
   }
 
@@ -350,6 +531,16 @@ message Response {
     optional AgentInfo agent_info = 1;
   }
 
+  // Lists information about all resource providers known to the agent
+  // at the current time.
+  message GetResourceProviders {
+    message ResourceProvider {
+      required ResourceProviderInfo resource_provider_info = 1 [(gogoproto.nullable) = false];
+    }
+
+    repeated ResourceProvider resource_providers = 1 [(gogoproto.nullable) = false];
+  }
+
   // Returns termination information about the nested container.
   message WaitNestedContainer {
     // Wait status of the lead process in the container. Note that this
@@ -358,6 +549,32 @@ message Response {
     // what the exit code was.
     optional int32 exit_status = 1;
 
+    // The `state` and `reason` fields may be populated if the Mesos agent
+    // terminates the container. In the absence of any special knowledge,
+    // executors should propagate this information via the `status` field
+    // of an `Update` call for the corresponding TaskID.
+    optional TaskState state = 2;
+    optional TaskStatus.Reason reason = 3;
+
+    // This field will be populated if the task was terminated due to
+    // a resource limitation.
+    optional TaskResourceLimitation limitation = 4;
+
+    optional string message = 5;
+  }
+
+  // Returns termination information about the standalone or nested container.
+  message WaitContainer {
+    // Wait status of the lead process in the container. Note that this
+    // is the return value of `wait(2)`, so callers must use the `wait(2)`
+    // family of macros to extract whether the process exited cleanly and
+    // what the exit code was.
+    optional int32 exit_status = 1;
+
+    // The `state` and `reason` fields may be populated if the Mesos agent
+    // terminates the container. In the absence of any special knowledge,
+    // executors should propagate this information via the `status` field
+    // of an `Update` call for the corresponding TaskID.
     optional TaskState state = 2;
     optional TaskStatus.Reason reason = 3;
 
@@ -383,7 +600,9 @@ message Response {
   optional GetExecutors get_executors = 12;
   optional GetTasks get_tasks = 13;
   optional GetAgent get_agent = 15;
+  optional GetResourceProviders get_resource_providers = 17;
   optional WaitNestedContainer wait_nested_container = 14;
+  optional WaitContainer wait_container = 16;
 }
 
 

@@ -61,11 +61,19 @@ const (
 	Call_READ_FILE         Call_Type = 8
 	Call_GET_STATE         Call_Type = 9
 	Call_GET_CONTAINERS    Call_Type = 10
-	Call_GET_FRAMEWORKS    Call_Type = 11
-	Call_GET_EXECUTORS     Call_Type = 12
-	Call_GET_TASKS         Call_Type = 13
-	Call_GET_AGENT         Call_Type = 20
+	// Retrieves the information about known frameworks.
+	Call_GET_FRAMEWORKS Call_Type = 11
+	// Retrieves the information about known executors.
+	Call_GET_EXECUTORS Call_Type = 12
+	// Retrieves the information about known tasks.
+	Call_GET_TASKS Call_Type = 13
+	// Retrieves the agent information.
+	Call_GET_AGENT Call_Type = 20
+	// Retrieves the information about known resource providers.
+	Call_GET_RESOURCE_PROVIDERS Call_Type = 26
 	// Calls for managing nested containers underneath an executor's container.
+	// Some of these calls are deprecated in favor of the calls
+	// for both standalone or nested containers further below.
 	Call_LAUNCH_NESTED_CONTAINER Call_Type = 14
 	Call_WAIT_NESTED_CONTAINER   Call_Type = 15
 	Call_KILL_NESTED_CONTAINER   Call_Type = 16
@@ -74,6 +82,15 @@ const (
 	Call_LAUNCH_NESTED_CONTAINER_SESSION Call_Type = 17
 	Call_ATTACH_CONTAINER_INPUT          Call_Type = 18
 	Call_ATTACH_CONTAINER_OUTPUT         Call_Type = 19
+	// Calls for managing standalone containers
+	// or containers nested underneath another container.
+	Call_LAUNCH_CONTAINER                Call_Type = 22
+	Call_WAIT_CONTAINER                  Call_Type = 23
+	Call_KILL_CONTAINER                  Call_Type = 24
+	Call_REMOVE_CONTAINER                Call_Type = 25
+	Call_ADD_RESOURCE_PROVIDER_CONFIG    Call_Type = 27
+	Call_UPDATE_RESOURCE_PROVIDER_CONFIG Call_Type = 28
+	Call_REMOVE_RESOURCE_PROVIDER_CONFIG Call_Type = 29
 )
 
 var Call_Type_name = map[int32]string{
@@ -92,6 +109,7 @@ var Call_Type_name = map[int32]string{
 	12: "GET_EXECUTORS",
 	13: "GET_TASKS",
 	20: "GET_AGENT",
+	26: "GET_RESOURCE_PROVIDERS",
 	14: "LAUNCH_NESTED_CONTAINER",
 	15: "WAIT_NESTED_CONTAINER",
 	16: "KILL_NESTED_CONTAINER",
@@ -99,6 +117,13 @@ var Call_Type_name = map[int32]string{
 	17: "LAUNCH_NESTED_CONTAINER_SESSION",
 	18: "ATTACH_CONTAINER_INPUT",
 	19: "ATTACH_CONTAINER_OUTPUT",
+	22: "LAUNCH_CONTAINER",
+	23: "WAIT_CONTAINER",
+	24: "KILL_CONTAINER",
+	25: "REMOVE_CONTAINER",
+	27: "ADD_RESOURCE_PROVIDER_CONFIG",
+	28: "UPDATE_RESOURCE_PROVIDER_CONFIG",
+	29: "REMOVE_RESOURCE_PROVIDER_CONFIG",
 }
 var Call_Type_value = map[string]int32{
 	"UNKNOWN":                         0,
@@ -116,6 +141,7 @@ var Call_Type_value = map[string]int32{
 	"GET_EXECUTORS":                   12,
 	"GET_TASKS":                       13,
 	"GET_AGENT":                       20,
+	"GET_RESOURCE_PROVIDERS":          26,
 	"LAUNCH_NESTED_CONTAINER":         14,
 	"WAIT_NESTED_CONTAINER":           15,
 	"KILL_NESTED_CONTAINER":           16,
@@ -123,6 +149,13 @@ var Call_Type_value = map[string]int32{
 	"LAUNCH_NESTED_CONTAINER_SESSION": 17,
 	"ATTACH_CONTAINER_INPUT":          18,
 	"ATTACH_CONTAINER_OUTPUT":         19,
+	"LAUNCH_CONTAINER":                22,
+	"WAIT_CONTAINER":                  23,
+	"KILL_CONTAINER":                  24,
+	"REMOVE_CONTAINER":                25,
+	"ADD_RESOURCE_PROVIDER_CONFIG":    27,
+	"UPDATE_RESOURCE_PROVIDER_CONFIG": 28,
+	"REMOVE_RESOURCE_PROVIDER_CONFIG": 29,
 }
 
 func (x Call_Type) Enum() *Call_Type {
@@ -186,21 +219,23 @@ func (Call_AttachContainerInput_Type) EnumDescriptor() ([]byte, []int) {
 type Response_Type int32
 
 const (
-	Response_UNKNOWN               Response_Type = 0
-	Response_GET_HEALTH            Response_Type = 1
-	Response_GET_FLAGS             Response_Type = 2
-	Response_GET_VERSION           Response_Type = 3
-	Response_GET_METRICS           Response_Type = 4
-	Response_GET_LOGGING_LEVEL     Response_Type = 5
-	Response_LIST_FILES            Response_Type = 6
-	Response_READ_FILE             Response_Type = 7
-	Response_GET_STATE             Response_Type = 8
-	Response_GET_CONTAINERS        Response_Type = 9
-	Response_GET_FRAMEWORKS        Response_Type = 10
-	Response_GET_EXECUTORS         Response_Type = 11
-	Response_GET_TASKS             Response_Type = 12
-	Response_GET_AGENT             Response_Type = 14
-	Response_WAIT_NESTED_CONTAINER Response_Type = 13
+	Response_UNKNOWN                Response_Type = 0
+	Response_GET_HEALTH             Response_Type = 1
+	Response_GET_FLAGS              Response_Type = 2
+	Response_GET_VERSION            Response_Type = 3
+	Response_GET_METRICS            Response_Type = 4
+	Response_GET_LOGGING_LEVEL      Response_Type = 5
+	Response_LIST_FILES             Response_Type = 6
+	Response_READ_FILE              Response_Type = 7
+	Response_GET_STATE              Response_Type = 8
+	Response_GET_CONTAINERS         Response_Type = 9
+	Response_GET_FRAMEWORKS         Response_Type = 10
+	Response_GET_EXECUTORS          Response_Type = 11
+	Response_GET_TASKS              Response_Type = 12
+	Response_GET_AGENT              Response_Type = 14
+	Response_GET_RESOURCE_PROVIDERS Response_Type = 16
+	Response_WAIT_NESTED_CONTAINER  Response_Type = 13
+	Response_WAIT_CONTAINER         Response_Type = 15
 )
 
 var Response_Type_name = map[int32]string{
@@ -218,24 +253,28 @@ var Response_Type_name = map[int32]string{
 	11: "GET_EXECUTORS",
 	12: "GET_TASKS",
 	14: "GET_AGENT",
+	16: "GET_RESOURCE_PROVIDERS",
 	13: "WAIT_NESTED_CONTAINER",
+	15: "WAIT_CONTAINER",
 }
 var Response_Type_value = map[string]int32{
-	"UNKNOWN":               0,
-	"GET_HEALTH":            1,
-	"GET_FLAGS":             2,
-	"GET_VERSION":           3,
-	"GET_METRICS":           4,
-	"GET_LOGGING_LEVEL":     5,
-	"LIST_FILES":            6,
-	"READ_FILE":             7,
-	"GET_STATE":             8,
-	"GET_CONTAINERS":        9,
-	"GET_FRAMEWORKS":        10,
-	"GET_EXECUTORS":         11,
-	"GET_TASKS":             12,
-	"GET_AGENT":             14,
-	"WAIT_NESTED_CONTAINER": 13,
+	"UNKNOWN":                0,
+	"GET_HEALTH":             1,
+	"GET_FLAGS":              2,
+	"GET_VERSION":            3,
+	"GET_METRICS":            4,
+	"GET_LOGGING_LEVEL":      5,
+	"LIST_FILES":             6,
+	"READ_FILE":              7,
+	"GET_STATE":              8,
+	"GET_CONTAINERS":         9,
+	"GET_FRAMEWORKS":         10,
+	"GET_EXECUTORS":          11,
+	"GET_TASKS":              12,
+	"GET_AGENT":              14,
+	"GET_RESOURCE_PROVIDERS": 16,
+	"WAIT_NESTED_CONTAINER":  13,
+	"WAIT_CONTAINER":         15,
 }
 
 func (x Response_Type) Enum() *Response_Type {
@@ -393,6 +432,13 @@ type Call struct {
 	LaunchNestedContainerSession *Call_LaunchNestedContainerSession `protobuf:"bytes,9,opt,name=launch_nested_container_session,json=launchNestedContainerSession" json:"launch_nested_container_session,omitempty"`
 	AttachContainerInput         *Call_AttachContainerInput         `protobuf:"bytes,10,opt,name=attach_container_input,json=attachContainerInput" json:"attach_container_input,omitempty"`
 	AttachContainerOutput        *Call_AttachContainerOutput        `protobuf:"bytes,11,opt,name=attach_container_output,json=attachContainerOutput" json:"attach_container_output,omitempty"`
+	LaunchContainer              *Call_LaunchContainer              `protobuf:"bytes,13,opt,name=launch_container,json=launchContainer" json:"launch_container,omitempty"`
+	WaitContainer                *Call_WaitContainer                `protobuf:"bytes,14,opt,name=wait_container,json=waitContainer" json:"wait_container,omitempty"`
+	KillContainer                *Call_KillContainer                `protobuf:"bytes,15,opt,name=kill_container,json=killContainer" json:"kill_container,omitempty"`
+	RemoveContainer              *Call_RemoveContainer              `protobuf:"bytes,16,opt,name=remove_container,json=removeContainer" json:"remove_container,omitempty"`
+	AddResourceProviderConfig    *Call_UpdateResourceProviderConfig `protobuf:"bytes,17,opt,name=add_resource_provider_config,json=addResourceProviderConfig" json:"add_resource_provider_config,omitempty"`
+	UpdateResourceProviderConfig *Call_UpdateResourceProviderConfig `protobuf:"bytes,18,opt,name=update_resource_provider_config,json=updateResourceProviderConfig" json:"update_resource_provider_config,omitempty"`
+	RemoveResourceProviderConfig *Call_RemoveResourceProviderConfig `protobuf:"bytes,19,opt,name=remove_resource_provider_config,json=removeResourceProviderConfig" json:"remove_resource_provider_config,omitempty"`
 }
 
 func (m *Call) Reset()                    { *m = Call{} }
@@ -479,6 +525,55 @@ func (m *Call) GetAttachContainerInput() *Call_AttachContainerInput {
 func (m *Call) GetAttachContainerOutput() *Call_AttachContainerOutput {
 	if m != nil {
 		return m.AttachContainerOutput
+	}
+	return nil
+}
+
+func (m *Call) GetLaunchContainer() *Call_LaunchContainer {
+	if m != nil {
+		return m.LaunchContainer
+	}
+	return nil
+}
+
+func (m *Call) GetWaitContainer() *Call_WaitContainer {
+	if m != nil {
+		return m.WaitContainer
+	}
+	return nil
+}
+
+func (m *Call) GetKillContainer() *Call_KillContainer {
+	if m != nil {
+		return m.KillContainer
+	}
+	return nil
+}
+
+func (m *Call) GetRemoveContainer() *Call_RemoveContainer {
+	if m != nil {
+		return m.RemoveContainer
+	}
+	return nil
+}
+
+func (m *Call) GetAddResourceProviderConfig() *Call_UpdateResourceProviderConfig {
+	if m != nil {
+		return m.AddResourceProviderConfig
+	}
+	return nil
+}
+
+func (m *Call) GetUpdateResourceProviderConfig() *Call_UpdateResourceProviderConfig {
+	if m != nil {
+		return m.UpdateResourceProviderConfig
+	}
+	return nil
+}
+
+func (m *Call) GetRemoveResourceProviderConfig() *Call_RemoveResourceProviderConfig {
+	if m != nil {
+		return m.RemoveResourceProviderConfig
 	}
 	return nil
 }
@@ -584,7 +679,7 @@ func (m *Call_ReadFile) GetLength() uint64 {
 	return 0
 }
 
-// Launches a nested container within an executor's tree of containers.
+// Deprecated in favor of `LaunchContainer`.
 type Call_LaunchNestedContainer struct {
 	ContainerID mesos.ContainerID    `protobuf:"bytes,1,req,name=container_id,json=containerId" json:"container_id"`
 	Command     *mesos.CommandInfo   `protobuf:"bytes,2,opt,name=command" json:"command,omitempty"`
@@ -618,7 +713,7 @@ func (m *Call_LaunchNestedContainer) GetContainer() *mesos.ContainerInfo {
 	return nil
 }
 
-// Waits for the nested container to terminate and receives the exit status.
+// Deprecated in favor of `WaitContainer`.
 type Call_WaitNestedContainer struct {
 	ContainerID mesos.ContainerID `protobuf:"bytes,1,req,name=container_id,json=containerId" json:"container_id"`
 }
@@ -634,9 +729,7 @@ func (m *Call_WaitNestedContainer) GetContainerID() mesos.ContainerID {
 	return mesos.ContainerID{}
 }
 
-// Kills the nested container. The signal (e.g., SIGTERM, SIGKILL, etc.)
-// to be sent to the container can be specified in the 'signal' field.
-// If 'signal' is not set, SIGKILL is used by default.
+// Deprecated in favor of `KillContainer`.
 type Call_KillNestedContainer struct {
 	ContainerID mesos.ContainerID `protobuf:"bytes,1,req,name=container_id,json=containerId" json:"container_id"`
 	Signal      *int32            `protobuf:"varint,2,opt,name=signal" json:"signal,omitempty"`
@@ -660,8 +753,7 @@ func (m *Call_KillNestedContainer) GetSignal() int32 {
 	return 0
 }
 
-// Removes a nested container and its artifacts (runtime and sandbox
-// directories).
+// Deprecated in favor of `RemoveContainer`.
 type Call_RemoveNestedContainer struct {
 	ContainerID mesos.ContainerID `protobuf:"bytes,1,req,name=container_id,json=containerId" json:"container_id"`
 }
@@ -780,24 +872,284 @@ func (m *Call_AttachContainerOutput) GetContainerID() mesos.ContainerID {
 	return mesos.ContainerID{}
 }
 
+// Launches a either a "standalone" container on this agent
+// or a nested container within another tree of containers.
+//
+// A standalone container is launched by specifying a ContainerID
+// with no parent. Standalone containers bypass the normal offer cycle
+// between the master and agent. Unlike other containers, a standalone
+// container does not have an executor or any tasks. This means the
+// standalone container does not report back to Mesos or any framework
+// and must be supervised separately.
+//
+// A nested container is launched by specifying a ContainerID with
+// another existing container (including standalone containers)
+// as the parent.
+//
+// Returns 200 OK if the new container launch succeeds.
+// Returns 202 Accepted if the requested ContainerID is already in use
+//   by a standalone or nested container.
+// Returns 400 Bad Request if the container launch fails.
+type Call_LaunchContainer struct {
+	// NOTE: Some characters cannot be used in the ID. All characters
+	// must be valid filesystem path characters.  In addition, '/' and '.'
+	// are reserved.
+	ContainerID *mesos.ContainerID `protobuf:"bytes,1,req,name=container_id,json=containerId" json:"container_id,omitempty"`
+	Command     *mesos.CommandInfo `protobuf:"bytes,2,opt,name=command" json:"command,omitempty"`
+	// NOTE: Nested containers may not specify resources and instead
+	// share resources with its parent container.
+	//
+	// TODO(josephw): These resources are purely used for isolation
+	// and are not accounted for by the Mesos master (if connected).
+	// It is the caller's responsibility to ensure that resources are
+	// not overcommitted (e.g. CPU and memory) or conflicting (e.g. ports
+	// and volumes). Once there is support for preempting tasks and a
+	// way to update the resources advertised by the agent, these standalone
+	// container resources should be accounted for by the master.
+	Resources []mesos.Resource     `protobuf:"bytes,3,rep,name=resources" json:"resources"`
+	Container *mesos.ContainerInfo `protobuf:"bytes,4,opt,name=container" json:"container,omitempty"`
+}
+
+func (m *Call_LaunchContainer) Reset()                    { *m = Call_LaunchContainer{} }
+func (*Call_LaunchContainer) ProtoMessage()               {}
+func (*Call_LaunchContainer) Descriptor() ([]byte, []int) { return fileDescriptorAgent, []int{0, 11} }
+
+func (m *Call_LaunchContainer) GetContainerID() *mesos.ContainerID {
+	if m != nil {
+		return m.ContainerID
+	}
+	return nil
+}
+
+func (m *Call_LaunchContainer) GetCommand() *mesos.CommandInfo {
+	if m != nil {
+		return m.Command
+	}
+	return nil
+}
+
+func (m *Call_LaunchContainer) GetResources() []mesos.Resource {
+	if m != nil {
+		return m.Resources
+	}
+	return nil
+}
+
+func (m *Call_LaunchContainer) GetContainer() *mesos.ContainerInfo {
+	if m != nil {
+		return m.Container
+	}
+	return nil
+}
+
+// Waits for the standalone or nested container to terminate
+// and returns the exit status.
+//
+// Returns 200 OK if and when the container exits.
+// Returns 404 Not Found if the container does not exist.
+type Call_WaitContainer struct {
+	ContainerID *mesos.ContainerID `protobuf:"bytes,1,req,name=container_id,json=containerId" json:"container_id,omitempty"`
+}
+
+func (m *Call_WaitContainer) Reset()                    { *m = Call_WaitContainer{} }
+func (*Call_WaitContainer) ProtoMessage()               {}
+func (*Call_WaitContainer) Descriptor() ([]byte, []int) { return fileDescriptorAgent, []int{0, 12} }
+
+func (m *Call_WaitContainer) GetContainerID() *mesos.ContainerID {
+	if m != nil {
+		return m.ContainerID
+	}
+	return nil
+}
+
+// Kills the standalone or nested container. The signal to be sent
+// to the container can be specified in the 'signal' field.
+//
+// Returns 200 OK if the signal is sent successfully.
+// Returns 404 Not Found if the container does not exist.
+type Call_KillContainer struct {
+	ContainerID *mesos.ContainerID `protobuf:"bytes,1,req,name=container_id,json=containerId" json:"container_id,omitempty"`
+	// Defaults to SIGKILL.
+	Signal *int32 `protobuf:"varint,2,opt,name=signal" json:"signal,omitempty"`
+}
+
+func (m *Call_KillContainer) Reset()                    { *m = Call_KillContainer{} }
+func (*Call_KillContainer) ProtoMessage()               {}
+func (*Call_KillContainer) Descriptor() ([]byte, []int) { return fileDescriptorAgent, []int{0, 13} }
+
+func (m *Call_KillContainer) GetContainerID() *mesos.ContainerID {
+	if m != nil {
+		return m.ContainerID
+	}
+	return nil
+}
+
+func (m *Call_KillContainer) GetSignal() int32 {
+	if m != nil && m.Signal != nil {
+		return *m.Signal
+	}
+	return 0
+}
+
+// Removes a container's artifacts (runtime and sandbox directories).
+//
+// For nested containers, it is important to use this call if multiple
+// nested containers are launched under the same parent container, because
+// garbage collection only takes place at the parent container. Artifacts
+// belonging to nested containers will not be garbage collected while
+// the parent container is running.
+//
+// TODO(josephw): A standalone container's runtime directory is currently
+// garbage collected as soon as the container exits. To allow the user to
+// retrieve the exit status reliably, the runtime directory cannot be
+// garbage collected immediately. Instead, the user will eventually be
+// required to make this call after the standalone container has exited.
+// Also, a standalone container's sandbox directory is currently not
+// garbage collected and is only deleted via this call.
+//
+// Returns 200 OK if the removal is successful or if the parent container
+//   (for nested containers) does not exist.
+// Returns 500 Internal Server Error if anything goes wrong, including
+//   if the container is still running or does not exist.
+//
+// TODO(josephw): Consider returning a 400 Bad Request instead of 500
+// Internal Server Error when the user tries to remove a running or
+// nonexistent nested container.
+type Call_RemoveContainer struct {
+	ContainerID *mesos.ContainerID `protobuf:"bytes,1,req,name=container_id,json=containerId" json:"container_id,omitempty"`
+}
+
+func (m *Call_RemoveContainer) Reset()                    { *m = Call_RemoveContainer{} }
+func (*Call_RemoveContainer) ProtoMessage()               {}
+func (*Call_RemoveContainer) Descriptor() ([]byte, []int) { return fileDescriptorAgent, []int{0, 14} }
+
+func (m *Call_RemoveContainer) GetContainerID() *mesos.ContainerID {
+	if m != nil {
+		return m.ContainerID
+	}
+	return nil
+}
+
+// Adds a new resource provider config file.
+//
+// The content of the 'info' field will be written into a new config
+// file in the resource provider config directory. The 'info.id' field
+// should not be set. A resource provider will be launched based on
+// the new config asynchronously. Note that only config files that
+// exist at agent startup will be checked against this call.
+//
+// Returns 200 OK if a new config file is created.
+// Returns 400 Bad Request if 'info' is not well-formed.
+// Returns 403 Forbidden if the call is not authorized.
+// Returns 409 Conflict if another config file that describes a
+//   resource provider of the same type and name exists.
+// Returns 500 Internal Server Error if anything goes wrong.
+type Call_AddResourceProviderConfig struct {
+	Info mesos.ResourceProviderInfo `protobuf:"bytes,1,req,name=info" json:"info"`
+}
+
+func (m *Call_AddResourceProviderConfig) Reset()      { *m = Call_AddResourceProviderConfig{} }
+func (*Call_AddResourceProviderConfig) ProtoMessage() {}
+func (*Call_AddResourceProviderConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptorAgent, []int{0, 15}
+}
+
+func (m *Call_AddResourceProviderConfig) GetInfo() mesos.ResourceProviderInfo {
+	if m != nil {
+		return m.Info
+	}
+	return mesos.ResourceProviderInfo{}
+}
+
+// Updates an existing resource provider config file.
+//
+// The content of the 'info' field  will be written into an existing
+// config file that describes a resource provider of the specified
+// type and name in the resource provider config directory. The
+// 'info.id' field should not be set. The resource provider will be
+// relaunched asynchoronously to reflect the changes in its config.
+// Note that only config files that exist at agent startup can be
+// updated though this call.
+//
+// Returns 200 OK if an existing config file is updated.
+// Returns 400 Bad Request if 'info' is not well-formed.
+// Returns 403 Forbidden if the call is not authorized.
+// Returns 404 Not Found if no config file describes a resource
+//  provider of the same type and name exists.
+// Returns 500 Internal Server Error if anything goes wrong.
+type Call_UpdateResourceProviderConfig struct {
+	Info mesos.ResourceProviderInfo `protobuf:"bytes,1,req,name=info" json:"info"`
+}
+
+func (m *Call_UpdateResourceProviderConfig) Reset()      { *m = Call_UpdateResourceProviderConfig{} }
+func (*Call_UpdateResourceProviderConfig) ProtoMessage() {}
+func (*Call_UpdateResourceProviderConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptorAgent, []int{0, 16}
+}
+
+func (m *Call_UpdateResourceProviderConfig) GetInfo() mesos.ResourceProviderInfo {
+	if m != nil {
+		return m.Info
+	}
+	return mesos.ResourceProviderInfo{}
+}
+
+// Removes a config file from the resource provider config directory.
+//
+// The config file that describes the resource provider of the
+// specified type and name will be removed. The resource provider will
+// be terminated asynchronously. Note that only config files that
+// exists at agent startup can be removed though this call.
+//
+// Returns 200 OK if the config file is removed.
+// Returns 403 Forbidden if the call is not authorized.
+// Returns 404 Not Found if the config file does not exist.
+// Returns 500 Internal Server Error if anything goes wrong.
+type Call_RemoveResourceProviderConfig struct {
+	Type string `protobuf:"bytes,1,req,name=type" json:"type"`
+	Name string `protobuf:"bytes,2,req,name=name" json:"name"`
+}
+
+func (m *Call_RemoveResourceProviderConfig) Reset()      { *m = Call_RemoveResourceProviderConfig{} }
+func (*Call_RemoveResourceProviderConfig) ProtoMessage() {}
+func (*Call_RemoveResourceProviderConfig) Descriptor() ([]byte, []int) {
+	return fileDescriptorAgent, []int{0, 17}
+}
+
+func (m *Call_RemoveResourceProviderConfig) GetType() string {
+	if m != nil {
+		return m.Type
+	}
+	return ""
+}
+
+func (m *Call_RemoveResourceProviderConfig) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 // *
 // Synchronous responses for all calls made to the v1 agent API.
 type Response struct {
-	Type                Response_Type                 `protobuf:"varint,1,opt,name=type,enum=mesos.agent.Response_Type" json:"type"`
-	GetHealth           *Response_GetHealth           `protobuf:"bytes,2,opt,name=get_health,json=getHealth" json:"get_health,omitempty"`
-	GetFlags            *Response_GetFlags            `protobuf:"bytes,3,opt,name=get_flags,json=getFlags" json:"get_flags,omitempty"`
-	GetVersion          *Response_GetVersion          `protobuf:"bytes,4,opt,name=get_version,json=getVersion" json:"get_version,omitempty"`
-	GetMetrics          *Response_GetMetrics          `protobuf:"bytes,5,opt,name=get_metrics,json=getMetrics" json:"get_metrics,omitempty"`
-	GetLoggingLevel     *Response_GetLoggingLevel     `protobuf:"bytes,6,opt,name=get_logging_level,json=getLoggingLevel" json:"get_logging_level,omitempty"`
-	ListFiles           *Response_ListFiles           `protobuf:"bytes,7,opt,name=list_files,json=listFiles" json:"list_files,omitempty"`
-	ReadFile            *Response_ReadFile            `protobuf:"bytes,8,opt,name=read_file,json=readFile" json:"read_file,omitempty"`
-	GetState            *Response_GetState            `protobuf:"bytes,9,opt,name=get_state,json=getState" json:"get_state,omitempty"`
-	GetContainers       *Response_GetContainers       `protobuf:"bytes,10,opt,name=get_containers,json=getContainers" json:"get_containers,omitempty"`
-	GetFrameworks       *Response_GetFrameworks       `protobuf:"bytes,11,opt,name=get_frameworks,json=getFrameworks" json:"get_frameworks,omitempty"`
-	GetExecutors        *Response_GetExecutors        `protobuf:"bytes,12,opt,name=get_executors,json=getExecutors" json:"get_executors,omitempty"`
-	GetTasks            *Response_GetTasks            `protobuf:"bytes,13,opt,name=get_tasks,json=getTasks" json:"get_tasks,omitempty"`
-	GetAgent            *Response_GetAgent            `protobuf:"bytes,15,opt,name=get_agent,json=getAgent" json:"get_agent,omitempty"`
-	WaitNestedContainer *Response_WaitNestedContainer `protobuf:"bytes,14,opt,name=wait_nested_container,json=waitNestedContainer" json:"wait_nested_container,omitempty"`
+	Type                 Response_Type                  `protobuf:"varint,1,opt,name=type,enum=mesos.agent.Response_Type" json:"type"`
+	GetHealth            *Response_GetHealth            `protobuf:"bytes,2,opt,name=get_health,json=getHealth" json:"get_health,omitempty"`
+	GetFlags             *Response_GetFlags             `protobuf:"bytes,3,opt,name=get_flags,json=getFlags" json:"get_flags,omitempty"`
+	GetVersion           *Response_GetVersion           `protobuf:"bytes,4,opt,name=get_version,json=getVersion" json:"get_version,omitempty"`
+	GetMetrics           *Response_GetMetrics           `protobuf:"bytes,5,opt,name=get_metrics,json=getMetrics" json:"get_metrics,omitempty"`
+	GetLoggingLevel      *Response_GetLoggingLevel      `protobuf:"bytes,6,opt,name=get_logging_level,json=getLoggingLevel" json:"get_logging_level,omitempty"`
+	ListFiles            *Response_ListFiles            `protobuf:"bytes,7,opt,name=list_files,json=listFiles" json:"list_files,omitempty"`
+	ReadFile             *Response_ReadFile             `protobuf:"bytes,8,opt,name=read_file,json=readFile" json:"read_file,omitempty"`
+	GetState             *Response_GetState             `protobuf:"bytes,9,opt,name=get_state,json=getState" json:"get_state,omitempty"`
+	GetContainers        *Response_GetContainers        `protobuf:"bytes,10,opt,name=get_containers,json=getContainers" json:"get_containers,omitempty"`
+	GetFrameworks        *Response_GetFrameworks        `protobuf:"bytes,11,opt,name=get_frameworks,json=getFrameworks" json:"get_frameworks,omitempty"`
+	GetExecutors         *Response_GetExecutors         `protobuf:"bytes,12,opt,name=get_executors,json=getExecutors" json:"get_executors,omitempty"`
+	GetTasks             *Response_GetTasks             `protobuf:"bytes,13,opt,name=get_tasks,json=getTasks" json:"get_tasks,omitempty"`
+	GetAgent             *Response_GetAgent             `protobuf:"bytes,15,opt,name=get_agent,json=getAgent" json:"get_agent,omitempty"`
+	GetResourceProviders *Response_GetResourceProviders `protobuf:"bytes,17,opt,name=get_resource_providers,json=getResourceProviders" json:"get_resource_providers,omitempty"`
+	WaitNestedContainer  *Response_WaitNestedContainer  `protobuf:"bytes,14,opt,name=wait_nested_container,json=waitNestedContainer" json:"wait_nested_container,omitempty"`
+	WaitContainer        *Response_WaitContainer        `protobuf:"bytes,16,opt,name=wait_container,json=waitContainer" json:"wait_container,omitempty"`
 }
 
 func (m *Response) Reset()                    { *m = Response{} }
@@ -902,9 +1254,23 @@ func (m *Response) GetGetAgent() *Response_GetAgent {
 	return nil
 }
 
+func (m *Response) GetGetResourceProviders() *Response_GetResourceProviders {
+	if m != nil {
+		return m.GetResourceProviders
+	}
+	return nil
+}
+
 func (m *Response) GetWaitNestedContainer() *Response_WaitNestedContainer {
 	if m != nil {
 		return m.WaitNestedContainer
+	}
+	return nil
+}
+
+func (m *Response) GetWaitContainer() *Response_WaitContainer {
+	if m != nil {
+		return m.WaitContainer
 	}
 	return nil
 }
@@ -1295,15 +1661,57 @@ func (m *Response_GetAgent) GetAgentInfo() *mesos.AgentInfo {
 	return nil
 }
 
+// Lists information about all resource providers known to the agent
+// at the current time.
+type Response_GetResourceProviders struct {
+	ResourceProviders []Response_GetResourceProviders_ResourceProvider `protobuf:"bytes,1,rep,name=resource_providers,json=resourceProviders" json:"resource_providers"`
+}
+
+func (m *Response_GetResourceProviders) Reset()      { *m = Response_GetResourceProviders{} }
+func (*Response_GetResourceProviders) ProtoMessage() {}
+func (*Response_GetResourceProviders) Descriptor() ([]byte, []int) {
+	return fileDescriptorAgent, []int{1, 13}
+}
+
+func (m *Response_GetResourceProviders) GetResourceProviders() []Response_GetResourceProviders_ResourceProvider {
+	if m != nil {
+		return m.ResourceProviders
+	}
+	return nil
+}
+
+type Response_GetResourceProviders_ResourceProvider struct {
+	ResourceProviderInfo mesos.ResourceProviderInfo `protobuf:"bytes,1,req,name=resource_provider_info,json=resourceProviderInfo" json:"resource_provider_info"`
+}
+
+func (m *Response_GetResourceProviders_ResourceProvider) Reset() {
+	*m = Response_GetResourceProviders_ResourceProvider{}
+}
+func (*Response_GetResourceProviders_ResourceProvider) ProtoMessage() {}
+func (*Response_GetResourceProviders_ResourceProvider) Descriptor() ([]byte, []int) {
+	return fileDescriptorAgent, []int{1, 13, 0}
+}
+
+func (m *Response_GetResourceProviders_ResourceProvider) GetResourceProviderInfo() mesos.ResourceProviderInfo {
+	if m != nil {
+		return m.ResourceProviderInfo
+	}
+	return mesos.ResourceProviderInfo{}
+}
+
 // Returns termination information about the nested container.
 type Response_WaitNestedContainer struct {
 	// Wait status of the lead process in the container. Note that this
 	// is the return value of `wait(2)`, so callers must use the `wait(2)`
 	// family of macros to extract whether the process exited cleanly and
 	// what the exit code was.
-	ExitStatus *int32                   `protobuf:"varint,1,opt,name=exit_status,json=exitStatus" json:"exit_status,omitempty"`
-	State      *mesos.TaskState         `protobuf:"varint,2,opt,name=state,enum=mesos.TaskState" json:"state,omitempty"`
-	Reason     *mesos.TaskStatus_Reason `protobuf:"varint,3,opt,name=reason,enum=mesos.TaskStatus_Reason" json:"reason,omitempty"`
+	ExitStatus *int32 `protobuf:"varint,1,opt,name=exit_status,json=exitStatus" json:"exit_status,omitempty"`
+	// The `state` and `reason` fields may be populated if the Mesos agent
+	// terminates the container. In the absence of any special knowledge,
+	// executors should propagate this information via the `status` field
+	// of an `Update` call for the corresponding TaskID.
+	State  *mesos.TaskState         `protobuf:"varint,2,opt,name=state,enum=mesos.TaskState" json:"state,omitempty"`
+	Reason *mesos.TaskStatus_Reason `protobuf:"varint,3,opt,name=reason,enum=mesos.TaskStatus_Reason" json:"reason,omitempty"`
 	// This field will be populated if the task was terminated due to
 	// a resource limitation.
 	Limitation *mesos.TaskResourceLimitation `protobuf:"bytes,4,opt,name=limitation" json:"limitation,omitempty"`
@@ -1313,7 +1721,7 @@ type Response_WaitNestedContainer struct {
 func (m *Response_WaitNestedContainer) Reset()      { *m = Response_WaitNestedContainer{} }
 func (*Response_WaitNestedContainer) ProtoMessage() {}
 func (*Response_WaitNestedContainer) Descriptor() ([]byte, []int) {
-	return fileDescriptorAgent, []int{1, 13}
+	return fileDescriptorAgent, []int{1, 14}
 }
 
 func (m *Response_WaitNestedContainer) GetExitStatus() int32 {
@@ -1345,6 +1753,64 @@ func (m *Response_WaitNestedContainer) GetLimitation() *mesos.TaskResourceLimita
 }
 
 func (m *Response_WaitNestedContainer) GetMessage() string {
+	if m != nil && m.Message != nil {
+		return *m.Message
+	}
+	return ""
+}
+
+// Returns termination information about the standalone or nested container.
+type Response_WaitContainer struct {
+	// Wait status of the lead process in the container. Note that this
+	// is the return value of `wait(2)`, so callers must use the `wait(2)`
+	// family of macros to extract whether the process exited cleanly and
+	// what the exit code was.
+	ExitStatus *int32 `protobuf:"varint,1,opt,name=exit_status,json=exitStatus" json:"exit_status,omitempty"`
+	// The `state` and `reason` fields may be populated if the Mesos agent
+	// terminates the container. In the absence of any special knowledge,
+	// executors should propagate this information via the `status` field
+	// of an `Update` call for the corresponding TaskID.
+	State  *mesos.TaskState         `protobuf:"varint,2,opt,name=state,enum=mesos.TaskState" json:"state,omitempty"`
+	Reason *mesos.TaskStatus_Reason `protobuf:"varint,3,opt,name=reason,enum=mesos.TaskStatus_Reason" json:"reason,omitempty"`
+	// This field will be populated if the task was terminated due to
+	// a resource limitation.
+	Limitation *mesos.TaskResourceLimitation `protobuf:"bytes,4,opt,name=limitation" json:"limitation,omitempty"`
+	Message    *string                       `protobuf:"bytes,5,opt,name=message" json:"message,omitempty"`
+}
+
+func (m *Response_WaitContainer) Reset()                    { *m = Response_WaitContainer{} }
+func (*Response_WaitContainer) ProtoMessage()               {}
+func (*Response_WaitContainer) Descriptor() ([]byte, []int) { return fileDescriptorAgent, []int{1, 15} }
+
+func (m *Response_WaitContainer) GetExitStatus() int32 {
+	if m != nil && m.ExitStatus != nil {
+		return *m.ExitStatus
+	}
+	return 0
+}
+
+func (m *Response_WaitContainer) GetState() mesos.TaskState {
+	if m != nil && m.State != nil {
+		return *m.State
+	}
+	return mesos.TASK_STAGING
+}
+
+func (m *Response_WaitContainer) GetReason() mesos.TaskStatus_Reason {
+	if m != nil && m.Reason != nil {
+		return *m.Reason
+	}
+	return mesos.REASON_COMMAND_EXECUTOR_FAILED
+}
+
+func (m *Response_WaitContainer) GetLimitation() *mesos.TaskResourceLimitation {
+	if m != nil {
+		return m.Limitation
+	}
+	return nil
+}
+
+func (m *Response_WaitContainer) GetMessage() string {
 	if m != nil && m.Message != nil {
 		return *m.Message
 	}
@@ -1472,6 +1938,13 @@ func init() {
 	proto.RegisterType((*Call_LaunchNestedContainerSession)(nil), "mesos.agent.Call.LaunchNestedContainerSession")
 	proto.RegisterType((*Call_AttachContainerInput)(nil), "mesos.agent.Call.AttachContainerInput")
 	proto.RegisterType((*Call_AttachContainerOutput)(nil), "mesos.agent.Call.AttachContainerOutput")
+	proto.RegisterType((*Call_LaunchContainer)(nil), "mesos.agent.Call.LaunchContainer")
+	proto.RegisterType((*Call_WaitContainer)(nil), "mesos.agent.Call.WaitContainer")
+	proto.RegisterType((*Call_KillContainer)(nil), "mesos.agent.Call.KillContainer")
+	proto.RegisterType((*Call_RemoveContainer)(nil), "mesos.agent.Call.RemoveContainer")
+	proto.RegisterType((*Call_AddResourceProviderConfig)(nil), "mesos.agent.Call.AddResourceProviderConfig")
+	proto.RegisterType((*Call_UpdateResourceProviderConfig)(nil), "mesos.agent.Call.UpdateResourceProviderConfig")
+	proto.RegisterType((*Call_RemoveResourceProviderConfig)(nil), "mesos.agent.Call.RemoveResourceProviderConfig")
 	proto.RegisterType((*Response)(nil), "mesos.agent.Response")
 	proto.RegisterType((*Response_GetHealth)(nil), "mesos.agent.Response.GetHealth")
 	proto.RegisterType((*Response_GetFlags)(nil), "mesos.agent.Response.GetFlags")
@@ -1489,7 +1962,10 @@ func init() {
 	proto.RegisterType((*Response_GetExecutors_Executor)(nil), "mesos.agent.Response.GetExecutors.Executor")
 	proto.RegisterType((*Response_GetTasks)(nil), "mesos.agent.Response.GetTasks")
 	proto.RegisterType((*Response_GetAgent)(nil), "mesos.agent.Response.GetAgent")
+	proto.RegisterType((*Response_GetResourceProviders)(nil), "mesos.agent.Response.GetResourceProviders")
+	proto.RegisterType((*Response_GetResourceProviders_ResourceProvider)(nil), "mesos.agent.Response.GetResourceProviders.ResourceProvider")
 	proto.RegisterType((*Response_WaitNestedContainer)(nil), "mesos.agent.Response.WaitNestedContainer")
+	proto.RegisterType((*Response_WaitContainer)(nil), "mesos.agent.Response.WaitContainer")
 	proto.RegisterType((*ProcessIO)(nil), "mesos.agent.ProcessIO")
 	proto.RegisterType((*ProcessIO_Data)(nil), "mesos.agent.ProcessIO.Data")
 	proto.RegisterType((*ProcessIO_Control)(nil), "mesos.agent.ProcessIO.Control")
@@ -1604,6 +2080,27 @@ func (this *Call) VerboseEqual(that interface{}) error {
 	if !this.AttachContainerOutput.Equal(that1.AttachContainerOutput) {
 		return fmt.Errorf("AttachContainerOutput this(%v) Not Equal that(%v)", this.AttachContainerOutput, that1.AttachContainerOutput)
 	}
+	if !this.LaunchContainer.Equal(that1.LaunchContainer) {
+		return fmt.Errorf("LaunchContainer this(%v) Not Equal that(%v)", this.LaunchContainer, that1.LaunchContainer)
+	}
+	if !this.WaitContainer.Equal(that1.WaitContainer) {
+		return fmt.Errorf("WaitContainer this(%v) Not Equal that(%v)", this.WaitContainer, that1.WaitContainer)
+	}
+	if !this.KillContainer.Equal(that1.KillContainer) {
+		return fmt.Errorf("KillContainer this(%v) Not Equal that(%v)", this.KillContainer, that1.KillContainer)
+	}
+	if !this.RemoveContainer.Equal(that1.RemoveContainer) {
+		return fmt.Errorf("RemoveContainer this(%v) Not Equal that(%v)", this.RemoveContainer, that1.RemoveContainer)
+	}
+	if !this.AddResourceProviderConfig.Equal(that1.AddResourceProviderConfig) {
+		return fmt.Errorf("AddResourceProviderConfig this(%v) Not Equal that(%v)", this.AddResourceProviderConfig, that1.AddResourceProviderConfig)
+	}
+	if !this.UpdateResourceProviderConfig.Equal(that1.UpdateResourceProviderConfig) {
+		return fmt.Errorf("UpdateResourceProviderConfig this(%v) Not Equal that(%v)", this.UpdateResourceProviderConfig, that1.UpdateResourceProviderConfig)
+	}
+	if !this.RemoveResourceProviderConfig.Equal(that1.RemoveResourceProviderConfig) {
+		return fmt.Errorf("RemoveResourceProviderConfig this(%v) Not Equal that(%v)", this.RemoveResourceProviderConfig, that1.RemoveResourceProviderConfig)
+	}
 	return nil
 }
 func (this *Call) Equal(that interface{}) bool {
@@ -1665,6 +2162,27 @@ func (this *Call) Equal(that interface{}) bool {
 		return false
 	}
 	if !this.AttachContainerOutput.Equal(that1.AttachContainerOutput) {
+		return false
+	}
+	if !this.LaunchContainer.Equal(that1.LaunchContainer) {
+		return false
+	}
+	if !this.WaitContainer.Equal(that1.WaitContainer) {
+		return false
+	}
+	if !this.KillContainer.Equal(that1.KillContainer) {
+		return false
+	}
+	if !this.RemoveContainer.Equal(that1.RemoveContainer) {
+		return false
+	}
+	if !this.AddResourceProviderConfig.Equal(that1.AddResourceProviderConfig) {
+		return false
+	}
+	if !this.UpdateResourceProviderConfig.Equal(that1.UpdateResourceProviderConfig) {
+		return false
+	}
+	if !this.RemoveResourceProviderConfig.Equal(that1.RemoveResourceProviderConfig) {
 		return false
 	}
 	return true
@@ -2413,6 +2931,478 @@ func (this *Call_AttachContainerOutput) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *Call_LaunchContainer) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_LaunchContainer)
+	if !ok {
+		that2, ok := that.(Call_LaunchContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_LaunchContainer")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_LaunchContainer but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_LaunchContainer but is not nil && this == nil")
+	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return fmt.Errorf("ContainerID this(%v) Not Equal that(%v)", this.ContainerID, that1.ContainerID)
+	}
+	if !this.Command.Equal(that1.Command) {
+		return fmt.Errorf("Command this(%v) Not Equal that(%v)", this.Command, that1.Command)
+	}
+	if len(this.Resources) != len(that1.Resources) {
+		return fmt.Errorf("Resources this(%v) Not Equal that(%v)", len(this.Resources), len(that1.Resources))
+	}
+	for i := range this.Resources {
+		if !this.Resources[i].Equal(&that1.Resources[i]) {
+			return fmt.Errorf("Resources this[%v](%v) Not Equal that[%v](%v)", i, this.Resources[i], i, that1.Resources[i])
+		}
+	}
+	if !this.Container.Equal(that1.Container) {
+		return fmt.Errorf("Container this(%v) Not Equal that(%v)", this.Container, that1.Container)
+	}
+	return nil
+}
+func (this *Call_LaunchContainer) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_LaunchContainer)
+	if !ok {
+		that2, ok := that.(Call_LaunchContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return false
+	}
+	if !this.Command.Equal(that1.Command) {
+		return false
+	}
+	if len(this.Resources) != len(that1.Resources) {
+		return false
+	}
+	for i := range this.Resources {
+		if !this.Resources[i].Equal(&that1.Resources[i]) {
+			return false
+		}
+	}
+	if !this.Container.Equal(that1.Container) {
+		return false
+	}
+	return true
+}
+func (this *Call_WaitContainer) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_WaitContainer)
+	if !ok {
+		that2, ok := that.(Call_WaitContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_WaitContainer")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_WaitContainer but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_WaitContainer but is not nil && this == nil")
+	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return fmt.Errorf("ContainerID this(%v) Not Equal that(%v)", this.ContainerID, that1.ContainerID)
+	}
+	return nil
+}
+func (this *Call_WaitContainer) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_WaitContainer)
+	if !ok {
+		that2, ok := that.(Call_WaitContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return false
+	}
+	return true
+}
+func (this *Call_KillContainer) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_KillContainer)
+	if !ok {
+		that2, ok := that.(Call_KillContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_KillContainer")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_KillContainer but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_KillContainer but is not nil && this == nil")
+	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return fmt.Errorf("ContainerID this(%v) Not Equal that(%v)", this.ContainerID, that1.ContainerID)
+	}
+	if this.Signal != nil && that1.Signal != nil {
+		if *this.Signal != *that1.Signal {
+			return fmt.Errorf("Signal this(%v) Not Equal that(%v)", *this.Signal, *that1.Signal)
+		}
+	} else if this.Signal != nil {
+		return fmt.Errorf("this.Signal == nil && that.Signal != nil")
+	} else if that1.Signal != nil {
+		return fmt.Errorf("Signal this(%v) Not Equal that(%v)", this.Signal, that1.Signal)
+	}
+	return nil
+}
+func (this *Call_KillContainer) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_KillContainer)
+	if !ok {
+		that2, ok := that.(Call_KillContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return false
+	}
+	if this.Signal != nil && that1.Signal != nil {
+		if *this.Signal != *that1.Signal {
+			return false
+		}
+	} else if this.Signal != nil {
+		return false
+	} else if that1.Signal != nil {
+		return false
+	}
+	return true
+}
+func (this *Call_RemoveContainer) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_RemoveContainer)
+	if !ok {
+		that2, ok := that.(Call_RemoveContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_RemoveContainer")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_RemoveContainer but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_RemoveContainer but is not nil && this == nil")
+	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return fmt.Errorf("ContainerID this(%v) Not Equal that(%v)", this.ContainerID, that1.ContainerID)
+	}
+	return nil
+}
+func (this *Call_RemoveContainer) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_RemoveContainer)
+	if !ok {
+		that2, ok := that.(Call_RemoveContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.ContainerID.Equal(that1.ContainerID) {
+		return false
+	}
+	return true
+}
+func (this *Call_AddResourceProviderConfig) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_AddResourceProviderConfig)
+	if !ok {
+		that2, ok := that.(Call_AddResourceProviderConfig)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_AddResourceProviderConfig")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_AddResourceProviderConfig but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_AddResourceProviderConfig but is not nil && this == nil")
+	}
+	if !this.Info.Equal(&that1.Info) {
+		return fmt.Errorf("Info this(%v) Not Equal that(%v)", this.Info, that1.Info)
+	}
+	return nil
+}
+func (this *Call_AddResourceProviderConfig) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_AddResourceProviderConfig)
+	if !ok {
+		that2, ok := that.(Call_AddResourceProviderConfig)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Info.Equal(&that1.Info) {
+		return false
+	}
+	return true
+}
+func (this *Call_UpdateResourceProviderConfig) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_UpdateResourceProviderConfig)
+	if !ok {
+		that2, ok := that.(Call_UpdateResourceProviderConfig)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_UpdateResourceProviderConfig")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_UpdateResourceProviderConfig but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_UpdateResourceProviderConfig but is not nil && this == nil")
+	}
+	if !this.Info.Equal(&that1.Info) {
+		return fmt.Errorf("Info this(%v) Not Equal that(%v)", this.Info, that1.Info)
+	}
+	return nil
+}
+func (this *Call_UpdateResourceProviderConfig) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_UpdateResourceProviderConfig)
+	if !ok {
+		that2, ok := that.(Call_UpdateResourceProviderConfig)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Info.Equal(&that1.Info) {
+		return false
+	}
+	return true
+}
+func (this *Call_RemoveResourceProviderConfig) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Call_RemoveResourceProviderConfig)
+	if !ok {
+		that2, ok := that.(Call_RemoveResourceProviderConfig)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Call_RemoveResourceProviderConfig")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Call_RemoveResourceProviderConfig but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Call_RemoveResourceProviderConfig but is not nil && this == nil")
+	}
+	if this.Type != that1.Type {
+		return fmt.Errorf("Type this(%v) Not Equal that(%v)", this.Type, that1.Type)
+	}
+	if this.Name != that1.Name {
+		return fmt.Errorf("Name this(%v) Not Equal that(%v)", this.Name, that1.Name)
+	}
+	return nil
+}
+func (this *Call_RemoveResourceProviderConfig) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Call_RemoveResourceProviderConfig)
+	if !ok {
+		that2, ok := that.(Call_RemoveResourceProviderConfig)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Type != that1.Type {
+		return false
+	}
+	if this.Name != that1.Name {
+		return false
+	}
+	return true
+}
 func (this *Response) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -2480,8 +3470,14 @@ func (this *Response) VerboseEqual(that interface{}) error {
 	if !this.GetAgent.Equal(that1.GetAgent) {
 		return fmt.Errorf("GetAgent this(%v) Not Equal that(%v)", this.GetAgent, that1.GetAgent)
 	}
+	if !this.GetResourceProviders.Equal(that1.GetResourceProviders) {
+		return fmt.Errorf("GetResourceProviders this(%v) Not Equal that(%v)", this.GetResourceProviders, that1.GetResourceProviders)
+	}
 	if !this.WaitNestedContainer.Equal(that1.WaitNestedContainer) {
 		return fmt.Errorf("WaitNestedContainer this(%v) Not Equal that(%v)", this.WaitNestedContainer, that1.WaitNestedContainer)
+	}
+	if !this.WaitContainer.Equal(that1.WaitContainer) {
+		return fmt.Errorf("WaitContainer this(%v) Not Equal that(%v)", this.WaitContainer, that1.WaitContainer)
 	}
 	return nil
 }
@@ -2552,7 +3548,13 @@ func (this *Response) Equal(that interface{}) bool {
 	if !this.GetAgent.Equal(that1.GetAgent) {
 		return false
 	}
+	if !this.GetResourceProviders.Equal(that1.GetResourceProviders) {
+		return false
+	}
 	if !this.WaitNestedContainer.Equal(that1.WaitNestedContainer) {
+		return false
+	}
+	if !this.WaitContainer.Equal(that1.WaitContainer) {
 		return false
 	}
 	return true
@@ -3731,6 +4733,136 @@ func (this *Response_GetAgent) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *Response_GetResourceProviders) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Response_GetResourceProviders)
+	if !ok {
+		that2, ok := that.(Response_GetResourceProviders)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Response_GetResourceProviders")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Response_GetResourceProviders but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Response_GetResourceProviders but is not nil && this == nil")
+	}
+	if len(this.ResourceProviders) != len(that1.ResourceProviders) {
+		return fmt.Errorf("ResourceProviders this(%v) Not Equal that(%v)", len(this.ResourceProviders), len(that1.ResourceProviders))
+	}
+	for i := range this.ResourceProviders {
+		if !this.ResourceProviders[i].Equal(&that1.ResourceProviders[i]) {
+			return fmt.Errorf("ResourceProviders this[%v](%v) Not Equal that[%v](%v)", i, this.ResourceProviders[i], i, that1.ResourceProviders[i])
+		}
+	}
+	return nil
+}
+func (this *Response_GetResourceProviders) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Response_GetResourceProviders)
+	if !ok {
+		that2, ok := that.(Response_GetResourceProviders)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if len(this.ResourceProviders) != len(that1.ResourceProviders) {
+		return false
+	}
+	for i := range this.ResourceProviders {
+		if !this.ResourceProviders[i].Equal(&that1.ResourceProviders[i]) {
+			return false
+		}
+	}
+	return true
+}
+func (this *Response_GetResourceProviders_ResourceProvider) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Response_GetResourceProviders_ResourceProvider)
+	if !ok {
+		that2, ok := that.(Response_GetResourceProviders_ResourceProvider)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Response_GetResourceProviders_ResourceProvider")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Response_GetResourceProviders_ResourceProvider but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Response_GetResourceProviders_ResourceProvider but is not nil && this == nil")
+	}
+	if !this.ResourceProviderInfo.Equal(&that1.ResourceProviderInfo) {
+		return fmt.Errorf("ResourceProviderInfo this(%v) Not Equal that(%v)", this.ResourceProviderInfo, that1.ResourceProviderInfo)
+	}
+	return nil
+}
+func (this *Response_GetResourceProviders_ResourceProvider) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Response_GetResourceProviders_ResourceProvider)
+	if !ok {
+		that2, ok := that.(Response_GetResourceProviders_ResourceProvider)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.ResourceProviderInfo.Equal(&that1.ResourceProviderInfo) {
+		return false
+	}
+	return true
+}
 func (this *Response_WaitNestedContainer) VerboseEqual(that interface{}) error {
 	if that == nil {
 		if this == nil {
@@ -3808,6 +4940,138 @@ func (this *Response_WaitNestedContainer) Equal(that interface{}) bool {
 	that1, ok := that.(*Response_WaitNestedContainer)
 	if !ok {
 		that2, ok := that.(Response_WaitNestedContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.ExitStatus != nil && that1.ExitStatus != nil {
+		if *this.ExitStatus != *that1.ExitStatus {
+			return false
+		}
+	} else if this.ExitStatus != nil {
+		return false
+	} else if that1.ExitStatus != nil {
+		return false
+	}
+	if this.State != nil && that1.State != nil {
+		if *this.State != *that1.State {
+			return false
+		}
+	} else if this.State != nil {
+		return false
+	} else if that1.State != nil {
+		return false
+	}
+	if this.Reason != nil && that1.Reason != nil {
+		if *this.Reason != *that1.Reason {
+			return false
+		}
+	} else if this.Reason != nil {
+		return false
+	} else if that1.Reason != nil {
+		return false
+	}
+	if !this.Limitation.Equal(that1.Limitation) {
+		return false
+	}
+	if this.Message != nil && that1.Message != nil {
+		if *this.Message != *that1.Message {
+			return false
+		}
+	} else if this.Message != nil {
+		return false
+	} else if that1.Message != nil {
+		return false
+	}
+	return true
+}
+func (this *Response_WaitContainer) VerboseEqual(that interface{}) error {
+	if that == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that == nil && this != nil")
+	}
+
+	that1, ok := that.(*Response_WaitContainer)
+	if !ok {
+		that2, ok := that.(Response_WaitContainer)
+		if ok {
+			that1 = &that2
+		} else {
+			return fmt.Errorf("that is not of type *Response_WaitContainer")
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return nil
+		}
+		return fmt.Errorf("that is type *Response_WaitContainer but is nil && this != nil")
+	} else if this == nil {
+		return fmt.Errorf("that is type *Response_WaitContainer but is not nil && this == nil")
+	}
+	if this.ExitStatus != nil && that1.ExitStatus != nil {
+		if *this.ExitStatus != *that1.ExitStatus {
+			return fmt.Errorf("ExitStatus this(%v) Not Equal that(%v)", *this.ExitStatus, *that1.ExitStatus)
+		}
+	} else if this.ExitStatus != nil {
+		return fmt.Errorf("this.ExitStatus == nil && that.ExitStatus != nil")
+	} else if that1.ExitStatus != nil {
+		return fmt.Errorf("ExitStatus this(%v) Not Equal that(%v)", this.ExitStatus, that1.ExitStatus)
+	}
+	if this.State != nil && that1.State != nil {
+		if *this.State != *that1.State {
+			return fmt.Errorf("State this(%v) Not Equal that(%v)", *this.State, *that1.State)
+		}
+	} else if this.State != nil {
+		return fmt.Errorf("this.State == nil && that.State != nil")
+	} else if that1.State != nil {
+		return fmt.Errorf("State this(%v) Not Equal that(%v)", this.State, that1.State)
+	}
+	if this.Reason != nil && that1.Reason != nil {
+		if *this.Reason != *that1.Reason {
+			return fmt.Errorf("Reason this(%v) Not Equal that(%v)", *this.Reason, *that1.Reason)
+		}
+	} else if this.Reason != nil {
+		return fmt.Errorf("this.Reason == nil && that.Reason != nil")
+	} else if that1.Reason != nil {
+		return fmt.Errorf("Reason this(%v) Not Equal that(%v)", this.Reason, that1.Reason)
+	}
+	if !this.Limitation.Equal(that1.Limitation) {
+		return fmt.Errorf("Limitation this(%v) Not Equal that(%v)", this.Limitation, that1.Limitation)
+	}
+	if this.Message != nil && that1.Message != nil {
+		if *this.Message != *that1.Message {
+			return fmt.Errorf("Message this(%v) Not Equal that(%v)", *this.Message, *that1.Message)
+		}
+	} else if this.Message != nil {
+		return fmt.Errorf("this.Message == nil && that.Message != nil")
+	} else if that1.Message != nil {
+		return fmt.Errorf("Message this(%v) Not Equal that(%v)", this.Message, that1.Message)
+	}
+	return nil
+}
+func (this *Response_WaitContainer) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*Response_WaitContainer)
+	if !ok {
+		that2, ok := that.(Response_WaitContainer)
 		if ok {
 			that1 = &that2
 		} else {
@@ -4137,7 +5401,7 @@ func (this *Call) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 16)
+	s := make([]string, 0, 23)
 	s = append(s, "&agent.Call{")
 	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
 	if this.GetMetrics != nil {
@@ -4172,6 +5436,27 @@ func (this *Call) GoString() string {
 	}
 	if this.AttachContainerOutput != nil {
 		s = append(s, "AttachContainerOutput: "+fmt.Sprintf("%#v", this.AttachContainerOutput)+",\n")
+	}
+	if this.LaunchContainer != nil {
+		s = append(s, "LaunchContainer: "+fmt.Sprintf("%#v", this.LaunchContainer)+",\n")
+	}
+	if this.WaitContainer != nil {
+		s = append(s, "WaitContainer: "+fmt.Sprintf("%#v", this.WaitContainer)+",\n")
+	}
+	if this.KillContainer != nil {
+		s = append(s, "KillContainer: "+fmt.Sprintf("%#v", this.KillContainer)+",\n")
+	}
+	if this.RemoveContainer != nil {
+		s = append(s, "RemoveContainer: "+fmt.Sprintf("%#v", this.RemoveContainer)+",\n")
+	}
+	if this.AddResourceProviderConfig != nil {
+		s = append(s, "AddResourceProviderConfig: "+fmt.Sprintf("%#v", this.AddResourceProviderConfig)+",\n")
+	}
+	if this.UpdateResourceProviderConfig != nil {
+		s = append(s, "UpdateResourceProviderConfig: "+fmt.Sprintf("%#v", this.UpdateResourceProviderConfig)+",\n")
+	}
+	if this.RemoveResourceProviderConfig != nil {
+		s = append(s, "RemoveResourceProviderConfig: "+fmt.Sprintf("%#v", this.RemoveResourceProviderConfig)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -4314,11 +5599,102 @@ func (this *Call_AttachContainerOutput) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *Call_LaunchContainer) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 8)
+	s = append(s, "&agent.Call_LaunchContainer{")
+	if this.ContainerID != nil {
+		s = append(s, "ContainerID: "+fmt.Sprintf("%#v", this.ContainerID)+",\n")
+	}
+	if this.Command != nil {
+		s = append(s, "Command: "+fmt.Sprintf("%#v", this.Command)+",\n")
+	}
+	if this.Resources != nil {
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
+	}
+	if this.Container != nil {
+		s = append(s, "Container: "+fmt.Sprintf("%#v", this.Container)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_WaitContainer) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&agent.Call_WaitContainer{")
+	if this.ContainerID != nil {
+		s = append(s, "ContainerID: "+fmt.Sprintf("%#v", this.ContainerID)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_KillContainer) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&agent.Call_KillContainer{")
+	if this.ContainerID != nil {
+		s = append(s, "ContainerID: "+fmt.Sprintf("%#v", this.ContainerID)+",\n")
+	}
+	if this.Signal != nil {
+		s = append(s, "Signal: "+valueToGoStringAgent(this.Signal, "int32")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_RemoveContainer) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&agent.Call_RemoveContainer{")
+	if this.ContainerID != nil {
+		s = append(s, "ContainerID: "+fmt.Sprintf("%#v", this.ContainerID)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_AddResourceProviderConfig) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&agent.Call_AddResourceProviderConfig{")
+	s = append(s, "Info: "+strings.Replace(this.Info.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_UpdateResourceProviderConfig) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&agent.Call_UpdateResourceProviderConfig{")
+	s = append(s, "Info: "+strings.Replace(this.Info.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Call_RemoveResourceProviderConfig) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&agent.Call_RemoveResourceProviderConfig{")
+	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func (this *Response) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 19)
+	s := make([]string, 0, 21)
 	s = append(s, "&agent.Response{")
 	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
 	if this.GetHealth != nil {
@@ -4360,8 +5736,14 @@ func (this *Response) GoString() string {
 	if this.GetAgent != nil {
 		s = append(s, "GetAgent: "+fmt.Sprintf("%#v", this.GetAgent)+",\n")
 	}
+	if this.GetResourceProviders != nil {
+		s = append(s, "GetResourceProviders: "+fmt.Sprintf("%#v", this.GetResourceProviders)+",\n")
+	}
 	if this.WaitNestedContainer != nil {
 		s = append(s, "WaitNestedContainer: "+fmt.Sprintf("%#v", this.WaitNestedContainer)+",\n")
+	}
+	if this.WaitContainer != nil {
+		s = append(s, "WaitContainer: "+fmt.Sprintf("%#v", this.WaitContainer)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -4580,12 +5962,58 @@ func (this *Response_GetAgent) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *Response_GetResourceProviders) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&agent.Response_GetResourceProviders{")
+	if this.ResourceProviders != nil {
+		s = append(s, "ResourceProviders: "+fmt.Sprintf("%#v", this.ResourceProviders)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Response_GetResourceProviders_ResourceProvider) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&agent.Response_GetResourceProviders_ResourceProvider{")
+	s = append(s, "ResourceProviderInfo: "+strings.Replace(this.ResourceProviderInfo.GoString(), `&`, ``, 1)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func (this *Response_WaitNestedContainer) GoString() string {
 	if this == nil {
 		return "nil"
 	}
 	s := make([]string, 0, 9)
 	s = append(s, "&agent.Response_WaitNestedContainer{")
+	if this.ExitStatus != nil {
+		s = append(s, "ExitStatus: "+valueToGoStringAgent(this.ExitStatus, "int32")+",\n")
+	}
+	if this.State != nil {
+		s = append(s, "State: "+valueToGoStringAgent(this.State, "mesos.TaskState")+",\n")
+	}
+	if this.Reason != nil {
+		s = append(s, "Reason: "+valueToGoStringAgent(this.Reason, "mesos.TaskStatus_Reason")+",\n")
+	}
+	if this.Limitation != nil {
+		s = append(s, "Limitation: "+fmt.Sprintf("%#v", this.Limitation)+",\n")
+	}
+	if this.Message != nil {
+		s = append(s, "Message: "+valueToGoStringAgent(this.Message, "string")+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Response_WaitContainer) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 9)
+	s = append(s, "&agent.Response_WaitContainer{")
 	if this.ExitStatus != nil {
 		s = append(s, "ExitStatus: "+valueToGoStringAgent(this.ExitStatus, "int32")+",\n")
 	}
@@ -4797,6 +6225,84 @@ func (m *Call) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n11
 	}
+	if m.LaunchContainer != nil {
+		dAtA[i] = 0x6a
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.LaunchContainer.ProtoSize()))
+		n12, err := m.LaunchContainer.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n12
+	}
+	if m.WaitContainer != nil {
+		dAtA[i] = 0x72
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.WaitContainer.ProtoSize()))
+		n13, err := m.WaitContainer.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n13
+	}
+	if m.KillContainer != nil {
+		dAtA[i] = 0x7a
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.KillContainer.ProtoSize()))
+		n14, err := m.KillContainer.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n14
+	}
+	if m.RemoveContainer != nil {
+		dAtA[i] = 0x82
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.RemoveContainer.ProtoSize()))
+		n15, err := m.RemoveContainer.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n15
+	}
+	if m.AddResourceProviderConfig != nil {
+		dAtA[i] = 0x8a
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.AddResourceProviderConfig.ProtoSize()))
+		n16, err := m.AddResourceProviderConfig.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n16
+	}
+	if m.UpdateResourceProviderConfig != nil {
+		dAtA[i] = 0x92
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.UpdateResourceProviderConfig.ProtoSize()))
+		n17, err := m.UpdateResourceProviderConfig.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n17
+	}
+	if m.RemoveResourceProviderConfig != nil {
+		dAtA[i] = 0x9a
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.RemoveResourceProviderConfig.ProtoSize()))
+		n18, err := m.RemoveResourceProviderConfig.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n18
+	}
 	return i, nil
 }
 
@@ -4819,11 +6325,11 @@ func (m *Call_GetMetrics) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Timeout.ProtoSize()))
-		n12, err := m.Timeout.MarshalTo(dAtA[i:])
+		n19, err := m.Timeout.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n12
+		i += n19
 	}
 	return i, nil
 }
@@ -4849,11 +6355,11 @@ func (m *Call_SetLoggingLevel) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.Duration.ProtoSize()))
-	n13, err := m.Duration.MarshalTo(dAtA[i:])
+	n20, err := m.Duration.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n13
+	i += n20
 	return i, nil
 }
 
@@ -4927,30 +6433,30 @@ func (m *Call_LaunchNestedContainer) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-	n14, err := m.ContainerID.MarshalTo(dAtA[i:])
+	n21, err := m.ContainerID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n14
+	i += n21
 	if m.Command != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Command.ProtoSize()))
-		n15, err := m.Command.MarshalTo(dAtA[i:])
+		n22, err := m.Command.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n15
+		i += n22
 	}
 	if m.Container != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Container.ProtoSize()))
-		n16, err := m.Container.MarshalTo(dAtA[i:])
+		n23, err := m.Container.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n16
+		i += n23
 	}
 	return i, nil
 }
@@ -4973,11 +6479,11 @@ func (m *Call_WaitNestedContainer) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-	n17, err := m.ContainerID.MarshalTo(dAtA[i:])
+	n24, err := m.ContainerID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n17
+	i += n24
 	return i, nil
 }
 
@@ -4999,11 +6505,11 @@ func (m *Call_KillNestedContainer) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-	n18, err := m.ContainerID.MarshalTo(dAtA[i:])
+	n25, err := m.ContainerID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n18
+	i += n25
 	if m.Signal != nil {
 		dAtA[i] = 0x10
 		i++
@@ -5030,11 +6536,11 @@ func (m *Call_RemoveNestedContainer) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-	n19, err := m.ContainerID.MarshalTo(dAtA[i:])
+	n26, err := m.ContainerID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n19
+	i += n26
 	return i, nil
 }
 
@@ -5056,30 +6562,30 @@ func (m *Call_LaunchNestedContainerSession) MarshalTo(dAtA []byte) (int, error) 
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-	n20, err := m.ContainerID.MarshalTo(dAtA[i:])
+	n27, err := m.ContainerID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n20
+	i += n27
 	if m.Command != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Command.ProtoSize()))
-		n21, err := m.Command.MarshalTo(dAtA[i:])
+		n28, err := m.Command.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n21
+		i += n28
 	}
 	if m.Container != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Container.ProtoSize()))
-		n22, err := m.Container.MarshalTo(dAtA[i:])
+		n29, err := m.Container.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n22
+		i += n29
 	}
 	return i, nil
 }
@@ -5106,21 +6612,21 @@ func (m *Call_AttachContainerInput) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-		n23, err := m.ContainerID.MarshalTo(dAtA[i:])
+		n30, err := m.ContainerID.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n23
+		i += n30
 	}
 	if m.ProcessIO != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.ProcessIO.ProtoSize()))
-		n24, err := m.ProcessIO.MarshalTo(dAtA[i:])
+		n31, err := m.ProcessIO.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n24
+		i += n31
 	}
 	return i, nil
 }
@@ -5143,11 +6649,246 @@ func (m *Call_AttachContainerOutput) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-	n25, err := m.ContainerID.MarshalTo(dAtA[i:])
+	n32, err := m.ContainerID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n25
+	i += n32
+	return i, nil
+}
+
+func (m *Call_LaunchContainer) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_LaunchContainer) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.ContainerID == nil {
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
+	} else {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
+		n33, err := m.ContainerID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n33
+	}
+	if m.Command != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.Command.ProtoSize()))
+		n34, err := m.Command.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n34
+	}
+	if len(m.Resources) > 0 {
+		for _, msg := range m.Resources {
+			dAtA[i] = 0x1a
+			i++
+			i = encodeVarintAgent(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.Container != nil {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.Container.ProtoSize()))
+		n35, err := m.Container.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n35
+	}
+	return i, nil
+}
+
+func (m *Call_WaitContainer) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_WaitContainer) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.ContainerID == nil {
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
+	} else {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
+		n36, err := m.ContainerID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n36
+	}
+	return i, nil
+}
+
+func (m *Call_KillContainer) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_KillContainer) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.ContainerID == nil {
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
+	} else {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
+		n37, err := m.ContainerID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n37
+	}
+	if m.Signal != nil {
+		dAtA[i] = 0x10
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(*m.Signal))
+	}
+	return i, nil
+}
+
+func (m *Call_RemoveContainer) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_RemoveContainer) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.ContainerID == nil {
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
+	} else {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
+		n38, err := m.ContainerID.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n38
+	}
+	return i, nil
+}
+
+func (m *Call_AddResourceProviderConfig) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_AddResourceProviderConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintAgent(dAtA, i, uint64(m.Info.ProtoSize()))
+	n39, err := m.Info.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n39
+	return i, nil
+}
+
+func (m *Call_UpdateResourceProviderConfig) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_UpdateResourceProviderConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintAgent(dAtA, i, uint64(m.Info.ProtoSize()))
+	n40, err := m.Info.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n40
+	return i, nil
+}
+
+func (m *Call_RemoveResourceProviderConfig) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Call_RemoveResourceProviderConfig) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintAgent(dAtA, i, uint64(len(m.Type)))
+	i += copy(dAtA[i:], m.Type)
+	dAtA[i] = 0x12
+	i++
+	i = encodeVarintAgent(dAtA, i, uint64(len(m.Name)))
+	i += copy(dAtA[i:], m.Name)
 	return i, nil
 }
 
@@ -5173,141 +6914,165 @@ func (m *Response) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetHealth.ProtoSize()))
-		n26, err := m.GetHealth.MarshalTo(dAtA[i:])
+		n41, err := m.GetHealth.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n26
+		i += n41
 	}
 	if m.GetFlags != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetFlags.ProtoSize()))
-		n27, err := m.GetFlags.MarshalTo(dAtA[i:])
+		n42, err := m.GetFlags.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n27
+		i += n42
 	}
 	if m.GetVersion != nil {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetVersion.ProtoSize()))
-		n28, err := m.GetVersion.MarshalTo(dAtA[i:])
+		n43, err := m.GetVersion.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n28
+		i += n43
 	}
 	if m.GetMetrics != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetMetrics.ProtoSize()))
-		n29, err := m.GetMetrics.MarshalTo(dAtA[i:])
+		n44, err := m.GetMetrics.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n29
+		i += n44
 	}
 	if m.GetLoggingLevel != nil {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetLoggingLevel.ProtoSize()))
-		n30, err := m.GetLoggingLevel.MarshalTo(dAtA[i:])
+		n45, err := m.GetLoggingLevel.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n30
+		i += n45
 	}
 	if m.ListFiles != nil {
 		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.ListFiles.ProtoSize()))
-		n31, err := m.ListFiles.MarshalTo(dAtA[i:])
+		n46, err := m.ListFiles.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n31
+		i += n46
 	}
 	if m.ReadFile != nil {
 		dAtA[i] = 0x42
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.ReadFile.ProtoSize()))
-		n32, err := m.ReadFile.MarshalTo(dAtA[i:])
+		n47, err := m.ReadFile.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n32
+		i += n47
 	}
 	if m.GetState != nil {
 		dAtA[i] = 0x4a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetState.ProtoSize()))
-		n33, err := m.GetState.MarshalTo(dAtA[i:])
+		n48, err := m.GetState.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n33
+		i += n48
 	}
 	if m.GetContainers != nil {
 		dAtA[i] = 0x52
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetContainers.ProtoSize()))
-		n34, err := m.GetContainers.MarshalTo(dAtA[i:])
+		n49, err := m.GetContainers.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n34
+		i += n49
 	}
 	if m.GetFrameworks != nil {
 		dAtA[i] = 0x5a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetFrameworks.ProtoSize()))
-		n35, err := m.GetFrameworks.MarshalTo(dAtA[i:])
+		n50, err := m.GetFrameworks.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n35
+		i += n50
 	}
 	if m.GetExecutors != nil {
 		dAtA[i] = 0x62
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetExecutors.ProtoSize()))
-		n36, err := m.GetExecutors.MarshalTo(dAtA[i:])
+		n51, err := m.GetExecutors.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n36
+		i += n51
 	}
 	if m.GetTasks != nil {
 		dAtA[i] = 0x6a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetTasks.ProtoSize()))
-		n37, err := m.GetTasks.MarshalTo(dAtA[i:])
+		n52, err := m.GetTasks.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n37
+		i += n52
 	}
 	if m.WaitNestedContainer != nil {
 		dAtA[i] = 0x72
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.WaitNestedContainer.ProtoSize()))
-		n38, err := m.WaitNestedContainer.MarshalTo(dAtA[i:])
+		n53, err := m.WaitNestedContainer.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n38
+		i += n53
 	}
 	if m.GetAgent != nil {
 		dAtA[i] = 0x7a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetAgent.ProtoSize()))
-		n39, err := m.GetAgent.MarshalTo(dAtA[i:])
+		n54, err := m.GetAgent.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n39
+		i += n54
+	}
+	if m.WaitContainer != nil {
+		dAtA[i] = 0x82
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.WaitContainer.ProtoSize()))
+		n55, err := m.WaitContainer.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n55
+	}
+	if m.GetResourceProviders != nil {
+		dAtA[i] = 0x8a
+		i++
+		dAtA[i] = 0x1
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.GetResourceProviders.ProtoSize()))
+		n56, err := m.GetResourceProviders.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n56
 	}
 	return i, nil
 }
@@ -5386,11 +7151,11 @@ func (m *Response_GetVersion) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.VersionInfo.ProtoSize()))
-	n40, err := m.VersionInfo.MarshalTo(dAtA[i:])
+	n57, err := m.VersionInfo.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n40
+	i += n57
 	return i, nil
 }
 
@@ -5523,31 +7288,31 @@ func (m *Response_GetState) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetTasks.ProtoSize()))
-		n41, err := m.GetTasks.MarshalTo(dAtA[i:])
+		n58, err := m.GetTasks.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n41
+		i += n58
 	}
 	if m.GetExecutors != nil {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetExecutors.ProtoSize()))
-		n42, err := m.GetExecutors.MarshalTo(dAtA[i:])
+		n59, err := m.GetExecutors.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n42
+		i += n59
 	}
 	if m.GetFrameworks != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.GetFrameworks.ProtoSize()))
-		n43, err := m.GetFrameworks.MarshalTo(dAtA[i:])
+		n60, err := m.GetFrameworks.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n43
+		i += n60
 	}
 	return i, nil
 }
@@ -5600,19 +7365,19 @@ func (m *Response_GetContainers_Container) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.FrameworkID.ProtoSize()))
-	n44, err := m.FrameworkID.MarshalTo(dAtA[i:])
+	n61, err := m.FrameworkID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n44
+	i += n61
 	dAtA[i] = 0x12
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.ExecutorID.ProtoSize()))
-	n45, err := m.ExecutorID.MarshalTo(dAtA[i:])
+	n62, err := m.ExecutorID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n45
+	i += n62
 	dAtA[i] = 0x1a
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(len(m.ExecutorName)))
@@ -5620,30 +7385,30 @@ func (m *Response_GetContainers_Container) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0x22
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.ContainerID.ProtoSize()))
-	n46, err := m.ContainerID.MarshalTo(dAtA[i:])
+	n63, err := m.ContainerID.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n46
+	i += n63
 	if m.ContainerStatus != nil {
 		dAtA[i] = 0x2a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.ContainerStatus.ProtoSize()))
-		n47, err := m.ContainerStatus.MarshalTo(dAtA[i:])
+		n64, err := m.ContainerStatus.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n47
+		i += n64
 	}
 	if m.ResourceStatistics != nil {
 		dAtA[i] = 0x32
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.ResourceStatistics.ProtoSize()))
-		n48, err := m.ResourceStatistics.MarshalTo(dAtA[i:])
+		n65, err := m.ResourceStatistics.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n48
+		i += n65
 	}
 	return i, nil
 }
@@ -5708,11 +7473,11 @@ func (m *Response_GetFrameworks_Framework) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.FrameworkInfo.ProtoSize()))
-	n49, err := m.FrameworkInfo.MarshalTo(dAtA[i:])
+	n66, err := m.FrameworkInfo.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n49
+	i += n66
 	return i, nil
 }
 
@@ -5776,11 +7541,11 @@ func (m *Response_GetExecutors_Executor) MarshalTo(dAtA []byte) (int, error) {
 	dAtA[i] = 0xa
 	i++
 	i = encodeVarintAgent(dAtA, i, uint64(m.ExecutorInfo.ProtoSize()))
-	n50, err := m.ExecutorInfo.MarshalTo(dAtA[i:])
+	n67, err := m.ExecutorInfo.MarshalTo(dAtA[i:])
 	if err != nil {
 		return 0, err
 	}
-	i += n50
+	i += n67
 	return i, nil
 }
 
@@ -5881,12 +7646,68 @@ func (m *Response_GetAgent) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.AgentInfo.ProtoSize()))
-		n51, err := m.AgentInfo.MarshalTo(dAtA[i:])
+		n68, err := m.AgentInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n51
+		i += n68
 	}
+	return i, nil
+}
+
+func (m *Response_GetResourceProviders) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Response_GetResourceProviders) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.ResourceProviders) > 0 {
+		for _, msg := range m.ResourceProviders {
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintAgent(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	return i, nil
+}
+
+func (m *Response_GetResourceProviders_ResourceProvider) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Response_GetResourceProviders_ResourceProvider) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintAgent(dAtA, i, uint64(m.ResourceProviderInfo.ProtoSize()))
+	n69, err := m.ResourceProviderInfo.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n69
 	return i, nil
 }
 
@@ -5924,11 +7745,60 @@ func (m *Response_WaitNestedContainer) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Limitation.ProtoSize()))
-		n52, err := m.Limitation.MarshalTo(dAtA[i:])
+		n70, err := m.Limitation.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n52
+		i += n70
+	}
+	if m.Message != nil {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(len(*m.Message)))
+		i += copy(dAtA[i:], *m.Message)
+	}
+	return i, nil
+}
+
+func (m *Response_WaitContainer) Marshal() (dAtA []byte, err error) {
+	size := m.ProtoSize()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Response_WaitContainer) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.ExitStatus != nil {
+		dAtA[i] = 0x8
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(*m.ExitStatus))
+	}
+	if m.State != nil {
+		dAtA[i] = 0x10
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(*m.State))
+	}
+	if m.Reason != nil {
+		dAtA[i] = 0x18
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(*m.Reason))
+	}
+	if m.Limitation != nil {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintAgent(dAtA, i, uint64(m.Limitation.ProtoSize()))
+		n71, err := m.Limitation.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n71
 	}
 	if m.Message != nil {
 		dAtA[i] = 0x2a
@@ -5961,21 +7831,21 @@ func (m *ProcessIO) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Data.ProtoSize()))
-		n53, err := m.Data.MarshalTo(dAtA[i:])
+		n72, err := m.Data.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n53
+		i += n72
 	}
 	if m.Control != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Control.ProtoSize()))
-		n54, err := m.Control.MarshalTo(dAtA[i:])
+		n73, err := m.Control.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n54
+		i += n73
 	}
 	return i, nil
 }
@@ -6029,21 +7899,21 @@ func (m *ProcessIO_Control) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.TTYInfo.ProtoSize()))
-		n55, err := m.TTYInfo.MarshalTo(dAtA[i:])
+		n74, err := m.TTYInfo.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n55
+		i += n74
 	}
 	if m.Heartbeat != nil {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Heartbeat.ProtoSize()))
-		n56, err := m.Heartbeat.MarshalTo(dAtA[i:])
+		n75, err := m.Heartbeat.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n56
+		i += n75
 	}
 	return i, nil
 }
@@ -6067,11 +7937,11 @@ func (m *ProcessIO_Control_Heartbeat) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintAgent(dAtA, i, uint64(m.Interval.ProtoSize()))
-		n57, err := m.Interval.MarshalTo(dAtA[i:])
+		n76, err := m.Interval.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n57
+		i += n76
 	}
 	return i, nil
 }
@@ -6105,7 +7975,7 @@ func encodeVarintAgent(dAtA []byte, offset int, v uint64) int {
 }
 func NewPopulatedCall(r randyAgent, easy bool) *Call {
 	this := &Call{}
-	this.Type = Call_Type([]int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 20, 14, 15, 16, 21, 17, 18, 19}[r.Intn(22)])
+	this.Type = Call_Type([]int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 20, 26, 14, 15, 16, 21, 17, 18, 19, 22, 23, 24, 25, 27, 28, 29}[r.Intn(30)])
 	if r.Intn(10) != 0 {
 		this.GetMetrics = NewPopulatedCall_GetMetrics(r, easy)
 	}
@@ -6138,6 +8008,27 @@ func NewPopulatedCall(r randyAgent, easy bool) *Call {
 	}
 	if r.Intn(10) == 0 {
 		this.RemoveNestedContainer = NewPopulatedCall_RemoveNestedContainer(r, easy)
+	}
+	if r.Intn(10) == 0 {
+		this.LaunchContainer = NewPopulatedCall_LaunchContainer(r, easy)
+	}
+	if r.Intn(10) == 0 {
+		this.WaitContainer = NewPopulatedCall_WaitContainer(r, easy)
+	}
+	if r.Intn(10) == 0 {
+		this.KillContainer = NewPopulatedCall_KillContainer(r, easy)
+	}
+	if r.Intn(10) == 0 {
+		this.RemoveContainer = NewPopulatedCall_RemoveContainer(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.AddResourceProviderConfig = NewPopulatedCall_UpdateResourceProviderConfig(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.UpdateResourceProviderConfig = NewPopulatedCall_UpdateResourceProviderConfig(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.RemoveResourceProviderConfig = NewPopulatedCall_RemoveResourceProviderConfig(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -6272,9 +8163,89 @@ func NewPopulatedCall_AttachContainerOutput(r randyAgent, easy bool) *Call_Attac
 	return this
 }
 
+func NewPopulatedCall_LaunchContainer(r randyAgent, easy bool) *Call_LaunchContainer {
+	this := &Call_LaunchContainer{}
+	this.ContainerID = mesos.NewPopulatedContainerID(r, easy)
+	if r.Intn(10) != 0 {
+		this.Command = mesos.NewPopulatedCommandInfo(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		v10 := r.Intn(5)
+		this.Resources = make([]mesos.Resource, v10)
+		for i := 0; i < v10; i++ {
+			v11 := mesos.NewPopulatedResource(r, easy)
+			this.Resources[i] = *v11
+		}
+	}
+	if r.Intn(10) != 0 {
+		this.Container = mesos.NewPopulatedContainerInfo(r, easy)
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedCall_WaitContainer(r randyAgent, easy bool) *Call_WaitContainer {
+	this := &Call_WaitContainer{}
+	this.ContainerID = mesos.NewPopulatedContainerID(r, easy)
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedCall_KillContainer(r randyAgent, easy bool) *Call_KillContainer {
+	this := &Call_KillContainer{}
+	this.ContainerID = mesos.NewPopulatedContainerID(r, easy)
+	if r.Intn(10) != 0 {
+		v12 := int32(r.Int31())
+		if r.Intn(2) == 0 {
+			v12 *= -1
+		}
+		this.Signal = &v12
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedCall_RemoveContainer(r randyAgent, easy bool) *Call_RemoveContainer {
+	this := &Call_RemoveContainer{}
+	this.ContainerID = mesos.NewPopulatedContainerID(r, easy)
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedCall_AddResourceProviderConfig(r randyAgent, easy bool) *Call_AddResourceProviderConfig {
+	this := &Call_AddResourceProviderConfig{}
+	v13 := mesos.NewPopulatedResourceProviderInfo(r, easy)
+	this.Info = *v13
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedCall_UpdateResourceProviderConfig(r randyAgent, easy bool) *Call_UpdateResourceProviderConfig {
+	this := &Call_UpdateResourceProviderConfig{}
+	v14 := mesos.NewPopulatedResourceProviderInfo(r, easy)
+	this.Info = *v14
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedCall_RemoveResourceProviderConfig(r randyAgent, easy bool) *Call_RemoveResourceProviderConfig {
+	this := &Call_RemoveResourceProviderConfig{}
+	this.Type = string(randStringAgent(r))
+	this.Name = string(randStringAgent(r))
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
 func NewPopulatedResponse(r randyAgent, easy bool) *Response {
 	this := &Response{}
-	this.Type = Response_Type([]int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 13}[r.Intn(15)])
+	this.Type = Response_Type([]int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 13, 15}[r.Intn(17)])
 	if r.Intn(10) != 0 {
 		this.GetHealth = NewPopulatedResponse_GetHealth(r, easy)
 	}
@@ -6317,6 +8288,12 @@ func NewPopulatedResponse(r randyAgent, easy bool) *Response {
 	if r.Intn(10) != 0 {
 		this.GetAgent = NewPopulatedResponse_GetAgent(r, easy)
 	}
+	if r.Intn(10) != 0 {
+		this.WaitContainer = NewPopulatedResponse_WaitContainer(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		this.GetResourceProviders = NewPopulatedResponse_GetResourceProviders(r, easy)
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -6333,11 +8310,11 @@ func NewPopulatedResponse_GetHealth(r randyAgent, easy bool) *Response_GetHealth
 func NewPopulatedResponse_GetFlags(r randyAgent, easy bool) *Response_GetFlags {
 	this := &Response_GetFlags{}
 	if r.Intn(10) != 0 {
-		v10 := r.Intn(5)
-		this.Flags = make([]mesos.Flag, v10)
-		for i := 0; i < v10; i++ {
-			v11 := mesos.NewPopulatedFlag(r, easy)
-			this.Flags[i] = *v11
+		v15 := r.Intn(5)
+		this.Flags = make([]mesos.Flag, v15)
+		for i := 0; i < v15; i++ {
+			v16 := mesos.NewPopulatedFlag(r, easy)
+			this.Flags[i] = *v16
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -6347,8 +8324,8 @@ func NewPopulatedResponse_GetFlags(r randyAgent, easy bool) *Response_GetFlags {
 
 func NewPopulatedResponse_GetVersion(r randyAgent, easy bool) *Response_GetVersion {
 	this := &Response_GetVersion{}
-	v12 := mesos.NewPopulatedVersionInfo(r, easy)
-	this.VersionInfo = *v12
+	v17 := mesos.NewPopulatedVersionInfo(r, easy)
+	this.VersionInfo = *v17
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -6357,11 +8334,11 @@ func NewPopulatedResponse_GetVersion(r randyAgent, easy bool) *Response_GetVersi
 func NewPopulatedResponse_GetMetrics(r randyAgent, easy bool) *Response_GetMetrics {
 	this := &Response_GetMetrics{}
 	if r.Intn(10) != 0 {
-		v13 := r.Intn(5)
-		this.Metrics = make([]mesos.Metric, v13)
-		for i := 0; i < v13; i++ {
-			v14 := mesos.NewPopulatedMetric(r, easy)
-			this.Metrics[i] = *v14
+		v18 := r.Intn(5)
+		this.Metrics = make([]mesos.Metric, v18)
+		for i := 0; i < v18; i++ {
+			v19 := mesos.NewPopulatedMetric(r, easy)
+			this.Metrics[i] = *v19
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -6380,11 +8357,11 @@ func NewPopulatedResponse_GetLoggingLevel(r randyAgent, easy bool) *Response_Get
 func NewPopulatedResponse_ListFiles(r randyAgent, easy bool) *Response_ListFiles {
 	this := &Response_ListFiles{}
 	if r.Intn(10) != 0 {
-		v15 := r.Intn(5)
-		this.FileInfos = make([]mesos.FileInfo, v15)
-		for i := 0; i < v15; i++ {
-			v16 := mesos.NewPopulatedFileInfo(r, easy)
-			this.FileInfos[i] = *v16
+		v20 := r.Intn(5)
+		this.FileInfos = make([]mesos.FileInfo, v20)
+		for i := 0; i < v20; i++ {
+			v21 := mesos.NewPopulatedFileInfo(r, easy)
+			this.FileInfos[i] = *v21
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -6395,9 +8372,9 @@ func NewPopulatedResponse_ListFiles(r randyAgent, easy bool) *Response_ListFiles
 func NewPopulatedResponse_ReadFile(r randyAgent, easy bool) *Response_ReadFile {
 	this := &Response_ReadFile{}
 	this.Size = uint64(uint64(r.Uint32()))
-	v17 := r.Intn(100)
-	this.Data = make([]byte, v17)
-	for i := 0; i < v17; i++ {
+	v22 := r.Intn(100)
+	this.Data = make([]byte, v22)
+	for i := 0; i < v22; i++ {
 		this.Data[i] = byte(r.Intn(256))
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -6424,11 +8401,11 @@ func NewPopulatedResponse_GetState(r randyAgent, easy bool) *Response_GetState {
 func NewPopulatedResponse_GetContainers(r randyAgent, easy bool) *Response_GetContainers {
 	this := &Response_GetContainers{}
 	if r.Intn(10) == 0 {
-		v18 := r.Intn(5)
-		this.Containers = make([]Response_GetContainers_Container, v18)
-		for i := 0; i < v18; i++ {
-			v19 := NewPopulatedResponse_GetContainers_Container(r, easy)
-			this.Containers[i] = *v19
+		v23 := r.Intn(5)
+		this.Containers = make([]Response_GetContainers_Container, v23)
+		for i := 0; i < v23; i++ {
+			v24 := NewPopulatedResponse_GetContainers_Container(r, easy)
+			this.Containers[i] = *v24
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -6438,13 +8415,13 @@ func NewPopulatedResponse_GetContainers(r randyAgent, easy bool) *Response_GetCo
 
 func NewPopulatedResponse_GetContainers_Container(r randyAgent, easy bool) *Response_GetContainers_Container {
 	this := &Response_GetContainers_Container{}
-	v20 := mesos.NewPopulatedFrameworkID(r, easy)
-	this.FrameworkID = *v20
-	v21 := mesos.NewPopulatedExecutorID(r, easy)
-	this.ExecutorID = *v21
+	v25 := mesos.NewPopulatedFrameworkID(r, easy)
+	this.FrameworkID = *v25
+	v26 := mesos.NewPopulatedExecutorID(r, easy)
+	this.ExecutorID = *v26
 	this.ExecutorName = string(randStringAgent(r))
-	v22 := mesos.NewPopulatedContainerID(r, easy)
-	this.ContainerID = *v22
+	v27 := mesos.NewPopulatedContainerID(r, easy)
+	this.ContainerID = *v27
 	if r.Intn(10) == 0 {
 		this.ContainerStatus = mesos.NewPopulatedContainerStatus(r, easy)
 	}
@@ -6459,19 +8436,19 @@ func NewPopulatedResponse_GetContainers_Container(r randyAgent, easy bool) *Resp
 func NewPopulatedResponse_GetFrameworks(r randyAgent, easy bool) *Response_GetFrameworks {
 	this := &Response_GetFrameworks{}
 	if r.Intn(10) != 0 {
-		v23 := r.Intn(5)
-		this.Frameworks = make([]Response_GetFrameworks_Framework, v23)
-		for i := 0; i < v23; i++ {
-			v24 := NewPopulatedResponse_GetFrameworks_Framework(r, easy)
-			this.Frameworks[i] = *v24
+		v28 := r.Intn(5)
+		this.Frameworks = make([]Response_GetFrameworks_Framework, v28)
+		for i := 0; i < v28; i++ {
+			v29 := NewPopulatedResponse_GetFrameworks_Framework(r, easy)
+			this.Frameworks[i] = *v29
 		}
 	}
 	if r.Intn(10) != 0 {
-		v25 := r.Intn(5)
-		this.CompletedFrameworks = make([]Response_GetFrameworks_Framework, v25)
-		for i := 0; i < v25; i++ {
-			v26 := NewPopulatedResponse_GetFrameworks_Framework(r, easy)
-			this.CompletedFrameworks[i] = *v26
+		v30 := r.Intn(5)
+		this.CompletedFrameworks = make([]Response_GetFrameworks_Framework, v30)
+		for i := 0; i < v30; i++ {
+			v31 := NewPopulatedResponse_GetFrameworks_Framework(r, easy)
+			this.CompletedFrameworks[i] = *v31
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -6481,8 +8458,8 @@ func NewPopulatedResponse_GetFrameworks(r randyAgent, easy bool) *Response_GetFr
 
 func NewPopulatedResponse_GetFrameworks_Framework(r randyAgent, easy bool) *Response_GetFrameworks_Framework {
 	this := &Response_GetFrameworks_Framework{}
-	v27 := mesos.NewPopulatedFrameworkInfo(r, easy)
-	this.FrameworkInfo = *v27
+	v32 := mesos.NewPopulatedFrameworkInfo(r, easy)
+	this.FrameworkInfo = *v32
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -6491,19 +8468,19 @@ func NewPopulatedResponse_GetFrameworks_Framework(r randyAgent, easy bool) *Resp
 func NewPopulatedResponse_GetExecutors(r randyAgent, easy bool) *Response_GetExecutors {
 	this := &Response_GetExecutors{}
 	if r.Intn(10) != 0 {
-		v28 := r.Intn(5)
-		this.Executors = make([]Response_GetExecutors_Executor, v28)
-		for i := 0; i < v28; i++ {
-			v29 := NewPopulatedResponse_GetExecutors_Executor(r, easy)
-			this.Executors[i] = *v29
+		v33 := r.Intn(5)
+		this.Executors = make([]Response_GetExecutors_Executor, v33)
+		for i := 0; i < v33; i++ {
+			v34 := NewPopulatedResponse_GetExecutors_Executor(r, easy)
+			this.Executors[i] = *v34
 		}
 	}
 	if r.Intn(10) != 0 {
-		v30 := r.Intn(5)
-		this.CompletedExecutors = make([]Response_GetExecutors_Executor, v30)
-		for i := 0; i < v30; i++ {
-			v31 := NewPopulatedResponse_GetExecutors_Executor(r, easy)
-			this.CompletedExecutors[i] = *v31
+		v35 := r.Intn(5)
+		this.CompletedExecutors = make([]Response_GetExecutors_Executor, v35)
+		for i := 0; i < v35; i++ {
+			v36 := NewPopulatedResponse_GetExecutors_Executor(r, easy)
+			this.CompletedExecutors[i] = *v36
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -6513,8 +8490,8 @@ func NewPopulatedResponse_GetExecutors(r randyAgent, easy bool) *Response_GetExe
 
 func NewPopulatedResponse_GetExecutors_Executor(r randyAgent, easy bool) *Response_GetExecutors_Executor {
 	this := &Response_GetExecutors_Executor{}
-	v32 := mesos.NewPopulatedExecutorInfo(r, easy)
-	this.ExecutorInfo = *v32
+	v37 := mesos.NewPopulatedExecutorInfo(r, easy)
+	this.ExecutorInfo = *v37
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -6523,43 +8500,43 @@ func NewPopulatedResponse_GetExecutors_Executor(r randyAgent, easy bool) *Respon
 func NewPopulatedResponse_GetTasks(r randyAgent, easy bool) *Response_GetTasks {
 	this := &Response_GetTasks{}
 	if r.Intn(10) == 0 {
-		v33 := r.Intn(5)
-		this.PendingTasks = make([]mesos.Task, v33)
-		for i := 0; i < v33; i++ {
-			v34 := mesos.NewPopulatedTask(r, easy)
-			this.PendingTasks[i] = *v34
+		v38 := r.Intn(5)
+		this.PendingTasks = make([]mesos.Task, v38)
+		for i := 0; i < v38; i++ {
+			v39 := mesos.NewPopulatedTask(r, easy)
+			this.PendingTasks[i] = *v39
 		}
 	}
 	if r.Intn(10) == 0 {
-		v35 := r.Intn(5)
-		this.QueuedTasks = make([]mesos.Task, v35)
-		for i := 0; i < v35; i++ {
-			v36 := mesos.NewPopulatedTask(r, easy)
-			this.QueuedTasks[i] = *v36
+		v40 := r.Intn(5)
+		this.QueuedTasks = make([]mesos.Task, v40)
+		for i := 0; i < v40; i++ {
+			v41 := mesos.NewPopulatedTask(r, easy)
+			this.QueuedTasks[i] = *v41
 		}
 	}
 	if r.Intn(10) == 0 {
-		v37 := r.Intn(5)
-		this.LaunchedTasks = make([]mesos.Task, v37)
-		for i := 0; i < v37; i++ {
-			v38 := mesos.NewPopulatedTask(r, easy)
-			this.LaunchedTasks[i] = *v38
+		v42 := r.Intn(5)
+		this.LaunchedTasks = make([]mesos.Task, v42)
+		for i := 0; i < v42; i++ {
+			v43 := mesos.NewPopulatedTask(r, easy)
+			this.LaunchedTasks[i] = *v43
 		}
 	}
 	if r.Intn(10) == 0 {
-		v39 := r.Intn(5)
-		this.TerminatedTasks = make([]mesos.Task, v39)
-		for i := 0; i < v39; i++ {
-			v40 := mesos.NewPopulatedTask(r, easy)
-			this.TerminatedTasks[i] = *v40
+		v44 := r.Intn(5)
+		this.TerminatedTasks = make([]mesos.Task, v44)
+		for i := 0; i < v44; i++ {
+			v45 := mesos.NewPopulatedTask(r, easy)
+			this.TerminatedTasks[i] = *v45
 		}
 	}
 	if r.Intn(10) == 0 {
-		v41 := r.Intn(5)
-		this.CompletedTasks = make([]mesos.Task, v41)
-		for i := 0; i < v41; i++ {
-			v42 := mesos.NewPopulatedTask(r, easy)
-			this.CompletedTasks[i] = *v42
+		v46 := r.Intn(5)
+		this.CompletedTasks = make([]mesos.Task, v46)
+		for i := 0; i < v46; i++ {
+			v47 := mesos.NewPopulatedTask(r, easy)
+			this.CompletedTasks[i] = *v47
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -6577,29 +8554,82 @@ func NewPopulatedResponse_GetAgent(r randyAgent, easy bool) *Response_GetAgent {
 	return this
 }
 
+func NewPopulatedResponse_GetResourceProviders(r randyAgent, easy bool) *Response_GetResourceProviders {
+	this := &Response_GetResourceProviders{}
+	if r.Intn(10) != 0 {
+		v48 := r.Intn(5)
+		this.ResourceProviders = make([]Response_GetResourceProviders_ResourceProvider, v48)
+		for i := 0; i < v48; i++ {
+			v49 := NewPopulatedResponse_GetResourceProviders_ResourceProvider(r, easy)
+			this.ResourceProviders[i] = *v49
+		}
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedResponse_GetResourceProviders_ResourceProvider(r randyAgent, easy bool) *Response_GetResourceProviders_ResourceProvider {
+	this := &Response_GetResourceProviders_ResourceProvider{}
+	v50 := mesos.NewPopulatedResourceProviderInfo(r, easy)
+	this.ResourceProviderInfo = *v50
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
 func NewPopulatedResponse_WaitNestedContainer(r randyAgent, easy bool) *Response_WaitNestedContainer {
 	this := &Response_WaitNestedContainer{}
 	if r.Intn(10) != 0 {
-		v43 := int32(r.Int31())
+		v51 := int32(r.Int31())
 		if r.Intn(2) == 0 {
-			v43 *= -1
+			v51 *= -1
 		}
-		this.ExitStatus = &v43
+		this.ExitStatus = &v51
 	}
 	if r.Intn(10) != 0 {
-		v44 := mesos.TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 7, 5, 9, 10, 11, 12, 13}[r.Intn(14)])
-		this.State = &v44
+		v52 := mesos.TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 7, 5, 9, 10, 11, 12, 13}[r.Intn(14)])
+		this.State = &v52
 	}
 	if r.Intn(10) != 0 {
-		v45 := mesos.TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 23, 24, 1, 2, 3, 4, 5, 6, 27, 7, 9, 18, 10, 11, 31, 12, 13, 30, 28, 29, 25, 26, 14, 15, 16}[r.Intn(32)])
-		this.Reason = &v45
+		v53 := mesos.TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 23, 24, 1, 2, 3, 4, 5, 6, 27, 7, 9, 18, 10, 11, 31, 12, 13, 30, 28, 29, 25, 26, 14, 15, 16}[r.Intn(32)])
+		this.Reason = &v53
 	}
 	if r.Intn(10) != 0 {
 		this.Limitation = mesos.NewPopulatedTaskResourceLimitation(r, easy)
 	}
 	if r.Intn(10) != 0 {
-		v46 := string(randStringAgent(r))
-		this.Message = &v46
+		v54 := string(randStringAgent(r))
+		this.Message = &v54
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedResponse_WaitContainer(r randyAgent, easy bool) *Response_WaitContainer {
+	this := &Response_WaitContainer{}
+	if r.Intn(10) != 0 {
+		v55 := int32(r.Int31())
+		if r.Intn(2) == 0 {
+			v55 *= -1
+		}
+		this.ExitStatus = &v55
+	}
+	if r.Intn(10) != 0 {
+		v56 := mesos.TaskState([]int32{6, 0, 1, 8, 2, 3, 4, 7, 5, 9, 10, 11, 12, 13}[r.Intn(14)])
+		this.State = &v56
+	}
+	if r.Intn(10) != 0 {
+		v57 := mesos.TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 23, 24, 1, 2, 3, 4, 5, 6, 27, 7, 9, 18, 10, 11, 31, 12, 13, 30, 28, 29, 25, 26, 14, 15, 16}[r.Intn(32)])
+		this.Reason = &v57
+	}
+	if r.Intn(10) != 0 {
+		this.Limitation = mesos.NewPopulatedTaskResourceLimitation(r, easy)
+	}
+	if r.Intn(10) != 0 {
+		v58 := string(randStringAgent(r))
+		this.Message = &v58
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -6624,9 +8654,9 @@ func NewPopulatedProcessIO_Data(r randyAgent, easy bool) *ProcessIO_Data {
 	this := &ProcessIO_Data{}
 	this.Type = ProcessIO_Data_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
 	if r.Intn(10) != 0 {
-		v47 := r.Intn(100)
-		this.Data = make([]byte, v47)
-		for i := 0; i < v47; i++ {
+		v59 := r.Intn(100)
+		this.Data = make([]byte, v59)
+		for i := 0; i < v59; i++ {
 			this.Data[i] = byte(r.Intn(256))
 		}
 	}
@@ -6678,9 +8708,9 @@ func randUTF8RuneAgent(r randyAgent) rune {
 	return rune(ru + 61)
 }
 func randStringAgent(r randyAgent) string {
-	v48 := r.Intn(100)
-	tmps := make([]rune, v48)
-	for i := 0; i < v48; i++ {
+	v60 := r.Intn(100)
+	tmps := make([]rune, v60)
+	for i := 0; i < v60; i++ {
 		tmps[i] = randUTF8RuneAgent(r)
 	}
 	return string(tmps)
@@ -6702,11 +8732,11 @@ func randFieldAgent(dAtA []byte, r randyAgent, fieldNumber int, wire int) []byte
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateAgent(dAtA, uint64(key))
-		v49 := r.Int63()
+		v61 := r.Int63()
 		if r.Intn(2) == 0 {
-			v49 *= -1
+			v61 *= -1
 		}
-		dAtA = encodeVarintPopulateAgent(dAtA, uint64(v49))
+		dAtA = encodeVarintPopulateAgent(dAtA, uint64(v61))
 	case 1:
 		dAtA = encodeVarintPopulateAgent(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -6778,6 +8808,34 @@ func (m *Call) ProtoSize() (n int) {
 	if m.RemoveNestedContainer != nil {
 		l = m.RemoveNestedContainer.ProtoSize()
 		n += 1 + l + sovAgent(uint64(l))
+	}
+	if m.LaunchContainer != nil {
+		l = m.LaunchContainer.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	if m.WaitContainer != nil {
+		l = m.WaitContainer.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	if m.KillContainer != nil {
+		l = m.KillContainer.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	if m.RemoveContainer != nil {
+		l = m.RemoveContainer.ProtoSize()
+		n += 2 + l + sovAgent(uint64(l))
+	}
+	if m.AddResourceProviderConfig != nil {
+		l = m.AddResourceProviderConfig.ProtoSize()
+		n += 2 + l + sovAgent(uint64(l))
+	}
+	if m.UpdateResourceProviderConfig != nil {
+		l = m.UpdateResourceProviderConfig.ProtoSize()
+		n += 2 + l + sovAgent(uint64(l))
+	}
+	if m.RemoveResourceProviderConfig != nil {
+		l = m.RemoveResourceProviderConfig.ProtoSize()
+		n += 2 + l + sovAgent(uint64(l))
 	}
 	return n
 }
@@ -6903,6 +8961,89 @@ func (m *Call_AttachContainerOutput) ProtoSize() (n int) {
 	return n
 }
 
+func (m *Call_LaunchContainer) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if m.ContainerID != nil {
+		l = m.ContainerID.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	if m.Command != nil {
+		l = m.Command.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	if len(m.Resources) > 0 {
+		for _, e := range m.Resources {
+			l = e.ProtoSize()
+			n += 1 + l + sovAgent(uint64(l))
+		}
+	}
+	if m.Container != nil {
+		l = m.Container.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	return n
+}
+
+func (m *Call_WaitContainer) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if m.ContainerID != nil {
+		l = m.ContainerID.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	return n
+}
+
+func (m *Call_KillContainer) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if m.ContainerID != nil {
+		l = m.ContainerID.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	if m.Signal != nil {
+		n += 1 + sovAgent(uint64(*m.Signal))
+	}
+	return n
+}
+
+func (m *Call_RemoveContainer) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if m.ContainerID != nil {
+		l = m.ContainerID.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	return n
+}
+
+func (m *Call_AddResourceProviderConfig) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.Info.ProtoSize()
+	n += 1 + l + sovAgent(uint64(l))
+	return n
+}
+
+func (m *Call_UpdateResourceProviderConfig) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.Info.ProtoSize()
+	n += 1 + l + sovAgent(uint64(l))
+	return n
+}
+
+func (m *Call_RemoveResourceProviderConfig) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = len(m.Type)
+	n += 1 + l + sovAgent(uint64(l))
+	l = len(m.Name)
+	n += 1 + l + sovAgent(uint64(l))
+	return n
+}
+
 func (m *Response) ProtoSize() (n int) {
 	var l int
 	_ = l
@@ -6962,6 +9103,14 @@ func (m *Response) ProtoSize() (n int) {
 	if m.GetAgent != nil {
 		l = m.GetAgent.ProtoSize()
 		n += 1 + l + sovAgent(uint64(l))
+	}
+	if m.WaitContainer != nil {
+		l = m.WaitContainer.ProtoSize()
+		n += 2 + l + sovAgent(uint64(l))
+	}
+	if m.GetResourceProviders != nil {
+		l = m.GetResourceProviders.ProtoSize()
+		n += 2 + l + sovAgent(uint64(l))
 	}
 	return n
 }
@@ -7185,7 +9334,50 @@ func (m *Response_GetAgent) ProtoSize() (n int) {
 	return n
 }
 
+func (m *Response_GetResourceProviders) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if len(m.ResourceProviders) > 0 {
+		for _, e := range m.ResourceProviders {
+			l = e.ProtoSize()
+			n += 1 + l + sovAgent(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *Response_GetResourceProviders_ResourceProvider) ProtoSize() (n int) {
+	var l int
+	_ = l
+	l = m.ResourceProviderInfo.ProtoSize()
+	n += 1 + l + sovAgent(uint64(l))
+	return n
+}
+
 func (m *Response_WaitNestedContainer) ProtoSize() (n int) {
+	var l int
+	_ = l
+	if m.ExitStatus != nil {
+		n += 1 + sovAgent(uint64(*m.ExitStatus))
+	}
+	if m.State != nil {
+		n += 1 + sovAgent(uint64(*m.State))
+	}
+	if m.Reason != nil {
+		n += 1 + sovAgent(uint64(*m.Reason))
+	}
+	if m.Limitation != nil {
+		l = m.Limitation.ProtoSize()
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	if m.Message != nil {
+		l = len(*m.Message)
+		n += 1 + l + sovAgent(uint64(l))
+	}
+	return n
+}
+
+func (m *Response_WaitContainer) ProtoSize() (n int) {
 	var l int
 	_ = l
 	if m.ExitStatus != nil {
@@ -7289,6 +9481,13 @@ func (this *Call) String() string {
 		`AttachContainerInput:` + strings.Replace(fmt.Sprintf("%v", this.AttachContainerInput), "Call_AttachContainerInput", "Call_AttachContainerInput", 1) + `,`,
 		`AttachContainerOutput:` + strings.Replace(fmt.Sprintf("%v", this.AttachContainerOutput), "Call_AttachContainerOutput", "Call_AttachContainerOutput", 1) + `,`,
 		`RemoveNestedContainer:` + strings.Replace(fmt.Sprintf("%v", this.RemoveNestedContainer), "Call_RemoveNestedContainer", "Call_RemoveNestedContainer", 1) + `,`,
+		`LaunchContainer:` + strings.Replace(fmt.Sprintf("%v", this.LaunchContainer), "Call_LaunchContainer", "Call_LaunchContainer", 1) + `,`,
+		`WaitContainer:` + strings.Replace(fmt.Sprintf("%v", this.WaitContainer), "Call_WaitContainer", "Call_WaitContainer", 1) + `,`,
+		`KillContainer:` + strings.Replace(fmt.Sprintf("%v", this.KillContainer), "Call_KillContainer", "Call_KillContainer", 1) + `,`,
+		`RemoveContainer:` + strings.Replace(fmt.Sprintf("%v", this.RemoveContainer), "Call_RemoveContainer", "Call_RemoveContainer", 1) + `,`,
+		`AddResourceProviderConfig:` + strings.Replace(fmt.Sprintf("%v", this.AddResourceProviderConfig), "Call_UpdateResourceProviderConfig", "Call_UpdateResourceProviderConfig", 1) + `,`,
+		`UpdateResourceProviderConfig:` + strings.Replace(fmt.Sprintf("%v", this.UpdateResourceProviderConfig), "Call_UpdateResourceProviderConfig", "Call_UpdateResourceProviderConfig", 1) + `,`,
+		`RemoveResourceProviderConfig:` + strings.Replace(fmt.Sprintf("%v", this.RemoveResourceProviderConfig), "Call_RemoveResourceProviderConfig", "Call_RemoveResourceProviderConfig", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -7413,6 +9612,81 @@ func (this *Call_AttachContainerOutput) String() string {
 	}, "")
 	return s
 }
+func (this *Call_LaunchContainer) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_LaunchContainer{`,
+		`ContainerID:` + strings.Replace(fmt.Sprintf("%v", this.ContainerID), "ContainerID", "mesos.ContainerID", 1) + `,`,
+		`Command:` + strings.Replace(fmt.Sprintf("%v", this.Command), "CommandInfo", "mesos.CommandInfo", 1) + `,`,
+		`Resources:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Resources), "Resource", "mesos.Resource", 1), `&`, ``, 1) + `,`,
+		`Container:` + strings.Replace(fmt.Sprintf("%v", this.Container), "ContainerInfo", "mesos.ContainerInfo", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Call_WaitContainer) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_WaitContainer{`,
+		`ContainerID:` + strings.Replace(fmt.Sprintf("%v", this.ContainerID), "ContainerID", "mesos.ContainerID", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Call_KillContainer) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_KillContainer{`,
+		`ContainerID:` + strings.Replace(fmt.Sprintf("%v", this.ContainerID), "ContainerID", "mesos.ContainerID", 1) + `,`,
+		`Signal:` + valueToStringAgent(this.Signal) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Call_RemoveContainer) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_RemoveContainer{`,
+		`ContainerID:` + strings.Replace(fmt.Sprintf("%v", this.ContainerID), "ContainerID", "mesos.ContainerID", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Call_AddResourceProviderConfig) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_AddResourceProviderConfig{`,
+		`Info:` + strings.Replace(strings.Replace(this.Info.String(), "ResourceProviderInfo", "mesos.ResourceProviderInfo", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Call_UpdateResourceProviderConfig) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_UpdateResourceProviderConfig{`,
+		`Info:` + strings.Replace(strings.Replace(this.Info.String(), "ResourceProviderInfo", "mesos.ResourceProviderInfo", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Call_RemoveResourceProviderConfig) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Call_RemoveResourceProviderConfig{`,
+		`Type:` + fmt.Sprintf("%v", this.Type) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *Response) String() string {
 	if this == nil {
 		return "nil"
@@ -7433,6 +9707,8 @@ func (this *Response) String() string {
 		`GetTasks:` + strings.Replace(fmt.Sprintf("%v", this.GetTasks), "Response_GetTasks", "Response_GetTasks", 1) + `,`,
 		`WaitNestedContainer:` + strings.Replace(fmt.Sprintf("%v", this.WaitNestedContainer), "Response_WaitNestedContainer", "Response_WaitNestedContainer", 1) + `,`,
 		`GetAgent:` + strings.Replace(fmt.Sprintf("%v", this.GetAgent), "Response_GetAgent", "Response_GetAgent", 1) + `,`,
+		`WaitContainer:` + strings.Replace(fmt.Sprintf("%v", this.WaitContainer), "Response_WaitContainer", "Response_WaitContainer", 1) + `,`,
+		`GetResourceProviders:` + strings.Replace(fmt.Sprintf("%v", this.GetResourceProviders), "Response_GetResourceProviders", "Response_GetResourceProviders", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -7611,11 +9887,45 @@ func (this *Response_GetAgent) String() string {
 	}, "")
 	return s
 }
+func (this *Response_GetResourceProviders) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Response_GetResourceProviders{`,
+		`ResourceProviders:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.ResourceProviders), "Response_GetResourceProviders_ResourceProvider", "Response_GetResourceProviders_ResourceProvider", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Response_GetResourceProviders_ResourceProvider) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Response_GetResourceProviders_ResourceProvider{`,
+		`ResourceProviderInfo:` + strings.Replace(strings.Replace(this.ResourceProviderInfo.String(), "ResourceProviderInfo", "mesos.ResourceProviderInfo", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *Response_WaitNestedContainer) String() string {
 	if this == nil {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Response_WaitNestedContainer{`,
+		`ExitStatus:` + valueToStringAgent(this.ExitStatus) + `,`,
+		`State:` + valueToStringAgent(this.State) + `,`,
+		`Reason:` + valueToStringAgent(this.Reason) + `,`,
+		`Limitation:` + strings.Replace(fmt.Sprintf("%v", this.Limitation), "TaskResourceLimitation", "mesos.TaskResourceLimitation", 1) + `,`,
+		`Message:` + valueToStringAgent(this.Message) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Response_WaitContainer) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Response_WaitContainer{`,
 		`ExitStatus:` + valueToStringAgent(this.ExitStatus) + `,`,
 		`State:` + valueToStringAgent(this.State) + `,`,
 		`Reason:` + valueToStringAgent(this.Reason) + `,`,
@@ -8086,6 +10396,237 @@ func (m *Call) Unmarshal(dAtA []byte) error {
 				m.RemoveNestedContainer = &Call_RemoveNestedContainer{}
 			}
 			if err := m.RemoveNestedContainer.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 13:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LaunchContainer", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.LaunchContainer == nil {
+				m.LaunchContainer = &Call_LaunchContainer{}
+			}
+			if err := m.LaunchContainer.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 14:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WaitContainer", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.WaitContainer == nil {
+				m.WaitContainer = &Call_WaitContainer{}
+			}
+			if err := m.WaitContainer.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 15:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KillContainer", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.KillContainer == nil {
+				m.KillContainer = &Call_KillContainer{}
+			}
+			if err := m.KillContainer.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 16:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RemoveContainer", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RemoveContainer == nil {
+				m.RemoveContainer = &Call_RemoveContainer{}
+			}
+			if err := m.RemoveContainer.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 17:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AddResourceProviderConfig", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.AddResourceProviderConfig == nil {
+				m.AddResourceProviderConfig = &Call_UpdateResourceProviderConfig{}
+			}
+			if err := m.AddResourceProviderConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 18:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UpdateResourceProviderConfig", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.UpdateResourceProviderConfig == nil {
+				m.UpdateResourceProviderConfig = &Call_UpdateResourceProviderConfig{}
+			}
+			if err := m.UpdateResourceProviderConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 19:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RemoveResourceProviderConfig", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RemoveResourceProviderConfig == nil {
+				m.RemoveResourceProviderConfig = &Call_RemoveResourceProviderConfig{}
+			}
+			if err := m.RemoveResourceProviderConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -9309,6 +11850,762 @@ func (m *Call_AttachContainerOutput) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *Call_LaunchContainer) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LaunchContainer: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LaunchContainer: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ContainerID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ContainerID == nil {
+				m.ContainerID = &mesos.ContainerID{}
+			}
+			if err := m.ContainerID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Command", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Command == nil {
+				m.Command = &mesos.CommandInfo{}
+			}
+			if err := m.Command.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Resources", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Resources = append(m.Resources, mesos.Resource{})
+			if err := m.Resources[len(m.Resources)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Container", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Container == nil {
+				m.Container = &mesos.ContainerInfo{}
+			}
+			if err := m.Container.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Call_WaitContainer) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: WaitContainer: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: WaitContainer: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ContainerID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ContainerID == nil {
+				m.ContainerID = &mesos.ContainerID{}
+			}
+			if err := m.ContainerID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Call_KillContainer) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: KillContainer: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: KillContainer: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ContainerID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ContainerID == nil {
+				m.ContainerID = &mesos.ContainerID{}
+			}
+			if err := m.ContainerID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signal", wireType)
+			}
+			var v int32
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Signal = &v
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Call_RemoveContainer) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RemoveContainer: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RemoveContainer: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ContainerID", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ContainerID == nil {
+				m.ContainerID = &mesos.ContainerID{}
+			}
+			if err := m.ContainerID.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Call_AddResourceProviderConfig) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AddResourceProviderConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AddResourceProviderConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Info", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Info.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("info")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Call_UpdateResourceProviderConfig) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: UpdateResourceProviderConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: UpdateResourceProviderConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Info", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Info.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("info")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Call_RemoveResourceProviderConfig) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RemoveResourceProviderConfig: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RemoveResourceProviderConfig: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Type = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000002)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
+	}
+	if hasFields[0]&uint64(0x00000002) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *Response) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -9816,6 +13113,72 @@ func (m *Response) Unmarshal(dAtA []byte) error {
 				m.GetAgent = &Response_GetAgent{}
 			}
 			if err := m.GetAgent.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 16:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WaitContainer", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.WaitContainer == nil {
+				m.WaitContainer = &Response_WaitContainer{}
+			}
+			if err := m.WaitContainer.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 17:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field GetResourceProviders", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.GetResourceProviders == nil {
+				m.GetResourceProviders = &Response_GetResourceProviders{}
+			}
+			if err := m.GetResourceProviders.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -11590,6 +14953,172 @@ func (m *Response_GetAgent) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *Response_GetResourceProviders) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GetResourceProviders: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GetResourceProviders: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ResourceProviders", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ResourceProviders = append(m.ResourceProviders, Response_GetResourceProviders_ResourceProvider{})
+			if err := m.ResourceProviders[len(m.ResourceProviders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Response_GetResourceProviders_ResourceProvider) Unmarshal(dAtA []byte) error {
+	var hasFields [1]uint64
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ResourceProvider: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ResourceProvider: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ResourceProviderInfo", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ResourceProviderInfo.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+			hasFields[0] |= uint64(0x00000001)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if hasFields[0]&uint64(0x00000001) == 0 {
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("resource_provider_info")
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *Response_WaitNestedContainer) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -11617,6 +15146,179 @@ func (m *Response_WaitNestedContainer) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: WaitNestedContainer: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExitStatus", wireType)
+			}
+			var v int32
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.ExitStatus = &v
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			var v mesos.TaskState
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (mesos.TaskState(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.State = &v
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
+			}
+			var v mesos.TaskStatus_Reason
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (mesos.TaskStatus_Reason(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Reason = &v
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Limitation", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Limitation == nil {
+				m.Limitation = &mesos.TaskResourceLimitation{}
+			}
+			if err := m.Limitation.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Message", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAgent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAgent
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(dAtA[iNdEx:postIndex])
+			m.Message = &s
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAgent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAgent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Response_WaitContainer) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAgent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: WaitContainer: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: WaitContainer: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -12324,154 +16026,183 @@ var (
 func init() { proto.RegisterFile("agent/agent.proto", fileDescriptorAgent) }
 
 var fileDescriptorAgent = []byte{
-	// 2371 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x59, 0x4d, 0x6c, 0xdb, 0xc8,
-	0xf5, 0x37, 0x65, 0xd9, 0x92, 0x9e, 0x3e, 0x4c, 0x8f, 0x3f, 0x56, 0xcb, 0xcd, 0x5f, 0xf6, 0xdf,
-	0xc1, 0xee, 0x66, 0x91, 0xc6, 0x4e, 0xdd, 0x6c, 0x1a, 0xc4, 0x49, 0x00, 0xd9, 0xa6, 0x6d, 0x25,
-	0x8a, 0x94, 0x92, 0x74, 0xd2, 0x2c, 0x5a, 0x08, 0x8c, 0x34, 0x96, 0x89, 0x50, 0xa2, 0x2b, 0x8e,
-	0x9c, 0xba, 0xa7, 0x1e, 0x7b, 0x28, 0xd0, 0x02, 0xed, 0xb1, 0x87, 0x02, 0x45, 0x81, 0x3d, 0xb4,
-	0xe7, 0xf6, 0x54, 0xf4, 0x52, 0x60, 0x0f, 0x3d, 0xec, 0xb1, 0x05, 0xda, 0xa0, 0xf1, 0x5e, 0xda,
-	0xdb, 0x1e, 0x7b, 0x2c, 0xe6, 0x8b, 0xa4, 0x4c, 0xca, 0x4e, 0xd3, 0xa0, 0x40, 0x2f, 0xc2, 0xcc,
-	0x9b, 0xdf, 0xfb, 0xcd, 0xf0, 0xf1, 0xbd, 0xc7, 0xf7, 0x46, 0x30, 0x6b, 0x77, 0x71, 0x9f, 0xac,
-	0xb1, 0xdf, 0xd5, 0xa3, 0x81, 0x47, 0x3c, 0x94, 0xef, 0x61, 0xdf, 0xf3, 0x57, 0x99, 0x48, 0xbb,
-	0xde, 0x75, 0xc8, 0xe1, 0xf0, 0xd9, 0x6a, 0xdb, 0xeb, 0xad, 0x31, 0x39, 0xff, 0xbd, 0xd6, 0xf5,
-	0xd6, 0xec, 0x23, 0x67, 0xed, 0xf8, 0xab, 0x6b, 0xae, 0xf3, 0x8c, 0xcb, 0xb8, 0xba, 0x76, 0x2d,
-	0xa2, 0xd1, 0xf5, 0xba, 0xde, 0x1a, 0x13, 0x3f, 0x1b, 0x1e, 0xb0, 0x19, 0x9b, 0xb0, 0x11, 0x87,
-	0xaf, 0xfc, 0x79, 0x11, 0xd2, 0x5b, 0xb6, 0xeb, 0xa2, 0xeb, 0x90, 0x26, 0x27, 0x47, 0xb8, 0xac,
-	0x2c, 0x2b, 0x57, 0x4a, 0xeb, 0x8b, 0xab, 0x91, 0x53, 0xac, 0x52, 0xc0, 0xaa, 0x75, 0x72, 0x84,
-	0x37, 0xd3, 0x9f, 0xbd, 0x5c, 0x9a, 0x30, 0x18, 0x12, 0xdd, 0x85, 0x7c, 0x17, 0x93, 0x56, 0x0f,
-	0x93, 0x81, 0xd3, 0xf6, 0xcb, 0xa9, 0x65, 0xe5, 0x4a, 0x7e, 0xfd, 0x52, 0x5c, 0x71, 0x17, 0x93,
-	0x87, 0x1c, 0x63, 0x40, 0x37, 0x18, 0xa3, 0x87, 0x30, 0xeb, 0x63, 0xd2, 0x72, 0xbd, 0x6e, 0xd7,
-	0xe9, 0x77, 0x5b, 0x2e, 0x3e, 0xc6, 0x6e, 0x79, 0x92, 0x91, 0xfc, 0x7f, 0x9c, 0xc4, 0xc4, 0xa4,
-	0xce, 0x91, 0x75, 0x0a, 0x34, 0x66, 0xfc, 0x51, 0x01, 0xba, 0x0d, 0xe0, 0x3a, 0x3e, 0x69, 0x1d,
-	0x38, 0x2e, 0xf6, 0xcb, 0x69, 0xc6, 0xf3, 0x5e, 0x9c, 0xa7, 0xee, 0xf8, 0x64, 0x87, 0x42, 0x8c,
-	0x9c, 0x2b, 0x87, 0xe8, 0xeb, 0x90, 0x1b, 0x60, 0xbb, 0xc3, 0x74, 0xcb, 0x53, 0x4c, 0x55, 0x8b,
-	0xab, 0x1a, 0xd8, 0xee, 0x50, 0xbc, 0x91, 0x1d, 0x88, 0x11, 0x6a, 0xc1, 0x3b, 0xae, 0x3d, 0xec,
-	0xb7, 0x0f, 0x5b, 0x7d, 0xec, 0x13, 0xdc, 0x69, 0xb5, 0xbd, 0x3e, 0xb1, 0x9d, 0x3e, 0x1e, 0x94,
-	0xa7, 0x19, 0xcd, 0x87, 0x09, 0x27, 0x60, 0x0a, 0x0d, 0x86, 0xdf, 0x92, 0x70, 0x63, 0xc1, 0x4d,
-	0x12, 0xa3, 0xa7, 0xb0, 0xf0, 0xc2, 0x76, 0x48, 0x9c, 0x3e, 0xc3, 0xe8, 0xdf, 0x8f, 0xd3, 0x3f,
-	0xb1, 0x1d, 0x72, 0x96, 0x7c, 0xee, 0x45, 0x5c, 0x48, 0xa9, 0x9f, 0x3b, 0xae, 0x1b, 0xa7, 0xce,
-	0x8e, 0xa3, 0x7e, 0xe0, 0xb8, 0x6e, 0x8c, 0xfa, 0x79, 0x5c, 0x88, 0x86, 0xb0, 0x34, 0xc6, 0x2c,
-	0x2d, 0x1f, 0xfb, 0xbe, 0xe3, 0xf5, 0xcb, 0x39, 0xb6, 0xc9, 0xea, 0x6b, 0x9a, 0xc7, 0xe4, 0x5a,
-	0xc6, 0x25, 0xf7, 0x9c, 0x55, 0xf4, 0x2d, 0x58, 0xb4, 0x09, 0xb1, 0xdb, 0x87, 0x91, 0xfd, 0x9c,
-	0xfe, 0xd1, 0x90, 0x94, 0x81, 0xed, 0xf6, 0x41, 0x7c, 0xb7, 0x2a, 0xc3, 0x07, 0x4c, 0x35, 0x8a,
-	0x36, 0xe6, 0xed, 0x04, 0x29, 0x7d, 0xd7, 0x31, 0x76, 0x6f, 0x48, 0x28, 0x7d, 0x7e, 0xdc, 0xbb,
-	0x3e, 0x43, 0xdf, 0x64, 0x70, 0x63, 0xc1, 0x4e, 0x12, 0xd3, 0x0d, 0x06, 0xb8, 0xe7, 0x1d, 0xe3,
-	0xf8, 0x2b, 0x29, 0x8c, 0xdb, 0xc0, 0x60, 0x0a, 0x31, 0x67, 0x1a, 0x24, 0x89, 0xb5, 0x0d, 0x80,
-	0x30, 0x16, 0xd1, 0x35, 0xc8, 0x10, 0xa7, 0x87, 0xbd, 0x21, 0x61, 0x31, 0x9f, 0x5f, 0x9f, 0x13,
-	0xf4, 0xdb, 0xc3, 0x81, 0x4d, 0x1c, 0xaf, 0x5f, 0xeb, 0x1f, 0x78, 0x86, 0xc4, 0x68, 0x1d, 0x98,
-	0x39, 0x13, 0x83, 0x48, 0x83, 0x29, 0x1e, 0xb5, 0xca, 0x72, 0xea, 0x4a, 0x51, 0xe4, 0x06, 0x2e,
-	0x42, 0x1f, 0x43, 0xb6, 0x23, 0x78, 0xca, 0xa9, 0xe5, 0xd4, 0x18, 0x7a, 0xa1, 0x13, 0x40, 0xb5,
-	0xf7, 0x21, 0x17, 0x44, 0x28, 0x2a, 0x43, 0xfa, 0xc8, 0x26, 0x87, 0x8c, 0x3e, 0x27, 0x53, 0x0f,
-	0x95, 0x68, 0x9f, 0x40, 0x56, 0x46, 0xe3, 0x78, 0x14, 0xba, 0x04, 0xd3, 0xde, 0xc1, 0x81, 0x8f,
-	0x09, 0x3b, 0x41, 0x5a, 0xac, 0x09, 0x19, 0x5a, 0x84, 0x69, 0x17, 0xf7, 0xbb, 0xe4, 0x90, 0x25,
-	0x9d, 0xb4, 0x21, 0x66, 0xda, 0x1f, 0x14, 0x58, 0x48, 0x74, 0x42, 0x74, 0x1f, 0x0a, 0x11, 0xc7,
-	0xea, 0xb0, 0x1d, 0xf3, 0xeb, 0x48, 0x3c, 0x57, 0xe8, 0x2e, 0xdb, 0x9b, 0x73, 0x74, 0xa7, 0xd3,
-	0x97, 0x4b, 0xf9, 0x88, 0xd0, 0xc8, 0x07, 0xca, 0xb5, 0x0e, 0xfa, 0x0a, 0x64, 0xda, 0x5e, 0xaf,
-	0x67, 0xf7, 0x3b, 0x22, 0x71, 0x86, 0x34, 0x4c, 0xca, 0x8d, 0x2f, 0x20, 0x68, 0x1d, 0x72, 0xa1,
-	0x33, 0xf0, 0x1c, 0x39, 0x1f, 0xdb, 0x96, 0x6a, 0x84, 0x30, 0xcd, 0x86, 0xb9, 0x84, 0x5c, 0xf0,
-	0x36, 0x1f, 0x42, 0x3b, 0x81, 0xb9, 0x84, 0x9c, 0xf0, 0x56, 0xed, 0xb4, 0x08, 0xd3, 0xbe, 0xd3,
-	0xed, 0xdb, 0x2e, 0x33, 0xd3, 0x94, 0x21, 0x66, 0x5a, 0x1b, 0x16, 0x12, 0x7d, 0xff, 0xad, 0x3e,
-	0xdf, 0x1f, 0x15, 0xb8, 0x74, 0x5e, 0x3e, 0xfa, 0x1f, 0xf3, 0x88, 0x4f, 0x53, 0x30, 0x9f, 0x94,
-	0xf0, 0x90, 0x3e, 0xf2, 0xed, 0xbf, 0xfa, 0x7a, 0x69, 0x32, 0x5e, 0x10, 0xec, 0x9c, 0xb1, 0xc6,
-	0xd9, 0xc7, 0x08, 0xad, 0x31, 0x73, 0xae, 0x25, 0xb6, 0x01, 0x8e, 0x06, 0x5e, 0x1b, 0xfb, 0x7e,
-	0xcb, 0xf1, 0xc4, 0xc3, 0x8d, 0x16, 0x24, 0x8f, 0xf8, 0x72, 0xad, 0xb9, 0x59, 0x3c, 0x7d, 0xb9,
-	0x94, 0x0b, 0xa6, 0x46, 0x4e, 0x28, 0xd6, 0xbc, 0x95, 0x0d, 0x48, 0xd3, 0x13, 0xa2, 0x3c, 0x64,
-	0xf6, 0x1b, 0x0f, 0x1a, 0xcd, 0x27, 0x0d, 0x75, 0x02, 0xa9, 0x50, 0xd8, 0x6a, 0x36, 0xac, 0x6a,
-	0xad, 0xa1, 0x1b, 0xad, 0xda, 0xb6, 0xaa, 0xa0, 0x12, 0xc0, 0x23, 0xa3, 0xb9, 0xa5, 0x9b, 0x66,
-	0xab, 0xd6, 0x54, 0x53, 0x5a, 0xfa, 0x07, 0xbf, 0xa8, 0x28, 0xd4, 0xbd, 0x12, 0x73, 0xf7, 0xdb,
-	0x7c, 0xe3, 0x2b, 0x7f, 0x9d, 0x4c, 0x3a, 0x62, 0x09, 0x60, 0x57, 0xb7, 0x5a, 0x7b, 0x7a, 0xb5,
-	0x6e, 0xed, 0xa9, 0x0a, 0x2a, 0x42, 0x8e, 0xce, 0x77, 0xea, 0xd5, 0x5d, 0x53, 0x4d, 0xa1, 0x19,
-	0xc8, 0xd3, 0xe9, 0x63, 0xdd, 0x30, 0x6b, 0xcd, 0x86, 0x3a, 0x29, 0x05, 0x0f, 0x75, 0xcb, 0xa8,
-	0x6d, 0x99, 0x6a, 0x1a, 0x2d, 0xc0, 0x2c, 0x15, 0xd4, 0x9b, 0xbb, 0xbb, 0xb5, 0xc6, 0x6e, 0xab,
-	0xae, 0x3f, 0xd6, 0xeb, 0xea, 0x14, 0x15, 0x9b, 0x31, 0xf1, 0x34, 0xdd, 0xae, 0x5e, 0x33, 0xad,
-	0xd6, 0x4e, 0xad, 0xae, 0x9b, 0x6a, 0x86, 0x6e, 0x67, 0xe8, 0xd5, 0x6d, 0x36, 0x57, 0xb3, 0x72,
-	0x77, 0xd3, 0xaa, 0x5a, 0xba, 0x9a, 0x43, 0x08, 0x4a, 0x74, 0x1a, 0xd8, 0xd0, 0x54, 0x41, 0xca,
-	0x76, 0x8c, 0xea, 0x43, 0xfd, 0x49, 0xd3, 0x78, 0x60, 0xaa, 0x79, 0x34, 0x0b, 0x45, 0x2a, 0xd3,
-	0xbf, 0xa9, 0x6f, 0xed, 0x5b, 0x4d, 0xc3, 0x54, 0x0b, 0x92, 0xc9, 0xaa, 0x9a, 0x0f, 0x4c, 0xb5,
-	0x28, 0xa7, 0xd5, 0x5d, 0xbd, 0x61, 0xa9, 0xf3, 0xe8, 0x3d, 0x78, 0xa7, 0x5e, 0xdd, 0x6f, 0x6c,
-	0xed, 0xb5, 0x1a, 0xba, 0x69, 0xe9, 0xdb, 0xe1, 0x16, 0x6a, 0x09, 0xbd, 0x0b, 0x0b, 0x4f, 0xaa,
-	0x35, 0x2b, 0xbe, 0x34, 0x43, 0x97, 0x1e, 0xd4, 0xea, 0xf5, 0xf8, 0x92, 0x4a, 0x29, 0x0d, 0xfd,
-	0x61, 0xf3, 0xb1, 0x1e, 0x5f, 0x5c, 0x40, 0x97, 0x61, 0x69, 0xcc, 0x7e, 0x2d, 0x53, 0x37, 0x99,
-	0x69, 0x67, 0x91, 0x06, 0x8b, 0x55, 0xcb, 0xaa, 0x6e, 0xed, 0x45, 0x56, 0x6b, 0x8d, 0x47, 0xfb,
-	0x96, 0x8a, 0x28, 0x7b, 0x6c, 0xad, 0xb9, 0x6f, 0xd1, 0xc5, 0x39, 0xee, 0x44, 0x2b, 0xbf, 0xbe,
-	0x44, 0x3f, 0x53, 0xfe, 0x91, 0xd7, 0xf7, 0x31, 0xba, 0x31, 0x12, 0x63, 0xa3, 0xe5, 0xa5, 0x04,
-	0xc5, 0x43, 0xea, 0x1e, 0xd0, 0x92, 0xb9, 0x75, 0x88, 0x6d, 0x97, 0x1c, 0x8a, 0x80, 0x5a, 0x4a,
-	0xd6, 0xdd, 0xc5, 0x64, 0x8f, 0xc1, 0x8c, 0x5c, 0x57, 0x0e, 0xd1, 0x06, 0xd0, 0x49, 0xeb, 0xc0,
-	0xb5, 0xbb, 0xbe, 0x88, 0xa4, 0xca, 0x58, 0xf5, 0x1d, 0x8a, 0x32, 0xb2, 0x5d, 0x31, 0x42, 0x55,
-	0x5e, 0xe0, 0x1f, 0xe3, 0x01, 0x2b, 0xd9, 0x78, 0x4d, 0xbd, 0x3c, 0x56, 0xfd, 0x31, 0xc7, 0xb1,
-	0x22, 0x5f, 0x8c, 0x25, 0x85, 0xec, 0x11, 0xa6, 0x2e, 0xa0, 0x48, 0xea, 0x13, 0xbe, 0x01, 0xb3,
-	0xdd, 0x58, 0x9f, 0x30, 0x9d, 0x50, 0xa3, 0x46, 0x89, 0x46, 0x7b, 0x85, 0xee, 0x99, 0xc2, 0xe5,
-	0xde, 0x48, 0xaf, 0x90, 0x39, 0xcf, 0xaa, 0x89, 0xfd, 0xc2, 0x46, 0xb4, 0x5f, 0xc8, 0x9e, 0x67,
-	0xd5, 0x84, 0x9e, 0x41, 0xbc, 0x12, 0x9f, 0xd8, 0x04, 0x8b, 0x32, 0x78, 0xfc, 0x2b, 0x31, 0x29,
-	0x8a, 0xbd, 0x12, 0x36, 0x42, 0xf7, 0xa1, 0x44, 0x95, 0x83, 0x2c, 0xe2, 0x8b, 0xd2, 0xf6, 0xf2,
-	0x58, 0x86, 0x20, 0xfb, 0xf8, 0x46, 0xb1, 0x1b, 0x9d, 0x4a, 0xae, 0x83, 0x81, 0xdd, 0xc3, 0x2f,
-	0xbc, 0xc1, 0x73, 0x5f, 0xd4, 0xb1, 0xe3, 0xb9, 0x76, 0x02, 0x28, 0xe3, 0x0a, 0xa7, 0x68, 0x17,
-	0xa8, 0xa0, 0x85, 0xbf, 0x8b, 0xdb, 0x43, 0xe2, 0x0d, 0x7c, 0x51, 0xb1, 0xae, 0x8c, 0xa5, 0xd2,
-	0x25, 0xd2, 0x28, 0x74, 0x23, 0x33, 0x69, 0x1d, 0x62, 0xfb, 0xcf, 0xfd, 0x72, 0xf1, 0x02, 0xeb,
-	0x58, 0x14, 0xc5, 0xac, 0xc3, 0x46, 0xe8, 0xdb, 0xe3, 0xba, 0xa5, 0x12, 0x23, 0xfa, 0x28, 0x99,
-	0xe8, 0xb5, 0x3b, 0x26, 0x71, 0x36, 0xa6, 0x5e, 0x9e, 0xb9, 0xe0, 0x6c, 0x55, 0x2a, 0x61, 0x67,
-	0x63, 0x23, 0xed, 0x2a, 0xe4, 0x82, 0x08, 0x45, 0x15, 0xc8, 0xf0, 0x90, 0x3e, 0x61, 0x1f, 0x90,
-	0xac, 0x88, 0x79, 0x29, 0xd4, 0xbe, 0x06, 0x59, 0x19, 0x8f, 0xe8, 0x43, 0x98, 0xe2, 0xe1, 0xab,
-	0x2c, 0x4f, 0x5e, 0xc9, 0xaf, 0xe7, 0xc5, 0x8e, 0x74, 0x51, 0x96, 0xdc, 0x6c, 0x5d, 0xab, 0xb1,
-	0xf2, 0x5e, 0x46, 0xde, 0x06, 0x14, 0x44, 0xe0, 0xb6, 0x9c, 0xfe, 0x81, 0x77, 0xe6, 0x43, 0x25,
-	0x50, 0x91, 0x1a, 0x3c, 0x7f, 0x1c, 0x8a, 0xe2, 0x9d, 0x82, 0x0c, 0x60, 0x7e, 0x86, 0xa2, 0x60,
-	0xe1, 0x00, 0x79, 0x78, 0x81, 0xd1, 0xae, 0xc1, 0xcc, 0xee, 0xeb, 0x77, 0x0a, 0x5a, 0x35, 0x5a,
-	0xf2, 0xdf, 0x00, 0xa0, 0x41, 0xc5, 0x8e, 0x2c, 0x77, 0x9b, 0x91, 0x4f, 0xec, 0xb8, 0x38, 0x72,
-	0xe0, 0xdc, 0x81, 0x98, 0xfb, 0xda, 0xad, 0xd1, 0x76, 0xc0, 0x77, 0xbe, 0x87, 0xd9, 0x4e, 0xb2,
-	0xe4, 0x67, 0x12, 0x84, 0x20, 0xdd, 0xb1, 0x89, 0xcd, 0x9a, 0x81, 0x82, 0xc1, 0xc6, 0xda, 0x5f,
-	0x14, 0x66, 0x69, 0x1e, 0x5c, 0x23, 0xbe, 0xa7, 0xfc, 0x9b, 0xbe, 0x17, 0x8b, 0x80, 0xd4, 0x1b,
-	0x46, 0x40, 0x3c, 0x2c, 0x27, 0xdf, 0x34, 0x2c, 0xb5, 0x1f, 0xa6, 0xa1, 0x38, 0x92, 0x03, 0x90,
-	0x09, 0x10, 0x49, 0x1e, 0xdc, 0xc0, 0xd7, 0x5e, 0x23, 0x79, 0x84, 0xa5, 0x8d, 0xb0, 0x69, 0x84,
-	0x46, 0xfb, 0xe5, 0x24, 0xe4, 0x46, 0x2a, 0xf0, 0xe0, 0xf0, 0xf1, 0x12, 0x29, 0x38, 0x5d, 0xb4,
-	0x44, 0x8a, 0x08, 0x8d, 0x7c, 0xa0, 0x5c, 0xeb, 0xa0, 0x1d, 0xc8, 0x4b, 0x8b, 0xf2, 0x8a, 0x92,
-	0x52, 0xcd, 0x0a, 0x2a, 0x69, 0xb3, 0xda, 0xf6, 0x26, 0x12, 0x4c, 0x10, 0xca, 0x0c, 0x90, 0x9a,
-	0xb5, 0x0e, 0xfa, 0x08, 0x8a, 0x01, 0x4f, 0xdf, 0xee, 0xe1, 0xf2, 0x64, 0xa4, 0x5b, 0x2c, 0xc8,
-	0xa5, 0x86, 0xdd, 0xc3, 0xb1, 0x0a, 0x2f, 0xfd, 0x1f, 0xd4, 0xf4, 0x55, 0x50, 0x23, 0x57, 0x1f,
-	0xc4, 0x26, 0x43, 0xf9, 0x0d, 0x5c, 0x3c, 0xcb, 0x67, 0xb2, 0x55, 0x63, 0xa6, 0x3d, 0x2a, 0x40,
-	0xf7, 0x61, 0x6e, 0x80, 0x7d, 0x6f, 0x38, 0x68, 0x63, 0xc6, 0xe0, 0xf8, 0x84, 0x06, 0x22, 0xff,
-	0x00, 0xbe, 0x2b, 0x58, 0x0c, 0x81, 0x30, 0x03, 0x80, 0x81, 0x06, 0x31, 0x99, 0xf6, 0xb3, 0x14,
-	0x73, 0x87, 0x48, 0xde, 0x36, 0x01, 0x22, 0x8e, 0x76, 0x91, 0x3b, 0x84, 0x8a, 0xe1, 0x6b, 0x94,
-	0xee, 0x10, 0xd2, 0xa0, 0x03, 0x98, 0x6f, 0x7b, 0xbd, 0x23, 0x17, 0xd3, 0x24, 0x1c, 0xa1, 0x4f,
-	0xbd, 0x39, 0xfd, 0x5c, 0x40, 0x18, 0xf1, 0xee, 0x06, 0xe4, 0x82, 0x19, 0xaa, 0x42, 0x29, 0xe2,
-	0x75, 0x61, 0xc6, 0x9b, 0x8f, 0xf9, 0x5d, 0x98, 0x42, 0x8a, 0x07, 0x51, 0xa1, 0xf6, 0xa3, 0x14,
-	0x14, 0xa2, 0x81, 0x89, 0x9a, 0x90, 0x0b, 0xe3, 0x99, 0x1b, 0xe7, 0xea, 0xc5, 0xf1, 0x1c, 0xf8,
-	0xa5, 0x4c, 0x54, 0x01, 0x07, 0x7a, 0x06, 0xe1, 0x83, 0x8c, 0xa4, 0x8a, 0x37, 0xa4, 0x46, 0x01,
-	0x5b, 0x00, 0xd1, 0xee, 0x43, 0x56, 0x4e, 0xd0, 0xbd, 0x88, 0xdb, 0x47, 0x6c, 0x32, 0x77, 0x36,
-	0x80, 0x42, 0x93, 0x04, 0xb1, 0xc0, 0x2c, 0xf2, 0xab, 0x14, 0x4b, 0x8f, 0x3c, 0xc3, 0xdd, 0x84,
-	0xe2, 0x11, 0xee, 0x77, 0x68, 0x11, 0x26, 0x53, 0x64, 0xf4, 0x83, 0x44, 0x41, 0x92, 0x44, 0xe0,
-	0xb8, 0xde, 0x0d, 0x28, 0x7c, 0x67, 0x88, 0x87, 0xb8, 0x23, 0xd4, 0x52, 0xe3, 0xd4, 0xf2, 0x1c,
-	0xc6, 0xb5, 0x6e, 0x41, 0x89, 0x5f, 0xf6, 0x05, 0x7a, 0x93, 0xe3, 0xf4, 0x8a, 0x12, 0xc8, 0x35,
-	0xef, 0x80, 0x4a, 0xf0, 0xa0, 0xe7, 0xf4, 0x6d, 0x12, 0xe8, 0xa6, 0xc7, 0xe9, 0xce, 0x84, 0x50,
-	0xae, 0x7d, 0x1b, 0x66, 0xc2, 0x57, 0xc4, 0x95, 0xa7, 0xc6, 0x29, 0x97, 0x02, 0x24, 0xd3, 0xd5,
-	0x36, 0x98, 0xb5, 0xd8, 0xf7, 0x1e, 0xad, 0x01, 0xb0, 0x17, 0x29, 0xed, 0x4e, 0xc3, 0x55, 0x15,
-	0x14, 0x0c, 0xc1, 0xbb, 0x73, 0x5b, 0x0e, 0xb5, 0x7f, 0x28, 0xc9, 0x17, 0x36, 0x4b, 0x34, 0x05,
-	0x3a, 0x44, 0xa6, 0x0f, 0x85, 0x5d, 0x83, 0x00, 0x15, 0x89, 0x0c, 0xf1, 0x01, 0x4c, 0xf1, 0x62,
-	0x32, 0xc5, 0x5a, 0x0b, 0x35, 0x72, 0x4e, 0x5e, 0x3e, 0xf2, 0x65, 0x74, 0x1d, 0xa6, 0x07, 0xd8,
-	0xf6, 0xbd, 0x3e, 0xfb, 0xa0, 0x94, 0xd6, 0xcb, 0x67, 0x80, 0x43, 0x9a, 0x47, 0xe8, 0xba, 0x21,
-	0x70, 0xe8, 0x2e, 0xad, 0x93, 0x7b, 0x0e, 0xe1, 0xd7, 0x78, 0xbc, 0xfe, 0xff, 0xbf, 0x88, 0x96,
-	0x4c, 0x3b, 0xf5, 0x00, 0x64, 0x44, 0x14, 0x50, 0x99, 0xd6, 0x0d, 0xbe, 0x6f, 0x77, 0xf9, 0xa5,
-	0x7a, 0xce, 0x90, 0xd3, 0x95, 0x9f, 0xa4, 0xfe, 0x9b, 0x9d, 0xef, 0x68, 0x8b, 0x3b, 0x3d, 0xda,
-	0xe2, 0x66, 0x46, 0x5b, 0xdc, 0x6c, 0x42, 0x8b, 0x9b, 0x4b, 0x68, 0x71, 0x21, 0xde, 0xe2, 0xe6,
-	0x47, 0x5b, 0xdc, 0xc2, 0x68, 0x8b, 0x7b, 0x4e, 0x17, 0x5b, 0x14, 0xfd, 0xe2, 0x6f, 0xa6, 0x20,
-	0xbc, 0xca, 0x40, 0x1f, 0x8f, 0x34, 0x8c, 0xef, 0x25, 0xdf, 0x7f, 0xc4, 0x3b, 0xc6, 0xb5, 0xa0,
-	0xca, 0x89, 0xff, 0x03, 0x12, 0xaa, 0x6d, 0xdb, 0xc4, 0xe6, 0x25, 0x10, 0xba, 0x05, 0x19, 0xfa,
-	0xcd, 0x19, 0x78, 0x6e, 0x62, 0x83, 0x18, 0xea, 0x6c, 0x71, 0x94, 0x21, 0xe1, 0xda, 0x4f, 0x15,
-	0x48, 0x53, 0x22, 0x74, 0x7b, 0xe4, 0xa8, 0xcb, 0xe7, 0xec, 0x19, 0x3f, 0x2f, 0x8a, 0x9c, 0x57,
-	0x54, 0x65, 0x2b, 0x77, 0x92, 0xbc, 0x23, 0x07, 0x53, 0xa6, 0xb5, 0x5d, 0x6b, 0xa8, 0x0a, 0x02,
-	0x98, 0x36, 0xad, 0xed, 0xe6, 0xbe, 0xa5, 0xa6, 0xc4, 0x58, 0x37, 0x0c, 0x75, 0x52, 0xdc, 0xdd,
-	0xfc, 0x2e, 0x05, 0x19, 0x71, 0x56, 0x74, 0x77, 0xe4, 0x64, 0x97, 0xcf, 0x7f, 0xb2, 0xf8, 0xe1,
-	0x6e, 0x42, 0x96, 0x90, 0x13, 0x1e, 0xc2, 0xdc, 0xa0, 0x25, 0xe9, 0xfe, 0xd6, 0x53, 0x96, 0x35,
-	0xf3, 0xa7, 0x2f, 0x97, 0x32, 0x62, 0x62, 0x64, 0x08, 0x39, 0xa1, 0x03, 0xb4, 0x03, 0xb9, 0x43,
-	0x6c, 0x0f, 0xc8, 0x33, 0x6c, 0x13, 0x61, 0xd5, 0x2b, 0x17, 0xec, 0xbd, 0x27, 0xf1, 0x46, 0xa8,
-	0xaa, 0xdd, 0x81, 0x5c, 0x20, 0x47, 0x6b, 0x90, 0x75, 0xfa, 0x04, 0x0f, 0x8e, 0x6d, 0xf7, 0xbc,
-	0x1b, 0xfb, 0x00, 0xb4, 0x72, 0x33, 0xc9, 0x8c, 0x05, 0xc8, 0x5a, 0xd6, 0xd3, 0x56, 0xad, 0xb1,
-	0xd3, 0xe4, 0x21, 0xb6, 0xa7, 0x57, 0x0d, 0x6b, 0x53, 0xaf, 0x5a, 0xf2, 0xf2, 0x6b, 0xe5, 0x7a,
-	0x92, 0x5e, 0x16, 0xd2, 0xdb, 0x55, 0xab, 0xaa, 0x2a, 0x54, 0x4c, 0x7d, 0xd7, 0x68, 0xd6, 0xa5,
-	0xc6, 0xe6, 0xd6, 0xe7, 0xaf, 0x2a, 0x13, 0x7f, 0x7a, 0x55, 0x99, 0xf8, 0xdb, 0xab, 0x8a, 0xf2,
-	0xe5, 0xab, 0x8a, 0xf2, 0xcf, 0x57, 0x15, 0xe5, 0xfb, 0xa7, 0x15, 0xe5, 0xd3, 0xd3, 0x8a, 0xf2,
-	0xdb, 0xd3, 0x8a, 0xf2, 0xfb, 0xd3, 0x8a, 0xf2, 0xd9, 0x69, 0x45, 0xf9, 0xfc, 0xb4, 0xa2, 0xfc,
-	0xfd, 0xb4, 0x32, 0xf1, 0xe5, 0x69, 0x45, 0xf9, 0xf1, 0x17, 0x95, 0x89, 0x9f, 0x7f, 0x51, 0x51,
-	0x3e, 0x99, 0x62, 0x36, 0xf9, 0x57, 0x00, 0x00, 0x00, 0xff, 0xff, 0x3b, 0xba, 0x47, 0xd2, 0x0c,
-	0x1d, 0x00, 0x00,
+	// 2843 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x5a, 0x4d, 0x6c, 0x23, 0x49,
+	0xf5, 0x9f, 0x76, 0x9c, 0xc4, 0x7e, 0x8e, 0xed, 0x4e, 0xe5, 0x63, 0x3c, 0x3d, 0x59, 0x27, 0x9b,
+	0xd1, 0xee, 0xce, 0xfe, 0xf7, 0x3f, 0xc9, 0x90, 0xfd, 0x60, 0xb5, 0xd9, 0x5d, 0xc9, 0x89, 0x3b,
+	0x89, 0x67, 0x3c, 0xf6, 0x50, 0xdd, 0x99, 0xb0, 0x2b, 0x90, 0xe9, 0x89, 0x3b, 0x4e, 0x6b, 0x6c,
+	0xb7, 0xe9, 0x6e, 0x67, 0x18, 0x4e, 0x1c, 0x39, 0x20, 0xc1, 0x81, 0x23, 0x07, 0x24, 0x84, 0xb4,
+	0x07, 0xee, 0x70, 0x42, 0x5c, 0x10, 0x8b, 0xc4, 0x61, 0x8f, 0x1c, 0xd0, 0x88, 0xc9, 0x5e, 0xe0,
+	0x80, 0xb4, 0x17, 0x04, 0x47, 0x54, 0x5f, 0xdd, 0x6d, 0x77, 0xb7, 0x27, 0x3b, 0x44, 0x48, 0x70,
+	0x89, 0xba, 0x5e, 0xbd, 0xf7, 0x7b, 0x55, 0xaf, 0xab, 0xde, 0x7b, 0xfd, 0x73, 0x60, 0xde, 0xe8,
+	0x98, 0x7d, 0x6f, 0x93, 0xfe, 0xdd, 0x18, 0x38, 0xb6, 0x67, 0xa3, 0x5c, 0xcf, 0x74, 0x6d, 0x77,
+	0x83, 0x8a, 0x94, 0xdb, 0x1d, 0xcb, 0x3b, 0x1d, 0x3e, 0xdc, 0x38, 0xb6, 0x7b, 0x9b, 0x54, 0xce,
+	0xfe, 0xde, 0xea, 0xd8, 0x9b, 0xc6, 0xc0, 0xda, 0x3c, 0xfb, 0xca, 0x66, 0xd7, 0x7a, 0xc8, 0x64,
+	0xcc, 0x5c, 0xb9, 0x15, 0xb2, 0xe8, 0xd8, 0x1d, 0x7b, 0x93, 0x8a, 0x1f, 0x0e, 0x4f, 0xe8, 0x88,
+	0x0e, 0xe8, 0x13, 0x53, 0x5f, 0xff, 0xc7, 0x0d, 0x48, 0xef, 0x1a, 0xdd, 0x2e, 0xba, 0x0d, 0x69,
+	0xef, 0xc9, 0xc0, 0x2c, 0x49, 0x6b, 0xd2, 0xcd, 0xc2, 0xd6, 0xf2, 0x46, 0x68, 0x15, 0x1b, 0x44,
+	0x61, 0x43, 0x7f, 0x32, 0x30, 0x77, 0xd2, 0x9f, 0x3e, 0x5d, 0xbd, 0x82, 0xa9, 0x26, 0xfa, 0x00,
+	0x72, 0x1d, 0xd3, 0x6b, 0xf5, 0x4c, 0xcf, 0xb1, 0x8e, 0xdd, 0x52, 0x6a, 0x4d, 0xba, 0x99, 0xdb,
+	0x5a, 0x89, 0x1a, 0xee, 0x9b, 0xde, 0x3d, 0xa6, 0x83, 0xa1, 0xe3, 0x3f, 0xa3, 0x7b, 0x30, 0xef,
+	0x9a, 0x5e, 0xab, 0x6b, 0x77, 0x3a, 0x56, 0xbf, 0xd3, 0xea, 0x9a, 0x67, 0x66, 0xb7, 0x34, 0x45,
+	0x41, 0x5e, 0x8e, 0x82, 0x68, 0xa6, 0x57, 0x67, 0x9a, 0x75, 0xa2, 0x88, 0x8b, 0xee, 0xa8, 0x00,
+	0xbd, 0x07, 0xd0, 0xb5, 0x5c, 0xaf, 0x75, 0x62, 0x75, 0x4d, 0xb7, 0x94, 0xa6, 0x38, 0xd7, 0xa3,
+	0x38, 0x75, 0xcb, 0xf5, 0xf6, 0x88, 0x0a, 0xce, 0x76, 0xc5, 0x23, 0xfa, 0x2a, 0x64, 0x1d, 0xd3,
+	0x68, 0x53, 0xdb, 0xd2, 0x34, 0x35, 0x55, 0xa2, 0xa6, 0xd8, 0x34, 0xda, 0x44, 0x1f, 0x67, 0x1c,
+	0xfe, 0x84, 0x8e, 0xe1, 0x6a, 0xd7, 0x18, 0xf6, 0x8f, 0x4f, 0x5b, 0x7d, 0xd3, 0xf5, 0xcc, 0x76,
+	0xeb, 0xd8, 0xee, 0x7b, 0x86, 0xd5, 0x37, 0x9d, 0xd2, 0x0c, 0x85, 0x79, 0x2d, 0x66, 0x05, 0xd4,
+	0xa0, 0x41, 0xf5, 0x77, 0x85, 0xfa, 0x4e, 0xaa, 0x24, 0xe1, 0xa5, 0x6e, 0xdc, 0x14, 0xfa, 0x26,
+	0x2c, 0x3d, 0x36, 0x2c, 0x2f, 0xea, 0x62, 0x96, 0xba, 0x78, 0x25, 0xea, 0xe2, 0xc8, 0xb0, 0xbc,
+	0x38, 0x07, 0x0b, 0x8f, 0xa3, 0x13, 0x04, 0xfe, 0x91, 0xd5, 0xed, 0x46, 0xe1, 0x33, 0x49, 0xf0,
+	0x77, 0xad, 0x6e, 0x37, 0x16, 0xfe, 0x51, 0x74, 0x02, 0x0d, 0x61, 0x35, 0x21, 0x44, 0x2d, 0xd7,
+	0x74, 0x5d, 0xcb, 0xee, 0x97, 0xb2, 0xd4, 0xd1, 0xc6, 0x05, 0x43, 0xa5, 0x31, 0x2b, 0xbc, 0xd2,
+	0x9d, 0x30, 0x8b, 0xbe, 0x01, 0xcb, 0x86, 0xe7, 0x19, 0xc7, 0xa7, 0x21, 0x7f, 0x56, 0x7f, 0x30,
+	0xf4, 0x4a, 0x40, 0xbd, 0xbd, 0x1a, 0xf5, 0x56, 0xa1, 0xfa, 0x3e, 0x52, 0x8d, 0x68, 0xe3, 0x45,
+	0x23, 0x46, 0x8a, 0x5a, 0x70, 0x35, 0x82, 0x6e, 0x0f, 0x3d, 0x02, 0x9f, 0x4b, 0x7a, 0xef, 0x63,
+	0xf0, 0x4d, 0xaa, 0x8e, 0x97, 0x8c, 0x38, 0x31, 0x39, 0x58, 0x8e, 0xd9, 0xb3, 0xcf, 0xcc, 0xe8,
+	0x6b, 0x99, 0x4b, 0x72, 0x80, 0xa9, 0x41, 0xec, 0xc1, 0x72, 0xe2, 0xa6, 0x50, 0x1d, 0x64, 0xfe,
+	0x6a, 0x02, 0xf4, 0x7c, 0xd2, 0x05, 0x64, 0xef, 0xc2, 0x37, 0xc6, 0xc5, 0xee, 0xa8, 0x00, 0xed,
+	0x41, 0x81, 0x1e, 0xd3, 0x00, 0xab, 0x40, 0xb1, 0x56, 0xe3, 0xcf, 0x67, 0x80, 0x94, 0x7f, 0x1c,
+	0x1e, 0x12, 0x1c, 0x7a, 0x1e, 0x03, 0x9c, 0x62, 0x12, 0x0e, 0x39, 0x88, 0x21, 0x9c, 0x47, 0xe1,
+	0x21, 0xd9, 0x1d, 0x0f, 0x61, 0x80, 0x24, 0x27, 0xed, 0x8e, 0xc5, 0x2e, 0xb4, 0x3b, 0x67, 0x54,
+	0x80, 0x6c, 0x58, 0x31, 0xda, 0xed, 0x96, 0x63, 0xba, 0xf6, 0xd0, 0x39, 0x36, 0x5b, 0x03, 0xc7,
+	0x3e, 0xb3, 0xda, 0xa6, 0x43, 0xc0, 0x4f, 0xac, 0x4e, 0x69, 0x3e, 0xe9, 0x0c, 0x1f, 0x0e, 0xda,
+	0x86, 0x67, 0x62, 0x6e, 0x77, 0x9f, 0x9b, 0xed, 0x52, 0x2b, 0x7c, 0xcd, 0x68, 0xb7, 0xe3, 0xa7,
+	0xc8, 0xbd, 0x19, 0x52, 0xd3, 0x64, 0x9f, 0xe8, 0x85, 0x7c, 0xae, 0x0c, 0x27, 0xcc, 0x12, 0xb7,
+	0x3c, 0x6a, 0x89, 0x6e, 0x17, 0x92, 0xdc, 0xb2, 0x20, 0x26, 0xb9, 0x75, 0x26, 0xcc, 0x2a, 0xdb,
+	0x00, 0x41, 0x99, 0x40, 0xb7, 0x60, 0xd6, 0xb3, 0x7a, 0xa6, 0x3d, 0xf4, 0x68, 0x39, 0xca, 0x6d,
+	0x2d, 0x70, 0x67, 0xd5, 0xa1, 0x63, 0x78, 0x96, 0xdd, 0xaf, 0xf5, 0x4f, 0x6c, 0x2c, 0x74, 0x94,
+	0x36, 0x14, 0xc7, 0xca, 0x03, 0x52, 0x60, 0x9a, 0x15, 0x14, 0x69, 0x2d, 0x75, 0x33, 0xcf, 0xcb,
+	0x16, 0x13, 0xa1, 0xb7, 0x21, 0xd3, 0xe6, 0x38, 0xa5, 0xd4, 0x5a, 0x2a, 0x01, 0x9e, 0xdb, 0xf8,
+	0xaa, 0xca, 0x2b, 0x90, 0xf5, 0x8b, 0x07, 0x2a, 0x41, 0x7a, 0x60, 0x78, 0xa7, 0x14, 0x3e, 0x2b,
+	0xaa, 0x22, 0x91, 0x28, 0x1f, 0x43, 0x46, 0x14, 0x8a, 0x64, 0x2d, 0xb4, 0x02, 0x33, 0xf6, 0xc9,
+	0x89, 0x6b, 0x7a, 0x74, 0x05, 0x69, 0x3e, 0xc7, 0x65, 0x68, 0x19, 0x66, 0xba, 0x66, 0xbf, 0xe3,
+	0x9d, 0xd2, 0x7a, 0x98, 0xc6, 0x7c, 0xa4, 0xfc, 0x56, 0x82, 0xa5, 0xd8, 0x9c, 0x88, 0xee, 0xc0,
+	0x5c, 0x28, 0xcf, 0xb5, 0xa9, 0xc7, 0xdc, 0x16, 0xe2, 0xfb, 0x0a, 0xb2, 0x57, 0x75, 0x67, 0x81,
+	0x78, 0x3a, 0x7f, 0xba, 0x9a, 0x0b, 0x09, 0x71, 0xce, 0x37, 0xae, 0xb5, 0xd1, 0xff, 0xc3, 0xec,
+	0xb1, 0xdd, 0xeb, 0x19, 0xfd, 0x36, 0xaf, 0xe9, 0x01, 0x0c, 0x95, 0xb2, 0xe0, 0x73, 0x15, 0xb4,
+	0x05, 0xd9, 0xe0, 0x7e, 0xb1, 0xf2, 0xbd, 0x18, 0x71, 0x4b, 0x2c, 0x02, 0x35, 0xc5, 0x80, 0x85,
+	0x98, 0x12, 0x75, 0x99, 0x9b, 0x50, 0x9e, 0xc0, 0x42, 0x4c, 0x99, 0xba, 0xd4, 0x38, 0x2d, 0xc3,
+	0x8c, 0x6b, 0x75, 0xfa, 0x46, 0x97, 0x86, 0x69, 0x1a, 0xf3, 0x91, 0x72, 0x0c, 0x4b, 0xb1, 0xa9,
+	0xf8, 0x52, 0xf7, 0xf7, 0x07, 0x09, 0x56, 0x26, 0x95, 0xc7, 0xff, 0xb2, 0x13, 0xf1, 0x49, 0x0a,
+	0x16, 0xe3, 0xea, 0x2f, 0x52, 0x47, 0xda, 0xd2, 0x37, 0x2e, 0x56, 0xb5, 0xa3, 0xbd, 0xea, 0xde,
+	0x58, 0x34, 0xc6, 0xb7, 0x11, 0x44, 0xa3, 0x38, 0x31, 0x12, 0x55, 0x80, 0x81, 0x63, 0x1f, 0x9b,
+	0xae, 0xdb, 0xb2, 0x6c, 0xbe, 0xb9, 0xd1, 0x5e, 0xf9, 0x3e, 0x9b, 0xae, 0x35, 0x77, 0xf2, 0xe7,
+	0x4f, 0x57, 0xb3, 0xfe, 0x10, 0x67, 0xb9, 0x61, 0xcd, 0x5e, 0xdf, 0x86, 0x34, 0x59, 0x21, 0xca,
+	0xc1, 0xec, 0x61, 0xe3, 0x6e, 0xa3, 0x79, 0xd4, 0x90, 0xaf, 0x20, 0x19, 0xe6, 0x76, 0x9b, 0x0d,
+	0xbd, 0x52, 0x6b, 0xa8, 0xb8, 0x55, 0xab, 0xca, 0x12, 0x2a, 0x00, 0xdc, 0xc7, 0xcd, 0x5d, 0x55,
+	0xd3, 0x5a, 0xb5, 0xa6, 0x9c, 0x52, 0xd2, 0xdf, 0xff, 0x59, 0x59, 0x22, 0xc7, 0x2b, 0xb6, 0x95,
+	0xb8, 0xd4, 0xe3, 0xf5, 0x85, 0x04, 0xc5, 0x7a, 0xa4, 0xc0, 0x5f, 0x14, 0xbf, 0x78, 0x89, 0xa7,
+	0xe9, 0x4d, 0xd2, 0x9b, 0xb3, 0x9a, 0xe1, 0x96, 0xa6, 0xd6, 0xa6, 0x6e, 0xe6, 0xb6, 0x8a, 0x5c,
+	0x5f, 0xd4, 0x12, 0xfe, 0xa6, 0x03, 0xbd, 0xd1, 0x23, 0x98, 0xbe, 0xd8, 0x11, 0x3c, 0x82, 0xfc,
+	0xd1, 0x58, 0x23, 0x72, 0x29, 0xfb, 0x55, 0x6c, 0xc8, 0x8f, 0x34, 0x2a, 0x97, 0x16, 0xc8, 0xa4,
+	0x04, 0xf4, 0x11, 0x14, 0xc7, 0xfa, 0x99, 0x4b, 0xdb, 0x0b, 0x86, 0x6b, 0x95, 0xc4, 0x96, 0xe5,
+	0x6d, 0x48, 0x5b, 0xfd, 0x13, 0x9b, 0x83, 0x5f, 0x1f, 0x7b, 0x4b, 0x42, 0x39, 0x54, 0x5c, 0xa9,
+	0xba, 0x72, 0x08, 0x2b, 0x93, 0x1a, 0x96, 0x17, 0x85, 0xc5, 0xb0, 0x32, 0xa9, 0x21, 0x21, 0xc5,
+	0x99, 0x67, 0x96, 0x50, 0x71, 0xa6, 0xc9, 0xa2, 0x04, 0xe9, 0xbe, 0xd1, 0x33, 0x69, 0x69, 0xf6,
+	0x67, 0x88, 0x64, 0xfd, 0xf7, 0xd3, 0x71, 0x37, 0xb7, 0x00, 0xb0, 0xaf, 0xea, 0xad, 0x03, 0xb5,
+	0x52, 0xd7, 0x0f, 0x64, 0x09, 0xe5, 0x21, 0x4b, 0xc6, 0x7b, 0xf5, 0xca, 0xbe, 0x26, 0xa7, 0x50,
+	0x11, 0x72, 0x64, 0xf8, 0x40, 0xc5, 0x5a, 0xad, 0xd9, 0x90, 0xa7, 0x84, 0xe0, 0x9e, 0xaa, 0xe3,
+	0xda, 0xae, 0x26, 0xa7, 0xd1, 0x12, 0xcc, 0x13, 0x41, 0xbd, 0xb9, 0xbf, 0x5f, 0x6b, 0xec, 0xb7,
+	0xea, 0xea, 0x03, 0xb5, 0x2e, 0x4f, 0x13, 0xb1, 0x16, 0x11, 0xcf, 0x10, 0x77, 0xf5, 0x9a, 0xa6,
+	0xb7, 0xf6, 0x6a, 0x75, 0x55, 0x93, 0x67, 0x89, 0x3b, 0xac, 0x56, 0xaa, 0x74, 0x2c, 0x67, 0x84,
+	0x77, 0x4d, 0xaf, 0xe8, 0xaa, 0x9c, 0x45, 0x08, 0x0a, 0x64, 0xe8, 0xa7, 0x16, 0x4d, 0x06, 0x21,
+	0xdb, 0xc3, 0x95, 0x7b, 0xea, 0x51, 0x13, 0xdf, 0xd5, 0xe4, 0x1c, 0x9a, 0x87, 0x3c, 0x91, 0xa9,
+	0x5f, 0x57, 0x77, 0x0f, 0xf5, 0x26, 0xd6, 0xe4, 0x39, 0x81, 0xa4, 0x57, 0xb4, 0xbb, 0x9a, 0x9c,
+	0x17, 0xc3, 0xca, 0xbe, 0xda, 0xd0, 0xe5, 0x45, 0xa4, 0xc0, 0x32, 0x19, 0x62, 0x55, 0x6b, 0x1e,
+	0xe2, 0x5d, 0xb5, 0x75, 0x1f, 0x37, 0x1f, 0xd4, 0xaa, 0xc4, 0x81, 0x82, 0x56, 0xe1, 0x6a, 0xbd,
+	0x72, 0xd8, 0xd8, 0x3d, 0x68, 0x35, 0x54, 0x4d, 0x57, 0xab, 0x81, 0x7b, 0xb9, 0xa0, 0xa4, 0x32,
+	0x12, 0x7a, 0x09, 0x96, 0x8e, 0x2a, 0x35, 0x3d, 0x3a, 0x5d, 0x14, 0xd3, 0x77, 0x6b, 0xf5, 0x7a,
+	0x74, 0x5a, 0xa6, 0xd3, 0xab, 0x70, 0x15, 0xab, 0xf7, 0x9a, 0x0f, 0xd4, 0xa8, 0xc2, 0x12, 0x55,
+	0xb8, 0x01, 0xab, 0x09, 0xfe, 0x5b, 0x9a, 0xaa, 0xd1, 0xd7, 0x30, 0x4f, 0x36, 0x50, 0xd1, 0xf5,
+	0xca, 0xee, 0x41, 0x68, 0xb6, 0xd6, 0xb8, 0x7f, 0xa8, 0xcb, 0x08, 0x5d, 0x87, 0xab, 0x91, 0xb9,
+	0xe6, 0xa1, 0x4e, 0x26, 0x17, 0xd0, 0x22, 0xc8, 0x1c, 0x3d, 0xf0, 0xbb, 0x4c, 0x82, 0x4a, 0xb7,
+	0x14, 0xc8, 0xae, 0x12, 0x19, 0xdd, 0x47, 0x20, 0x2b, 0x11, 0x6b, 0xbe, 0xf8, 0x40, 0x7a, 0x0d,
+	0xad, 0xc1, 0x4a, 0xa5, 0x5a, 0x8d, 0x46, 0x93, 0x28, 0xed, 0xd5, 0xf6, 0xe5, 0xeb, 0x64, 0x4f,
+	0x87, 0xf7, 0xab, 0x15, 0x5d, 0x4d, 0x56, 0x5a, 0x21, 0x4a, 0x1c, 0x3c, 0x51, 0xe9, 0x25, 0x56,
+	0x47, 0xd6, 0xff, 0xf6, 0x32, 0xe9, 0x54, 0xdd, 0x81, 0xdd, 0x77, 0x4d, 0xf4, 0xd6, 0x48, 0x99,
+	0x1d, 0x25, 0x3f, 0x84, 0x52, 0xb4, 0xaa, 0x7e, 0x08, 0xd0, 0x31, 0xbd, 0xd6, 0xa9, 0x69, 0x74,
+	0xbd, 0x53, 0x9e, 0xcc, 0x57, 0xe3, 0x6d, 0xf7, 0x4d, 0xef, 0x80, 0xaa, 0xe1, 0x6c, 0x47, 0x3c,
+	0xa2, 0x6d, 0x20, 0x83, 0xd6, 0x49, 0xd7, 0xe8, 0xb8, 0xbc, 0x98, 0x96, 0x13, 0xcd, 0xf7, 0x88,
+	0x16, 0xce, 0x74, 0xf8, 0x13, 0xaa, 0x30, 0xfa, 0xe9, 0xcc, 0x74, 0x28, 0x89, 0xc0, 0xb2, 0xfc,
+	0x5a, 0xa2, 0xf9, 0x03, 0xa6, 0x47, 0x29, 0x28, 0xfe, 0x2c, 0x20, 0x04, 0x83, 0x35, 0xfd, 0x1c,
+	0x88, 0x38, 0x16, 0xeb, 0x6b, 0x30, 0xdf, 0x89, 0xb0, 0x58, 0x33, 0x31, 0xcc, 0x49, 0x18, 0x68,
+	0x94, 0xc9, 0xea, 0x8c, 0x7d, 0xbb, 0x7c, 0x38, 0xc2, 0x64, 0xcd, 0x4e, 0x8a, 0x6a, 0x2c, 0x9b,
+	0xb5, 0x1d, 0x66, 0xb3, 0x32, 0x93, 0xa2, 0x1a, 0xc3, 0x68, 0xf1, 0x57, 0xe2, 0x7a, 0x86, 0x67,
+	0x72, 0x62, 0x26, 0xf9, 0x95, 0x68, 0x44, 0x8b, 0xbe, 0x12, 0xfa, 0x84, 0xee, 0x40, 0x81, 0x18,
+	0xfb, 0x05, 0xc3, 0xe5, 0x64, 0xcb, 0x8d, 0x44, 0x04, 0xbf, 0xd0, 0xb8, 0x38, 0xdf, 0x09, 0x0f,
+	0x05, 0xd6, 0x89, 0x63, 0xf4, 0xcc, 0xc7, 0xb6, 0xf3, 0xc8, 0xe5, 0xcc, 0x4a, 0x32, 0xd6, 0x9e,
+	0xaf, 0x4a, 0xb1, 0x82, 0x21, 0xda, 0x07, 0x22, 0x68, 0x99, 0xdf, 0x31, 0x8f, 0x87, 0x9e, 0xed,
+	0xb8, 0x9c, 0x43, 0x59, 0x4f, 0x84, 0x52, 0x85, 0x26, 0x9e, 0xeb, 0x84, 0x46, 0x22, 0x3a, 0x9e,
+	0xe1, 0x3e, 0x72, 0x39, 0x55, 0x92, 0x1c, 0x1d, 0x9d, 0x68, 0xd1, 0xe8, 0xd0, 0xa7, 0x64, 0x1e,
+	0x8f, 0xf1, 0x24, 0xaf, 0xc7, 0x03, 0xc5, 0x7c, 0x28, 0xc5, 0xf3, 0x78, 0x7c, 0x6d, 0xd4, 0x9c,
+	0x53, 0x26, 0xc9, 0x6b, 0xab, 0x10, 0x09, 0x5d, 0x1b, 0x7d, 0x22, 0xd1, 0x1e, 0x23, 0x6f, 0xe4,
+	0x49, 0xd1, 0x9e, 0x48, 0xe0, 0x7c, 0x0b, 0x96, 0xc9, 0x42, 0x22, 0xfc, 0x81, 0xcb, 0x49, 0x92,
+	0xff, 0x4b, 0x5c, 0xd5, 0x78, 0xa5, 0x76, 0xf1, 0x62, 0x27, 0x46, 0xaa, 0xbc, 0x01, 0x59, 0x3f,
+	0x9f, 0xa0, 0x32, 0xcc, 0xb2, 0x04, 0xf4, 0x84, 0x96, 0xf2, 0x0c, 0xcf, 0x50, 0x42, 0xa8, 0xbc,
+	0x09, 0x19, 0x91, 0x3d, 0xd0, 0x6b, 0x30, 0xcd, 0x92, 0x8d, 0x44, 0x1b, 0xc9, 0x1c, 0x5f, 0x09,
+	0x99, 0x14, 0x1c, 0x01, 0x9d, 0x57, 0x6a, 0x94, 0x8f, 0x10, 0x79, 0x62, 0x1b, 0xe6, 0x78, 0x9a,
+	0x69, 0x85, 0x3a, 0x11, 0xd1, 0x3d, 0x71, 0xad, 0x50, 0x03, 0x92, 0x3b, 0x0b, 0x44, 0x51, 0x6a,
+	0x43, 0xa4, 0x1b, 0xb6, 0x86, 0x3c, 0x47, 0x61, 0x0a, 0x62, 0xf1, 0x5c, 0x47, 0xb9, 0x05, 0xc5,
+	0xfd, 0x8b, 0x53, 0x1b, 0x4a, 0x25, 0xcc, 0x51, 0xbc, 0x05, 0x40, 0x52, 0x00, 0x5d, 0xb2, 0xf0,
+	0x26, 0x5a, 0x67, 0xa2, 0x11, 0x5a, 0x70, 0xf6, 0x84, 0x8f, 0x5d, 0xe5, 0xdd, 0x51, 0xfe, 0xc2,
+	0xb5, 0xbe, 0xcb, 0x5a, 0x24, 0xc1, 0x51, 0x50, 0x09, 0x42, 0x90, 0x6e, 0x1b, 0x9e, 0x41, 0x5b,
+	0xa4, 0x39, 0x4c, 0x9f, 0x95, 0x3f, 0x49, 0x34, 0xd2, 0x2c, 0x15, 0x8c, 0xdc, 0x14, 0xe9, 0x4b,
+	0xde, 0x94, 0xc8, 0x7d, 0x4d, 0xbd, 0xe0, 0x7d, 0x8d, 0x26, 0x91, 0xa9, 0x17, 0x4d, 0x22, 0xca,
+	0x0f, 0xd2, 0x90, 0x1f, 0xc9, 0x58, 0x48, 0x03, 0x08, 0xa5, 0x3a, 0x16, 0xe0, 0x5b, 0x17, 0x48,
+	0x75, 0x41, 0xbf, 0xcd, 0x63, 0x1a, 0x82, 0x51, 0x7e, 0x3e, 0x05, 0xd9, 0x11, 0xca, 0xc0, 0x5f,
+	0x7c, 0xb4, 0x6f, 0xf7, 0x57, 0x17, 0xfe, 0xa6, 0x0b, 0x09, 0x71, 0xce, 0x37, 0xae, 0xb5, 0xd1,
+	0x1e, 0xe4, 0x44, 0x44, 0xd9, 0x27, 0x30, 0x81, 0x9a, 0xe7, 0x50, 0x22, 0x66, 0xb5, 0xea, 0x0e,
+	0xe2, 0x48, 0x10, 0xc8, 0x30, 0x08, 0xcb, 0x5a, 0x1b, 0xbd, 0x0e, 0x79, 0x1f, 0x87, 0xf6, 0xc9,
+	0x53, 0xa1, 0x3e, 0x79, 0x4e, 0x4c, 0x35, 0x8c, 0x9e, 0x19, 0xf9, 0x24, 0x4d, 0xff, 0x1b, 0x24,
+	0x44, 0x05, 0xe4, 0xd0, 0x4f, 0x07, 0x9e, 0xe1, 0x0d, 0x45, 0xc5, 0x5e, 0x1e, 0xc7, 0xd3, 0xe8,
+	0x2c, 0x2e, 0x1e, 0x8f, 0x0a, 0xd0, 0x1d, 0x58, 0xf0, 0xb3, 0x12, 0x41, 0xb0, 0x5c, 0x8f, 0x5c,
+	0x44, 0x56, 0xae, 0xaf, 0x8d, 0x7d, 0x58, 0x68, 0xbe, 0x02, 0x46, 0x4e, 0x44, 0xa6, 0xfc, 0x24,
+	0x45, 0x8f, 0x43, 0xa8, 0xca, 0x68, 0x00, 0xa1, 0x83, 0xf6, 0xbc, 0xe3, 0x10, 0x18, 0x06, 0xaf,
+	0x51, 0x1c, 0x87, 0x00, 0x06, 0x9d, 0xc0, 0xe2, 0xb1, 0xdd, 0x1b, 0x74, 0x4d, 0x52, 0x32, 0x42,
+	0xf0, 0xa9, 0x17, 0x87, 0x5f, 0xf0, 0x01, 0x43, 0xa7, 0xbb, 0x01, 0x59, 0x7f, 0x84, 0x2a, 0x50,
+	0x08, 0x9d, 0xba, 0x20, 0xe3, 0x2d, 0x46, 0xce, 0x5d, 0x90, 0x42, 0xf2, 0x27, 0x61, 0xa1, 0xf2,
+	0xc3, 0x14, 0xcc, 0x85, 0x2f, 0x26, 0x6a, 0x42, 0x36, 0xb8, 0xcf, 0x2c, 0x38, 0x6f, 0x3c, 0xff,
+	0x3e, 0xfb, 0xe7, 0x52, 0x24, 0x2a, 0x1f, 0x03, 0x3d, 0x84, 0x60, 0x23, 0x23, 0xa9, 0xe2, 0x05,
+	0xa1, 0x91, 0x8f, 0xe6, 0xab, 0x28, 0x77, 0x20, 0x23, 0x06, 0xe8, 0xc3, 0xd0, 0xb1, 0x0f, 0xc5,
+	0x64, 0x61, 0xfc, 0x02, 0x05, 0x21, 0xf1, 0xef, 0x02, 0x8d, 0xc8, 0x2f, 0x52, 0x34, 0x3d, 0xb2,
+	0x0c, 0xf7, 0x0e, 0xe4, 0x07, 0x66, 0xbf, 0x4d, 0x5a, 0x46, 0x91, 0x22, 0xc3, 0x05, 0x89, 0x28,
+	0x09, 0x10, 0xae, 0xc7, 0xec, 0xde, 0x82, 0xb9, 0x6f, 0x0f, 0xcd, 0xa1, 0xd9, 0xe6, 0x66, 0xa9,
+	0x24, 0xb3, 0x1c, 0x53, 0x63, 0x56, 0xef, 0x42, 0x81, 0xfd, 0x5a, 0xe3, 0xdb, 0x4d, 0x25, 0xd9,
+	0xe5, 0x85, 0x22, 0xb3, 0x7c, 0x1f, 0x64, 0xcf, 0x74, 0x7a, 0x56, 0xdf, 0xf0, 0x7c, 0xdb, 0x74,
+	0x92, 0x6d, 0x31, 0x50, 0x65, 0xd6, 0xef, 0x41, 0x31, 0x78, 0x45, 0xcc, 0x78, 0x3a, 0xc9, 0xb8,
+	0xe0, 0x6b, 0x52, 0x5b, 0x65, 0x9b, 0x46, 0x8b, 0x75, 0x27, 0x9b, 0x00, 0xf4, 0x45, 0x8a, 0xb8,
+	0x93, 0xeb, 0x2a, 0x73, 0x08, 0xaa, 0xc1, 0xb8, 0x1c, 0x43, 0x3c, 0x2a, 0x7f, 0x97, 0x60, 0x31,
+	0xae, 0x9f, 0x40, 0x03, 0x40, 0x31, 0x7d, 0x09, 0x0b, 0xfe, 0xf6, 0xc5, 0xfb, 0x92, 0x08, 0xfb,
+	0xc0, 0x37, 0x31, 0xef, 0x44, 0x7a, 0x95, 0x47, 0x20, 0x8f, 0x2b, 0xa3, 0x23, 0x58, 0x8e, 0xfe,
+	0xba, 0xf2, 0xe5, 0x38, 0x8e, 0x45, 0x27, 0x66, 0x4e, 0xf9, 0xab, 0x14, 0xcf, 0xac, 0xaf, 0x92,
+	0xd4, 0x6f, 0x79, 0x22, 0x6d, 0x4a, 0x94, 0x2e, 0x02, 0x22, 0xe2, 0x99, 0xf1, 0x55, 0x98, 0x66,
+	0x2d, 0x7f, 0x8a, 0x7e, 0x00, 0xca, 0xa1, 0xf7, 0xc3, 0x9a, 0x7c, 0x36, 0x8d, 0x6e, 0xc3, 0x8c,
+	0x63, 0x1a, 0xae, 0xdd, 0xa7, 0x85, 0xb4, 0xb0, 0x55, 0x1a, 0x53, 0x1c, 0x92, 0x45, 0x93, 0x79,
+	0xcc, 0xf5, 0xd0, 0x07, 0xe4, 0x6b, 0xa6, 0x67, 0x79, 0xec, 0xf7, 0x16, 0xf6, 0x95, 0xf6, 0x52,
+	0xc8, 0x4a, 0xec, 0xb1, 0xee, 0x2b, 0xe1, 0x90, 0x01, 0x2a, 0x91, 0x7e, 0xc9, 0x75, 0x8d, 0x0e,
+	0xfb, 0x61, 0x3e, 0x8b, 0xc5, 0x50, 0xf9, 0x5c, 0x1a, 0x27, 0xec, 0xfe, 0x07, 0x77, 0xb9, 0xfe,
+	0xbb, 0xd4, 0x7f, 0x92, 0x71, 0x1a, 0xa5, 0x96, 0x66, 0x46, 0xa9, 0xa5, 0xd9, 0x51, 0x6a, 0x29,
+	0x13, 0x43, 0x2d, 0x65, 0x63, 0xa8, 0x25, 0x88, 0x52, 0x4b, 0xb9, 0x51, 0x6a, 0x69, 0x6e, 0x94,
+	0x5a, 0x2a, 0x4c, 0xa0, 0x96, 0xe4, 0x64, 0xe6, 0x28, 0x4f, 0x99, 0x9f, 0x28, 0x0b, 0x53, 0xe4,
+	0x7c, 0xc7, 0x2f, 0xa7, 0x21, 0x60, 0xe3, 0xd1, 0xdb, 0x23, 0x84, 0xc7, 0xf5, 0x78, 0x0a, 0x3f,
+	0xca, 0x78, 0x6c, 0xfa, 0x7d, 0x6f, 0xf4, 0xff, 0x4b, 0x02, 0xb3, 0xaa, 0xe1, 0x19, 0xac, 0x29,
+	0x46, 0xef, 0xc2, 0x2c, 0xe9, 0x42, 0x1c, 0xbb, 0x1b, 0x4b, 0x70, 0x04, 0x36, 0xbb, 0x4c, 0x0b,
+	0x0b, 0x75, 0xe5, 0xc7, 0x12, 0xa4, 0x09, 0x10, 0x7a, 0x6f, 0x64, 0xa9, 0x6b, 0x13, 0x7c, 0x46,
+	0xd7, 0x8b, 0x42, 0xeb, 0xe5, 0x7d, 0xfa, 0xfa, 0xfb, 0x71, 0x27, 0x2a, 0x0b, 0xd3, 0x9a, 0x5e,
+	0xad, 0x35, 0x64, 0x09, 0x01, 0xcc, 0x68, 0x7a, 0xb5, 0x79, 0xa8, 0xcb, 0x29, 0xfe, 0xac, 0x62,
+	0x2c, 0x4f, 0xf1, 0x9f, 0x1f, 0x7e, 0x9d, 0x82, 0x59, 0xbe, 0x56, 0xf4, 0xc1, 0xc8, 0xca, 0x6e,
+	0x4c, 0xde, 0x59, 0x74, 0x71, 0xef, 0x40, 0xc6, 0xf3, 0x9e, 0xb0, 0xc4, 0xc7, 0x02, 0x5a, 0x10,
+	0x57, 0x46, 0xff, 0x88, 0xe6, 0xba, 0xdc, 0xf9, 0xd3, 0xd5, 0x59, 0x3e, 0xc0, 0xb3, 0x9e, 0xf7,
+	0x84, 0x3c, 0xa0, 0x3d, 0xc8, 0x9e, 0x9a, 0x86, 0xe3, 0x3d, 0x34, 0x0d, 0x8f, 0x47, 0xf5, 0xe6,
+	0x73, 0x7c, 0x1f, 0x08, 0x7d, 0x1c, 0x98, 0x2a, 0xef, 0x43, 0xd6, 0x97, 0xa3, 0x4d, 0xc8, 0x58,
+	0x7d, 0xcf, 0x74, 0xce, 0x8c, 0xee, 0xa4, 0x1f, 0x9d, 0x7d, 0xa5, 0xf5, 0x77, 0xe2, 0xc2, 0x38,
+	0x07, 0x19, 0x5d, 0xff, 0xa8, 0x55, 0x6b, 0xec, 0x35, 0xd9, 0xb5, 0x3c, 0x50, 0x2b, 0x58, 0xdf,
+	0x51, 0x2b, 0xba, 0xf8, 0xfd, 0x66, 0xfd, 0x76, 0x9c, 0x5d, 0x06, 0xd2, 0xd5, 0x8a, 0x5e, 0x91,
+	0x25, 0x22, 0x26, 0x67, 0x17, 0x37, 0xeb, 0xc2, 0x62, 0x67, 0xf7, 0xb3, 0x67, 0xe5, 0x2b, 0x7f,
+	0x7c, 0x56, 0xbe, 0xf2, 0xe7, 0x67, 0x65, 0xe9, 0x8b, 0x67, 0x65, 0xe9, 0x9f, 0xcf, 0xca, 0xd2,
+	0xf7, 0xce, 0xcb, 0xd2, 0x27, 0xe7, 0x65, 0xe9, 0x57, 0xe7, 0x65, 0xe9, 0x37, 0xe7, 0x65, 0xe9,
+	0xd3, 0xf3, 0xb2, 0xf4, 0xd9, 0x79, 0x59, 0xfa, 0xcb, 0x79, 0xf9, 0xca, 0x17, 0xe7, 0x65, 0xe9,
+	0x47, 0x9f, 0x97, 0xaf, 0xfc, 0xf4, 0xf3, 0xb2, 0xf4, 0xf1, 0x34, 0x8d, 0xc9, 0xbf, 0x02, 0x00,
+	0x00, 0xff, 0xff, 0xb5, 0x87, 0xcc, 0xff, 0x6a, 0x26, 0x00, 0x00,
 }

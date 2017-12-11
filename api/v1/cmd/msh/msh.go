@@ -65,7 +65,7 @@ var (
 		resources.NewCPUs(0.01).Resource,
 		resources.NewMemory(32).Resource,
 		resources.NewDisk(5).Resource,
-	}.Allocate(string(Role))
+	}.Allocate(string(Role)) // TODO(jdef): we didn't opt-in to MULTI_ROLE, should not need to Allocate anything (for resource matching); remove once https://issues.apache.org/jira/browse/MESOS-8237 lands in a release
 	agentDirectory = make(map[mesos.AgentID]string)
 	uponExit       = new(cleanups)
 )

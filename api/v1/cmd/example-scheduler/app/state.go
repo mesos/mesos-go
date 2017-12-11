@@ -91,7 +91,7 @@ func buildWantsTaskResources(config Config) (r mesos.Resources) {
 	r.Add(
 		resources.NewCPUs(config.taskCPU).Resource,
 		resources.NewMemory(config.taskMemory).Resource,
-	).Allocate(config.role)
+	).Allocate(config.role) // TODO(jdef) remove Allocated once https://issues.apache.org/jira/browse/MESOS-8237 lands in a release
 	log.Println("wants-task-resources = " + r.String())
 	return
 }
@@ -100,7 +100,7 @@ func buildWantsExecutorResources(config Config) (r mesos.Resources) {
 	r.Add(
 		resources.NewCPUs(config.execCPU).Resource,
 		resources.NewMemory(config.execMemory).Resource,
-	).Allocate(config.role)
+	).Allocate(config.role) // TODO(jdef) remove Allocate() once https://issues.apache.org/jira/browse/MESOS-8237 lands in a release
 	log.Println("wants-executor-resources = " + r.String())
 	return
 }

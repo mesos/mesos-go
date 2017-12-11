@@ -29,6 +29,8 @@ func classifyResponse(c *agent.Call) (rc client.ResponseClass, err error) {
 		agent.Call_GET_EXECUTORS,
 		agent.Call_GET_TASKS,
 		agent.Call_GET_AGENT,
+		agent.Call_GET_RESOURCE_PROVIDERS,
+		agent.Call_WAIT_CONTAINER,
 		agent.Call_WAIT_NESTED_CONTAINER:
 		rc = client.ResponseClassSingleton
 
@@ -39,10 +41,16 @@ func classifyResponse(c *agent.Call) (rc client.ResponseClass, err error) {
 
 	// no-data
 	case agent.Call_SET_LOGGING_LEVEL,
+		agent.Call_LAUNCH_CONTAINER,
 		agent.Call_LAUNCH_NESTED_CONTAINER,
+		agent.Call_KILL_CONTAINER,
 		agent.Call_KILL_NESTED_CONTAINER,
+		agent.Call_REMOVE_CONTAINER,
 		agent.Call_REMOVE_NESTED_CONTAINER,
-		agent.Call_ATTACH_CONTAINER_INPUT:
+		agent.Call_ATTACH_CONTAINER_INPUT,
+		agent.Call_ADD_RESOURCE_PROVIDER_CONFIG,
+		agent.Call_UPDATE_RESOURCE_PROVIDER_CONFIG,
+		agent.Call_REMOVE_RESOURCE_PROVIDER_CONFIG:
 		rc = client.ResponseClassNoData
 
 	default:

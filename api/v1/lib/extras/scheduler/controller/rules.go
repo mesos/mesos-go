@@ -148,10 +148,10 @@ func AckOperationUpdatesF(callerLookup func() calls.Caller) Rule {
 		// aggressively attempt to ack updates: even if there's pre-existing error state attempt
 		// to acknowledge all offer operation status updates.
 		origErr := err
-		if e.GetType() == scheduler.Event_OFFER_OPERATION_UPDATE {
+		if e.GetType() == scheduler.Event_UPDATE_OPERATION_STATUS {
 			var (
-				s    = e.GetOfferOperationUpdate().GetStatus()
-				uuid = s.GetStatusUUID()
+				s    = e.GetUpdateOperationStatus().GetStatus()
+				uuid = s.GetUUID().GetValue()
 			)
 			// only ACK non-empty UUID's, as per mesos scheduler spec.
 			if len(uuid) > 0 {
@@ -173,7 +173,7 @@ func AckOperationUpdatesF(callerLookup func() calls.Caller) Rule {
 						break
 					}
 				}
-				ack := calls.AcknowledgeOfferOperationUpdate(
+				ack := calls.AcknowledgeOperationStatus(
 					"",   // agentID: optional
 					rpID, // optional
 					uuid,

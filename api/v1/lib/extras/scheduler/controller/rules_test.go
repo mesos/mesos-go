@@ -21,16 +21,16 @@ func TestAckOperationUpdates_OperationPending(t *testing.T) {
 		})
 		rule       = AckOperationUpdates(fakeCaller)
 		statusUUID = []byte{1}
-		ooID       = mesos.OfferOperationID{Value: "1"}
+		ooID       = mesos.OperationID{Value: "1"}
 
 		evt = &scheduler.Event{
-			Type: scheduler.Event_OFFER_OPERATION_UPDATE,
-			OfferOperationUpdate: &scheduler.Event_OfferOperationUpdate{
-				Status: mesos.OfferOperationStatus{
+			Type: scheduler.Event_UPDATE_OPERATION_STATUS,
+			UpdateOperationStatus: &scheduler.Event_UpdateOperationStatus{
+				Status: mesos.OperationStatus{
 					OperationID:        &ooID,
-					State:              mesos.OFFER_OPERATION_PENDING,
+					State:              mesos.OPERATION_PENDING,
 					ConvertedResources: nil,
-					StatusUUID:         statusUUID,
+					UUID:               &mesos.UUID{Value: statusUUID},
 				},
 			},
 		}
@@ -45,14 +45,14 @@ func TestAckOperationUpdates_OperationPending(t *testing.T) {
 	}
 
 	call := sentCalls[0]
-	if ty := call.GetType(); ty != scheduler.Call_ACKNOWLEDGE_OFFER_OPERATION_UPDATE {
+	if ty := call.GetType(); ty != scheduler.Call_ACKNOWLEDGE_OPERATION_STATUS {
 		t.Errorf("unexpected call type: %v", t)
 	}
-	ack := call.GetAcknowledgeOfferOperationUpdate()
+	ack := call.GetAcknowledgeOperationStatus()
 	if v := ack.GetOperationID().Value; v != ooID.Value {
 		t.Errorf("expected offer operation ID %q instead of %q", ooID.Value, v)
 	}
-	if uuid := ack.GetStatusUUID(); !reflect.DeepEqual(uuid, statusUUID) {
+	if uuid := ack.GetUUID(); !reflect.DeepEqual(uuid, statusUUID) {
 		t.Errorf("expected statusUUID of %+v instead of %+v", statusUUID, uuid)
 	}
 	// no provider, or agent
@@ -75,13 +75,13 @@ func TestAckOperationUpdates_IllegalEvent(t *testing.T) {
 		statusUUID = []byte{1}
 
 		evt = &scheduler.Event{
-			Type: scheduler.Event_OFFER_OPERATION_UPDATE,
-			OfferOperationUpdate: &scheduler.Event_OfferOperationUpdate{
-				Status: mesos.OfferOperationStatus{
+			Type: scheduler.Event_UPDATE_OPERATION_STATUS,
+			UpdateOperationStatus: &scheduler.Event_UpdateOperationStatus{
+				Status: mesos.OperationStatus{
 					OperationID:        nil, // this should cause a panic
-					State:              mesos.OFFER_OPERATION_FINISHED,
+					State:              mesos.OPERATION_FINISHED,
 					ConvertedResources: []mesos.Resource{{ProviderID: &mesos.ResourceProviderID{Value: "a"}}},
-					StatusUUID:         statusUUID,
+					UUID:               &mesos.UUID{Value: statusUUID},
 				},
 			},
 		}
@@ -104,10 +104,10 @@ func TestAckOperationUpdates_NoStatusUUID(t *testing.T) {
 		rule = AckOperationUpdates(fakeCaller)
 
 		evt = &scheduler.Event{
-			Type: scheduler.Event_OFFER_OPERATION_UPDATE,
-			OfferOperationUpdate: &scheduler.Event_OfferOperationUpdate{
-				Status: mesos.OfferOperationStatus{
-					State:              mesos.OFFER_OPERATION_FINISHED,
+			Type: scheduler.Event_UPDATE_OPERATION_STATUS,
+			UpdateOperationStatus: &scheduler.Event_UpdateOperationStatus{
+				Status: mesos.OperationStatus{
+					State:              mesos.OPERATION_FINISHED,
 					ConvertedResources: []mesos.Resource{{ProviderID: &mesos.ResourceProviderID{Value: "a"}}},
 				},
 			},
@@ -132,16 +132,16 @@ func TestAckOperationUpdates_OperationFinished(t *testing.T) {
 		})
 		rule       = AckOperationUpdates(fakeCaller)
 		statusUUID = []byte{1}
-		ooID       = mesos.OfferOperationID{Value: "1"}
+		ooID       = mesos.OperationID{Value: "1"}
 
 		evt = &scheduler.Event{
-			Type: scheduler.Event_OFFER_OPERATION_UPDATE,
-			OfferOperationUpdate: &scheduler.Event_OfferOperationUpdate{
-				Status: mesos.OfferOperationStatus{
+			Type: scheduler.Event_UPDATE_OPERATION_STATUS,
+			UpdateOperationStatus: &scheduler.Event_UpdateOperationStatus{
+				Status: mesos.OperationStatus{
 					OperationID:        &ooID,
-					State:              mesos.OFFER_OPERATION_FINISHED,
+					State:              mesos.OPERATION_FINISHED,
 					ConvertedResources: []mesos.Resource{{ProviderID: &mesos.ResourceProviderID{Value: "a"}}},
-					StatusUUID:         statusUUID,
+					UUID:               &mesos.UUID{Value: statusUUID},
 				},
 			},
 		}
@@ -156,14 +156,14 @@ func TestAckOperationUpdates_OperationFinished(t *testing.T) {
 	}
 
 	call := sentCalls[0]
-	if ty := call.GetType(); ty != scheduler.Call_ACKNOWLEDGE_OFFER_OPERATION_UPDATE {
+	if ty := call.GetType(); ty != scheduler.Call_ACKNOWLEDGE_OPERATION_STATUS {
 		t.Errorf("unexpected call type: %v", t)
 	}
-	ack := call.GetAcknowledgeOfferOperationUpdate()
+	ack := call.GetAcknowledgeOperationStatus()
 	if v := ack.GetOperationID().Value; v != ooID.Value {
 		t.Errorf("expected offer operation ID %q instead of %q", ooID.Value, v)
 	}
-	if uuid := ack.GetStatusUUID(); !reflect.DeepEqual(uuid, statusUUID) {
+	if uuid := ack.GetUUID(); !reflect.DeepEqual(uuid, statusUUID) {
 		t.Errorf("expected statusUUID of %+v instead of %+v", statusUUID, uuid)
 	}
 	// or agent
@@ -183,16 +183,16 @@ func TestAckOperationUpdates_CallerError(t *testing.T) {
 		})
 		rule       = AckOperationUpdates(fakeCaller)
 		statusUUID = []byte{1}
-		ooID       = mesos.OfferOperationID{Value: "1"}
+		ooID       = mesos.OperationID{Value: "1"}
 
 		evt = &scheduler.Event{
-			Type: scheduler.Event_OFFER_OPERATION_UPDATE,
-			OfferOperationUpdate: &scheduler.Event_OfferOperationUpdate{
-				Status: mesos.OfferOperationStatus{
+			Type: scheduler.Event_UPDATE_OPERATION_STATUS,
+			UpdateOperationStatus: &scheduler.Event_UpdateOperationStatus{
+				Status: mesos.OperationStatus{
 					OperationID:        &ooID,
-					State:              mesos.OFFER_OPERATION_FINISHED,
+					State:              mesos.OPERATION_FINISHED,
 					ConvertedResources: []mesos.Resource{{ProviderID: &mesos.ResourceProviderID{Value: "a"}}},
-					StatusUUID:         statusUUID,
+					UUID:               &mesos.UUID{Value: statusUUID},
 				},
 			},
 		}

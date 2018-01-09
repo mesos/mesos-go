@@ -67,6 +67,7 @@ func Example() {
 		AddResourceProviderConfig(mesos.ResourceProviderInfo{}),
 		UpdateResourceProviderConfig(mesos.ResourceProviderInfo{}),
 		RemoveResourceProviderConfig("", ""),
+		PruneImages(nil),
 	)
 
 	swallow(sender.Send(ctx, Empty().Push(

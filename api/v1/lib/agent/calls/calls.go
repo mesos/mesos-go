@@ -245,3 +245,12 @@ func RemoveResourceProviderConfig(typ, name string) *agent.Call {
 		},
 	}
 }
+
+func PruneImages(excluded []mesos.Image) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_PRUNE_IMAGES,
+		PruneImages: &agent.Call_PruneImages{
+			ExcludedImages: excluded,
+		},
+	}
+}

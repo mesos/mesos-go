@@ -387,18 +387,18 @@ func errInvalidCall(reason string) error {
 	return errors.New("invalid call: " + reason)
 }
 
-// AcknowledgeOfferOperationUpdate acks the receipt of an offer operation status update. Schedulers are responsible for
-// explicitly acknowledging the receipt of updates which have the 'OfferOperationStatusUpdate.status().status_uuid()'
+// AcknowledgeOperationStatus acks the receipt of an operation status update. Schedulers are responsible for
+// explicitly acknowledging the receipt of updates which have the 'OperationStatusUpdate.status().uuid()'
 // field set. Such status updates are retried by the agent or resource provider until they are acknowledged by the scheduler.
 // agentID and resourceProviderID are optional, the remaining fields are required.
-func AcknowledgeOfferOperationUpdate(agentID, resourceProviderID string, statusUUID []byte, operationID string) *scheduler.Call {
+func AcknowledgeOperationStatus(agentID, resourceProviderID string, uuid []byte, operationID string) *scheduler.Call {
 	return &scheduler.Call{
-		Type: scheduler.Call_ACKNOWLEDGE_OFFER_OPERATION_UPDATE,
-		AcknowledgeOfferOperationUpdate: &scheduler.Call_AcknowledgeOfferOperationUpdate{
+		Type: scheduler.Call_ACKNOWLEDGE_OPERATION_STATUS,
+		AcknowledgeOperationStatus: &scheduler.Call_AcknowledgeOperationStatus{
 			AgentID:            optionalAgentID(agentID),
 			ResourceProviderID: optionalResourceProviderID(resourceProviderID),
-			StatusUUID:         statusUUID,
-			OperationID:        mesos.OfferOperationID{Value: operationID},
+			UUID:               uuid,
+			OperationID:        mesos.OperationID{Value: operationID},
 		},
 	}
 }
@@ -411,21 +411,21 @@ type ReconcileOperationRequest struct {
 	ResourceProviderID string // ResourceProviderID is optional
 }
 
-// ReconcileOfferOperations allows the scheduler to query the status of offer operations. This causes the master to send
-// back the latest status for each offer operation in 'req', if possible. If 'req' is empty, then the master will send
+// ReconcileOperations allows the scheduler to query the status of operations. This causes the master to send
+// back the latest status for each operation in 'req', if possible. If 'req' is empty, then the master will send
 // the latest status for each operation currently known.
-func ReconcileOfferOperations(req []ReconcileOperationRequest) *scheduler.Call {
-	var operations []scheduler.Call_ReconcileOfferOperations_Operation
+func ReconcileOperations(req []ReconcileOperationRequest) *scheduler.Call {
+	var operations []scheduler.Call_ReconcileOperations_Operation
 	for i := range req {
-		operations = append(operations, scheduler.Call_ReconcileOfferOperations_Operation{
-			OperationID:        mesos.OfferOperationID{Value: req[i].OperationID},
+		operations = append(operations, scheduler.Call_ReconcileOperations_Operation{
+			OperationID:        mesos.OperationID{Value: req[i].OperationID},
 			AgentID:            optionalAgentID(req[i].AgentID),
 			ResourceProviderID: optionalResourceProviderID(req[i].ResourceProviderID),
 		})
 	}
 	return &scheduler.Call{
-		Type: scheduler.Call_RECONCILE_OFFER_OPERATIONS,
-		ReconcileOfferOperations: &scheduler.Call_ReconcileOfferOperations{
+		Type: scheduler.Call_RECONCILE_OPERATIONS,
+		ReconcileOperations: &scheduler.Call_ReconcileOperations{
 			Operations: operations,
 		},
 	}

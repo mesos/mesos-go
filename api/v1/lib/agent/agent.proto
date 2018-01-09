@@ -109,6 +109,9 @@ message Call {
     UPDATE_RESOURCE_PROVIDER_CONFIG = 28; // See 'UpdateResourceProviderConfig' below. // NOLINT
     REMOVE_RESOURCE_PROVIDER_CONFIG = 29; // See 'RemoveResourceProviderConfig' below. // NOLINT
 
+    // Prune unused container images.
+    PRUNE_IMAGES = 30;
+
     option (gogoproto.goproto_enum_prefix) = true;
   }
 
@@ -148,6 +151,12 @@ message Call {
     // The maximum number of bytes to read. The read length is capped at 16
     // memory pages.
     optional uint64 length = 3;
+  }
+
+  // Lists active containers on the agent.
+  message GetContainers {
+    optional bool show_nested = 1;
+    optional bool show_standalone = 2;
   }
 
   // Deprecated in favor of `LaunchContainer`.
@@ -328,7 +337,7 @@ message Call {
   // config file that describes a resource provider of the specified
   // type and name in the resource provider config directory. The
   // 'info.id' field should not be set. The resource provider will be
-  // relaunched asynchoronously to reflect the changes in its config.
+  // relaunched asynchronously to reflect the changes in its config.
   // Note that only config files that exist at agent startup can be
   // updated though this call.
   //
@@ -358,12 +367,22 @@ message Call {
     required string name = 2 [(gogoproto.nullable) = false];
   }
 
+  // Prune unused container images from image store.
+  //
+  // Images and layers referenced by active containers as well as
+  // image references specified in `excluded_images` will not be pruned.
+  message PruneImages {
+    repeated Image excluded_images = 1 [(gogoproto.nullable) = false];
+  }
+
   optional Type type = 1 [(gogoproto.nullable) = false];
 
   optional GetMetrics get_metrics = 2;
   optional SetLoggingLevel set_logging_level = 3;
   optional ListFiles list_files = 4;
   optional ReadFile read_file = 5;
+
+  optional GetContainers get_containers = 20;
 
   optional LaunchNestedContainer launch_nested_container = 6
     [deprecated = true];
@@ -384,6 +403,8 @@ message Call {
   optional AddResourceProviderConfig add_resource_provider_config = 17;
   optional UpdateResourceProviderConfig update_resource_provider_config = 18;
   optional RemoveResourceProviderConfig remove_resource_provider_config = 19;
+
+  optional PruneImages prune_images = 21;
 }
 
 
@@ -472,9 +493,9 @@ message Response {
   // of the containers.
   message GetContainers {
     message Container {
-      required FrameworkID framework_id = 1 [(gogoproto.customname) = "FrameworkID", (gogoproto.nullable) = false];
-      required ExecutorID executor_id = 2 [(gogoproto.customname) = "ExecutorID", (gogoproto.nullable) = false];
-      required string executor_name = 3 [(gogoproto.nullable) = false];
+      optional FrameworkID framework_id = 1 [(gogoproto.customname) = "FrameworkID"];
+      optional ExecutorID executor_id = 2 [(gogoproto.customname) = "ExecutorID"];
+      optional string executor_name = 3;
       required ContainerID container_id = 4 [(gogoproto.customname) = "ContainerID", (gogoproto.nullable) = false];
       optional ContainerStatus container_status = 5;
       optional ResourceStatistics resource_statistics = 6;

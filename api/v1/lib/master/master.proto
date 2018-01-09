@@ -355,6 +355,12 @@ message Response {
       repeated Resource offered_resources = 9 [(gogoproto.nullable) = false];
 
       repeated AgentInfo.Capability capabilities = 10 [(gogoproto.nullable) = false];
+
+      message ResourceProvider {
+        required ResourceProviderInfo resource_provider_info = 1 [(gogoproto.nullable) = false];
+      }
+
+      repeated ResourceProvider resource_providers = 11 [(gogoproto.nullable) = false];
     }
 
     // Registered agents.

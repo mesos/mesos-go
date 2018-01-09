@@ -15,7 +15,7 @@ It has these top-level messages:
 	ExecutorID
 	ContainerID
 	ResourceProviderID
-	OfferOperationID
+	OperationID
 	TimeInfo
 	DurationInfo
 	Address
@@ -55,8 +55,9 @@ It has these top-level messages:
 	TaskGroupInfo
 	Task
 	TaskResourceLimitation
-	OfferOperation
-	OfferOperationStatus
+	UUID
+	Operation
+	OperationStatus
 	CheckStatusInfo
 	TaskStatus
 	Filters
@@ -826,15 +827,15 @@ func BenchmarkResourceProviderIDProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOfferOperationIDProto(t *testing.T) {
+func TestOperationIDProto(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationID(popr, false)
+	p := NewPopulatedOperationID(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &OfferOperationID{}
+	msg := &OperationID{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -860,10 +861,10 @@ func TestOfferOperationIDProto(t *testing.T) {
 	}
 }
 
-func TestOfferOperationIDMarshalTo(t *testing.T) {
+func TestOperationIDMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationID(popr, false)
+	p := NewPopulatedOperationID(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
 	for i := range dAtA {
@@ -873,7 +874,7 @@ func TestOfferOperationIDMarshalTo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &OfferOperationID{}
+	msg := &OperationID{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -888,12 +889,12 @@ func TestOfferOperationIDMarshalTo(t *testing.T) {
 	}
 }
 
-func BenchmarkOfferOperationIDProtoMarshal(b *testing.B) {
+func BenchmarkOperationIDProtoMarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*OfferOperationID, 10000)
+	pops := make([]*OperationID, 10000)
 	for i := 0; i < 10000; i++ {
-		pops[i] = NewPopulatedOfferOperationID(popr, false)
+		pops[i] = NewPopulatedOperationID(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -906,18 +907,18 @@ func BenchmarkOfferOperationIDProtoMarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkOfferOperationIDProtoUnmarshal(b *testing.B) {
+func BenchmarkOperationIDProtoUnmarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOfferOperationID(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOperationID(popr, false))
 		if err != nil {
 			panic(err)
 		}
 		datas[i] = dAtA
 	}
-	msg := &OfferOperationID{}
+	msg := &OperationID{}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
@@ -8986,15 +8987,15 @@ func BenchmarkTaskResourceLimitationProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOfferOperationProto(t *testing.T) {
+func TestUUIDProto(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperation(popr, false)
+	p := NewPopulatedUUID(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &OfferOperation{}
+	msg := &UUID{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -9020,10 +9021,10 @@ func TestOfferOperationProto(t *testing.T) {
 	}
 }
 
-func TestOfferOperationMarshalTo(t *testing.T) {
+func TestUUIDMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperation(popr, false)
+	p := NewPopulatedUUID(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
 	for i := range dAtA {
@@ -9033,7 +9034,7 @@ func TestOfferOperationMarshalTo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &OfferOperation{}
+	msg := &UUID{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -9048,12 +9049,12 @@ func TestOfferOperationMarshalTo(t *testing.T) {
 	}
 }
 
-func BenchmarkOfferOperationProtoMarshal(b *testing.B) {
+func BenchmarkUUIDProtoMarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*OfferOperation, 10000)
+	pops := make([]*UUID, 10000)
 	for i := 0; i < 10000; i++ {
-		pops[i] = NewPopulatedOfferOperation(popr, false)
+		pops[i] = NewPopulatedUUID(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -9066,18 +9067,18 @@ func BenchmarkOfferOperationProtoMarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkOfferOperationProtoUnmarshal(b *testing.B) {
+func BenchmarkUUIDProtoUnmarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOfferOperation(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedUUID(popr, false))
 		if err != nil {
 			panic(err)
 		}
 		datas[i] = dAtA
 	}
-	msg := &OfferOperation{}
+	msg := &UUID{}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
@@ -9088,15 +9089,15 @@ func BenchmarkOfferOperationProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOfferOperationStatusProto(t *testing.T) {
+func TestOperationProto(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationStatus(popr, false)
+	p := NewPopulatedOperation(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &OfferOperationStatus{}
+	msg := &Operation{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -9122,10 +9123,10 @@ func TestOfferOperationStatusProto(t *testing.T) {
 	}
 }
 
-func TestOfferOperationStatusMarshalTo(t *testing.T) {
+func TestOperationMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationStatus(popr, false)
+	p := NewPopulatedOperation(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
 	for i := range dAtA {
@@ -9135,7 +9136,7 @@ func TestOfferOperationStatusMarshalTo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &OfferOperationStatus{}
+	msg := &Operation{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -9150,12 +9151,12 @@ func TestOfferOperationStatusMarshalTo(t *testing.T) {
 	}
 }
 
-func BenchmarkOfferOperationStatusProtoMarshal(b *testing.B) {
+func BenchmarkOperationProtoMarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*OfferOperationStatus, 10000)
+	pops := make([]*Operation, 10000)
 	for i := 0; i < 10000; i++ {
-		pops[i] = NewPopulatedOfferOperationStatus(popr, false)
+		pops[i] = NewPopulatedOperation(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -9168,18 +9169,120 @@ func BenchmarkOfferOperationStatusProtoMarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkOfferOperationStatusProtoUnmarshal(b *testing.B) {
+func BenchmarkOperationProtoUnmarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOfferOperationStatus(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOperation(popr, false))
 		if err != nil {
 			panic(err)
 		}
 		datas[i] = dAtA
 	}
-	msg := &OfferOperationStatus{}
+	msg := &Operation{}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += len(datas[i%10000])
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
+			panic(err)
+		}
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func TestOperationStatusProto(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedOperationStatus(popr, false)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	msg := &OperationStatus{}
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	littlefuzz := make([]byte, len(dAtA))
+	copy(littlefuzz, dAtA)
+	for i := range dAtA {
+		dAtA[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+	if len(littlefuzz) > 0 {
+		fuzzamount := 100
+		for i := 0; i < fuzzamount; i++ {
+			littlefuzz[popr.Intn(len(littlefuzz))] = byte(popr.Intn(256))
+			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
+		}
+		// shouldn't panic
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
+	}
+}
+
+func TestOperationStatusMarshalTo(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedOperationStatus(popr, false)
+	size := p.ProtoSize()
+	dAtA := make([]byte, size)
+	for i := range dAtA {
+		dAtA[i] = byte(popr.Intn(256))
+	}
+	_, err := p.MarshalTo(dAtA)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	msg := &OperationStatus{}
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	for i := range dAtA {
+		dAtA[i] = byte(popr.Intn(256))
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+}
+
+func BenchmarkOperationStatusProtoMarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*OperationStatus, 10000)
+	for i := 0; i < 10000; i++ {
+		pops[i] = NewPopulatedOperationStatus(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
+		if err != nil {
+			panic(err)
+		}
+		total += len(dAtA)
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func BenchmarkOperationStatusProtoUnmarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	datas := make([][]byte, 10000)
+	for i := 0; i < 10000; i++ {
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOperationStatus(popr, false))
+		if err != nil {
+			panic(err)
+		}
+		datas[i] = dAtA
+	}
+	msg := &OperationStatus{}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
@@ -15967,16 +16070,16 @@ func TestResourceProviderIDJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
-func TestOfferOperationIDJSON(t *testing.T) {
+func TestOperationIDJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationID(popr, true)
+	p := NewPopulatedOperationID(popr, true)
 	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &OfferOperationID{}
+	msg := &OperationID{}
 	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
@@ -17647,16 +17750,16 @@ func TestTaskResourceLimitationJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
-func TestOfferOperationJSON(t *testing.T) {
+func TestUUIDJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperation(popr, true)
+	p := NewPopulatedUUID(popr, true)
 	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &OfferOperation{}
+	msg := &UUID{}
 	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
@@ -17668,16 +17771,37 @@ func TestOfferOperationJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
-func TestOfferOperationStatusJSON(t *testing.T) {
+func TestOperationJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationStatus(popr, true)
+	p := NewPopulatedOperation(popr, true)
 	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &OfferOperationStatus{}
+	msg := &Operation{}
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
+	}
+}
+func TestOperationStatusJSON(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedOperationStatus(popr, true)
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
+	jsondata, err := marshaler.MarshalToString(p)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	msg := &OperationStatus{}
 	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
@@ -19292,12 +19416,12 @@ func TestResourceProviderIDProtoCompactText(t *testing.T) {
 	}
 }
 
-func TestOfferOperationIDProtoText(t *testing.T) {
+func TestOperationIDProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationID(popr, true)
+	p := NewPopulatedOperationID(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
-	msg := &OfferOperationID{}
+	msg := &OperationID{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -19309,12 +19433,12 @@ func TestOfferOperationIDProtoText(t *testing.T) {
 	}
 }
 
-func TestOfferOperationIDProtoCompactText(t *testing.T) {
+func TestOperationIDProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationID(popr, true)
+	p := NewPopulatedOperationID(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
-	msg := &OfferOperationID{}
+	msg := &OperationID{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -22012,12 +22136,12 @@ func TestTaskResourceLimitationProtoCompactText(t *testing.T) {
 	}
 }
 
-func TestOfferOperationProtoText(t *testing.T) {
+func TestUUIDProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperation(popr, true)
+	p := NewPopulatedUUID(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
-	msg := &OfferOperation{}
+	msg := &UUID{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -22029,12 +22153,12 @@ func TestOfferOperationProtoText(t *testing.T) {
 	}
 }
 
-func TestOfferOperationProtoCompactText(t *testing.T) {
+func TestUUIDProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperation(popr, true)
+	p := NewPopulatedUUID(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
-	msg := &OfferOperation{}
+	msg := &UUID{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -22046,12 +22170,12 @@ func TestOfferOperationProtoCompactText(t *testing.T) {
 	}
 }
 
-func TestOfferOperationStatusProtoText(t *testing.T) {
+func TestOperationProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationStatus(popr, true)
+	p := NewPopulatedOperation(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
-	msg := &OfferOperationStatus{}
+	msg := &Operation{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -22063,12 +22187,46 @@ func TestOfferOperationStatusProtoText(t *testing.T) {
 	}
 }
 
-func TestOfferOperationStatusProtoCompactText(t *testing.T) {
+func TestOperationProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationStatus(popr, true)
+	p := NewPopulatedOperation(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
-	msg := &OfferOperationStatus{}
+	msg := &Operation{}
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+}
+
+func TestOperationStatusProtoText(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedOperationStatus(popr, true)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
+	msg := &OperationStatus{}
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
+	}
+	if !p.Equal(msg) {
+		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
+	}
+}
+
+func TestOperationStatusProtoCompactText(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedOperationStatus(popr, true)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
+	msg := &OperationStatus{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -24395,14 +24553,14 @@ func TestResourceProviderIDVerboseEqual(t *testing.T) {
 		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
 	}
 }
-func TestOfferOperationIDVerboseEqual(t *testing.T) {
+func TestOperationIDVerboseEqual(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOfferOperationID(popr, false)
+	p := NewPopulatedOperationID(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
-	msg := &OfferOperationID{}
+	msg := &OperationID{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
@@ -25595,14 +25753,14 @@ func TestTaskResourceLimitationVerboseEqual(t *testing.T) {
 		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
 	}
 }
-func TestOfferOperationVerboseEqual(t *testing.T) {
+func TestUUIDVerboseEqual(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOfferOperation(popr, false)
+	p := NewPopulatedUUID(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
-	msg := &OfferOperation{}
+	msg := &UUID{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
@@ -25610,14 +25768,29 @@ func TestOfferOperationVerboseEqual(t *testing.T) {
 		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
 	}
 }
-func TestOfferOperationStatusVerboseEqual(t *testing.T) {
+func TestOperationVerboseEqual(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOfferOperationStatus(popr, false)
+	p := NewPopulatedOperation(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
-	msg := &OfferOperationStatus{}
+	msg := &Operation{}
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
+		panic(err)
+	}
+	if err := p.VerboseEqual(msg); err != nil {
+		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
+	}
+}
+func TestOperationStatusVerboseEqual(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedOperationStatus(popr, false)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+	msg := &OperationStatus{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
@@ -26691,9 +26864,9 @@ func TestResourceProviderIDGoString(t *testing.T) {
 		panic(err)
 	}
 }
-func TestOfferOperationIDGoString(t *testing.T) {
+func TestOperationIDGoString(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOfferOperationID(popr, false)
+	p := NewPopulatedOperationID(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
@@ -27731,9 +27904,9 @@ func TestTaskResourceLimitationGoString(t *testing.T) {
 		panic(err)
 	}
 }
-func TestOfferOperationGoString(t *testing.T) {
+func TestUUIDGoString(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOfferOperation(popr, false)
+	p := NewPopulatedUUID(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
@@ -27744,9 +27917,22 @@ func TestOfferOperationGoString(t *testing.T) {
 		panic(err)
 	}
 }
-func TestOfferOperationStatusGoString(t *testing.T) {
+func TestOperationGoString(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOfferOperationStatus(popr, false)
+	p := NewPopulatedOperation(popr, false)
+	s1 := p.GoString()
+	s2 := fmt.Sprintf("%#v", p)
+	if s1 != s2 {
+		t.Fatalf("GoString want %v got %v", s1, s2)
+	}
+	_, err := go_parser.ParseExpr(s1)
+	if err != nil {
+		panic(err)
+	}
+}
+func TestOperationStatusGoString(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedOperationStatus(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
@@ -28854,10 +29040,10 @@ func BenchmarkResourceProviderIDProtoSize(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOfferOperationIDProtoSize(t *testing.T) {
+func TestOperationIDProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationID(popr, true)
+	p := NewPopulatedOperationID(popr, true)
 	size2 := github_com_gogo_protobuf_proto.Size(p)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
@@ -28876,12 +29062,12 @@ func TestOfferOperationIDProtoSize(t *testing.T) {
 	}
 }
 
-func BenchmarkOfferOperationIDProtoSize(b *testing.B) {
+func BenchmarkOperationIDProtoSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*OfferOperationID, 1000)
+	pops := make([]*OperationID, 1000)
 	for i := 0; i < 1000; i++ {
-		pops[i] = NewPopulatedOfferOperationID(popr, false)
+		pops[i] = NewPopulatedOperationID(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -31734,10 +31920,10 @@ func BenchmarkTaskResourceLimitationProtoSize(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOfferOperationProtoSize(t *testing.T) {
+func TestUUIDProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperation(popr, true)
+	p := NewPopulatedUUID(popr, true)
 	size2 := github_com_gogo_protobuf_proto.Size(p)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
@@ -31756,12 +31942,12 @@ func TestOfferOperationProtoSize(t *testing.T) {
 	}
 }
 
-func BenchmarkOfferOperationProtoSize(b *testing.B) {
+func BenchmarkUUIDProtoSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*OfferOperation, 1000)
+	pops := make([]*UUID, 1000)
 	for i := 0; i < 1000; i++ {
-		pops[i] = NewPopulatedOfferOperation(popr, false)
+		pops[i] = NewPopulatedUUID(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -31770,10 +31956,10 @@ func BenchmarkOfferOperationProtoSize(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOfferOperationStatusProtoSize(t *testing.T) {
+func TestOperationProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOfferOperationStatus(popr, true)
+	p := NewPopulatedOperation(popr, true)
 	size2 := github_com_gogo_protobuf_proto.Size(p)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
@@ -31792,12 +31978,48 @@ func TestOfferOperationStatusProtoSize(t *testing.T) {
 	}
 }
 
-func BenchmarkOfferOperationStatusProtoSize(b *testing.B) {
+func BenchmarkOperationProtoSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*OfferOperationStatus, 1000)
+	pops := make([]*Operation, 1000)
 	for i := 0; i < 1000; i++ {
-		pops[i] = NewPopulatedOfferOperationStatus(popr, false)
+		pops[i] = NewPopulatedOperation(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += pops[i%1000].ProtoSize()
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func TestOperationStatusProtoSize(t *testing.T) {
+	seed := time.Now().UnixNano()
+	popr := math_rand.New(math_rand.NewSource(seed))
+	p := NewPopulatedOperationStatus(popr, true)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
+	if err != nil {
+		t.Fatalf("seed = %d, err = %v", seed, err)
+	}
+	size := p.ProtoSize()
+	if len(dAtA) != size {
+		t.Errorf("seed = %d, size %v != marshalled size %v", seed, size, len(dAtA))
+	}
+	if size2 != size {
+		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
+	}
+	size3 := github_com_gogo_protobuf_proto.Size(p)
+	if size3 != size {
+		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
+	}
+}
+
+func BenchmarkOperationStatusProtoSize(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*OperationStatus, 1000)
+	for i := 0; i < 1000; i++ {
+		pops[i] = NewPopulatedOperationStatus(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -34209,9 +34431,9 @@ func TestResourceProviderIDStringer(t *testing.T) {
 		t.Fatalf("String want %v got %v", s1, s2)
 	}
 }
-func TestOfferOperationIDStringer(t *testing.T) {
+func TestOperationIDStringer(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOfferOperationID(popr, false)
+	p := NewPopulatedOperationID(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
 	if s1 != s2 {
@@ -34929,18 +35151,27 @@ func TestTaskResourceLimitationStringer(t *testing.T) {
 		t.Fatalf("String want %v got %v", s1, s2)
 	}
 }
-func TestOfferOperationStringer(t *testing.T) {
+func TestUUIDStringer(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOfferOperation(popr, false)
+	p := NewPopulatedUUID(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
 	if s1 != s2 {
 		t.Fatalf("String want %v got %v", s1, s2)
 	}
 }
-func TestOfferOperationStatusStringer(t *testing.T) {
+func TestOperationStringer(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOfferOperationStatus(popr, false)
+	p := NewPopulatedOperation(popr, false)
+	s1 := p.String()
+	s2 := fmt.Sprintf("%v", p)
+	if s1 != s2 {
+		t.Fatalf("String want %v got %v", s1, s2)
+	}
+}
+func TestOperationStatusStringer(t *testing.T) {
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	p := NewPopulatedOperationStatus(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
 	if s1 != s2 {

@@ -193,7 +193,10 @@ func (this *QuotaInfo) VerboseEqual(that interface{}) error {
 }
 func (this *QuotaInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*QuotaInfo)
@@ -206,7 +209,10 @@ func (this *QuotaInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -293,7 +299,10 @@ func (this *QuotaRequest) VerboseEqual(that interface{}) error {
 }
 func (this *QuotaRequest) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*QuotaRequest)
@@ -306,7 +315,10 @@ func (this *QuotaRequest) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -375,7 +387,10 @@ func (this *QuotaStatus) VerboseEqual(that interface{}) error {
 }
 func (this *QuotaStatus) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*QuotaStatus)
@@ -388,7 +403,10 @@ func (this *QuotaStatus) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -415,11 +433,7 @@ func (this *QuotaInfo) GoString() string {
 		s = append(s, "Principal: "+valueToGoStringQuota(this.Principal, "string")+",\n")
 	}
 	if this.Guarantee != nil {
-		vs := make([]*mesos.Resource, len(this.Guarantee))
-		for i := range vs {
-			vs[i] = &this.Guarantee[i]
-		}
-		s = append(s, "Guarantee: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Guarantee: "+fmt.Sprintf("%#v", this.Guarantee)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -437,11 +451,7 @@ func (this *QuotaRequest) GoString() string {
 		s = append(s, "Role: "+valueToGoStringQuota(this.Role, "string")+",\n")
 	}
 	if this.Guarantee != nil {
-		vs := make([]*mesos.Resource, len(this.Guarantee))
-		for i := range vs {
-			vs[i] = &this.Guarantee[i]
-		}
-		s = append(s, "Guarantee: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Guarantee: "+fmt.Sprintf("%#v", this.Guarantee)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -453,11 +463,7 @@ func (this *QuotaStatus) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&quota.QuotaStatus{")
 	if this.Infos != nil {
-		vs := make([]*QuotaInfo, len(this.Infos))
-		for i := range vs {
-			vs[i] = &this.Infos[i]
-		}
-		s = append(s, "Infos: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Infos: "+fmt.Sprintf("%#v", this.Infos)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -588,6 +594,24 @@ func (m *QuotaStatus) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func encodeFixed64Quota(dAtA []byte, offset int, v uint64) int {
+	dAtA[offset] = uint8(v)
+	dAtA[offset+1] = uint8(v >> 8)
+	dAtA[offset+2] = uint8(v >> 16)
+	dAtA[offset+3] = uint8(v >> 24)
+	dAtA[offset+4] = uint8(v >> 32)
+	dAtA[offset+5] = uint8(v >> 40)
+	dAtA[offset+6] = uint8(v >> 48)
+	dAtA[offset+7] = uint8(v >> 56)
+	return offset + 8
+}
+func encodeFixed32Quota(dAtA []byte, offset int, v uint32) int {
+	dAtA[offset] = uint8(v)
+	dAtA[offset+1] = uint8(v >> 8)
+	dAtA[offset+2] = uint8(v >> 16)
+	dAtA[offset+3] = uint8(v >> 24)
+	return offset + 4
+}
 func encodeVarintQuota(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)

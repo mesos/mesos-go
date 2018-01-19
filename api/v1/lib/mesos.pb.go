@@ -101,7 +101,7 @@ import bytes "bytes"
 import strings "strings"
 import reflect "reflect"
 
-import binary "encoding/binary"
+import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
 
 import io "io"
 
@@ -9002,7 +9002,10 @@ func (this *FrameworkID) VerboseEqual(that interface{}) error {
 }
 func (this *FrameworkID) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*FrameworkID)
@@ -9015,7 +9018,10 @@ func (this *FrameworkID) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9056,7 +9062,10 @@ func (this *OfferID) VerboseEqual(that interface{}) error {
 }
 func (this *OfferID) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*OfferID)
@@ -9069,7 +9078,10 @@ func (this *OfferID) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9110,7 +9122,10 @@ func (this *AgentID) VerboseEqual(that interface{}) error {
 }
 func (this *AgentID) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*AgentID)
@@ -9123,7 +9138,10 @@ func (this *AgentID) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9164,7 +9182,10 @@ func (this *TaskID) VerboseEqual(that interface{}) error {
 }
 func (this *TaskID) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TaskID)
@@ -9177,7 +9198,10 @@ func (this *TaskID) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9218,7 +9242,10 @@ func (this *ExecutorID) VerboseEqual(that interface{}) error {
 }
 func (this *ExecutorID) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ExecutorID)
@@ -9231,7 +9258,10 @@ func (this *ExecutorID) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9275,7 +9305,10 @@ func (this *ContainerID) VerboseEqual(that interface{}) error {
 }
 func (this *ContainerID) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ContainerID)
@@ -9288,7 +9321,10 @@ func (this *ContainerID) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9332,7 +9368,10 @@ func (this *ResourceProviderID) VerboseEqual(that interface{}) error {
 }
 func (this *ResourceProviderID) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ResourceProviderID)
@@ -9345,7 +9384,10 @@ func (this *ResourceProviderID) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9386,7 +9428,10 @@ func (this *TimeInfo) VerboseEqual(that interface{}) error {
 }
 func (this *TimeInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TimeInfo)
@@ -9399,7 +9444,10 @@ func (this *TimeInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9440,7 +9488,10 @@ func (this *DurationInfo) VerboseEqual(that interface{}) error {
 }
 func (this *DurationInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DurationInfo)
@@ -9453,7 +9504,10 @@ func (this *DurationInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9512,7 +9566,10 @@ func (this *Address) VerboseEqual(that interface{}) error {
 }
 func (this *Address) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Address)
@@ -9525,7 +9582,10 @@ func (this *Address) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9613,7 +9673,10 @@ func (this *URL) VerboseEqual(that interface{}) error {
 }
 func (this *URL) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*URL)
@@ -9626,7 +9689,10 @@ func (this *URL) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9699,7 +9765,10 @@ func (this *Unavailability) VerboseEqual(that interface{}) error {
 }
 func (this *Unavailability) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Unavailability)
@@ -9712,7 +9781,10 @@ func (this *Unavailability) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9771,7 +9843,10 @@ func (this *MachineID) VerboseEqual(that interface{}) error {
 }
 func (this *MachineID) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*MachineID)
@@ -9784,7 +9859,10 @@ func (this *MachineID) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9852,7 +9930,10 @@ func (this *MachineInfo) VerboseEqual(that interface{}) error {
 }
 func (this *MachineInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*MachineInfo)
@@ -9865,7 +9946,10 @@ func (this *MachineInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -9997,7 +10081,10 @@ func (this *FrameworkInfo) VerboseEqual(that interface{}) error {
 }
 func (this *FrameworkInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*FrameworkInfo)
@@ -10010,7 +10097,10 @@ func (this *FrameworkInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10130,7 +10220,10 @@ func (this *FrameworkInfo_Capability) VerboseEqual(that interface{}) error {
 }
 func (this *FrameworkInfo_Capability) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*FrameworkInfo_Capability)
@@ -10143,7 +10236,10 @@ func (this *FrameworkInfo_Capability) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10220,7 +10316,10 @@ func (this *CheckInfo) VerboseEqual(that interface{}) error {
 }
 func (this *CheckInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CheckInfo)
@@ -10233,7 +10332,10 @@ func (this *CheckInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10310,7 +10412,10 @@ func (this *CheckInfo_Command) VerboseEqual(that interface{}) error {
 }
 func (this *CheckInfo_Command) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CheckInfo_Command)
@@ -10323,7 +10428,10 @@ func (this *CheckInfo_Command) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10373,7 +10481,10 @@ func (this *CheckInfo_Http) VerboseEqual(that interface{}) error {
 }
 func (this *CheckInfo_Http) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CheckInfo_Http)
@@ -10386,7 +10497,10 @@ func (this *CheckInfo_Http) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10436,7 +10550,10 @@ func (this *CheckInfo_Tcp) VerboseEqual(that interface{}) error {
 }
 func (this *CheckInfo_Tcp) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CheckInfo_Tcp)
@@ -10449,7 +10566,10 @@ func (this *CheckInfo_Tcp) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10544,7 +10664,10 @@ func (this *HealthCheck) VerboseEqual(that interface{}) error {
 }
 func (this *HealthCheck) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*HealthCheck)
@@ -10557,7 +10680,10 @@ func (this *HealthCheck) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10678,7 +10804,10 @@ func (this *HealthCheck_HTTPCheckInfo) VerboseEqual(that interface{}) error {
 }
 func (this *HealthCheck_HTTPCheckInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*HealthCheck_HTTPCheckInfo)
@@ -10691,7 +10820,10 @@ func (this *HealthCheck_HTTPCheckInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10758,7 +10890,10 @@ func (this *HealthCheck_TCPCheckInfo) VerboseEqual(that interface{}) error {
 }
 func (this *HealthCheck_TCPCheckInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*HealthCheck_TCPCheckInfo)
@@ -10771,7 +10906,10 @@ func (this *HealthCheck_TCPCheckInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10812,7 +10950,10 @@ func (this *KillPolicy) VerboseEqual(that interface{}) error {
 }
 func (this *KillPolicy) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*KillPolicy)
@@ -10825,7 +10966,10 @@ func (this *KillPolicy) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -10909,7 +11053,10 @@ func (this *CommandInfo) VerboseEqual(that interface{}) error {
 }
 func (this *CommandInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CommandInfo)
@@ -10922,7 +11069,10 @@ func (this *CommandInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11042,7 +11192,10 @@ func (this *CommandInfo_URI) VerboseEqual(that interface{}) error {
 }
 func (this *CommandInfo_URI) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CommandInfo_URI)
@@ -11055,7 +11208,10 @@ func (this *CommandInfo_URI) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11182,7 +11338,10 @@ func (this *ExecutorInfo) VerboseEqual(that interface{}) error {
 }
 func (this *ExecutorInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ExecutorInfo)
@@ -11195,7 +11354,10 @@ func (this *ExecutorInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11286,7 +11448,10 @@ func (this *DomainInfo) VerboseEqual(that interface{}) error {
 }
 func (this *DomainInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DomainInfo)
@@ -11299,7 +11464,10 @@ func (this *DomainInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11343,7 +11511,10 @@ func (this *DomainInfo_FaultDomain) VerboseEqual(that interface{}) error {
 }
 func (this *DomainInfo_FaultDomain) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DomainInfo_FaultDomain)
@@ -11356,7 +11527,10 @@ func (this *DomainInfo_FaultDomain) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11400,7 +11574,10 @@ func (this *DomainInfo_FaultDomain_RegionInfo) VerboseEqual(that interface{}) er
 }
 func (this *DomainInfo_FaultDomain_RegionInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DomainInfo_FaultDomain_RegionInfo)
@@ -11413,7 +11590,10 @@ func (this *DomainInfo_FaultDomain_RegionInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11454,7 +11634,10 @@ func (this *DomainInfo_FaultDomain_ZoneInfo) VerboseEqual(that interface{}) erro
 }
 func (this *DomainInfo_FaultDomain_ZoneInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DomainInfo_FaultDomain_ZoneInfo)
@@ -11467,7 +11650,10 @@ func (this *DomainInfo_FaultDomain_ZoneInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11553,7 +11739,10 @@ func (this *MasterInfo) VerboseEqual(that interface{}) error {
 }
 func (this *MasterInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*MasterInfo)
@@ -11566,7 +11755,10 @@ func (this *MasterInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11683,7 +11875,10 @@ func (this *AgentInfo) VerboseEqual(that interface{}) error {
 }
 func (this *AgentInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*AgentInfo)
@@ -11696,7 +11891,10 @@ func (this *AgentInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11768,7 +11966,10 @@ func (this *AgentInfo_Capability) VerboseEqual(that interface{}) error {
 }
 func (this *AgentInfo_Capability) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*AgentInfo_Capability)
@@ -11781,7 +11982,10 @@ func (this *AgentInfo_Capability) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11836,7 +12040,10 @@ func (this *ResourceProviderInfo) VerboseEqual(that interface{}) error {
 }
 func (this *ResourceProviderInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ResourceProviderInfo)
@@ -11849,7 +12056,10 @@ func (this *ResourceProviderInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11916,7 +12126,10 @@ func (this *Value) VerboseEqual(that interface{}) error {
 }
 func (this *Value) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Value)
@@ -11929,7 +12142,10 @@ func (this *Value) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -11982,7 +12198,10 @@ func (this *Value_Scalar) VerboseEqual(that interface{}) error {
 }
 func (this *Value_Scalar) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Value_Scalar)
@@ -11995,7 +12214,10 @@ func (this *Value_Scalar) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12039,7 +12261,10 @@ func (this *Value_Range) VerboseEqual(that interface{}) error {
 }
 func (this *Value_Range) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Value_Range)
@@ -12052,7 +12277,10 @@ func (this *Value_Range) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12101,7 +12329,10 @@ func (this *Value_Ranges) VerboseEqual(that interface{}) error {
 }
 func (this *Value_Ranges) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Value_Ranges)
@@ -12114,7 +12345,10 @@ func (this *Value_Ranges) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12165,7 +12399,10 @@ func (this *Value_Set) VerboseEqual(that interface{}) error {
 }
 func (this *Value_Set) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Value_Set)
@@ -12178,7 +12415,10 @@ func (this *Value_Set) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12224,7 +12464,10 @@ func (this *Value_Text) VerboseEqual(that interface{}) error {
 }
 func (this *Value_Text) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Value_Text)
@@ -12237,7 +12480,10 @@ func (this *Value_Text) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12293,7 +12539,10 @@ func (this *Attribute) VerboseEqual(that interface{}) error {
 }
 func (this *Attribute) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Attribute)
@@ -12306,7 +12555,10 @@ func (this *Attribute) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12415,7 +12667,10 @@ func (this *Resource) VerboseEqual(that interface{}) error {
 }
 func (this *Resource) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource)
@@ -12428,7 +12683,10 @@ func (this *Resource) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12528,7 +12786,10 @@ func (this *Resource_AllocationInfo) VerboseEqual(that interface{}) error {
 }
 func (this *Resource_AllocationInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource_AllocationInfo)
@@ -12541,7 +12802,10 @@ func (this *Resource_AllocationInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12615,7 +12879,10 @@ func (this *Resource_ReservationInfo) VerboseEqual(that interface{}) error {
 }
 func (this *Resource_ReservationInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource_ReservationInfo)
@@ -12628,7 +12895,10 @@ func (this *Resource_ReservationInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12702,7 +12972,10 @@ func (this *Resource_DiskInfo) VerboseEqual(that interface{}) error {
 }
 func (this *Resource_DiskInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource_DiskInfo)
@@ -12715,7 +12988,10 @@ func (this *Resource_DiskInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12771,7 +13047,10 @@ func (this *Resource_DiskInfo_Persistence) VerboseEqual(that interface{}) error 
 }
 func (this *Resource_DiskInfo_Persistence) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource_DiskInfo_Persistence)
@@ -12784,7 +13063,10 @@ func (this *Resource_DiskInfo_Persistence) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12840,7 +13122,10 @@ func (this *Resource_DiskInfo_Source) VerboseEqual(that interface{}) error {
 }
 func (this *Resource_DiskInfo_Source) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource_DiskInfo_Source)
@@ -12853,7 +13138,10 @@ func (this *Resource_DiskInfo_Source) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12906,7 +13194,10 @@ func (this *Resource_DiskInfo_Source_Path) VerboseEqual(that interface{}) error 
 }
 func (this *Resource_DiskInfo_Source_Path) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource_DiskInfo_Source_Path)
@@ -12919,7 +13210,10 @@ func (this *Resource_DiskInfo_Source_Path) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -12972,7 +13266,10 @@ func (this *Resource_DiskInfo_Source_Mount) VerboseEqual(that interface{}) error
 }
 func (this *Resource_DiskInfo_Source_Mount) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource_DiskInfo_Source_Mount)
@@ -12985,7 +13282,10 @@ func (this *Resource_DiskInfo_Source_Mount) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -13029,7 +13329,10 @@ func (this *Resource_RevocableInfo) VerboseEqual(that interface{}) error {
 }
 func (this *Resource_RevocableInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource_RevocableInfo)
@@ -13042,7 +13345,10 @@ func (this *Resource_RevocableInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -13077,7 +13383,10 @@ func (this *Resource_SharedInfo) VerboseEqual(that interface{}) error {
 }
 func (this *Resource_SharedInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Resource_SharedInfo)
@@ -13090,7 +13399,10 @@ func (this *Resource_SharedInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -13209,7 +13521,10 @@ func (this *TrafficControlStatistics) VerboseEqual(that interface{}) error {
 }
 func (this *TrafficControlStatistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TrafficControlStatistics)
@@ -13222,7 +13537,10 @@ func (this *TrafficControlStatistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -13512,7 +13830,10 @@ func (this *IpStatistics) VerboseEqual(that interface{}) error {
 }
 func (this *IpStatistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*IpStatistics)
@@ -13525,7 +13846,10 @@ func (this *IpStatistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -13974,7 +14298,10 @@ func (this *IcmpStatistics) VerboseEqual(that interface{}) error {
 }
 func (this *IcmpStatistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*IcmpStatistics)
@@ -13987,7 +14314,10 @@ func (this *IcmpStatistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -14400,7 +14730,10 @@ func (this *TcpStatistics) VerboseEqual(that interface{}) error {
 }
 func (this *TcpStatistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TcpStatistics)
@@ -14413,7 +14746,10 @@ func (this *TcpStatistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -14655,7 +14991,10 @@ func (this *UdpStatistics) VerboseEqual(that interface{}) error {
 }
 func (this *UdpStatistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*UdpStatistics)
@@ -14668,7 +15007,10 @@ func (this *UdpStatistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -14787,7 +15129,10 @@ func (this *SNMPStatistics) VerboseEqual(that interface{}) error {
 }
 func (this *SNMPStatistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*SNMPStatistics)
@@ -14800,7 +15145,10 @@ func (this *SNMPStatistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -14871,7 +15219,10 @@ func (this *DiskStatistics) VerboseEqual(that interface{}) error {
 }
 func (this *DiskStatistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DiskStatistics)
@@ -14884,7 +15235,10 @@ func (this *DiskStatistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -15313,7 +15667,10 @@ func (this *ResourceStatistics) VerboseEqual(that interface{}) error {
 }
 func (this *ResourceStatistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ResourceStatistics)
@@ -15326,7 +15683,10 @@ func (this *ResourceStatistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -15747,7 +16107,10 @@ func (this *ResourceUsage) VerboseEqual(that interface{}) error {
 }
 func (this *ResourceUsage) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ResourceUsage)
@@ -15760,7 +16123,10 @@ func (this *ResourceUsage) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -15836,7 +16202,10 @@ func (this *ResourceUsage_Executor) VerboseEqual(that interface{}) error {
 }
 func (this *ResourceUsage_Executor) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ResourceUsage_Executor)
@@ -15849,7 +16218,10 @@ func (this *ResourceUsage_Executor) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -15926,7 +16298,10 @@ func (this *ResourceUsage_Executor_Task) VerboseEqual(that interface{}) error {
 }
 func (this *ResourceUsage_Executor_Task) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ResourceUsage_Executor_Task)
@@ -15939,7 +16314,10 @@ func (this *ResourceUsage_Executor_Task) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -16456,7 +16834,10 @@ func (this *PerfStatistics) VerboseEqual(that interface{}) error {
 }
 func (this *PerfStatistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*PerfStatistics)
@@ -16469,7 +16850,10 @@ func (this *PerfStatistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -16980,7 +17364,10 @@ func (this *Request) VerboseEqual(that interface{}) error {
 }
 func (this *Request) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Request)
@@ -16993,7 +17380,10 @@ func (this *Request) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17087,7 +17477,10 @@ func (this *Offer) VerboseEqual(that interface{}) error {
 }
 func (this *Offer) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Offer)
@@ -17100,7 +17493,10 @@ func (this *Offer) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17204,7 +17600,10 @@ func (this *Offer_Operation) VerboseEqual(that interface{}) error {
 }
 func (this *Offer_Operation) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Offer_Operation)
@@ -17217,7 +17616,10 @@ func (this *Offer_Operation) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17281,7 +17683,10 @@ func (this *Offer_Operation_Launch) VerboseEqual(that interface{}) error {
 }
 func (this *Offer_Operation_Launch) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Offer_Operation_Launch)
@@ -17294,7 +17699,10 @@ func (this *Offer_Operation_Launch) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17343,7 +17751,10 @@ func (this *Offer_Operation_LaunchGroup) VerboseEqual(that interface{}) error {
 }
 func (this *Offer_Operation_LaunchGroup) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Offer_Operation_LaunchGroup)
@@ -17356,7 +17767,10 @@ func (this *Offer_Operation_LaunchGroup) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17405,7 +17819,10 @@ func (this *Offer_Operation_Reserve) VerboseEqual(that interface{}) error {
 }
 func (this *Offer_Operation_Reserve) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Offer_Operation_Reserve)
@@ -17418,7 +17835,10 @@ func (this *Offer_Operation_Reserve) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17469,7 +17889,10 @@ func (this *Offer_Operation_Unreserve) VerboseEqual(that interface{}) error {
 }
 func (this *Offer_Operation_Unreserve) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Offer_Operation_Unreserve)
@@ -17482,7 +17905,10 @@ func (this *Offer_Operation_Unreserve) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17533,7 +17959,10 @@ func (this *Offer_Operation_Create) VerboseEqual(that interface{}) error {
 }
 func (this *Offer_Operation_Create) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Offer_Operation_Create)
@@ -17546,7 +17975,10 @@ func (this *Offer_Operation_Create) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17597,7 +18029,10 @@ func (this *Offer_Operation_Destroy) VerboseEqual(that interface{}) error {
 }
 func (this *Offer_Operation_Destroy) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Offer_Operation_Destroy)
@@ -17610,7 +18045,10 @@ func (this *Offer_Operation_Destroy) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17676,7 +18114,10 @@ func (this *InverseOffer) VerboseEqual(that interface{}) error {
 }
 func (this *InverseOffer) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*InverseOffer)
@@ -17689,7 +18130,10 @@ func (this *InverseOffer) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17791,7 +18235,10 @@ func (this *TaskInfo) VerboseEqual(that interface{}) error {
 }
 func (this *TaskInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TaskInfo)
@@ -17804,7 +18251,10 @@ func (this *TaskInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -17891,7 +18341,10 @@ func (this *TaskGroupInfo) VerboseEqual(that interface{}) error {
 }
 func (this *TaskGroupInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TaskGroupInfo)
@@ -17904,7 +18357,10 @@ func (this *TaskGroupInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18017,7 +18473,10 @@ func (this *Task) VerboseEqual(that interface{}) error {
 }
 func (this *Task) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Task)
@@ -18030,7 +18489,10 @@ func (this *Task) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18153,7 +18615,10 @@ func (this *CheckStatusInfo) VerboseEqual(that interface{}) error {
 }
 func (this *CheckStatusInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CheckStatusInfo)
@@ -18166,7 +18631,10 @@ func (this *CheckStatusInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18228,7 +18696,10 @@ func (this *CheckStatusInfo_Command) VerboseEqual(that interface{}) error {
 }
 func (this *CheckStatusInfo_Command) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CheckStatusInfo_Command)
@@ -18241,7 +18712,10 @@ func (this *CheckStatusInfo_Command) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18294,7 +18768,10 @@ func (this *CheckStatusInfo_Http) VerboseEqual(that interface{}) error {
 }
 func (this *CheckStatusInfo_Http) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CheckStatusInfo_Http)
@@ -18307,7 +18784,10 @@ func (this *CheckStatusInfo_Http) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18360,7 +18840,10 @@ func (this *CheckStatusInfo_Tcp) VerboseEqual(that interface{}) error {
 }
 func (this *CheckStatusInfo_Tcp) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CheckStatusInfo_Tcp)
@@ -18373,7 +18856,10 @@ func (this *CheckStatusInfo_Tcp) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18498,7 +18984,10 @@ func (this *TaskStatus) VerboseEqual(that interface{}) error {
 }
 func (this *TaskStatus) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TaskStatus)
@@ -18511,7 +19000,10 @@ func (this *TaskStatus) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18636,7 +19128,10 @@ func (this *Filters) VerboseEqual(that interface{}) error {
 }
 func (this *Filters) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Filters)
@@ -18649,7 +19144,10 @@ func (this *Filters) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18701,7 +19199,10 @@ func (this *Environment) VerboseEqual(that interface{}) error {
 }
 func (this *Environment) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Environment)
@@ -18714,7 +19215,10 @@ func (this *Environment) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18781,7 +19285,10 @@ func (this *Environment_Variable) VerboseEqual(that interface{}) error {
 }
 func (this *Environment_Variable) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Environment_Variable)
@@ -18794,7 +19301,10 @@ func (this *Environment_Variable) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18859,7 +19369,10 @@ func (this *Parameter) VerboseEqual(that interface{}) error {
 }
 func (this *Parameter) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Parameter)
@@ -18872,7 +19385,10 @@ func (this *Parameter) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18921,7 +19437,10 @@ func (this *Parameters) VerboseEqual(that interface{}) error {
 }
 func (this *Parameters) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Parameters)
@@ -18934,7 +19453,10 @@ func (this *Parameters) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -18989,7 +19511,10 @@ func (this *Credential) VerboseEqual(that interface{}) error {
 }
 func (this *Credential) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Credential)
@@ -19002,7 +19527,10 @@ func (this *Credential) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19057,7 +19585,10 @@ func (this *Credentials) VerboseEqual(that interface{}) error {
 }
 func (this *Credentials) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Credentials)
@@ -19070,7 +19601,10 @@ func (this *Credentials) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19122,7 +19656,10 @@ func (this *Secret) VerboseEqual(that interface{}) error {
 }
 func (this *Secret) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Secret)
@@ -19135,7 +19672,10 @@ func (this *Secret) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19191,7 +19731,10 @@ func (this *Secret_Reference) VerboseEqual(that interface{}) error {
 }
 func (this *Secret_Reference) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Secret_Reference)
@@ -19204,7 +19747,10 @@ func (this *Secret_Reference) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19254,7 +19800,10 @@ func (this *Secret_Value) VerboseEqual(that interface{}) error {
 }
 func (this *Secret_Value) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Secret_Value)
@@ -19267,7 +19816,10 @@ func (this *Secret_Value) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19326,7 +19878,10 @@ func (this *RateLimit) VerboseEqual(that interface{}) error {
 }
 func (this *RateLimit) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*RateLimit)
@@ -19339,7 +19894,10 @@ func (this *RateLimit) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19421,7 +19979,10 @@ func (this *RateLimits) VerboseEqual(that interface{}) error {
 }
 func (this *RateLimits) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*RateLimits)
@@ -19434,7 +19995,10 @@ func (this *RateLimits) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19519,7 +20083,10 @@ func (this *Image) VerboseEqual(that interface{}) error {
 }
 func (this *Image) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Image)
@@ -19532,7 +20099,10 @@ func (this *Image) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19606,7 +20176,10 @@ func (this *Image_Appc) VerboseEqual(that interface{}) error {
 }
 func (this *Image_Appc) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Image_Appc)
@@ -19619,7 +20192,10 @@ func (this *Image_Appc) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19678,7 +20254,10 @@ func (this *Image_Docker) VerboseEqual(that interface{}) error {
 }
 func (this *Image_Docker) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Image_Docker)
@@ -19691,7 +20270,10 @@ func (this *Image_Docker) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19762,7 +20344,10 @@ func (this *Volume) VerboseEqual(that interface{}) error {
 }
 func (this *Volume) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Volume)
@@ -19775,7 +20360,10 @@ func (this *Volume) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19849,7 +20437,10 @@ func (this *Volume_Source) VerboseEqual(that interface{}) error {
 }
 func (this *Volume_Source) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Volume_Source)
@@ -19862,7 +20453,10 @@ func (this *Volume_Source) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19924,7 +20518,10 @@ func (this *Volume_Source_DockerVolume) VerboseEqual(that interface{}) error {
 }
 func (this *Volume_Source_DockerVolume) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Volume_Source_DockerVolume)
@@ -19937,7 +20534,10 @@ func (this *Volume_Source_DockerVolume) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -19993,7 +20593,10 @@ func (this *Volume_Source_SandboxPath) VerboseEqual(that interface{}) error {
 }
 func (this *Volume_Source_SandboxPath) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Volume_Source_SandboxPath)
@@ -20006,7 +20609,10 @@ func (this *Volume_Source_SandboxPath) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20083,7 +20689,10 @@ func (this *NetworkInfo) VerboseEqual(that interface{}) error {
 }
 func (this *NetworkInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*NetworkInfo)
@@ -20096,7 +20705,10 @@ func (this *NetworkInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20185,7 +20797,10 @@ func (this *NetworkInfo_IPAddress) VerboseEqual(that interface{}) error {
 }
 func (this *NetworkInfo_IPAddress) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*NetworkInfo_IPAddress)
@@ -20198,7 +20813,10 @@ func (this *NetworkInfo_IPAddress) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20266,7 +20884,10 @@ func (this *NetworkInfo_PortMapping) VerboseEqual(that interface{}) error {
 }
 func (this *NetworkInfo_PortMapping) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*NetworkInfo_PortMapping)
@@ -20279,7 +20900,10 @@ func (this *NetworkInfo_PortMapping) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20337,7 +20961,10 @@ func (this *CapabilityInfo) VerboseEqual(that interface{}) error {
 }
 func (this *CapabilityInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CapabilityInfo)
@@ -20350,7 +20977,10 @@ func (this *CapabilityInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20411,7 +21041,10 @@ func (this *LinuxInfo) VerboseEqual(that interface{}) error {
 }
 func (this *LinuxInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*LinuxInfo)
@@ -20424,7 +21057,10 @@ func (this *LinuxInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20485,7 +21121,10 @@ func (this *RLimitInfo) VerboseEqual(that interface{}) error {
 }
 func (this *RLimitInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*RLimitInfo)
@@ -20498,7 +21137,10 @@ func (this *RLimitInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20562,7 +21204,10 @@ func (this *RLimitInfo_RLimit) VerboseEqual(that interface{}) error {
 }
 func (this *RLimitInfo_RLimit) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*RLimitInfo_RLimit)
@@ -20575,7 +21220,10 @@ func (this *RLimitInfo_RLimit) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20634,7 +21282,10 @@ func (this *TTYInfo) VerboseEqual(that interface{}) error {
 }
 func (this *TTYInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TTYInfo)
@@ -20647,7 +21298,10 @@ func (this *TTYInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20691,7 +21345,10 @@ func (this *TTYInfo_WindowSize) VerboseEqual(that interface{}) error {
 }
 func (this *TTYInfo_WindowSize) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*TTYInfo_WindowSize)
@@ -20704,7 +21361,10 @@ func (this *TTYInfo_WindowSize) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20794,7 +21454,10 @@ func (this *ContainerInfo) VerboseEqual(that interface{}) error {
 }
 func (this *ContainerInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ContainerInfo)
@@ -20807,7 +21470,10 @@ func (this *ContainerInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -20946,7 +21612,10 @@ func (this *ContainerInfo_DockerInfo) VerboseEqual(that interface{}) error {
 }
 func (this *ContainerInfo_DockerInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ContainerInfo_DockerInfo)
@@ -20959,7 +21628,10 @@ func (this *ContainerInfo_DockerInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21064,7 +21736,10 @@ func (this *ContainerInfo_DockerInfo_PortMapping) VerboseEqual(that interface{})
 }
 func (this *ContainerInfo_DockerInfo_PortMapping) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ContainerInfo_DockerInfo_PortMapping)
@@ -21077,7 +21752,10 @@ func (this *ContainerInfo_DockerInfo_PortMapping) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21130,7 +21808,10 @@ func (this *ContainerInfo_MesosInfo) VerboseEqual(that interface{}) error {
 }
 func (this *ContainerInfo_MesosInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ContainerInfo_MesosInfo)
@@ -21143,7 +21824,10 @@ func (this *ContainerInfo_MesosInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21204,7 +21888,10 @@ func (this *ContainerStatus) VerboseEqual(that interface{}) error {
 }
 func (this *ContainerStatus) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ContainerStatus)
@@ -21217,7 +21904,10 @@ func (this *ContainerStatus) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21278,7 +21968,10 @@ func (this *CgroupInfo) VerboseEqual(that interface{}) error {
 }
 func (this *CgroupInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CgroupInfo)
@@ -21291,7 +21984,10 @@ func (this *CgroupInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21329,7 +22025,10 @@ func (this *CgroupInfo_Blkio) VerboseEqual(that interface{}) error {
 }
 func (this *CgroupInfo_Blkio) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CgroupInfo_Blkio)
@@ -21342,7 +22041,10 @@ func (this *CgroupInfo_Blkio) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21395,7 +22097,10 @@ func (this *CgroupInfo_Blkio_Value) VerboseEqual(that interface{}) error {
 }
 func (this *CgroupInfo_Blkio_Value) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CgroupInfo_Blkio_Value)
@@ -21408,7 +22113,10 @@ func (this *CgroupInfo_Blkio_Value) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21461,7 +22169,10 @@ func (this *CgroupInfo_Blkio_CFQ) VerboseEqual(that interface{}) error {
 }
 func (this *CgroupInfo_Blkio_CFQ) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CgroupInfo_Blkio_CFQ)
@@ -21474,7 +22185,10 @@ func (this *CgroupInfo_Blkio_CFQ) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21578,7 +22292,10 @@ func (this *CgroupInfo_Blkio_CFQ_Statistics) VerboseEqual(that interface{}) erro
 }
 func (this *CgroupInfo_Blkio_CFQ_Statistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CgroupInfo_Blkio_CFQ_Statistics)
@@ -21591,7 +22308,10 @@ func (this *CgroupInfo_Blkio_CFQ_Statistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21695,7 +22415,10 @@ func (this *CgroupInfo_Blkio_Throttling) VerboseEqual(that interface{}) error {
 }
 func (this *CgroupInfo_Blkio_Throttling) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CgroupInfo_Blkio_Throttling)
@@ -21708,7 +22431,10 @@ func (this *CgroupInfo_Blkio_Throttling) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21762,7 +22488,10 @@ func (this *CgroupInfo_Blkio_Throttling_Statistics) VerboseEqual(that interface{
 }
 func (this *CgroupInfo_Blkio_Throttling_Statistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CgroupInfo_Blkio_Throttling_Statistics)
@@ -21775,7 +22504,10 @@ func (this *CgroupInfo_Blkio_Throttling_Statistics) Equal(that interface{}) bool
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21853,7 +22585,10 @@ func (this *CgroupInfo_Blkio_Statistics) VerboseEqual(that interface{}) error {
 }
 func (this *CgroupInfo_Blkio_Statistics) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CgroupInfo_Blkio_Statistics)
@@ -21866,7 +22601,10 @@ func (this *CgroupInfo_Blkio_Statistics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21934,7 +22672,10 @@ func (this *CgroupInfo_NetCls) VerboseEqual(that interface{}) error {
 }
 func (this *CgroupInfo_NetCls) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*CgroupInfo_NetCls)
@@ -21947,7 +22688,10 @@ func (this *CgroupInfo_NetCls) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -21999,7 +22743,10 @@ func (this *Labels) VerboseEqual(that interface{}) error {
 }
 func (this *Labels) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Labels)
@@ -22012,7 +22759,10 @@ func (this *Labels) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22067,7 +22817,10 @@ func (this *Label) VerboseEqual(that interface{}) error {
 }
 func (this *Label) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Label)
@@ -22080,7 +22833,10 @@ func (this *Label) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22160,7 +22916,10 @@ func (this *Port) VerboseEqual(that interface{}) error {
 }
 func (this *Port) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Port)
@@ -22173,7 +22932,10 @@ func (this *Port) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22249,7 +23011,10 @@ func (this *Ports) VerboseEqual(that interface{}) error {
 }
 func (this *Ports) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Ports)
@@ -22262,7 +23027,10 @@ func (this *Ports) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22350,7 +23118,10 @@ func (this *DiscoveryInfo) VerboseEqual(that interface{}) error {
 }
 func (this *DiscoveryInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DiscoveryInfo)
@@ -22363,7 +23134,10 @@ func (this *DiscoveryInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22455,7 +23229,10 @@ func (this *WeightInfo) VerboseEqual(that interface{}) error {
 }
 func (this *WeightInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*WeightInfo)
@@ -22468,7 +23245,10 @@ func (this *WeightInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22572,7 +23352,10 @@ func (this *VersionInfo) VerboseEqual(that interface{}) error {
 }
 func (this *VersionInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*VersionInfo)
@@ -22585,7 +23368,10 @@ func (this *VersionInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22689,7 +23475,10 @@ func (this *Flag) VerboseEqual(that interface{}) error {
 }
 func (this *Flag) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Flag)
@@ -22702,7 +23491,10 @@ func (this *Flag) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22771,7 +23563,10 @@ func (this *Role) VerboseEqual(that interface{}) error {
 }
 func (this *Role) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Role)
@@ -22784,7 +23579,10 @@ func (this *Role) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22853,7 +23651,10 @@ func (this *Metric) VerboseEqual(that interface{}) error {
 }
 func (this *Metric) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Metric)
@@ -22866,7 +23667,10 @@ func (this *Metric) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -22964,7 +23768,10 @@ func (this *FileInfo) VerboseEqual(that interface{}) error {
 }
 func (this *FileInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*FileInfo)
@@ -22977,7 +23784,10 @@ func (this *FileInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -23075,7 +23885,10 @@ func (this *Device) VerboseEqual(that interface{}) error {
 }
 func (this *Device) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Device)
@@ -23088,7 +23901,10 @@ func (this *Device) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -23153,7 +23969,10 @@ func (this *Device_Number) VerboseEqual(that interface{}) error {
 }
 func (this *Device_Number) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Device_Number)
@@ -23166,7 +23985,10 @@ func (this *Device_Number) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -23225,7 +24047,10 @@ func (this *DeviceAccess) VerboseEqual(that interface{}) error {
 }
 func (this *DeviceAccess) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DeviceAccess)
@@ -23238,7 +24063,10 @@ func (this *DeviceAccess) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -23306,7 +24134,10 @@ func (this *DeviceAccess_Access) VerboseEqual(that interface{}) error {
 }
 func (this *DeviceAccess_Access) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DeviceAccess_Access)
@@ -23319,7 +24150,10 @@ func (this *DeviceAccess_Access) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -23389,7 +24223,10 @@ func (this *DeviceWhitelist) VerboseEqual(that interface{}) error {
 }
 func (this *DeviceWhitelist) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*DeviceWhitelist)
@@ -23402,7 +24239,10 @@ func (this *DeviceWhitelist) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -23537,11 +24377,7 @@ func (this *URL) GoString() string {
 		s = append(s, "Path: "+valueToGoStringMesos(this.Path, "string")+",\n")
 	}
 	if this.Query != nil {
-		vs := make([]*Parameter, len(this.Query))
-		for i := range vs {
-			vs[i] = &this.Query[i]
-		}
-		s = append(s, "Query: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Query: "+fmt.Sprintf("%#v", this.Query)+",\n")
 	}
 	if this.Fragment != nil {
 		s = append(s, "Fragment: "+valueToGoStringMesos(this.Fragment, "string")+",\n")
@@ -23626,11 +24462,7 @@ func (this *FrameworkInfo) GoString() string {
 		s = append(s, "WebUiURL: "+valueToGoStringMesos(this.WebUiURL, "string")+",\n")
 	}
 	if this.Capabilities != nil {
-		vs := make([]*FrameworkInfo_Capability, len(this.Capabilities))
-		for i := range vs {
-			vs[i] = &this.Capabilities[i]
-		}
-		s = append(s, "Capabilities: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Capabilities: "+fmt.Sprintf("%#v", this.Capabilities)+",\n")
 	}
 	if this.Labels != nil {
 		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
@@ -23791,11 +24623,7 @@ func (this *CommandInfo) GoString() string {
 	s := make([]string, 0, 10)
 	s = append(s, "&mesos.CommandInfo{")
 	if this.URIs != nil {
-		vs := make([]*CommandInfo_URI, len(this.URIs))
-		for i := range vs {
-			vs[i] = &this.URIs[i]
-		}
-		s = append(s, "URIs: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "URIs: "+fmt.Sprintf("%#v", this.URIs)+",\n")
 	}
 	if this.Environment != nil {
 		s = append(s, "Environment: "+fmt.Sprintf("%#v", this.Environment)+",\n")
@@ -23855,11 +24683,7 @@ func (this *ExecutorInfo) GoString() string {
 		s = append(s, "Container: "+fmt.Sprintf("%#v", this.Container)+",\n")
 	}
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	if this.Name != nil {
 		s = append(s, "Name: "+valueToGoStringMesos(this.Name, "string")+",\n")
@@ -23965,18 +24789,10 @@ func (this *AgentInfo) GoString() string {
 		s = append(s, "Port: "+valueToGoStringMesos(this.Port, "int32")+",\n")
 	}
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	if this.Attributes != nil {
-		vs := make([]*Attribute, len(this.Attributes))
-		for i := range vs {
-			vs[i] = &this.Attributes[i]
-		}
-		s = append(s, "Attributes: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Attributes: "+fmt.Sprintf("%#v", this.Attributes)+",\n")
 	}
 	if this.ID != nil {
 		s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
@@ -24007,11 +24823,7 @@ func (this *ResourceProviderInfo) GoString() string {
 		s = append(s, "ID: "+fmt.Sprintf("%#v", this.ID)+",\n")
 	}
 	if this.Attributes != nil {
-		vs := make([]*Attribute, len(this.Attributes))
-		for i := range vs {
-			vs[i] = &this.Attributes[i]
-		}
-		s = append(s, "Attributes: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Attributes: "+fmt.Sprintf("%#v", this.Attributes)+",\n")
 	}
 	s = append(s, "Type: "+fmt.Sprintf("%#v", this.Type)+",\n")
 	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
@@ -24068,11 +24880,7 @@ func (this *Value_Ranges) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Value_Ranges{")
 	if this.Range != nil {
-		vs := make([]*Value_Range, len(this.Range))
-		for i := range vs {
-			vs[i] = &this.Range[i]
-		}
-		s = append(s, "Range: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Range: "+fmt.Sprintf("%#v", this.Range)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -24154,11 +24962,7 @@ func (this *Resource) GoString() string {
 		s = append(s, "Reservation: "+fmt.Sprintf("%#v", this.Reservation)+",\n")
 	}
 	if this.Reservations != nil {
-		vs := make([]*Resource_ReservationInfo, len(this.Reservations))
-		for i := range vs {
-			vs[i] = &this.Reservations[i]
-		}
-		s = append(s, "Reservations: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Reservations: "+fmt.Sprintf("%#v", this.Reservations)+",\n")
 	}
 	if this.Disk != nil {
 		s = append(s, "Disk: "+fmt.Sprintf("%#v", this.Disk)+",\n")
@@ -24696,11 +25500,7 @@ func (this *ResourceStatistics) GoString() string {
 		s = append(s, "DiskUsedBytes: "+valueToGoStringMesos(this.DiskUsedBytes, "uint64")+",\n")
 	}
 	if this.DiskStatistics != nil {
-		vs := make([]*DiskStatistics, len(this.DiskStatistics))
-		for i := range vs {
-			vs[i] = &this.DiskStatistics[i]
-		}
-		s = append(s, "DiskStatistics: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "DiskStatistics: "+fmt.Sprintf("%#v", this.DiskStatistics)+",\n")
 	}
 	if this.BlkioStatistics != nil {
 		s = append(s, "BlkioStatistics: "+fmt.Sprintf("%#v", this.BlkioStatistics)+",\n")
@@ -24751,11 +25551,7 @@ func (this *ResourceStatistics) GoString() string {
 		s = append(s, "NetTCPTimeWaitConnections: "+valueToGoStringMesos(this.NetTCPTimeWaitConnections, "float64")+",\n")
 	}
 	if this.NetTrafficControlStatistics != nil {
-		vs := make([]*TrafficControlStatistics, len(this.NetTrafficControlStatistics))
-		for i := range vs {
-			vs[i] = &this.NetTrafficControlStatistics[i]
-		}
-		s = append(s, "NetTrafficControlStatistics: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "NetTrafficControlStatistics: "+fmt.Sprintf("%#v", this.NetTrafficControlStatistics)+",\n")
 	}
 	if this.NetSNMPStatistics != nil {
 		s = append(s, "NetSNMPStatistics: "+fmt.Sprintf("%#v", this.NetSNMPStatistics)+",\n")
@@ -24770,18 +25566,10 @@ func (this *ResourceUsage) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&mesos.ResourceUsage{")
 	if this.Executors != nil {
-		vs := make([]*ResourceUsage_Executor, len(this.Executors))
-		for i := range vs {
-			vs[i] = &this.Executors[i]
-		}
-		s = append(s, "Executors: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Executors: "+fmt.Sprintf("%#v", this.Executors)+",\n")
 	}
 	if this.Total != nil {
-		vs := make([]*Resource, len(this.Total))
-		for i := range vs {
-			vs[i] = &this.Total[i]
-		}
-		s = append(s, "Total: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Total: "+fmt.Sprintf("%#v", this.Total)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -24794,22 +25582,14 @@ func (this *ResourceUsage_Executor) GoString() string {
 	s = append(s, "&mesos.ResourceUsage_Executor{")
 	s = append(s, "ExecutorInfo: "+strings.Replace(this.ExecutorInfo.GoString(), `&`, ``, 1)+",\n")
 	if this.Allocated != nil {
-		vs := make([]*Resource, len(this.Allocated))
-		for i := range vs {
-			vs[i] = &this.Allocated[i]
-		}
-		s = append(s, "Allocated: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Allocated: "+fmt.Sprintf("%#v", this.Allocated)+",\n")
 	}
 	if this.Statistics != nil {
 		s = append(s, "Statistics: "+fmt.Sprintf("%#v", this.Statistics)+",\n")
 	}
 	s = append(s, "ContainerID: "+strings.Replace(this.ContainerID.GoString(), `&`, ``, 1)+",\n")
 	if this.Tasks != nil {
-		vs := make([]*ResourceUsage_Executor_Task, len(this.Tasks))
-		for i := range vs {
-			vs[i] = &this.Tasks[i]
-		}
-		s = append(s, "Tasks: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Tasks: "+fmt.Sprintf("%#v", this.Tasks)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -24823,11 +25603,7 @@ func (this *ResourceUsage_Executor_Task) GoString() string {
 	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
 	s = append(s, "ID: "+strings.Replace(this.ID.GoString(), `&`, ``, 1)+",\n")
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	if this.Labels != nil {
 		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
@@ -25009,11 +25785,7 @@ func (this *Request) GoString() string {
 		s = append(s, "AgentID: "+fmt.Sprintf("%#v", this.AgentID)+",\n")
 	}
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25035,25 +25807,13 @@ func (this *Offer) GoString() string {
 		s = append(s, "Domain: "+fmt.Sprintf("%#v", this.Domain)+",\n")
 	}
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	if this.Attributes != nil {
-		vs := make([]*Attribute, len(this.Attributes))
-		for i := range vs {
-			vs[i] = &this.Attributes[i]
-		}
-		s = append(s, "Attributes: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Attributes: "+fmt.Sprintf("%#v", this.Attributes)+",\n")
 	}
 	if this.ExecutorIDs != nil {
-		vs := make([]*ExecutorID, len(this.ExecutorIDs))
-		for i := range vs {
-			vs[i] = &this.ExecutorIDs[i]
-		}
-		s = append(s, "ExecutorIDs: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "ExecutorIDs: "+fmt.Sprintf("%#v", this.ExecutorIDs)+",\n")
 	}
 	if this.Unavailability != nil {
 		s = append(s, "Unavailability: "+fmt.Sprintf("%#v", this.Unavailability)+",\n")
@@ -25099,11 +25859,7 @@ func (this *Offer_Operation_Launch) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Offer_Operation_Launch{")
 	if this.TaskInfos != nil {
-		vs := make([]*TaskInfo, len(this.TaskInfos))
-		for i := range vs {
-			vs[i] = &this.TaskInfos[i]
-		}
-		s = append(s, "TaskInfos: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "TaskInfos: "+fmt.Sprintf("%#v", this.TaskInfos)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25126,11 +25882,7 @@ func (this *Offer_Operation_Reserve) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Offer_Operation_Reserve{")
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25142,11 +25894,7 @@ func (this *Offer_Operation_Unreserve) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Offer_Operation_Unreserve{")
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25158,11 +25906,7 @@ func (this *Offer_Operation_Create) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Offer_Operation_Create{")
 	if this.Volumes != nil {
-		vs := make([]*Resource, len(this.Volumes))
-		for i := range vs {
-			vs[i] = &this.Volumes[i]
-		}
-		s = append(s, "Volumes: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Volumes: "+fmt.Sprintf("%#v", this.Volumes)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25174,11 +25918,7 @@ func (this *Offer_Operation_Destroy) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Offer_Operation_Destroy{")
 	if this.Volumes != nil {
-		vs := make([]*Resource, len(this.Volumes))
-		for i := range vs {
-			vs[i] = &this.Volumes[i]
-		}
-		s = append(s, "Volumes: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Volumes: "+fmt.Sprintf("%#v", this.Volumes)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25199,11 +25939,7 @@ func (this *InverseOffer) GoString() string {
 	}
 	s = append(s, "Unavailability: "+strings.Replace(this.Unavailability.GoString(), `&`, ``, 1)+",\n")
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25218,11 +25954,7 @@ func (this *TaskInfo) GoString() string {
 	s = append(s, "TaskID: "+strings.Replace(this.TaskID.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "AgentID: "+strings.Replace(this.AgentID.GoString(), `&`, ``, 1)+",\n")
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	if this.Executor != nil {
 		s = append(s, "Executor: "+fmt.Sprintf("%#v", this.Executor)+",\n")
@@ -25261,11 +25993,7 @@ func (this *TaskGroupInfo) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.TaskGroupInfo{")
 	if this.Tasks != nil {
-		vs := make([]*TaskInfo, len(this.Tasks))
-		for i := range vs {
-			vs[i] = &this.Tasks[i]
-		}
-		s = append(s, "Tasks: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Tasks: "+fmt.Sprintf("%#v", this.Tasks)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25287,18 +26015,10 @@ func (this *Task) GoString() string {
 		s = append(s, "State: "+valueToGoStringMesos(this.State, "TaskState")+",\n")
 	}
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	if this.Statuses != nil {
-		vs := make([]*TaskStatus, len(this.Statuses))
-		for i := range vs {
-			vs[i] = &this.Statuses[i]
-		}
-		s = append(s, "Statuses: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Statuses: "+fmt.Sprintf("%#v", this.Statuses)+",\n")
 	}
 	if this.StatusUpdateState != nil {
 		s = append(s, "StatusUpdateState: "+valueToGoStringMesos(this.StatusUpdateState, "TaskState")+",\n")
@@ -25449,11 +26169,7 @@ func (this *Environment) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Environment{")
 	if this.Variables != nil {
-		vs := make([]*Environment_Variable, len(this.Variables))
-		for i := range vs {
-			vs[i] = &this.Variables[i]
-		}
-		s = append(s, "Variables: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Variables: "+fmt.Sprintf("%#v", this.Variables)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25495,11 +26211,7 @@ func (this *Parameters) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Parameters{")
 	if this.Parameter != nil {
-		vs := make([]*Parameter, len(this.Parameter))
-		for i := range vs {
-			vs[i] = &this.Parameter[i]
-		}
-		s = append(s, "Parameter: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Parameter: "+fmt.Sprintf("%#v", this.Parameter)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25524,11 +26236,7 @@ func (this *Credentials) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Credentials{")
 	if this.Credentials != nil {
-		vs := make([]*Credential, len(this.Credentials))
-		for i := range vs {
-			vs[i] = &this.Credentials[i]
-		}
-		s = append(s, "Credentials: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Credentials: "+fmt.Sprintf("%#v", this.Credentials)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25597,11 +26305,7 @@ func (this *RateLimits) GoString() string {
 	s := make([]string, 0, 7)
 	s = append(s, "&mesos.RateLimits{")
 	if this.Limits != nil {
-		vs := make([]*RateLimit, len(this.Limits))
-		for i := range vs {
-			vs[i] = &this.Limits[i]
-		}
-		s = append(s, "Limits: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Limits: "+fmt.Sprintf("%#v", this.Limits)+",\n")
 	}
 	if this.AggregateDefaultQPS != nil {
 		s = append(s, "AggregateDefaultQPS: "+valueToGoStringMesos(this.AggregateDefaultQPS, "float64")+",\n")
@@ -25740,11 +26444,7 @@ func (this *NetworkInfo) GoString() string {
 	s := make([]string, 0, 9)
 	s = append(s, "&mesos.NetworkInfo{")
 	if this.IPAddresses != nil {
-		vs := make([]*NetworkInfo_IPAddress, len(this.IPAddresses))
-		for i := range vs {
-			vs[i] = &this.IPAddresses[i]
-		}
-		s = append(s, "IPAddresses: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "IPAddresses: "+fmt.Sprintf("%#v", this.IPAddresses)+",\n")
 	}
 	if this.Name != nil {
 		s = append(s, "Name: "+valueToGoStringMesos(this.Name, "string")+",\n")
@@ -25756,11 +26456,7 @@ func (this *NetworkInfo) GoString() string {
 		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
 	}
 	if this.PortMappings != nil {
-		vs := make([]*NetworkInfo_PortMapping, len(this.PortMappings))
-		for i := range vs {
-			vs[i] = &this.PortMappings[i]
-		}
-		s = append(s, "PortMappings: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "PortMappings: "+fmt.Sprintf("%#v", this.PortMappings)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25834,11 +26530,7 @@ func (this *RLimitInfo) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.RLimitInfo{")
 	if this.Rlimits != nil {
-		vs := make([]*RLimitInfo_RLimit, len(this.Rlimits))
-		for i := range vs {
-			vs[i] = &this.Rlimits[i]
-		}
-		s = append(s, "Rlimits: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Rlimits: "+fmt.Sprintf("%#v", this.Rlimits)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -25892,11 +26584,7 @@ func (this *ContainerInfo) GoString() string {
 		s = append(s, "Type: "+valueToGoStringMesos(this.Type, "ContainerInfo_Type")+",\n")
 	}
 	if this.Volumes != nil {
-		vs := make([]*Volume, len(this.Volumes))
-		for i := range vs {
-			vs[i] = &this.Volumes[i]
-		}
-		s = append(s, "Volumes: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Volumes: "+fmt.Sprintf("%#v", this.Volumes)+",\n")
 	}
 	if this.Hostname != nil {
 		s = append(s, "Hostname: "+valueToGoStringMesos(this.Hostname, "string")+",\n")
@@ -25908,11 +26596,7 @@ func (this *ContainerInfo) GoString() string {
 		s = append(s, "Mesos: "+fmt.Sprintf("%#v", this.Mesos)+",\n")
 	}
 	if this.NetworkInfos != nil {
-		vs := make([]*NetworkInfo, len(this.NetworkInfos))
-		for i := range vs {
-			vs[i] = &this.NetworkInfos[i]
-		}
-		s = append(s, "NetworkInfos: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "NetworkInfos: "+fmt.Sprintf("%#v", this.NetworkInfos)+",\n")
 	}
 	if this.LinuxInfo != nil {
 		s = append(s, "LinuxInfo: "+fmt.Sprintf("%#v", this.LinuxInfo)+",\n")
@@ -25937,21 +26621,13 @@ func (this *ContainerInfo_DockerInfo) GoString() string {
 		s = append(s, "Network: "+valueToGoStringMesos(this.Network, "ContainerInfo_DockerInfo_Network")+",\n")
 	}
 	if this.PortMappings != nil {
-		vs := make([]*ContainerInfo_DockerInfo_PortMapping, len(this.PortMappings))
-		for i := range vs {
-			vs[i] = &this.PortMappings[i]
-		}
-		s = append(s, "PortMappings: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "PortMappings: "+fmt.Sprintf("%#v", this.PortMappings)+",\n")
 	}
 	if this.Privileged != nil {
 		s = append(s, "Privileged: "+valueToGoStringMesos(this.Privileged, "bool")+",\n")
 	}
 	if this.Parameters != nil {
-		vs := make([]*Parameter, len(this.Parameters))
-		for i := range vs {
-			vs[i] = &this.Parameters[i]
-		}
-		s = append(s, "Parameters: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Parameters: "+fmt.Sprintf("%#v", this.Parameters)+",\n")
 	}
 	if this.ForcePullImage != nil {
 		s = append(s, "ForcePullImage: "+valueToGoStringMesos(this.ForcePullImage, "bool")+",\n")
@@ -25998,11 +26674,7 @@ func (this *ContainerStatus) GoString() string {
 		s = append(s, "ContainerID: "+fmt.Sprintf("%#v", this.ContainerID)+",\n")
 	}
 	if this.NetworkInfos != nil {
-		vs := make([]*NetworkInfo, len(this.NetworkInfos))
-		for i := range vs {
-			vs[i] = &this.NetworkInfos[i]
-		}
-		s = append(s, "NetworkInfos: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "NetworkInfos: "+fmt.Sprintf("%#v", this.NetworkInfos)+",\n")
 	}
 	if this.CgroupInfo != nil {
 		s = append(s, "CgroupInfo: "+fmt.Sprintf("%#v", this.CgroupInfo)+",\n")
@@ -26074,46 +26746,22 @@ func (this *CgroupInfo_Blkio_CFQ_Statistics) GoString() string {
 		s = append(s, "Time: "+valueToGoStringMesos(this.Time, "uint64")+",\n")
 	}
 	if this.IOServiced != nil {
-		vs := make([]*CgroupInfo_Blkio_Value, len(this.IOServiced))
-		for i := range vs {
-			vs[i] = &this.IOServiced[i]
-		}
-		s = append(s, "IOServiced: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "IOServiced: "+fmt.Sprintf("%#v", this.IOServiced)+",\n")
 	}
 	if this.IOServiceBytes != nil {
-		vs := make([]*CgroupInfo_Blkio_Value, len(this.IOServiceBytes))
-		for i := range vs {
-			vs[i] = &this.IOServiceBytes[i]
-		}
-		s = append(s, "IOServiceBytes: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "IOServiceBytes: "+fmt.Sprintf("%#v", this.IOServiceBytes)+",\n")
 	}
 	if this.IOServiceTime != nil {
-		vs := make([]*CgroupInfo_Blkio_Value, len(this.IOServiceTime))
-		for i := range vs {
-			vs[i] = &this.IOServiceTime[i]
-		}
-		s = append(s, "IOServiceTime: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "IOServiceTime: "+fmt.Sprintf("%#v", this.IOServiceTime)+",\n")
 	}
 	if this.IOWaitTime != nil {
-		vs := make([]*CgroupInfo_Blkio_Value, len(this.IOWaitTime))
-		for i := range vs {
-			vs[i] = &this.IOWaitTime[i]
-		}
-		s = append(s, "IOWaitTime: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "IOWaitTime: "+fmt.Sprintf("%#v", this.IOWaitTime)+",\n")
 	}
 	if this.IOMerged != nil {
-		vs := make([]*CgroupInfo_Blkio_Value, len(this.IOMerged))
-		for i := range vs {
-			vs[i] = &this.IOMerged[i]
-		}
-		s = append(s, "IOMerged: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "IOMerged: "+fmt.Sprintf("%#v", this.IOMerged)+",\n")
 	}
 	if this.IOQueued != nil {
-		vs := make([]*CgroupInfo_Blkio_Value, len(this.IOQueued))
-		for i := range vs {
-			vs[i] = &this.IOQueued[i]
-		}
-		s = append(s, "IOQueued: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "IOQueued: "+fmt.Sprintf("%#v", this.IOQueued)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -26137,18 +26785,10 @@ func (this *CgroupInfo_Blkio_Throttling_Statistics) GoString() string {
 		s = append(s, "Device: "+fmt.Sprintf("%#v", this.Device)+",\n")
 	}
 	if this.IOServiced != nil {
-		vs := make([]*CgroupInfo_Blkio_Value, len(this.IOServiced))
-		for i := range vs {
-			vs[i] = &this.IOServiced[i]
-		}
-		s = append(s, "IOServiced: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "IOServiced: "+fmt.Sprintf("%#v", this.IOServiced)+",\n")
 	}
 	if this.IOServiceBytes != nil {
-		vs := make([]*CgroupInfo_Blkio_Value, len(this.IOServiceBytes))
-		for i := range vs {
-			vs[i] = &this.IOServiceBytes[i]
-		}
-		s = append(s, "IOServiceBytes: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "IOServiceBytes: "+fmt.Sprintf("%#v", this.IOServiceBytes)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -26160,18 +26800,10 @@ func (this *CgroupInfo_Blkio_Statistics) GoString() string {
 	s := make([]string, 0, 7)
 	s = append(s, "&mesos.CgroupInfo_Blkio_Statistics{")
 	if this.CFQ != nil {
-		vs := make([]*CgroupInfo_Blkio_CFQ_Statistics, len(this.CFQ))
-		for i := range vs {
-			vs[i] = &this.CFQ[i]
-		}
-		s = append(s, "CFQ: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "CFQ: "+fmt.Sprintf("%#v", this.CFQ)+",\n")
 	}
 	if this.CFQRecursive != nil {
-		vs := make([]*CgroupInfo_Blkio_CFQ_Statistics, len(this.CFQRecursive))
-		for i := range vs {
-			vs[i] = &this.CFQRecursive[i]
-		}
-		s = append(s, "CFQRecursive: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "CFQRecursive: "+fmt.Sprintf("%#v", this.CFQRecursive)+",\n")
 	}
 	if this.Throttling != nil {
 		s = append(s, "Throttling: "+fmt.Sprintf("%#v", this.Throttling)+",\n")
@@ -26198,11 +26830,7 @@ func (this *Labels) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Labels{")
 	if this.Labels != nil {
-		vs := make([]*Label, len(this.Labels))
-		for i := range vs {
-			vs[i] = &this.Labels[i]
-		}
-		s = append(s, "Labels: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -26249,11 +26877,7 @@ func (this *Ports) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.Ports{")
 	if this.Ports != nil {
-		vs := make([]*Port, len(this.Ports))
-		for i := range vs {
-			vs[i] = &this.Ports[i]
-		}
-		s = append(s, "Ports: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Ports: "+fmt.Sprintf("%#v", this.Ports)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -26349,18 +26973,10 @@ func (this *Role) GoString() string {
 	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
 	s = append(s, "Weight: "+fmt.Sprintf("%#v", this.Weight)+",\n")
 	if this.Frameworks != nil {
-		vs := make([]*FrameworkID, len(this.Frameworks))
-		for i := range vs {
-			vs[i] = &this.Frameworks[i]
-		}
-		s = append(s, "Frameworks: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Frameworks: "+fmt.Sprintf("%#v", this.Frameworks)+",\n")
 	}
 	if this.Resources != nil {
-		vs := make([]*Resource, len(this.Resources))
-		for i := range vs {
-			vs[i] = &this.Resources[i]
-		}
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -26472,11 +27088,7 @@ func (this *DeviceWhitelist) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&mesos.DeviceWhitelist{")
 	if this.AllowedDevices != nil {
-		vs := make([]*DeviceAccess, len(this.AllowedDevices))
-		for i := range vs {
-			vs[i] = &this.AllowedDevices[i]
-		}
-		s = append(s, "AllowedDevices: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "AllowedDevices: "+fmt.Sprintf("%#v", this.AllowedDevices)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -26925,8 +27537,7 @@ func (m *FrameworkInfo) MarshalTo(dAtA []byte) (int, error) {
 	if m.FailoverTimeout != nil {
 		dAtA[i] = 0x21
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.FailoverTimeout))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.FailoverTimeout))))
 	}
 	if m.Checkpoint != nil {
 		dAtA[i] = 0x28
@@ -27064,20 +27675,17 @@ func (m *CheckInfo) MarshalTo(dAtA []byte) (int, error) {
 	if m.DelaySeconds != nil {
 		dAtA[i] = 0x21
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.DelaySeconds))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.DelaySeconds))))
 	}
 	if m.IntervalSeconds != nil {
 		dAtA[i] = 0x29
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.IntervalSeconds))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.IntervalSeconds))))
 	}
 	if m.TimeoutSeconds != nil {
 		dAtA[i] = 0x31
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.TimeoutSeconds))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.TimeoutSeconds))))
 	}
 	if m.TCP != nil {
 		dAtA[i] = 0x3a
@@ -27194,20 +27802,17 @@ func (m *HealthCheck) MarshalTo(dAtA []byte) (int, error) {
 	if m.DelaySeconds != nil {
 		dAtA[i] = 0x11
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.DelaySeconds))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.DelaySeconds))))
 	}
 	if m.IntervalSeconds != nil {
 		dAtA[i] = 0x19
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.IntervalSeconds))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.IntervalSeconds))))
 	}
 	if m.TimeoutSeconds != nil {
 		dAtA[i] = 0x21
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.TimeoutSeconds))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.TimeoutSeconds))))
 	}
 	if m.ConsecutiveFailures != nil {
 		dAtA[i] = 0x28
@@ -27217,8 +27822,7 @@ func (m *HealthCheck) MarshalTo(dAtA []byte) (int, error) {
 	if m.GracePeriodSeconds != nil {
 		dAtA[i] = 0x31
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.GracePeriodSeconds))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.GracePeriodSeconds))))
 	}
 	if m.Command != nil {
 		dAtA[i] = 0x3a
@@ -27718,7 +28322,7 @@ func (m *MasterInfo) MarshalTo(dAtA []byte) (int, error) {
 	i++
 	i = encodeVarintMesos(dAtA, i, uint64(m.IP))
 	if m.Port == nil {
-		return 0, proto.NewRequiredNotSetError("port")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("port")
 	} else {
 		dAtA[i] = 0x18
 		i++
@@ -27983,8 +28587,7 @@ func (m *Value_Scalar) MarshalTo(dAtA []byte) (int, error) {
 	_ = l
 	dAtA[i] = 0x9
 	i++
-	binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Value))))
-	i += 8
+	i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(m.Value))))
 	return i, nil
 }
 
@@ -28182,7 +28785,7 @@ func (m *Resource) MarshalTo(dAtA []byte) (int, error) {
 	i = encodeVarintMesos(dAtA, i, uint64(len(m.Name)))
 	i += copy(dAtA[i:], m.Name)
 	if m.Type == nil {
-		return 0, proto.NewRequiredNotSetError("type")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	} else {
 		dAtA[i] = 0x10
 		i++
@@ -29208,25 +29811,21 @@ func (m *ResourceStatistics) MarshalTo(dAtA []byte) (int, error) {
 	_ = l
 	dAtA[i] = 0x9
 	i++
-	binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Timestamp))))
-	i += 8
+	i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(m.Timestamp))))
 	if m.CPUsUserTimeSecs != nil {
 		dAtA[i] = 0x11
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.CPUsUserTimeSecs))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.CPUsUserTimeSecs))))
 	}
 	if m.CPUsSystemTimeSecs != nil {
 		dAtA[i] = 0x19
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.CPUsSystemTimeSecs))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.CPUsSystemTimeSecs))))
 	}
 	if m.CPUsLimit != nil {
 		dAtA[i] = 0x21
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.CPUsLimit))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.CPUsLimit))))
 	}
 	if m.MemRSSBytes != nil {
 		dAtA[i] = 0x28
@@ -29251,8 +29850,7 @@ func (m *ResourceStatistics) MarshalTo(dAtA []byte) (int, error) {
 	if m.CPUsThrottledTimeSecs != nil {
 		dAtA[i] = 0x49
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.CPUsThrottledTimeSecs))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.CPUsThrottledTimeSecs))))
 	}
 	if m.MemFileBytes != nil {
 		dAtA[i] = 0x50
@@ -29336,32 +29934,28 @@ func (m *ResourceStatistics) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		dAtA[i] = 0x1
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.NetTCPRttMicrosecsP50))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.NetTCPRttMicrosecsP50))))
 	}
 	if m.NetTCPRttMicrosecsP90 != nil {
 		dAtA[i] = 0xb9
 		i++
 		dAtA[i] = 0x1
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.NetTCPRttMicrosecsP90))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.NetTCPRttMicrosecsP90))))
 	}
 	if m.NetTCPRttMicrosecsP95 != nil {
 		dAtA[i] = 0xc1
 		i++
 		dAtA[i] = 0x1
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.NetTCPRttMicrosecsP95))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.NetTCPRttMicrosecsP95))))
 	}
 	if m.NetTCPRttMicrosecsP99 != nil {
 		dAtA[i] = 0xc9
 		i++
 		dAtA[i] = 0x1
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.NetTCPRttMicrosecsP99))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.NetTCPRttMicrosecsP99))))
 	}
 	if m.DiskLimitBytes != nil {
 		dAtA[i] = 0xd0
@@ -29382,16 +29976,14 @@ func (m *ResourceStatistics) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		dAtA[i] = 0x1
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.NetTCPActiveConnections))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.NetTCPActiveConnections))))
 	}
 	if m.NetTCPTimeWaitConnections != nil {
 		dAtA[i] = 0xe9
 		i++
 		dAtA[i] = 0x1
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.NetTCPTimeWaitConnections))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.NetTCPTimeWaitConnections))))
 	}
 	if m.Processes != nil {
 		dAtA[i] = 0xf0
@@ -29704,12 +30296,10 @@ func (m *PerfStatistics) MarshalTo(dAtA []byte) (int, error) {
 	_ = l
 	dAtA[i] = 0x9
 	i++
-	binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Timestamp))))
-	i += 8
+	i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(m.Timestamp))))
 	dAtA[i] = 0x11
 	i++
-	binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Duration))))
-	i += 8
+	i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(m.Duration))))
 	if m.Cycles != nil {
 		dAtA[i] = 0x18
 		i++
@@ -29763,14 +30353,12 @@ func (m *PerfStatistics) MarshalTo(dAtA []byte) (int, error) {
 	if m.CPUClock != nil {
 		dAtA[i] = 0x69
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.CPUClock))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.CPUClock))))
 	}
 	if m.TaskClock != nil {
 		dAtA[i] = 0x71
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.TaskClock))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.TaskClock))))
 	}
 	if m.PageFaults != nil {
 		dAtA[i] = 0x78
@@ -30767,7 +31355,7 @@ func (m *Task) MarshalTo(dAtA []byte) (int, error) {
 	}
 	i += n104
 	if m.State == nil {
-		return 0, proto.NewRequiredNotSetError("state")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
 	} else {
 		dAtA[i] = 0x30
 		i++
@@ -30998,7 +31586,7 @@ func (m *TaskStatus) MarshalTo(dAtA []byte) (int, error) {
 	}
 	i += n111
 	if m.State == nil {
-		return 0, proto.NewRequiredNotSetError("state")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
 	} else {
 		dAtA[i] = 0x10
 		i++
@@ -31029,8 +31617,7 @@ func (m *TaskStatus) MarshalTo(dAtA []byte) (int, error) {
 	if m.Timestamp != nil {
 		dAtA[i] = 0x31
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.Timestamp))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.Timestamp))))
 	}
 	if m.ExecutorID != nil {
 		dAtA[i] = 0x3a
@@ -31129,8 +31716,7 @@ func (m *Filters) MarshalTo(dAtA []byte) (int, error) {
 	if m.RefuseSeconds != nil {
 		dAtA[i] = 0x9
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.RefuseSeconds))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.RefuseSeconds))))
 	}
 	return i, nil
 }
@@ -31407,7 +31993,7 @@ func (m *Secret_Value) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.Data == nil {
-		return 0, proto.NewRequiredNotSetError("data")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
 	} else {
 		dAtA[i] = 0xa
 		i++
@@ -31435,8 +32021,7 @@ func (m *RateLimit) MarshalTo(dAtA []byte) (int, error) {
 	if m.QPS != nil {
 		dAtA[i] = 0x9
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.QPS))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.QPS))))
 	}
 	dAtA[i] = 0x12
 	i++
@@ -31480,8 +32065,7 @@ func (m *RateLimits) MarshalTo(dAtA []byte) (int, error) {
 	if m.AggregateDefaultQPS != nil {
 		dAtA[i] = 0x11
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.AggregateDefaultQPS))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.AggregateDefaultQPS))))
 	}
 	if m.AggregateDefaultCapacity != nil {
 		dAtA[i] = 0x18
@@ -31507,7 +32091,7 @@ func (m *Image) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.Type == nil {
-		return 0, proto.NewRequiredNotSetError("type")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	} else {
 		dAtA[i] = 0x8
 		i++
@@ -31652,7 +32236,7 @@ func (m *Volume) MarshalTo(dAtA []byte) (int, error) {
 		i += copy(dAtA[i:], *m.HostPath)
 	}
 	if m.Mode == nil {
-		return 0, proto.NewRequiredNotSetError("mode")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("mode")
 	} else {
 		dAtA[i] = 0x18
 		i++
@@ -32139,7 +32723,7 @@ func (m *ContainerInfo) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.Type == nil {
-		return 0, proto.NewRequiredNotSetError("type")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	} else {
 		dAtA[i] = 0x8
 		i++
@@ -32985,8 +33569,7 @@ func (m *WeightInfo) MarshalTo(dAtA []byte) (int, error) {
 	_ = l
 	dAtA[i] = 0x9
 	i++
-	binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Weight))))
-	i += 8
+	i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(m.Weight))))
 	if m.Role != nil {
 		dAtA[i] = 0x12
 		i++
@@ -33024,8 +33607,7 @@ func (m *VersionInfo) MarshalTo(dAtA []byte) (int, error) {
 	if m.BuildTime != nil {
 		dAtA[i] = 0x19
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.BuildTime))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.BuildTime))))
 	}
 	if m.BuildUser != nil {
 		dAtA[i] = 0x22
@@ -33103,8 +33685,7 @@ func (m *Role) MarshalTo(dAtA []byte) (int, error) {
 	i += copy(dAtA[i:], m.Name)
 	dAtA[i] = 0x11
 	i++
-	binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Weight))))
-	i += 8
+	i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(m.Weight))))
 	if len(m.Frameworks) > 0 {
 		for _, msg := range m.Frameworks {
 			dAtA[i] = 0x1a
@@ -33154,8 +33735,7 @@ func (m *Metric) MarshalTo(dAtA []byte) (int, error) {
 	if m.Value != nil {
 		dAtA[i] = 0x11
 		i++
-		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.Value))))
-		i += 8
+		i = encodeFixed64Mesos(dAtA, i, uint64(math.Float64bits(float64(*m.Value))))
 	}
 	return i, nil
 }
@@ -33269,14 +33849,14 @@ func (m *Device_Number) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.MajorNumber == nil {
-		return 0, proto.NewRequiredNotSetError("major_number")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("major_number")
 	} else {
 		dAtA[i] = 0x8
 		i++
 		i = encodeVarintMesos(dAtA, i, uint64(*m.MajorNumber))
 	}
 	if m.MinorNumber == nil {
-		return 0, proto.NewRequiredNotSetError("minor_number")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("minor_number")
 	} else {
 		dAtA[i] = 0x10
 		i++
@@ -33397,6 +33977,24 @@ func (m *DeviceWhitelist) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func encodeFixed64Mesos(dAtA []byte, offset int, v uint64) int {
+	dAtA[offset] = uint8(v)
+	dAtA[offset+1] = uint8(v >> 8)
+	dAtA[offset+2] = uint8(v >> 16)
+	dAtA[offset+3] = uint8(v >> 24)
+	dAtA[offset+4] = uint8(v >> 32)
+	dAtA[offset+5] = uint8(v >> 40)
+	dAtA[offset+6] = uint8(v >> 48)
+	dAtA[offset+7] = uint8(v >> 56)
+	return offset + 8
+}
+func encodeFixed32Mesos(dAtA []byte, offset int, v uint32) int {
+	dAtA[offset] = uint8(v)
+	dAtA[offset+1] = uint8(v >> 8)
+	dAtA[offset+2] = uint8(v >> 16)
+	dAtA[offset+3] = uint8(v >> 24)
+	return offset + 4
+}
 func encodeVarintMesos(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -41815,7 +42413,7 @@ func (m *FrameworkID) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -41899,7 +42497,7 @@ func (m *OfferID) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -41983,7 +42581,7 @@ func (m *AgentID) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -42067,7 +42665,7 @@ func (m *TaskID) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -42151,7 +42749,7 @@ func (m *ExecutorID) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -42268,7 +42866,7 @@ func (m *ContainerID) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -42352,7 +42950,7 @@ func (m *ResourceProviderID) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -42426,7 +43024,7 @@ func (m *TimeInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("nanoseconds")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("nanoseconds")
 	}
 
 	if iNdEx > l {
@@ -42500,7 +43098,7 @@ func (m *DurationInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("nanoseconds")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("nanoseconds")
 	}
 
 	if iNdEx > l {
@@ -42634,7 +43232,7 @@ func (m *Address) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("port")
 	}
 
 	if iNdEx > l {
@@ -42840,10 +43438,10 @@ func (m *URL) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("scheme")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("scheme")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("address")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("address")
 	}
 
 	if iNdEx > l {
@@ -42961,7 +43559,7 @@ func (m *Unavailability) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("start")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("start")
 	}
 
 	if iNdEx > l {
@@ -43209,7 +43807,7 @@ func (m *MachineInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	}
 
 	if iNdEx > l {
@@ -43348,8 +43946,15 @@ func (m *FrameworkInfo) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.FailoverTimeout = &v2
 		case 5:
@@ -43602,10 +44207,10 @@ func (m *FrameworkInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("user")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("user")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -43804,8 +44409,15 @@ func (m *CheckInfo) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.DelaySeconds = &v2
 		case 5:
@@ -43816,8 +44428,15 @@ func (m *CheckInfo) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.IntervalSeconds = &v2
 		case 6:
@@ -43828,8 +44447,15 @@ func (m *CheckInfo) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.TimeoutSeconds = &v2
 		case 7:
@@ -43963,7 +44589,7 @@ func (m *CheckInfo_Command) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("command")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("command")
 	}
 
 	if iNdEx > l {
@@ -44067,7 +44693,7 @@ func (m *CheckInfo_Http) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("port")
 	}
 
 	if iNdEx > l {
@@ -44141,7 +44767,7 @@ func (m *CheckInfo_Tcp) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("port")
 	}
 
 	if iNdEx > l {
@@ -44219,8 +44845,15 @@ func (m *HealthCheck) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.DelaySeconds = &v2
 		case 3:
@@ -44231,8 +44864,15 @@ func (m *HealthCheck) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.IntervalSeconds = &v2
 		case 4:
@@ -44243,8 +44883,15 @@ func (m *HealthCheck) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.TimeoutSeconds = &v2
 		case 5:
@@ -44275,8 +44922,15 @@ func (m *HealthCheck) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.GracePeriodSeconds = &v2
 		case 7:
@@ -44573,7 +45227,7 @@ func (m *HealthCheck_HTTPCheckInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("port")
 	}
 
 	if iNdEx > l {
@@ -44647,7 +45301,7 @@ func (m *HealthCheck_TCPCheckInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("port")
 	}
 
 	if iNdEx > l {
@@ -45131,7 +45785,7 @@ func (m *CommandInfo_URI) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -45555,7 +46209,7 @@ func (m *ExecutorInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("executor_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
 	}
 
 	if iNdEx > l {
@@ -45754,10 +46408,10 @@ func (m *DomainInfo_FaultDomain) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("region")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("region")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("zone")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("zone")
 	}
 
 	if iNdEx > l {
@@ -45841,7 +46495,7 @@ func (m *DomainInfo_FaultDomain_RegionInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -45925,7 +46579,7 @@ func (m *DomainInfo_FaultDomain_ZoneInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -46206,13 +46860,13 @@ func (m *MasterInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("ip")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("ip")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return proto.NewRequiredNotSetError("port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("port")
 	}
 
 	if iNdEx > l {
@@ -46444,7 +47098,7 @@ func (m *AgentInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("hostname")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("hostname")
 	}
 
 	if iNdEx > l {
@@ -46691,10 +47345,10 @@ func (m *ResourceProviderInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("type")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -46900,7 +47554,7 @@ func (m *Value) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("type")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
 	if iNdEx > l {
@@ -46946,8 +47600,15 @@ func (m *Value_Scalar) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			m.Value = float64(math.Float64frombits(v))
 			hasFields[0] |= uint64(0x00000001)
 		default:
@@ -46966,7 +47627,7 @@ func (m *Value_Scalar) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -47060,10 +47721,10 @@ func (m *Value_Range) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("begin")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("begin")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("end")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("end")
 	}
 
 	if iNdEx > l {
@@ -47307,7 +47968,7 @@ func (m *Value_Text) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -47543,10 +48204,10 @@ func (m *Attribute) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("type")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
 	if iNdEx > l {
@@ -48009,10 +48670,10 @@ func (m *Resource) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("type")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
 	if iNdEx > l {
@@ -48518,7 +49179,7 @@ func (m *Resource_DiskInfo_Persistence) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	}
 
 	if iNdEx > l {
@@ -48658,7 +49319,7 @@ func (m *Resource_DiskInfo_Source) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("type")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
 	if iNdEx > l {
@@ -49182,7 +49843,7 @@ func (m *TrafficControlStatistics) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	}
 
 	if iNdEx > l {
@@ -51146,8 +51807,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			m.Timestamp = float64(math.Float64frombits(v))
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
@@ -51158,8 +51826,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.CPUsUserTimeSecs = &v2
 		case 3:
@@ -51170,8 +51845,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.CPUsSystemTimeSecs = &v2
 		case 4:
@@ -51182,8 +51864,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.CPUsLimit = &v2
 		case 5:
@@ -51274,8 +51963,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.CPUsThrottledTimeSecs = &v2
 		case 10:
@@ -51539,8 +52235,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.NetTCPRttMicrosecsP50 = &v2
 		case 23:
@@ -51551,8 +52254,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.NetTCPRttMicrosecsP90 = &v2
 		case 24:
@@ -51563,8 +52273,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.NetTCPRttMicrosecsP95 = &v2
 		case 25:
@@ -51575,8 +52292,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.NetTCPRttMicrosecsP99 = &v2
 		case 26:
@@ -51627,8 +52351,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.NetTCPActiveConnections = &v2
 		case 29:
@@ -51639,8 +52370,15 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.NetTCPTimeWaitConnections = &v2
 		case 30:
@@ -52007,7 +52745,7 @@ func (m *ResourceStatistics) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("timestamp")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("timestamp")
 	}
 
 	if iNdEx > l {
@@ -52330,10 +53068,10 @@ func (m *ResourceUsage_Executor) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("executor_info")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_info")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("container_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_id")
 	}
 
 	if iNdEx > l {
@@ -52512,10 +53250,10 @@ func (m *ResourceUsage_Executor_Task) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	}
 
 	if iNdEx > l {
@@ -52561,8 +53299,15 @@ func (m *PerfStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			m.Timestamp = float64(math.Float64frombits(v))
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
@@ -52573,8 +53318,15 @@ func (m *PerfStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			m.Duration = float64(math.Float64frombits(v))
 			hasFields[0] |= uint64(0x00000002)
 		case 3:
@@ -52785,8 +53537,15 @@ func (m *PerfStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.CPUClock = &v2
 		case 14:
@@ -52797,8 +53556,15 @@ func (m *PerfStatistics) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.TaskClock = &v2
 		case 15:
@@ -53597,10 +54363,10 @@ func (m *PerfStatistics) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("timestamp")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("timestamp")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("duration")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("duration")
 	}
 
 	if iNdEx > l {
@@ -54116,16 +54882,16 @@ func (m *Offer) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("framework_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return proto.NewRequiredNotSetError("agent_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
 	}
 	if hasFields[0]&uint64(0x00000008) == 0 {
-		return proto.NewRequiredNotSetError("hostname")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("hostname")
 	}
 
 	if iNdEx > l {
@@ -54589,10 +55355,10 @@ func (m *Offer_Operation_LaunchGroup) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("executor")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("task_group")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_group")
 	}
 
 	if iNdEx > l {
@@ -55160,13 +55926,13 @@ func (m *InverseOffer) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("framework_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return proto.NewRequiredNotSetError("unavailability")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("unavailability")
 	}
 
 	if iNdEx > l {
@@ -55638,13 +56404,13 @@ func (m *TaskInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("task_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return proto.NewRequiredNotSetError("agent_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
 	}
 
 	if iNdEx > l {
@@ -56198,19 +56964,19 @@ func (m *Task) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("task_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return proto.NewRequiredNotSetError("framework_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
 	}
 	if hasFields[0]&uint64(0x00000008) == 0 {
-		return proto.NewRequiredNotSetError("agent_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
 	}
 	if hasFields[0]&uint64(0x00000010) == 0 {
-		return proto.NewRequiredNotSetError("state")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
 	}
 
 	if iNdEx > l {
@@ -56782,8 +57548,15 @@ func (m *TaskStatus) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.Timestamp = &v2
 		case 7:
@@ -57059,10 +57832,10 @@ func (m *TaskStatus) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("task_id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("state")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
 	}
 
 	if iNdEx > l {
@@ -57107,8 +57880,15 @@ func (m *Filters) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.RefuseSeconds = &v2
 		default:
@@ -57372,7 +58152,7 @@ func (m *Environment_Variable) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -57486,10 +58266,10 @@ func (m *Parameter) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("key")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("key")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("value")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("value")
 	}
 
 	if iNdEx > l {
@@ -57684,7 +58464,7 @@ func (m *Credential) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("principal")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("principal")
 	}
 
 	if iNdEx > l {
@@ -58014,7 +58794,7 @@ func (m *Secret_Reference) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -58100,7 +58880,7 @@ func (m *Secret_Value) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("data")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
 	}
 
 	if iNdEx > l {
@@ -58146,8 +58926,15 @@ func (m *RateLimit) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.QPS = &v2
 		case 2:
@@ -58216,7 +59003,7 @@ func (m *RateLimit) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("principal")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("principal")
 	}
 
 	if iNdEx > l {
@@ -58292,8 +59079,15 @@ func (m *RateLimits) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.AggregateDefaultQPS = &v2
 		case 3:
@@ -58491,7 +59285,7 @@ func (m *Image) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("type")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
 	if iNdEx > l {
@@ -58638,7 +59432,7 @@ func (m *Image_Appc) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -58788,7 +59582,7 @@ func (m *Image_Docker) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -58989,10 +59783,10 @@ func (m *Volume) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("container_path")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_path")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("mode")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("mode")
 	}
 
 	if iNdEx > l {
@@ -59307,7 +60101,7 @@ func (m *Volume_Source_DockerVolume) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -59410,7 +60204,7 @@ func (m *Volume_Source_SandboxPath) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("path")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("path")
 	}
 
 	if iNdEx > l {
@@ -59838,10 +60632,10 @@ func (m *NetworkInfo_PortMapping) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("host_port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("host_port")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("container_port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_port")
 	}
 
 	if iNdEx > l {
@@ -60490,10 +61284,10 @@ func (m *TTYInfo_WindowSize) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("rows")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("rows")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("columns")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("columns")
 	}
 
 	if iNdEx > l {
@@ -60825,7 +61619,7 @@ func (m *ContainerInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("type")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("type")
 	}
 
 	if iNdEx > l {
@@ -61063,7 +61857,7 @@ func (m *ContainerInfo_DockerInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("image")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("image")
 	}
 
 	if iNdEx > l {
@@ -61187,10 +61981,10 @@ func (m *ContainerInfo_DockerInfo_PortMapping) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("host_port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("host_port")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("container_port")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("container_port")
 	}
 
 	if iNdEx > l {
@@ -62625,7 +63419,7 @@ func (m *Label) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("key")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("key")
 	}
 
 	if iNdEx > l {
@@ -62812,7 +63606,7 @@ func (m *Port) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("number")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("number")
 	}
 
 	if iNdEx > l {
@@ -63153,7 +63947,7 @@ func (m *DiscoveryInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("visibility")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("visibility")
 	}
 
 	if iNdEx > l {
@@ -63199,8 +63993,15 @@ func (m *WeightInfo) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			m.Weight = float64(math.Float64frombits(v))
 			hasFields[0] |= uint64(0x00000001)
 		case 2:
@@ -63249,7 +64050,7 @@ func (m *WeightInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("weight")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("weight")
 	}
 
 	if iNdEx > l {
@@ -63355,8 +64156,15 @@ func (m *VersionInfo) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.BuildTime = &v2
 		case 4:
@@ -63495,7 +64303,7 @@ func (m *VersionInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("version")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("version")
 	}
 
 	if iNdEx > l {
@@ -63609,7 +64417,7 @@ func (m *Flag) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -63685,8 +64493,15 @@ func (m *Role) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			m.Weight = float64(math.Float64frombits(v))
 			hasFields[0] |= uint64(0x00000002)
 		case 3:
@@ -63767,10 +64582,10 @@ func (m *Role) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("weight")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("weight")
 	}
 
 	if iNdEx > l {
@@ -63846,8 +64661,15 @@ func (m *Metric) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
-			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
+			v = uint64(dAtA[iNdEx-8])
+			v |= uint64(dAtA[iNdEx-7]) << 8
+			v |= uint64(dAtA[iNdEx-6]) << 16
+			v |= uint64(dAtA[iNdEx-5]) << 24
+			v |= uint64(dAtA[iNdEx-4]) << 32
+			v |= uint64(dAtA[iNdEx-3]) << 40
+			v |= uint64(dAtA[iNdEx-2]) << 48
+			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.Value = &v2
 		default:
@@ -63866,7 +64688,7 @@ func (m *Metric) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("name")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("name")
 	}
 
 	if iNdEx > l {
@@ -64103,7 +64925,7 @@ func (m *FileInfo) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("path")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("path")
 	}
 
 	if iNdEx > l {
@@ -64312,10 +65134,10 @@ func (m *Device_Number) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("major_number")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("major_number")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("minor_number")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("minor_number")
 	}
 
 	if iNdEx > l {
@@ -64431,10 +65253,10 @@ func (m *DeviceAccess) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("device")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("device")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return proto.NewRequiredNotSetError("access")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("access")
 	}
 
 	if iNdEx > l {

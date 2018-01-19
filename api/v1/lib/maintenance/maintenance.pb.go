@@ -25,6 +25,7 @@ import strings "strings"
 import reflect "reflect"
 
 import io "io"
+import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -182,7 +183,10 @@ func (this *Window) VerboseEqual(that interface{}) error {
 }
 func (this *Window) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Window)
@@ -195,7 +199,10 @@ func (this *Window) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -249,7 +256,10 @@ func (this *Schedule) VerboseEqual(that interface{}) error {
 }
 func (this *Schedule) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*Schedule)
@@ -262,7 +272,10 @@ func (this *Schedule) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -321,7 +334,10 @@ func (this *ClusterStatus) VerboseEqual(that interface{}) error {
 }
 func (this *ClusterStatus) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ClusterStatus)
@@ -334,7 +350,10 @@ func (this *ClusterStatus) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -396,7 +415,10 @@ func (this *ClusterStatus_DrainingMachine) VerboseEqual(that interface{}) error 
 }
 func (this *ClusterStatus_DrainingMachine) Equal(that interface{}) bool {
 	if that == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	}
 
 	that1, ok := that.(*ClusterStatus_DrainingMachine)
@@ -409,7 +431,10 @@ func (this *ClusterStatus_DrainingMachine) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return this == nil
+		if this == nil {
+			return true
+		}
+		return false
 	} else if this == nil {
 		return false
 	}
@@ -433,11 +458,7 @@ func (this *Window) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&maintenance.Window{")
 	if this.MachineIDs != nil {
-		vs := make([]*mesos.MachineID, len(this.MachineIDs))
-		for i := range vs {
-			vs[i] = &this.MachineIDs[i]
-		}
-		s = append(s, "MachineIDs: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "MachineIDs: "+fmt.Sprintf("%#v", this.MachineIDs)+",\n")
 	}
 	s = append(s, "Unavailability: "+strings.Replace(this.Unavailability.GoString(), `&`, ``, 1)+",\n")
 	s = append(s, "}")
@@ -450,11 +471,7 @@ func (this *Schedule) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&maintenance.Schedule{")
 	if this.Windows != nil {
-		vs := make([]*Window, len(this.Windows))
-		for i := range vs {
-			vs[i] = &this.Windows[i]
-		}
-		s = append(s, "Windows: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Windows: "+fmt.Sprintf("%#v", this.Windows)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -466,18 +483,10 @@ func (this *ClusterStatus) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&maintenance.ClusterStatus{")
 	if this.DrainingMachines != nil {
-		vs := make([]*ClusterStatus_DrainingMachine, len(this.DrainingMachines))
-		for i := range vs {
-			vs[i] = &this.DrainingMachines[i]
-		}
-		s = append(s, "DrainingMachines: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "DrainingMachines: "+fmt.Sprintf("%#v", this.DrainingMachines)+",\n")
 	}
 	if this.DownMachines != nil {
-		vs := make([]*mesos.MachineID, len(this.DownMachines))
-		for i := range vs {
-			vs[i] = &this.DownMachines[i]
-		}
-		s = append(s, "DownMachines: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "DownMachines: "+fmt.Sprintf("%#v", this.DownMachines)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -490,11 +499,7 @@ func (this *ClusterStatus_DrainingMachine) GoString() string {
 	s = append(s, "&maintenance.ClusterStatus_DrainingMachine{")
 	s = append(s, "ID: "+strings.Replace(this.ID.GoString(), `&`, ``, 1)+",\n")
 	if this.Statuses != nil {
-		vs := make([]*mesos_allocator.InverseOfferStatus, len(this.Statuses))
-		for i := range vs {
-			vs[i] = &this.Statuses[i]
-		}
-		s = append(s, "Statuses: "+fmt.Sprintf("%#v", vs)+",\n")
+		s = append(s, "Statuses: "+fmt.Sprintf("%#v", this.Statuses)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -655,6 +660,24 @@ func (m *ClusterStatus_DrainingMachine) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func encodeFixed64Maintenance(dAtA []byte, offset int, v uint64) int {
+	dAtA[offset] = uint8(v)
+	dAtA[offset+1] = uint8(v >> 8)
+	dAtA[offset+2] = uint8(v >> 16)
+	dAtA[offset+3] = uint8(v >> 24)
+	dAtA[offset+4] = uint8(v >> 32)
+	dAtA[offset+5] = uint8(v >> 40)
+	dAtA[offset+6] = uint8(v >> 48)
+	dAtA[offset+7] = uint8(v >> 56)
+	return offset + 8
+}
+func encodeFixed32Maintenance(dAtA []byte, offset int, v uint32) int {
+	dAtA[offset] = uint8(v)
+	dAtA[offset+1] = uint8(v >> 8)
+	dAtA[offset+2] = uint8(v >> 16)
+	dAtA[offset+3] = uint8(v >> 24)
+	return offset + 4
+}
 func encodeVarintMaintenance(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -1038,7 +1061,7 @@ func (m *Window) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("unavailability")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("unavailability")
 	}
 
 	if iNdEx > l {
@@ -1347,7 +1370,7 @@ func (m *ClusterStatus_DrainingMachine) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return proto.NewRequiredNotSetError("id")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("id")
 	}
 
 	if iNdEx > l {

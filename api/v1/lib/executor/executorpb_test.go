@@ -14,12 +14,13 @@ It has these top-level messages:
 package executor
 
 import testing "testing"
-import rand "math/rand"
+import math_rand "math/rand"
 import time "time"
-import proto "github.com/gogo/protobuf/proto"
-import jsonpb "github.com/gogo/protobuf/jsonpb"
+import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
+import github_com_gogo_protobuf_jsonpb "github.com/gogo/protobuf/jsonpb"
 import fmt "fmt"
-import parser "go/parser"
+import go_parser "go/parser"
+import proto "github.com/gogo/protobuf/proto"
 import math "math"
 import _ "github.com/mesos/mesos-go/api/v1/lib"
 import _ "github.com/gogo/protobuf/gogoproto"
@@ -31,14 +32,14 @@ var _ = math.Inf
 
 func TestEventProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -59,13 +60,13 @@ func TestEventProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestEventMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -77,7 +78,7 @@ func TestEventMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -92,7 +93,7 @@ func TestEventMarshalTo(t *testing.T) {
 }
 
 func BenchmarkEventProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event, 10000)
 	for i := 0; i < 10000; i++ {
@@ -100,7 +101,7 @@ func BenchmarkEventProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -110,11 +111,11 @@ func BenchmarkEventProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkEventProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedEvent(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedEvent(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -124,7 +125,7 @@ func BenchmarkEventProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -133,14 +134,14 @@ func BenchmarkEventProtoUnmarshal(b *testing.B) {
 
 func TestEvent_SubscribedProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Subscribed(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Subscribed{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -161,13 +162,13 @@ func TestEvent_SubscribedProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestEvent_SubscribedMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Subscribed(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -179,7 +180,7 @@ func TestEvent_SubscribedMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Subscribed{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -194,7 +195,7 @@ func TestEvent_SubscribedMarshalTo(t *testing.T) {
 }
 
 func BenchmarkEvent_SubscribedProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Subscribed, 10000)
 	for i := 0; i < 10000; i++ {
@@ -202,7 +203,7 @@ func BenchmarkEvent_SubscribedProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -212,11 +213,11 @@ func BenchmarkEvent_SubscribedProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkEvent_SubscribedProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedEvent_Subscribed(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedEvent_Subscribed(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -226,7 +227,7 @@ func BenchmarkEvent_SubscribedProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -235,14 +236,14 @@ func BenchmarkEvent_SubscribedProtoUnmarshal(b *testing.B) {
 
 func TestEvent_LaunchProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Launch(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Launch{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -263,13 +264,13 @@ func TestEvent_LaunchProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestEvent_LaunchMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Launch(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -281,7 +282,7 @@ func TestEvent_LaunchMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Launch{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -296,7 +297,7 @@ func TestEvent_LaunchMarshalTo(t *testing.T) {
 }
 
 func BenchmarkEvent_LaunchProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Launch, 10000)
 	for i := 0; i < 10000; i++ {
@@ -304,7 +305,7 @@ func BenchmarkEvent_LaunchProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -314,11 +315,11 @@ func BenchmarkEvent_LaunchProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkEvent_LaunchProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedEvent_Launch(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedEvent_Launch(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -328,7 +329,7 @@ func BenchmarkEvent_LaunchProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -337,14 +338,14 @@ func BenchmarkEvent_LaunchProtoUnmarshal(b *testing.B) {
 
 func TestEvent_LaunchGroupProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_LaunchGroup(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_LaunchGroup{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -365,13 +366,13 @@ func TestEvent_LaunchGroupProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestEvent_LaunchGroupMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_LaunchGroup(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -383,7 +384,7 @@ func TestEvent_LaunchGroupMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_LaunchGroup{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -398,7 +399,7 @@ func TestEvent_LaunchGroupMarshalTo(t *testing.T) {
 }
 
 func BenchmarkEvent_LaunchGroupProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_LaunchGroup, 10000)
 	for i := 0; i < 10000; i++ {
@@ -406,7 +407,7 @@ func BenchmarkEvent_LaunchGroupProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -416,11 +417,11 @@ func BenchmarkEvent_LaunchGroupProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkEvent_LaunchGroupProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedEvent_LaunchGroup(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedEvent_LaunchGroup(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -430,7 +431,7 @@ func BenchmarkEvent_LaunchGroupProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -439,14 +440,14 @@ func BenchmarkEvent_LaunchGroupProtoUnmarshal(b *testing.B) {
 
 func TestEvent_KillProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Kill(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Kill{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -467,13 +468,13 @@ func TestEvent_KillProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestEvent_KillMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Kill(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -485,7 +486,7 @@ func TestEvent_KillMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Kill{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -500,7 +501,7 @@ func TestEvent_KillMarshalTo(t *testing.T) {
 }
 
 func BenchmarkEvent_KillProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Kill, 10000)
 	for i := 0; i < 10000; i++ {
@@ -508,7 +509,7 @@ func BenchmarkEvent_KillProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -518,11 +519,11 @@ func BenchmarkEvent_KillProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkEvent_KillProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedEvent_Kill(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedEvent_Kill(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -532,7 +533,7 @@ func BenchmarkEvent_KillProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -541,14 +542,14 @@ func BenchmarkEvent_KillProtoUnmarshal(b *testing.B) {
 
 func TestEvent_AcknowledgedProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Acknowledged(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Acknowledged{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -569,13 +570,13 @@ func TestEvent_AcknowledgedProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestEvent_AcknowledgedMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Acknowledged(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -587,7 +588,7 @@ func TestEvent_AcknowledgedMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Acknowledged{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -602,7 +603,7 @@ func TestEvent_AcknowledgedMarshalTo(t *testing.T) {
 }
 
 func BenchmarkEvent_AcknowledgedProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Acknowledged, 10000)
 	for i := 0; i < 10000; i++ {
@@ -610,7 +611,7 @@ func BenchmarkEvent_AcknowledgedProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -620,11 +621,11 @@ func BenchmarkEvent_AcknowledgedProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkEvent_AcknowledgedProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedEvent_Acknowledged(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedEvent_Acknowledged(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -634,7 +635,7 @@ func BenchmarkEvent_AcknowledgedProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -643,14 +644,14 @@ func BenchmarkEvent_AcknowledgedProtoUnmarshal(b *testing.B) {
 
 func TestEvent_MessageProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Message(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Message{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -671,13 +672,13 @@ func TestEvent_MessageProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestEvent_MessageMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Message(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -689,7 +690,7 @@ func TestEvent_MessageMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Message{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -704,7 +705,7 @@ func TestEvent_MessageMarshalTo(t *testing.T) {
 }
 
 func BenchmarkEvent_MessageProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Message, 10000)
 	for i := 0; i < 10000; i++ {
@@ -712,7 +713,7 @@ func BenchmarkEvent_MessageProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -722,11 +723,11 @@ func BenchmarkEvent_MessageProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkEvent_MessageProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedEvent_Message(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedEvent_Message(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -736,7 +737,7 @@ func BenchmarkEvent_MessageProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -745,14 +746,14 @@ func BenchmarkEvent_MessageProtoUnmarshal(b *testing.B) {
 
 func TestEvent_ErrorProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Error(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Error{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -773,13 +774,13 @@ func TestEvent_ErrorProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestEvent_ErrorMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Error(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -791,7 +792,7 @@ func TestEvent_ErrorMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Error{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -806,7 +807,7 @@ func TestEvent_ErrorMarshalTo(t *testing.T) {
 }
 
 func BenchmarkEvent_ErrorProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Error, 10000)
 	for i := 0; i < 10000; i++ {
@@ -814,7 +815,7 @@ func BenchmarkEvent_ErrorProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -824,11 +825,11 @@ func BenchmarkEvent_ErrorProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkEvent_ErrorProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedEvent_Error(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedEvent_Error(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -838,7 +839,7 @@ func BenchmarkEvent_ErrorProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -847,14 +848,14 @@ func BenchmarkEvent_ErrorProtoUnmarshal(b *testing.B) {
 
 func TestCallProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -875,13 +876,13 @@ func TestCallProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestCallMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -893,7 +894,7 @@ func TestCallMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -908,7 +909,7 @@ func TestCallMarshalTo(t *testing.T) {
 }
 
 func BenchmarkCallProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call, 10000)
 	for i := 0; i < 10000; i++ {
@@ -916,7 +917,7 @@ func BenchmarkCallProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -926,11 +927,11 @@ func BenchmarkCallProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkCallProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedCall(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedCall(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -940,7 +941,7 @@ func BenchmarkCallProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -949,14 +950,14 @@ func BenchmarkCallProtoUnmarshal(b *testing.B) {
 
 func TestCall_SubscribeProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Subscribe(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call_Subscribe{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -977,13 +978,13 @@ func TestCall_SubscribeProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestCall_SubscribeMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Subscribe(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -995,7 +996,7 @@ func TestCall_SubscribeMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call_Subscribe{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -1010,7 +1011,7 @@ func TestCall_SubscribeMarshalTo(t *testing.T) {
 }
 
 func BenchmarkCall_SubscribeProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call_Subscribe, 10000)
 	for i := 0; i < 10000; i++ {
@@ -1018,7 +1019,7 @@ func BenchmarkCall_SubscribeProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -1028,11 +1029,11 @@ func BenchmarkCall_SubscribeProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkCall_SubscribeProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedCall_Subscribe(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedCall_Subscribe(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -1042,7 +1043,7 @@ func BenchmarkCall_SubscribeProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -1051,14 +1052,14 @@ func BenchmarkCall_SubscribeProtoUnmarshal(b *testing.B) {
 
 func TestCall_UpdateProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Update(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call_Update{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -1079,13 +1080,13 @@ func TestCall_UpdateProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestCall_UpdateMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Update(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -1097,7 +1098,7 @@ func TestCall_UpdateMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call_Update{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -1112,7 +1113,7 @@ func TestCall_UpdateMarshalTo(t *testing.T) {
 }
 
 func BenchmarkCall_UpdateProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call_Update, 10000)
 	for i := 0; i < 10000; i++ {
@@ -1120,7 +1121,7 @@ func BenchmarkCall_UpdateProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -1130,11 +1131,11 @@ func BenchmarkCall_UpdateProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkCall_UpdateProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedCall_Update(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedCall_Update(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -1144,7 +1145,7 @@ func BenchmarkCall_UpdateProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -1153,14 +1154,14 @@ func BenchmarkCall_UpdateProtoUnmarshal(b *testing.B) {
 
 func TestCall_MessageProto(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Message(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call_Message{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	littlefuzz := make([]byte, len(dAtA))
@@ -1181,13 +1182,13 @@ func TestCall_MessageProto(t *testing.T) {
 			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
 		}
 		// shouldn't panic
-		_ = proto.Unmarshal(littlefuzz, msg)
+		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
 	}
 }
 
 func TestCall_MessageMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Message(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
@@ -1199,7 +1200,7 @@ func TestCall_MessageMarshalTo(t *testing.T) {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call_Message{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	for i := range dAtA {
@@ -1214,7 +1215,7 @@ func TestCall_MessageMarshalTo(t *testing.T) {
 }
 
 func BenchmarkCall_MessageProtoMarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call_Message, 10000)
 	for i := 0; i < 10000; i++ {
@@ -1222,7 +1223,7 @@ func BenchmarkCall_MessageProtoMarshal(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		dAtA, err := proto.Marshal(pops[i%10000])
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
 		if err != nil {
 			panic(err)
 		}
@@ -1232,11 +1233,11 @@ func BenchmarkCall_MessageProtoMarshal(b *testing.B) {
 }
 
 func BenchmarkCall_MessageProtoUnmarshal(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := proto.Marshal(NewPopulatedCall_Message(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedCall_Message(popr, false))
 		if err != nil {
 			panic(err)
 		}
@@ -1246,7 +1247,7 @@ func BenchmarkCall_MessageProtoUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
-		if err := proto.Unmarshal(datas[i%10000], msg); err != nil {
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
 			panic(err)
 		}
 	}
@@ -1255,15 +1256,15 @@ func BenchmarkCall_MessageProtoUnmarshal(b *testing.B) {
 
 func TestEventJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1276,15 +1277,15 @@ func TestEventJSON(t *testing.T) {
 }
 func TestEvent_SubscribedJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Subscribed(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Subscribed{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1297,15 +1298,15 @@ func TestEvent_SubscribedJSON(t *testing.T) {
 }
 func TestEvent_LaunchJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Launch(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Launch{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1318,15 +1319,15 @@ func TestEvent_LaunchJSON(t *testing.T) {
 }
 func TestEvent_LaunchGroupJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_LaunchGroup(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_LaunchGroup{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1339,15 +1340,15 @@ func TestEvent_LaunchGroupJSON(t *testing.T) {
 }
 func TestEvent_KillJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Kill(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Kill{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1360,15 +1361,15 @@ func TestEvent_KillJSON(t *testing.T) {
 }
 func TestEvent_AcknowledgedJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Acknowledged(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Acknowledged{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1381,15 +1382,15 @@ func TestEvent_AcknowledgedJSON(t *testing.T) {
 }
 func TestEvent_MessageJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Message(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Message{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1402,15 +1403,15 @@ func TestEvent_MessageJSON(t *testing.T) {
 }
 func TestEvent_ErrorJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Error(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Event_Error{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1423,15 +1424,15 @@ func TestEvent_ErrorJSON(t *testing.T) {
 }
 func TestCallJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1444,15 +1445,15 @@ func TestCallJSON(t *testing.T) {
 }
 func TestCall_SubscribeJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Subscribe(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call_Subscribe{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1465,15 +1466,15 @@ func TestCall_SubscribeJSON(t *testing.T) {
 }
 func TestCall_UpdateJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Update(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call_Update{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1486,15 +1487,15 @@ func TestCall_UpdateJSON(t *testing.T) {
 }
 func TestCall_MessageJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Message(popr, true)
-	marshaler := jsonpb.Marshaler{}
+	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	msg := &Call_Message{}
-	err = jsonpb.UnmarshalString(jsondata, msg)
+	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -1507,11 +1508,11 @@ func TestCall_MessageJSON(t *testing.T) {
 }
 func TestEventProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Event{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1524,11 +1525,11 @@ func TestEventProtoText(t *testing.T) {
 
 func TestEventProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Event{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1541,11 +1542,11 @@ func TestEventProtoCompactText(t *testing.T) {
 
 func TestEvent_SubscribedProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Subscribed(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Event_Subscribed{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1558,11 +1559,11 @@ func TestEvent_SubscribedProtoText(t *testing.T) {
 
 func TestEvent_SubscribedProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Subscribed(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Event_Subscribed{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1575,11 +1576,11 @@ func TestEvent_SubscribedProtoCompactText(t *testing.T) {
 
 func TestEvent_LaunchProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Launch(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Event_Launch{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1592,11 +1593,11 @@ func TestEvent_LaunchProtoText(t *testing.T) {
 
 func TestEvent_LaunchProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Launch(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Event_Launch{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1609,11 +1610,11 @@ func TestEvent_LaunchProtoCompactText(t *testing.T) {
 
 func TestEvent_LaunchGroupProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_LaunchGroup(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Event_LaunchGroup{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1626,11 +1627,11 @@ func TestEvent_LaunchGroupProtoText(t *testing.T) {
 
 func TestEvent_LaunchGroupProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_LaunchGroup(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Event_LaunchGroup{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1643,11 +1644,11 @@ func TestEvent_LaunchGroupProtoCompactText(t *testing.T) {
 
 func TestEvent_KillProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Kill(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Event_Kill{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1660,11 +1661,11 @@ func TestEvent_KillProtoText(t *testing.T) {
 
 func TestEvent_KillProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Kill(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Event_Kill{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1677,11 +1678,11 @@ func TestEvent_KillProtoCompactText(t *testing.T) {
 
 func TestEvent_AcknowledgedProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Acknowledged(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Event_Acknowledged{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1694,11 +1695,11 @@ func TestEvent_AcknowledgedProtoText(t *testing.T) {
 
 func TestEvent_AcknowledgedProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Acknowledged(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Event_Acknowledged{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1711,11 +1712,11 @@ func TestEvent_AcknowledgedProtoCompactText(t *testing.T) {
 
 func TestEvent_MessageProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Message(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Event_Message{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1728,11 +1729,11 @@ func TestEvent_MessageProtoText(t *testing.T) {
 
 func TestEvent_MessageProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Message(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Event_Message{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1745,11 +1746,11 @@ func TestEvent_MessageProtoCompactText(t *testing.T) {
 
 func TestEvent_ErrorProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Error(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Event_Error{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1762,11 +1763,11 @@ func TestEvent_ErrorProtoText(t *testing.T) {
 
 func TestEvent_ErrorProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Error(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Event_Error{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1779,11 +1780,11 @@ func TestEvent_ErrorProtoCompactText(t *testing.T) {
 
 func TestCallProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Call{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1796,11 +1797,11 @@ func TestCallProtoText(t *testing.T) {
 
 func TestCallProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Call{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1813,11 +1814,11 @@ func TestCallProtoCompactText(t *testing.T) {
 
 func TestCall_SubscribeProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Subscribe(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Call_Subscribe{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1830,11 +1831,11 @@ func TestCall_SubscribeProtoText(t *testing.T) {
 
 func TestCall_SubscribeProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Subscribe(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Call_Subscribe{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1847,11 +1848,11 @@ func TestCall_SubscribeProtoCompactText(t *testing.T) {
 
 func TestCall_UpdateProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Update(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Call_Update{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1864,11 +1865,11 @@ func TestCall_UpdateProtoText(t *testing.T) {
 
 func TestCall_UpdateProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Update(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Call_Update{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1881,11 +1882,11 @@ func TestCall_UpdateProtoCompactText(t *testing.T) {
 
 func TestCall_MessageProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Message(popr, true)
-	dAtA := proto.MarshalTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
 	msg := &Call_Message{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1898,11 +1899,11 @@ func TestCall_MessageProtoText(t *testing.T) {
 
 func TestCall_MessageProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Message(popr, true)
-	dAtA := proto.CompactTextString(p)
+	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
 	msg := &Call_Message{}
-	if err := proto.UnmarshalText(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1914,14 +1915,14 @@ func TestCall_MessageProtoCompactText(t *testing.T) {
 }
 
 func TestEventVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Event{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1929,14 +1930,14 @@ func TestEventVerboseEqual(t *testing.T) {
 	}
 }
 func TestEvent_SubscribedVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Subscribed(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Event_Subscribed{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1944,14 +1945,14 @@ func TestEvent_SubscribedVerboseEqual(t *testing.T) {
 	}
 }
 func TestEvent_LaunchVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Launch(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Event_Launch{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1959,14 +1960,14 @@ func TestEvent_LaunchVerboseEqual(t *testing.T) {
 	}
 }
 func TestEvent_LaunchGroupVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_LaunchGroup(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Event_LaunchGroup{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1974,14 +1975,14 @@ func TestEvent_LaunchGroupVerboseEqual(t *testing.T) {
 	}
 }
 func TestEvent_KillVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Kill(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Event_Kill{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -1989,14 +1990,14 @@ func TestEvent_KillVerboseEqual(t *testing.T) {
 	}
 }
 func TestEvent_AcknowledgedVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Acknowledged(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Event_Acknowledged{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -2004,14 +2005,14 @@ func TestEvent_AcknowledgedVerboseEqual(t *testing.T) {
 	}
 }
 func TestEvent_MessageVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Message(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Event_Message{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -2019,14 +2020,14 @@ func TestEvent_MessageVerboseEqual(t *testing.T) {
 	}
 }
 func TestEvent_ErrorVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Error(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Event_Error{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -2034,14 +2035,14 @@ func TestEvent_ErrorVerboseEqual(t *testing.T) {
 	}
 }
 func TestCallVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Call{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -2049,14 +2050,14 @@ func TestCallVerboseEqual(t *testing.T) {
 	}
 }
 func TestCall_SubscribeVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall_Subscribe(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Call_Subscribe{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -2064,14 +2065,14 @@ func TestCall_SubscribeVerboseEqual(t *testing.T) {
 	}
 }
 func TestCall_UpdateVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall_Update(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Call_Update{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -2079,14 +2080,14 @@ func TestCall_UpdateVerboseEqual(t *testing.T) {
 	}
 }
 func TestCall_MessageVerboseEqual(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall_Message(popr, false)
-	dAtA, err := proto.Marshal(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
 	msg := &Call_Message{}
-	if err := proto.Unmarshal(dAtA, msg); err != nil {
+	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
 	if err := p.VerboseEqual(msg); err != nil {
@@ -2094,167 +2095,167 @@ func TestCall_MessageVerboseEqual(t *testing.T) {
 	}
 }
 func TestEventGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestEvent_SubscribedGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Subscribed(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestEvent_LaunchGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Launch(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestEvent_LaunchGroupGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_LaunchGroup(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestEvent_KillGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Kill(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestEvent_AcknowledgedGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Acknowledged(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestEvent_MessageGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Message(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestEvent_ErrorGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Error(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestCallGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestCall_SubscribeGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall_Subscribe(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestCall_UpdateGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall_Update(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestCall_MessageGoString(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall_Message(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
 		t.Fatalf("GoString want %v got %v", s1, s2)
 	}
-	_, err := parser.ParseExpr(s1)
+	_, err := go_parser.ParseExpr(s1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 func TestEventProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2265,14 +2266,14 @@ func TestEventProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkEventProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2287,10 +2288,10 @@ func BenchmarkEventProtoSize(b *testing.B) {
 
 func TestEvent_SubscribedProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Subscribed(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2301,14 +2302,14 @@ func TestEvent_SubscribedProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkEvent_SubscribedProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Subscribed, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2323,10 +2324,10 @@ func BenchmarkEvent_SubscribedProtoSize(b *testing.B) {
 
 func TestEvent_LaunchProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Launch(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2337,14 +2338,14 @@ func TestEvent_LaunchProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkEvent_LaunchProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Launch, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2359,10 +2360,10 @@ func BenchmarkEvent_LaunchProtoSize(b *testing.B) {
 
 func TestEvent_LaunchGroupProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_LaunchGroup(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2373,14 +2374,14 @@ func TestEvent_LaunchGroupProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkEvent_LaunchGroupProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_LaunchGroup, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2395,10 +2396,10 @@ func BenchmarkEvent_LaunchGroupProtoSize(b *testing.B) {
 
 func TestEvent_KillProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Kill(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2409,14 +2410,14 @@ func TestEvent_KillProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkEvent_KillProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Kill, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2431,10 +2432,10 @@ func BenchmarkEvent_KillProtoSize(b *testing.B) {
 
 func TestEvent_AcknowledgedProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Acknowledged(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2445,14 +2446,14 @@ func TestEvent_AcknowledgedProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkEvent_AcknowledgedProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Acknowledged, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2467,10 +2468,10 @@ func BenchmarkEvent_AcknowledgedProtoSize(b *testing.B) {
 
 func TestEvent_MessageProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Message(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2481,14 +2482,14 @@ func TestEvent_MessageProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkEvent_MessageProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Message, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2503,10 +2504,10 @@ func BenchmarkEvent_MessageProtoSize(b *testing.B) {
 
 func TestEvent_ErrorProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedEvent_Error(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2517,14 +2518,14 @@ func TestEvent_ErrorProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkEvent_ErrorProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Error, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2539,10 +2540,10 @@ func BenchmarkEvent_ErrorProtoSize(b *testing.B) {
 
 func TestCallProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2553,14 +2554,14 @@ func TestCallProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkCallProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2575,10 +2576,10 @@ func BenchmarkCallProtoSize(b *testing.B) {
 
 func TestCall_SubscribeProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Subscribe(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2589,14 +2590,14 @@ func TestCall_SubscribeProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkCall_SubscribeProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call_Subscribe, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2611,10 +2612,10 @@ func BenchmarkCall_SubscribeProtoSize(b *testing.B) {
 
 func TestCall_UpdateProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Update(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2625,14 +2626,14 @@ func TestCall_UpdateProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkCall_UpdateProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call_Update, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2647,10 +2648,10 @@ func BenchmarkCall_UpdateProtoSize(b *testing.B) {
 
 func TestCall_MessageProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
-	popr := rand.New(rand.NewSource(seed))
+	popr := math_rand.New(math_rand.NewSource(seed))
 	p := NewPopulatedCall_Message(popr, true)
-	size2 := proto.Size(p)
-	dAtA, err := proto.Marshal(p)
+	size2 := github_com_gogo_protobuf_proto.Size(p)
+	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -2661,14 +2662,14 @@ func TestCall_MessageProtoSize(t *testing.T) {
 	if size2 != size {
 		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
 	}
-	size3 := proto.Size(p)
+	size3 := github_com_gogo_protobuf_proto.Size(p)
 	if size3 != size {
 		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
 	}
 }
 
 func BenchmarkCall_MessageProtoSize(b *testing.B) {
-	popr := rand.New(rand.NewSource(616))
+	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call_Message, 1000)
 	for i := 0; i < 1000; i++ {
@@ -2682,7 +2683,7 @@ func BenchmarkCall_MessageProtoSize(b *testing.B) {
 }
 
 func TestEventStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2691,7 +2692,7 @@ func TestEventStringer(t *testing.T) {
 	}
 }
 func TestEvent_SubscribedStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Subscribed(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2700,7 +2701,7 @@ func TestEvent_SubscribedStringer(t *testing.T) {
 	}
 }
 func TestEvent_LaunchStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Launch(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2709,7 +2710,7 @@ func TestEvent_LaunchStringer(t *testing.T) {
 	}
 }
 func TestEvent_LaunchGroupStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_LaunchGroup(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2718,7 +2719,7 @@ func TestEvent_LaunchGroupStringer(t *testing.T) {
 	}
 }
 func TestEvent_KillStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Kill(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2727,7 +2728,7 @@ func TestEvent_KillStringer(t *testing.T) {
 	}
 }
 func TestEvent_AcknowledgedStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Acknowledged(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2736,7 +2737,7 @@ func TestEvent_AcknowledgedStringer(t *testing.T) {
 	}
 }
 func TestEvent_MessageStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Message(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2745,7 +2746,7 @@ func TestEvent_MessageStringer(t *testing.T) {
 	}
 }
 func TestEvent_ErrorStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedEvent_Error(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2754,7 +2755,7 @@ func TestEvent_ErrorStringer(t *testing.T) {
 	}
 }
 func TestCallStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2763,7 +2764,7 @@ func TestCallStringer(t *testing.T) {
 	}
 }
 func TestCall_SubscribeStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall_Subscribe(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2772,7 +2773,7 @@ func TestCall_SubscribeStringer(t *testing.T) {
 	}
 }
 func TestCall_UpdateStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall_Update(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
@@ -2781,7 +2782,7 @@ func TestCall_UpdateStringer(t *testing.T) {
 	}
 }
 func TestCall_MessageStringer(t *testing.T) {
-	popr := rand.New(rand.NewSource(time.Now().UnixNano()))
+	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	p := NewPopulatedCall_Message(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)

@@ -1251,7 +1251,7 @@ message Resource {
 
     // The type of this reservation.
     // NOTE: This field must not be set for `Resource.reservation`.
-    optional Type type = 4 [(gogoproto.nullable) = false];
+    optional Type type = 4;
 
     // The role to which this reservation is made for.
     // NOTE: This field must not be set for `Resource.reservation`.

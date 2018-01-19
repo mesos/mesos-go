@@ -44913,18 +44913,23 @@ func (mj *Resource_ReservationInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ "type":`)
+	buf.WriteString(`{ `)
+	if mj.Type != nil {
+		if true {
+			buf.WriteString(`"type":`)
 
-	{
+			{
 
-		obj, err = mj.Type.MarshalJSON()
-		if err != nil {
-			return err
+				obj, err = mj.Type.MarshalJSON()
+				if err != nil {
+					return err
+				}
+				buf.Write(obj)
+
+			}
+			buf.WriteByte(',')
 		}
-		buf.Write(obj)
-
 	}
-	buf.WriteByte(',')
 	if mj.Role != nil {
 		if true {
 			buf.WriteString(`"role":`)
@@ -45147,6 +45152,8 @@ handle_Type:
 	{
 		if tok == fflib.FFTok_null {
 
+			uj.Type = nil
+
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
@@ -45154,6 +45161,10 @@ handle_Type:
 		tbuf, err := fs.CaptureField(tok)
 		if err != nil {
 			return fs.WrapErr(err)
+		}
+
+		if uj.Type == nil {
+			uj.Type = new(Resource_ReservationInfo_Type)
 		}
 
 		err = uj.Type.UnmarshalJSON(tbuf)

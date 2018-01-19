@@ -30,8 +30,6 @@ import bytes "bytes"
 import strings "strings"
 import reflect "reflect"
 
-import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
-
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1952,10 +1950,7 @@ func (this *Call) VerboseEqual(that interface{}) error {
 }
 func (this *Call) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call)
@@ -1968,10 +1963,7 @@ func (this *Call) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2054,10 +2046,7 @@ func (this *Call_GetMetrics) VerboseEqual(that interface{}) error {
 }
 func (this *Call_GetMetrics) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_GetMetrics)
@@ -2070,10 +2059,7 @@ func (this *Call_GetMetrics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2117,10 +2103,7 @@ func (this *Call_SetLoggingLevel) VerboseEqual(that interface{}) error {
 }
 func (this *Call_SetLoggingLevel) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_SetLoggingLevel)
@@ -2133,10 +2116,7 @@ func (this *Call_SetLoggingLevel) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2180,10 +2160,7 @@ func (this *Call_ListFiles) VerboseEqual(that interface{}) error {
 }
 func (this *Call_ListFiles) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_ListFiles)
@@ -2196,10 +2173,7 @@ func (this *Call_ListFiles) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2252,10 +2226,7 @@ func (this *Call_ReadFile) VerboseEqual(that interface{}) error {
 }
 func (this *Call_ReadFile) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_ReadFile)
@@ -2268,10 +2239,7 @@ func (this *Call_ReadFile) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2329,10 +2297,7 @@ func (this *Call_UpdateWeights) VerboseEqual(that interface{}) error {
 }
 func (this *Call_UpdateWeights) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_UpdateWeights)
@@ -2345,10 +2310,7 @@ func (this *Call_UpdateWeights) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2402,10 +2364,7 @@ func (this *Call_ReserveResources) VerboseEqual(that interface{}) error {
 }
 func (this *Call_ReserveResources) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_ReserveResources)
@@ -2418,10 +2377,7 @@ func (this *Call_ReserveResources) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2478,10 +2434,7 @@ func (this *Call_UnreserveResources) VerboseEqual(that interface{}) error {
 }
 func (this *Call_UnreserveResources) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_UnreserveResources)
@@ -2494,10 +2447,7 @@ func (this *Call_UnreserveResources) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2554,10 +2504,7 @@ func (this *Call_CreateVolumes) VerboseEqual(that interface{}) error {
 }
 func (this *Call_CreateVolumes) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_CreateVolumes)
@@ -2570,10 +2517,7 @@ func (this *Call_CreateVolumes) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2630,10 +2574,7 @@ func (this *Call_DestroyVolumes) VerboseEqual(that interface{}) error {
 }
 func (this *Call_DestroyVolumes) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_DestroyVolumes)
@@ -2646,10 +2587,7 @@ func (this *Call_DestroyVolumes) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2698,10 +2636,7 @@ func (this *Call_UpdateMaintenanceSchedule) VerboseEqual(that interface{}) error
 }
 func (this *Call_UpdateMaintenanceSchedule) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_UpdateMaintenanceSchedule)
@@ -2714,10 +2649,7 @@ func (this *Call_UpdateMaintenanceSchedule) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2763,10 +2695,7 @@ func (this *Call_StartMaintenance) VerboseEqual(that interface{}) error {
 }
 func (this *Call_StartMaintenance) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_StartMaintenance)
@@ -2779,10 +2708,7 @@ func (this *Call_StartMaintenance) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2833,10 +2759,7 @@ func (this *Call_StopMaintenance) VerboseEqual(that interface{}) error {
 }
 func (this *Call_StopMaintenance) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_StopMaintenance)
@@ -2849,10 +2772,7 @@ func (this *Call_StopMaintenance) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2898,10 +2818,7 @@ func (this *Call_SetQuota) VerboseEqual(that interface{}) error {
 }
 func (this *Call_SetQuota) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_SetQuota)
@@ -2914,10 +2831,7 @@ func (this *Call_SetQuota) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2958,10 +2872,7 @@ func (this *Call_RemoveQuota) VerboseEqual(that interface{}) error {
 }
 func (this *Call_RemoveQuota) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_RemoveQuota)
@@ -2974,10 +2885,7 @@ func (this *Call_RemoveQuota) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3072,10 +2980,7 @@ func (this *Response) VerboseEqual(that interface{}) error {
 }
 func (this *Response) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response)
@@ -3088,10 +2993,7 @@ func (this *Response) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3186,10 +3088,7 @@ func (this *Response_GetHealth) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetHealth) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetHealth)
@@ -3202,10 +3101,7 @@ func (this *Response_GetHealth) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3251,10 +3147,7 @@ func (this *Response_GetFlags) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetFlags) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetFlags)
@@ -3267,10 +3160,7 @@ func (this *Response_GetFlags) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3316,10 +3206,7 @@ func (this *Response_GetVersion) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetVersion) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetVersion)
@@ -3332,10 +3219,7 @@ func (this *Response_GetVersion) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3381,10 +3265,7 @@ func (this *Response_GetMetrics) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetMetrics) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetMetrics)
@@ -3397,10 +3278,7 @@ func (this *Response_GetMetrics) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3446,10 +3324,7 @@ func (this *Response_GetLoggingLevel) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetLoggingLevel) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetLoggingLevel)
@@ -3462,10 +3337,7 @@ func (this *Response_GetLoggingLevel) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3511,10 +3383,7 @@ func (this *Response_ListFiles) VerboseEqual(that interface{}) error {
 }
 func (this *Response_ListFiles) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_ListFiles)
@@ -3527,10 +3396,7 @@ func (this *Response_ListFiles) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3579,10 +3445,7 @@ func (this *Response_ReadFile) VerboseEqual(that interface{}) error {
 }
 func (this *Response_ReadFile) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_ReadFile)
@@ -3595,10 +3458,7 @@ func (this *Response_ReadFile) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3651,10 +3511,7 @@ func (this *Response_GetState) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetState) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetState)
@@ -3667,10 +3524,7 @@ func (this *Response_GetState) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3733,10 +3587,7 @@ func (this *Response_GetAgents) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetAgents) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetAgents)
@@ -3749,10 +3600,7 @@ func (this *Response_GetAgents) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3859,10 +3707,7 @@ func (this *Response_GetAgents_Agent) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetAgents_Agent) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetAgents_Agent)
@@ -3875,10 +3720,7 @@ func (this *Response_GetAgents_Agent) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3993,10 +3835,7 @@ func (this *Response_GetFrameworks) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetFrameworks) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetFrameworks)
@@ -4009,10 +3848,7 @@ func (this *Response_GetFrameworks) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4124,10 +3960,7 @@ func (this *Response_GetFrameworks_Framework) VerboseEqual(that interface{}) err
 }
 func (this *Response_GetFrameworks_Framework) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetFrameworks_Framework)
@@ -4140,10 +3973,7 @@ func (this *Response_GetFrameworks_Framework) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4247,10 +4077,7 @@ func (this *Response_GetExecutors) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetExecutors) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetExecutors)
@@ -4263,10 +4090,7 @@ func (this *Response_GetExecutors) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4323,10 +4147,7 @@ func (this *Response_GetExecutors_Executor) VerboseEqual(that interface{}) error
 }
 func (this *Response_GetExecutors_Executor) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetExecutors_Executor)
@@ -4339,10 +4160,7 @@ func (this *Response_GetExecutors_Executor) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4423,10 +4241,7 @@ func (this *Response_GetTasks) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetTasks) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetTasks)
@@ -4439,10 +4254,7 @@ func (this *Response_GetTasks) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4525,10 +4337,7 @@ func (this *Response_GetRoles) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetRoles) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetRoles)
@@ -4541,10 +4350,7 @@ func (this *Response_GetRoles) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4595,10 +4401,7 @@ func (this *Response_GetWeights) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetWeights) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetWeights)
@@ -4611,10 +4414,7 @@ func (this *Response_GetWeights) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4660,10 +4460,7 @@ func (this *Response_GetMaster) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetMaster) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetMaster)
@@ -4676,10 +4473,7 @@ func (this *Response_GetMaster) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4720,10 +4514,7 @@ func (this *Response_GetMaintenanceStatus) VerboseEqual(that interface{}) error 
 }
 func (this *Response_GetMaintenanceStatus) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetMaintenanceStatus)
@@ -4736,10 +4527,7 @@ func (this *Response_GetMaintenanceStatus) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4780,10 +4568,7 @@ func (this *Response_GetMaintenanceSchedule) VerboseEqual(that interface{}) erro
 }
 func (this *Response_GetMaintenanceSchedule) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetMaintenanceSchedule)
@@ -4796,10 +4581,7 @@ func (this *Response_GetMaintenanceSchedule) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4840,10 +4622,7 @@ func (this *Response_GetQuota) VerboseEqual(that interface{}) error {
 }
 func (this *Response_GetQuota) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response_GetQuota)
@@ -4856,10 +4635,7 @@ func (this *Response_GetQuota) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -4924,10 +4700,7 @@ func (this *Event) VerboseEqual(that interface{}) error {
 }
 func (this *Event) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event)
@@ -4940,10 +4713,7 @@ func (this *Event) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -5008,10 +4778,7 @@ func (this *Event_Subscribed) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Subscribed) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Subscribed)
@@ -5024,10 +4791,7 @@ func (this *Event_Subscribed) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -5068,10 +4832,7 @@ func (this *Event_TaskAdded) VerboseEqual(that interface{}) error {
 }
 func (this *Event_TaskAdded) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_TaskAdded)
@@ -5084,10 +4845,7 @@ func (this *Event_TaskAdded) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -5140,10 +4898,7 @@ func (this *Event_TaskUpdated) VerboseEqual(that interface{}) error {
 }
 func (this *Event_TaskUpdated) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_TaskUpdated)
@@ -5156,10 +4911,7 @@ func (this *Event_TaskUpdated) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -5212,10 +4964,7 @@ func (this *Event_FrameworkAdded) VerboseEqual(that interface{}) error {
 }
 func (this *Event_FrameworkAdded) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_FrameworkAdded)
@@ -5228,10 +4977,7 @@ func (this *Event_FrameworkAdded) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -5272,10 +5018,7 @@ func (this *Event_FrameworkUpdated) VerboseEqual(that interface{}) error {
 }
 func (this *Event_FrameworkUpdated) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_FrameworkUpdated)
@@ -5288,10 +5031,7 @@ func (this *Event_FrameworkUpdated) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -5332,10 +5072,7 @@ func (this *Event_FrameworkRemoved) VerboseEqual(that interface{}) error {
 }
 func (this *Event_FrameworkRemoved) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_FrameworkRemoved)
@@ -5348,10 +5085,7 @@ func (this *Event_FrameworkRemoved) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -5392,10 +5126,7 @@ func (this *Event_AgentAdded) VerboseEqual(that interface{}) error {
 }
 func (this *Event_AgentAdded) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_AgentAdded)
@@ -5408,10 +5139,7 @@ func (this *Event_AgentAdded) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -5452,10 +5180,7 @@ func (this *Event_AgentRemoved) VerboseEqual(that interface{}) error {
 }
 func (this *Event_AgentRemoved) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_AgentRemoved)
@@ -5468,10 +5193,7 @@ func (this *Event_AgentRemoved) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -5586,7 +5308,11 @@ func (this *Call_UpdateWeights) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&master.Call_UpdateWeights{")
 	if this.WeightInfos != nil {
-		s = append(s, "WeightInfos: "+fmt.Sprintf("%#v", this.WeightInfos)+",\n")
+		vs := make([]*mesos.WeightInfo, len(this.WeightInfos))
+		for i := range vs {
+			vs[i] = &this.WeightInfos[i]
+		}
+		s = append(s, "WeightInfos: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5599,7 +5325,11 @@ func (this *Call_ReserveResources) GoString() string {
 	s = append(s, "&master.Call_ReserveResources{")
 	s = append(s, "AgentID: "+strings.Replace(this.AgentID.GoString(), `&`, ``, 1)+",\n")
 	if this.Resources != nil {
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
+		vs := make([]*mesos.Resource, len(this.Resources))
+		for i := range vs {
+			vs[i] = &this.Resources[i]
+		}
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5612,7 +5342,11 @@ func (this *Call_UnreserveResources) GoString() string {
 	s = append(s, "&master.Call_UnreserveResources{")
 	s = append(s, "AgentID: "+strings.Replace(this.AgentID.GoString(), `&`, ``, 1)+",\n")
 	if this.Resources != nil {
-		s = append(s, "Resources: "+fmt.Sprintf("%#v", this.Resources)+",\n")
+		vs := make([]*mesos.Resource, len(this.Resources))
+		for i := range vs {
+			vs[i] = &this.Resources[i]
+		}
+		s = append(s, "Resources: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5625,7 +5359,11 @@ func (this *Call_CreateVolumes) GoString() string {
 	s = append(s, "&master.Call_CreateVolumes{")
 	s = append(s, "AgentID: "+strings.Replace(this.AgentID.GoString(), `&`, ``, 1)+",\n")
 	if this.Volumes != nil {
-		s = append(s, "Volumes: "+fmt.Sprintf("%#v", this.Volumes)+",\n")
+		vs := make([]*mesos.Resource, len(this.Volumes))
+		for i := range vs {
+			vs[i] = &this.Volumes[i]
+		}
+		s = append(s, "Volumes: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5638,7 +5376,11 @@ func (this *Call_DestroyVolumes) GoString() string {
 	s = append(s, "&master.Call_DestroyVolumes{")
 	s = append(s, "AgentID: "+strings.Replace(this.AgentID.GoString(), `&`, ``, 1)+",\n")
 	if this.Volumes != nil {
-		s = append(s, "Volumes: "+fmt.Sprintf("%#v", this.Volumes)+",\n")
+		vs := make([]*mesos.Resource, len(this.Volumes))
+		for i := range vs {
+			vs[i] = &this.Volumes[i]
+		}
+		s = append(s, "Volumes: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5660,7 +5402,11 @@ func (this *Call_StartMaintenance) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&master.Call_StartMaintenance{")
 	if this.Machines != nil {
-		s = append(s, "Machines: "+fmt.Sprintf("%#v", this.Machines)+",\n")
+		vs := make([]*mesos.MachineID, len(this.Machines))
+		for i := range vs {
+			vs[i] = &this.Machines[i]
+		}
+		s = append(s, "Machines: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5672,7 +5418,11 @@ func (this *Call_StopMaintenance) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&master.Call_StopMaintenance{")
 	if this.Machines != nil {
-		s = append(s, "Machines: "+fmt.Sprintf("%#v", this.Machines)+",\n")
+		vs := make([]*mesos.MachineID, len(this.Machines))
+		for i := range vs {
+			vs[i] = &this.Machines[i]
+		}
+		s = append(s, "Machines: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5778,7 +5528,11 @@ func (this *Response_GetFlags) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&master.Response_GetFlags{")
 	if this.Flags != nil {
-		s = append(s, "Flags: "+fmt.Sprintf("%#v", this.Flags)+",\n")
+		vs := make([]*mesos.Flag, len(this.Flags))
+		for i := range vs {
+			vs[i] = &this.Flags[i]
+		}
+		s = append(s, "Flags: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5800,7 +5554,11 @@ func (this *Response_GetMetrics) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&master.Response_GetMetrics{")
 	if this.Metrics != nil {
-		s = append(s, "Metrics: "+fmt.Sprintf("%#v", this.Metrics)+",\n")
+		vs := make([]*mesos.Metric, len(this.Metrics))
+		for i := range vs {
+			vs[i] = &this.Metrics[i]
+		}
+		s = append(s, "Metrics: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5822,7 +5580,11 @@ func (this *Response_ListFiles) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&master.Response_ListFiles{")
 	if this.FileInfos != nil {
-		s = append(s, "FileInfos: "+fmt.Sprintf("%#v", this.FileInfos)+",\n")
+		vs := make([]*mesos.FileInfo, len(this.FileInfos))
+		for i := range vs {
+			vs[i] = &this.FileInfos[i]
+		}
+		s = append(s, "FileInfos: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5868,10 +5630,18 @@ func (this *Response_GetAgents) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&master.Response_GetAgents{")
 	if this.Agents != nil {
-		s = append(s, "Agents: "+fmt.Sprintf("%#v", this.Agents)+",\n")
+		vs := make([]*Response_GetAgents_Agent, len(this.Agents))
+		for i := range vs {
+			vs[i] = &this.Agents[i]
+		}
+		s = append(s, "Agents: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.RecoveredAgents != nil {
-		s = append(s, "RecoveredAgents: "+fmt.Sprintf("%#v", this.RecoveredAgents)+",\n")
+		vs := make([]*mesos.AgentInfo, len(this.RecoveredAgents))
+		for i := range vs {
+			vs[i] = &this.RecoveredAgents[i]
+		}
+		s = append(s, "RecoveredAgents: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5895,16 +5665,32 @@ func (this *Response_GetAgents_Agent) GoString() string {
 		s = append(s, "ReregisteredTime: "+fmt.Sprintf("%#v", this.ReregisteredTime)+",\n")
 	}
 	if this.TotalResources != nil {
-		s = append(s, "TotalResources: "+fmt.Sprintf("%#v", this.TotalResources)+",\n")
+		vs := make([]*mesos.Resource, len(this.TotalResources))
+		for i := range vs {
+			vs[i] = &this.TotalResources[i]
+		}
+		s = append(s, "TotalResources: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.AllocatedResources != nil {
-		s = append(s, "AllocatedResources: "+fmt.Sprintf("%#v", this.AllocatedResources)+",\n")
+		vs := make([]*mesos.Resource, len(this.AllocatedResources))
+		for i := range vs {
+			vs[i] = &this.AllocatedResources[i]
+		}
+		s = append(s, "AllocatedResources: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.OfferedResources != nil {
-		s = append(s, "OfferedResources: "+fmt.Sprintf("%#v", this.OfferedResources)+",\n")
+		vs := make([]*mesos.Resource, len(this.OfferedResources))
+		for i := range vs {
+			vs[i] = &this.OfferedResources[i]
+		}
+		s = append(s, "OfferedResources: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.Capabilities != nil {
-		s = append(s, "Capabilities: "+fmt.Sprintf("%#v", this.Capabilities)+",\n")
+		vs := make([]*mesos.AgentInfo_Capability, len(this.Capabilities))
+		for i := range vs {
+			vs[i] = &this.Capabilities[i]
+		}
+		s = append(s, "Capabilities: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5916,13 +5702,25 @@ func (this *Response_GetFrameworks) GoString() string {
 	s := make([]string, 0, 7)
 	s = append(s, "&master.Response_GetFrameworks{")
 	if this.Frameworks != nil {
-		s = append(s, "Frameworks: "+fmt.Sprintf("%#v", this.Frameworks)+",\n")
+		vs := make([]*Response_GetFrameworks_Framework, len(this.Frameworks))
+		for i := range vs {
+			vs[i] = &this.Frameworks[i]
+		}
+		s = append(s, "Frameworks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.CompletedFrameworks != nil {
-		s = append(s, "CompletedFrameworks: "+fmt.Sprintf("%#v", this.CompletedFrameworks)+",\n")
+		vs := make([]*Response_GetFrameworks_Framework, len(this.CompletedFrameworks))
+		for i := range vs {
+			vs[i] = &this.CompletedFrameworks[i]
+		}
+		s = append(s, "CompletedFrameworks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.RecoveredFrameworks != nil {
-		s = append(s, "RecoveredFrameworks: "+fmt.Sprintf("%#v", this.RecoveredFrameworks)+",\n")
+		vs := make([]*mesos.FrameworkInfo, len(this.RecoveredFrameworks))
+		for i := range vs {
+			vs[i] = &this.RecoveredFrameworks[i]
+		}
+		s = append(s, "RecoveredFrameworks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5947,16 +5745,32 @@ func (this *Response_GetFrameworks_Framework) GoString() string {
 		s = append(s, "UnregisteredTime: "+fmt.Sprintf("%#v", this.UnregisteredTime)+",\n")
 	}
 	if this.Offers != nil {
-		s = append(s, "Offers: "+fmt.Sprintf("%#v", this.Offers)+",\n")
+		vs := make([]*mesos.Offer, len(this.Offers))
+		for i := range vs {
+			vs[i] = &this.Offers[i]
+		}
+		s = append(s, "Offers: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.InverseOffers != nil {
-		s = append(s, "InverseOffers: "+fmt.Sprintf("%#v", this.InverseOffers)+",\n")
+		vs := make([]*mesos.InverseOffer, len(this.InverseOffers))
+		for i := range vs {
+			vs[i] = &this.InverseOffers[i]
+		}
+		s = append(s, "InverseOffers: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.AllocatedResources != nil {
-		s = append(s, "AllocatedResources: "+fmt.Sprintf("%#v", this.AllocatedResources)+",\n")
+		vs := make([]*mesos.Resource, len(this.AllocatedResources))
+		for i := range vs {
+			vs[i] = &this.AllocatedResources[i]
+		}
+		s = append(s, "AllocatedResources: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.OfferedResources != nil {
-		s = append(s, "OfferedResources: "+fmt.Sprintf("%#v", this.OfferedResources)+",\n")
+		vs := make([]*mesos.Resource, len(this.OfferedResources))
+		for i := range vs {
+			vs[i] = &this.OfferedResources[i]
+		}
+		s = append(s, "OfferedResources: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5968,10 +5782,18 @@ func (this *Response_GetExecutors) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&master.Response_GetExecutors{")
 	if this.Executors != nil {
-		s = append(s, "Executors: "+fmt.Sprintf("%#v", this.Executors)+",\n")
+		vs := make([]*Response_GetExecutors_Executor, len(this.Executors))
+		for i := range vs {
+			vs[i] = &this.Executors[i]
+		}
+		s = append(s, "Executors: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.OrphanExecutors != nil {
-		s = append(s, "OrphanExecutors: "+fmt.Sprintf("%#v", this.OrphanExecutors)+",\n")
+		vs := make([]*Response_GetExecutors_Executor, len(this.OrphanExecutors))
+		for i := range vs {
+			vs[i] = &this.OrphanExecutors[i]
+		}
+		s = append(s, "OrphanExecutors: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -5994,19 +5816,39 @@ func (this *Response_GetTasks) GoString() string {
 	s := make([]string, 0, 9)
 	s = append(s, "&master.Response_GetTasks{")
 	if this.PendingTasks != nil {
-		s = append(s, "PendingTasks: "+fmt.Sprintf("%#v", this.PendingTasks)+",\n")
+		vs := make([]*mesos.Task, len(this.PendingTasks))
+		for i := range vs {
+			vs[i] = &this.PendingTasks[i]
+		}
+		s = append(s, "PendingTasks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.Tasks != nil {
-		s = append(s, "Tasks: "+fmt.Sprintf("%#v", this.Tasks)+",\n")
+		vs := make([]*mesos.Task, len(this.Tasks))
+		for i := range vs {
+			vs[i] = &this.Tasks[i]
+		}
+		s = append(s, "Tasks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.UnreachableTasks != nil {
-		s = append(s, "UnreachableTasks: "+fmt.Sprintf("%#v", this.UnreachableTasks)+",\n")
+		vs := make([]*mesos.Task, len(this.UnreachableTasks))
+		for i := range vs {
+			vs[i] = &this.UnreachableTasks[i]
+		}
+		s = append(s, "UnreachableTasks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.CompletedTasks != nil {
-		s = append(s, "CompletedTasks: "+fmt.Sprintf("%#v", this.CompletedTasks)+",\n")
+		vs := make([]*mesos.Task, len(this.CompletedTasks))
+		for i := range vs {
+			vs[i] = &this.CompletedTasks[i]
+		}
+		s = append(s, "CompletedTasks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.OrphanTasks != nil {
-		s = append(s, "OrphanTasks: "+fmt.Sprintf("%#v", this.OrphanTasks)+",\n")
+		vs := make([]*mesos.Task, len(this.OrphanTasks))
+		for i := range vs {
+			vs[i] = &this.OrphanTasks[i]
+		}
+		s = append(s, "OrphanTasks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -6018,7 +5860,11 @@ func (this *Response_GetRoles) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&master.Response_GetRoles{")
 	if this.Roles != nil {
-		s = append(s, "Roles: "+fmt.Sprintf("%#v", this.Roles)+",\n")
+		vs := make([]*mesos.Role, len(this.Roles))
+		for i := range vs {
+			vs[i] = &this.Roles[i]
+		}
+		s = append(s, "Roles: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -6030,7 +5876,11 @@ func (this *Response_GetWeights) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&master.Response_GetWeights{")
 	if this.WeightInfos != nil {
-		s = append(s, "WeightInfos: "+fmt.Sprintf("%#v", this.WeightInfos)+",\n")
+		vs := make([]*mesos.WeightInfo, len(this.WeightInfos))
+		for i := range vs {
+			vs[i] = &this.WeightInfos[i]
+		}
+		s = append(s, "WeightInfos: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -7182,7 +7032,7 @@ func (m *Response_ReadFile) MarshalTo(dAtA []byte) (int, error) {
 	i++
 	i = encodeVarintMaster(dAtA, i, uint64(m.Size))
 	if m.Data == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return 0, proto.NewRequiredNotSetError("data")
 	} else {
 		dAtA[i] = 0x12
 		i++
@@ -8093,7 +7943,7 @@ func (m *Event_TaskUpdated) MarshalTo(dAtA []byte) (int, error) {
 	}
 	i += n70
 	if m.State == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
+		return 0, proto.NewRequiredNotSetError("state")
 	} else {
 		dAtA[i] = 0x18
 		i++
@@ -8232,24 +8082,6 @@ func (m *Event_AgentRemoved) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func encodeFixed64Master(dAtA []byte, offset int, v uint64) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	dAtA[offset+4] = uint8(v >> 32)
-	dAtA[offset+5] = uint8(v >> 40)
-	dAtA[offset+6] = uint8(v >> 48)
-	dAtA[offset+7] = uint8(v >> 56)
-	return offset + 8
-}
-func encodeFixed32Master(dAtA []byte, offset int, v uint32) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	return offset + 4
-}
 func encodeVarintMaster(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -8513,7 +8345,7 @@ func NewPopulatedResponse(r randyMaster, easy bool) *Response {
 	if r.Intn(10) != 0 {
 		this.ReadFile = NewPopulatedResponse_ReadFile(r, easy)
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.GetState = NewPopulatedResponse_GetState(r, easy)
 	}
 	if r.Intn(10) != 0 {
@@ -8525,7 +8357,7 @@ func NewPopulatedResponse(r randyMaster, easy bool) *Response {
 	if r.Intn(10) != 0 {
 		this.GetExecutors = NewPopulatedResponse_GetExecutors(r, easy)
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.GetTasks = NewPopulatedResponse_GetTasks(r, easy)
 	}
 	if r.Intn(10) != 0 {
@@ -8636,7 +8468,7 @@ func NewPopulatedResponse_ReadFile(r randyMaster, easy bool) *Response_ReadFile 
 
 func NewPopulatedResponse_GetState(r randyMaster, easy bool) *Response_GetState {
 	this := &Response_GetState{}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.GetTasks = NewPopulatedResponse_GetTasks(r, easy)
 	}
 	if r.Intn(10) != 0 {
@@ -8849,7 +8681,7 @@ func NewPopulatedResponse_GetExecutors_Executor(r randyMaster, easy bool) *Respo
 
 func NewPopulatedResponse_GetTasks(r randyMaster, easy bool) *Response_GetTasks {
 	this := &Response_GetTasks{}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		v66 := r.Intn(5)
 		this.PendingTasks = make([]mesos.Task, v66)
 		for i := 0; i < v66; i++ {
@@ -8857,7 +8689,7 @@ func NewPopulatedResponse_GetTasks(r randyMaster, easy bool) *Response_GetTasks 
 			this.PendingTasks[i] = *v67
 		}
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		v68 := r.Intn(5)
 		this.Tasks = make([]mesos.Task, v68)
 		for i := 0; i < v68; i++ {
@@ -8865,7 +8697,7 @@ func NewPopulatedResponse_GetTasks(r randyMaster, easy bool) *Response_GetTasks 
 			this.Tasks[i] = *v69
 		}
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		v70 := r.Intn(5)
 		this.CompletedTasks = make([]mesos.Task, v70)
 		for i := 0; i < v70; i++ {
@@ -8873,7 +8705,7 @@ func NewPopulatedResponse_GetTasks(r randyMaster, easy bool) *Response_GetTasks 
 			this.CompletedTasks[i] = *v71
 		}
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		v72 := r.Intn(5)
 		this.OrphanTasks = make([]mesos.Task, v72)
 		for i := 0; i < v72; i++ {
@@ -8881,7 +8713,7 @@ func NewPopulatedResponse_GetTasks(r randyMaster, easy bool) *Response_GetTasks 
 			this.OrphanTasks[i] = *v73
 		}
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		v74 := r.Intn(5)
 		this.UnreachableTasks = make([]mesos.Task, v74)
 		for i := 0; i < v74; i++ {
@@ -8964,13 +8796,13 @@ func NewPopulatedResponse_GetQuota(r randyMaster, easy bool) *Response_GetQuota 
 func NewPopulatedEvent(r randyMaster, easy bool) *Event {
 	this := &Event{}
 	this.Type = Event_Type([]int32{0, 1, 2, 3, 4, 5, 6, 7, 8}[r.Intn(9)])
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.Subscribed = NewPopulatedEvent_Subscribed(r, easy)
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.TaskAdded = NewPopulatedEvent_TaskAdded(r, easy)
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.TaskUpdated = NewPopulatedEvent_TaskUpdated(r, easy)
 	}
 	if r.Intn(10) != 0 {
@@ -8995,7 +8827,7 @@ func NewPopulatedEvent(r randyMaster, easy bool) *Event {
 
 func NewPopulatedEvent_Subscribed(r randyMaster, easy bool) *Event_Subscribed {
 	this := &Event_Subscribed{}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.GetState = NewPopulatedResponse_GetState(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -11171,10 +11003,10 @@ func (m *Call_SetLoggingLevel) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("level")
+		return proto.NewRequiredNotSetError("level")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("duration")
+		return proto.NewRequiredNotSetError("duration")
 	}
 
 	if iNdEx > l {
@@ -11258,7 +11090,7 @@ func (m *Call_ListFiles) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("path")
+		return proto.NewRequiredNotSetError("path")
 	}
 
 	if iNdEx > l {
@@ -11382,10 +11214,10 @@ func (m *Call_ReadFile) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("path")
+		return proto.NewRequiredNotSetError("path")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("offset")
+		return proto.NewRequiredNotSetError("offset")
 	}
 
 	if iNdEx > l {
@@ -11582,7 +11414,7 @@ func (m *Call_ReserveResources) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 
 	if iNdEx > l {
@@ -11698,7 +11530,7 @@ func (m *Call_UnreserveResources) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 
 	if iNdEx > l {
@@ -11814,7 +11646,7 @@ func (m *Call_CreateVolumes) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 
 	if iNdEx > l {
@@ -11930,7 +11762,7 @@ func (m *Call_DestroyVolumes) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 
 	if iNdEx > l {
@@ -12015,7 +11847,7 @@ func (m *Call_UpdateMaintenanceSchedule) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("schedule")
+		return proto.NewRequiredNotSetError("schedule")
 	}
 
 	if iNdEx > l {
@@ -12262,7 +12094,7 @@ func (m *Call_SetQuota) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("quota_request")
+		return proto.NewRequiredNotSetError("quota_request")
 	}
 
 	if iNdEx > l {
@@ -12346,7 +12178,7 @@ func (m *Call_RemoveQuota) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("role")
+		return proto.NewRequiredNotSetError("role")
 	}
 
 	if iNdEx > l {
@@ -13084,7 +12916,7 @@ func (m *Response_GetHealth) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("healthy")
+		return proto.NewRequiredNotSetError("healthy")
 	}
 
 	if iNdEx > l {
@@ -13250,7 +13082,7 @@ func (m *Response_GetVersion) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("version_info")
+		return proto.NewRequiredNotSetError("version_info")
 	}
 
 	if iNdEx > l {
@@ -13405,7 +13237,7 @@ func (m *Response_GetLoggingLevel) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("level")
+		return proto.NewRequiredNotSetError("level")
 	}
 
 	if iNdEx > l {
@@ -13592,10 +13424,10 @@ func (m *Response_ReadFile) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("size")
+		return proto.NewRequiredNotSetError("size")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return proto.NewRequiredNotSetError("data")
 	}
 
 	if iNdEx > l {
@@ -14245,13 +14077,13 @@ func (m *Response_GetAgents_Agent) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_info")
+		return proto.NewRequiredNotSetError("agent_info")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("active")
+		return proto.NewRequiredNotSetError("active")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("version")
+		return proto.NewRequiredNotSetError("version")
 	}
 
 	if iNdEx > l {
@@ -14765,16 +14597,16 @@ func (m *Response_GetFrameworks_Framework) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_info")
+		return proto.NewRequiredNotSetError("framework_info")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("active")
+		return proto.NewRequiredNotSetError("active")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("connected")
+		return proto.NewRequiredNotSetError("connected")
 	}
 	if hasFields[0]&uint64(0x00000008) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("recovered")
+		return proto.NewRequiredNotSetError("recovered")
 	}
 
 	if iNdEx > l {
@@ -15002,10 +14834,10 @@ func (m *Response_GetExecutors_Executor) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_info")
+		return proto.NewRequiredNotSetError("executor_info")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 
 	if iNdEx > l {
@@ -15540,7 +15372,7 @@ func (m *Response_GetMaintenanceStatus) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
+		return proto.NewRequiredNotSetError("status")
 	}
 
 	if iNdEx > l {
@@ -15625,7 +15457,7 @@ func (m *Response_GetMaintenanceSchedule) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("schedule")
+		return proto.NewRequiredNotSetError("schedule")
 	}
 
 	if iNdEx > l {
@@ -15710,7 +15542,7 @@ func (m *Response_GetQuota) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
+		return proto.NewRequiredNotSetError("status")
 	}
 
 	if iNdEx > l {
@@ -16211,7 +16043,7 @@ func (m *Event_TaskAdded) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task")
+		return proto.NewRequiredNotSetError("task")
 	}
 
 	if iNdEx > l {
@@ -16348,13 +16180,13 @@ func (m *Event_TaskUpdated) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
+		return proto.NewRequiredNotSetError("framework_id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
+		return proto.NewRequiredNotSetError("status")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
+		return proto.NewRequiredNotSetError("state")
 	}
 
 	if iNdEx > l {
@@ -16439,7 +16271,7 @@ func (m *Event_FrameworkAdded) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework")
+		return proto.NewRequiredNotSetError("framework")
 	}
 
 	if iNdEx > l {
@@ -16524,7 +16356,7 @@ func (m *Event_FrameworkUpdated) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework")
+		return proto.NewRequiredNotSetError("framework")
 	}
 
 	if iNdEx > l {
@@ -16609,7 +16441,7 @@ func (m *Event_FrameworkRemoved) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_info")
+		return proto.NewRequiredNotSetError("framework_info")
 	}
 
 	if iNdEx > l {
@@ -16694,7 +16526,7 @@ func (m *Event_AgentAdded) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent")
+		return proto.NewRequiredNotSetError("agent")
 	}
 
 	if iNdEx > l {
@@ -16779,7 +16611,7 @@ func (m *Event_AgentRemoved) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 
 	if iNdEx > l {

@@ -23,8 +23,6 @@ import strconv "strconv"
 import strings "strings"
 import reflect "reflect"
 
-import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
-
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -178,10 +176,7 @@ func (this *InverseOfferStatus) VerboseEqual(that interface{}) error {
 }
 func (this *InverseOfferStatus) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*InverseOfferStatus)
@@ -194,10 +189,7 @@ func (this *InverseOfferStatus) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -256,7 +248,7 @@ func (m *InverseOfferStatus) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.Status == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
+		return 0, proto.NewRequiredNotSetError("status")
 	} else {
 		dAtA[i] = 0x8
 		i++
@@ -281,24 +273,6 @@ func (m *InverseOfferStatus) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func encodeFixed64Allocator(dAtA []byte, offset int, v uint64) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	dAtA[offset+4] = uint8(v >> 32)
-	dAtA[offset+5] = uint8(v >> 40)
-	dAtA[offset+6] = uint8(v >> 48)
-	dAtA[offset+7] = uint8(v >> 56)
-	return offset + 8
-}
-func encodeFixed32Allocator(dAtA []byte, offset int, v uint32) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	return offset + 4
-}
 func encodeVarintAllocator(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -568,13 +542,13 @@ func (m *InverseOfferStatus) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
+		return proto.NewRequiredNotSetError("status")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
+		return proto.NewRequiredNotSetError("framework_id")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("timestamp")
+		return proto.NewRequiredNotSetError("timestamp")
 	}
 
 	if iNdEx > l {

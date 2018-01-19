@@ -26,7 +26,7 @@ import bytes "bytes"
 import strings "strings"
 import reflect "reflect"
 
-import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
+import binary "encoding/binary"
 
 import io "io"
 
@@ -1201,10 +1201,7 @@ func (this *Event) VerboseEqual(that interface{}) error {
 }
 func (this *Event) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event)
@@ -1217,10 +1214,7 @@ func (this *Event) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1300,10 +1294,7 @@ func (this *Event_Subscribed) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Subscribed) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Subscribed)
@@ -1316,10 +1307,7 @@ func (this *Event_Subscribed) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1377,10 +1365,7 @@ func (this *Event_Offers) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Offers) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Offers)
@@ -1393,10 +1378,7 @@ func (this *Event_Offers) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1447,10 +1429,7 @@ func (this *Event_InverseOffers) VerboseEqual(that interface{}) error {
 }
 func (this *Event_InverseOffers) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_InverseOffers)
@@ -1463,10 +1442,7 @@ func (this *Event_InverseOffers) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1512,10 +1488,7 @@ func (this *Event_Rescind) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Rescind) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Rescind)
@@ -1528,10 +1501,7 @@ func (this *Event_Rescind) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1572,10 +1542,7 @@ func (this *Event_RescindInverseOffer) VerboseEqual(that interface{}) error {
 }
 func (this *Event_RescindInverseOffer) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_RescindInverseOffer)
@@ -1588,10 +1555,7 @@ func (this *Event_RescindInverseOffer) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1632,10 +1596,7 @@ func (this *Event_Update) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Update) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Update)
@@ -1648,10 +1609,7 @@ func (this *Event_Update) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1698,10 +1656,7 @@ func (this *Event_Message) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Message) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Message)
@@ -1714,10 +1669,7 @@ func (this *Event_Message) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1776,10 +1728,7 @@ func (this *Event_Failure) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Failure) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Failure)
@@ -1792,10 +1741,7 @@ func (this *Event_Failure) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1848,10 +1794,7 @@ func (this *Event_Error) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Error) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Error)
@@ -1864,10 +1807,7 @@ func (this *Event_Error) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1950,10 +1890,7 @@ func (this *Call) VerboseEqual(that interface{}) error {
 }
 func (this *Call) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call)
@@ -1966,10 +1903,7 @@ func (this *Call) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2060,10 +1994,7 @@ func (this *Call_Subscribe) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Subscribe) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Subscribe)
@@ -2076,10 +2007,7 @@ func (this *Call_Subscribe) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2144,10 +2072,7 @@ func (this *Call_Accept) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Accept) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Accept)
@@ -2160,10 +2085,7 @@ func (this *Call_Accept) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2228,10 +2150,7 @@ func (this *Call_Decline) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Decline) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Decline)
@@ -2244,10 +2163,7 @@ func (this *Call_Decline) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2304,10 +2220,7 @@ func (this *Call_AcceptInverseOffers) VerboseEqual(that interface{}) error {
 }
 func (this *Call_AcceptInverseOffers) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_AcceptInverseOffers)
@@ -2320,10 +2233,7 @@ func (this *Call_AcceptInverseOffers) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2380,10 +2290,7 @@ func (this *Call_DeclineInverseOffers) VerboseEqual(that interface{}) error {
 }
 func (this *Call_DeclineInverseOffers) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_DeclineInverseOffers)
@@ -2396,10 +2303,7 @@ func (this *Call_DeclineInverseOffers) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2453,10 +2357,7 @@ func (this *Call_Revive) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Revive) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Revive)
@@ -2469,10 +2370,7 @@ func (this *Call_Revive) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2524,10 +2422,7 @@ func (this *Call_Kill) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Kill) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Kill)
@@ -2540,10 +2435,7 @@ func (this *Call_Kill) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2593,10 +2485,7 @@ func (this *Call_Shutdown) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Shutdown) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Shutdown)
@@ -2609,10 +2498,7 @@ func (this *Call_Shutdown) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2662,10 +2548,7 @@ func (this *Call_Acknowledge) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Acknowledge) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Acknowledge)
@@ -2678,10 +2561,7 @@ func (this *Call_Acknowledge) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2733,10 +2613,7 @@ func (this *Call_Reconcile) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Reconcile) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Reconcile)
@@ -2749,10 +2626,7 @@ func (this *Call_Reconcile) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2801,10 +2675,7 @@ func (this *Call_Reconcile_Task) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Reconcile_Task) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Reconcile_Task)
@@ -2817,10 +2688,7 @@ func (this *Call_Reconcile_Task) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2870,10 +2738,7 @@ func (this *Call_Message) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Message) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Message)
@@ -2886,10 +2751,7 @@ func (this *Call_Message) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -2941,10 +2803,7 @@ func (this *Call_Request) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Request) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Request)
@@ -2957,10 +2816,7 @@ func (this *Call_Request) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3011,10 +2867,7 @@ func (this *Call_Suppress) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Suppress) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Suppress)
@@ -3027,10 +2880,7 @@ func (this *Call_Suppress) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -3106,7 +2956,11 @@ func (this *Event_Offers) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&scheduler.Event_Offers{")
 	if this.Offers != nil {
-		s = append(s, "Offers: "+fmt.Sprintf("%#v", this.Offers)+",\n")
+		vs := make([]*mesos.Offer, len(this.Offers))
+		for i := range vs {
+			vs[i] = &this.Offers[i]
+		}
+		s = append(s, "Offers: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -3118,7 +2972,11 @@ func (this *Event_InverseOffers) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&scheduler.Event_InverseOffers{")
 	if this.InverseOffers != nil {
-		s = append(s, "InverseOffers: "+fmt.Sprintf("%#v", this.InverseOffers)+",\n")
+		vs := make([]*mesos.InverseOffer, len(this.InverseOffers))
+		for i := range vs {
+			vs[i] = &this.InverseOffers[i]
+		}
+		s = append(s, "InverseOffers: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -3269,10 +3127,18 @@ func (this *Call_Accept) GoString() string {
 	s := make([]string, 0, 7)
 	s = append(s, "&scheduler.Call_Accept{")
 	if this.OfferIDs != nil {
-		s = append(s, "OfferIDs: "+fmt.Sprintf("%#v", this.OfferIDs)+",\n")
+		vs := make([]*mesos.OfferID, len(this.OfferIDs))
+		for i := range vs {
+			vs[i] = &this.OfferIDs[i]
+		}
+		s = append(s, "OfferIDs: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.Operations != nil {
-		s = append(s, "Operations: "+fmt.Sprintf("%#v", this.Operations)+",\n")
+		vs := make([]*mesos.Offer_Operation, len(this.Operations))
+		for i := range vs {
+			vs[i] = &this.Operations[i]
+		}
+		s = append(s, "Operations: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.Filters != nil {
 		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
@@ -3287,7 +3153,11 @@ func (this *Call_Decline) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&scheduler.Call_Decline{")
 	if this.OfferIDs != nil {
-		s = append(s, "OfferIDs: "+fmt.Sprintf("%#v", this.OfferIDs)+",\n")
+		vs := make([]*mesos.OfferID, len(this.OfferIDs))
+		for i := range vs {
+			vs[i] = &this.OfferIDs[i]
+		}
+		s = append(s, "OfferIDs: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.Filters != nil {
 		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
@@ -3302,7 +3172,11 @@ func (this *Call_AcceptInverseOffers) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&scheduler.Call_AcceptInverseOffers{")
 	if this.InverseOfferIDs != nil {
-		s = append(s, "InverseOfferIDs: "+fmt.Sprintf("%#v", this.InverseOfferIDs)+",\n")
+		vs := make([]*mesos.OfferID, len(this.InverseOfferIDs))
+		for i := range vs {
+			vs[i] = &this.InverseOfferIDs[i]
+		}
+		s = append(s, "InverseOfferIDs: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.Filters != nil {
 		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
@@ -3317,7 +3191,11 @@ func (this *Call_DeclineInverseOffers) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&scheduler.Call_DeclineInverseOffers{")
 	if this.InverseOfferIDs != nil {
-		s = append(s, "InverseOfferIDs: "+fmt.Sprintf("%#v", this.InverseOfferIDs)+",\n")
+		vs := make([]*mesos.OfferID, len(this.InverseOfferIDs))
+		for i := range vs {
+			vs[i] = &this.InverseOfferIDs[i]
+		}
+		s = append(s, "InverseOfferIDs: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.Filters != nil {
 		s = append(s, "Filters: "+fmt.Sprintf("%#v", this.Filters)+",\n")
@@ -3385,7 +3263,11 @@ func (this *Call_Reconcile) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&scheduler.Call_Reconcile{")
 	if this.Tasks != nil {
-		s = append(s, "Tasks: "+fmt.Sprintf("%#v", this.Tasks)+",\n")
+		vs := make([]*Call_Reconcile_Task, len(this.Tasks))
+		for i := range vs {
+			vs[i] = &this.Tasks[i]
+		}
+		s = append(s, "Tasks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -3424,7 +3306,11 @@ func (this *Call_Request) GoString() string {
 	s := make([]string, 0, 5)
 	s = append(s, "&scheduler.Call_Request{")
 	if this.Requests != nil {
-		s = append(s, "Requests: "+fmt.Sprintf("%#v", this.Requests)+",\n")
+		vs := make([]*mesos.Request, len(this.Requests))
+		for i := range vs {
+			vs[i] = &this.Requests[i]
+		}
+		s = append(s, "Requests: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -3576,7 +3462,7 @@ func (m *Event_Subscribed) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.FrameworkID == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
+		return 0, proto.NewRequiredNotSetError("framework_id")
 	} else {
 		dAtA[i] = 0xa
 		i++
@@ -3590,7 +3476,8 @@ func (m *Event_Subscribed) MarshalTo(dAtA []byte) (int, error) {
 	if m.HeartbeatIntervalSeconds != nil {
 		dAtA[i] = 0x11
 		i++
-		i = encodeFixed64Scheduler(dAtA, i, uint64(math.Float64bits(float64(*m.HeartbeatIntervalSeconds))))
+		binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(*m.HeartbeatIntervalSeconds))))
+		i += 8
 	}
 	if m.MasterInfo != nil {
 		dAtA[i] = 0x1a
@@ -3775,7 +3662,7 @@ func (m *Event_Message) MarshalTo(dAtA []byte) (int, error) {
 	}
 	i += n16
 	if m.Data == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return 0, proto.NewRequiredNotSetError("data")
 	} else {
 		dAtA[i] = 0x1a
 		i++
@@ -4029,7 +3916,7 @@ func (m *Call_Subscribe) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.FrameworkInfo == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_info")
+		return 0, proto.NewRequiredNotSetError("framework_info")
 	} else {
 		dAtA[i] = 0xa
 		i++
@@ -4375,7 +4262,7 @@ func (m *Call_Acknowledge) MarshalTo(dAtA []byte) (int, error) {
 	}
 	i += n44
 	if m.UUID == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("uuid")
+		return 0, proto.NewRequiredNotSetError("uuid")
 	} else {
 		dAtA[i] = 0x1a
 		i++
@@ -4483,7 +4370,7 @@ func (m *Call_Message) MarshalTo(dAtA []byte) (int, error) {
 	}
 	i += n48
 	if m.Data == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return 0, proto.NewRequiredNotSetError("data")
 	} else {
 		dAtA[i] = 0x1a
 		i++
@@ -4556,24 +4443,6 @@ func (m *Call_Suppress) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func encodeFixed64Scheduler(dAtA []byte, offset int, v uint64) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	dAtA[offset+4] = uint8(v >> 32)
-	dAtA[offset+5] = uint8(v >> 40)
-	dAtA[offset+6] = uint8(v >> 48)
-	dAtA[offset+7] = uint8(v >> 56)
-	return offset + 8
-}
-func encodeFixed32Scheduler(dAtA []byte, offset int, v uint32) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	return offset + 4
-}
 func encodeVarintScheduler(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -4595,7 +4464,7 @@ func NewPopulatedEvent(r randyScheduler, easy bool) *Event {
 	if r.Intn(10) != 0 {
 		this.Rescind = NewPopulatedEvent_Rescind(r, easy)
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.Update = NewPopulatedEvent_Update(r, easy)
 	}
 	if r.Intn(10) != 0 {
@@ -6244,15 +6113,8 @@ func (m *Event_Subscribed) Unmarshal(dAtA []byte) error {
 			if (iNdEx + 8) > l {
 				return io.ErrUnexpectedEOF
 			}
+			v = uint64(binary.LittleEndian.Uint64(dAtA[iNdEx:]))
 			iNdEx += 8
-			v = uint64(dAtA[iNdEx-8])
-			v |= uint64(dAtA[iNdEx-7]) << 8
-			v |= uint64(dAtA[iNdEx-6]) << 16
-			v |= uint64(dAtA[iNdEx-5]) << 24
-			v |= uint64(dAtA[iNdEx-4]) << 32
-			v |= uint64(dAtA[iNdEx-3]) << 40
-			v |= uint64(dAtA[iNdEx-2]) << 48
-			v |= uint64(dAtA[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.HeartbeatIntervalSeconds = &v2
 		case 3:
@@ -6304,7 +6166,7 @@ func (m *Event_Subscribed) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
+		return proto.NewRequiredNotSetError("framework_id")
 	}
 
 	if iNdEx > l {
@@ -6551,7 +6413,7 @@ func (m *Event_Rescind) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("offer_id")
+		return proto.NewRequiredNotSetError("offer_id")
 	}
 
 	if iNdEx > l {
@@ -6636,7 +6498,7 @@ func (m *Event_RescindInverseOffer) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("inverse_offer_id")
+		return proto.NewRequiredNotSetError("inverse_offer_id")
 	}
 
 	if iNdEx > l {
@@ -6721,7 +6583,7 @@ func (m *Event_Update) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
+		return proto.NewRequiredNotSetError("status")
 	}
 
 	if iNdEx > l {
@@ -6869,13 +6731,13 @@ func (m *Event_Message) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
+		return proto.NewRequiredNotSetError("executor_id")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return proto.NewRequiredNotSetError("data")
 	}
 
 	if iNdEx > l {
@@ -7095,7 +6957,7 @@ func (m *Event_Error) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("message")
+		return proto.NewRequiredNotSetError("message")
 	}
 
 	if iNdEx > l {
@@ -7743,7 +7605,7 @@ func (m *Call_Subscribe) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_info")
+		return proto.NewRequiredNotSetError("framework_info")
 	}
 
 	if iNdEx > l {
@@ -8460,7 +8322,7 @@ func (m *Call_Kill) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
+		return proto.NewRequiredNotSetError("task_id")
 	}
 
 	if iNdEx > l {
@@ -8576,10 +8438,10 @@ func (m *Call_Shutdown) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
+		return proto.NewRequiredNotSetError("executor_id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 
 	if iNdEx > l {
@@ -8727,13 +8589,13 @@ func (m *Call_Acknowledge) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
+		return proto.NewRequiredNotSetError("task_id")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("uuid")
+		return proto.NewRequiredNotSetError("uuid")
 	}
 
 	if iNdEx > l {
@@ -8932,7 +8794,7 @@ func (m *Call_Reconcile_Task) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
+		return proto.NewRequiredNotSetError("task_id")
 	}
 
 	if iNdEx > l {
@@ -9080,13 +8942,13 @@ func (m *Call_Message) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_id")
+		return proto.NewRequiredNotSetError("agent_id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
+		return proto.NewRequiredNotSetError("executor_id")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return proto.NewRequiredNotSetError("data")
 	}
 
 	if iNdEx > l {

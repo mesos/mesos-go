@@ -26,8 +26,6 @@ import bytes "bytes"
 import strings "strings"
 import reflect "reflect"
 
-import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
-
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -636,10 +634,7 @@ func (this *Event) VerboseEqual(that interface{}) error {
 }
 func (this *Event) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event)
@@ -652,10 +647,7 @@ func (this *Event) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -726,10 +718,7 @@ func (this *Event_Subscribed) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Subscribed) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Subscribed)
@@ -742,10 +731,7 @@ func (this *Event_Subscribed) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -795,10 +781,7 @@ func (this *Event_Launch) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Launch) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Launch)
@@ -811,10 +794,7 @@ func (this *Event_Launch) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -855,10 +835,7 @@ func (this *Event_LaunchGroup) VerboseEqual(that interface{}) error {
 }
 func (this *Event_LaunchGroup) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_LaunchGroup)
@@ -871,10 +848,7 @@ func (this *Event_LaunchGroup) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -918,10 +892,7 @@ func (this *Event_Kill) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Kill) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Kill)
@@ -934,10 +905,7 @@ func (this *Event_Kill) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -984,10 +952,7 @@ func (this *Event_Acknowledged) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Acknowledged) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Acknowledged)
@@ -1000,10 +965,7 @@ func (this *Event_Acknowledged) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1047,10 +1009,7 @@ func (this *Event_Message) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Message) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Message)
@@ -1063,10 +1022,7 @@ func (this *Event_Message) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1107,10 +1063,7 @@ func (this *Event_Error) VerboseEqual(that interface{}) error {
 }
 func (this *Event_Error) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Event_Error)
@@ -1123,10 +1076,7 @@ func (this *Event_Error) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1182,10 +1132,7 @@ func (this *Call) VerboseEqual(that interface{}) error {
 }
 func (this *Call) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call)
@@ -1198,10 +1145,7 @@ func (this *Call) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1270,10 +1214,7 @@ func (this *Call_Subscribe) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Subscribe) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Subscribe)
@@ -1286,10 +1227,7 @@ func (this *Call_Subscribe) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1343,10 +1281,7 @@ func (this *Call_Update) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Update) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Update)
@@ -1359,10 +1294,7 @@ func (this *Call_Update) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1403,10 +1335,7 @@ func (this *Call_Message) VerboseEqual(that interface{}) error {
 }
 func (this *Call_Message) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Call_Message)
@@ -1419,10 +1348,7 @@ func (this *Call_Message) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -1573,10 +1499,18 @@ func (this *Call_Subscribe) GoString() string {
 	s := make([]string, 0, 6)
 	s = append(s, "&executor.Call_Subscribe{")
 	if this.UnacknowledgedTasks != nil {
-		s = append(s, "UnacknowledgedTasks: "+fmt.Sprintf("%#v", this.UnacknowledgedTasks)+",\n")
+		vs := make([]*mesos.TaskInfo, len(this.UnacknowledgedTasks))
+		for i := range vs {
+			vs[i] = &this.UnacknowledgedTasks[i]
+		}
+		s = append(s, "UnacknowledgedTasks: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	if this.UnacknowledgedUpdates != nil {
-		s = append(s, "UnacknowledgedUpdates: "+fmt.Sprintf("%#v", this.UnacknowledgedUpdates)+",\n")
+		vs := make([]*Call_Update, len(this.UnacknowledgedUpdates))
+		for i := range vs {
+			vs[i] = &this.UnacknowledgedUpdates[i]
+		}
+		s = append(s, "UnacknowledgedUpdates: "+fmt.Sprintf("%#v", vs)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -1866,7 +1800,7 @@ func (m *Event_Acknowledged) MarshalTo(dAtA []byte) (int, error) {
 	}
 	i += n16
 	if m.UUID == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("uuid")
+		return 0, proto.NewRequiredNotSetError("uuid")
 	} else {
 		dAtA[i] = 0x12
 		i++
@@ -1892,7 +1826,7 @@ func (m *Event_Message) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.Data == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return 0, proto.NewRequiredNotSetError("data")
 	} else {
 		dAtA[i] = 0xa
 		i++
@@ -2075,7 +2009,7 @@ func (m *Call_Message) MarshalTo(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.Data == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return 0, proto.NewRequiredNotSetError("data")
 	} else {
 		dAtA[i] = 0x12
 		i++
@@ -2085,24 +2019,6 @@ func (m *Call_Message) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func encodeFixed64Executor(dAtA []byte, offset int, v uint64) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	dAtA[offset+4] = uint8(v >> 32)
-	dAtA[offset+5] = uint8(v >> 40)
-	dAtA[offset+6] = uint8(v >> 48)
-	dAtA[offset+7] = uint8(v >> 56)
-	return offset + 8
-}
-func encodeFixed32Executor(dAtA []byte, offset int, v uint32) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	return offset + 4
-}
 func encodeVarintExecutor(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -2115,7 +2031,7 @@ func encodeVarintExecutor(dAtA []byte, offset int, v uint64) int {
 func NewPopulatedEvent(r randyExecutor, easy bool) *Event {
 	this := &Event{}
 	this.Type = Event_Type([]int32{0, 1, 2, 8, 3, 4, 5, 6, 7}[r.Intn(9)])
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.Subscribed = NewPopulatedEvent_Subscribed(r, easy)
 	}
 	if r.Intn(10) != 0 {
@@ -2149,7 +2065,7 @@ func NewPopulatedEvent_Subscribed(r randyExecutor, easy bool) *Event_Subscribed 
 	this.FrameworkInfo = *v2
 	v3 := mesos.NewPopulatedAgentInfo(r, easy)
 	this.AgentInfo = *v3
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.ContainerID = mesos.NewPopulatedContainerID(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -2228,10 +2144,10 @@ func NewPopulatedCall(r randyExecutor, easy bool) *Call {
 	v11 := mesos.NewPopulatedFrameworkID(r, easy)
 	this.FrameworkID = *v11
 	this.Type = Call_Type([]int32{0, 1, 2, 3}[r.Intn(4)])
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.Subscribe = NewPopulatedCall_Subscribe(r, easy)
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		this.Update = NewPopulatedCall_Update(r, easy)
 	}
 	if r.Intn(10) != 0 {
@@ -2252,7 +2168,7 @@ func NewPopulatedCall_Subscribe(r randyExecutor, easy bool) *Call_Subscribe {
 			this.UnacknowledgedTasks[i] = *v13
 		}
 	}
-	if r.Intn(10) == 0 {
+	if r.Intn(10) != 0 {
 		v14 := r.Intn(5)
 		this.UnacknowledgedUpdates = make([]Call_Update, v14)
 		for i := 0; i < v14; i++ {
@@ -3157,13 +3073,13 @@ func (m *Event_Subscribed) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_info")
+		return proto.NewRequiredNotSetError("executor_info")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_info")
+		return proto.NewRequiredNotSetError("framework_info")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("agent_info")
+		return proto.NewRequiredNotSetError("agent_info")
 	}
 
 	if iNdEx > l {
@@ -3248,7 +3164,7 @@ func (m *Event_Launch) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task")
+		return proto.NewRequiredNotSetError("task")
 	}
 
 	if iNdEx > l {
@@ -3333,7 +3249,7 @@ func (m *Event_LaunchGroup) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_group")
+		return proto.NewRequiredNotSetError("task_group")
 	}
 
 	if iNdEx > l {
@@ -3451,7 +3367,7 @@ func (m *Event_Kill) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
+		return proto.NewRequiredNotSetError("task_id")
 	}
 
 	if iNdEx > l {
@@ -3568,10 +3484,10 @@ func (m *Event_Acknowledged) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("task_id")
+		return proto.NewRequiredNotSetError("task_id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("uuid")
+		return proto.NewRequiredNotSetError("uuid")
 	}
 
 	if iNdEx > l {
@@ -3657,7 +3573,7 @@ func (m *Event_Message) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return proto.NewRequiredNotSetError("data")
 	}
 
 	if iNdEx > l {
@@ -3741,7 +3657,7 @@ func (m *Event_Error) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("message")
+		return proto.NewRequiredNotSetError("message")
 	}
 
 	if iNdEx > l {
@@ -3975,10 +3891,10 @@ func (m *Call) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("executor_id")
+		return proto.NewRequiredNotSetError("executor_id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("framework_id")
+		return proto.NewRequiredNotSetError("framework_id")
 	}
 
 	if iNdEx > l {
@@ -4175,7 +4091,7 @@ func (m *Call_Update) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("status")
+		return proto.NewRequiredNotSetError("status")
 	}
 
 	if iNdEx > l {
@@ -4261,7 +4177,7 @@ func (m *Call_Message) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("data")
+		return proto.NewRequiredNotSetError("data")
 	}
 
 	if iNdEx > l {

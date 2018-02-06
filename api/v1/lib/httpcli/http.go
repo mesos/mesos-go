@@ -105,13 +105,23 @@ func New(opts ...Opt) *Client {
 	c := &Client{
 		codec:       DefaultCodec,
 		do:          With(DefaultConfigOpt...),
-		header:      DefaultHeaders,
+		header:      cloneHeaders(DefaultHeaders),
 		errorMapper: DefaultErrorMapper,
 	}
 	c.buildRequestFunc = c.buildRequest
 	c.handleResponse = c.HandleResponse
 	c.With(opts...)
 	return c
+}
+
+func cloneHeaders(hs http.Header) http.Header {
+	result := make(http.Header)
+	for k, v := range hs {
+		cloned := make([]string, len(v))
+		copy(cloned, v)
+		result[k] = cloned
+	}
+	return result
 }
 
 // Endpoint returns the current Mesos API endpoint URL that the caller is set to invoke

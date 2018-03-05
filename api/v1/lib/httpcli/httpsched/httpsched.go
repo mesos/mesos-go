@@ -97,6 +97,9 @@ func MaxRedirects(mr int) Option {
 	}
 }
 
+// AllowReconnection allows a subsequent SUBSCRIBE call before a prior SUBSCRIBE has experienced a network
+// or protocol error. Useful in concert with heartbeat detection and for other edge error cases not handled
+// by the connection state machine.
 func AllowReconnection(v bool) Option {
 	return func(c *client) Option {
 		old := c.allowReconnect

@@ -89,6 +89,46 @@ func TestStandalone_pollerFetched(t *testing.T) {
 	}
 }
 
+func TestStandalone_pollerFetchedAddress(t *testing.T) {
+	assert := assert.New(t)
+	// presence of IP address allows fecher to be called
+	d := NewStandalone(&mesos.MasterInfo{
+		Address: &mesos.Address{
+			Ip: proto.String("127.0.0.1"),
+		},
+	})
+	defer d.Cancel()
+
+	fetched := make(chan struct{})
+	pid := &upid.UPID{
+		ID:   "foo@127.0.0.1:5050",
+		Host: "127.0.0.1",
+		Port: "5050",
+	}
+	f := fetcherFunc(func(ctx context.Context, addr string) (*upid.UPID, error) {
+		defer close(fetched)
+		assert.Equal("127.0.0.1:5050", addr)
+		return pid, nil
+	})
+
+	go d.poller(f)
+
+	// fetch called
+	select {
+	case <-fetched: // expected
+	case <-time.After(1 * time.Second):
+		t.Fatalf("expected fetch")
+	}
+
+	// read MasterInfo
+	select {
+	case mi := <-d.ch:
+		assert.Equal(mi, CreateMasterInfo(pid))
+	case <-time.After(1 * time.Second):
+		t.Fatalf("expected poller to send master info")
+	}
+}
+
 func TestStandalone_pollerFetchedMulti(t *testing.T) {
 	assert := assert.New(t)
 	// presence of IP address allows fecher to be called

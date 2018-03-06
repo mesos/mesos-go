@@ -20,6 +20,7 @@ package upid
 
 import (
 	"fmt"
+	log "github.com/golang/glog"
 	"net"
 	"strings"
 )
@@ -41,7 +42,8 @@ func Parse(input string) (*UPID, error) {
 	}
 	upid.ID = splits[0]
 
-	if _, err := net.ResolveTCPAddr("tcp4", splits[1]); err != nil {
+	// Using network "tcp" allows us to resolve ipv4 and ipv6
+	if _, err := net.ResolveTCPAddr("tcp", splits[1]); err != nil {
 		return nil, err
 	}
 	upid.Host, upid.Port, _ = net.SplitHostPort(splits[1])
@@ -50,7 +52,7 @@ func Parse(input string) (*UPID, error) {
 
 // String returns the string representation.
 func (u UPID) String() string {
-	return fmt.Sprintf("%s@%s:%s", u.ID, u.Host, u.Port)
+	return fmt.Sprintf("%s@%s", u.ID, net.JoinHostPort(u.Host, u.Port))
 }
 
 // Equal returns true if two upid is equal
@@ -60,4 +62,44 @@ func (u *UPID) Equal(upid *UPID) bool {
 	} else {
 		return upid != nil && u.ID == upid.ID && u.Host == upid.Host && u.Port == upid.Port
 	}
+}
+
+// LookupIP attempts to parse hostname into an ip. If that doesn't work it will perform a
+// lookup and try to find an ipv4 or ipv6 ip in the results.
+func LookupIP(hostname string) (net.IP, error) {
+	var ip net.IP
+	parsedIP := net.ParseIP(hostname)
+
+	if ip = parsedIP.To4(); ip != nil {
+		// This is needed for the people cross-compiling from macos to linux.
+		// The cross-compiled version of net.LookupIP() fails to handle plain IPs.
+		// See https://github.com/mesos/mesos-go/pull/117
+	} else if ip = parsedIP.To16(); ip != nil {
+
+	} else if ips, err := net.LookupIP(hostname); err == nil {
+		// Find the first ipv4 and break.
+		for _, lookupIP := range ips {
+			if ip = lookupIP.To4(); ip != nil {
+				break
+			}
+		}
+
+		if ip == nil {
+			// no ipv4, best guess, just take the first addr
+			if len(ips) > 0 {
+				if ip = ips[0].To16(); ip != nil {
+					// Attempt conversion to ipv6, else return first entry in ips
+				} else {
+					ip = ips[0]
+				}
+				log.Warningf("failed to find an IPv4 address for '%v', best guess is '%v'", hostname, ip)
+			} else {
+				return nil, fmt.Errorf("host does not resolve to an IPv4 or IPv6 address: %v", hostname)
+			}
+		}
+	} else {
+		return nil, fmt.Errorf("failed to lookup IPs for host '%v': %v", hostname, err)
+	}
+
+	return ip, nil
 }

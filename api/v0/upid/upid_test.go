@@ -49,3 +49,24 @@ func TestUPIDEqual(t *testing.T) {
 	assert.False(t, (*UPID)(nil).Equal(u5))
 	assert.True(t, (*UPID)(nil).Equal(nil))
 }
+
+func TestUPIDIPAddress(t *testing.T) {
+	u, err := Parse("mesos@192.0.2.1:5050")
+	assert.NotNil(t, u)
+	assert.NoError(t, err)
+
+	u, err = Parse("mesos@198.51.100.1:5050")
+	assert.NotNil(t, u)
+	assert.NoError(t, err)
+
+	u, err = Parse("mesos@[2001:db8::1]:5050")
+	assert.NotNil(t, u)
+	assert.NoError(t, err)
+	assert.Equal(t, "2001:db8::1", u.Host)
+	assert.Equal(t, "mesos@[2001:db8::1]:5050", u.String())
+
+	u, err = Parse("mesos@[fe80::1%lo0]:5051")
+	assert.NotNil(t, u)
+	assert.NoError(t, err)
+	assert.Equal(t, "fe80::1%lo0", u.Host)
+}

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"strconv"
 	"strings"
 	"sync"
@@ -64,7 +63,7 @@ func Register(prefix string, f PluginFactory) error {
 // Create a new detector given the provided specification. Examples are:
 //
 //   - file://{path_to_local_file}
-//   - {ipaddress}:{port}
+//   - {ip_address}:{port}
 //   - master@{ip_address}:{port}
 //   - master({id})@{ip_address}:{port}
 //
@@ -119,37 +118,29 @@ func CreateMasterInfo(pid *upid.UPID) *mesos.MasterInfo {
 	if pid == nil {
 		return nil
 	}
+
 	port, err := strconv.Atoi(pid.Port)
 	if err != nil {
 		log.Errorf("failed to parse port: %v", err)
 		return nil
 	}
-	//TODO(jdef) what about (future) ipv6 support?
-	var ipv4 net.IP
-	if ipv4 = net.ParseIP(pid.Host); ipv4 != nil {
-		// This is needed for the people cross-compiling from macos to linux.
-		// The cross-compiled version of net.LookupIP() fails to handle plain IPs.
-		// See https://github.com/mesos/mesos-go/api/v0/pull/117
-	} else if addrs, err := net.LookupIP(pid.Host); err == nil {
-		for _, ip := range addrs {
-			if ip = ip.To4(); ip != nil {
-				ipv4 = ip
-				break
-			}
-		}
-		if ipv4 == nil {
-			log.Errorf("host does not resolve to an IPv4 address: %v", pid.Host)
-			return nil
-		}
-	} else {
-		log.Errorf("failed to lookup IPs for host '%v': %v", pid.Host, err)
+
+	ip, err := upid.LookupIP(pid.Host)
+	if err != nil {
+		log.Error(err)
 		return nil
 	}
-	packedip := binary.BigEndian.Uint32(ipv4) // network byte order is big-endian
-	mi := util.NewMasterInfo(pid.ID, packedip, uint32(port))
-	mi.Pid = proto.String(pid.String())
-	if pid.Host != "" {
-		mi.Hostname = proto.String(pid.Host)
+
+	// MasterInfo.Ip only supports IPv4
+	var packedipv4 uint32
+	if len(ip) == 4 {
+		packedipv4 = binary.BigEndian.Uint32(ip) // network byte order is big-endian
+	} else {
+		packedipv4 = 0
 	}
+
+	mi := util.NewMasterInfoWithAddress(pid.ID, pid.Host, ip.String(), packedipv4, int32(port))
+	mi.Pid = proto.String(pid.String())
+
 	return mi
 }

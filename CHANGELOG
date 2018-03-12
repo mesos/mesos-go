@@ -1,4 +1,7 @@
-2017-xx-xx: v0.0.6
+2018-xx-xx: v0.0.7
+  TODO
+
+2018-03-12: v0.0.6
   1.4.x protobuf support
   mwatch support for framework-{added,updated,removed} events
   fixes for decoder/framing implementation

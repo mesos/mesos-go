@@ -1,5 +1,11 @@
 2018-xx-xx: v0.0.7
-  TODO
+  1.5.x protobuf support
+  operations: new helpers for additional offer operations
+  scheduler/calls: new helpers for ack offer op update AND reconcile offer op
+  extras/scheduler: rule that acks offer op updates
+  master: helpers for teardown and mark-agent-gone
+  additional test cases for new reservation validation
+  operations: support reservation refinements
 
 2018-03-12: v0.0.6
   1.4.x protobuf support

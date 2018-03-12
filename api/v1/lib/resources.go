@@ -211,9 +211,26 @@ func (resources *Resources) Subtract1(that Resource) Resources {
 	return *resources
 }
 
+// String returns a human-friendly representation of the resource collection using default formatting
+// options (e.g. allocation-info is not rendered). For additional control over resource formatting see
+// the Format func.
 func (resources Resources) String() string {
+	return resources.Format()
+}
+
+type ResourcesFormatOptions struct {
+	ShowAllocated bool // ShowAllocated when true will not display resource allocation info
+}
+
+func (resources Resources) Format(options ...func(*ResourcesFormatOptions)) string {
 	if len(resources) == 0 {
 		return ""
+	}
+	var f ResourcesFormatOptions
+	for _, o := range options {
+		if o != nil {
+			o(&f)
+		}
 	}
 	buf := bytes.Buffer{}
 	for i := range resources {
@@ -222,7 +239,7 @@ func (resources Resources) String() string {
 		}
 		r := &resources[i]
 		buf.WriteString(r.Name)
-		if r.AllocationInfo != nil {
+		if r.AllocationInfo != nil && f.ShowAllocated {
 			buf.WriteString("(allocated: ")
 			buf.WriteString(r.AllocationInfo.GetRole())
 			buf.WriteString(")")
@@ -269,17 +286,45 @@ func (resources Resources) String() string {
 				switch s.GetType() {
 				case Resource_DiskInfo_Source_BLOCK:
 					buf.WriteString("BLOCK")
+					if id, profile := s.GetID(), s.GetProfile(); id != "" || profile != "" {
+						buf.WriteByte('(')
+						buf.WriteString(id)
+						buf.WriteByte(',')
+						buf.WriteString(profile)
+						buf.WriteByte(')')
+					}
 				case Resource_DiskInfo_Source_RAW:
 					buf.WriteString("RAW")
+					if id, profile := s.GetID(), s.GetProfile(); id != "" || profile != "" {
+						buf.WriteByte('(')
+						buf.WriteString(id)
+						buf.WriteByte(',')
+						buf.WriteString(profile)
+						buf.WriteByte(')')
+					}
 				case Resource_DiskInfo_Source_PATH:
-					buf.WriteString("PATH:")
-					if p := s.GetPath(); p != nil {
-						buf.WriteString(p.GetRoot())
+					buf.WriteString("PATH")
+					if id, profile := s.GetID(), s.GetProfile(); id != "" || profile != "" {
+						buf.WriteByte('(')
+						buf.WriteString(id)
+						buf.WriteByte(',')
+						buf.WriteString(profile)
+						buf.WriteByte(')')
+					} else if root := s.GetPath().GetRoot(); root != "" {
+						buf.WriteByte(':')
+						buf.WriteString(root)
 					}
 				case Resource_DiskInfo_Source_MOUNT:
-					buf.WriteString("MOUNT:")
-					if m := s.GetMount(); m != nil {
-						buf.WriteString(m.GetRoot())
+					buf.WriteString("MOUNT")
+					if id, profile := s.GetID(), s.GetProfile(); id != "" || profile != "" {
+						buf.WriteByte('(')
+						buf.WriteString(id)
+						buf.WriteByte(',')
+						buf.WriteString(profile)
+						buf.WriteByte(')')
+					} else if root := s.GetMount().GetRoot(); root != "" {
+						buf.WriteByte(':')
+						buf.WriteString(root)
 					}
 				}
 			}
@@ -326,9 +371,13 @@ func (resources Resources) String() string {
 				if j > 0 {
 					buf.WriteString(",")
 				}
-				buf.WriteString(strconv.FormatUint(ranges[j].Begin, 10))
-				buf.WriteString("-")
-				buf.WriteString(strconv.FormatUint(ranges[j].End, 10))
+				if b, e := ranges[j].Begin, ranges[j].End; b == e {
+					buf.WriteString(strconv.FormatUint(b, 10))
+				} else {
+					buf.WriteString(strconv.FormatUint(b, 10))
+					buf.WriteString("-")
+					buf.WriteString(strconv.FormatUint(e, 10))
+				}
 			}
 			buf.WriteString("]")
 		case SET:

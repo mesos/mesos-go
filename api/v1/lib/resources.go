@@ -232,6 +232,7 @@ func (resources Resources) Format(options ...func(*ResourcesFormatOptions)) stri
 			o(&f)
 		}
 	}
+	// TODO(jdef) use a string.Builder once we can rely on a more modern golang version
 	buf := bytes.Buffer{}
 	for i := range resources {
 		if i > 0 {
@@ -273,8 +274,9 @@ func (resources Resources) Format(options ...func(*ResourcesFormatOptions)) stri
 					buf.WriteString(*rr.Principal)
 				}
 				if rr.Labels != nil {
-					buf.WriteString(",")
-					buf.WriteString(rr.GetLabels().String())
+					buf.WriteString(",{")
+					rr.GetLabels().writeTo(&buf)
+					buf.WriteString("}")
 				}
 				buf.WriteString(")")
 			}

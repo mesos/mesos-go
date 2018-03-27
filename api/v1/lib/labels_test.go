@@ -81,3 +81,25 @@ func TestEquivalent_Labels(t *testing.T) {
 		})
 	}
 }
+
+func TestLabels_Format(t *testing.T) {
+	ps := func(s string) *string { return &s }
+	for ti, tc := range []struct {
+		lab   *Labels
+		wants string
+	}{
+		{},
+		{&Labels{}, ""},
+		{&Labels{Labels: []Label{}}, ""},
+		{&Labels{Labels: []Label{{Key: "a"}}}, "a"},
+		{&Labels{Labels: []Label{{Key: "a"}, {Key: "b"}}}, "a,b"},
+		{&Labels{Labels: []Label{{Key: "a"}, {Key: "b", Value: ps("1")}, {Key: "c"}}}, "a,b=1,c"},
+	} {
+		t.Run(strconv.Itoa(ti), func(t *testing.T) {
+			actual := tc.lab.Format()
+			if tc.wants != actual {
+				t.Errorf("expected %q instead of %q", tc.wants, actual)
+			}
+		})
+	}
+}

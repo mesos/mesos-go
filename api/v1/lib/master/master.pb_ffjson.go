@@ -13499,6 +13499,20 @@ func (mj *Response_GetMaster) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.StartTime != nil {
+		if true {
+			buf.WriteString(`"start_time":`)
+			fflib.AppendFloat(buf, float64(*mj.StartTime), 'g', -1, 64)
+			buf.WriteByte(',')
+		}
+	}
+	if mj.ElectedTime != nil {
+		if true {
+			buf.WriteString(`"elected_time":`)
+			fflib.AppendFloat(buf, float64(*mj.ElectedTime), 'g', -1, 64)
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -13509,9 +13523,17 @@ const (
 	ffj_t_Response_GetMasterno_such_key
 
 	ffj_t_Response_GetMaster_MasterInfo
+
+	ffj_t_Response_GetMaster_StartTime
+
+	ffj_t_Response_GetMaster_ElectedTime
 )
 
 var ffj_key_Response_GetMaster_MasterInfo = []byte("master_info")
+
+var ffj_key_Response_GetMaster_StartTime = []byte("start_time")
+
+var ffj_key_Response_GetMaster_ElectedTime = []byte("elected_time")
 
 func (uj *Response_GetMaster) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -13572,6 +13594,14 @@ mainparse:
 			} else {
 				switch kn[0] {
 
+				case 'e':
+
+					if bytes.Equal(ffj_key_Response_GetMaster_ElectedTime, kn) {
+						currentKey = ffj_t_Response_GetMaster_ElectedTime
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'm':
 
 					if bytes.Equal(ffj_key_Response_GetMaster_MasterInfo, kn) {
@@ -13580,6 +13610,26 @@ mainparse:
 						goto mainparse
 					}
 
+				case 's':
+
+					if bytes.Equal(ffj_key_Response_GetMaster_StartTime, kn) {
+						currentKey = ffj_t_Response_GetMaster_StartTime
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Response_GetMaster_ElectedTime, kn) {
+					currentKey = ffj_t_Response_GetMaster_ElectedTime
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Response_GetMaster_StartTime, kn) {
+					currentKey = ffj_t_Response_GetMaster_StartTime
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Response_GetMaster_MasterInfo, kn) {
@@ -13607,6 +13657,12 @@ mainparse:
 
 				case ffj_t_Response_GetMaster_MasterInfo:
 					goto handle_MasterInfo
+
+				case ffj_t_Response_GetMaster_StartTime:
+					goto handle_StartTime
+
+				case ffj_t_Response_GetMaster_ElectedTime:
+					goto handle_ElectedTime
 
 				case ffj_t_Response_GetMasterno_such_key:
 					err = fs.SkipField(tok)
@@ -13644,6 +13700,72 @@ handle_MasterInfo:
 			return err
 		}
 		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_StartTime:
+
+	/* handler: uj.StartTime type=float64 kind=float64 quoted=false*/
+
+	{
+		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for float64", tok))
+		}
+	}
+
+	{
+
+		if tok == fflib.FFTok_null {
+
+			uj.StartTime = nil
+
+		} else {
+
+			tval, err := fflib.ParseFloat(fs.Output.Bytes(), 64)
+
+			if err != nil {
+				return fs.WrapErr(err)
+			}
+
+			ttypval := float64(tval)
+			uj.StartTime = &ttypval
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_ElectedTime:
+
+	/* handler: uj.ElectedTime type=float64 kind=float64 quoted=false*/
+
+	{
+		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for float64", tok))
+		}
+	}
+
+	{
+
+		if tok == fflib.FFTok_null {
+
+			uj.ElectedTime = nil
+
+		} else {
+
+			tval, err := fflib.ParseFloat(fs.Output.Bytes(), 64)
+
+			if err != nil {
+				return fs.WrapErr(err)
+			}
+
+			ttypval := float64(tval)
+			uj.ElectedTime = &ttypval
+
+		}
 	}
 
 	state = fflib.FFParse_after_value

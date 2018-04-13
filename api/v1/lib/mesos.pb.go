@@ -2994,12 +2994,12 @@ func (m *CommandInfo_URI) GetOutputFile() string {
 // Describes information about an executor.
 type ExecutorInfo struct {
 	// For backwards compatibility, if this field is not set when using `LAUNCH`
-	// operation, Mesos will infer the type by checking if `command` is
-	// set (`CUSTOM`) or unset (`DEFAULT`). `type` must be set when using
+	// operation, Mesos will infer the type by checking if `command` is set
+	// (`CUSTOM`) or unset (`DEFAULT`). `type` must be set when using
 	// `LAUNCH_GROUP` operation.
 	//
-	// TODO(vinod): Add support for explicitly setting `type` to `DEFAULT `
-	// in `LAUNCH` operation.
+	// TODO(vinod): Add support for explicitly setting `type` to `DEFAULT` in
+	// `LAUNCH` operation.
 	Type        ExecutorInfo_Type `protobuf:"varint,15,opt,name=type,enum=mesos.ExecutorInfo_Type" json:"type"`
 	ExecutorID  ExecutorID        `protobuf:"bytes,1,req,name=executor_id,json=executorId" json:"executor_id"`
 	FrameworkID *FrameworkID      `protobuf:"bytes,8,opt,name=framework_id,json=frameworkId" json:"framework_id,omitempty"`
@@ -3502,7 +3502,7 @@ type CSIPluginInfo struct {
 	Name string `protobuf:"bytes,2,req,name=name" json:"name"`
 	// A list of container configurations to run CSI plugin components.
 	// The controller service will be served by the first configuration
-	// that containers `CONTROLLER_SERVICE`, and the node service will be
+	// that contains `CONTROLLER_SERVICE`, and the node service will be
 	// served by the first configuration that contains `NODE_SERVICE`.
 	Containers []CSIPluginContainerInfo `protobuf:"bytes,3,rep,name=containers" json:"containers"`
 }
@@ -3862,7 +3862,11 @@ type Resource struct {
 	// If this is set, this resource was dynamically reserved by an
 	// operator or a framework. Otherwise, this resource is either unreserved
 	// or statically reserved by an operator via the --resources flag.
+	//
 	// NOTE: Frameworks must not set this field if `reservations` is set.
+	//       See the 'Resource Format' section for more details.
+	//
+	// TODO(mpark): Deprecate once `reservations` is no longer experimental.
 	Reservation *Resource_ReservationInfo `protobuf:"bytes,8,opt,name=reservation" json:"reservation,omitempty"`
 	// The stack of reservations. If this field is empty, it indicates that this
 	// resource is unreserved. Otherwise, the resource is reserved. The first
@@ -3871,7 +3875,11 @@ type Resource struct {
 	// one by pushing a new `ReservationInfo` to the back. The last
 	// `ReservationInfo` in this stack is the "current" reservation. The new
 	// reservation's role must be a child of the current reservation's role.
+	//
 	// NOTE: Frameworks must not set this field if `reservation` is set.
+	//       See the 'Resource Format' section for more details.
+	//
+	// TODO(mpark): Deprecate `role` and `reservation` once this is stable.
 	Reservations []Resource_ReservationInfo `protobuf:"bytes,13,rep,name=reservations" json:"reservations"`
 	Disk         *Resource_DiskInfo         `protobuf:"bytes,7,opt,name=disk" json:"disk,omitempty"`
 	// If this is set, the resources are revocable, i.e., any tasks or
@@ -4009,10 +4017,14 @@ func (m *Resource_AllocationInfo) GetRole() string {
 
 type Resource_ReservationInfo struct {
 	// The type of this reservation.
+	//
 	// NOTE: This field must not be set for `Resource.reservation`.
+	//       See the 'Resource Format' section for more details.
 	Type *Resource_ReservationInfo_Type `protobuf:"varint,4,opt,name=type,enum=mesos.Resource_ReservationInfo_Type" json:"type,omitempty"`
 	// The role to which this reservation is made for.
+	//
 	// NOTE: This field must not be set for `Resource.reservation`.
+	//       See the 'Resource Format' section for more details.
 	Role *string `protobuf:"bytes,3,opt,name=role" json:"role,omitempty"`
 	// Indicates the principal, if any, of the framework or operator
 	// that reserved this resource. If reserved by a framework, the
@@ -4168,7 +4180,7 @@ type Resource_DiskInfo_Source struct {
 	// the framework will do disk selection based on profile names,
 	// instead of vendor specific disk parameters.
 	//
-	// Also see the VolumeProfile module.
+	// Also see the DiskProfile module.
 	Profile *string `protobuf:"bytes,6,opt,name=profile" json:"profile,omitempty"`
 }
 
@@ -7144,7 +7156,7 @@ type TaskStatus struct {
 	// acted upon by Mesos itself. As opposed to the data field, labels
 	// will be kept in memory on master and agent processes. Therefore,
 	// labels should be used to tag TaskStatus message with light-weight
-	// meta-data.  Labels should not contain duplicate key-value pairs.
+	// meta-data. Labels should not contain duplicate key-value pairs.
 	Labels *Labels `protobuf:"bytes,12,opt,name=labels" json:"labels,omitempty"`
 	// Container related information that is resolved dynamically such as
 	// network address.

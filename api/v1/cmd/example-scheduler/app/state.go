@@ -127,7 +127,11 @@ func buildHTTPSched(cfg Config, creds credentials) calls.Caller {
 		log.Println("compression enabled")
 		cli.With(httpcli.RequestOptions(httpcli.Header("Accept-Encoding", "gzip")))
 	}
-	return httpsched.NewCaller(cli)
+	return httpsched.NewCaller(cli, httpsched.Listener(func(n httpsched.Notification) {
+		if cfg.verbose {
+			log.Printf("scheduler client notification: %+v", n)
+		}
+	}))
 }
 
 func buildFrameworkInfo(cfg Config) *mesos.FrameworkInfo {

@@ -39,6 +39,7 @@ type (
 		*httpcli.Client
 		redirect       RedirectSettings
 		allowReconnect bool // feature flag
+		listener       func(Notification)
 	}
 
 	// Caller is the public interface a framework scheduler's should consume
@@ -60,12 +61,37 @@ type (
 	// Option is a functional configuration option type
 	Option func(*client) Option
 
+	// Notification objects are sent to a registered client listener (see Listener) when the
+	// state of the scheduler client changes (e.g. from disconnected to connected).
+	Notification struct {
+		Type NotificationType
+	}
+
+	NotificationType uint8
+
 	callerTemporary struct {
 		callerInternal                      // delegate actually does the work
 		requestOpts    []httpcli.RequestOpt // requestOpts are temporary per-request options
 		opt            httpcli.Opt          // opt is a temporary client option
 	}
 )
+
+const (
+	NotificationUndefined NotificationType = iota
+	NotificationDisconnected
+	NotificationConnected
+)
+
+func (t NotificationType) String() string {
+	switch t {
+	case NotificationDisconnected:
+		return "disconnected"
+	case NotificationConnected:
+		return "connected"
+	default:
+		return "undefined"
+	}
+}
 
 func (ct *callerTemporary) httpDo(ctx context.Context, m encoding.Marshaler, opt ...httpcli.RequestOpt) (resp mesos.Response, err error) {
 	ct.callerInternal.WithTemporary(ct.opt, func() error {
@@ -225,4 +251,18 @@ func buildNewEndpoint(location, currentEndpoint string) (string, bool) {
 	}
 	current.Host = hostport.Host
 	return current.String(), true
+}
+
+func (cli *client) notify(n Notification) {
+	if cli.listener != nil {
+		cli.listener(n)
+	}
+}
+
+func Listener(l func(Notification)) Option {
+	return func(cli *client) Option {
+		old := cli.listener
+		cli.listener = l
+		return Listener(old)
+	}
 }

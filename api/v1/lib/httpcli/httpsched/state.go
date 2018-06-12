@@ -43,7 +43,7 @@ type (
 		err  error           // err is the error from the most recently executed call
 	}
 
-	stateFn func(context.Context, *state) stateFn
+	stateFn func(context.Context, *state) (stateFn, Notification)
 )
 
 func maybeLogged(f httpcli.DoFunc) httpcli.DoFunc {
@@ -76,10 +76,14 @@ func maybeLogged(f httpcli.DoFunc) httpcli.DoFunc {
 // value of this var, but should exercise caution: failure to properly transition to a disconnected
 // state may cause subsequent Call operations to fail (without recourse).
 var DisconnectionDetector = func(disconnect func()) mesos.ResponseDecorator {
+	var disconnectOnce sync.Once
+	disconnectF := func() { disconnectOnce.Do(disconnect) }
+	closeF := mesos.CloseFunc(func() (_ error) { disconnectF(); return })
 	return mesos.ResponseDecoratorFunc(func(resp mesos.Response) mesos.Response {
 		return &mesos.ResponseWrapper{
 			Response: resp,
-			Decoder:  disconnectionDecoder(resp, disconnect),
+			Decoder:  disconnectionDecoder(resp, disconnectF),
+			Closer:   closeF,
 		}
 	})
 }
@@ -109,12 +113,12 @@ func disconnectionDecoder(decoder encoding.Decoder, disconnect func()) encoding.
 	})
 }
 
-func disconnectedFn(ctx context.Context, state *state) stateFn {
+func disconnectedFn(ctx context.Context, state *state) (stateFn, Notification) {
 	// (a) validate call = SUBSCRIBE
 	if state.call.GetType() != scheduler.Call_SUBSCRIBE {
 		state.resp = nil
 		state.err = apierrors.CodeUnsubscribed.Error("")
-		return disconnectedFn
+		return disconnectedFn, withoutNotification
 	}
 
 	// (b) prepare client for a subscription call
@@ -154,14 +158,16 @@ func disconnectedFn(ctx context.Context, state *state) stateFn {
 			stateResp.Close()
 		}
 		state.resp = nil
-		return disconnectedFn
+		return disconnectedFn, withoutNotification
 	}
 
 	transitionToDisconnected := func() {
+		defer stateResp.Close() // swallow any error here
+
 		state.m.Lock()
 		defer state.m.Unlock()
 		state.fn = disconnectedFn
-		_ = stateResp.Close() // swallow any error here
+		state.client.notify(Notification{Type: NotificationDisconnected})
 	}
 
 	// wrap the response: any errors processing the subscription stream should result in a
@@ -173,7 +179,7 @@ func disconnectedFn(ctx context.Context, state *state) stateFn {
 		opt:            httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID),
 		callerInternal: state.client,
 	}
-	return connectedFn
+	return connectedFn, Notification{Type: NotificationConnected}
 }
 
 func errorIndicatesSubscriptionLoss(err error) (result bool) {
@@ -186,7 +192,7 @@ func errorIndicatesSubscriptionLoss(err error) (result bool) {
 	return
 }
 
-func connectedFn(ctx context.Context, state *state) stateFn {
+func connectedFn(ctx context.Context, state *state) (stateFn, Notification) {
 	// (a) validate call != SUBSCRIBE
 	if state.call.GetType() == scheduler.Call_SUBSCRIBE {
 		if state.client.allowReconnect {
@@ -196,6 +202,7 @@ func connectedFn(ctx context.Context, state *state) stateFn {
 			state.resp = nil
 			state.err = nil
 			state.fn = disconnectedFn
+			state.client.notify(Notification{Type: NotificationDisconnected})
 
 			return state.fn(ctx, state)
 		} else {
@@ -210,7 +217,7 @@ func connectedFn(ctx context.Context, state *state) stateFn {
 			// if authentication is an issue, so we should never end up here. I'm not convinced there's
 			// not other edge cases though with respect to other error codes.
 			state.err = errAlreadySubscribed
-			return connectedFn
+			return connectedFn, withoutNotification
 		}
 	}
 
@@ -219,22 +226,32 @@ func connectedFn(ctx context.Context, state *state) stateFn {
 
 	if errorIndicatesSubscriptionLoss(state.err) {
 		// properly transition back to a disconnected state if mesos thinks that we're unsubscribed
-		return disconnectedFn
+		return disconnectedFn, Notification{Type: NotificationDisconnected}
 	}
 
 	// stay connected, don't attempt to interpret other errors here
-	return connectedFn
+	return connectedFn, withoutNotification
 }
 
 func (state *state) Call(ctx context.Context, call *scheduler.Call) (resp mesos.Response, err error) {
-	state.m.Lock()
-	defer state.m.Unlock()
-	state.call = call
-	state.fn = state.fn(ctx, state)
+	func() {
+		var n Notification
 
-	if debug && state.err != nil {
-		log.Print(*call, state.err)
+		state.m.Lock()
+		defer state.m.Unlock()
+		state.call = call
+		state.fn, n = state.fn(ctx, state)
+		if n != withoutNotification {
+			state.client.notify(n)
+		}
+		resp, err = state.resp, state.err
+	}()
+
+	if debug && err != nil {
+		log.Print(*call, err)
 	}
 
-	return state.resp, state.err
+	return
 }
+
+var withoutNotification = Notification{}

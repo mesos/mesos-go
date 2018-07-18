@@ -239,7 +239,8 @@ message Response {
     repeated OperationStatus operation_statuses = 1 [(gogoproto.nullable) = false];
   }
 
-  optional ReconcileOperations reconcile_operations = 1;
+  optional Type type = 1 [(gogoproto.nullable) = false];
+  optional ReconcileOperations reconcile_operations = 2;
 }
 
 
@@ -280,6 +281,7 @@ message Call {
     // SchedulerDriver::abort which was only necessary to handle
     // exceptions getting thrown from within Scheduler callbacks,
     // something that is not an issue with the Event/Call API.
+
     option (gogoproto.goproto_enum_prefix) = true;
   }
 
@@ -409,8 +411,14 @@ message Call {
   // Such status updates are retried by the agent or resource provider
   // until they are acknowledged by the scheduler.
   message AcknowledgeOperationStatus {
+    // If the operation affects resources that belong to a SLRP, both
+    // `agent_id` and `resource_provider_id` have to be set.
+    //
+    // If the operation affects resources that belong to a SERP, only
+    // `resource_provider_id` has to be set.
     optional AgentID agent_id = 1 [(gogoproto.customname) = "AgentID"];
     optional ResourceProviderID resource_provider_id = 2 [(gogoproto.customname) = "ResourceProviderID"];
+
     required bytes uuid = 3 [(gogoproto.customname) = "UUID"];
     required OperationID operation_id = 4 [(gogoproto.nullable) = false, (gogoproto.customname) = "OperationID"];
   }
@@ -439,7 +447,13 @@ message Call {
   message ReconcileOperations {
     message Operation {
       required OperationID operation_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "OperationID"];
+
+      // If `agent_id` is not set and the master doesn't know the operation,
+      // then it will return `OPERATION_UNKNOWN`; if `agent_id` is set, it can
+      // return more fine-grained states depending on the state of the
+      // corresponding agent.
       optional AgentID agent_id = 2 [(gogoproto.customname) = "AgentID"];
+
       optional ResourceProviderID resource_provider_id = 3 [(gogoproto.customname) = "ResourceProviderID"];
     }
 

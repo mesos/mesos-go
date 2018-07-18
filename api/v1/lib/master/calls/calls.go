@@ -125,6 +125,13 @@ func GetExecutors() *master.Call {
 	}
 }
 
+// GetOperations retrieves information about all the operations known to the master.
+func GetOperations() *master.Call {
+	return &master.Call{
+		Type: master.Call_GET_OPERATIONS,
+	}
+}
+
 // GetTasks retrieves information about all the tasks known to the master.
 func GetTasks() *master.Call {
 	return &master.Call{
@@ -217,6 +224,32 @@ func DestroyVolumes(a mesos.AgentID, v ...mesos.Resource) *master.Call {
 		DestroyVolumes: &master.Call_DestroyVolumes{
 			AgentID: a,
 			Volumes: v,
+		},
+	}
+}
+
+// GrowLocalVolume grows a persistent volume on an agent's ROOT or PATH disks. The request is forwarded asynchronously
+// to the Mesos agent where the persistent volume is located.
+func GrowLocalVolume(a mesos.AgentID, volume mesos.Resource, addition mesos.Resource) *master.Call {
+	return &master.Call{
+		Type: master.Call_GROW_VOLUME,
+		GrowVolume: &master.Call_GrowVolume{
+			AgentID:  &a,
+			Volume:   volume,
+			Addition: addition,
+		},
+	}
+}
+
+// ShrinkLocalVolume shrinks a persistent volume on an agent's ROOT or PATH disks. The request is forwarded
+// asynchronously to the Mesos agent where the persistent volume is located.
+func ShrinkLocalVolume(a mesos.AgentID, volume mesos.Resource, subtract mesos.Value_Scalar) *master.Call {
+	return &master.Call{
+		Type: master.Call_SHRINK_VOLUME,
+		ShrinkVolume: &master.Call_ShrinkVolume{
+			AgentID:  &a,
+			Volume:   volume,
+			Subtract: subtract,
 		},
 	}
 }

@@ -200,6 +200,26 @@ func OpDestroy(rs ...mesos.Resource) mesos.Offer_Operation {
 	}
 }
 
+func OpGrowVolume(v mesos.Resource, a mesos.Resource) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.Offer_Operation_GROW_VOLUME,
+		GrowVolume: &mesos.Offer_Operation_GrowVolume{
+			Volume:   v,
+			Addition: a,
+		},
+	}
+}
+
+func OpShrinkVolume(v mesos.Resource, s mesos.Value_Scalar) mesos.Offer_Operation {
+	return mesos.Offer_Operation{
+		Type: mesos.Offer_Operation_SHRINK_VOLUME,
+		ShrinkVolume: &mesos.Offer_Operation_ShrinkVolume{
+			Volume:   v,
+			Subtract: s,
+		},
+	}
+}
+
 func OpCreateVolume(src mesos.Resource, t mesos.Resource_DiskInfo_Source_Type) mesos.Offer_Operation {
 	return mesos.Offer_Operation{
 		Type: mesos.Offer_Operation_CREATE_VOLUME,

@@ -57,6 +57,8 @@ var (
 		opRegister(mesos.Offer_Operation_UNRESERVE, opUnreserve)
 		opRegister(mesos.Offer_Operation_CREATE, opCreate)
 		opRegister(mesos.Offer_Operation_DESTROY, opDestroy)
+		opRegister(mesos.Offer_Operation_GROW_VOLUME, opGrowVolume)
+		opRegister(mesos.Offer_Operation_SHRINK_VOLUME, opShrinkVolume)
 		opRegister(mesos.Offer_Operation_CREATE_VOLUME, opCreateVolume)
 		opRegister(mesos.Offer_Operation_DESTROY_VOLUME, opDestroyVolume)
 		opRegister(mesos.Offer_Operation_CREATE_BLOCK, opCreateBlock)
@@ -252,6 +254,45 @@ func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources, conv
 
 		result.Add1(*stripped)
 	}
+	return result, nil
+}
+
+func opGrowVolume(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := mesos.Resources{
+		operation.GetGrowVolume().GetVolume(),
+		operation.GetGrowVolume().GetAddition(),
+	}
+
+	if !rez.ContainsAll(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract(consumed...)
+	result.Add(conv...)
+
+	return result, nil
+}
+
+func opShrinkVolume(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	if len(conv) == 0 {
+		return nil, fmt.Errorf("converted resources not specified")
+	}
+
+	result := resources.Clone()
+	consumed := operation.GetShrinkVolume().GetVolume()
+
+	if !rez.Contains(result, consumed) {
+		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+	}
+
+	result.Subtract1(consumed)
+	result.Add(conv...)
+
 	return result, nil
 }
 

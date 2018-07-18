@@ -71,6 +71,8 @@ func GetFrameworks() *agent.Call { return &agent.Call{Type: agent.Call_GET_FRAME
 
 func GetExecutors() *agent.Call { return &agent.Call{Type: agent.Call_GET_EXECUTORS} }
 
+func GetOperations() *agent.Call { return &agent.Call{Type: agent.Call_GET_OPERATIONS} }
+
 func GetTasks() *agent.Call { return &agent.Call{Type: agent.Call_GET_TASKS} }
 
 func GetAgent() *agent.Call { return &agent.Call{Type: agent.Call_GET_AGENT} }

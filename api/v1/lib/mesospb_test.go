@@ -8273,15 +8273,15 @@ func BenchmarkOffer_Operation_ShrinkVolumeProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOffer_Operation_CreateVolumeProto(t *testing.T) {
+func TestOffer_Operation_CreateDiskProto(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateVolume(popr, false)
+	p := NewPopulatedOffer_Operation_CreateDisk(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &Offer_Operation_CreateVolume{}
+	msg := &Offer_Operation_CreateDisk{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -8307,10 +8307,10 @@ func TestOffer_Operation_CreateVolumeProto(t *testing.T) {
 	}
 }
 
-func TestOffer_Operation_CreateVolumeMarshalTo(t *testing.T) {
+func TestOffer_Operation_CreateDiskMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateVolume(popr, false)
+	p := NewPopulatedOffer_Operation_CreateDisk(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
 	for i := range dAtA {
@@ -8320,7 +8320,7 @@ func TestOffer_Operation_CreateVolumeMarshalTo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &Offer_Operation_CreateVolume{}
+	msg := &Offer_Operation_CreateDisk{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -8335,12 +8335,12 @@ func TestOffer_Operation_CreateVolumeMarshalTo(t *testing.T) {
 	}
 }
 
-func BenchmarkOffer_Operation_CreateVolumeProtoMarshal(b *testing.B) {
+func BenchmarkOffer_Operation_CreateDiskProtoMarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*Offer_Operation_CreateVolume, 10000)
+	pops := make([]*Offer_Operation_CreateDisk, 10000)
 	for i := 0; i < 10000; i++ {
-		pops[i] = NewPopulatedOffer_Operation_CreateVolume(popr, false)
+		pops[i] = NewPopulatedOffer_Operation_CreateDisk(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -8353,18 +8353,18 @@ func BenchmarkOffer_Operation_CreateVolumeProtoMarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkOffer_Operation_CreateVolumeProtoUnmarshal(b *testing.B) {
+func BenchmarkOffer_Operation_CreateDiskProtoUnmarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOffer_Operation_CreateVolume(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOffer_Operation_CreateDisk(popr, false))
 		if err != nil {
 			panic(err)
 		}
 		datas[i] = dAtA
 	}
-	msg := &Offer_Operation_CreateVolume{}
+	msg := &Offer_Operation_CreateDisk{}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
@@ -8375,15 +8375,15 @@ func BenchmarkOffer_Operation_CreateVolumeProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOffer_Operation_DestroyVolumeProto(t *testing.T) {
+func TestOffer_Operation_DestroyDiskProto(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyVolume(popr, false)
+	p := NewPopulatedOffer_Operation_DestroyDisk(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &Offer_Operation_DestroyVolume{}
+	msg := &Offer_Operation_DestroyDisk{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -8409,10 +8409,10 @@ func TestOffer_Operation_DestroyVolumeProto(t *testing.T) {
 	}
 }
 
-func TestOffer_Operation_DestroyVolumeMarshalTo(t *testing.T) {
+func TestOffer_Operation_DestroyDiskMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyVolume(popr, false)
+	p := NewPopulatedOffer_Operation_DestroyDisk(popr, false)
 	size := p.ProtoSize()
 	dAtA := make([]byte, size)
 	for i := range dAtA {
@@ -8422,7 +8422,7 @@ func TestOffer_Operation_DestroyVolumeMarshalTo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &Offer_Operation_DestroyVolume{}
+	msg := &Offer_Operation_DestroyDisk{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -8437,12 +8437,12 @@ func TestOffer_Operation_DestroyVolumeMarshalTo(t *testing.T) {
 	}
 }
 
-func BenchmarkOffer_Operation_DestroyVolumeProtoMarshal(b *testing.B) {
+func BenchmarkOffer_Operation_DestroyDiskProtoMarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*Offer_Operation_DestroyVolume, 10000)
+	pops := make([]*Offer_Operation_DestroyDisk, 10000)
 	for i := 0; i < 10000; i++ {
-		pops[i] = NewPopulatedOffer_Operation_DestroyVolume(popr, false)
+		pops[i] = NewPopulatedOffer_Operation_DestroyDisk(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -8455,222 +8455,18 @@ func BenchmarkOffer_Operation_DestroyVolumeProtoMarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkOffer_Operation_DestroyVolumeProtoUnmarshal(b *testing.B) {
+func BenchmarkOffer_Operation_DestroyDiskProtoUnmarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	datas := make([][]byte, 10000)
 	for i := 0; i < 10000; i++ {
-		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOffer_Operation_DestroyVolume(popr, false))
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOffer_Operation_DestroyDisk(popr, false))
 		if err != nil {
 			panic(err)
 		}
 		datas[i] = dAtA
 	}
-	msg := &Offer_Operation_DestroyVolume{}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		total += len(datas[i%10000])
-		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
-			panic(err)
-		}
-	}
-	b.SetBytes(int64(total / b.N))
-}
-
-func TestOffer_Operation_CreateBlockProto(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateBlock(popr, false)
-	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	msg := &Offer_Operation_CreateBlock{}
-	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	littlefuzz := make([]byte, len(dAtA))
-	copy(littlefuzz, dAtA)
-	for i := range dAtA {
-		dAtA[i] = byte(popr.Intn(256))
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
-	}
-	if len(littlefuzz) > 0 {
-		fuzzamount := 100
-		for i := 0; i < fuzzamount; i++ {
-			littlefuzz[popr.Intn(len(littlefuzz))] = byte(popr.Intn(256))
-			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
-		}
-		// shouldn't panic
-		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
-	}
-}
-
-func TestOffer_Operation_CreateBlockMarshalTo(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateBlock(popr, false)
-	size := p.ProtoSize()
-	dAtA := make([]byte, size)
-	for i := range dAtA {
-		dAtA[i] = byte(popr.Intn(256))
-	}
-	_, err := p.MarshalTo(dAtA)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	msg := &Offer_Operation_CreateBlock{}
-	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	for i := range dAtA {
-		dAtA[i] = byte(popr.Intn(256))
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
-	}
-}
-
-func BenchmarkOffer_Operation_CreateBlockProtoMarshal(b *testing.B) {
-	popr := math_rand.New(math_rand.NewSource(616))
-	total := 0
-	pops := make([]*Offer_Operation_CreateBlock, 10000)
-	for i := 0; i < 10000; i++ {
-		pops[i] = NewPopulatedOffer_Operation_CreateBlock(popr, false)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
-		if err != nil {
-			panic(err)
-		}
-		total += len(dAtA)
-	}
-	b.SetBytes(int64(total / b.N))
-}
-
-func BenchmarkOffer_Operation_CreateBlockProtoUnmarshal(b *testing.B) {
-	popr := math_rand.New(math_rand.NewSource(616))
-	total := 0
-	datas := make([][]byte, 10000)
-	for i := 0; i < 10000; i++ {
-		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOffer_Operation_CreateBlock(popr, false))
-		if err != nil {
-			panic(err)
-		}
-		datas[i] = dAtA
-	}
-	msg := &Offer_Operation_CreateBlock{}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		total += len(datas[i%10000])
-		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
-			panic(err)
-		}
-	}
-	b.SetBytes(int64(total / b.N))
-}
-
-func TestOffer_Operation_DestroyBlockProto(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyBlock(popr, false)
-	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	msg := &Offer_Operation_DestroyBlock{}
-	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	littlefuzz := make([]byte, len(dAtA))
-	copy(littlefuzz, dAtA)
-	for i := range dAtA {
-		dAtA[i] = byte(popr.Intn(256))
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
-	}
-	if len(littlefuzz) > 0 {
-		fuzzamount := 100
-		for i := 0; i < fuzzamount; i++ {
-			littlefuzz[popr.Intn(len(littlefuzz))] = byte(popr.Intn(256))
-			littlefuzz = append(littlefuzz, byte(popr.Intn(256)))
-		}
-		// shouldn't panic
-		_ = github_com_gogo_protobuf_proto.Unmarshal(littlefuzz, msg)
-	}
-}
-
-func TestOffer_Operation_DestroyBlockMarshalTo(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyBlock(popr, false)
-	size := p.ProtoSize()
-	dAtA := make([]byte, size)
-	for i := range dAtA {
-		dAtA[i] = byte(popr.Intn(256))
-	}
-	_, err := p.MarshalTo(dAtA)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	msg := &Offer_Operation_DestroyBlock{}
-	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	for i := range dAtA {
-		dAtA[i] = byte(popr.Intn(256))
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
-	}
-}
-
-func BenchmarkOffer_Operation_DestroyBlockProtoMarshal(b *testing.B) {
-	popr := math_rand.New(math_rand.NewSource(616))
-	total := 0
-	pops := make([]*Offer_Operation_DestroyBlock, 10000)
-	for i := 0; i < 10000; i++ {
-		pops[i] = NewPopulatedOffer_Operation_DestroyBlock(popr, false)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
-		if err != nil {
-			panic(err)
-		}
-		total += len(dAtA)
-	}
-	b.SetBytes(int64(total / b.N))
-}
-
-func BenchmarkOffer_Operation_DestroyBlockProtoUnmarshal(b *testing.B) {
-	popr := math_rand.New(math_rand.NewSource(616))
-	total := 0
-	datas := make([][]byte, 10000)
-	for i := 0; i < 10000; i++ {
-		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedOffer_Operation_DestroyBlock(popr, false))
-		if err != nil {
-			panic(err)
-		}
-		datas[i] = dAtA
-	}
-	msg := &Offer_Operation_DestroyBlock{}
+	msg := &Offer_Operation_DestroyDisk{}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		total += len(datas[i%10000])
@@ -17807,16 +17603,16 @@ func TestOffer_Operation_ShrinkVolumeJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
-func TestOffer_Operation_CreateVolumeJSON(t *testing.T) {
+func TestOffer_Operation_CreateDiskJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateVolume(popr, true)
+	p := NewPopulatedOffer_Operation_CreateDisk(popr, true)
 	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &Offer_Operation_CreateVolume{}
+	msg := &Offer_Operation_CreateDisk{}
 	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
@@ -17828,58 +17624,16 @@ func TestOffer_Operation_CreateVolumeJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
-func TestOffer_Operation_DestroyVolumeJSON(t *testing.T) {
+func TestOffer_Operation_DestroyDiskJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyVolume(popr, true)
+	p := NewPopulatedOffer_Operation_DestroyDisk(popr, true)
 	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &Offer_Operation_DestroyVolume{}
-	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
-	}
-}
-func TestOffer_Operation_CreateBlockJSON(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateBlock(popr, true)
-	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
-	jsondata, err := marshaler.MarshalToString(p)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	msg := &Offer_Operation_CreateBlock{}
-	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
-	}
-}
-func TestOffer_Operation_DestroyBlockJSON(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyBlock(popr, true)
-	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
-	jsondata, err := marshaler.MarshalToString(p)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	msg := &Offer_Operation_DestroyBlock{}
+	msg := &Offer_Operation_DestroyDisk{}
 	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
@@ -22144,12 +21898,12 @@ func TestOffer_Operation_ShrinkVolumeProtoCompactText(t *testing.T) {
 	}
 }
 
-func TestOffer_Operation_CreateVolumeProtoText(t *testing.T) {
+func TestOffer_Operation_CreateDiskProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateVolume(popr, true)
+	p := NewPopulatedOffer_Operation_CreateDisk(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
-	msg := &Offer_Operation_CreateVolume{}
+	msg := &Offer_Operation_CreateDisk{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -22161,12 +21915,12 @@ func TestOffer_Operation_CreateVolumeProtoText(t *testing.T) {
 	}
 }
 
-func TestOffer_Operation_CreateVolumeProtoCompactText(t *testing.T) {
+func TestOffer_Operation_CreateDiskProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateVolume(popr, true)
+	p := NewPopulatedOffer_Operation_CreateDisk(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
-	msg := &Offer_Operation_CreateVolume{}
+	msg := &Offer_Operation_CreateDisk{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -22178,12 +21932,12 @@ func TestOffer_Operation_CreateVolumeProtoCompactText(t *testing.T) {
 	}
 }
 
-func TestOffer_Operation_DestroyVolumeProtoText(t *testing.T) {
+func TestOffer_Operation_DestroyDiskProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyVolume(popr, true)
+	p := NewPopulatedOffer_Operation_DestroyDisk(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
-	msg := &Offer_Operation_DestroyVolume{}
+	msg := &Offer_Operation_DestroyDisk{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -22195,80 +21949,12 @@ func TestOffer_Operation_DestroyVolumeProtoText(t *testing.T) {
 	}
 }
 
-func TestOffer_Operation_DestroyVolumeProtoCompactText(t *testing.T) {
+func TestOffer_Operation_DestroyDiskProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyVolume(popr, true)
+	p := NewPopulatedOffer_Operation_DestroyDisk(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
-	msg := &Offer_Operation_DestroyVolume{}
-	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
-	}
-}
-
-func TestOffer_Operation_CreateBlockProtoText(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateBlock(popr, true)
-	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
-	msg := &Offer_Operation_CreateBlock{}
-	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
-	}
-}
-
-func TestOffer_Operation_CreateBlockProtoCompactText(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateBlock(popr, true)
-	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
-	msg := &Offer_Operation_CreateBlock{}
-	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
-	}
-}
-
-func TestOffer_Operation_DestroyBlockProtoText(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyBlock(popr, true)
-	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
-	msg := &Offer_Operation_DestroyBlock{}
-	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("seed = %d, %#v !VerboseProto %#v, since %v", seed, msg, p, err)
-	}
-	if !p.Equal(msg) {
-		t.Fatalf("seed = %d, %#v !Proto %#v", seed, msg, p)
-	}
-}
-
-func TestOffer_Operation_DestroyBlockProtoCompactText(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyBlock(popr, true)
-	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
-	msg := &Offer_Operation_DestroyBlock{}
+	msg := &Offer_Operation_DestroyDisk{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -25962,14 +25648,14 @@ func TestOffer_Operation_ShrinkVolumeVerboseEqual(t *testing.T) {
 		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
 	}
 }
-func TestOffer_Operation_CreateVolumeVerboseEqual(t *testing.T) {
+func TestOffer_Operation_CreateDiskVerboseEqual(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_CreateVolume(popr, false)
+	p := NewPopulatedOffer_Operation_CreateDisk(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
-	msg := &Offer_Operation_CreateVolume{}
+	msg := &Offer_Operation_CreateDisk{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
@@ -25977,44 +25663,14 @@ func TestOffer_Operation_CreateVolumeVerboseEqual(t *testing.T) {
 		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
 	}
 }
-func TestOffer_Operation_DestroyVolumeVerboseEqual(t *testing.T) {
+func TestOffer_Operation_DestroyDiskVerboseEqual(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_DestroyVolume(popr, false)
+	p := NewPopulatedOffer_Operation_DestroyDisk(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}
-	msg := &Offer_Operation_DestroyVolume{}
-	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
-		panic(err)
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
-	}
-}
-func TestOffer_Operation_CreateBlockVerboseEqual(t *testing.T) {
-	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_CreateBlock(popr, false)
-	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
-	if err != nil {
-		panic(err)
-	}
-	msg := &Offer_Operation_CreateBlock{}
-	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
-		panic(err)
-	}
-	if err := p.VerboseEqual(msg); err != nil {
-		t.Fatalf("%#v !VerboseEqual %#v, since %v", msg, p, err)
-	}
-}
-func TestOffer_Operation_DestroyBlockVerboseEqual(t *testing.T) {
-	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_DestroyBlock(popr, false)
-	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
-	if err != nil {
-		panic(err)
-	}
-	msg := &Offer_Operation_DestroyBlock{}
+	msg := &Offer_Operation_DestroyDisk{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		panic(err)
 	}
@@ -28157,9 +27813,9 @@ func TestOffer_Operation_ShrinkVolumeGoString(t *testing.T) {
 		panic(err)
 	}
 }
-func TestOffer_Operation_CreateVolumeGoString(t *testing.T) {
+func TestOffer_Operation_CreateDiskGoString(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_CreateVolume(popr, false)
+	p := NewPopulatedOffer_Operation_CreateDisk(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
@@ -28170,35 +27826,9 @@ func TestOffer_Operation_CreateVolumeGoString(t *testing.T) {
 		panic(err)
 	}
 }
-func TestOffer_Operation_DestroyVolumeGoString(t *testing.T) {
+func TestOffer_Operation_DestroyDiskGoString(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_DestroyVolume(popr, false)
-	s1 := p.GoString()
-	s2 := fmt.Sprintf("%#v", p)
-	if s1 != s2 {
-		t.Fatalf("GoString want %v got %v", s1, s2)
-	}
-	_, err := go_parser.ParseExpr(s1)
-	if err != nil {
-		panic(err)
-	}
-}
-func TestOffer_Operation_CreateBlockGoString(t *testing.T) {
-	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_CreateBlock(popr, false)
-	s1 := p.GoString()
-	s2 := fmt.Sprintf("%#v", p)
-	if s1 != s2 {
-		t.Fatalf("GoString want %v got %v", s1, s2)
-	}
-	_, err := go_parser.ParseExpr(s1)
-	if err != nil {
-		panic(err)
-	}
-}
-func TestOffer_Operation_DestroyBlockGoString(t *testing.T) {
-	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_DestroyBlock(popr, false)
+	p := NewPopulatedOffer_Operation_DestroyDisk(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
@@ -32038,10 +31668,10 @@ func BenchmarkOffer_Operation_ShrinkVolumeProtoSize(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOffer_Operation_CreateVolumeProtoSize(t *testing.T) {
+func TestOffer_Operation_CreateDiskProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateVolume(popr, true)
+	p := NewPopulatedOffer_Operation_CreateDisk(popr, true)
 	size2 := github_com_gogo_protobuf_proto.Size(p)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
@@ -32060,12 +31690,12 @@ func TestOffer_Operation_CreateVolumeProtoSize(t *testing.T) {
 	}
 }
 
-func BenchmarkOffer_Operation_CreateVolumeProtoSize(b *testing.B) {
+func BenchmarkOffer_Operation_CreateDiskProtoSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*Offer_Operation_CreateVolume, 1000)
+	pops := make([]*Offer_Operation_CreateDisk, 1000)
 	for i := 0; i < 1000; i++ {
-		pops[i] = NewPopulatedOffer_Operation_CreateVolume(popr, false)
+		pops[i] = NewPopulatedOffer_Operation_CreateDisk(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -32074,10 +31704,10 @@ func BenchmarkOffer_Operation_CreateVolumeProtoSize(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func TestOffer_Operation_DestroyVolumeProtoSize(t *testing.T) {
+func TestOffer_Operation_DestroyDiskProtoSize(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyVolume(popr, true)
+	p := NewPopulatedOffer_Operation_DestroyDisk(popr, true)
 	size2 := github_com_gogo_protobuf_proto.Size(p)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
@@ -32096,84 +31726,12 @@ func TestOffer_Operation_DestroyVolumeProtoSize(t *testing.T) {
 	}
 }
 
-func BenchmarkOffer_Operation_DestroyVolumeProtoSize(b *testing.B) {
+func BenchmarkOffer_Operation_DestroyDiskProtoSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
-	pops := make([]*Offer_Operation_DestroyVolume, 1000)
+	pops := make([]*Offer_Operation_DestroyDisk, 1000)
 	for i := 0; i < 1000; i++ {
-		pops[i] = NewPopulatedOffer_Operation_DestroyVolume(popr, false)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
-	}
-	b.SetBytes(int64(total / b.N))
-}
-
-func TestOffer_Operation_CreateBlockProtoSize(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_CreateBlock(popr, true)
-	size2 := github_com_gogo_protobuf_proto.Size(p)
-	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	size := p.ProtoSize()
-	if len(dAtA) != size {
-		t.Errorf("seed = %d, size %v != marshalled size %v", seed, size, len(dAtA))
-	}
-	if size2 != size {
-		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
-	}
-	size3 := github_com_gogo_protobuf_proto.Size(p)
-	if size3 != size {
-		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
-	}
-}
-
-func BenchmarkOffer_Operation_CreateBlockProtoSize(b *testing.B) {
-	popr := math_rand.New(math_rand.NewSource(616))
-	total := 0
-	pops := make([]*Offer_Operation_CreateBlock, 1000)
-	for i := 0; i < 1000; i++ {
-		pops[i] = NewPopulatedOffer_Operation_CreateBlock(popr, false)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
-	}
-	b.SetBytes(int64(total / b.N))
-}
-
-func TestOffer_Operation_DestroyBlockProtoSize(t *testing.T) {
-	seed := time.Now().UnixNano()
-	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedOffer_Operation_DestroyBlock(popr, true)
-	size2 := github_com_gogo_protobuf_proto.Size(p)
-	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
-	if err != nil {
-		t.Fatalf("seed = %d, err = %v", seed, err)
-	}
-	size := p.ProtoSize()
-	if len(dAtA) != size {
-		t.Errorf("seed = %d, size %v != marshalled size %v", seed, size, len(dAtA))
-	}
-	if size2 != size {
-		t.Errorf("seed = %d, size %v != before marshal proto.Size %v", seed, size, size2)
-	}
-	size3 := github_com_gogo_protobuf_proto.Size(p)
-	if size3 != size {
-		t.Errorf("seed = %d, size %v != after marshal proto.Size %v", seed, size, size3)
-	}
-}
-
-func BenchmarkOffer_Operation_DestroyBlockProtoSize(b *testing.B) {
-	popr := math_rand.New(math_rand.NewSource(616))
-	total := 0
-	pops := make([]*Offer_Operation_DestroyBlock, 1000)
-	for i := 0; i < 1000; i++ {
-		pops[i] = NewPopulatedOffer_Operation_DestroyBlock(popr, false)
+		pops[i] = NewPopulatedOffer_Operation_DestroyDisk(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -35530,36 +35088,18 @@ func TestOffer_Operation_ShrinkVolumeStringer(t *testing.T) {
 		t.Fatalf("String want %v got %v", s1, s2)
 	}
 }
-func TestOffer_Operation_CreateVolumeStringer(t *testing.T) {
+func TestOffer_Operation_CreateDiskStringer(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_CreateVolume(popr, false)
+	p := NewPopulatedOffer_Operation_CreateDisk(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
 	if s1 != s2 {
 		t.Fatalf("String want %v got %v", s1, s2)
 	}
 }
-func TestOffer_Operation_DestroyVolumeStringer(t *testing.T) {
+func TestOffer_Operation_DestroyDiskStringer(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_DestroyVolume(popr, false)
-	s1 := p.String()
-	s2 := fmt.Sprintf("%v", p)
-	if s1 != s2 {
-		t.Fatalf("String want %v got %v", s1, s2)
-	}
-}
-func TestOffer_Operation_CreateBlockStringer(t *testing.T) {
-	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_CreateBlock(popr, false)
-	s1 := p.String()
-	s2 := fmt.Sprintf("%v", p)
-	if s1 != s2 {
-		t.Fatalf("String want %v got %v", s1, s2)
-	}
-}
-func TestOffer_Operation_DestroyBlockStringer(t *testing.T) {
-	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedOffer_Operation_DestroyBlock(popr, false)
+	p := NewPopulatedOffer_Operation_DestroyDisk(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
 	if s1 != s2 {

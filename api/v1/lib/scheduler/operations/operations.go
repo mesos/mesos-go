@@ -59,10 +59,8 @@ var (
 		opRegister(mesos.Offer_Operation_DESTROY, opDestroy)
 		opRegister(mesos.Offer_Operation_GROW_VOLUME, opGrowVolume)
 		opRegister(mesos.Offer_Operation_SHRINK_VOLUME, opShrinkVolume)
-		opRegister(mesos.Offer_Operation_CREATE_VOLUME, opCreateVolume)
-		opRegister(mesos.Offer_Operation_DESTROY_VOLUME, opDestroyVolume)
-		opRegister(mesos.Offer_Operation_CREATE_BLOCK, opCreateBlock)
-		opRegister(mesos.Offer_Operation_DESTROY_BLOCK, opDestroyBlock)
+		opRegister(mesos.Offer_Operation_CREATE_DISK, opCreateDisk)
+		opRegister(mesos.Offer_Operation_DESTROY_DISK, opDestroyDisk)
 
 		return
 	}()
@@ -296,13 +294,13 @@ func opShrinkVolume(operation *mesos.Offer_Operation, resources mesos.Resources,
 	return result, nil
 }
 
-func opCreateVolume(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+func opCreateDisk(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
 	if len(conv) == 0 {
 		return nil, fmt.Errorf("converted resources not specified")
 	}
 
 	result := resources.Clone()
-	consumed := operation.GetCreateVolume().GetSource()
+	consumed := operation.GetCreateDisk().GetSource()
 
 	if !rez.Contains(result, consumed) {
 		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
@@ -314,49 +312,11 @@ func opCreateVolume(operation *mesos.Offer_Operation, resources mesos.Resources,
 	return result, nil
 }
 
-func opDestroyVolume(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
-	if len(conv) == 0 {
-		return nil, fmt.Errorf("converted resources not specified")
-	}
+func opDestroyDisk(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
+	// NOTE: `conv` would be empty if the source disks have stale profiles.
 
 	result := resources.Clone()
-	consumed := operation.GetDestroyVolume().GetVolume()
-
-	if !rez.Contains(result, consumed) {
-		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
-	}
-
-	result.Subtract1(consumed)
-	result.Add(conv...)
-
-	return result, nil
-}
-
-func opCreateBlock(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
-	if len(conv) == 0 {
-		return nil, fmt.Errorf("converted resources not specified")
-	}
-
-	result := resources.Clone()
-	consumed := operation.GetCreateBlock().GetSource()
-
-	if !rez.Contains(result, consumed) {
-		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
-	}
-
-	result.Subtract1(consumed)
-	result.Add(conv...)
-
-	return result, nil
-}
-
-func opDestroyBlock(operation *mesos.Offer_Operation, resources mesos.Resources, conv mesos.Resources) (mesos.Resources, error) {
-	if len(conv) == 0 {
-		return nil, fmt.Errorf("converted resources not specified")
-	}
-
-	result := resources.Clone()
-	consumed := operation.GetDestroyBlock().GetBlock()
+	consumed := operation.GetDestroyDisk().GetSource()
 
 	if !rez.Contains(result, consumed) {
 		return nil, fmt.Errorf("%q does not contain %q", result, consumed)

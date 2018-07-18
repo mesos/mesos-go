@@ -42,6 +42,7 @@ func Example() {
 		GetContainers(),
 		GetFrameworks(),
 		GetExecutors(),
+		GetOperations(),
 		GetTasks(),
 		GetAgent(),
 		GetResourceProviders(),

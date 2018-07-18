@@ -220,39 +220,21 @@ func OpShrinkVolume(v mesos.Resource, s mesos.Value_Scalar) mesos.Offer_Operatio
 	}
 }
 
-func OpCreateVolume(src mesos.Resource, t mesos.Resource_DiskInfo_Source_Type) mesos.Offer_Operation {
+func OpCreateDisk(src mesos.Resource, t mesos.Resource_DiskInfo_Source_Type) mesos.Offer_Operation {
 	return mesos.Offer_Operation{
-		Type: mesos.Offer_Operation_CREATE_VOLUME,
-		CreateVolume: &mesos.Offer_Operation_CreateVolume{
+		Type: mesos.Offer_Operation_CREATE_DISK,
+		CreateDisk: &mesos.Offer_Operation_CreateDisk{
 			Source:     src,
 			TargetType: t,
 		},
 	}
 }
 
-func OpDestroyVolume(vol mesos.Resource) mesos.Offer_Operation {
+func OpDestroyDisk(src mesos.Resource) mesos.Offer_Operation {
 	return mesos.Offer_Operation{
-		Type: mesos.Offer_Operation_DESTROY_VOLUME,
-		DestroyVolume: &mesos.Offer_Operation_DestroyVolume{
-			Volume: vol,
-		},
-	}
-}
-
-func OpCreateBlock(src mesos.Resource) mesos.Offer_Operation {
-	return mesos.Offer_Operation{
-		Type: mesos.Offer_Operation_CREATE_BLOCK,
-		CreateBlock: &mesos.Offer_Operation_CreateBlock{
+		Type: mesos.Offer_Operation_DESTROY_DISK,
+		DestroyDisk: &mesos.Offer_Operation_DestroyDisk{
 			Source: src,
-		},
-	}
-}
-
-func OpDestroyBlock(blk mesos.Resource) mesos.Offer_Operation {
-	return mesos.Offer_Operation{
-		Type: mesos.Offer_Operation_DESTROY_BLOCK,
-		DestroyBlock: &mesos.Offer_Operation_DestroyBlock{
-			Block: blk,
 		},
 	}
 }

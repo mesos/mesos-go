@@ -9567,7 +9567,18 @@ func (mj *Response) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
+	buf.WriteString(`{ "type":`)
+
+	{
+
+		obj, err = mj.Type.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		buf.Write(obj)
+
+	}
+	buf.WriteByte(',')
 	if mj.ReconcileOperations != nil {
 		if true {
 			buf.WriteString(`"reconcile_operations":`)
@@ -9592,8 +9603,12 @@ const (
 	ffj_t_Responsebase = iota
 	ffj_t_Responseno_such_key
 
+	ffj_t_Response_Type
+
 	ffj_t_Response_ReconcileOperations
 )
+
+var ffj_key_Response_Type = []byte("type")
 
 var ffj_key_Response_ReconcileOperations = []byte("reconcile_operations")
 
@@ -9664,10 +9679,24 @@ mainparse:
 						goto mainparse
 					}
 
+				case 't':
+
+					if bytes.Equal(ffj_key_Response_Type, kn) {
+						currentKey = ffj_t_Response_Type
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Response_ReconcileOperations, kn) {
 					currentKey = ffj_t_Response_ReconcileOperations
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_Response_Type, kn) {
+					currentKey = ffj_t_Response_Type
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -9689,6 +9718,9 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
+				case ffj_t_Response_Type:
+					goto handle_Type
+
 				case ffj_t_Response_ReconcileOperations:
 					goto handle_ReconcileOperations
 
@@ -9705,6 +9737,32 @@ mainparse:
 			}
 		}
 	}
+
+handle_Type:
+
+	/* handler: uj.Type type=scheduler.Response_Type kind=int32 quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		tbuf, err := fs.CaptureField(tok)
+		if err != nil {
+			return fs.WrapErr(err)
+		}
+
+		err = uj.Type.UnmarshalJSON(tbuf)
+		if err != nil {
+			return fs.WrapErr(err)
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
 
 handle_ReconcileOperations:
 

@@ -31249,6 +31249,36 @@ func (mj *Offer_Operation) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.GrowVolume != nil {
+		if true {
+			buf.WriteString(`"grow_volume":`)
+
+			{
+
+				err = mj.GrowVolume.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.ShrinkVolume != nil {
+		if true {
+			buf.WriteString(`"shrink_volume":`)
+
+			{
+
+				err = mj.ShrinkVolume.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	if mj.CreateVolume != nil {
 		if true {
 			buf.WriteString(`"create_volume":`)
@@ -31334,6 +31364,10 @@ const (
 
 	ffj_t_Offer_Operation_Destroy
 
+	ffj_t_Offer_Operation_GrowVolume
+
+	ffj_t_Offer_Operation_ShrinkVolume
+
 	ffj_t_Offer_Operation_CreateVolume
 
 	ffj_t_Offer_Operation_DestroyVolume
@@ -31358,6 +31392,10 @@ var ffj_key_Offer_Operation_Unreserve = []byte("unreserve")
 var ffj_key_Offer_Operation_Create = []byte("create")
 
 var ffj_key_Offer_Operation_Destroy = []byte("destroy")
+
+var ffj_key_Offer_Operation_GrowVolume = []byte("grow_volume")
+
+var ffj_key_Offer_Operation_ShrinkVolume = []byte("shrink_volume")
 
 var ffj_key_Offer_Operation_CreateVolume = []byte("create_volume")
 
@@ -31462,6 +31500,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'g':
+
+					if bytes.Equal(ffj_key_Offer_Operation_GrowVolume, kn) {
+						currentKey = ffj_t_Offer_Operation_GrowVolume
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'i':
 
 					if bytes.Equal(ffj_key_Offer_Operation_ID, kn) {
@@ -31487,6 +31533,14 @@ mainparse:
 
 					if bytes.Equal(ffj_key_Offer_Operation_Reserve, kn) {
 						currentKey = ffj_t_Offer_Operation_Reserve
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 's':
+
+					if bytes.Equal(ffj_key_Offer_Operation_ShrinkVolume, kn) {
+						currentKey = ffj_t_Offer_Operation_ShrinkVolume
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -31529,6 +31583,18 @@ mainparse:
 
 				if fflib.AsciiEqualFold(ffj_key_Offer_Operation_CreateVolume, kn) {
 					currentKey = ffj_t_Offer_Operation_CreateVolume
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Offer_Operation_ShrinkVolume, kn) {
+					currentKey = ffj_t_Offer_Operation_ShrinkVolume
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Offer_Operation_GrowVolume, kn) {
+					currentKey = ffj_t_Offer_Operation_GrowVolume
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -31621,6 +31687,12 @@ mainparse:
 
 				case ffj_t_Offer_Operation_Destroy:
 					goto handle_Destroy
+
+				case ffj_t_Offer_Operation_GrowVolume:
+					goto handle_GrowVolume
+
+				case ffj_t_Offer_Operation_ShrinkVolume:
+					goto handle_ShrinkVolume
 
 				case ffj_t_Offer_Operation_CreateVolume:
 					goto handle_CreateVolume
@@ -31854,6 +31926,60 @@ handle_Destroy:
 		}
 
 		err = uj.Destroy.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_GrowVolume:
+
+	/* handler: uj.GrowVolume type=mesos.Offer_Operation_GrowVolume kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.GrowVolume = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.GrowVolume == nil {
+			uj.GrowVolume = new(Offer_Operation_GrowVolume)
+		}
+
+		err = uj.GrowVolume.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_ShrinkVolume:
+
+	/* handler: uj.ShrinkVolume type=mesos.Offer_Operation_ShrinkVolume kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.ShrinkVolume = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.ShrinkVolume == nil {
+			uj.ShrinkVolume = new(Offer_Operation_ShrinkVolume)
+		}
+
+		err = uj.ShrinkVolume.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -33317,6 +33443,250 @@ done:
 	return nil
 }
 
+func (mj *Offer_Operation_GrowVolume) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Offer_Operation_GrowVolume) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"volume":`)
+
+	{
+
+		err = mj.Volume.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteString(`,"addition":`)
+
+	{
+
+		err = mj.Addition.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Offer_Operation_GrowVolumebase = iota
+	ffj_t_Offer_Operation_GrowVolumeno_such_key
+
+	ffj_t_Offer_Operation_GrowVolume_Volume
+
+	ffj_t_Offer_Operation_GrowVolume_Addition
+)
+
+var ffj_key_Offer_Operation_GrowVolume_Volume = []byte("volume")
+
+var ffj_key_Offer_Operation_GrowVolume_Addition = []byte("addition")
+
+func (uj *Offer_Operation_GrowVolume) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Offer_Operation_GrowVolume) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Offer_Operation_GrowVolumebase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Offer_Operation_GrowVolumeno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'a':
+
+					if bytes.Equal(ffj_key_Offer_Operation_GrowVolume_Addition, kn) {
+						currentKey = ffj_t_Offer_Operation_GrowVolume_Addition
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'v':
+
+					if bytes.Equal(ffj_key_Offer_Operation_GrowVolume_Volume, kn) {
+						currentKey = ffj_t_Offer_Operation_GrowVolume_Volume
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_Offer_Operation_GrowVolume_Addition, kn) {
+					currentKey = ffj_t_Offer_Operation_GrowVolume_Addition
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_Offer_Operation_GrowVolume_Volume, kn) {
+					currentKey = ffj_t_Offer_Operation_GrowVolume_Volume
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Offer_Operation_GrowVolumeno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Offer_Operation_GrowVolume_Volume:
+					goto handle_Volume
+
+				case ffj_t_Offer_Operation_GrowVolume_Addition:
+					goto handle_Addition
+
+				case ffj_t_Offer_Operation_GrowVolumeno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_Volume:
+
+	/* handler: uj.Volume type=mesos.Resource kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.Volume.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Addition:
+
+	/* handler: uj.Addition type=mesos.Resource kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.Addition.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
 func (mj *Offer_Operation_Launch) MarshalJSON() ([]byte, error) {
 	var buf fflib.Buffer
 	if mj == nil {
@@ -34040,6 +34410,250 @@ handle_Resources:
 				wantVal = false
 			}
 		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Offer_Operation_ShrinkVolume) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Offer_Operation_ShrinkVolume) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"volume":`)
+
+	{
+
+		err = mj.Volume.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteString(`,"subtract":`)
+
+	{
+
+		err = mj.Subtract.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Offer_Operation_ShrinkVolumebase = iota
+	ffj_t_Offer_Operation_ShrinkVolumeno_such_key
+
+	ffj_t_Offer_Operation_ShrinkVolume_Volume
+
+	ffj_t_Offer_Operation_ShrinkVolume_Subtract
+)
+
+var ffj_key_Offer_Operation_ShrinkVolume_Volume = []byte("volume")
+
+var ffj_key_Offer_Operation_ShrinkVolume_Subtract = []byte("subtract")
+
+func (uj *Offer_Operation_ShrinkVolume) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Offer_Operation_ShrinkVolume) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Offer_Operation_ShrinkVolumebase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Offer_Operation_ShrinkVolumeno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 's':
+
+					if bytes.Equal(ffj_key_Offer_Operation_ShrinkVolume_Subtract, kn) {
+						currentKey = ffj_t_Offer_Operation_ShrinkVolume_Subtract
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'v':
+
+					if bytes.Equal(ffj_key_Offer_Operation_ShrinkVolume_Volume, kn) {
+						currentKey = ffj_t_Offer_Operation_ShrinkVolume_Volume
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Offer_Operation_ShrinkVolume_Subtract, kn) {
+					currentKey = ffj_t_Offer_Operation_ShrinkVolume_Subtract
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_Offer_Operation_ShrinkVolume_Volume, kn) {
+					currentKey = ffj_t_Offer_Operation_ShrinkVolume_Volume
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Offer_Operation_ShrinkVolumeno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Offer_Operation_ShrinkVolume_Volume:
+					goto handle_Volume
+
+				case ffj_t_Offer_Operation_ShrinkVolume_Subtract:
+					goto handle_Subtract
+
+				case ffj_t_Offer_Operation_ShrinkVolumeno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_Volume:
+
+	/* handler: uj.Volume type=mesos.Resource kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.Volume.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Subtract:
+
+	/* handler: uj.Subtract type=mesos.Value_Scalar kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.Subtract.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value
@@ -53755,6 +54369,21 @@ func (mj *TaskInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.MaxCompletionTime != nil {
+		if true {
+			buf.WriteString(`"max_completion_time":`)
+
+			{
+
+				err = mj.MaxCompletionTime.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -53789,6 +54418,8 @@ const (
 	ffj_t_TaskInfo_Labels
 
 	ffj_t_TaskInfo_Discovery
+
+	ffj_t_TaskInfo_MaxCompletionTime
 )
 
 var ffj_key_TaskInfo_Name = []byte("name")
@@ -53816,6 +54447,8 @@ var ffj_key_TaskInfo_Data = []byte("data")
 var ffj_key_TaskInfo_Labels = []byte("labels")
 
 var ffj_key_TaskInfo_Discovery = []byte("discovery")
+
+var ffj_key_TaskInfo_MaxCompletionTime = []byte("max_completion_time")
 
 func (uj *TaskInfo) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -53947,6 +54580,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'm':
+
+					if bytes.Equal(ffj_key_TaskInfo_MaxCompletionTime, kn) {
+						currentKey = ffj_t_TaskInfo_MaxCompletionTime
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'n':
 
 					if bytes.Equal(ffj_key_TaskInfo_Name, kn) {
@@ -53971,6 +54612,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_TaskInfo_MaxCompletionTime, kn) {
+					currentKey = ffj_t_TaskInfo_MaxCompletionTime
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_TaskInfo_Discovery, kn) {
@@ -54106,6 +54753,9 @@ mainparse:
 
 				case ffj_t_TaskInfo_Discovery:
 					goto handle_Discovery
+
+				case ffj_t_TaskInfo_MaxCompletionTime:
+					goto handle_MaxCompletionTime
 
 				case ffj_t_TaskInfono_such_key:
 					err = fs.SkipField(tok)
@@ -54495,6 +55145,33 @@ handle_Discovery:
 		}
 
 		err = uj.Discovery.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_MaxCompletionTime:
+
+	/* handler: uj.MaxCompletionTime type=mesos.DurationInfo kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.MaxCompletionTime = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.MaxCompletionTime == nil {
+			uj.MaxCompletionTime = new(DurationInfo)
+		}
+
+		err = uj.MaxCompletionTime.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

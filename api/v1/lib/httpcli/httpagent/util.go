@@ -27,6 +27,7 @@ func classifyResponse(c *agent.Call) (rc client.ResponseClass, err error) {
 		agent.Call_GET_CONTAINERS,
 		agent.Call_GET_FRAMEWORKS,
 		agent.Call_GET_EXECUTORS,
+		agent.Call_GET_OPERATIONS,
 		agent.Call_GET_TASKS,
 		agent.Call_GET_AGENT,
 		agent.Call_GET_RESOURCE_PROVIDERS,

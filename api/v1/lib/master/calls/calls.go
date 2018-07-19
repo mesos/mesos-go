@@ -228,26 +228,26 @@ func DestroyVolumes(a mesos.AgentID, v ...mesos.Resource) *master.Call {
 	}
 }
 
-// GrowLocalVolume grows a persistent volume on an agent's ROOT or PATH disks. The request is forwarded asynchronously
-// to the Mesos agent where the persistent volume is located.
-func GrowLocalVolume(a mesos.AgentID, volume mesos.Resource, addition mesos.Resource) *master.Call {
+// GrowVolume grows a persistent volume on an agent's ROOT or PATH disks. The request is forwarded asynchronously to
+// the Mesos agent where the persistent volume is located.
+func GrowVolume(a *mesos.AgentID, volume, addition mesos.Resource) *master.Call {
 	return &master.Call{
 		Type: master.Call_GROW_VOLUME,
 		GrowVolume: &master.Call_GrowVolume{
-			AgentID:  &a,
+			AgentID:  a,
 			Volume:   volume,
 			Addition: addition,
 		},
 	}
 }
 
-// ShrinkLocalVolume shrinks a persistent volume on an agent's ROOT or PATH disks. The request is forwarded
-// asynchronously to the Mesos agent where the persistent volume is located.
-func ShrinkLocalVolume(a mesos.AgentID, volume mesos.Resource, subtract mesos.Value_Scalar) *master.Call {
+// ShrinkVolume shrinks a persistent volume on an agent's ROOT or PATH disks. The request is forwarded asynchronously
+// to the Mesos agent where the persistent volume is located.
+func ShrinkVolume(a *mesos.AgentID, volume mesos.Resource, subtract mesos.Value_Scalar) *master.Call {
 	return &master.Call{
 		Type: master.Call_SHRINK_VOLUME,
 		ShrinkVolume: &master.Call_ShrinkVolume{
-			AgentID:  &a,
+			AgentID:  a,
 			Volume:   volume,
 			Subtract: subtract,
 		},

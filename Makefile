@@ -25,6 +25,7 @@ all: test
 .PHONY: install
 install: INSTALL_FLAGS +=
 install:
+	go get ./...
 	go install $(INSTALL_FLAGS) $(BINARIES)
 
 .PHONY: test

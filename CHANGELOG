@@ -1,4 +1,4 @@
-2018-xx-xx: v0.0.7
+2018-07-24: v0.0.7
   1.5.x protobuf support
   operations: new helpers for additional offer operations
   scheduler/calls: new helpers for ack offer op update AND reconcile offer op
@@ -6,6 +6,9 @@
   master: helpers for teardown and mark-agent-gone
   additional test cases for new reservation validation
   operations: support reservation refinements
+  lib: formatting options for resource stringification
+  httpsched: connectivity listener/notification API
+  ci: drop golang 1.7.x, add 1.9.x, 1.10.x
 
 2018-03-12: v0.0.6
   1.4.x protobuf support

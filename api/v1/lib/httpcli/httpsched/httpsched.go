@@ -193,10 +193,11 @@ func (cli *client) httpDo(ctx context.Context, m encoding.Marshaler, opt ...http
 			var candidate string
 			if !ok {
 				if cli.candidateSelector == nil {
-					log.Printf("not found candidate selector, return directly")
-					return
+					log.Printf("not found candidate selector, using url when initilize framework")
+					candidate = cli.Endpoint()
+				} else {
+					candidate = cli.candidateSelector()
 				}
-				candidate = cli.candidateSelector()
 				if candidate == "" {
 					log.Printf("not found candidate url, return directly")
 					return

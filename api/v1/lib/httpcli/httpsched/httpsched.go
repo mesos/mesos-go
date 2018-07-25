@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
@@ -41,6 +40,7 @@ type (
 		redirect       RedirectSettings
 		allowReconnect bool // feature flag
 		listener       func(Notification)
+		candidates     []string
 	}
 
 	// Caller is the public interface a framework scheduler's should consume
@@ -135,6 +135,14 @@ func AllowReconnection(v bool) Option {
 	}
 }
 
+func MasterCandidates(masters []string) Option {
+	return func(c *client) Option {
+		old := c.candidates
+		c.candidates = masters
+		return MasterCandidates(old)
+	}
+}
+
 // NewCaller returns a scheduler API Client in the form of a Caller. Concurrent invocations
 // of Call upon the returned caller are safely executed in a serial fashion. It is expected that
 // there are no other users of the given Client since its state may be modified by this impl.
@@ -182,12 +190,11 @@ func (cli *client) httpDo(ctx context.Context, m encoding.Marshaler, opt ...http
 		if attempt < cli.redirect.MaxAttempts {
 			var newURL string
 			if !ok {
-				candidates := strings.Split(cli.Candidates(), ",")
-				if len(candidates) <= 0 {
+				if len(cli.candidates) <= 0 {
 					log.Printf("not found candidate urls, return directly")
 					return
 				}
-				newURL = candidates[attempt%len(candidates)]
+				newURL = cli.candidates[attempt%len(cli.candidates)]
 			} else {
 				newURL = redirectErr.newURL
 			}

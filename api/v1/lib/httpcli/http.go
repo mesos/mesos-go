@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -74,7 +73,6 @@ type ResponseHandler func(*http.Response, client.ResponseClass, error) (mesos.Re
 // A Client is a Mesos HTTP APIs client.
 type Client struct {
 	url              string
-	candidates       string
 	do               DoFunc
 	header           http.Header
 	codec            encoding.Codec
@@ -128,14 +126,7 @@ func cloneHeaders(hs http.Header) http.Header {
 
 // Endpoint returns the current Mesos API endpoint URL that the caller is set to invoke
 func (c *Client) Endpoint() string {
-	if c.url == "" && c.candidates != "" {
-		c.url = strings.Split(c.candidates, ",")[0]
-	}
 	return c.url
-}
-
-func (c *Client) Candidates() string {
-	return c.candidates
 }
 
 // RequestOpt defines a functional option for an http.Request.
@@ -214,7 +205,7 @@ func (c *Client) buildRequest(cr client.Request, rc client.ResponseClass, opt ..
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", c.Endpoint(), &body)
+	req, err := http.NewRequest("POST", c.url, &body)
 	if err != nil {
 		return nil, err
 	}
@@ -427,15 +418,6 @@ func Endpoint(rawurl string) Opt {
 		old := c.url
 		c.url = rawurl
 		return Endpoint(old)
-	}
-}
-
-// URL returns an Opt that sets a Client's Candidates.
-func Candidates(rawurls string) Opt {
-	return func(c *Client) Opt {
-		old := c.candidates
-		c.candidates = rawurls
-		return Candidates(old)
 	}
 }
 

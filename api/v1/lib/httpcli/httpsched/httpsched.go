@@ -37,10 +37,10 @@ type (
 
 	client struct {
 		*httpcli.Client
-		redirect       RedirectSettings
-		allowReconnect bool // feature flag
+		redirect          RedirectSettings
+		allowReconnect    bool // feature flag
 		listener       func(Notification)
-		candidates     []string
+		candidateSelector CandidateSelector
 	}
 
 	// Caller is the public interface a framework scheduler's should consume
@@ -75,6 +75,8 @@ type (
 		requestOpts    []httpcli.RequestOpt // requestOpts are temporary per-request options
 		opt            httpcli.Opt          // opt is a temporary client option
 	}
+
+	CandidateSelector func() string
 )
 
 const (
@@ -135,10 +137,10 @@ func AllowReconnection(v bool) Option {
 	}
 }
 
-func MasterCandidates(masters []string) Option {
+func MasterCandidates(cs CandidateSelector) Option {
 	return func(c *client) Option {
-		old := c.candidates
-		c.candidates = masters
+		old := c.candidateSelector
+		c.candidateSelector = cs
 		return MasterCandidates(old)
 	}
 }
@@ -188,20 +190,24 @@ func (cli *client) httpDo(ctx context.Context, m encoding.Marshaler, opt ...http
 		redirectErr, ok := err.(*mesosRedirectionError)
 
 		if attempt < cli.redirect.MaxAttempts {
-			var newURL string
+			var candidate string
 			if !ok {
-				if len(cli.candidates) <= 0 {
-					log.Printf("not found candidate urls, return directly")
+				if cli.candidateSelector == nil {
+					log.Printf("not found candidate selector, return directly")
 					return
 				}
-				newURL = cli.candidates[attempt%len(cli.candidates)]
+				candidate = cli.candidateSelector()
+				if candidate == "" {
+					log.Printf("not found candidate url, return directly")
+					return
+				}
 			} else {
-				newURL = redirectErr.newURL
+				candidate = redirectErr.newURL
 			}
 			if debug {
-				log.Printf("redirecting to %v", newURL)
+				log.Printf("redirecting to %v", candidate)
 			}
-			cli.With(httpcli.Endpoint(newURL))
+			cli.With(httpcli.Endpoint(candidate))
 			select {
 			case <-getBackoff():
 			case <-ctx.Done():

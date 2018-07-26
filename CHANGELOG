@@ -1,3 +1,6 @@
+2018-07-26: v0.0.8
+  1.6.x protobuf support
+
 2018-07-24: v0.0.7
   1.5.x protobuf support
   operations: new helpers for additional offer operations

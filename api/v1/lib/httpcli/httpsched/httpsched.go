@@ -76,6 +76,8 @@ type (
 		opt            httpcli.Opt          // opt is a temporary client option
 	}
 
+	// CandidateSelector returns the next endpoint to try if there are errors reaching the mesos master,
+	// or else an empty string if there are no such candidates.
 	CandidateSelector func() string
 )
 
@@ -137,11 +139,11 @@ func AllowReconnection(v bool) Option {
 	}
 }
 
-func MasterCandidates(cs CandidateSelector) Option {
+func EndpointCandidates(cs CandidateSelector) Option {
 	return func(c *client) Option {
 		old := c.candidateSelector
 		c.candidateSelector = cs
-		return MasterCandidates(old)
+		return EndpointCandidates(old)
 	}
 }
 
@@ -193,13 +195,17 @@ func (cli *client) httpDo(ctx context.Context, m encoding.Marshaler, opt ...http
 			var candidate string
 			if !ok {
 				if cli.candidateSelector == nil {
-					log.Printf("not found candidate selector, using url when initilize framework")
+					if debug {
+						log.Printf("not found candidate selector, using url when initilize framework")
+					}
 					candidate = cli.Endpoint()
 				} else {
 					candidate = cli.candidateSelector()
 				}
 				if candidate == "" {
-					log.Printf("not found candidate url, return directly")
+					if debug {
+						log.Printf("not found candidate url, return directly")
+					}
 					return
 				}
 			} else {

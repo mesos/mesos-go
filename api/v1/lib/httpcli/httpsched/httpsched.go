@@ -39,7 +39,7 @@ type (
 		*httpcli.Client
 		redirect          RedirectSettings
 		allowReconnect    bool // feature flag
-		listener       func(Notification)
+		listener          func(Notification)
 		candidateSelector CandidateSelector
 	}
 

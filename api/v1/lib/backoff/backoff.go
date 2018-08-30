@@ -72,6 +72,10 @@ func Notifier(minWait, maxWait time.Duration, until <-chan struct{}) <-chan stru
 					d = maxWait
 				}
 				limiter = nil
+				// drain the timer to avoid Reset problems
+				if !t.Stop() {
+					<-t.C
+				}
 			case <-t.C:
 				if limiter != nil {
 					d /= 2
@@ -82,7 +86,7 @@ func Notifier(minWait, maxWait time.Duration, until <-chan struct{}) <-chan stru
 				return
 			}
 			// important to have non-zero minWait otherwise we busy-loop
-			if d == 0 {
+			if d < minWait {
 				d = minWait
 			}
 			t.Reset(d)

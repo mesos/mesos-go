@@ -20,8 +20,19 @@ type (
 		handler                events.Handler
 		registrationTokens     <-chan struct{}
 		subscriptionTerminated func(error)
+		initSuppressRoles      []string
 	}
 )
+
+// WithInitiallySuppressedRoles sets the "suppressed_roles" field of the SUBSCRIBE call
+// that's issued to Mesos for each (re-)subscription attempt.
+func WithInitiallySuppressedRoles(r []string) Option {
+	return func(c *Config) Option {
+		old := c.initSuppressRoles
+		c.initSuppressRoles = r
+		return WithInitiallySuppressedRoles(old)
+	}
+}
 
 // WithEventHandler sets the consumer of scheduler events. The controller's internal event processing
 // loop is aborted if a Handler returns a non-nil error, after which the controller may attempt
@@ -99,6 +110,7 @@ func Run(ctx context.Context, framework *mesos.FrameworkInfo, caller calls.Calle
 		config.handler = DefaultHandler
 	}
 	subscribe := calls.Subscribe(framework)
+	subscribe.Subscribe.SuppressedRoles = config.initSuppressRoles
 	for !isDone(ctx) {
 		frameworkID := config.tryFrameworkID()
 		if framework.GetFailoverTimeout() > 0 && frameworkID != "" {

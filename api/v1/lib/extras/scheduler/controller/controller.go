@@ -21,8 +21,20 @@ type (
 		registrationTokens     <-chan struct{}
 		subscriptionTerminated func(error)
 		initSuppressRoles      []string
+		contextPerSubscription bool
 	}
 )
+
+// WithContextPerSubscription results in the creation of a sub-context that is passed to all event handlers
+// and is canceled when the associated subscription has termined (i.e. when the event loop exits and a re-
+// subscribe attempt is (possibly) attempted).
+func WithContextPerSubscription(b bool) Option {
+	return func(c *Config) Option {
+		old := c.contextPerSubscription
+		c.contextPerSubscription = b
+		return WithContextPerSubscription(old)
+	}
+}
 
 // WithInitiallySuppressedRoles sets the "suppressed_roles" field of the SUBSCRIBE call
 // that's issued to Mesos for each (re-)subscription attempt.
@@ -139,6 +151,11 @@ func Run(ctx context.Context, framework *mesos.FrameworkInfo, caller calls.Calle
 func processSubscription(ctx context.Context, config Config, resp mesos.Response, err error) error {
 	if resp != nil {
 		defer resp.Close()
+	}
+	if config.contextPerSubscription {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithCancel(ctx)
+		defer cancel()
 	}
 	if err == nil {
 		err = eventLoop(ctx, config, resp)

@@ -27,9 +27,59 @@ func Filters(fo ...mesos.FilterOpt) scheduler.CallOpt {
 	}
 }
 
+type Jitter interface {
+	// Duration returns, as a time.Duration, a non-negative pseudo-random duration in
+	// [0,n). It panics if n <= 0.
+	Jitter(time.Duration) time.Duration
+}
+
+// JitterFunc implements Jitter.
+type JitterFunc func(time.Duration) time.Duration
+
+func (f JitterFunc) Jitter(d time.Duration) time.Duration { return f(d) }
+
+var _ = Jitter(JitterFunc(nil)) // sanity check
+
+// JitterRandom generates a JitterFunc for the given *Rand; if the *Rand is nil then the returned
+// Jitter uses the default randomness provided by package math/rand.
+func JitterRandom(r *rand.Rand) JitterFunc {
+	if r == nil {
+		return jitterRandom
+	}
+	return func(d time.Duration) time.Duration {
+		return time.Duration(r.Int63n(int64(d)))
+	}
+}
+
+func jitterRandom(d time.Duration) time.Duration {
+	return time.Duration(rand.Int63n(int64(d)))
+}
+
+func jitterNone(d time.Duration) time.Duration { return d }
+
+// RefuseDuration returns a calls.Filters option that sets RefuseSeconds to a random number
+// of seconds between 0 and the given duration. If the given Jitter is nil then the duration is
+// fixed and will not fluctuate. Otherwise, every time the CallOpt is applied it will generate
+// a new "refuse seconds" value.
+func RefuseDuration(d time.Duration, r Jitter) scheduler.CallOpt {
+	if r == nil {
+		r = JitterFunc(jitterNone)
+	}
+	return Filters(func(f *mesos.Filters) {
+		s := r.Jitter(d).Seconds()
+		f.RefuseSeconds = &s
+	})
+}
+
 // RefuseSecondsWithJitter returns a calls.Filters option that sets RefuseSeconds to a random number
 // of seconds between 0 and the given duration.
+// If the given Rand is nil then the returned option will not introduce any jitter and the "refuse
+// seconds" filter will be fixed to the specified duration.
+// Deprecated in favor of RefuseDuration.
 func RefuseSecondsWithJitter(r *rand.Rand, d time.Duration) scheduler.CallOpt {
+	if r == nil {
+		return RefuseDuration(d, nil)
+	}
 	return Filters(func(f *mesos.Filters) {
 		s := time.Duration(r.Int63n(int64(d))).Seconds()
 		f.RefuseSeconds = &s
@@ -37,11 +87,9 @@ func RefuseSecondsWithJitter(r *rand.Rand, d time.Duration) scheduler.CallOpt {
 }
 
 // RefuseSeconds returns a calls.Filters option that sets RefuseSeconds to the given duration
+// Deprecated in favor of RefuseDuration.
 func RefuseSeconds(d time.Duration) scheduler.CallOpt {
-	asFloat := d.Seconds()
-	return Filters(func(f *mesos.Filters) {
-		f.RefuseSeconds = &asFloat
-	})
+	return RefuseDuration(d, nil)
 }
 
 // Framework sets a scheduler.Call's FrameworkID

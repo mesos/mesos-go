@@ -1947,7 +1947,10 @@ type Event_TaskUpdated struct {
 	// This is the status of the task corresponding to the last
 	// status update acknowledged by the scheduler.
 	Status mesos.TaskStatus `protobuf:"bytes,2,req,name=status" json:"status"`
-	// This is the latest state of the task according to the agent.
+	// This is the latest state of the task according to the agent,
+	// which can be more recent than `status` above but intermediate
+	// state changes may be skipped if they happen faster than the
+	// scheduler can acknowledge them.
 	State *mesos.TaskState `protobuf:"varint,3,req,name=state,enum=mesos.TaskState" json:"state,omitempty"`
 }
 

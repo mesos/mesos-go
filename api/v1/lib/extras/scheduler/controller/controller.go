@@ -166,13 +166,22 @@ func processSubscription(ctx context.Context, config Config, resp mesos.Response
 // eventLoop returns the framework ID received by mesos (if any); callers should check for a
 // framework ID regardless of whether error != nil.
 func eventLoop(ctx context.Context, config Config, eventDecoder encoding.Decoder) (err error) {
-	for err == nil && !isDone(ctx) {
-		var e scheduler.Event
-		if err = eventDecoder.Decode(&e); err == nil {
-			err = config.handler.HandleEvent(ctx, &e)
+	for err == nil {
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+			return
+		default:
 		}
+
+		var e scheduler.Event
+		if err = eventDecoder.Decode(&e); err != nil {
+			return
+		}
+
+		err = config.handler.HandleEvent(ctx, &e)
 	}
-	return err
+	return
 }
 
 // DefaultHandler is invoked when no other handlers have been defined for the controller.

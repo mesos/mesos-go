@@ -299,13 +299,21 @@ func validateSuccessfulResponse(codec encoding.Codec, res *http.Response, rc cli
 	return nil
 }
 
-func newSourceFactory(rc client.ResponseClass) encoding.SourceFactoryFunc {
+func newSourceFactory(rc client.ResponseClass, knownLen bool) encoding.SourceFactoryFunc {
 	switch rc {
 	case client.ResponseClassNoData:
 		return nil
 	case client.ResponseClassSingleton:
 		return encoding.SourceReader
-	case client.ResponseClassStreaming, client.ResponseClassAuto:
+	case client.ResponseClassStreaming:
+		return recordIOSourceFactory
+	case client.ResponseClassAuto:
+		// Some operations return the same content-type header (json) but actually
+		// return different content types (recordio vs singleton json obj).
+		// Check the content-length header to distinguish between these cases.
+		if knownLen {
+			return encoding.SourceReader
+		}
 		return recordIOSourceFactory
 	default:
 		panic(fmt.Sprintf("unsupported response-class: %q", rc))
@@ -344,7 +352,7 @@ func (c *Client) HandleResponse(res *http.Response, rc client.ResponseClass, err
 	case http.StatusOK:
 		debug.Log("request OK, decoding response")
 
-		sf := newSourceFactory(rc)
+		sf := newSourceFactory(rc, res.ContentLength > -1)
 		if sf == nil {
 			if rc != client.ResponseClassNoData {
 				panic("nil Source for response that expected data")

@@ -50,15 +50,17 @@ func TestPrepareForResponse(t *testing.T) {
 
 func TestNewSourceFactory(t *testing.T) {
 	for ti, tc := range []struct {
-		rc         client.ResponseClass
-		wantsNil   bool
-		wantsPanic bool
+		rc          client.ResponseClass
+		knownLength bool
+		wantsNil    bool
+		wantsPanic  bool
 	}{
-		{client.ResponseClass(-1), false, true},
-		{client.ResponseClassNoData, true, false},
-		{client.ResponseClassAuto, false, false},
-		{client.ResponseClassSingleton, false, false},
-		{client.ResponseClassStreaming, false, false},
+		{client.ResponseClass(-1), false, false, true},
+		{client.ResponseClassNoData, false, true, false},
+		{client.ResponseClassAuto, false, false, false},
+		{client.ResponseClassAuto, true, false, false},
+		{client.ResponseClassSingleton, false, false, false},
+		{client.ResponseClassStreaming, false, false, false},
 	} {
 		f := func() encoding.SourceFactoryFunc {
 			defer func() {
@@ -66,7 +68,7 @@ func TestNewSourceFactory(t *testing.T) {
 					panic(x)
 				}
 			}()
-			return newSourceFactory(tc.rc)
+			return newSourceFactory(tc.rc, tc.knownLength)
 		}()
 		if tc.wantsPanic {
 			continue

@@ -48737,6 +48737,13 @@ func (mj *Resource_DiskInfo_Source) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 			buf.WriteByte(',')
 		}
 	}
+	if mj.Vendor != nil {
+		if true {
+			buf.WriteString(`"vendor":`)
+			fflib.WriteJsonString(buf, string(*mj.Vendor))
+			buf.WriteByte(',')
+		}
+	}
 	if mj.ID != nil {
 		if true {
 			buf.WriteString(`"id":`)
@@ -48781,6 +48788,8 @@ const (
 
 	ffj_t_Resource_DiskInfo_Source_Mount
 
+	ffj_t_Resource_DiskInfo_Source_Vendor
+
 	ffj_t_Resource_DiskInfo_Source_ID
 
 	ffj_t_Resource_DiskInfo_Source_Metadata
@@ -48793,6 +48802,8 @@ var ffj_key_Resource_DiskInfo_Source_Type = []byte("type")
 var ffj_key_Resource_DiskInfo_Source_Path = []byte("path")
 
 var ffj_key_Resource_DiskInfo_Source_Mount = []byte("mount")
+
+var ffj_key_Resource_DiskInfo_Source_Vendor = []byte("vendor")
 
 var ffj_key_Resource_DiskInfo_Source_ID = []byte("id")
 
@@ -48901,6 +48912,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'v':
+
+					if bytes.Equal(ffj_key_Resource_DiskInfo_Source_Vendor, kn) {
+						currentKey = ffj_t_Resource_DiskInfo_Source_Vendor
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				}
 
 				if fflib.SimpleLetterEqualFold(ffj_key_Resource_DiskInfo_Source_Profile, kn) {
@@ -48917,6 +48936,12 @@ mainparse:
 
 				if fflib.SimpleLetterEqualFold(ffj_key_Resource_DiskInfo_Source_ID, kn) {
 					currentKey = ffj_t_Resource_DiskInfo_Source_ID
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_Resource_DiskInfo_Source_Vendor, kn) {
+					currentKey = ffj_t_Resource_DiskInfo_Source_Vendor
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -48964,6 +48989,9 @@ mainparse:
 
 				case ffj_t_Resource_DiskInfo_Source_Mount:
 					goto handle_Mount
+
+				case ffj_t_Resource_DiskInfo_Source_Vendor:
+					goto handle_Vendor
 
 				case ffj_t_Resource_DiskInfo_Source_ID:
 					goto handle_ID
@@ -49063,6 +49091,36 @@ handle_Mount:
 			return err
 		}
 		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Vendor:
+
+	/* handler: uj.Vendor type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+			uj.Vendor = nil
+
+		} else {
+
+			var tval string
+			outBuf := fs.Output.Bytes()
+
+			tval = string(string(outBuf))
+			uj.Vendor = &tval
+
+		}
 	}
 
 	state = fflib.FFParse_after_value

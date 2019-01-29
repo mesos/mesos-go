@@ -233,7 +233,7 @@ func opDestroy(operation *mesos.Offer_Operation, resources mesos.Resources, conv
 
 		if rez.Contains(result, volumes[i]) {
 			return nil, fmt.Errorf(
-				"persistent volume %q cannot be removed due to additional shared copies", volumes[i])
+				"persistent volume %v cannot be removed due to additional shared copies", volumes[i])
 		}
 
 		// Strip the disk info so that we can subtract it from the
@@ -267,7 +267,7 @@ func opGrowVolume(operation *mesos.Offer_Operation, resources mesos.Resources, c
 	}
 
 	if !rez.ContainsAll(result, consumed) {
-		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+		return nil, fmt.Errorf("%v does not contain %v", result, consumed)
 	}
 
 	result.Subtract(consumed...)
@@ -285,7 +285,7 @@ func opShrinkVolume(operation *mesos.Offer_Operation, resources mesos.Resources,
 	consumed := operation.GetShrinkVolume().GetVolume()
 
 	if !rez.Contains(result, consumed) {
-		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+		return nil, fmt.Errorf("%v does not contain %v", result, consumed)
 	}
 
 	result.Subtract1(consumed)
@@ -303,7 +303,7 @@ func opCreateDisk(operation *mesos.Offer_Operation, resources mesos.Resources, c
 	consumed := operation.GetCreateDisk().GetSource()
 
 	if !rez.Contains(result, consumed) {
-		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+		return nil, fmt.Errorf("%v does not contain %v", result, consumed)
 	}
 
 	result.Subtract1(consumed)
@@ -319,7 +319,7 @@ func opDestroyDisk(operation *mesos.Offer_Operation, resources mesos.Resources, 
 	consumed := operation.GetDestroyDisk().GetSource()
 
 	if !rez.Contains(result, consumed) {
-		return nil, fmt.Errorf("%q does not contain %q", result, consumed)
+		return nil, fmt.Errorf("%v does not contain %v", result, consumed)
 	}
 
 	result.Subtract1(consumed)

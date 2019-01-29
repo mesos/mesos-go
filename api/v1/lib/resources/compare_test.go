@@ -87,7 +87,7 @@ func TestResources_ContainsAll(t *testing.T) {
 			r2: Resources(
 				Resource(Name("cpus"), ValueScalar(50), Role("role2")),
 			),
-			wants: false,
+			wants: mesos.IsCapabilityReservationRefinementEnabled(),
 		},
 		// test case 3
 		{
@@ -248,7 +248,7 @@ func TestResources_Equivalent(t *testing.T) {
 			r2: Resources(
 				Resource(Name("cpus"), ValueScalar(50), Role("role2")),
 			),
-			wants: false,
+			wants: mesos.IsCapabilityReservationRefinementEnabled(),
 		},
 		{ // 3
 			r1:    Resources(Resource(Name("ports"), ValueRange(Span(20, 40)), Role("*"))),
@@ -290,15 +290,29 @@ func TestResources_Equivalent(t *testing.T) {
 		Expect(t, tc.wants == actual, "test case %d failed: wants (%v) != actual (%v)", i, tc.wants, actual)
 	}
 
-	possiblyReserved := mesos.Resources{
-		// unreserved
-		Resource(Name("cpus"), ValueScalar(8), Role("*")),
-		// statically role reserved
-		Resource(Name("cpus"), ValueScalar(8), Role("role1")),
-		Resource(Name("cpus"), ValueScalar(8), Role("role2")),
-		// dynamically role reserved:
-		Resource(Name("cpus"), ValueScalar(8), Role("role1"), Reservation(ReservedBy("principal1"))),
-		Resource(Name("cpus"), ValueScalar(8), Role("role2"), Reservation(ReservedBy("principal2"))),
+	var possiblyReserved mesos.Resources
+	if !mesos.IsCapabilityReservationRefinementEnabled() {
+		possiblyReserved = mesos.Resources{
+			// unreserved
+			Resource(Name("cpus"), ValueScalar(8), Role("*")),
+			// statically role reserved
+			Resource(Name("cpus"), ValueScalar(8), Role("role1")),
+			Resource(Name("cpus"), ValueScalar(8), Role("role2")),
+			// dynamically role reserved:
+			Resource(Name("cpus"), ValueScalar(8), Role("role1"), Reservation(ReservedBy("principal1"))),
+			Resource(Name("cpus"), ValueScalar(8), Role("role2"), Reservation(ReservedBy("principal2"))),
+		}
+	} else {
+		possiblyReserved = mesos.Resources{
+			// unreserved
+			Resource(Name("cpus"), ValueScalar(8)),
+			// statically role reserved
+			Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("role1", ""))),
+			Resource(Name("cpus"), ValueScalar(8), Reservations(StaticReservation("role2", ""))),
+			// dynamically role reserved:
+			Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role1", "principal1"))),
+			Resource(Name("cpus"), ValueScalar(8), Reservations(DynamicReservation("role1", "principal2"))),
+		}
 	}
 	for i := 0; i < len(possiblyReserved); i++ {
 		for j := 0; j < len(possiblyReserved); j++ {
@@ -306,7 +320,7 @@ func TestResources_Equivalent(t *testing.T) {
 				continue
 			}
 			if rez.Equivalent(Resources(possiblyReserved[i]), Resources(possiblyReserved[j])) {
-				t.Errorf("unexpected equivalence between %v and %v", possiblyReserved[i], possiblyReserved[j])
+				t.Errorf("test case %d failed: unexpected equivalence between %v and %v", i, possiblyReserved[i], possiblyReserved[j])
 			}
 		}
 	}

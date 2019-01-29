@@ -11,6 +11,14 @@ import (
 
 const DefaultRole = "*"
 
+var (
+	// CapabilityReservationRefinement should be set to "1" for frameworks that opt-in to RESERVATION_REFINEMENT.
+	// This is a string so that it can be set to something else at link time.
+	CapabilityReservationRefinement string = ""
+)
+
+func IsCapabilityReservationRefinementEnabled() bool { return CapabilityReservationRefinement == "1" }
+
 type (
 	Resources         []Resource
 	resourceErrorType int
@@ -750,14 +758,19 @@ func (left *Resource) Addable(right Resource) bool {
 		return true
 	}
 	if left.GetName() != right.GetName() ||
-		left.GetType() != right.GetType() ||
-		left.GetRole() != right.GetRole() {
+		left.GetType() != right.GetType() {
+		return false
+	}
+	if !IsCapabilityReservationRefinementEnabled() && left.GetRole() != right.GetRole() {
 		return false
 	}
 
 	if a, b := left.GetShared(), right.GetShared(); (a == nil) != (b == nil) {
 		// shared has no fields
 		return false
+	} else if a != nil {
+		// For shared resources, they can be added only if left == right.
+		return left.Equivalent(right)
 	}
 
 	if a, b := left.GetAllocationInfo(), right.GetAllocationInfo(); !a.Equivalent(b) {
@@ -794,7 +807,7 @@ func (left *Resource) Addable(right Resource) bool {
 			return false
 		case Resource_DiskInfo_Source_RAW:
 			// We can only add resources representing 'RAW' disks if
-			// they have no identity or are identical.
+			// they have no identity.
 			if ls.GetID() != "" {
 				return false
 			}
@@ -832,13 +845,17 @@ func (left *Resource) Addable(right Resource) bool {
 // contain "right".
 func (left *Resource) Subtractable(right Resource) bool {
 	if left.GetName() != right.GetName() ||
-		left.GetType() != right.GetType() ||
-		left.GetRole() != right.GetRole() {
+		left.GetType() != right.GetType() {
+		return false
+	}
+	if !IsCapabilityReservationRefinementEnabled() && left.GetRole() != right.GetRole() {
 		return false
 	}
 	if a, b := left.GetShared(), right.GetShared(); (a == nil) != (b == nil) {
 		// shared has no fields
 		return false
+	} else if a != nil {
+		return left.Equivalent(right)
 	}
 
 	if a, b := left.GetAllocationInfo(), right.GetAllocationInfo(); !a.Equivalent(b) {

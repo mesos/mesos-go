@@ -288,8 +288,10 @@ func (resources Resources) Format(options ...func(*ResourcesFormatOptions)) stri
 				switch s.GetType() {
 				case Resource_DiskInfo_Source_BLOCK:
 					buf.WriteString("BLOCK")
-					if id, profile := s.GetID(), s.GetProfile(); id != "" || profile != "" {
+					if id, profile, vendor := s.GetID(), s.GetProfile(), s.GetVendor(); id != "" || profile != "" || vendor != "" {
 						buf.WriteByte('(')
+						buf.WriteString(vendor)
+						buf.WriteByte(',')
 						buf.WriteString(id)
 						buf.WriteByte(',')
 						buf.WriteString(profile)
@@ -297,8 +299,10 @@ func (resources Resources) Format(options ...func(*ResourcesFormatOptions)) stri
 					}
 				case Resource_DiskInfo_Source_RAW:
 					buf.WriteString("RAW")
-					if id, profile := s.GetID(), s.GetProfile(); id != "" || profile != "" {
+					if id, profile, vendor := s.GetID(), s.GetProfile(), s.GetVendor(); id != "" || profile != "" || vendor != "" {
 						buf.WriteByte('(')
+						buf.WriteString(vendor)
+						buf.WriteByte(',')
 						buf.WriteString(id)
 						buf.WriteByte(',')
 						buf.WriteString(profile)
@@ -306,8 +310,10 @@ func (resources Resources) Format(options ...func(*ResourcesFormatOptions)) stri
 					}
 				case Resource_DiskInfo_Source_PATH:
 					buf.WriteString("PATH")
-					if id, profile := s.GetID(), s.GetProfile(); id != "" || profile != "" {
+					if id, profile, vendor := s.GetID(), s.GetProfile(), s.GetVendor(); id != "" || profile != "" || vendor != "" {
 						buf.WriteByte('(')
+						buf.WriteString(vendor)
+						buf.WriteByte(',')
 						buf.WriteString(id)
 						buf.WriteByte(',')
 						buf.WriteString(profile)
@@ -318,8 +324,10 @@ func (resources Resources) Format(options ...func(*ResourcesFormatOptions)) stri
 					}
 				case Resource_DiskInfo_Source_MOUNT:
 					buf.WriteString("MOUNT")
-					if id, profile := s.GetID(), s.GetProfile(); id != "" || profile != "" {
+					if id, profile, vendor := s.GetID(), s.GetProfile(), s.GetVendor(); id != "" || profile != "" || vendor != "" {
 						buf.WriteByte('(')
+						buf.WriteString(vendor)
+						buf.WriteByte(',')
 						buf.WriteString(id)
 						buf.WriteByte(',')
 						buf.WriteString(profile)
@@ -659,6 +667,9 @@ func (left *Resource_DiskInfo) Equivalent(right *Resource_DiskInfo) bool {
 			return false
 		}
 		if aa, bb := a.GetProfile(), b.GetProfile(); aa != bb {
+			return false
+		}
+		if aa, bb := a.GetVendor(), b.GetVendor(); aa != bb {
 			return false
 		}
 		if aa, bb := a.GetMetadata(), b.GetMetadata(); (aa == nil) != (bb == nil) {

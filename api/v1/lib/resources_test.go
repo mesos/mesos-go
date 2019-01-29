@@ -762,10 +762,10 @@ func TestReservedResources_Validation(t *testing.T) {
 		if tc.wantsErr != (err != nil) {
 			if tc.wantsErr {
 				// expected failure
-				t.Errorf("test case %d failed: expected validation failure for %q", ti, tc.r)
+				t.Errorf("test case %d failed: expected validation failure for %v", ti, tc.r)
 			} else {
 				// unexpected failure
-				t.Errorf("test case %d failed: unexpected validation error for %q: %+v", ti, tc.r, err)
+				t.Errorf("test case %d failed: unexpected validation error for %v: %+v", ti, tc.r, err)
 			}
 		}
 	}
@@ -828,7 +828,7 @@ func TestReservedResources_Equivalence(t *testing.T) {
 				continue
 			}
 			if left.Equivalent(unique[j]) {
-				t.Errorf("unexpected equivalence for resources: %q and %q", left, unique[j])
+				t.Errorf("unexpected equivalence for resources: %v and %v", left, unique[j])
 			}
 		}
 	}

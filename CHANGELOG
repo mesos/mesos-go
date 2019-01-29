@@ -1,3 +1,14 @@
+2019-xx-xx: v0.0.9
+  1.7.x protobuf support
+  resources: initial support for reservation-refinement in resource algebra, may be enabled
+  programmatically or at link-time via:
+  `-ldflags "-X github.com/mesos/mesos-go/api/v1/lib.CapabilityReservationRefinement=1"`.
+  controller: eventLoop returns context error if done
+  controller: WithContextPerSubscription
+  controller: option WithInitiallySuppressedRoles
+  backoff: avoid Timer.Reset() problems; honor minWait promise
+  httpsched: EndpointCandidates()
+
 2018-07-26: v0.0.8
   1.6.x protobuf support
 

@@ -14,7 +14,36 @@ PROTO_PATH := ${PROTO_PATH}:${API_VENDOR}/github.com/gogo/protobuf/gogoproto
 PACKAGES ?= $(shell go list ${API_PKG}/...|grep -v vendor)
 TEST_DIRS ?= $(sort $(dir $(shell find ${API_PKG} -name '*_test.go' | grep -v vendor)))
 BINARIES ?= $(shell go list -f "{{.Name}} {{.ImportPath}}" ${CMD_PKG}/...|grep -v -e vendor|grep -e ^main|cut -f2 -d' ')
+
+# NOTE: set this to non-"true" to disable reservation refinement for the resource math in api/v1/lib.
+# See api/v1/lib.CapabilityReservationRefinement.
+CAP_RESERVATION_REFINEMENT ?= true
+
+TEST_LDFLAGS ?=
 TEST_FLAGS ?= -race
+
+INSTALL_LDFLAGS ?=
+INSTALL_FLAGS ?=
+
+CAP_RESERVATION_REFINEMENT_STR = 1
+ifeq ($(CAP_RESERVATION_REFINEMENT),true)
+else
+  CAP_RESERVATION_REFINEMENT_STR = 0
+endif
+
+INSTALL_LDFLAGS += -X github.com/mesos/mesos-go/api/v1/lib.CapabilityReservationRefinement=$(CAP_RESERVATION_REFINEMENT_STR)
+TEST_LDFLAGS += -X github.com/mesos/mesos-go/api/v1/lib.CapabilityReservationRefinement=$(CAP_RESERVATION_REFINEMENT_STR)
+
+ifeq ($(INSTALL_LDFLAGS),)
+else
+  INSTALL_FLAGS += -ldflags "$(INSTALL_LDFLAGS)"
+endif
+
+ifeq ($(TEST_LDFLAGS),)
+else
+  TEST_FLAGS += -ldflags "$(TEST_LDFLAGS)"
+endif
+
 COVERAGE_TARGETS = ${TEST_DIRS:%/=%.cover}
 
 GO_VERSION := $(shell go version|cut -f3 -d' '|dd bs=1 count=6 2>/dev/null)
@@ -29,11 +58,19 @@ install:
 
 .PHONY: test
 test:
-	go $@ $(TEST_FLAGS) $(TEST_DIRS)
+	$(MAKE) _test CAP_RESERVATION_REFINEMENT=false
+	$(MAKE) _test CAP_RESERVATION_REFINEMENT=true
+
+.PHONY: _test
+_test:
+	go test $(TEST_FLAGS) $(TEST_DIRS)
 
 .PHONY: test-verbose
 test-verbose: TEST_FLAGS += -v
 test-verbose: test
+
+# TODO(jdef) simplify test coverage target now that ./... (almost) works as expected.
+# TODO(jdef) test coverage w/ and w/out CapabilityReservationRefinement.
 
 .PHONY: coverage $(COVERAGE_TARGETS)
 coverage: REPORT=_output/coverage.out

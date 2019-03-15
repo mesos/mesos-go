@@ -256,3 +256,12 @@ func PruneImages(excluded []mesos.Image) *agent.Call {
 		},
 	}
 }
+
+func MarkResourceProviderGone(id mesos.ResourceProviderID) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_MARK_RESOURCE_PROVIDER_GONE,
+		MarkResourceProviderGone: &agent.Call_MarkResourceProviderGone{
+			ResourceProviderID: id,
+		},
+	}
+}

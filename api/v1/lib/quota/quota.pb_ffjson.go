@@ -70,6 +70,27 @@ func (mj *QuotaInfo) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	} else {
 		buf.WriteString(`null`)
 	}
+	buf.WriteString(`,"limit":`)
+	if mj.Limit != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Limit {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
 	buf.WriteByte('}')
 	return nil
 }
@@ -83,6 +104,8 @@ const (
 	ffj_t_QuotaInfo_Principal
 
 	ffj_t_QuotaInfo_Guarantee
+
+	ffj_t_QuotaInfo_Limit
 )
 
 var ffj_key_QuotaInfo_Role = []byte("role")
@@ -90,6 +113,8 @@ var ffj_key_QuotaInfo_Role = []byte("role")
 var ffj_key_QuotaInfo_Principal = []byte("principal")
 
 var ffj_key_QuotaInfo_Guarantee = []byte("guarantee")
+
+var ffj_key_QuotaInfo_Limit = []byte("limit")
 
 func (uj *QuotaInfo) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -158,6 +183,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'l':
+
+					if bytes.Equal(ffj_key_QuotaInfo_Limit, kn) {
+						currentKey = ffj_t_QuotaInfo_Limit
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'p':
 
 					if bytes.Equal(ffj_key_QuotaInfo_Principal, kn) {
@@ -174,6 +207,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_QuotaInfo_Limit, kn) {
+					currentKey = ffj_t_QuotaInfo_Limit
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.SimpleLetterEqualFold(ffj_key_QuotaInfo_Guarantee, kn) {
@@ -219,6 +258,9 @@ mainparse:
 
 				case ffj_t_QuotaInfo_Guarantee:
 					goto handle_Guarantee
+
+				case ffj_t_QuotaInfo_Limit:
+					goto handle_Limit
 
 				case ffj_t_QuotaInfono_such_key:
 					err = fs.SkipField(tok)
@@ -363,6 +405,75 @@ handle_Guarantee:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
+handle_Limit:
+
+	/* handler: uj.Limit type=[]mesos.Resource kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.Limit = nil
+		} else {
+
+			uj.Limit = []mesos.Resource{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__Limit mesos.Resource
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__Limit type=mesos.Resource kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__Limit.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.Limit = append(uj.Limit, tmp_uj__Limit)
+
+				wantVal = false
+			}
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
 wantedvalue:
 	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
 wrongtokenerror:
@@ -441,6 +552,27 @@ func (mj *QuotaRequest) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	} else {
 		buf.WriteString(`null`)
 	}
+	buf.WriteString(`,"limit":`)
+	if mj.Limit != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Limit {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
 	buf.WriteByte('}')
 	return nil
 }
@@ -454,6 +586,8 @@ const (
 	ffj_t_QuotaRequest_Role
 
 	ffj_t_QuotaRequest_Guarantee
+
+	ffj_t_QuotaRequest_Limit
 )
 
 var ffj_key_QuotaRequest_Force = []byte("force")
@@ -461,6 +595,8 @@ var ffj_key_QuotaRequest_Force = []byte("force")
 var ffj_key_QuotaRequest_Role = []byte("role")
 
 var ffj_key_QuotaRequest_Guarantee = []byte("guarantee")
+
+var ffj_key_QuotaRequest_Limit = []byte("limit")
 
 func (uj *QuotaRequest) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -537,6 +673,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'l':
+
+					if bytes.Equal(ffj_key_QuotaRequest_Limit, kn) {
+						currentKey = ffj_t_QuotaRequest_Limit
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'r':
 
 					if bytes.Equal(ffj_key_QuotaRequest_Role, kn) {
@@ -545,6 +689,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_QuotaRequest_Limit, kn) {
+					currentKey = ffj_t_QuotaRequest_Limit
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.SimpleLetterEqualFold(ffj_key_QuotaRequest_Guarantee, kn) {
@@ -590,6 +740,9 @@ mainparse:
 
 				case ffj_t_QuotaRequest_Guarantee:
 					goto handle_Guarantee
+
+				case ffj_t_QuotaRequest_Limit:
+					goto handle_Limit
 
 				case ffj_t_QuotaRequestno_such_key:
 					err = fs.SkipField(tok)
@@ -736,6 +889,75 @@ handle_Guarantee:
 				}
 
 				uj.Guarantee = append(uj.Guarantee, tmp_uj__Guarantee)
+
+				wantVal = false
+			}
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Limit:
+
+	/* handler: uj.Limit type=[]mesos.Resource kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.Limit = nil
+		} else {
+
+			uj.Limit = []mesos.Resource{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__Limit mesos.Resource
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__Limit type=mesos.Resource kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__Limit.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.Limit = append(uj.Limit, tmp_uj__Limit)
 
 				wantVal = false
 			}

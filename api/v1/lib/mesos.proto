@@ -260,11 +260,13 @@ message FrameworkInfo {
   // Name of the framework that shows up in the Mesos Web UI.
   required string name = 2 [(gogoproto.nullable) = false];
 
-  // Note that 'id' is only available after a framework has
-  // registered, however, it is included here in order to facilitate
-  // scheduler failover (i.e., if it is set then the
-  // MesosSchedulerDriver expects the scheduler is performing
-  // failover).
+  // Used to uniquely identify the framework.
+  //
+  // This field must be unset when the framework subscribes for the
+  // first time upon which the master will assign a new ID. To
+  // resubscribe after scheduler failover the framework should set
+  // 'id' to the ID assigned by the master.  Setting 'id' to values
+  // not assigned by Mesos masters is unsupported.
   optional FrameworkID id = 3 [(gogoproto.customname) = "ID"];
 
   // The amount of time (in seconds) that the master will wait for the
@@ -433,6 +435,11 @@ message FrameworkInfo {
   // the framework). These labels are not interpreted by Mesos itself.
   // Labels should not contain duplicate key-value pairs.
   optional Labels labels = 11;
+
+  // Specifc resource requirements for each of the framework's roles. This field
+  // is used by e.g., the default allocator to decide whether a framework is
+  // interested in seeing a resource of a certain shape.
+  map<string, OfferFilters> offer_filters = 13 [(gogoproto.nullable) = false];
 }
 
 
@@ -856,6 +863,18 @@ message ExecutorInfo {
  * in the same zone, in different zones in the same region, or in
  * different regions. Note that all masters in a given Mesos cluster
  * must be in the same region.
+ *
+ * Complex deployments may have additional levels of hierarchy: for example,
+ * multiple racks might be grouped together into "halls" and multiple DCs in
+ * the same geographical vicinity might be grouped together. As a convention,
+ * the recommended way to represent additional levels of hierarchy is via dot-
+ * separated labels in the existing zone and region fields. For example, the
+ * fact that racks "abc" and "def" are in the same hall might be represented
+ * using the zone names "rack-abc.hall-1" and "rack-def.hall-1", for example.
+ * Software that is not aware of this additional structure will compare the
+ * zone names for equality- hence, the two zones will be treated as different
+ * (unrelated) zones. Software that is "hall-aware" can inspect the zone names
+ * and make use of the additional hierarchy.
  */
 message DomainInfo {
   message FaultDomain {
@@ -919,6 +938,13 @@ message MasterInfo {
   message Capability {
     enum Type {
       UNKNOWN = 0;
+
+      // NOTE: When the master starts to use a new capability that
+      // may prevent compatible downgrade, remember to add the
+      // capability to `Registry::MinimumCapability`. Conversely,
+      // the added minimum capability should be removed if the capability
+      // is deemed to be no longer required for compatible downgrade.
+      // See MESOS-8878 for more details.
 
       // The master can handle slaves whose state
       // changes after reregistering.
@@ -1016,12 +1042,27 @@ message AgentInfo {
       // (1) The ability to report resources that are provided by some
       //     local resource providers through the resource provider API.
       //
-      // (2) The ability to provide operation feedback.
+      // (2) The ability to provide operation feedback. This also means
+      //     that this capability is a prerequisite for full support of
+      //     feedback for operations on agent default resources. If an
+      //     agent has the mandatory AGENT_OPERATION_FEEDBACK capability
+      //     set but not the RESOURCE_PROVIDER capability, then
+      //     operations on agent default resources which request feedback
+      //     will not be allowed.
       RESOURCE_PROVIDER = 4;
 
       // This expresses the capability for the agent to handle persistent volume
       // resize operations safely. This capability is turned on by default.
       RESIZE_VOLUME = 5;
+
+      // This expresses the ability of the agent to handle operation feedback
+      // for operations on agent default resources.
+      //
+      // Note that full support for this feature also requires the
+      // RESOURCE_PROVIDER capability; if you would like the agent to
+      // handle feedback for operations on agent default resources, the
+      // RESOURCE_PROVIDER capability should be set as well.
+      AGENT_OPERATION_FEEDBACK = 6;
 
       option (gogoproto.goproto_enum_prefix) = true;
     }
@@ -1208,6 +1249,7 @@ message Attribute {
  * which correspond to partial shares of a CPU.
  */
 message Resource {
+  // Specified if the resource comes from a particular resource provider.
   optional ResourceProviderID provider_id = 12 [(gogoproto.customname) = "ProviderID"];
 
   required string name = 1 [(gogoproto.nullable) = false];
@@ -1907,6 +1949,34 @@ message PerfStatistics {
 
 
 /**
+ * Represents filters that allow a framework to control the shape of
+ * offers that will be sent to its role(s). These filters apply
+ * globally to any agent (unlike the existing `DECLINE` filter which
+ * us a time-based resource subset filter that only applies to the
+ * agent that was declined).
+ *
+ * NOTE: Custom allocators might interpret these fields in a different
+ * way, or not at all.
+ */
+message OfferFilters {
+  message ResourceQuantities {
+    // Quantities are pairs of identifiers of scalar resources and
+    // an associated value, e.g., `{"disk": Scalar {"value": 30}}`.
+    map<string, Value.Scalar> quantities = 1 [(gogoproto.nullable) = false];
+  }
+
+  message MinAllocatableResources {
+    // A set of resources is considered allocatable if contained in any of
+    // the following quantities. If no quantities are specified any resource
+    // is considered allocatable.
+    repeated ResourceQuantities quantities = 1 [(gogoproto.nullable) = false];
+  }
+
+  optional MinAllocatableResources min_allocatable_resources = 1;
+}
+
+
+/**
  * Describes a request for resources that can be used by a framework
  * to proactively influence the allocator.  If 'agent_id' is provided
  * then this request is assumed to only apply to resources on that
@@ -2090,9 +2160,9 @@ message Offer {
 
     optional Type type = 1 [(gogoproto.nullable) = false];
 
-    // NOTE: The `id` field will allow frameworks to indicate that they wish to
-    // receive feedback about an operation. Since this feature is not yet
-    // implemented, the `id` field should NOT be set at present. See MESOS-8054.
+    // The `id` field allows frameworks to indicate that they wish to receive
+    // feedback about an operation via the UPDATE_OPERATION_STATUS event in the
+    // v1 scheduler API.
     optional OperationID id = 12 [(gogoproto.customname) = "ID"]; // EXPERIMENTAL.
 
     optional Launch launch = 2;
@@ -2253,8 +2323,8 @@ message TaskGroupInfo {
  *   1) we need additional IDs, such as a specific
  *      framework, executor, or agent; or
  *   2) we do not need the additional data, such as the command run by the
- *      task or the health checks.  These additional fields may be large and
- *      unnecessary for some Mesos messages.
+ *      task. These additional fields may be large and unnecessary for some
+ *      Mesos messages.
  *
  * `Task` is generally constructed from a `TaskInfo`.  See protobuf::createTask.
  */
@@ -2284,6 +2354,10 @@ message Task {
 
   // Container information for the task.
   optional ContainerInfo container = 13;
+
+  optional HealthCheck health_check = 15;
+
+  // TODO(greggomann): Add the task's `CheckInfo`. See MESOS-8780.
 
   // Specific user under which task is running.
   optional string user = 14;
@@ -2373,7 +2447,7 @@ message TaskResourceLimitation {
 
 
 /**
- * Describes a UUID.
+ * A 128 bit (16 byte) UUID, see RFC 4122.
  */
 message UUID {
   required bytes value = 1;
@@ -3190,6 +3264,24 @@ message CapabilityInfo {
 
 
 /**
+ * Encapsulation for Seccomp configuration, which is Linux specific.
+ */
+message SeccompInfo {
+  // A filename of the Seccomp profile. This should be a path
+  // relative to the directory containing Seccomp profiles,
+  // which is specified on the agent via the `--seccomp_config_dir` flag.
+  optional string profile_name = 1;
+
+  // If set to `true`, Seccomp is not applied to the container.
+  // If not set or set to `false`, the container is launched with
+  // the profile specified in the `profile_name` field.
+  //
+  // NOTE: `profile_name` should not be specified if `unconfined` set to `true`.
+  optional bool unconfined = 2;
+}
+
+
+/**
  * Encapsulation for Linux specific configuration.
  * E.g, capabilities, limits etc.
  */
@@ -3212,6 +3304,9 @@ message LinuxInfo {
   // parent container. This field will be ignored if 'namespaces/pid'
   // isolator is not enabled.
   optional bool share_pid_namespace = 4 [(gogoproto.customname) = "SharePIDNamespace"];
+
+  // Represents Seccomp configuration, which is used for syscall filtering.
+  optional SeccompInfo seccomp = 5;
 }
 
 

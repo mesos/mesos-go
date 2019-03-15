@@ -36,18 +36,15 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
-// TODO(joerg84): Add limits, i.e. upper bounds of resources that a
-// role is allowed to use.
+// *
+// Describes the resource guarantees and limits for a role.
+// Persisted in the registry.
 type QuotaInfo struct {
-	// Quota is granted per role and not per framework, similar to
-	// dynamic reservations.
 	Role *string `protobuf:"bytes,1,opt,name=role" json:"role,omitempty"`
 	// Principal which set the quota. Currently only operators can set quotas.
-	Principal *string `protobuf:"bytes,2,opt,name=principal" json:"principal,omitempty"`
-	// The guarantee that these resources are allocatable for the above role.
-	// NOTE: `guarantee.role` should not specify any role except '*',
-	// because quota does not reserve specific resources.
+	Principal *string          `protobuf:"bytes,2,opt,name=principal" json:"principal,omitempty"`
 	Guarantee []mesos.Resource `protobuf:"bytes,3,rep,name=guarantee" json:"guarantee"`
+	Limit     []mesos.Resource `protobuf:"bytes,4,rep,name=limit" json:"limit"`
 }
 
 func (m *QuotaInfo) Reset()                    { *m = QuotaInfo{} }
@@ -75,16 +72,78 @@ func (m *QuotaInfo) GetGuarantee() []mesos.Resource {
 	return nil
 }
 
+func (m *QuotaInfo) GetLimit() []mesos.Resource {
+	if m != nil {
+		return m.Limit
+	}
+	return nil
+}
+
 // *
-// `QuotaRequest` provides a schema for set quota JSON requests.
+// Describes an update to a role's quota. This is a copy of
+// `QuotaInfo` which omits the principal since it is determined
+// during authentication. Also allows the user to force the update
+// in the case of a guarantee overcommit or a limit exceeding the
+// parent's limit (or overall cluster size if a top level role).
 type QuotaRequest struct {
-	// Disables the capacity heuristic check if set to `true`.
-	Force *bool `protobuf:"varint,1,opt,name=force,def=0" json:"force,omitempty"`
-	// The role for which to set quota.
-	Role *string `protobuf:"bytes,2,opt,name=role" json:"role,omitempty"`
-	// The requested guarantee that these resources will be allocatable for
-	// the above role.
+	// See `guarantee` and `limit` for the behavior of `force`
+	// on these two fields.
+	Force *bool   `protobuf:"varint,1,opt,name=force,def=0" json:"force,omitempty"`
+	Role  *string `protobuf:"bytes,2,opt,name=role" json:"role,omitempty"`
+	// Mesos will try its best to ensure that the role can be
+	// allocated at least as many resources as the guarantee.
+	// Despite this, it's possible for the guarantee to not be
+	// satisfiable, if:
+	//   (1) The operator has overcommitted guarantees.
+	//   (2) There is a loss of agents that such that the
+	//       guarantees overcommit the cluster.
+	//   (3) The scheduler is pickier than mesos knows about,
+	//       e.g. the scheduler needs resources from agents
+	//       with specific attributes.
+	//
+	// The provided guarantee will be validated to ensure it
+	// is not overcommitting the cluster. The operator can
+	// disable this via `QuotaRequest.force`.
+	//
+	// If the guarantee is omitted, there is no guarantee.
+	//
+	// Operators may want to set up alerting to let them know
+	// when a guarantee cannot be satisfied.
+	//
+	// NOTE: The resources must be scalars without additional
+	// metadata like reservations, disk information, etc.
 	Guarantee []mesos.Resource `protobuf:"bytes,3,rep,name=guarantee" json:"guarantee"`
+	// EXPERIMENTAL DO NOT USE.
+	//
+	// This feature is not implementation complete.
+	//
+	// Imposes a limit on the amount of resources allocated to the
+	// role. Mesos will try its best to ensure that the role does
+	// not exceed this limit. Despite this, the limit can be exceeded
+	// when:
+	//   (1) The limit is lowered below the allocation.
+	//   (2) Some agents are partitioned and re-connect with
+	//       resources allocated to the role.
+	//
+	// The provided limit will be validated to ensure it does not
+	// exceed the total cluster size. The operator can disable
+	// this check via `QuotaRequest.force`.
+	//
+	// If the limit is omitted, there is no limit.
+	//
+	// Operators may want to set up alerting to let them know
+	// when the limit is exceeded.
+	//
+	// NOTE: The resources must be scalars without additional
+	// metadata like reservations, disk information, etc.
+	//
+	// NOTE: The limit was introduced alongside the v1 `UPDATE_QUOTA`
+	// `master::Call`. Note that the old v0 `POST /quota` endpoint and
+	// the v1 `SetQuota` `master::Call` continue to implicitly set
+	// limit to the guarantee for backwards compatibility. Users
+	// should switch to the v1 `UPDATE_QUOTA` `master::Call` which
+	// does not implicitly set the limit.
+	Limit []mesos.Resource `protobuf:"bytes,4,rep,name=limit" json:"limit"`
 }
 
 func (m *QuotaRequest) Reset()                    { *m = QuotaRequest{} }
@@ -114,11 +173,19 @@ func (m *QuotaRequest) GetGuarantee() []mesos.Resource {
 	return nil
 }
 
+func (m *QuotaRequest) GetLimit() []mesos.Resource {
+	if m != nil {
+		return m.Limit
+	}
+	return nil
+}
+
 // *
-// `QuotaStatus` describes the internal representation for the /quota/status
-// response.
+// `QuotaStatus` describes the internal representation for the
+// /quota/status response and `GET_QUOTA` `master::Response`.
 type QuotaStatus struct {
-	// Quotas which are currently set, i.e. known to the master.
+	// Returns all non-default quotas. Those ommitted from this
+	// list have the default of: no guarantee and no limit.
 	Infos []QuotaInfo `protobuf:"bytes,1,rep,name=infos" json:"infos"`
 }
 
@@ -189,6 +256,14 @@ func (this *QuotaInfo) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Guarantee this[%v](%v) Not Equal that[%v](%v)", i, this.Guarantee[i], i, that1.Guarantee[i])
 		}
 	}
+	if len(this.Limit) != len(that1.Limit) {
+		return fmt.Errorf("Limit this(%v) Not Equal that(%v)", len(this.Limit), len(that1.Limit))
+	}
+	for i := range this.Limit {
+		if !this.Limit[i].Equal(&that1.Limit[i]) {
+			return fmt.Errorf("Limit this[%v](%v) Not Equal that[%v](%v)", i, this.Limit[i], i, that1.Limit[i])
+		}
+	}
 	return nil
 }
 func (this *QuotaInfo) Equal(that interface{}) bool {
@@ -239,6 +314,14 @@ func (this *QuotaInfo) Equal(that interface{}) bool {
 	}
 	for i := range this.Guarantee {
 		if !this.Guarantee[i].Equal(&that1.Guarantee[i]) {
+			return false
+		}
+	}
+	if len(this.Limit) != len(that1.Limit) {
+		return false
+	}
+	for i := range this.Limit {
+		if !this.Limit[i].Equal(&that1.Limit[i]) {
 			return false
 		}
 	}
@@ -295,6 +378,14 @@ func (this *QuotaRequest) VerboseEqual(that interface{}) error {
 			return fmt.Errorf("Guarantee this[%v](%v) Not Equal that[%v](%v)", i, this.Guarantee[i], i, that1.Guarantee[i])
 		}
 	}
+	if len(this.Limit) != len(that1.Limit) {
+		return fmt.Errorf("Limit this(%v) Not Equal that(%v)", len(this.Limit), len(that1.Limit))
+	}
+	for i := range this.Limit {
+		if !this.Limit[i].Equal(&that1.Limit[i]) {
+			return fmt.Errorf("Limit this[%v](%v) Not Equal that[%v](%v)", i, this.Limit[i], i, that1.Limit[i])
+		}
+	}
 	return nil
 }
 func (this *QuotaRequest) Equal(that interface{}) bool {
@@ -345,6 +436,14 @@ func (this *QuotaRequest) Equal(that interface{}) bool {
 	}
 	for i := range this.Guarantee {
 		if !this.Guarantee[i].Equal(&that1.Guarantee[i]) {
+			return false
+		}
+	}
+	if len(this.Limit) != len(that1.Limit) {
+		return false
+	}
+	for i := range this.Limit {
+		if !this.Limit[i].Equal(&that1.Limit[i]) {
 			return false
 		}
 	}
@@ -424,7 +523,7 @@ func (this *QuotaInfo) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 7)
+	s := make([]string, 0, 8)
 	s = append(s, "&quota.QuotaInfo{")
 	if this.Role != nil {
 		s = append(s, "Role: "+valueToGoStringQuota(this.Role, "string")+",\n")
@@ -435,6 +534,9 @@ func (this *QuotaInfo) GoString() string {
 	if this.Guarantee != nil {
 		s = append(s, "Guarantee: "+fmt.Sprintf("%#v", this.Guarantee)+",\n")
 	}
+	if this.Limit != nil {
+		s = append(s, "Limit: "+fmt.Sprintf("%#v", this.Limit)+",\n")
+	}
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -442,7 +544,7 @@ func (this *QuotaRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 7)
+	s := make([]string, 0, 8)
 	s = append(s, "&quota.QuotaRequest{")
 	if this.Force != nil {
 		s = append(s, "Force: "+valueToGoStringQuota(this.Force, "bool")+",\n")
@@ -452,6 +554,9 @@ func (this *QuotaRequest) GoString() string {
 	}
 	if this.Guarantee != nil {
 		s = append(s, "Guarantee: "+fmt.Sprintf("%#v", this.Guarantee)+",\n")
+	}
+	if this.Limit != nil {
+		s = append(s, "Limit: "+fmt.Sprintf("%#v", this.Limit)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -515,6 +620,18 @@ func (m *QuotaInfo) MarshalTo(dAtA []byte) (int, error) {
 			i += n
 		}
 	}
+	if len(m.Limit) > 0 {
+		for _, msg := range m.Limit {
+			dAtA[i] = 0x22
+			i++
+			i = encodeVarintQuota(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
 	return i, nil
 }
 
@@ -552,6 +669,18 @@ func (m *QuotaRequest) MarshalTo(dAtA []byte) (int, error) {
 	if len(m.Guarantee) > 0 {
 		for _, msg := range m.Guarantee {
 			dAtA[i] = 0x1a
+			i++
+			i = encodeVarintQuota(dAtA, i, uint64(msg.ProtoSize()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if len(m.Limit) > 0 {
+		for _, msg := range m.Limit {
+			dAtA[i] = 0x22
 			i++
 			i = encodeVarintQuota(dAtA, i, uint64(msg.ProtoSize()))
 			n, err := msg.MarshalTo(dAtA[i:])
@@ -639,6 +768,14 @@ func NewPopulatedQuotaInfo(r randyQuota, easy bool) *QuotaInfo {
 			this.Guarantee[i] = *v4
 		}
 	}
+	if r.Intn(10) != 0 {
+		v5 := r.Intn(5)
+		this.Limit = make([]mesos.Resource, v5)
+		for i := 0; i < v5; i++ {
+			v6 := mesos.NewPopulatedResource(r, easy)
+			this.Limit[i] = *v6
+		}
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -647,19 +784,27 @@ func NewPopulatedQuotaInfo(r randyQuota, easy bool) *QuotaInfo {
 func NewPopulatedQuotaRequest(r randyQuota, easy bool) *QuotaRequest {
 	this := &QuotaRequest{}
 	if r.Intn(10) != 0 {
-		v5 := bool(bool(r.Intn(2) == 0))
-		this.Force = &v5
+		v7 := bool(bool(r.Intn(2) == 0))
+		this.Force = &v7
 	}
 	if r.Intn(10) != 0 {
-		v6 := string(randStringQuota(r))
-		this.Role = &v6
+		v8 := string(randStringQuota(r))
+		this.Role = &v8
 	}
 	if r.Intn(10) != 0 {
-		v7 := r.Intn(5)
-		this.Guarantee = make([]mesos.Resource, v7)
-		for i := 0; i < v7; i++ {
-			v8 := mesos.NewPopulatedResource(r, easy)
-			this.Guarantee[i] = *v8
+		v9 := r.Intn(5)
+		this.Guarantee = make([]mesos.Resource, v9)
+		for i := 0; i < v9; i++ {
+			v10 := mesos.NewPopulatedResource(r, easy)
+			this.Guarantee[i] = *v10
+		}
+	}
+	if r.Intn(10) != 0 {
+		v11 := r.Intn(5)
+		this.Limit = make([]mesos.Resource, v11)
+		for i := 0; i < v11; i++ {
+			v12 := mesos.NewPopulatedResource(r, easy)
+			this.Limit[i] = *v12
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -670,11 +815,11 @@ func NewPopulatedQuotaRequest(r randyQuota, easy bool) *QuotaRequest {
 func NewPopulatedQuotaStatus(r randyQuota, easy bool) *QuotaStatus {
 	this := &QuotaStatus{}
 	if r.Intn(10) != 0 {
-		v9 := r.Intn(5)
-		this.Infos = make([]QuotaInfo, v9)
-		for i := 0; i < v9; i++ {
-			v10 := NewPopulatedQuotaInfo(r, easy)
-			this.Infos[i] = *v10
+		v13 := r.Intn(5)
+		this.Infos = make([]QuotaInfo, v13)
+		for i := 0; i < v13; i++ {
+			v14 := NewPopulatedQuotaInfo(r, easy)
+			this.Infos[i] = *v14
 		}
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -701,9 +846,9 @@ func randUTF8RuneQuota(r randyQuota) rune {
 	return rune(ru + 61)
 }
 func randStringQuota(r randyQuota) string {
-	v11 := r.Intn(100)
-	tmps := make([]rune, v11)
-	for i := 0; i < v11; i++ {
+	v15 := r.Intn(100)
+	tmps := make([]rune, v15)
+	for i := 0; i < v15; i++ {
 		tmps[i] = randUTF8RuneQuota(r)
 	}
 	return string(tmps)
@@ -725,11 +870,11 @@ func randFieldQuota(dAtA []byte, r randyQuota, fieldNumber int, wire int) []byte
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateQuota(dAtA, uint64(key))
-		v12 := r.Int63()
+		v16 := r.Int63()
 		if r.Intn(2) == 0 {
-			v12 *= -1
+			v16 *= -1
 		}
-		dAtA = encodeVarintPopulateQuota(dAtA, uint64(v12))
+		dAtA = encodeVarintPopulateQuota(dAtA, uint64(v16))
 	case 1:
 		dAtA = encodeVarintPopulateQuota(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -771,6 +916,12 @@ func (m *QuotaInfo) ProtoSize() (n int) {
 			n += 1 + l + sovQuota(uint64(l))
 		}
 	}
+	if len(m.Limit) > 0 {
+		for _, e := range m.Limit {
+			l = e.ProtoSize()
+			n += 1 + l + sovQuota(uint64(l))
+		}
+	}
 	return n
 }
 
@@ -786,6 +937,12 @@ func (m *QuotaRequest) ProtoSize() (n int) {
 	}
 	if len(m.Guarantee) > 0 {
 		for _, e := range m.Guarantee {
+			l = e.ProtoSize()
+			n += 1 + l + sovQuota(uint64(l))
+		}
+	}
+	if len(m.Limit) > 0 {
+		for _, e := range m.Limit {
 			l = e.ProtoSize()
 			n += 1 + l + sovQuota(uint64(l))
 		}
@@ -826,6 +983,7 @@ func (this *QuotaInfo) String() string {
 		`Role:` + valueToStringQuota(this.Role) + `,`,
 		`Principal:` + valueToStringQuota(this.Principal) + `,`,
 		`Guarantee:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Guarantee), "Resource", "mesos.Resource", 1), `&`, ``, 1) + `,`,
+		`Limit:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Limit), "Resource", "mesos.Resource", 1), `&`, ``, 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -838,6 +996,7 @@ func (this *QuotaRequest) String() string {
 		`Force:` + valueToStringQuota(this.Force) + `,`,
 		`Role:` + valueToStringQuota(this.Role) + `,`,
 		`Guarantee:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Guarantee), "Resource", "mesos.Resource", 1), `&`, ``, 1) + `,`,
+		`Limit:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Limit), "Resource", "mesos.Resource", 1), `&`, ``, 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -980,6 +1139,37 @@ func (m *QuotaInfo) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Limit", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuota
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuota
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Limit = append(m.Limit, mesos.Resource{})
+			if err := m.Limit[len(m.Limit)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuota(dAtA[iNdEx:])
@@ -1109,6 +1299,37 @@ func (m *QuotaRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Guarantee = append(m.Guarantee, mesos.Resource{})
 			if err := m.Guarantee[len(m.Guarantee)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Limit", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuota
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuota
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Limit = append(m.Limit, mesos.Resource{})
+			if err := m.Limit[len(m.Limit)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1322,26 +1543,27 @@ var (
 func init() { proto.RegisterFile("quota/quota.proto", fileDescriptorQuota) }
 
 var fileDescriptorQuota = []byte{
-	// 331 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x90, 0xbd, 0x4e, 0xeb, 0x40,
-	0x10, 0x85, 0x3d, 0x49, 0x2c, 0x5d, 0x6f, 0xae, 0x84, 0x70, 0x81, 0xac, 0x80, 0x86, 0x28, 0x55,
-	0x9a, 0xd8, 0x10, 0x3a, 0x3a, 0x42, 0x45, 0x89, 0xe9, 0xe8, 0x1c, 0x6b, 0x6d, 0x2c, 0x39, 0x5e,
-	0x67, 0x7f, 0xa8, 0x79, 0x04, 0x1e, 0x81, 0x92, 0x47, 0xa0, 0xa4, 0x4c, 0x99, 0x92, 0x0a, 0xe1,
-	0x4d, 0x43, 0x99, 0x92, 0x12, 0xb1, 0x8b, 0x92, 0xd4, 0x34, 0xab, 0x99, 0x6f, 0xe7, 0xcc, 0x39,
-	0x1a, 0xb2, 0x3f, 0x57, 0x4c, 0x26, 0x91, 0x79, 0xc3, 0x9a, 0x33, 0xc9, 0xfc, 0xee, 0x8c, 0x0a,
-	0x26, 0x42, 0x83, 0x7a, 0x27, 0x79, 0x21, 0xef, 0xd4, 0x34, 0x4c, 0xd9, 0x2c, 0x32, 0xdc, 0xbe,
-	0xa3, 0x9c, 0x45, 0x49, 0x5d, 0x44, 0xf7, 0xa7, 0x51, 0x59, 0x4c, 0x2d, 0xb3, 0xf2, 0xde, 0x68,
-	0x47, 0x91, 0xb3, 0x9c, 0x45, 0x06, 0x4f, 0x55, 0x66, 0x3a, 0xd3, 0x98, 0xca, 0x8e, 0x0f, 0x38,
-	0xf1, 0xae, 0x7f, 0x9c, 0xae, 0xaa, 0x8c, 0xf9, 0x3e, 0xe9, 0x70, 0x56, 0xd2, 0x00, 0xfa, 0x30,
-	0xf4, 0x62, 0x53, 0xfb, 0x47, 0xc4, 0xab, 0x79, 0x51, 0xa5, 0x45, 0x9d, 0x94, 0x41, 0xcb, 0x7c,
-	0x6c, 0x81, 0x7f, 0x46, 0xbc, 0x5c, 0x25, 0x3c, 0xa9, 0x24, 0xa5, 0x41, 0xbb, 0xdf, 0x1e, 0x76,
-	0xc7, 0x7b, 0xa1, 0x8d, 0x13, 0x53, 0xc1, 0x14, 0x4f, 0xe9, 0xa4, 0xb3, 0x78, 0x3f, 0x76, 0xe2,
-	0xed, 0xdc, 0x40, 0x92, 0xff, 0xc6, 0x33, 0xa6, 0x73, 0x45, 0x85, 0xf4, 0x0f, 0x89, 0x9b, 0x31,
-	0x9e, 0x5a, 0xdf, 0x7f, 0xe7, 0x6e, 0x96, 0x94, 0x82, 0xc6, 0x96, 0x6d, 0x32, 0xb5, 0x76, 0x32,
-	0xfd, 0xc9, 0xf5, 0x82, 0x74, 0x8d, 0xeb, 0x8d, 0x4c, 0xa4, 0x12, 0xfe, 0x98, 0xb8, 0x45, 0x95,
-	0x31, 0x11, 0x80, 0xd1, 0x1f, 0x84, 0x3b, 0x67, 0x0f, 0x37, 0x27, 0xf9, 0x5d, 0x63, 0x47, 0x27,
-	0x97, 0xcb, 0x06, 0x9d, 0xb7, 0x06, 0x9d, 0x8f, 0x06, 0x61, 0xdd, 0x20, 0x7c, 0x35, 0x08, 0x0f,
-	0x1a, 0xe1, 0x59, 0x23, 0xbc, 0x68, 0x84, 0x57, 0x8d, 0xb0, 0xd0, 0x08, 0x4b, 0x8d, 0xf0, 0xa9,
-	0xd1, 0x59, 0x6b, 0x84, 0xc7, 0x15, 0x3a, 0x4f, 0x2b, 0x84, 0x5b, 0xd7, 0xec, 0xfe, 0x0e, 0x00,
-	0x00, 0xff, 0xff, 0xf0, 0x55, 0x30, 0x8e, 0xf3, 0x01, 0x00, 0x00,
+	// 349 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x91, 0xb1, 0x4e, 0xfb, 0x30,
+	0x10, 0xc6, 0x73, 0x6d, 0x23, 0xfd, 0xe3, 0xfe, 0x25, 0x84, 0x07, 0x14, 0x15, 0x74, 0x54, 0x9d,
+	0x2a, 0xa1, 0x26, 0x50, 0x36, 0x36, 0xca, 0xc4, 0x48, 0xd8, 0xd8, 0xd2, 0xc8, 0x09, 0x96, 0xd2,
+	0x38, 0x4d, 0x1c, 0x66, 0x1e, 0x81, 0x37, 0x00, 0x36, 0x1e, 0x81, 0x91, 0xb1, 0x63, 0x47, 0x26,
+	0x44, 0xdc, 0x85, 0xb1, 0x23, 0x23, 0xc2, 0x16, 0x6d, 0x27, 0x36, 0x96, 0xd3, 0xdd, 0x2f, 0xdf,
+	0x77, 0xf9, 0x2e, 0x21, 0xdb, 0xd3, 0x4a, 0xc8, 0xd0, 0xd7, 0xd5, 0xcb, 0x0b, 0x21, 0x05, 0x6d,
+	0x4f, 0x58, 0x29, 0x4a, 0x4f, 0xa3, 0xce, 0x61, 0xc2, 0xe5, 0x75, 0x35, 0xf6, 0x22, 0x31, 0xf1,
+	0x35, 0x37, 0x75, 0x90, 0x08, 0x3f, 0xcc, 0xb9, 0x7f, 0x73, 0xe4, 0xa7, 0x7c, 0x6c, 0x98, 0xb1,
+	0x77, 0x06, 0x1b, 0x8e, 0x44, 0x24, 0xc2, 0xd7, 0x78, 0x5c, 0xc5, 0x7a, 0xd2, 0x83, 0xee, 0x8c,
+	0xbc, 0x77, 0x0f, 0xc4, 0xb9, 0xf8, 0x7e, 0xd5, 0x79, 0x16, 0x0b, 0x4a, 0x49, 0xab, 0x10, 0x29,
+	0x73, 0xa1, 0x0b, 0x7d, 0x27, 0xd0, 0x3d, 0xdd, 0x23, 0x4e, 0x5e, 0xf0, 0x2c, 0xe2, 0x79, 0x98,
+	0xba, 0x0d, 0xfd, 0x60, 0x0d, 0xe8, 0x31, 0x71, 0x92, 0x2a, 0x2c, 0xc2, 0x4c, 0x32, 0xe6, 0x36,
+	0xbb, 0xcd, 0x7e, 0x7b, 0xb8, 0xe5, 0x99, 0x3c, 0x01, 0x2b, 0x45, 0x55, 0x44, 0x6c, 0xd4, 0x9a,
+	0xbd, 0xed, 0x5b, 0xc1, 0x5a, 0x47, 0x0f, 0x88, 0x9d, 0xf2, 0x09, 0x97, 0x6e, 0xeb, 0x37, 0x83,
+	0xd1, 0xf4, 0x1e, 0x81, 0xfc, 0xd7, 0x09, 0x03, 0x36, 0xad, 0x58, 0x29, 0xe9, 0x2e, 0xb1, 0x63,
+	0x51, 0x44, 0x26, 0xe5, 0xbf, 0x13, 0x3b, 0x0e, 0xd3, 0x92, 0x05, 0x86, 0xad, 0x2e, 0x68, 0x6c,
+	0x5c, 0xf0, 0xf7, 0x19, 0x4f, 0x49, 0x5b, 0x47, 0xbc, 0x94, 0xa1, 0xac, 0x4a, 0x3a, 0x24, 0x36,
+	0xcf, 0x62, 0x51, 0xba, 0xa0, 0xbd, 0x3b, 0xde, 0xc6, 0x2f, 0xf5, 0x56, 0x5f, 0xfb, 0x67, 0x85,
+	0x96, 0x8e, 0xce, 0xe6, 0x35, 0x5a, 0xaf, 0x35, 0x5a, 0xef, 0x35, 0xc2, 0xb2, 0x46, 0xf8, 0xac,
+	0x11, 0x6e, 0x15, 0xc2, 0x93, 0x42, 0x78, 0x56, 0x08, 0x2f, 0x0a, 0x61, 0xa6, 0x10, 0xe6, 0x0a,
+	0xe1, 0x43, 0xa1, 0xb5, 0x54, 0x08, 0x77, 0x0b, 0xb4, 0x1e, 0x16, 0x08, 0x57, 0xb6, 0xde, 0xfd,
+	0x15, 0x00, 0x00, 0xff, 0xff, 0x7f, 0x70, 0x8c, 0x46, 0x4f, 0x02, 0x00, 0x00,
 }

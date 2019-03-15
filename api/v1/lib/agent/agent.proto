@@ -112,6 +112,8 @@ message Call {
     UPDATE_RESOURCE_PROVIDER_CONFIG = 28; // See 'UpdateResourceProviderConfig' below. // NOLINT
     REMOVE_RESOURCE_PROVIDER_CONFIG = 29; // See 'RemoveResourceProviderConfig' below. // NOLINT
 
+    MARK_RESOURCE_PROVIDER_GONE = 32; // See 'MarkResourceProviderGone' below.
+
     // Prune unused container images.
     PRUNE_IMAGES = 30;
 
@@ -382,6 +384,11 @@ message Call {
     required string name = 2 [(gogoproto.nullable) = false];
   }
 
+  // Mark a resource provider as gone.
+  message MarkResourceProviderGone {
+    required ResourceProviderID resource_provider_id = 1 [(gogoproto.nullable) = false, (gogoproto.customname) = "ResourceProviderID"];
+  }
+
   // Prune unused container images from image store.
   //
   // Images and layers referenced by active containers as well as
@@ -418,6 +425,8 @@ message Call {
   optional AddResourceProviderConfig add_resource_provider_config = 17;
   optional UpdateResourceProviderConfig update_resource_provider_config = 18;
   optional RemoveResourceProviderConfig remove_resource_provider_config = 19;
+
+  optional MarkResourceProviderGone mark_resource_provider_gone = 22;
 
   optional PruneImages prune_images = 21;
 }

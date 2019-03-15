@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/quota"
 	fflib "github.com/pquerna/ffjson/fflib/v1"
 	"reflect"
 )
@@ -258,28 +259,13 @@ func (mj *Call) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	if mj.SetQuota != nil {
+	if mj.UpdateQuota != nil {
 		if true {
-			buf.WriteString(`"set_quota":`)
+			buf.WriteString(`"update_quota":`)
 
 			{
 
-				err = mj.SetQuota.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
-			}
-			buf.WriteByte(',')
-		}
-	}
-	if mj.RemoveQuota != nil {
-		if true {
-			buf.WriteString(`"remove_quota":`)
-
-			{
-
-				err = mj.RemoveQuota.MarshalJSONBuf(buf)
+				err = mj.UpdateQuota.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -310,6 +296,36 @@ func (mj *Call) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			{
 
 				err = mj.MarkAgentGone.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.SetQuota != nil {
+		if true {
+			buf.WriteString(`"set_quota":`)
+
+			{
+
+				err = mj.SetQuota.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	if mj.RemoveQuota != nil {
+		if true {
+			buf.WriteString(`"remove_quota":`)
+
+			{
+
+				err = mj.RemoveQuota.MarshalJSONBuf(buf)
 				if err != nil {
 					return err
 				}
@@ -357,13 +373,15 @@ const (
 
 	ffj_t_Call_StopMaintenance
 
-	ffj_t_Call_SetQuota
-
-	ffj_t_Call_RemoveQuota
+	ffj_t_Call_UpdateQuota
 
 	ffj_t_Call_Teardown
 
 	ffj_t_Call_MarkAgentGone
+
+	ffj_t_Call_SetQuota
+
+	ffj_t_Call_RemoveQuota
 )
 
 var ffj_key_Call_Type = []byte("type")
@@ -396,13 +414,15 @@ var ffj_key_Call_StartMaintenance = []byte("start_maintenance")
 
 var ffj_key_Call_StopMaintenance = []byte("stop_maintenance")
 
-var ffj_key_Call_SetQuota = []byte("set_quota")
-
-var ffj_key_Call_RemoveQuota = []byte("remove_quota")
+var ffj_key_Call_UpdateQuota = []byte("update_quota")
 
 var ffj_key_Call_Teardown = []byte("teardown")
 
 var ffj_key_Call_MarkAgentGone = []byte("mark_agent_gone")
+
+var ffj_key_Call_SetQuota = []byte("set_quota")
+
+var ffj_key_Call_RemoveQuota = []byte("remove_quota")
 
 func (uj *Call) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -583,8 +603,25 @@ mainparse:
 						currentKey = ffj_t_Call_UpdateMaintenanceSchedule
 						state = fflib.FFParse_want_colon
 						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Call_UpdateQuota, kn) {
+						currentKey = ffj_t_Call_UpdateQuota
+						state = fflib.FFParse_want_colon
+						goto mainparse
 					}
 
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Call_RemoveQuota, kn) {
+					currentKey = ffj_t_Call_RemoveQuota
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_SetQuota, kn) {
+					currentKey = ffj_t_Call_SetQuota
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Call_MarkAgentGone, kn) {
@@ -599,14 +636,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.AsciiEqualFold(ffj_key_Call_RemoveQuota, kn) {
-					currentKey = ffj_t_Call_RemoveQuota
-					state = fflib.FFParse_want_colon
-					goto mainparse
-				}
-
-				if fflib.EqualFoldRight(ffj_key_Call_SetQuota, kn) {
-					currentKey = ffj_t_Call_SetQuota
+				if fflib.AsciiEqualFold(ffj_key_Call_UpdateQuota, kn) {
+					currentKey = ffj_t_Call_UpdateQuota
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -763,17 +794,20 @@ mainparse:
 				case ffj_t_Call_StopMaintenance:
 					goto handle_StopMaintenance
 
-				case ffj_t_Call_SetQuota:
-					goto handle_SetQuota
-
-				case ffj_t_Call_RemoveQuota:
-					goto handle_RemoveQuota
+				case ffj_t_Call_UpdateQuota:
+					goto handle_UpdateQuota
 
 				case ffj_t_Call_Teardown:
 					goto handle_Teardown
 
 				case ffj_t_Call_MarkAgentGone:
 					goto handle_MarkAgentGone
+
+				case ffj_t_Call_SetQuota:
+					goto handle_SetQuota
+
+				case ffj_t_Call_RemoveQuota:
+					goto handle_RemoveQuota
 
 				case ffj_t_Callno_such_key:
 					err = fs.SkipField(tok)
@@ -1193,51 +1227,24 @@ handle_StopMaintenance:
 	state = fflib.FFParse_after_value
 	goto mainparse
 
-handle_SetQuota:
+handle_UpdateQuota:
 
-	/* handler: uj.SetQuota type=master.Call_SetQuota kind=struct quoted=false*/
+	/* handler: uj.UpdateQuota type=master.Call_UpdateQuota kind=struct quoted=false*/
 
 	{
 		if tok == fflib.FFTok_null {
 
-			uj.SetQuota = nil
+			uj.UpdateQuota = nil
 
 			state = fflib.FFParse_after_value
 			goto mainparse
 		}
 
-		if uj.SetQuota == nil {
-			uj.SetQuota = new(Call_SetQuota)
+		if uj.UpdateQuota == nil {
+			uj.UpdateQuota = new(Call_UpdateQuota)
 		}
 
-		err = uj.SetQuota.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
-		if err != nil {
-			return err
-		}
-		state = fflib.FFParse_after_value
-	}
-
-	state = fflib.FFParse_after_value
-	goto mainparse
-
-handle_RemoveQuota:
-
-	/* handler: uj.RemoveQuota type=master.Call_RemoveQuota kind=struct quoted=false*/
-
-	{
-		if tok == fflib.FFTok_null {
-
-			uj.RemoveQuota = nil
-
-			state = fflib.FFParse_after_value
-			goto mainparse
-		}
-
-		if uj.RemoveQuota == nil {
-			uj.RemoveQuota = new(Call_RemoveQuota)
-		}
-
-		err = uj.RemoveQuota.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		err = uj.UpdateQuota.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -1292,6 +1299,60 @@ handle_MarkAgentGone:
 		}
 
 		err = uj.MarkAgentGone.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_SetQuota:
+
+	/* handler: uj.SetQuota type=master.Call_SetQuota kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.SetQuota = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.SetQuota == nil {
+			uj.SetQuota = new(Call_SetQuota)
+		}
+
+		err = uj.SetQuota.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_RemoveQuota:
+
+	/* handler: uj.RemoveQuota type=master.Call_RemoveQuota kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.RemoveQuota = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.RemoveQuota == nil {
+			uj.RemoveQuota = new(Call_RemoveQuota)
+		}
+
+		err = uj.RemoveQuota.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -5524,6 +5585,257 @@ handle_Schedule:
 			return err
 		}
 		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Call_UpdateQuota) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Call_UpdateQuota) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{"quota_requests":`)
+	if mj.QuotaRequests != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.QuotaRequests {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Call_UpdateQuotabase = iota
+	ffj_t_Call_UpdateQuotano_such_key
+
+	ffj_t_Call_UpdateQuota_QuotaRequests
+)
+
+var ffj_key_Call_UpdateQuota_QuotaRequests = []byte("quota_requests")
+
+func (uj *Call_UpdateQuota) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Call_UpdateQuota) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Call_UpdateQuotabase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Call_UpdateQuotano_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'q':
+
+					if bytes.Equal(ffj_key_Call_UpdateQuota_QuotaRequests, kn) {
+						currentKey = ffj_t_Call_UpdateQuota_QuotaRequests
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_UpdateQuota_QuotaRequests, kn) {
+					currentKey = ffj_t_Call_UpdateQuota_QuotaRequests
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Call_UpdateQuotano_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Call_UpdateQuota_QuotaRequests:
+					goto handle_QuotaRequests
+
+				case ffj_t_Call_UpdateQuotano_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_QuotaRequests:
+
+	/* handler: uj.QuotaRequests type=[]quota.QuotaRequest kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.QuotaRequests = nil
+		} else {
+
+			uj.QuotaRequests = []quota.QuotaRequest{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__QuotaRequests quota.QuotaRequest
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__QuotaRequests type=quota.QuotaRequest kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__QuotaRequests.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.QuotaRequests = append(uj.QuotaRequests, tmp_uj__QuotaRequests)
+
+				wantVal = false
+			}
+		}
 	}
 
 	state = fflib.FFParse_after_value

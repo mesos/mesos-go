@@ -81,6 +81,11 @@ message Event {
     // has been allotted.
     SHUTDOWN = 7;
 
+    // Received periodically to make sure the connection is alive and to
+    // prevent any possible network intermediaries from marking the
+    // connection as stale (when there are no other messages being sent).
+    HEARTBEAT = 9;
+
     option (gogoproto.goproto_enum_prefix) = true;
   }
 
@@ -182,6 +187,13 @@ message Call {
     SUBSCRIBE = 1;    // See 'Subscribe' below.
     UPDATE = 2;       // See 'Update' below.
     MESSAGE = 3;      // See 'Message' below.
+
+    // Optional message that can be used to make sure the executor's
+    // connection is still alive and to prevent any possible network
+    // intermediaries from marking the connection as stale (when there
+    // are no other messages being sent). Heartbeats are only necessary
+    // if the executor uses a persistent connection to send calls.
+    HEARTBEAT = 4;
 
     option (gogoproto.goproto_enum_prefix) = true;
   }

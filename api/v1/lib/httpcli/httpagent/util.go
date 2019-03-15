@@ -52,7 +52,8 @@ func classifyResponse(c *agent.Call) (rc client.ResponseClass, err error) {
 		agent.Call_ADD_RESOURCE_PROVIDER_CONFIG,
 		agent.Call_UPDATE_RESOURCE_PROVIDER_CONFIG,
 		agent.Call_REMOVE_RESOURCE_PROVIDER_CONFIG,
-		agent.Call_PRUNE_IMAGES:
+		agent.Call_PRUNE_IMAGES,
+		agent.Call_MARK_RESOURCE_PROVIDER_GONE:
 		rc = client.ResponseClassNoData
 
 	default:

@@ -1,4 +1,7 @@
-2019-xx-xx: v0.0.9
+xxxx-xx-xx: v0.0.10
+  TODO
+
+2019-03-15: v0.0.9
   1.7.x protobuf support
   resources: initial support for reservation-refinement in resource algebra, may be enabled
   programmatically or at link-time via:

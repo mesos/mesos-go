@@ -49,3 +49,10 @@ func Message(data []byte) *executor.Call {
 		},
 	}
 }
+
+// Heartbeat returns an executor heartbeat call, useful to detect disconnections.
+func Heartbeat() *executor.Call {
+	return &executor.Call{
+		Type: executor.Call_HEARTBEAT,
+	}
+}

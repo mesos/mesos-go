@@ -35,7 +35,7 @@ option (gogoproto.marshaler_all) = true;
 option (gogoproto.populate_all) = true;
 option (gogoproto.protosizer_all) = true;
 option (gogoproto.stringer_all) =  true;
-option (gogoproto.testgen_all) = true;
+option (gogoproto.testgen_all) = false;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.verbose_equal_all) = true;
 

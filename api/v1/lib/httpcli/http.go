@@ -153,6 +153,8 @@ func (c *Client) With(opts ...Opt) Opt {
 // WithTemporary configures the Client with the temporary option and returns the results of
 // invoking f(). Changes made to the Client by the temporary option are reverted before this
 // func returns.
+// It is not safe to modify the configuration of a Client as long as said Client is in use by
+// multiple goroutines.
 func (c *Client) WithTemporary(opt Opt, f func() error) error {
 	if opt != nil {
 		undo := c.With(opt)
@@ -528,8 +530,8 @@ func With(opt ...ConfigOpt) DoFunc {
 			Timeout:   5 * time.Second,
 		}
 		transport = &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			Dial:  dialer.Dial,
+			Proxy:                 http.ProxyFromEnvironment,
+			Dial:                  dialer.Dial,
 			ResponseHeaderTimeout: 5 * time.Second,
 			TLSClientConfig:       &tls.Config{InsecureSkipVerify: false},
 			TLSHandshakeTimeout:   5 * time.Second,

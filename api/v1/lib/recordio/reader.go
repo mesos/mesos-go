@@ -55,8 +55,9 @@ func MaxMessageSize(max int) Opt {
 
 func (r *reader) splitSize(data []byte, atEOF bool) (int, []byte, error) {
 	const maxTokenLength = 20 // textual length of largest uint64 number
+	x := len(data)
+	debug.Log("splitSize:x=", x, ",eof=", atEOF)
 	if atEOF {
-		x := len(data)
 		switch {
 		case x == 0:
 			debug.Log("EOF and empty frame, returning io.EOF")
@@ -117,6 +118,7 @@ func (r *reader) splitFrame(data []byte, atEOF bool) (advance int, token []byte,
 	}
 	if x < int(r.pend) {
 		// need more data
+		debug.Log("splitFrame:need-data")
 		return 0, nil, nil
 	}
 	r.splitf = r.splitSize
@@ -127,13 +129,15 @@ func (r *reader) splitFrame(data []byte, atEOF bool) (advance int, token []byte,
 
 // ReadFrame implements framing.Reader
 func (r *reader) ReadFrame() (tok []byte, err error) {
+	if debug {
+		defer func() { debug.Log("ReadFrame", len(tok), err) }()
+	}
 	for r.Scan() {
 		b := r.Bytes()
 		if len(b) == 0 {
 			continue
 		}
 		tok = b
-		debug.Log("len(tok)", len(tok))
 		break
 	}
 	// either scan failed, or it succeeded and we have a token...

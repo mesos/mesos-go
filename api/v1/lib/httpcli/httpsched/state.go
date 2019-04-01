@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/mesos/mesos-go/api/v1/lib"
+	"github.com/mesos/mesos-go/api/v1/lib/backoff"
 	"github.com/mesos/mesos-go/api/v1/lib/encoding"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli"
 	"github.com/mesos/mesos-go/api/v1/lib/httpcli/apierrors"
@@ -32,36 +36,39 @@ var (
 type (
 	// state implements calls.Caller and tracks connectivity with Mesos
 	state struct {
-		client *client // client is a handle to the original underlying HTTP client
+		client      *client // client is a handle to the original underlying HTTP client
+		notifyBusy  int32
+		notifyQueue chan Notification
 
-		m      sync.Mutex
-		fn     stateFn      // fn is the next state function to execute
-		caller calls.Caller // caller is (maybe) used by a state function to execute a call
-
-		call *scheduler.Call // call is the next call to execute
-		resp mesos.Response  // resp is the Mesos response from the most recently executed call
-		err  error           // err is the error from the most recently executed call
+		m           sync.Mutex   // m guards the following state:
+		fn          phase        // fn is the next state function to execute
+		caller      calls.Caller // caller is (maybe) used by a state function to execute a call
+		call        *stateCall   // upon executation of fn, this is the most recent call that's been issued
+		callCounter uint64       // index of the most recent call we've issued
 	}
 
-	stateFn func(context.Context, *state) (stateFn, Notification)
+	stateCall struct {
+		*scheduler.Call                // call is the next call to execute
+		resp            mesos.Response // resp is the Mesos response from the most recently executed call
+		err             error          // err is the error from the most recently executed call
+		idx             uint64         // captured value of state.callCounter when this object was created
+	}
+
+	phase interface {
+		isDisconnected() bool
+		exec(context.Context, *state) phase
+	}
+
+	stateFn           func(context.Context, *state) phase
+	disconnectedPhase stateFn
+	connectedPhase    stateFn
 )
 
-func maybeLogged(f httpcli.DoFunc) httpcli.DoFunc {
-	if debug {
-		return func(req *http.Request) (*http.Response, error) {
-			log.Println("wrapping request", req.URL, req.Header)
-			resp, err := f(req)
-			if err == nil {
-				log.Printf("status %d", resp.StatusCode)
-				for k := range resp.Header {
-					log.Println("header " + k + ": " + resp.Header.Get(k))
-				}
-			}
-			return resp, err
-		}
-	}
-	return f
-}
+func (disconnectedPhase) isDisconnected() bool { return true }
+func (connectedPhase) isDisconnected() bool    { return false }
+
+func (f disconnectedPhase) exec(ctx context.Context, s *state) phase { return f(ctx, s) }
+func (f connectedPhase) exec(ctx context.Context, s *state) phase    { return f(ctx, s) }
 
 // DisconnectionDetector is a programmable response decorator that attempts to detect errors
 // that should transition the state from "connected" to "disconnected". Detector implementations
@@ -113,73 +120,142 @@ func disconnectionDecoder(decoder encoding.Decoder, disconnect func()) encoding.
 	})
 }
 
-func disconnectedFn(ctx context.Context, state *state) (stateFn, Notification) {
-	// (a) validate call = SUBSCRIBE
-	if state.call.GetType() != scheduler.Call_SUBSCRIBE {
-		state.resp = nil
-		state.err = apierrors.CodeUnsubscribed.Error("")
-		return disconnectedFn, withoutNotification
-	}
-
-	// (b) prepare client for a subscription call
+func doSubscribe(ctx context.Context, ci callerInternal, call *stateCall) (mesosStreamID string) {
 	var (
-		mesosStreamID = ""
-		undoable      = httpcli.WrapDoer(func(f httpcli.DoFunc) httpcli.DoFunc {
-			f = maybeLogged(f)
-			return func(req *http.Request) (resp *http.Response, err error) {
-				resp, err = f(req)
-				if err == nil && resp.StatusCode == 200 {
-					// grab Mesos-Stream-Id header; if missing then
-					// close the response body and return an error
-					mesosStreamID = resp.Header.Get(headerMesosStreamID)
-					if mesosStreamID == "" {
-						resp.Body.Close()
-						resp = nil
-						err = errMissingStreamID
-					}
-				}
-				return
+		done            chan struct{} // avoid allocating these chans unless we actually need to redirect
+		redirectBackoff <-chan struct{}
+		getBackoff      = func(minBackoff, maxBackoff time.Duration) <-chan struct{} {
+			if redirectBackoff != nil {
+				return redirectBackoff
 			}
-		})
-		subscribeCaller = &callerTemporary{
-			opt:            undoable,
-			callerInternal: state.client,
-			requestOpts:    []httpcli.RequestOpt{httpcli.Close(true)},
+			done = make(chan struct{})
+			redirectBackoff = backoff.Notifier(minBackoff, maxBackoff, done)
+			return redirectBackoff
 		}
 	)
-
-	// (c) execute the call, save the result in resp, err
-	stateResp, stateErr := subscribeCaller.Call(ctx, state.call)
-	state.err = stateErr
-
-	// (d) if err != nil return disconnectedFn since we're unsubscribed
-	if stateErr != nil {
-		if stateResp != nil {
-			stateResp.Close()
+	defer func() {
+		if done != nil {
+			close(done)
 		}
-		state.resp = nil
-		return disconnectedFn, withoutNotification
+	}()
+
+	// prepare client for a subscription call
+	var (
+		subscribeOptions = []httpcli.RequestOpt{httpcli.Close(true)}
+		subscribeCaller  = &callerTemporary{
+			callerInternal: ci,
+			requestOpts:    subscribeOptions,
+		}
+		clearResponse = func() {
+			if call.resp != nil {
+				call.resp.Close()
+			}
+			call.resp = nil
+		}
+	)
+	for attempt := 0; ; attempt++ {
+		// execute the call, save the result in resp, err
+		call.resp, call.err = subscribeCaller.Call(ctx, call.Call)
+
+		// if err != nil return mustSubscribe since we're unsubscribed
+		if call.err != nil {
+			clearResponse()
+			return ""
+		}
+
+		nmr, ok := call.resp.(*noMasterResponse)
+		if !ok {
+			break // this is not a redirect
+		}
+
+		if attempt >= nmr.maxAttempts {
+			call.err = nmr.clientErr
+			clearResponse()
+			return ""
+		}
+
+		u, err := url.Parse(nmr.newLeaderURL)
+		if err != nil {
+			call.err = err
+			clearResponse()
+			return ""
+		}
+
+		subscribeCaller.requestOpts = append(subscribeOptions[:], func(req *http.Request) {
+			req.URL = u
+		})
+
+		// back off before retrying the subscription attempt
+		select {
+		case <-getBackoff(nmr.minBackoff, nmr.maxBackoff):
+		case <-ctx.Done():
+			call.err = ctx.Err()
+			clearResponse()
+			return ""
+		}
 	}
 
-	transitionToDisconnected := func() {
-		defer stateResp.Close() // swallow any error here
+	type mesosStream interface {
+		streamID() string
+	}
 
+	if sr, ok := call.resp.(mesosStream); ok {
+		mesosStreamID = sr.streamID()
+	}
+	if mesosStreamID == "" {
+		clearResponse()
+		call.err = errMissingStreamID
+	}
+	return
+}
+
+func mustSubscribe(ctx context.Context, state *state) phase {
+	// (a) validate call = SUBSCRIBE
+	if t := state.call.GetType(); t != scheduler.Call_SUBSCRIBE {
+		state.call.err = apierrors.CodeUnsubscribed.Error("httpsched: expected SUBSCRIBE instead of " + t.String())
+		return disconnectedPhase(mustSubscribe)
+	}
+
+	mesosStreamID := doSubscribe(ctx, state.client, state.call)
+	if mesosStreamID == "" {
+		return disconnectedPhase(mustSubscribe)
+	}
+
+	resp := state.call.resp // capture for use w/in closure
+
+	transitionToDisconnected := func() {
+		// swallow any error here; assumes that state.call.resp is guaranteed non-nil at this point.
+		defer resp.Close()
+
+		// Any call can trigger a disconnect.
+		// Resubscription attempts block all other calls.
+		var phaseChanged bool
+		defer func() {
+			if phaseChanged {
+				state.flushNotify()
+			}
+		}()
+
+		// NOTE: possibly long-blocking unless assumptions are met.
+		// Assume that we'll never be reconnected before this executes. e.g. the same goroutine that initiates the
+		// subscription is handling the decoding of subscription events.
 		state.m.Lock()
 		defer state.m.Unlock()
-		state.fn = disconnectedFn
-		state.client.notify(Notification{Type: NotificationDisconnected})
+		phaseChanged = state.setPhase(disconnectedPhase(mustSubscribe))
 	}
 
 	// wrap the response: any errors processing the subscription stream should result in a
 	// transition to a disconnected state ASAP.
-	state.resp = DisconnectionDetector(transitionToDisconnected).Decorate(stateResp)
+	resp = DisconnectionDetector(transitionToDisconnected).Decorate(resp)
 
-	// (e) else prepare callerTemporary w/ special header, return connectedFn since we're now subscribed
+	// (e) else prepare callerTemporary w/ special header, return anyCall since we're now subscribed
 	state.caller = &callerTemporary{
-		opt:            httpcli.DefaultHeader(headerMesosStreamID, mesosStreamID),
 		callerInternal: state.client,
+		requestOpts: []httpcli.RequestOpt{
+			httpcli.Header(headerMesosStreamID, mesosStreamID),
+		},
 	}
-	return connectedFn, Notification{Type: NotificationConnected}
+	return connectedPhase(anyCall)
 }
 
 func errorIndicatesSubscriptionLoss(err error) (result bool) {
@@ -192,66 +268,135 @@ func errorIndicatesSubscriptionLoss(err error) (result bool) {
 	return
 }
 
-func connectedFn(ctx context.Context, state *state) (stateFn, Notification) {
+func anyCall(ctx context.Context, state *state) phase {
 	// (a) validate call != SUBSCRIBE
 	if state.call.GetType() == scheduler.Call_SUBSCRIBE {
 		if state.client.allowReconnect {
 			// Reset internal state back to DISCONNECTED and re-execute the SUBSCRIBE call.
 			// Mesos will hangup on the old SUBSCRIBE socket after this one completes.
 			state.caller = nil
-			state.resp = nil
-			state.err = nil
-			state.fn = disconnectedFn
-			state.client.notify(Notification{Type: NotificationDisconnected})
-
-			return state.fn(ctx, state)
-		} else {
-			state.resp = nil
-
-			// TODO(jdef) not super happy with this error: I don't think that mesos minds if we issue
-			// redundant subscribe calls. However, the state tracking mechanism in this module can't
-			// cope with it (e.g. we'll need to track a new stream-id, etc).
-			// We make a best effort to transition to a disconnected state if we detect protocol errors,
-			// error events, or mesos-generated "not subscribed" errors. But we don't handle things such
-			// as, for example, authentication errors. Granted, the initial subscribe call should fail
-			// if authentication is an issue, so we should never end up here. I'm not convinced there's
-			// not other edge cases though with respect to other error codes.
-			state.err = errAlreadySubscribed
-			return connectedFn, withoutNotification
+			state.call.resp = nil
+			state.call.err = nil
+			state.setPhase(connectedPhase(mustSubscribe))
+			return state.fn.exec(ctx, state)
 		}
+
+		state.call.resp = nil
+
+		// TODO(jdef) not super happy with this error: I don't think that mesos minds if we issue
+		// redundant subscribe calls. However, the state tracking mechanism in this module can't
+		// cope with it (e.g. we'll need to track a new stream-id, etc).
+		// We make a best effort to transition to a disconnected state if we detect protocol errors,
+		// error events, or mesos-generated "not subscribed" errors. But we don't handle things such
+		// as, for example, authentication errors. Granted, the initial subscribe call should fail
+		// if authentication is an issue, so we should never end up here. I'm not convinced there's
+		// not other edge cases though with respect to other error codes.
+		state.call.err = errAlreadySubscribed
+		return connectedPhase(anyCall)
 	}
 
-	// (b) execute call, save the result in resp, err
-	state.resp, state.err = state.caller.Call(ctx, state.call)
+	// (b) execute call, save the result in resp, err.
+	// Release the state lock before issuing a potentially blocking non-SUBSCRIBE call.
+	call, caller := state.call, state.caller // pre-unlock state capture
 
-	if errorIndicatesSubscriptionLoss(state.err) {
+	state.m.Unlock()
+	defer state.m.Lock()
+
+	// NOTE: DO NOT reference state.xyz fields that are guarded by the lock!
+
+	call.resp, call.err = caller.Call(ctx, call.Call)
+
+	if errorIndicatesSubscriptionLoss(call.err) {
 		// properly transition back to a disconnected state if mesos thinks that we're unsubscribed
-		return disconnectedFn, Notification{Type: NotificationDisconnected}
+		return disconnectedPhase(mustSubscribe)
+	}
+
+	if nmr, ok := call.resp.(*noMasterResponse); ok {
+		// properly transition back to a disconnected state if there's been a leadership change
+		call.err = nmr.clientErr
+		return disconnectedPhase(mustSubscribe)
 	}
 
 	// stay connected, don't attempt to interpret other errors here
-	return connectedFn, withoutNotification
+	return connectedPhase(anyCall)
 }
 
-func (state *state) Call(ctx context.Context, call *scheduler.Call) (resp mesos.Response, err error) {
-	func() {
-		var n Notification
+func (state *state) sendNotify(n Notification) {
+	if n != withoutNotification {
+		// Preserve ordering of notifications. notifyQueue is buffered and so this is expected
+		// to not block under normal conditions.
+		state.notifyQueue <- n
+	}
+}
 
-		state.m.Lock()
-		defer state.m.Unlock()
-		state.call = call
-		state.fn, n = state.fn(ctx, state)
-		if n != withoutNotification {
+func (state *state) flushNotify() {
+	if !atomic.CompareAndSwapInt32(&state.notifyBusy, 0, 1) {
+		return
+	}
+	defer atomic.StoreInt32(&state.notifyBusy, 0)
+
+	for {
+		select {
+		case n, ok := <-state.notifyQueue:
+			if !ok {
+				// Should never happen:
+				// 1. This chan is never explicitly closed.
+				// 2. All constructors initialize the chan to non-nil.
+				return
+			}
 			state.client.notify(n)
+		default:
+			return
 		}
-		resp, err = state.resp, state.err
+	}
+}
+
+func (state *state) Call(ctx context.Context, oemCall *scheduler.Call) (resp mesos.Response, err error) {
+	// Attempt to flush the notification queue after every call.
+	defer func() {
+		state.flushNotify()
+		if debug && err != nil {
+			log.Print(*oemCall, err)
+		}
 	}()
 
-	if debug && err != nil {
-		log.Print(*call, err)
-	}
+	state.m.Lock()
+	defer state.m.Unlock()
 
+	state.callCounter++
+	call := &stateCall{Call: oemCall, idx: state.callCounter}
+	state.call = call
+
+	// Calls may complete in a different order: we need to ensure that returned stateFn is actually
+	// the intended "next-state". we also need to maintain order of notifications that we're sending.
+	fn := state.fn.exec(ctx, state)
+	if state.callCounter == call.idx {
+		state.setPhase(fn)
+	} // else, it's an older call so ignore the phase that it returns.
+
+	resp, err = call.resp, call.err
 	return
+}
+
+// setPhase establishes the next phase func and emits a notification if the connection status changes
+// between phases; returns true if a notification was sent.
+// requires that the caller is holding the state lock.
+func (state *state) setPhase(p phase) bool {
+	d1, d2 := state.fn.isDisconnected(), p.isDisconnected()
+	state.fn = p
+
+	if d1 == d2 {
+		// no connection phase change
+		return false
+	}
+	if d2 {
+		// connected -> disconnected
+		state.sendNotify(Notification{Type: NotificationDisconnected})
+		return true
+	}
+	// disconnected -> connected
+	state.sendNotify(Notification{Type: NotificationConnected})
+	return true
 }
 
 var withoutNotification = Notification{}

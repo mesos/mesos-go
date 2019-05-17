@@ -760,7 +760,7 @@ func (driver *MesosSchedulerDriver) exitedExecutor(_ context.Context, from *upid
 		return
 	}
 	status := msg.GetStatus()
-	log.V(2).Infoln("Lost executor %q from slave %q for framework %q with status %d",
+	log.V(2).Infof("Lost executor %q from slave %q for framework %q with status %d",
 		msg.GetExecutorId().GetValue(),
 		msg.GetSlaveId().GetValue(),
 		msg.GetFrameworkId().GetValue(),

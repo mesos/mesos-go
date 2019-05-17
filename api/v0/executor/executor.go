@@ -292,7 +292,7 @@ func (driver *MesosExecutorDriver) recoveryTimedOut(connection string) {
 	}
 	// ensure that connection ID's match otherwise we've been re-registered
 	if connection == driver.connection.String() {
-		log.Info("recovery timeout of %v exceeded; shutting down", driver.recoveryTimeout)
+		log.Infof("recovery timeout of %v exceeded; shutting down", driver.recoveryTimeout)
 		driver.shutdown(driver.context(), nil, nil)
 	}
 }
@@ -743,7 +743,7 @@ func (driver *MesosExecutorDriver) sendFrameworkMessage(data string) (mesosproto
 
 	// Send the message.
 	if err := driver.send(driver.context(), driver.slaveUPID, message); err != nil {
-		log.Errorln("Failed to send message %v: %v", message, err)
+		log.Errorf("Failed to send message %v: %v", message, err)
 		return driver.status, err
 	}
 	return driver.status, nil

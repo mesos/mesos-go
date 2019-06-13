@@ -220,6 +220,22 @@ func AttachContainerInputTTY(t *mesos.TTYInfo) *agent.Call {
 	}
 }
 
+func AttachContainerInputHeartbeat(heartbeat *agent.ProcessIO_Control_Heartbeat) *agent.Call {
+	return &agent.Call{
+		Type: agent.Call_ATTACH_CONTAINER_INPUT,
+		AttachContainerInput: &agent.Call_AttachContainerInput{
+			Type: agent.Call_AttachContainerInput_PROCESS_IO,
+			ProcessIO: &agent.ProcessIO{
+				Type: agent.ProcessIO_CONTROL,
+				Control: &agent.ProcessIO_Control{
+					Type:      agent.ProcessIO_Control_HEARTBEAT,
+					Heartbeat: heartbeat,
+				},
+			},
+		},
+	}
+}
+
 func AddResourceProviderConfig(rpi mesos.ResourceProviderInfo) *agent.Call {
 	return &agent.Call{
 		Type: agent.Call_ADD_RESOURCE_PROVIDER_CONFIG,

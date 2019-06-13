@@ -75,6 +75,7 @@ func Example() {
 		AttachContainerInput(mesos.ContainerID{}),
 		AttachContainerInputTTY(nil),
 		AttachContainerInputData(nil),
+		AttachContainerInputHeartbeat(nil),
 	)))
 
 	// Output:

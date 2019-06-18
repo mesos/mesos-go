@@ -220,6 +220,10 @@ func doSubscribe(ctx context.Context, ci callerInternal, call *stateCall) (mesos
 }
 
 func mustSubscribe(ctx context.Context, state *state) phase {
+	return mustSubscribe0(ctx, state, doSubscribe)
+}
+
+func mustSubscribe0(ctx context.Context, state *state, doSubscribe func(context.Context, callerInternal, *stateCall) (string, context.CancelFunc)) phase {
 	// (a) validate call = SUBSCRIBE
 	if t := state.call.GetType(); t != scheduler.Call_SUBSCRIBE {
 		state.call.err = apierrors.CodeUnsubscribed.Error("httpsched: expected SUBSCRIBE instead of " + t.String())

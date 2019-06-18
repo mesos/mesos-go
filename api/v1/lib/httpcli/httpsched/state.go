@@ -40,11 +40,13 @@ type (
 		notifyBusy  int32
 		notifyQueue chan Notification
 
-		m           sync.Mutex   // m guards the following state:
-		fn          phase        // fn is the next state function to execute
-		caller      calls.Caller // caller is (maybe) used by a state function to execute a call
-		call        *stateCall   // upon executation of fn, this is the most recent call that's been issued
-		callCounter uint64       // index of the most recent call we've issued
+		m            sync.Mutex   // m guards the following state:
+		fn           phase        // fn is the next state function to execute
+		caller       calls.Caller // caller is (maybe) used by a state function to execute a call
+		call         *stateCall   // upon executation of fn, this is the most recent call that's been issued
+		callCounter  uint64       // index of the most recent call we've issued
+		disconnector func()       // disconnector cancels a subscription
+		streamID     string       // most recent subscription stream ID returned by mesos
 	}
 
 	stateCall struct {
@@ -83,13 +85,11 @@ func (f connectedPhase) exec(ctx context.Context, s *state) phase    { return f(
 // value of this var, but should exercise caution: failure to properly transition to a disconnected
 // state may cause subsequent Call operations to fail (without recourse).
 var DisconnectionDetector = func(disconnect func()) mesos.ResponseDecorator {
-	var disconnectOnce sync.Once
-	disconnectF := func() { disconnectOnce.Do(disconnect) }
-	closeF := mesos.CloseFunc(func() (_ error) { disconnectF(); return })
+	closeF := mesos.CloseFunc(func() (_ error) { disconnect(); return })
 	return mesos.ResponseDecoratorFunc(func(resp mesos.Response) mesos.Response {
 		return &mesos.ResponseWrapper{
 			Response: resp,
-			Decoder:  disconnectionDecoder(resp, disconnectF),
+			Decoder:  disconnectionDecoder(resp, disconnect),
 			Closer:   closeF,
 		}
 	})
@@ -120,7 +120,7 @@ func disconnectionDecoder(decoder encoding.Decoder, disconnect func()) encoding.
 	})
 }
 
-func doSubscribe(ctx context.Context, ci callerInternal, call *stateCall) (mesosStreamID string) {
+func doSubscribe(ctx context.Context, ci callerInternal, call *stateCall) (mesosStreamID string, cancel context.CancelFunc) {
 	var (
 		done            chan struct{} // avoid allocating these chans unless we actually need to redirect
 		redirectBackoff <-chan struct{}
@@ -153,6 +153,7 @@ func doSubscribe(ctx context.Context, ci callerInternal, call *stateCall) (mesos
 			call.resp = nil
 		}
 	)
+	ctx, cancel = context.WithCancel(ctx)
 	for attempt := 0; ; attempt++ {
 		// execute the call, save the result in resp, err
 		call.resp, call.err = subscribeCaller.Call(ctx, call.Call)
@@ -160,7 +161,9 @@ func doSubscribe(ctx context.Context, ci callerInternal, call *stateCall) (mesos
 		// if err != nil return mustSubscribe since we're unsubscribed
 		if call.err != nil {
 			clearResponse()
-			return ""
+			cancel()
+			mesosStreamID = ""
+			return
 		}
 
 		nmr, ok := call.resp.(*noMasterResponse)
@@ -171,14 +174,18 @@ func doSubscribe(ctx context.Context, ci callerInternal, call *stateCall) (mesos
 		if attempt >= nmr.maxAttempts {
 			call.err = nmr.clientErr
 			clearResponse()
-			return ""
+			cancel()
+			mesosStreamID = ""
+			return
 		}
 
 		u, err := url.Parse(nmr.newLeaderURL)
 		if err != nil {
 			call.err = err
 			clearResponse()
-			return ""
+			cancel()
+			mesosStreamID = ""
+			return
 		}
 
 		subscribeCaller.requestOpts = append(subscribeOptions[:], func(req *http.Request) {
@@ -191,7 +198,9 @@ func doSubscribe(ctx context.Context, ci callerInternal, call *stateCall) (mesos
 		case <-ctx.Done():
 			call.err = ctx.Err()
 			clearResponse()
-			return ""
+			cancel()
+			mesosStreamID = ""
+			return
 		}
 	}
 
@@ -204,6 +213,7 @@ func doSubscribe(ctx context.Context, ci callerInternal, call *stateCall) (mesos
 	}
 	if mesosStreamID == "" {
 		clearResponse()
+		cancel()
 		call.err = errMissingStreamID
 	}
 	return
@@ -216,16 +226,14 @@ func mustSubscribe(ctx context.Context, state *state) phase {
 		return disconnectedPhase(mustSubscribe)
 	}
 
-	mesosStreamID := doSubscribe(ctx, state.client, state.call)
+	mesosStreamID, cancel := doSubscribe(ctx, state.client, state.call)
 	if mesosStreamID == "" {
+		cancel()
 		return disconnectedPhase(mustSubscribe)
 	}
 
-	resp := state.call.resp // capture for use w/in closure
-
 	transitionToDisconnected := func() {
-		// swallow any error here; assumes that state.call.resp is guaranteed non-nil at this point.
-		defer resp.Close()
+		cancel()
 
 		// Any call can trigger a disconnect.
 		// Resubscription attempts block all other calls.
@@ -237,16 +245,23 @@ func mustSubscribe(ctx context.Context, state *state) phase {
 		}()
 
 		// NOTE: possibly long-blocking unless assumptions are met.
-		// Assume that we'll never be reconnected before this executes. e.g. the same goroutine that initiates the
-		// subscription is handling the decoding of subscription events.
 		state.m.Lock()
 		defer state.m.Unlock()
-		phaseChanged = state.setPhase(disconnectedPhase(mustSubscribe))
+
+		// Assume that we might be reconnected before this executes. e.g. the same goroutine
+		// that initiates the subscription MAY NOT be handling the decoding of individual
+		// subscription events.
+		if state.streamID == mesosStreamID {
+			phaseChanged = state.setPhase(disconnectedPhase(mustSubscribe))
+		}
 	}
 
 	// wrap the response: any errors processing the subscription stream should result in a
 	// transition to a disconnected state ASAP.
-	resp = DisconnectionDetector(transitionToDisconnected).Decorate(resp)
+	state.call.resp = DisconnectionDetector(func() func() {
+		var disconnectOnce sync.Once
+		return func() { disconnectOnce.Do(transitionToDisconnected) }
+	}()).Decorate(state.call.resp)
 
 	// (e) else prepare callerTemporary w/ special header, return anyCall since we're now subscribed
 	state.caller = &callerTemporary{
@@ -255,6 +270,11 @@ func mustSubscribe(ctx context.Context, state *state) phase {
 			httpcli.Header(headerMesosStreamID, mesosStreamID),
 		},
 	}
+
+	// disconnector probably must be goroutine-safe because it mutates a response that may
+	// be concurrently streaming data to a decoder.
+	state.disconnector = cancel
+	state.streamID = mesosStreamID
 	return connectedPhase(anyCall)
 }
 
@@ -277,6 +297,7 @@ func anyCall(ctx context.Context, state *state) phase {
 			state.caller = nil
 			state.call.resp = nil
 			state.call.err = nil
+			state.disconnector = nil
 			state.setPhase(connectedPhase(mustSubscribe))
 			return state.fn.exec(ctx, state)
 		}
@@ -297,7 +318,7 @@ func anyCall(ctx context.Context, state *state) phase {
 
 	// (b) execute call, save the result in resp, err.
 	// Release the state lock before issuing a potentially blocking non-SUBSCRIBE call.
-	call, caller := state.call, state.caller // pre-unlock state capture
+	call, caller, disconnector := state.call, state.caller, state.disconnector // pre-unlock state capture
 
 	state.m.Unlock()
 	defer state.m.Lock()
@@ -308,11 +329,13 @@ func anyCall(ctx context.Context, state *state) phase {
 
 	if errorIndicatesSubscriptionLoss(call.err) {
 		// properly transition back to a disconnected state if mesos thinks that we're unsubscribed
+		disconnector()
 		return disconnectedPhase(mustSubscribe)
 	}
 
 	if nmr, ok := call.resp.(*noMasterResponse); ok {
 		// properly transition back to a disconnected state if there's been a leadership change
+		disconnector()
 		call.err = nmr.clientErr
 		return disconnectedPhase(mustSubscribe)
 	}

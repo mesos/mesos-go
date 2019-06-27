@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -51,23 +51,26 @@ type ttyDevice struct {
 	winch            chan mesos.TTYInfo_WindowSize
 	cleanups         *cleanups
 	original_winsize C.struct_winsize
+	log              func(string, ...interface{})
 }
 
 func (t *ttyDevice) Done() <-chan struct{} { return t.cancel }
 func (t *ttyDevice) Close()                { t.cleanups.unwind() }
 
-func initTTY() (_ *ttyDevice, err error) {
-	return newTTY(
-		ttyConsoleAttach(&os.Stdin, &os.Stdout, &os.Stderr),
-		ttyWinch,
-		ttyTermReset,
-	)
+func initTTY(opts ...ttyConfiguration) (_ *ttyDevice, err error) {
+	defaultOptions := []ttyConfiguration{
+		ttyOption(ttyConsoleAttach(&os.Stdin, &os.Stdout, &os.Stderr)),
+		ttyOption(ttyWinch),
+		ttyOption(ttyTermReset),
+	}
+	return newTTY(append(defaultOptions, opts...)...)
 }
 
-func newTTY(opts ...ttyOption) (_ *ttyDevice, err error) {
+func newTTY(opts ...ttyConfiguration) (_ *ttyDevice, err error) {
 	tty := ttyDevice{
 		cancel:   make(chan struct{}),
 		cleanups: new(cleanups),
+		log:      log.Printf,
 	}
 	tty.cleanups.push(func() { close(tty.cancel) })
 	defer func() {
@@ -75,6 +78,17 @@ func newTTY(opts ...ttyOption) (_ *ttyDevice, err error) {
 			tty.Close()
 		}
 	}()
+
+	// apply tty non-device configuration options
+	for _, f := range opts {
+		if f == nil {
+			continue
+		}
+		if _, ok := f.(ttyDeviceConfiguration); ok {
+			continue
+		}
+		f.apply(&tty)
+	}
 
 	ttyname := C.ctermid((*C.char)(unsafe.Pointer(nil)))
 	if p := (*C.char)(unsafe.Pointer(ttyname)); p == nil {
@@ -106,7 +120,7 @@ func newTTY(opts ...ttyOption) (_ *ttyDevice, err error) {
 	tty.cleanups.push(func() {
 		r := C.tcsetattr(C.int(tty.fd), C.TCSANOW, &original_termios)
 		if r < 0 {
-			log.Printf("failed to set original termios: %d", r)
+			tty.log("failed to set original termios: %d", r)
 		}
 	})
 
@@ -121,22 +135,50 @@ func newTTY(opts ...ttyOption) (_ *ttyDevice, err error) {
 	tty.cleanups.push(func() {
 		r := C.ioctl_winsize(0, C.TIOCSWINSZ, unsafe.Pointer(&original_winsize))
 		if r < 0 {
-			log.Printf("failed to set winsize: %d", r)
+			tty.log("failed to set winsize: %d", r)
 		}
 	})
 
-	log.Printf("original window size is %d x %d\n", tty.original_winsize.ws_col, tty.original_winsize.ws_row)
+	tty.log("original window size is %d x %d\n", tty.original_winsize.ws_col, tty.original_winsize.ws_row)
 
+	// apply tty device configuration options
 	for _, f := range opts {
-		if f != nil {
-			f(&tty)
+		if f == nil {
+			continue
 		}
+		if _, ok := f.(ttyDeviceConfiguration); !ok {
+			continue
+		}
+		f.apply(&tty)
 	}
 
 	return &tty, nil
 }
 
+type ttyConfiguration interface {
+	apply(*ttyDevice)
+}
+
+// marker interface
+type ttyDeviceConfiguration interface {
+	deviceConfiguration()
+}
+
 type ttyOption func(*ttyDevice)
+
+func (f ttyOption) apply(tty *ttyDevice) { f(tty) }
+
+func (f ttyOption) deviceConfiguration() {}
+
+type ttyInit func(*ttyDevice)
+
+func (f ttyInit) apply(tty *ttyDevice) { f(tty) }
+
+func ttyLogger(log func(string, ...interface{})) ttyInit {
+	return func(tty *ttyDevice) {
+		tty.log = log
+	}
+}
 
 func ttyConsoleAttach(stdin, stdout, stderr **os.File) ttyOption {
 	swapfd := func(newfd uintptr, name string, target **os.File) func() {

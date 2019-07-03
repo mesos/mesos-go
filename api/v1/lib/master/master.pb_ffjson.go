@@ -5629,10 +5629,21 @@ func (mj *Call_UpdateQuota) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{"quota_requests":`)
-	if mj.QuotaRequests != nil {
+	buf.WriteByte('{')
+	if mj.Force != nil {
+		if true {
+			if *mj.Force {
+				buf.WriteString(`"force":true`)
+			} else {
+				buf.WriteString(`"force":false`)
+			}
+			buf.WriteByte(',')
+		}
+	}
+	buf.WriteString(`"quota_configs":`)
+	if mj.QuotaConfigs != nil {
 		buf.WriteString(`[`)
-		for i, v := range mj.QuotaRequests {
+		for i, v := range mj.QuotaConfigs {
 			if i != 0 {
 				buf.WriteString(`,`)
 			}
@@ -5658,10 +5669,14 @@ const (
 	ffj_t_Call_UpdateQuotabase = iota
 	ffj_t_Call_UpdateQuotano_such_key
 
-	ffj_t_Call_UpdateQuota_QuotaRequests
+	ffj_t_Call_UpdateQuota_Force
+
+	ffj_t_Call_UpdateQuota_QuotaConfigs
 )
 
-var ffj_key_Call_UpdateQuota_QuotaRequests = []byte("quota_requests")
+var ffj_key_Call_UpdateQuota_Force = []byte("force")
+
+var ffj_key_Call_UpdateQuota_QuotaConfigs = []byte("quota_configs")
 
 func (uj *Call_UpdateQuota) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -5722,18 +5737,32 @@ mainparse:
 			} else {
 				switch kn[0] {
 
+				case 'f':
+
+					if bytes.Equal(ffj_key_Call_UpdateQuota_Force, kn) {
+						currentKey = ffj_t_Call_UpdateQuota_Force
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'q':
 
-					if bytes.Equal(ffj_key_Call_UpdateQuota_QuotaRequests, kn) {
-						currentKey = ffj_t_Call_UpdateQuota_QuotaRequests
+					if bytes.Equal(ffj_key_Call_UpdateQuota_QuotaConfigs, kn) {
+						currentKey = ffj_t_Call_UpdateQuota_QuotaConfigs
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
 
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Call_UpdateQuota_QuotaRequests, kn) {
-					currentKey = ffj_t_Call_UpdateQuota_QuotaRequests
+				if fflib.EqualFoldRight(ffj_key_Call_UpdateQuota_QuotaConfigs, kn) {
+					currentKey = ffj_t_Call_UpdateQuota_QuotaConfigs
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_Call_UpdateQuota_Force, kn) {
+					currentKey = ffj_t_Call_UpdateQuota_Force
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -5755,8 +5784,11 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Call_UpdateQuota_QuotaRequests:
-					goto handle_QuotaRequests
+				case ffj_t_Call_UpdateQuota_Force:
+					goto handle_Force
+
+				case ffj_t_Call_UpdateQuota_QuotaConfigs:
+					goto handle_QuotaConfigs
 
 				case ffj_t_Call_UpdateQuotano_such_key:
 					err = fs.SkipField(tok)
@@ -5772,9 +5804,50 @@ mainparse:
 		}
 	}
 
-handle_QuotaRequests:
+handle_Force:
 
-	/* handler: uj.QuotaRequests type=[]quota.QuotaRequest kind=slice quoted=false*/
+	/* handler: uj.Force type=bool kind=bool quoted=false*/
+
+	{
+		if tok != fflib.FFTok_bool && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for bool", tok))
+		}
+	}
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.Force = nil
+
+		} else {
+			tmpb := fs.Output.Bytes()
+
+			var tval bool
+
+			if bytes.Compare([]byte{'t', 'r', 'u', 'e'}, tmpb) == 0 {
+
+				tval = true
+
+			} else if bytes.Compare([]byte{'f', 'a', 'l', 's', 'e'}, tmpb) == 0 {
+
+				tval = false
+
+			} else {
+				err = errors.New("unexpected bytes for true/false value")
+				return fs.WrapErr(err)
+			}
+
+			uj.Force = &tval
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_QuotaConfigs:
+
+	/* handler: uj.QuotaConfigs type=[]quota.QuotaConfig kind=slice quoted=false*/
 
 	{
 
@@ -5785,16 +5858,16 @@ handle_QuotaRequests:
 		}
 
 		if tok == fflib.FFTok_null {
-			uj.QuotaRequests = nil
+			uj.QuotaConfigs = nil
 		} else {
 
-			uj.QuotaRequests = []quota.QuotaRequest{}
+			uj.QuotaConfigs = []quota.QuotaConfig{}
 
 			wantVal := true
 
 			for {
 
-				var tmp_uj__QuotaRequests quota.QuotaRequest
+				var tmp_uj__QuotaConfigs quota.QuotaConfig
 
 				tok = fs.Scan()
 				if tok == fflib.FFTok_error {
@@ -5815,7 +5888,7 @@ handle_QuotaRequests:
 					wantVal = true
 				}
 
-				/* handler: tmp_uj__QuotaRequests type=quota.QuotaRequest kind=struct quoted=false*/
+				/* handler: tmp_uj__QuotaConfigs type=quota.QuotaConfig kind=struct quoted=false*/
 
 				{
 					if tok == fflib.FFTok_null {
@@ -5824,14 +5897,14 @@ handle_QuotaRequests:
 						goto mainparse
 					}
 
-					err = tmp_uj__QuotaRequests.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					err = tmp_uj__QuotaConfigs.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
 						return err
 					}
 					state = fflib.FFParse_after_value
 				}
 
-				uj.QuotaRequests = append(uj.QuotaRequests, tmp_uj__QuotaRequests)
+				uj.QuotaConfigs = append(uj.QuotaConfigs, tmp_uj__QuotaConfigs)
 
 				wantVal = false
 			}

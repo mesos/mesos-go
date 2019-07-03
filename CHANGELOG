@@ -1,5 +1,11 @@
-xxxx-xx-xx: v0.0.10
-  [[started]] 1.8.x protobuf support
+xxxx-xx-xx: v0.0.11
+  TODO
+
+2019-07-03: v0.0.10
+  1.8.x protobuf support
+  cleanups and enhancements for msh example app
+  additional operator API helpers
+  fixes for concurrent scheduler API caller invocation
 
 2019-03-15: v0.0.9
   1.7.x protobuf support

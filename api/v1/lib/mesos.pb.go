@@ -1787,6 +1787,8 @@ func (RLimitInfo_RLimit_Type) EnumDescriptor() ([]byte, []int) {
 }
 
 // All container implementation types.
+// For each type there should be a field in the ContainerInfo itself
+// with exactly matching name in lowercase.
 type ContainerInfo_Type int32
 
 const (
@@ -4270,7 +4272,8 @@ type Resource_DiskInfo_Source struct {
 	// identify this source in the cluster.
 	ID *string `protobuf:"bytes,4,opt,name=id" json:"id,omitempty"`
 	// Additional metadata for this source. This field maps onto CSI volume
-	// attributes and is not expected to be set by frameworks.
+	// context. Frameworks should neither alter this field, nor expect this
+	// field to remain unchanged.
 	Metadata *Labels `protobuf:"bytes,5,opt,name=metadata" json:"metadata,omitempty"`
 	// This field serves as an indirection to a set of storage
 	// vendor specific disk parameters which describe the properties
@@ -6640,7 +6643,7 @@ func (m *Offer_Operation_ShrinkVolume) GetSubtract() Value_Scalar {
 // feature is experimental.
 type Offer_Operation_CreateDisk struct {
 	Source Resource `protobuf:"bytes,1,req,name=source" json:"source"`
-	// NOTE: Only `MOUNT` or `BLOCK` is allowed in the `target_type` field.
+	// NOTE: Only `MOUNT` or `BLOCK` is allowed in this field.
 	TargetType Resource_DiskInfo_Source_Type `protobuf:"varint,2,req,name=target_type,json=targetType,enum=mesos.Resource_DiskInfo_Source_Type" json:"target_type"`
 	// Apply the specified profile to the created disk. This field must be set
 	// if `source` does not have a profile, and must not be set if it has one.
@@ -6677,17 +6680,19 @@ func (m *Offer_Operation_CreateDisk) GetTargetProfile() string {
 	return ""
 }
 
-// Destroy a `MOUNT` or `BLOCK` disk resource backed by a CSI volume.
+// Destroy a disk resource backed by a CSI volume.
 //
 // In the typical case where the CSI plugin of the volume supports volume
-// deprovisioning and the profile of the disk resource is known to Mesos,
-// the volume will be deprovisioned and a `RAW` disk resource with the same
-// profile but no source ID will be returned. However, the following corner
-// cases could lead to different outcomes:
+// deprovisioning and the disk resource is a `MOUNT` or `BLOCK` disk with a
+// profile known to Mesos, the volume will be deprovisioned and a `RAW` disk
+// resource with the same profile but no source ID will be returned.
+// However, the following scenarios could lead to different outcomes:
 //
 // (1) If the CSI plugin supports volume deprovisioning but the profile of
-//     the disk resource is no longer reported by the disk profile adaptor,
-//     the volume will be deprovisioned but no resource will be returned.
+//     the disk resource is unknown to the disk profile adaptor, or the disk
+//     resource is a `RAW` disk with no profile but a source ID (see above
+//     for possible scenarios), the volume will be deprovisioned but no
+//     resource will be returned.
 //
 // (2) If the CSI plugin does not support volume deprovisioning, the volume
 //     won't be deprovisioned and a `RAW` disk resource with no profile but
@@ -6696,7 +6701,7 @@ func (m *Offer_Operation_CreateDisk) GetTargetProfile() string {
 // NOTE: For the time being, this API is subject to change and the related
 // feature is experimental.
 type Offer_Operation_DestroyDisk struct {
-	// NOTE: Only a `MOUNT` or `BLOCK` disk is allowed in the `source` field.
+	// NOTE: Only a `MOUNT`, `BLOCK` or `RAW` disk is allowed in this field.
 	Source Resource `protobuf:"bytes,1,req,name=source" json:"source"`
 }
 
@@ -8495,7 +8500,9 @@ type SeccompInfo struct {
 	// If not set or set to `false`, the container is launched with
 	// the profile specified in the `profile_name` field.
 	//
-	// NOTE: `profile_name` should not be specified if `unconfined` set to `true`.
+	// NOTE: `profile_name` must not be specified if `unconfined` set to `true`.
+	// `profile_name` must be specified if `unconfined` is not set or
+	// is set to `false`.
 	Unconfined *bool `protobuf:"varint,2,opt,name=unconfined" json:"unconfined,omitempty"`
 }
 
@@ -8537,6 +8544,7 @@ type LinuxInfo struct {
 	// isolator is not enabled.
 	SharePIDNamespace *bool `protobuf:"varint,4,opt,name=share_pid_namespace,json=sharePidNamespace" json:"share_pid_namespace,omitempty"`
 	// Represents Seccomp configuration, which is used for syscall filtering.
+	// This field is used to override the agent's default Seccomp configuration.
 	Seccomp *SeccompInfo `protobuf:"bytes,5,opt,name=seccomp" json:"seccomp,omitempty"`
 }
 
@@ -8689,8 +8697,8 @@ type ContainerInfo struct {
 	Type     *ContainerInfo_Type `protobuf:"varint,1,req,name=type,enum=mesos.ContainerInfo_Type" json:"type,omitempty"`
 	Volumes  []Volume            `protobuf:"bytes,2,rep,name=volumes" json:"volumes"`
 	Hostname *string             `protobuf:"bytes,4,opt,name=hostname" json:"hostname,omitempty"`
-	// Only one of the following *Info messages should be set to match
-	// the type.
+	// At most one of the following *Info messages should be set to match
+	// the type, i.e. the "protobuf union" in ContainerInfo should be valid.
 	Docker *ContainerInfo_DockerInfo `protobuf:"bytes,3,opt,name=docker" json:"docker,omitempty"`
 	Mesos  *ContainerInfo_MesosInfo  `protobuf:"bytes,5,opt,name=mesos" json:"mesos,omitempty"`
 	// A list of network requests. A framework can request multiple IP addresses

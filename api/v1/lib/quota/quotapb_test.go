@@ -10,6 +10,7 @@ It is generated from these files:
 It has these top-level messages:
 	QuotaInfo
 	QuotaRequest
+	QuotaConfig
 	QuotaStatus
 */
 package quota
@@ -108,6 +109,46 @@ func BenchmarkQuotaRequestProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
+func BenchmarkQuotaConfigProtoMarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*QuotaConfig, 10000)
+	for i := 0; i < 10000; i++ {
+		pops[i] = NewPopulatedQuotaConfig(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
+		if err != nil {
+			panic(err)
+		}
+		total += len(dAtA)
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func BenchmarkQuotaConfigProtoUnmarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	datas := make([][]byte, 10000)
+	for i := 0; i < 10000; i++ {
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedQuotaConfig(popr, false))
+		if err != nil {
+			panic(err)
+		}
+		datas[i] = dAtA
+	}
+	msg := &QuotaConfig{}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += len(datas[i%10000])
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
+			panic(err)
+		}
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
 func BenchmarkQuotaStatusProtoMarshal(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
@@ -168,6 +209,20 @@ func BenchmarkQuotaRequestProtoSize(b *testing.B) {
 	pops := make([]*QuotaRequest, 1000)
 	for i := 0; i < 1000; i++ {
 		pops[i] = NewPopulatedQuotaRequest(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += pops[i%1000].ProtoSize()
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func BenchmarkQuotaConfigProtoSize(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*QuotaConfig, 1000)
+	for i := 0; i < 1000; i++ {
+		pops[i] = NewPopulatedQuotaConfig(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

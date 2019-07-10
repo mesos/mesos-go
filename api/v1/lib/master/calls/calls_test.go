@@ -67,6 +67,9 @@ func Example() {
 	blackhole(RemoveQuota(""))
 	blackhole(MarkAgentGone(mesos.AgentID{}))
 	blackhole(Teardown(mesos.FrameworkID{}))
+	blackhole(DrainAgent(mesos.AgentID{}))
+	blackhole(DeactivateAgent(mesos.AgentID{}))
+	blackhole(ReactivateAgent(mesos.AgentID{}))
 
 	// Output:
 }

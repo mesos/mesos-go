@@ -432,3 +432,37 @@ func ReconcileOperations(req []ReconcileOperationRequest) *scheduler.Call {
 		},
 	}
 }
+
+// UpdateFramework updates the FrameworkInfo. All fields can be updated except for:
+//
+// * FrameworkInfo.checkpoint
+// * FrameworkInfo.principal
+// * FrameworkInfo.user
+//
+// The call returns after the update is either applied completely or
+// not applied at all. No incomplete updates occur.
+//
+// The HTTP response codes specific to this call are:
+//
+// * 200 OK: update operation was successfully completed.
+// * 400 Bad Request: the requested update is not valid.
+// * 403 Forbidden: framework is not authorized to use some entities
+//   requested by the update (e.g. not authorized to use some of the
+//   supplied roles).
+// * 409 Conflict: framework disappeared while this call was being processed
+//   (example: the framework was removed by a concurrent TEARDOWN call).
+//
+func UpdateFramework(fi mesos.FrameworkInfo, options ...func(*scheduler.Call_UpdateFramework)) *scheduler.Call {
+	c := &scheduler.Call{
+		Type: scheduler.Call_UPDATE_FRAMEWORK,
+		UpdateFramework: &scheduler.Call_UpdateFramework{
+			FrameworkInfo: fi,
+		},
+	}
+	for _, f := range options {
+		if f != nil {
+			f(c.UpdateFramework)
+		}
+	}
+	return c
+}

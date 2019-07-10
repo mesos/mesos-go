@@ -95,15 +95,16 @@ protobufs-requirements:
 	@for i in ${REQUIRED_PROTOC_BINARIES}; do which $$i >/dev/null || { echo "failed to locate binary: $$i"; exit 1; }; done
 
 .PHONY: protobufs
+protobufs: GOGO_OUT=Mgoogle/protobuf/duration.proto=github.com/gogo/protobuf/types:.
 protobufs: protobufs-requirements clean-protobufs
-	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. *.proto)
-	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./scheduler/*.proto)
-	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./executor/*.proto)
-	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./agent/*.proto)
-	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./quota/*.proto)
-	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./allocator/*.proto)
-	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./maintenance/*.proto)
-	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=. ./master/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=${GOGO_OUT} *.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=${GOGO_OUT} ./scheduler/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=${GOGO_OUT} ./executor/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=${GOGO_OUT} ./agent/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=${GOGO_OUT} ./quota/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=${GOGO_OUT} ./allocator/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=${GOGO_OUT} ./maintenance/*.proto)
+	(cd ${API_PKG}; protoc --proto_path="${PROTO_PATH}" --gogo_out=${GOGO_OUT} ./master/*.proto)
 
 .PHONY: clean-protobufs
 clean-protobufs:

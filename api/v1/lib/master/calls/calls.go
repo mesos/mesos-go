@@ -344,3 +344,48 @@ func Teardown(id mesos.FrameworkID) *master.Call {
 		},
 	}
 }
+
+// DrainAgent marks an agent for automated draining of tasks.
+// This prevents further tasks from being launched on the agent, by preventing
+// offers from being sent for the agent (see 'DeactivateAgent'), and also
+// begins killing tasks running on the agent.
+// EXPERIMENTAL.
+func DrainAgent(a mesos.AgentID, options ...func(*master.Call_DrainAgent)) *master.Call {
+	c := &master.Call{
+		Type: master.Call_DRAIN_AGENT,
+		DrainAgent: &master.Call_DrainAgent{
+			AgentID: a,
+		},
+	}
+	for _, f := range options {
+		if f != nil {
+			f(c.DrainAgent)
+		}
+	}
+	return c
+}
+
+// DeactivateAgent turns off offers for a specific agent.
+// A deactivated agent will continue to run tasks and communicate statuses
+// with the master.
+// EXPERIMENTAL.
+func DeactivateAgent(a mesos.AgentID) *master.Call {
+	return &master.Call{
+		Type: master.Call_DEACTIVATE_AGENT,
+		DeactivateAgent: &master.Call_DeactivateAgent{
+			AgentID: a,
+		},
+	}
+}
+
+// ReactivateAgent turns on offers for a specific agent, which was previously drained or
+// deactivated.
+// EXPERIMENTAL.
+func ReactivateAgent(a mesos.AgentID) *master.Call {
+	return &master.Call{
+		Type: master.Call_REACTIVATE_AGENT,
+		ReactivateAgent: &master.Call_ReactivateAgent{
+			AgentID: a,
+		},
+	}
+}

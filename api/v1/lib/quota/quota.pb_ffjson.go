@@ -1248,6 +1248,27 @@ func (mj *QuotaStatus) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	} else {
 		buf.WriteString(`null`)
 	}
+	buf.WriteString(`,"configs":`)
+	if mj.Configs != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Configs {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
 	buf.WriteByte('}')
 	return nil
 }
@@ -1257,9 +1278,13 @@ const (
 	ffj_t_QuotaStatusno_such_key
 
 	ffj_t_QuotaStatus_Infos
+
+	ffj_t_QuotaStatus_Configs
 )
 
 var ffj_key_QuotaStatus_Infos = []byte("infos")
+
+var ffj_key_QuotaStatus_Configs = []byte("configs")
 
 func (uj *QuotaStatus) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -1320,6 +1345,14 @@ mainparse:
 			} else {
 				switch kn[0] {
 
+				case 'c':
+
+					if bytes.Equal(ffj_key_QuotaStatus_Configs, kn) {
+						currentKey = ffj_t_QuotaStatus_Configs
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'i':
 
 					if bytes.Equal(ffj_key_QuotaStatus_Infos, kn) {
@@ -1328,6 +1361,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.EqualFoldRight(ffj_key_QuotaStatus_Configs, kn) {
+					currentKey = ffj_t_QuotaStatus_Configs
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_QuotaStatus_Infos, kn) {
@@ -1355,6 +1394,9 @@ mainparse:
 
 				case ffj_t_QuotaStatus_Infos:
 					goto handle_Infos
+
+				case ffj_t_QuotaStatus_Configs:
+					goto handle_Configs
 
 				case ffj_t_QuotaStatusno_such_key:
 					err = fs.SkipField(tok)
@@ -1430,6 +1472,75 @@ handle_Infos:
 				}
 
 				uj.Infos = append(uj.Infos, tmp_uj__Infos)
+
+				wantVal = false
+			}
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Configs:
+
+	/* handler: uj.Configs type=[]quota.QuotaConfig kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.Configs = nil
+		} else {
+
+			uj.Configs = []QuotaConfig{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__Configs QuotaConfig
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__Configs type=quota.QuotaConfig kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__Configs.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.Configs = append(uj.Configs, tmp_uj__Configs)
 
 				wantVal = false
 			}

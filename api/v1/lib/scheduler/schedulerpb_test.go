@@ -1268,6 +1268,46 @@ func BenchmarkCall_SuppressProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
+func BenchmarkCall_UpdateFrameworkProtoMarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*Call_UpdateFramework, 10000)
+	for i := 0; i < 10000; i++ {
+		pops[i] = NewPopulatedCall_UpdateFramework(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(pops[i%10000])
+		if err != nil {
+			panic(err)
+		}
+		total += len(dAtA)
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func BenchmarkCall_UpdateFrameworkProtoUnmarshal(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	datas := make([][]byte, 10000)
+	for i := 0; i < 10000; i++ {
+		dAtA, err := github_com_gogo_protobuf_proto.Marshal(NewPopulatedCall_UpdateFramework(popr, false))
+		if err != nil {
+			panic(err)
+		}
+		datas[i] = dAtA
+	}
+	msg := &Call_UpdateFramework{}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += len(datas[i%10000])
+		if err := github_com_gogo_protobuf_proto.Unmarshal(datas[i%10000], msg); err != nil {
+			panic(err)
+		}
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
 func BenchmarkEventProtoSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
@@ -1694,6 +1734,20 @@ func BenchmarkCall_SuppressProtoSize(b *testing.B) {
 	pops := make([]*Call_Suppress, 1000)
 	for i := 0; i < 1000; i++ {
 		pops[i] = NewPopulatedCall_Suppress(popr, false)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		total += pops[i%1000].ProtoSize()
+	}
+	b.SetBytes(int64(total / b.N))
+}
+
+func BenchmarkCall_UpdateFrameworkProtoSize(b *testing.B) {
+	popr := math_rand.New(math_rand.NewSource(616))
+	total := 0
+	pops := make([]*Call_UpdateFramework, 1000)
+	for i := 0; i < 1000; i++ {
+		pops[i] = NewPopulatedCall_UpdateFramework(popr, false)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

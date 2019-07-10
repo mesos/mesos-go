@@ -9406,7 +9406,7 @@ func NewPopulatedResponse_WaitNestedContainer(r randyAgent, easy bool) *Response
 		this.State = &v64
 	}
 	if r.Intn(10) != 0 {
-		v65 := mesos.TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 33, 23, 24, 1, 2, 3, 4, 5, 6, 27, 7, 9, 18, 10, 11, 31, 32, 12, 13, 30, 28, 29, 25, 26, 14, 15, 16}[r.Intn(34)])
+		v65 := mesos.TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 33, 23, 24, 1, 2, 3, 4, 5, 6, 27, 7, 9, 18, 10, 34, 11, 31, 32, 12, 13, 30, 28, 29, 25, 26, 14, 15, 16}[r.Intn(35)])
 		this.Reason = &v65
 	}
 	if r.Intn(10) != 0 {
@@ -9435,7 +9435,7 @@ func NewPopulatedResponse_WaitContainer(r randyAgent, easy bool) *Response_WaitC
 		this.State = &v68
 	}
 	if r.Intn(10) != 0 {
-		v69 := mesos.TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 33, 23, 24, 1, 2, 3, 4, 5, 6, 27, 7, 9, 18, 10, 11, 31, 32, 12, 13, 30, 28, 29, 25, 26, 14, 15, 16}[r.Intn(34)])
+		v69 := mesos.TaskStatus_Reason([]int32{0, 21, 19, 20, 8, 17, 22, 33, 23, 24, 1, 2, 3, 4, 5, 6, 27, 7, 9, 18, 10, 34, 11, 31, 32, 12, 13, 30, 28, 29, 25, 26, 14, 15, 16}[r.Intn(35)])
 		this.Reason = &v69
 	}
 	if r.Intn(10) != 0 {

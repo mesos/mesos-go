@@ -288,6 +288,21 @@ func (mj *Call) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.UpdateFramework != nil {
+		if true {
+			buf.WriteString(`"update_framework":`)
+
+			{
+
+				err = mj.UpdateFramework.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -330,6 +345,8 @@ const (
 	ffj_t_Call_Request
 
 	ffj_t_Call_Suppress
+
+	ffj_t_Call_UpdateFramework
 )
 
 var ffj_key_Call_FrameworkID = []byte("framework_id")
@@ -365,6 +382,8 @@ var ffj_key_Call_Message = []byte("message")
 var ffj_key_Call_Request = []byte("request")
 
 var ffj_key_Call_Suppress = []byte("suppress")
+
+var ffj_key_Call_UpdateFramework = []byte("update_framework")
 
 func (uj *Call) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -534,6 +553,20 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'u':
+
+					if bytes.Equal(ffj_key_Call_UpdateFramework, kn) {
+						currentKey = ffj_t_Call_UpdateFramework
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_UpdateFramework, kn) {
+					currentKey = ffj_t_Call_UpdateFramework
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Call_Suppress, kn) {
@@ -705,6 +738,9 @@ mainparse:
 
 				case ffj_t_Call_Suppress:
 					goto handle_Suppress
+
+				case ffj_t_Call_UpdateFramework:
+					goto handle_UpdateFramework
 
 				case ffj_t_Callno_such_key:
 					err = fs.SkipField(tok)
@@ -1169,6 +1205,33 @@ handle_Suppress:
 		}
 
 		err = uj.Suppress.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_UpdateFramework:
+
+	/* handler: uj.UpdateFramework type=scheduler.Call_UpdateFramework kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.UpdateFramework = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.UpdateFramework == nil {
+			uj.UpdateFramework = new(Call_UpdateFramework)
+		}
+
+		err = uj.UpdateFramework.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}
@@ -6266,6 +6329,311 @@ handle_Roles:
 				}
 
 				uj.Roles = append(uj.Roles, tmp_uj__Roles)
+
+				wantVal = false
+			}
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+wantedvalue:
+	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+wrongtokenerror:
+	return fs.WrapErr(fmt.Errorf("ffjson: wanted token: %v, but got token: %v output=%s", wantedTok, tok, fs.Output.String()))
+tokerror:
+	if fs.BigError != nil {
+		return fs.WrapErr(fs.BigError)
+	}
+	err = fs.Error.ToError()
+	if err != nil {
+		return fs.WrapErr(err)
+	}
+	panic("ffjson-generated: unreachable, please report bug.")
+done:
+
+	return nil
+}
+
+func (mj *Call_UpdateFramework) MarshalJSON() ([]byte, error) {
+	var buf fflib.Buffer
+	if mj == nil {
+		buf.WriteString("null")
+		return buf.Bytes(), nil
+	}
+	err := mj.MarshalJSONBuf(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+func (mj *Call_UpdateFramework) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
+	if mj == nil {
+		buf.WriteString("null")
+		return nil
+	}
+	var err error
+	var obj []byte
+	_ = obj
+	_ = err
+	buf.WriteString(`{ "framework_info":`)
+
+	{
+
+		err = mj.FrameworkInfo.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
+	}
+	buf.WriteByte(',')
+	if len(mj.SuppressedRoles) != 0 {
+		buf.WriteString(`"suppressed_roles":`)
+		if mj.SuppressedRoles != nil {
+			buf.WriteString(`[`)
+			for i, v := range mj.SuppressedRoles {
+				if i != 0 {
+					buf.WriteString(`,`)
+				}
+				fflib.WriteJsonString(buf, string(v))
+			}
+			buf.WriteString(`]`)
+		} else {
+			buf.WriteString(`null`)
+		}
+		buf.WriteByte(',')
+	}
+	buf.Rewind(1)
+	buf.WriteByte('}')
+	return nil
+}
+
+const (
+	ffj_t_Call_UpdateFrameworkbase = iota
+	ffj_t_Call_UpdateFrameworkno_such_key
+
+	ffj_t_Call_UpdateFramework_FrameworkInfo
+
+	ffj_t_Call_UpdateFramework_SuppressedRoles
+)
+
+var ffj_key_Call_UpdateFramework_FrameworkInfo = []byte("framework_info")
+
+var ffj_key_Call_UpdateFramework_SuppressedRoles = []byte("suppressed_roles")
+
+func (uj *Call_UpdateFramework) UnmarshalJSON(input []byte) error {
+	fs := fflib.NewFFLexer(input)
+	return uj.UnmarshalJSONFFLexer(fs, fflib.FFParse_map_start)
+}
+
+func (uj *Call_UpdateFramework) UnmarshalJSONFFLexer(fs *fflib.FFLexer, state fflib.FFParseState) error {
+	var err error = nil
+	currentKey := ffj_t_Call_UpdateFrameworkbase
+	_ = currentKey
+	tok := fflib.FFTok_init
+	wantedTok := fflib.FFTok_init
+
+mainparse:
+	for {
+		tok = fs.Scan()
+		//	println(fmt.Sprintf("debug: tok: %v  state: %v", tok, state))
+		if tok == fflib.FFTok_error {
+			goto tokerror
+		}
+
+		switch state {
+
+		case fflib.FFParse_map_start:
+			if tok != fflib.FFTok_left_bracket {
+				wantedTok = fflib.FFTok_left_bracket
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_key
+			continue
+
+		case fflib.FFParse_after_value:
+			if tok == fflib.FFTok_comma {
+				state = fflib.FFParse_want_key
+			} else if tok == fflib.FFTok_right_bracket {
+				goto done
+			} else {
+				wantedTok = fflib.FFTok_comma
+				goto wrongtokenerror
+			}
+
+		case fflib.FFParse_want_key:
+			// json {} ended. goto exit. woo.
+			if tok == fflib.FFTok_right_bracket {
+				goto done
+			}
+			if tok != fflib.FFTok_string {
+				wantedTok = fflib.FFTok_string
+				goto wrongtokenerror
+			}
+
+			kn := fs.Output.Bytes()
+			if len(kn) <= 0 {
+				// "" case. hrm.
+				currentKey = ffj_t_Call_UpdateFrameworkno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			} else {
+				switch kn[0] {
+
+				case 'f':
+
+					if bytes.Equal(ffj_key_Call_UpdateFramework_FrameworkInfo, kn) {
+						currentKey = ffj_t_Call_UpdateFramework_FrameworkInfo
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 's':
+
+					if bytes.Equal(ffj_key_Call_UpdateFramework_SuppressedRoles, kn) {
+						currentKey = ffj_t_Call_UpdateFramework_SuppressedRoles
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_UpdateFramework_SuppressedRoles, kn) {
+					currentKey = ffj_t_Call_UpdateFramework_SuppressedRoles
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_UpdateFramework_FrameworkInfo, kn) {
+					currentKey = ffj_t_Call_UpdateFramework_FrameworkInfo
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				currentKey = ffj_t_Call_UpdateFrameworkno_such_key
+				state = fflib.FFParse_want_colon
+				goto mainparse
+			}
+
+		case fflib.FFParse_want_colon:
+			if tok != fflib.FFTok_colon {
+				wantedTok = fflib.FFTok_colon
+				goto wrongtokenerror
+			}
+			state = fflib.FFParse_want_value
+			continue
+		case fflib.FFParse_want_value:
+
+			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
+				switch currentKey {
+
+				case ffj_t_Call_UpdateFramework_FrameworkInfo:
+					goto handle_FrameworkInfo
+
+				case ffj_t_Call_UpdateFramework_SuppressedRoles:
+					goto handle_SuppressedRoles
+
+				case ffj_t_Call_UpdateFrameworkno_such_key:
+					err = fs.SkipField(tok)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
+					state = fflib.FFParse_after_value
+					goto mainparse
+				}
+			} else {
+				goto wantedvalue
+			}
+		}
+	}
+
+handle_FrameworkInfo:
+
+	/* handler: uj.FrameworkInfo type=mesos.FrameworkInfo kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		err = uj.FrameworkInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_SuppressedRoles:
+
+	/* handler: uj.SuppressedRoles type=[]string kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.SuppressedRoles = nil
+		} else {
+
+			uj.SuppressedRoles = []string{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__SuppressedRoles string
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__SuppressedRoles type=string kind=string quoted=false*/
+
+				{
+
+					{
+						if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+							return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+						}
+					}
+
+					if tok == fflib.FFTok_null {
+
+					} else {
+
+						outBuf := fs.Output.Bytes()
+
+						tmp_uj__SuppressedRoles = string(string(outBuf))
+
+					}
+				}
+
+				uj.SuppressedRoles = append(uj.SuppressedRoles, tmp_uj__SuppressedRoles)
 
 				wantVal = false
 			}

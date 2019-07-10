@@ -950,6 +950,10 @@ message MasterInfo {
       // changes after reregistering.
       AGENT_UPDATE = 1;
 
+      // The master can drain or deactivate agents when requested
+      // via operator APIs.
+      AGENT_DRAINING = 2;
+
       option (gogoproto.goproto_enum_prefix) = true;
     }
     optional Type type = 1 [(gogoproto.nullable) = false];
@@ -1063,6 +1067,10 @@ message AgentInfo {
       // handle feedback for operations on agent default resources, the
       // RESOURCE_PROVIDER capability should be set as well.
       AGENT_OPERATION_FEEDBACK = 6;
+
+      // This expresses the ability for the agent to automatically drain tasks
+      // in preparation for operator maintenance. This capability is required.
+      AGENT_DRAINING = 7;
 
       option (gogoproto.goproto_enum_prefix) = true;
     }
@@ -2658,6 +2666,7 @@ message TaskStatus {
     REASON_RECONCILIATION = 9;
     REASON_RESOURCES_UNKNOWN = 18;
     REASON_AGENT_DISCONNECTED = 10;
+    REASON_AGENT_DRAINING = 34;
     REASON_AGENT_REMOVED = 11;
     REASON_AGENT_REMOVED_BY_OPERATOR = 31;
     REASON_AGENT_REREGISTERED = 32;
@@ -3313,6 +3322,54 @@ message LinuxInfo {
   // Represents Seccomp configuration, which is used for syscall filtering.
   // This field is used to override the agent's default Seccomp configuration.
   optional SeccompInfo seccomp = 5;
+
+  enum IpcMode {
+    UNKNOWN = 0;
+
+    // The container will have its own IPC namespace and /dev/shm, with a
+    // possibility to share them with its child containers.
+    PRIVATE = 1;
+
+    // The container will share the IPC namespace and /dev/shm from its
+    // parent. If the container is a top level container, it will share
+    // the IPC namespace and /dev/shm from the agent host, if the container
+    // is a nested container, it will share the IPC namespace and /dev/shm
+    // from its parent container. The implication is if a nested container
+    // wants to share the IPC namespace and /dev/shm from the agent host,
+    // its parent container has to do it first.
+    SHARE_PARENT = 2;
+
+    option (gogoproto.goproto_enum_prefix) = true;
+  }
+
+  // There are two special cases that we need to handle for this field:
+  // 1. This field is not set: For backward compatibility we will keep the
+  //    previous behavior: Top level container will have its own IPC namespace
+  //    and nested container will share the IPC namespace from its parent
+  //    container. If the container does not have its own rootfs, it will share
+  //    agent's /dev/shm, otherwise it will have its own /dev/shm.
+  // 2. The `namespaces/ipc` isolator is not enabled: This field will be ignored
+  //    in this case. For backward compatibility, in the `filesystem/linux`
+  //    isolator we will keep the previous behavior: Any containers will share
+  //    IPC namespace from agent, and if the container does not have its own
+  //    rootfs, it will also share agent's /dev/shm, otherwise it will have its
+  //    own /dev/shm.
+  //
+  // TODO(qianzhang): Remove the support for the above two cases after the
+  // deprecation cycle (started in 1.9). Eventually we want a single isolator
+  // (`namespaces/ipc`) to handle both IPC namespace and /dev/shm, and decouple
+  // /dev/shm from container's rootfs (i.e., whether a container will have its
+  // own /dev/shm depends on its `ipc_mode` instead of whether the container
+  // has its own rootfs).
+  optional IpcMode ipc_mode = 6 [(gogoproto.customname) = "IPCMode"];
+
+  // Size of /dev/shm in MB. If not set, the size of the /dev/shm for container
+  // will be value of the `--default_shm_size` agent flag, if that flag is not
+  // set too, the size of the /dev/shm will be half of the host RAM which is the
+  // default behavior of Linux. This field will be ignored for the container
+  // which shares /dev/shm from its parent and it will be also ignored for any
+  // containers if the `namespaces/ipc` isolator is not enabled.
+  optional uint32 shm_size = 7 [(gogoproto.customname) = "SHMSize"];
 }
 
 
@@ -3765,4 +3822,55 @@ message DeviceAccess {
 
 message DeviceWhitelist {
    repeated DeviceAccess allowed_devices = 1 [(gogoproto.nullable) = false];
+}
+
+
+enum DrainState {
+  UNKNOWN = 0;
+
+  // The agent is currently draining.
+  DRAINING = 1;
+
+  // The agent has been drained: all tasks have terminated, all terminal
+  // task status updates have been acknowledged by the frameworks, and all
+  // operations have finished and had their terminal updates acknowledged.
+  DRAINED = 2;
+
+  option (gogoproto.goproto_enum_prefix) = true;
+}
+
+
+message DrainConfig {
+  // An upper bound for tasks with a KillPolicy.
+  // If a task has a KillPolicy grace period greater than this value, this value
+  // will be used instead. This allows the operator to limit the maximum time it
+  // will take the agent to drain. If this field is unset, the task's KillPolicy
+  // or the executor's default grace period is used.
+  //
+  // NOTE: Grace periods start when the executor receives the associated kill.
+  // If, for example, the agent is unreachable when this call is made,
+  // tasks will still receive their full grace period to kill gracefully.
+  optional DurationInfo max_grace_period = 1;
+
+  // Whether or not this agent will be removed permanently from the cluster when
+  // draining is complete. This transition is automatic and does **NOT** require
+  // a separate call to `MarkAgentGone`. If this field is unset, then the
+  // default value of `false` is used.
+  //
+  // Compared to `MarkAgentGone`, which is used for unreachable agents,
+  // marking agents gone after draining will respect kill policies.
+  // To notify frameworks, tasks terminated during draining will return
+  // a `TASK_GONE_BY_OPERATOR` status update instead of any other terminal
+  // status. Executors will not need to account for this case, because
+  // the terminal status update will be intercepted and modified by the agent.
+  optional bool mark_gone = 2 [default = false];
+}
+
+
+message DrainInfo {
+  // The drain state of the agent.
+  required DrainState state = 1 [(gogoproto.nullable) = false];
+
+  // The configuration used to drain the agent.
+  required DrainConfig config = 2 [(gogoproto.nullable) = false];
 }

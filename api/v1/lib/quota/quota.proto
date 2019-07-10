@@ -92,7 +92,16 @@ message QuotaRequest {
 }
 
 /**
- * Describes a role's quota configuration.
+ * Describes a role's quota configuration. This replaces the legacy
+ * quota related messages: `QuotaInfo` and `QuotaRequest`. This is
+ * used in both `UPDATE_QUOTA` and `GET_QUOTA` calls as well as persisted
+ * in the registry.
+ *
+ * We use this new message in the new call `UPDATE_QUOTA` instead of reusing
+ * the legacy `QuotaRequest` message. This avoids confusions with deprecated
+ * fields and provides a cleaner interface. In `QuotaStatus` returned by
+ * `GET_QUOTA`, the legacy `infos` field is still filled along side `configs`
+ * for backwards compatibility.
  */
 message QuotaConfig {
   required string role = 1 [(gogoproto.nullable) = false];
@@ -149,7 +158,16 @@ message QuotaConfig {
  * /quota/status response and `GET_QUOTA` `master::Response`.
  */
 message QuotaStatus {
-  // Returns all non-default quotas. Those ommitted from this
+  // Returns all non-default quotas. Those omitted from this
   // list have the default of: no guarantee and no limit.
-  repeated QuotaInfo infos = 1 [(gogoproto.nullable) = false];
+  //
+  // For backwards compatibility, `infos` are still filled along
+  // side `configs`. Note, however `infos` will contain less information
+  // comparing to `configs` (e.g. info does not contain information
+  // regarding quota limits).
+  repeated QuotaInfo infos = 1 [deprecated = true, (gogoproto.nullable) = false];
+
+  // Returns all non-default quotas. Those omitted from this
+  // list have the default of: no guarantee and no limit.
+  repeated QuotaConfig configs = 2 [(gogoproto.nullable) = false];
 }

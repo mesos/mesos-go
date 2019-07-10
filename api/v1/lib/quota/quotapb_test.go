@@ -189,7 +189,7 @@ func BenchmarkQuotaStatusProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkQuotaInfoProtoSize(b *testing.B) {
+func BenchmarkQuotaInfoSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*QuotaInfo, 1000)
@@ -198,12 +198,12 @@ func BenchmarkQuotaInfoProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkQuotaRequestProtoSize(b *testing.B) {
+func BenchmarkQuotaRequestSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*QuotaRequest, 1000)
@@ -212,12 +212,12 @@ func BenchmarkQuotaRequestProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkQuotaConfigProtoSize(b *testing.B) {
+func BenchmarkQuotaConfigSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*QuotaConfig, 1000)
@@ -226,12 +226,12 @@ func BenchmarkQuotaConfigProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkQuotaStatusProtoSize(b *testing.B) {
+func BenchmarkQuotaStatusSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*QuotaStatus, 1000)
@@ -240,7 +240,7 @@ func BenchmarkQuotaStatusProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }

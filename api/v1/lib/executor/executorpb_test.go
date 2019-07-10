@@ -507,7 +507,7 @@ func BenchmarkCall_MessageProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkEventProtoSize(b *testing.B) {
+func BenchmarkEventSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event, 1000)
@@ -516,12 +516,12 @@ func BenchmarkEventProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkEvent_SubscribedProtoSize(b *testing.B) {
+func BenchmarkEvent_SubscribedSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Subscribed, 1000)
@@ -530,12 +530,12 @@ func BenchmarkEvent_SubscribedProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkEvent_LaunchProtoSize(b *testing.B) {
+func BenchmarkEvent_LaunchSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Launch, 1000)
@@ -544,12 +544,12 @@ func BenchmarkEvent_LaunchProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkEvent_LaunchGroupProtoSize(b *testing.B) {
+func BenchmarkEvent_LaunchGroupSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_LaunchGroup, 1000)
@@ -558,12 +558,12 @@ func BenchmarkEvent_LaunchGroupProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkEvent_KillProtoSize(b *testing.B) {
+func BenchmarkEvent_KillSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Kill, 1000)
@@ -572,12 +572,12 @@ func BenchmarkEvent_KillProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkEvent_AcknowledgedProtoSize(b *testing.B) {
+func BenchmarkEvent_AcknowledgedSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Acknowledged, 1000)
@@ -586,12 +586,12 @@ func BenchmarkEvent_AcknowledgedProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkEvent_MessageProtoSize(b *testing.B) {
+func BenchmarkEvent_MessageSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Message, 1000)
@@ -600,12 +600,12 @@ func BenchmarkEvent_MessageProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkEvent_ErrorProtoSize(b *testing.B) {
+func BenchmarkEvent_ErrorSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Event_Error, 1000)
@@ -614,12 +614,12 @@ func BenchmarkEvent_ErrorProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkCallProtoSize(b *testing.B) {
+func BenchmarkCallSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call, 1000)
@@ -628,12 +628,12 @@ func BenchmarkCallProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkCall_SubscribeProtoSize(b *testing.B) {
+func BenchmarkCall_SubscribeSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call_Subscribe, 1000)
@@ -642,12 +642,12 @@ func BenchmarkCall_SubscribeProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkCall_UpdateProtoSize(b *testing.B) {
+func BenchmarkCall_UpdateSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call_Update, 1000)
@@ -656,12 +656,12 @@ func BenchmarkCall_UpdateProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkCall_MessageProtoSize(b *testing.B) {
+func BenchmarkCall_MessageSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Call_Message, 1000)
@@ -670,7 +670,7 @@ func BenchmarkCall_MessageProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }

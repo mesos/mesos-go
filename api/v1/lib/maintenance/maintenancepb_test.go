@@ -189,7 +189,7 @@ func BenchmarkClusterStatus_DrainingMachineProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkWindowProtoSize(b *testing.B) {
+func BenchmarkWindowSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Window, 1000)
@@ -198,12 +198,12 @@ func BenchmarkWindowProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkScheduleProtoSize(b *testing.B) {
+func BenchmarkScheduleSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*Schedule, 1000)
@@ -212,12 +212,12 @@ func BenchmarkScheduleProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkClusterStatusProtoSize(b *testing.B) {
+func BenchmarkClusterStatusSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*ClusterStatus, 1000)
@@ -226,12 +226,12 @@ func BenchmarkClusterStatusProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkClusterStatus_DrainingMachineProtoSize(b *testing.B) {
+func BenchmarkClusterStatus_DrainingMachineSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*ClusterStatus_DrainingMachine, 1000)
@@ -240,7 +240,7 @@ func BenchmarkClusterStatus_DrainingMachineProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }

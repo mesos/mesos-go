@@ -14248,7 +14248,7 @@ func (mj *Response_ReadFile) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	_ = obj
 	_ = err
 	buf.WriteString(`{ "size":`)
-	fflib.FormatBits2(buf, uint64(mj.Size), 10, false)
+	fflib.FormatBits2(buf, uint64(mj.Size_), 10, false)
 	buf.WriteByte(',')
 	if len(mj.Data) != 0 {
 		buf.WriteString(`"data":`)
@@ -14274,12 +14274,12 @@ const (
 	ffj_t_Response_ReadFilebase = iota
 	ffj_t_Response_ReadFileno_such_key
 
-	ffj_t_Response_ReadFile_Size
+	ffj_t_Response_ReadFile_Size_
 
 	ffj_t_Response_ReadFile_Data
 )
 
-var ffj_key_Response_ReadFile_Size = []byte("size")
+var ffj_key_Response_ReadFile_Size_ = []byte("size")
 
 var ffj_key_Response_ReadFile_Data = []byte("data")
 
@@ -14352,8 +14352,8 @@ mainparse:
 
 				case 's':
 
-					if bytes.Equal(ffj_key_Response_ReadFile_Size, kn) {
-						currentKey = ffj_t_Response_ReadFile_Size
+					if bytes.Equal(ffj_key_Response_ReadFile_Size_, kn) {
+						currentKey = ffj_t_Response_ReadFile_Size_
 						state = fflib.FFParse_want_colon
 						goto mainparse
 					}
@@ -14366,8 +14366,8 @@ mainparse:
 					goto mainparse
 				}
 
-				if fflib.EqualFoldRight(ffj_key_Response_ReadFile_Size, kn) {
-					currentKey = ffj_t_Response_ReadFile_Size
+				if fflib.EqualFoldRight(ffj_key_Response_ReadFile_Size_, kn) {
+					currentKey = ffj_t_Response_ReadFile_Size_
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -14389,8 +14389,8 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
-				case ffj_t_Response_ReadFile_Size:
-					goto handle_Size
+				case ffj_t_Response_ReadFile_Size_:
+					goto handle_Size_
 
 				case ffj_t_Response_ReadFile_Data:
 					goto handle_Data
@@ -14409,9 +14409,9 @@ mainparse:
 		}
 	}
 
-handle_Size:
+handle_Size_:
 
-	/* handler: uj.Size type=uint64 kind=uint64 quoted=false*/
+	/* handler: uj.Size_ type=uint64 kind=uint64 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
@@ -14431,7 +14431,7 @@ handle_Size:
 				return fs.WrapErr(err)
 			}
 
-			uj.Size = uint64(tval)
+			uj.Size_ = uint64(tval)
 
 		}
 	}

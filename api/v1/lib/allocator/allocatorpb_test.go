@@ -66,7 +66,7 @@ func BenchmarkInverseOfferStatusProtoUnmarshal(b *testing.B) {
 	b.SetBytes(int64(total / b.N))
 }
 
-func BenchmarkInverseOfferStatusProtoSize(b *testing.B) {
+func BenchmarkInverseOfferStatusSize(b *testing.B) {
 	popr := math_rand.New(math_rand.NewSource(616))
 	total := 0
 	pops := make([]*InverseOfferStatus, 1000)
@@ -75,7 +75,7 @@ func BenchmarkInverseOfferStatusProtoSize(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		total += pops[i%1000].ProtoSize()
+		total += pops[i%1000].Size()
 	}
 	b.SetBytes(int64(total / b.N))
 }

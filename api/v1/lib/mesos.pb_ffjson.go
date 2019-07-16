@@ -54442,6 +54442,21 @@ func (mj *Task) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.KillPolicy != nil {
+		if true {
+			buf.WriteString(`"kill_policy":`)
+
+			{
+
+				err = mj.KillPolicy.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	if mj.User != nil {
 		if true {
 			buf.WriteString(`"user":`)
@@ -54486,6 +54501,8 @@ const (
 
 	ffj_t_Task_HealthCheck
 
+	ffj_t_Task_KillPolicy
+
 	ffj_t_Task_User
 )
 
@@ -54516,6 +54533,8 @@ var ffj_key_Task_Discovery = []byte("discovery")
 var ffj_key_Task_Container = []byte("container")
 
 var ffj_key_Task_HealthCheck = []byte("health_check")
+
+var ffj_key_Task_KillPolicy = []byte("kill_policy")
 
 var ffj_key_Task_User = []byte("user")
 
@@ -54626,6 +54645,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'k':
+
+					if bytes.Equal(ffj_key_Task_KillPolicy, kn) {
+						currentKey = ffj_t_Task_KillPolicy
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'l':
 
 					if bytes.Equal(ffj_key_Task_Labels, kn) {
@@ -54693,6 +54720,12 @@ mainparse:
 
 				if fflib.EqualFoldRight(ffj_key_Task_User, kn) {
 					currentKey = ffj_t_Task_User
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Task_KillPolicy, kn) {
+					currentKey = ffj_t_Task_KillPolicy
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -54839,6 +54872,9 @@ mainparse:
 
 				case ffj_t_Task_HealthCheck:
 					goto handle_HealthCheck
+
+				case ffj_t_Task_KillPolicy:
+					goto handle_KillPolicy
 
 				case ffj_t_Task_User:
 					goto handle_User
@@ -55304,6 +55340,33 @@ handle_HealthCheck:
 		}
 
 		err = uj.HealthCheck.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_KillPolicy:
+
+	/* handler: uj.KillPolicy type=mesos.KillPolicy kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.KillPolicy = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.KillPolicy == nil {
+			uj.KillPolicy = new(KillPolicy)
+		}
+
+		err = uj.KillPolicy.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

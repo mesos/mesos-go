@@ -9036,6 +9036,21 @@ func (mj *Response_GetAgent) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.DrainConfig != nil {
+		if true {
+			buf.WriteString(`"drain_config":`)
+
+			{
+
+				err = mj.DrainConfig.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -9046,9 +9061,13 @@ const (
 	ffj_t_Response_GetAgentno_such_key
 
 	ffj_t_Response_GetAgent_AgentInfo
+
+	ffj_t_Response_GetAgent_DrainConfig
 )
 
 var ffj_key_Response_GetAgent_AgentInfo = []byte("agent_info")
+
+var ffj_key_Response_GetAgent_DrainConfig = []byte("drain_config")
 
 func (uj *Response_GetAgent) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -9117,6 +9136,20 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'd':
+
+					if bytes.Equal(ffj_key_Response_GetAgent_DrainConfig, kn) {
+						currentKey = ffj_t_Response_GetAgent_DrainConfig
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Response_GetAgent_DrainConfig, kn) {
+					currentKey = ffj_t_Response_GetAgent_DrainConfig
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.AsciiEqualFold(ffj_key_Response_GetAgent_AgentInfo, kn) {
@@ -9144,6 +9177,9 @@ mainparse:
 
 				case ffj_t_Response_GetAgent_AgentInfo:
 					goto handle_AgentInfo
+
+				case ffj_t_Response_GetAgent_DrainConfig:
+					goto handle_DrainConfig
 
 				case ffj_t_Response_GetAgentno_such_key:
 					err = fs.SkipField(tok)
@@ -9177,6 +9213,33 @@ handle_AgentInfo:
 		}
 
 		err = uj.AgentInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_DrainConfig:
+
+	/* handler: uj.DrainConfig type=mesos.DrainConfig kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.DrainConfig = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.DrainConfig == nil {
+			uj.DrainConfig = new(mesos.DrainConfig)
+		}
+
+		err = uj.DrainConfig.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

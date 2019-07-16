@@ -11214,7 +11214,7 @@ func (mj *Response_GetAgents_Agent) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{"agent_info":`)
+	buf.WriteString(`{ "agent_info":`)
 
 	{
 
@@ -11229,7 +11229,18 @@ func (mj *Response_GetAgents_Agent) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 	} else {
 		buf.WriteString(`,"active":false`)
 	}
-	buf.WriteString(`,"version":`)
+	buf.WriteByte(',')
+	if mj.Deactivated != nil {
+		if true {
+			if *mj.Deactivated {
+				buf.WriteString(`"deactivated":true`)
+			} else {
+				buf.WriteString(`"deactivated":false`)
+			}
+			buf.WriteByte(',')
+		}
+	}
+	buf.WriteString(`"version":`)
 	fflib.WriteJsonString(buf, string(mj.Version))
 	buf.WriteByte(',')
 	if mj.PID != nil {
@@ -11374,6 +11385,23 @@ func (mj *Response_GetAgents_Agent) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 	} else {
 		buf.WriteString(`null`)
 	}
+	buf.WriteByte(',')
+	if mj.DrainInfo != nil {
+		if true {
+			buf.WriteString(`"drain_info":`)
+
+			{
+
+				err = mj.DrainInfo.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
+	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
 }
@@ -11385,6 +11413,8 @@ const (
 	ffj_t_Response_GetAgents_Agent_AgentInfo
 
 	ffj_t_Response_GetAgents_Agent_Active
+
+	ffj_t_Response_GetAgents_Agent_Deactivated
 
 	ffj_t_Response_GetAgents_Agent_Version
 
@@ -11403,11 +11433,15 @@ const (
 	ffj_t_Response_GetAgents_Agent_Capabilities
 
 	ffj_t_Response_GetAgents_Agent_ResourceProviders
+
+	ffj_t_Response_GetAgents_Agent_DrainInfo
 )
 
 var ffj_key_Response_GetAgents_Agent_AgentInfo = []byte("agent_info")
 
 var ffj_key_Response_GetAgents_Agent_Active = []byte("active")
+
+var ffj_key_Response_GetAgents_Agent_Deactivated = []byte("deactivated")
 
 var ffj_key_Response_GetAgents_Agent_Version = []byte("version")
 
@@ -11426,6 +11460,8 @@ var ffj_key_Response_GetAgents_Agent_OfferedResources = []byte("offered_resource
 var ffj_key_Response_GetAgents_Agent_Capabilities = []byte("capabilities")
 
 var ffj_key_Response_GetAgents_Agent_ResourceProviders = []byte("resource_providers")
+
+var ffj_key_Response_GetAgents_Agent_DrainInfo = []byte("drain_info")
 
 func (uj *Response_GetAgents_Agent) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -11512,6 +11548,19 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'd':
+
+					if bytes.Equal(ffj_key_Response_GetAgents_Agent_Deactivated, kn) {
+						currentKey = ffj_t_Response_GetAgents_Agent_Deactivated
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
+					} else if bytes.Equal(ffj_key_Response_GetAgents_Agent_DrainInfo, kn) {
+						currentKey = ffj_t_Response_GetAgents_Agent_DrainInfo
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'o':
 
 					if bytes.Equal(ffj_key_Response_GetAgents_Agent_OfferedResources, kn) {
@@ -11562,6 +11611,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.AsciiEqualFold(ffj_key_Response_GetAgents_Agent_DrainInfo, kn) {
+					currentKey = ffj_t_Response_GetAgents_Agent_DrainInfo
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Response_GetAgents_Agent_ResourceProviders, kn) {
@@ -11618,6 +11673,12 @@ mainparse:
 					goto mainparse
 				}
 
+				if fflib.SimpleLetterEqualFold(ffj_key_Response_GetAgents_Agent_Deactivated, kn) {
+					currentKey = ffj_t_Response_GetAgents_Agent_Deactivated
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
 				if fflib.SimpleLetterEqualFold(ffj_key_Response_GetAgents_Agent_Active, kn) {
 					currentKey = ffj_t_Response_GetAgents_Agent_Active
 					state = fflib.FFParse_want_colon
@@ -11653,6 +11714,9 @@ mainparse:
 				case ffj_t_Response_GetAgents_Agent_Active:
 					goto handle_Active
 
+				case ffj_t_Response_GetAgents_Agent_Deactivated:
+					goto handle_Deactivated
+
 				case ffj_t_Response_GetAgents_Agent_Version:
 					goto handle_Version
 
@@ -11679,6 +11743,9 @@ mainparse:
 
 				case ffj_t_Response_GetAgents_Agent_ResourceProviders:
 					goto handle_ResourceProviders
+
+				case ffj_t_Response_GetAgents_Agent_DrainInfo:
+					goto handle_DrainInfo
 
 				case ffj_t_Response_GetAgents_Agentno_such_key:
 					err = fs.SkipField(tok)
@@ -11743,6 +11810,47 @@ handle_Active:
 				err = errors.New("unexpected bytes for true/false value")
 				return fs.WrapErr(err)
 			}
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Deactivated:
+
+	/* handler: uj.Deactivated type=bool kind=bool quoted=false*/
+
+	{
+		if tok != fflib.FFTok_bool && tok != fflib.FFTok_null {
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for bool", tok))
+		}
+	}
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.Deactivated = nil
+
+		} else {
+			tmpb := fs.Output.Bytes()
+
+			var tval bool
+
+			if bytes.Compare([]byte{'t', 'r', 'u', 'e'}, tmpb) == 0 {
+
+				tval = true
+
+			} else if bytes.Compare([]byte{'f', 'a', 'l', 's', 'e'}, tmpb) == 0 {
+
+				tval = false
+
+			} else {
+				err = errors.New("unexpected bytes for true/false value")
+				return fs.WrapErr(err)
+			}
+
+			uj.Deactivated = &tval
 
 		}
 	}
@@ -12200,6 +12308,33 @@ handle_ResourceProviders:
 				wantVal = false
 			}
 		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_DrainInfo:
+
+	/* handler: uj.DrainInfo type=mesos.DrainInfo kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.DrainInfo = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.DrainInfo == nil {
+			uj.DrainInfo = new(mesos.DrainInfo)
+		}
+
+		err = uj.DrainInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value

@@ -3,7 +3,7 @@ current_dir	:= $(patsubst %/,%,$(dir $(mkfile_path)))
 
 MESOS_API_VERSION := v1
 API_PKG    := ./api/${MESOS_API_VERSION}/lib
-API_VENDOR := ${current_dir}/api/${MESOS_API_VERSION}/vendor
+API_VENDOR := ${current_dir}/vendor
 CMD_PKG    := ./api/${MESOS_API_VERSION}/cmd
 CMD_VENDOR := ./api/${MESOS_API_VERSION}/cmd/vendor
 
@@ -125,12 +125,6 @@ ffjson: clean-ffjson
 clean-ffjson:
 	(cd ${API_PKG}; rm -f *ffjson.go */*ffjson.go)
 
-.PHONY: sync
-sync:
-	@which govendor >/dev/null || { echo "govendor not found in $$PATH"; exit 1; }
-	(cd ${API_VENDOR}; govendor sync)
-	(cd ${CMD_VENDOR}; govendor sync)
-
 .PHONY: generate
 generate: GENERATE_PACKAGES = ./api/v1/lib/extras/executor/eventrules ./api/v1/lib/extras/executor/callrules ./api/v1/lib/extras/scheduler/eventrules ./api/v1/lib/extras/scheduler/callrules ./api/v1/lib/executor/events ./api/v1/lib/executor/calls ./api/v1/lib/scheduler/events ./api/v1/lib/scheduler/calls ./api/v1/lib/agent/calls ./api/v1/lib/master/calls ./api/v1/lib/httpcli/httpagent ./api/v1/lib/httpcli/httpmaster ./api/v1/lib/httpcli/httpexec
 generate:
@@ -175,7 +169,7 @@ coveralls:
 ifeq ($(GO_VERSION),go1.11)
 validate-protobufs: SHELL := /bin/bash
 validate-protobufs:
-	(cd api/v1; govendor install +vendor,program) && $(MAKE) -s protobufs ffjson && [[ `{ git status --porcelain || echo "failed"; } | tee /tmp/status | wc -l` = "0" ]] || { cat /tmp/status; git diff; false; }
+	$(MAKE) -s protobufs ffjson && [[ `{ git status --porcelain || echo "failed"; } | tee /tmp/status | wc -l` = "0" ]] || { cat /tmp/status; git diff; false; }
 else
 validate-protobufs:
 endif

@@ -8,12 +8,13 @@ import (
 	schedmetrics "github.com/mesos/mesos-go/api/v1/cmd/example-scheduler/app/metrics"
 	xmetrics "github.com/mesos/mesos-go/api/v1/lib/extras/metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func initMetrics(cfg Config) *metricsAPI {
 	schedmetrics.Register()
 	metricsAddress := net.JoinHostPort(cfg.server.address, strconv.Itoa(cfg.metrics.port))
-	http.Handle(cfg.metrics.path, prometheus.Handler())
+	http.Handle(cfg.metrics.path, promhttp.Handler())
 	api := newMetricsAPI()
 	go forever("api-server", cfg.jobRestartDelay, api.jobStartCount, func() error { return http.ListenAndServe(metricsAddress, nil) })
 	return api

@@ -4,4 +4,3 @@ bin/
 *.bak
 *.swp
 _output/
-**/vendor/*/

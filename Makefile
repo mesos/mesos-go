@@ -169,7 +169,7 @@ coveralls:
 ifeq ($(GO_VERSION),go1.11)
 validate-protobufs: SHELL := /bin/bash
 validate-protobufs:
-	$(MAKE) -s protobufs ffjson && [[ `{ git status --porcelain || echo "failed"; } | tee /tmp/status | wc -l` = "0" ]] || { cat /tmp/status; git diff; false; }
+	go get github.com/pquerna/ffjson && $(MAKE) -s protobufs ffjson && [[ `{ git status --porcelain || echo "failed"; } | tee /tmp/status | wc -l` = "0" ]] || { cat /tmp/status; git diff; false; }
 else
 validate-protobufs:
 endif

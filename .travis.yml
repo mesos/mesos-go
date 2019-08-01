@@ -1,7 +1,7 @@
 sudo: false
 language: go
 env:
-  - PROTOBUF_VERSION=3.3.0
+  - GO111MODULE=on PROTOBUF_VERSION=3.3.0
 go:
   # update validate-protobufs Makefile target once golang 1.11.x is no longer tested here
   - 1.9.x

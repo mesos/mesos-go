@@ -14,6 +14,7 @@ before_install:
   - if [[ "$SrcDir" != "$DestDir" ]]; then mv "$SrcDir" "$DestDir"; cd ../../mesos/$RepoName; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$RepoName; fi
   - go get github.com/mattn/goveralls
   - vendor/install-protobuf.sh
+  - go get github.com/gogo/protobuf/protoc-gen-gogo
   # re-generate protobuf and json code, check that there are no differences w/ respect to what's been checked in
   # ONLY for golang1.11.x; generated protobufs are not guaranteed to be consistent across golang versions
   - make validate-protobufs

@@ -55,6 +55,9 @@ func TestError(t *testing.T) {
 				t.Errorf("Expected: %s, got: %s", tt.wantsMessage, err.Error())
 			}
 			apierr := err.(*Error)
+			if apierr.Code() != tt.code {
+				t.Errorf("Expected: %d, got: %d", tt.code, apierr.Code())
+			}
 			if apierr.Temporary() != tt.temporary {
 				t.Errorf("expected temporary to be %v instead of %v", tt.temporary, apierr.Temporary())
 			}

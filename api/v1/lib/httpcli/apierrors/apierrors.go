@@ -114,6 +114,9 @@ func (code Code) Error(details string) error {
 // Error implements error interface
 func (e *Error) Error() string { return e.message }
 
+// Code returns the error code.
+func (e *Error) Code() Code { return e.code }
+
 // Temporary returns true if the error is a temporary condition that should eventually clear.
 func (e *Error) Temporary() bool {
 	switch e.code {

@@ -268,6 +268,9 @@ message Call {
     repeated Resource resources = 3 [(gogoproto.nullable) = false];
 
     optional ContainerInfo container = 4;
+
+    // Resource limits associated with the container during launch.
+    map<string, Value.Scalar> limits = 5 [(gogoproto.nullable) = false];
   }
 
   // Waits for the standalone or nested container to terminate
@@ -589,6 +592,7 @@ message Response {
     optional AgentInfo agent_info = 1;
 
     optional DrainConfig drain_config = 2;
+    optional TimeInfo estimated_drain_start_time = 3;
   }
 
   // Lists information about all resource providers known to the agent

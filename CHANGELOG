@@ -1,6 +1,5 @@
-xxxx-xx-xx: v0.0.11
-  1.9.x protobuf support
-  TODO
+2020-05-14: v0.0.11
+  1.10.x protobuf support
 
 2019-07-03: v0.0.10
   1.8.x protobuf support

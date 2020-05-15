@@ -3234,7 +3234,7 @@ func (mj *Call_LaunchContainer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ "container_id":`)
+	buf.WriteString(`{"container_id":`)
 
 	{
 
@@ -3297,7 +3297,12 @@ func (mj *Call_LaunchContainer) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
-	buf.Rewind(1)
+	buf.WriteString(`"limits":`)
+	/* Falling back. type=map[string]mesos.Value_Scalar kind=map */
+	err = buf.Encode(mj.Limits)
+	if err != nil {
+		return err
+	}
 	buf.WriteByte('}')
 	return nil
 }
@@ -3313,6 +3318,8 @@ const (
 	ffj_t_Call_LaunchContainer_Resources
 
 	ffj_t_Call_LaunchContainer_Container
+
+	ffj_t_Call_LaunchContainer_Limits
 )
 
 var ffj_key_Call_LaunchContainer_ContainerID = []byte("container_id")
@@ -3322,6 +3329,8 @@ var ffj_key_Call_LaunchContainer_Command = []byte("command")
 var ffj_key_Call_LaunchContainer_Resources = []byte("resources")
 
 var ffj_key_Call_LaunchContainer_Container = []byte("container")
+
+var ffj_key_Call_LaunchContainer_Limits = []byte("limits")
 
 func (uj *Call_LaunchContainer) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -3400,6 +3409,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'l':
+
+					if bytes.Equal(ffj_key_Call_LaunchContainer_Limits, kn) {
+						currentKey = ffj_t_Call_LaunchContainer_Limits
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'r':
 
 					if bytes.Equal(ffj_key_Call_LaunchContainer_Resources, kn) {
@@ -3408,6 +3425,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_LaunchContainer_Limits, kn) {
+					currentKey = ffj_t_Call_LaunchContainer_Limits
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.SimpleLetterEqualFold(ffj_key_Call_LaunchContainer_Container, kn) {
@@ -3462,6 +3485,9 @@ mainparse:
 
 				case ffj_t_Call_LaunchContainer_Container:
 					goto handle_Container
+
+				case ffj_t_Call_LaunchContainer_Limits:
+					goto handle_Limits
 
 				case ffj_t_Call_LaunchContainerno_such_key:
 					err = fs.SkipField(tok)
@@ -3616,6 +3642,106 @@ handle_Container:
 			return err
 		}
 		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Limits:
+
+	/* handler: uj.Limits type=map[string]mesos.Value_Scalar kind=map quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_bracket && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.Limits = nil
+		} else {
+
+			uj.Limits = make(map[string]mesos.Value_Scalar, 0)
+
+			wantVal := true
+
+			for {
+
+				var k string
+
+				var tmp_uj__Limits mesos.Value_Scalar
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_bracket {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: k type=string kind=string quoted=false*/
+
+				{
+
+					{
+						if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+							return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+						}
+					}
+
+					if tok == fflib.FFTok_null {
+
+					} else {
+
+						outBuf := fs.Output.Bytes()
+
+						k = string(string(outBuf))
+
+					}
+				}
+
+				// Expect ':' after key
+				tok = fs.Scan()
+				if tok != fflib.FFTok_colon {
+					return fs.WrapErr(fmt.Errorf("wanted colon token, but got token: %v", tok))
+				}
+
+				tok = fs.Scan()
+				/* handler: tmp_uj__Limits type=mesos.Value_Scalar kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__Limits.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.Limits[k] = tmp_uj__Limits
+
+				wantVal = false
+			}
+
+		}
 	}
 
 	state = fflib.FFParse_after_value
@@ -9051,6 +9177,21 @@ func (mj *Response_GetAgent) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			buf.WriteByte(',')
 		}
 	}
+	if mj.EstimatedDrainStartTime != nil {
+		if true {
+			buf.WriteString(`"estimated_drain_start_time":`)
+
+			{
+
+				err = mj.EstimatedDrainStartTime.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -9063,11 +9204,15 @@ const (
 	ffj_t_Response_GetAgent_AgentInfo
 
 	ffj_t_Response_GetAgent_DrainConfig
+
+	ffj_t_Response_GetAgent_EstimatedDrainStartTime
 )
 
 var ffj_key_Response_GetAgent_AgentInfo = []byte("agent_info")
 
 var ffj_key_Response_GetAgent_DrainConfig = []byte("drain_config")
+
+var ffj_key_Response_GetAgent_EstimatedDrainStartTime = []byte("estimated_drain_start_time")
 
 func (uj *Response_GetAgent) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -9144,6 +9289,20 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'e':
+
+					if bytes.Equal(ffj_key_Response_GetAgent_EstimatedDrainStartTime, kn) {
+						currentKey = ffj_t_Response_GetAgent_EstimatedDrainStartTime
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Response_GetAgent_EstimatedDrainStartTime, kn) {
+					currentKey = ffj_t_Response_GetAgent_EstimatedDrainStartTime
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.AsciiEqualFold(ffj_key_Response_GetAgent_DrainConfig, kn) {
@@ -9180,6 +9339,9 @@ mainparse:
 
 				case ffj_t_Response_GetAgent_DrainConfig:
 					goto handle_DrainConfig
+
+				case ffj_t_Response_GetAgent_EstimatedDrainStartTime:
+					goto handle_EstimatedDrainStartTime
 
 				case ffj_t_Response_GetAgentno_such_key:
 					err = fs.SkipField(tok)
@@ -9240,6 +9402,33 @@ handle_DrainConfig:
 		}
 
 		err = uj.DrainConfig.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_EstimatedDrainStartTime:
+
+	/* handler: uj.EstimatedDrainStartTime type=mesos.TimeInfo kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.EstimatedDrainStartTime = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.EstimatedDrainStartTime == nil {
+			uj.EstimatedDrainStartTime = new(mesos.TimeInfo)
+		}
+
+		err = uj.EstimatedDrainStartTime.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

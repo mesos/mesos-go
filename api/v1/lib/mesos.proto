@@ -1072,6 +1072,10 @@ message AgentInfo {
       // in preparation for operator maintenance. This capability is required.
       AGENT_DRAINING = 7;
 
+      // This expresses the ability for the agent to launch tasks which specify
+      // resource limits for CPU and/or memory.
+      TASK_RESOURCE_LIMITS = 8;
+
       option (gogoproto.goproto_enum_prefix) = true;
     }
 
@@ -1173,6 +1177,12 @@ message ResourceProviderInfo {
   // Storage resource provider related information.
   message Storage {
     required CSIPluginInfo plugin = 1 [(gogoproto.nullable) = false];
+
+    // Amount of time to wait after the resource provider finishes reconciling
+    // existing volumes and storage pools against the CSI plugin to start the
+    // next reconciliation. A non-positive value means that no reconciliation
+    // will happen after startup.
+    optional double reconciliation_interval_seconds = 2;
   }
 
   optional Storage storage = 6; // EXPERIMENTAL.
@@ -1588,6 +1598,10 @@ message Resource {
   // can be launched using this resource and all of them shall refer
   // to the same physical resource on the cluster. Note that only
   // persistent volumes can be shared currently.
+  //
+  // NOTE: Different shared resources must be uniquely identifiable.
+  // This currently holds as persistent volume should have unique `id`
+  // (this is not validated for enforced though).
   optional SharedInfo shared = 10;
 }
 
@@ -1746,8 +1760,11 @@ message ResourceStatistics {
   optional double cpus_user_time_secs = 2 [(gogoproto.customname) = "CPUsUserTimeSecs"];
   optional double cpus_system_time_secs = 3 [(gogoproto.customname) = "CPUsSystemTimeSecs"];
 
-  // Number of CPUs allocated.
+  // Hard CPU limit.
   optional double cpus_limit = 4 [(gogoproto.customname) = "CPUsLimit"];
+
+  // Soft CPU limit.
+  optional double cpus_soft_limit = 45 [(gogoproto.customname) = "CPUsSoftLimit"];
 
   // cpu.stat on process throttling (for contention issues).
   optional uint32 cpus_nr_periods = 7 [(gogoproto.customname) = "CPUsNrPeriods"];
@@ -1766,10 +1783,10 @@ message ResourceStatistics {
   // Total memory + swap usage. This is set if swap is enabled.
   optional uint64 mem_total_memsw_bytes = 37;
 
-  // Hard memory limit for a container.
+  // Hard memory limit.
   optional uint64 mem_limit_bytes = 6;
 
-  // Soft memory limit for a container.
+  // Soft memory limit.
   optional uint64 mem_soft_limit_bytes = 38;
 
   // Broken out memory usage information: pagecache, rss (anonymous),
@@ -2074,6 +2091,7 @@ message Offer {
     }
 
     message Reserve {
+      repeated Resource source = 2 [(gogoproto.nullable) = false];
       repeated Resource resources = 1 [(gogoproto.nullable) = false];
     }
 
@@ -2304,6 +2322,9 @@ message TaskInfo {
   // It is the executor's responsibility to implement this, so it might not be
   // supported by all custom executors.
   optional DurationInfo max_completion_time = 14;
+
+  // Resource limits associated with the task.
+  map<string, Value.Scalar> limits = 15 [(gogoproto.nullable) = false];
 }
 
 
@@ -3372,8 +3393,25 @@ message LinuxInfo {
   // flag is not set too, the size of the /dev/shm will be half of the host RAM
   // which is the default behavior of Linux. This field will be ignored for the
   // container which shares /dev/shm from its parent and it will be also ignored
-  // for any containers if the `namespaces/ipc` isolator is not enabled.
+  // for any containers if the `namespaces/ipc` isolator is not enabled. Please
+  // note that we only support setting this field when the `ipc_mode` field is
+  // set to `PRIVATE` otherwise the container launch will be rejected.
   optional uint32 shm_size = 7 [(gogoproto.customname) = "SHMSize"];
+
+  // If set as 'true', the container will share the cgroups from its parent
+  // container, otherwise it will have its own cgroups created. Please note:
+  // 1. For tasks in a task group launched via the LAUNCH_GROUP operation,
+  //    this field may be set to 'true' or 'false'. Resource limits may only be
+  //    set for tasks in a task group when this field is set to 'false'.
+  // 2. For tasks launched via the LAUNCH operation, this field may only be set
+  //    to 'true', and in this case resource limits may be set on these tasks.
+  // 3. For containers launched via the agent's LAUNCH_NESTED_CONTAINER_SESSION
+  //    call, this field must be set to 'true'.
+  // 4. For executor containers, this field may only be set to 'false'.
+  // 5. All tasks under a single executor must share the same value of this
+  //    field, if it is set. Note that this means that all tasks within a single
+  //    task group must set this field to the same value.
+  optional bool share_cgroups = 8 [default = true];
 }
 
 
@@ -3802,7 +3840,7 @@ message FileInfo {
 
 
 /**
- * Describes information abount a device.
+ * Describes information about a device.
  */
 message Device {
   message Number {

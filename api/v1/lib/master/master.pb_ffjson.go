@@ -4282,6 +4282,27 @@ func (mj *Call_ReserveResources) MarshalJSONBuf(buf fflib.EncodingBuffer) error 
 		}
 
 	}
+	buf.WriteString(`,"source":`)
+	if mj.Source != nil {
+		buf.WriteString(`[`)
+		for i, v := range mj.Source {
+			if i != 0 {
+				buf.WriteString(`,`)
+			}
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+		buf.WriteString(`]`)
+	} else {
+		buf.WriteString(`null`)
+	}
 	buf.WriteString(`,"resources":`)
 	if mj.Resources != nil {
 		buf.WriteString(`[`)
@@ -4313,10 +4334,14 @@ const (
 
 	ffj_t_Call_ReserveResources_AgentID
 
+	ffj_t_Call_ReserveResources_Source
+
 	ffj_t_Call_ReserveResources_Resources
 )
 
 var ffj_key_Call_ReserveResources_AgentID = []byte("agent_id")
+
+var ffj_key_Call_ReserveResources_Source = []byte("source")
 
 var ffj_key_Call_ReserveResources_Resources = []byte("resources")
 
@@ -4395,10 +4420,24 @@ mainparse:
 						goto mainparse
 					}
 
+				case 's':
+
+					if bytes.Equal(ffj_key_Call_ReserveResources_Source, kn) {
+						currentKey = ffj_t_Call_ReserveResources_Source
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				}
 
 				if fflib.EqualFoldRight(ffj_key_Call_ReserveResources_Resources, kn) {
 					currentKey = ffj_t_Call_ReserveResources_Resources
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Call_ReserveResources_Source, kn) {
+					currentKey = ffj_t_Call_ReserveResources_Source
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -4428,6 +4467,9 @@ mainparse:
 
 				case ffj_t_Call_ReserveResources_AgentID:
 					goto handle_AgentID
+
+				case ffj_t_Call_ReserveResources_Source:
+					goto handle_Source
 
 				case ffj_t_Call_ReserveResources_Resources:
 					goto handle_Resources
@@ -4462,6 +4504,75 @@ handle_AgentID:
 			return err
 		}
 		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Source:
+
+	/* handler: uj.Source type=[]mesos.Resource kind=slice quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_left_brace && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for ", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+			uj.Source = nil
+		} else {
+
+			uj.Source = []mesos.Resource{}
+
+			wantVal := true
+
+			for {
+
+				var tmp_uj__Source mesos.Resource
+
+				tok = fs.Scan()
+				if tok == fflib.FFTok_error {
+					goto tokerror
+				}
+				if tok == fflib.FFTok_right_brace {
+					break
+				}
+
+				if tok == fflib.FFTok_comma {
+					if wantVal == true {
+						// TODO(pquerna): this isn't an ideal error message, this handles
+						// things like [,,,] as an array value.
+						return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))
+					}
+					continue
+				} else {
+					wantVal = true
+				}
+
+				/* handler: tmp_uj__Source type=mesos.Resource kind=struct quoted=false*/
+
+				{
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
+					}
+
+					err = tmp_uj__Source.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					if err != nil {
+						return err
+					}
+					state = fflib.FFParse_after_value
+				}
+
+				uj.Source = append(uj.Source, tmp_uj__Source)
+
+				wantVal = false
+			}
+		}
 	}
 
 	state = fflib.FFParse_after_value
@@ -11401,6 +11512,21 @@ func (mj *Response_GetAgents_Agent) MarshalJSONBuf(buf fflib.EncodingBuffer) err
 			buf.WriteByte(',')
 		}
 	}
+	if mj.EstimatedDrainStartTime != nil {
+		if true {
+			buf.WriteString(`"estimated_drain_start_time":`)
+
+			{
+
+				err = mj.EstimatedDrainStartTime.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
+			}
+			buf.WriteByte(',')
+		}
+	}
 	buf.Rewind(1)
 	buf.WriteByte('}')
 	return nil
@@ -11435,6 +11561,8 @@ const (
 	ffj_t_Response_GetAgents_Agent_ResourceProviders
 
 	ffj_t_Response_GetAgents_Agent_DrainInfo
+
+	ffj_t_Response_GetAgents_Agent_EstimatedDrainStartTime
 )
 
 var ffj_key_Response_GetAgents_Agent_AgentInfo = []byte("agent_info")
@@ -11462,6 +11590,8 @@ var ffj_key_Response_GetAgents_Agent_Capabilities = []byte("capabilities")
 var ffj_key_Response_GetAgents_Agent_ResourceProviders = []byte("resource_providers")
 
 var ffj_key_Response_GetAgents_Agent_DrainInfo = []byte("drain_info")
+
+var ffj_key_Response_GetAgents_Agent_EstimatedDrainStartTime = []byte("estimated_drain_start_time")
 
 func (uj *Response_GetAgents_Agent) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -11561,6 +11691,14 @@ mainparse:
 						goto mainparse
 					}
 
+				case 'e':
+
+					if bytes.Equal(ffj_key_Response_GetAgents_Agent_EstimatedDrainStartTime, kn) {
+						currentKey = ffj_t_Response_GetAgents_Agent_EstimatedDrainStartTime
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
 				case 'o':
 
 					if bytes.Equal(ffj_key_Response_GetAgents_Agent_OfferedResources, kn) {
@@ -11611,6 +11749,12 @@ mainparse:
 						goto mainparse
 					}
 
+				}
+
+				if fflib.EqualFoldRight(ffj_key_Response_GetAgents_Agent_EstimatedDrainStartTime, kn) {
+					currentKey = ffj_t_Response_GetAgents_Agent_EstimatedDrainStartTime
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				if fflib.AsciiEqualFold(ffj_key_Response_GetAgents_Agent_DrainInfo, kn) {
@@ -11746,6 +11890,9 @@ mainparse:
 
 				case ffj_t_Response_GetAgents_Agent_DrainInfo:
 					goto handle_DrainInfo
+
+				case ffj_t_Response_GetAgents_Agent_EstimatedDrainStartTime:
+					goto handle_EstimatedDrainStartTime
 
 				case ffj_t_Response_GetAgents_Agentno_such_key:
 					err = fs.SkipField(tok)
@@ -12331,6 +12478,33 @@ handle_DrainInfo:
 		}
 
 		err = uj.DrainInfo.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		if err != nil {
+			return err
+		}
+		state = fflib.FFParse_after_value
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_EstimatedDrainStartTime:
+
+	/* handler: uj.EstimatedDrainStartTime type=mesos.TimeInfo kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			uj.EstimatedDrainStartTime = nil
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		if uj.EstimatedDrainStartTime == nil {
+			uj.EstimatedDrainStartTime = new(mesos.TimeInfo)
+		}
+
+		err = uj.EstimatedDrainStartTime.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
 			return err
 		}

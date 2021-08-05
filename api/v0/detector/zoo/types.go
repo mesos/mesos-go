@@ -1,7 +1,7 @@
 package zoo
 
 import (
-	"github.com/samuel/go-zookeeper/zk"
+	"github.com/go-zookeeper/zk"
 )
 
 // Connector Interface to facade zk.Conn type

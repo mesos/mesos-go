@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-zookeeper/zk"
 	"github.com/gogo/protobuf/proto"
 	log "github.com/golang/glog"
 	"github.com/mesos/mesos-go/api/v0/detector"
 	mock_zkdetector "github.com/mesos/mesos-go/api/v0/detector/zoo/mock"
 	mesos "github.com/mesos/mesos-go/api/v0/mesosproto"
 	util "github.com/mesos/mesos-go/api/v0/mesosutil"
-	"github.com/samuel/go-zookeeper/zk"
 	"github.com/stretchr/testify/assert"
 
 	. "github.com/mesos/mesos-go/api/v0/detector/zoo"
